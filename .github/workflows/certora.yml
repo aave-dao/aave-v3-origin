@@ -1,0 +1,72 @@
+name: certora
+
+on:
+  pull_request:
+    branches:
+      - certora
+      - main
+  push:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Check key
+        env:
+          CERTORAKEY: ${{ secrets.CERTORAKEY }}
+        run: echo "key length" ${#CERTORAKEY}
+
+      - name: Install python
+        uses: actions/setup-python@v2
+        with: { python-version: 3.9 }
+
+      - name: Install java
+        uses: actions/setup-java@v1
+        with: { java-version: '11', java-package: jre }
+
+      - name: Install certora cli
+        run: pip install certora-cli
+
+      - name: Install solc
+        run: |
+          wget https://github.com/ethereum/solidity/releases/download/v0.8.19/solc-static-linux
+          chmod +x solc-static-linux
+          sudo mv solc-static-linux /usr/local/bin/solc8.19
+
+      - name: Verify rule ${{ matrix.rule }}
+        run: |
+          cd certora
+          touch applyHarness.patch
+          make munged
+          cd ..
+          echo "key length" ${#CERTORAKEY}
+          certoraRun certora/conf/${{ matrix.rule }} --wait_for_results
+        env:
+          CERTORAKEY: ${{ secrets.CERTORAKEY }}
+
+    strategy:
+      fail-fast: false
+      max-parallel: 16
+      matrix:
+        rule:
+          - AToken.conf
+          - ReserveConfiguration.conf
+          - UserConfiguration.conf
+          - VariableDebtToken.conf
+          - NEW-pool-no-summarizations.conf
+          - NEW-pool-simple-properties.conf --rule cannotDepositInInactiveReserve --msg "cannotDepositInInactiveReserve"
+          - NEW-pool-simple-properties.conf --rule cannotDepositInFrozenReserve --msg "cannotDepositInFrozenReserve"
+          - NEW-pool-simple-properties.conf --rule cannotDepositZeroAmount --msg "cannotDepositZeroAmount"
+          - NEW-pool-simple-properties.conf --rule cannotWithdrawZeroAmount --msg "cannotWithdrawZeroAmount"
+          - NEW-pool-simple-properties.conf --rule cannotWithdrawFromInactiveReserve --msg "cannotWithdrawFromInactiveReserve"
+          - NEW-pool-simple-properties.conf --rule cannotBorrowZeroAmount --msg "cannotBorrowZeroAmount"
+          - NEW-pool-simple-properties.conf --rule cannotBorrowOnInactiveReserve --msg "cannotBorrowOnInactiveReserve"
+          - NEW-pool-simple-properties.conf --rule cannotBorrowOnReserveDisabledForBorrowing --msg "cannotBorrowOnReserveDisabledForBorrowing"
+          - NEW-pool-simple-properties.conf --rule cannotBorrowOnFrozenReserve --msg "cannotBorrowOnFrozenReserve"
