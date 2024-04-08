@@ -1,0 +1,29 @@
+{
+  "name": "@bgd-labs/solidity-utils",
+  "version": "1.1.0",
+  "description": "Common contracts we use almost everywhere",
+  "directories": {
+    "lib": "lib",
+    "test": "tests"
+  },
+  "scripts": {
+    "lint": "prettier ./",
+    "lint:fix": "npm run lint -- --write",
+    "ci:publish": "npm publish --access=public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bgd-labs/solidity-utils.git"
+  },
+  "keywords": [],
+  "author": "bgd-labs",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bgd-labs/solidity-utils/issues"
+  },
+  "homepage": "https://github.com/bgd-labs/solidity-utils#readme",
+  "devDependencies": {
+    "prettier": "^2.8.3",
+    "prettier-plugin-solidity": "^1.1.1"
+  }
+}

@@ -1,0 +1,12 @@
+name: Head branch workflow
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+
+jobs:
+  test:
+    uses: bgd-labs/github-workflows/.github/workflows/foundry-test.yml@main

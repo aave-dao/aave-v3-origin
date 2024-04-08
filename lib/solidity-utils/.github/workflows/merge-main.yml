@@ -1,0 +1,20 @@
+name: Head branch workflow
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    uses: bgd-labs/github-workflows/.github/workflows/foundry-test.yml@main
+  release:
+    uses: bgd-labs/github-workflows/.github/workflows/release.yml@main
+  release-node:
+    uses: bgd-labs/github-workflows/.github/workflows/release-node.yml@main
+    secrets:
+      NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}

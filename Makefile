@@ -1,0 +1,35 @@
+# include .env file and export its env vars
+# (-include to ignore error if it does not exist)
+-include .env
+
+# deps
+update:; forge update
+
+# Build & test
+test   :; forge test -vvv --no-match-contract DeploymentsGasLimits
+test-watch   :; forge test --watch -vvv --no-match-contract DeploymentsGasLimits
+coverage :; forge coverage --report lcov && \
+	lcov --remove ./lcov.info -o ./lcov.info.p \
+	'scripts/*' \
+	'tests/*' \
+	'src/deployments/*' \
+	'src/periphery/contracts/v3-config-engine/*' \
+	'src/periphery/contracts/treasury/*' \
+	'src/periphery/contracts/dependencies/openzeppelin/ReentrancyGuard.sol' \
+	'src/periphery/contracts/misc/UiIncentiveDataProviderV3.sol' \
+	'src/periphery/contracts/misc/UiPoolDataProviderV3.sol' \
+	'src/periphery/contracts/misc/WalletBalanceProvider.sol' \
+	'src/periphery/contracts/mocks/*' \
+	'src/core/contracts/mocks/*' \
+	'src/core/contracts/dependencies/*' \
+	'src/core/contracts/misc/AaveProtocolDataProvider.sol' \
+	'src/core/contracts/protocol/libraries/configuration/*' \
+	'src/core/contracts/protocol/libraries/logic/GenericLogic.sol' \
+	'src/core/contracts/protocol/libraries/logic/ReserveLogic.sol' \
+	&& genhtml ./lcov.info.p -o report --branch-coverage
+
+# Utilities
+download :; cast etherscan-source --chain ${chain} -d src/etherscan/${chain}_${address} ${address}
+git-diff :
+	@mkdir -p diffs
+	@printf '%s\n%s\n%s\n' "\`\`\`diff" "$$(git diff --no-index --diff-algorithm=patience --ignore-space-at-eol ${before} ${after})" "\`\`\`" > diffs/${out}.md

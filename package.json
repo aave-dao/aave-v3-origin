@@ -1,0 +1,28 @@
+{
+  "name": "aave-v3-origin",
+  "version": "1.0.0",
+  "scripts": {
+    "lint": "prettier ./",
+    "lint:fix": "npm run lint -- --write"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aave-dao/aave-v3-origin.git"
+  },
+  "keywords": [],
+  "author": "BGD Labs for Aave",
+  "license": "BUSL1.1",
+  "bugs": {
+    "url": "https://github.com/aave-dao/aave-v3-origin/issues"
+  },
+  "homepage": "https://github.com/aave-dao/aave-v3-origin#readme",
+  "type": "module",
+  "devDependencies": {
+    "prettier": "^2.8.3",
+    "prettier-plugin-solidity": "^1.1.1"
+  },
+  "dependencies": {
+    "@bgd-labs/aave-cli": "^0.7.2",
+    "catapulta-verify": "^1.0.6-b4e4af767ca0ef6644d50aeca57aae1a560fe40d.0"
+  }
+}

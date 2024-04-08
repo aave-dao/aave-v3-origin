@@ -1,0 +1,12 @@
+name: Draft release
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+on:
+  workflow_dispatch:
+
+jobs:
+  draft-release:
+    uses: bgd-labs/github-workflows/.github/workflows/draft-release.yml@main

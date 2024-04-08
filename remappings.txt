@@ -1,0 +1,5 @@
+aave-v3-core/=src/core/
+aave-v3-periphery/=src/periphery/
+solidity-utils/=lib/solidity-utils/src/
+forge-std/=lib/forge-std/src/
+ds-test/=lib/forge-std/lib/ds-test/src/
