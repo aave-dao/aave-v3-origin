@@ -4,7 +4,10 @@
 
 Aave v3.1 complete codebase, Foundry-based.
 
+[![Coverage badge](./report/coverage.svg)](https://aave-dao.github.io/aave-v3-origin)
 <br>
+
+
 
 ## Dependencies
 
@@ -99,4 +102,3 @@ Copyright © 2024, Aave DAO, represented by its governance smart contracts.
 
 The [BUSL1.1](./LICENSE) license of this repository allows for any usage of the software, if respecting the Additional Use Grant limitations, forbidding any use case damaging anyhow the Aave DAO's interests.
 Interfaces and other components required for integrations are explicitly MIT licensed.
-

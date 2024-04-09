@@ -26,7 +26,9 @@ coverage :; forge coverage --report lcov && \
 	'src/core/contracts/protocol/libraries/configuration/*' \
 	'src/core/contracts/protocol/libraries/logic/GenericLogic.sol' \
 	'src/core/contracts/protocol/libraries/logic/ReserveLogic.sol' \
-	&& genhtml ./lcov.info.p -o report --branch-coverage
+	&& genhtml ./lcov.info.p -o report --branch-coverage \
+	&& coverage=$$(awk -F '[<>]' '/headerCovTableEntryHi/{print $3}' ./report/index.html | sed 's/[^0-9.]//g' | head -n 1); \
+	wget -O ./report/coverage.svg "https://img.shields.io/badge/coverage-$${coverage}%25-brightgreen"
 
 # Utilities
 download :; cast etherscan-source --chain ${chain} -d src/etherscan/${chain}_${address} ${address}
