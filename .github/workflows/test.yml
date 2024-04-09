@@ -1,17 +1,10 @@
-name: foundry-test
+name: Test
 
 on:
   pull_request:
   push:
     branches:
       - main
-  workflow_call:
-    inputs:
-      testCommand:
-        default: forge test -vv
-        description: the command responsible for running the test
-        type: string
-        required: false
 
 jobs:
   test:
