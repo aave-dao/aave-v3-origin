@@ -86,6 +86,13 @@ The following are the security procedures historically applied to Aave v3.X vers
 
 <br>
 
+### Bug bounty
+
+This repository will be subjected to [this bug bounty](https://immunefi.com/bounty/aave/) once the Aave Governance upgrades de smart contracts in the applicable production instances.
+
+
+<br>
+
 ## License
 
 Copyright © 2024, Aave DAO, represented by its governance smart contracts.
