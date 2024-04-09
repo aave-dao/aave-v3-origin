@@ -4,7 +4,7 @@
 
 Aave v3.1 complete codebase, Foundry-based.
 
-[![General badge](./report/coverage.svg)](https://aave-dao.github.io/aave-v3-origin)
+[![Coverage badge](./report/coverage.svg)](https://aave-dao.github.io/aave-v3-origin)
 <br>
 
 
