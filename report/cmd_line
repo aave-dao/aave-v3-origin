@@ -1,0 +1,1 @@
+genhtml ./lcov.info.p -o report --branch-coverage
