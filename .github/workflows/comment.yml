@@ -1,0 +1,11 @@
+name: PR Comment
+
+on:
+  workflow_run:
+    workflows: [Test]
+    types:
+      - completed
+
+jobs:
+  comment:
+    uses: bgd-labs/github-workflows/.github/workflows/comment.yml@main
