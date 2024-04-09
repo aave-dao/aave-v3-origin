@@ -91,7 +91,7 @@ The following are the security procedures historically applied to Aave v3.X vers
 
 ### Bug bounty
 
-This repository will be subjected to [this bug bounty](https://immunefi.com/bounty/aave/) once the Aave Governance upgrades de smart contracts in the applicable production instances.
+This repository will be subjected to [this bug bounty](https://immunefi.com/bounty/aave/) once the Aave Governance upgrades the smart contracts in the applicable production instances.
 
 
 <br>
