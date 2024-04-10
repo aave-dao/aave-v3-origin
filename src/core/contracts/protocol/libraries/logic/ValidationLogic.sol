@@ -161,7 +161,8 @@ library ValidationLogic {
     require(!vars.isFrozen, Errors.RESERVE_FROZEN);
     require(vars.borrowingEnabled, Errors.BORROWING_NOT_ENABLED);
     require(
-      IERC20(params.reserveCache.aTokenAddress).totalSupply() >= params.amount,
+      !params.reserveCache.reserveConfiguration.getIsVirtualAccActive() ||
+        IERC20(params.reserveCache.aTokenAddress).totalSupply() >= params.amount,
       Errors.INVALID_AMOUNT
     );
 
@@ -486,7 +487,11 @@ library ValidationLogic {
     require(!configuration.getPaused(), Errors.RESERVE_PAUSED);
     require(configuration.getActive(), Errors.RESERVE_INACTIVE);
     require(configuration.getFlashLoanEnabled(), Errors.FLASHLOAN_DISABLED);
-    require(IERC20(reserve.aTokenAddress).totalSupply() >= amount, Errors.INVALID_AMOUNT);
+    require(
+      !configuration.getIsVirtualAccActive() ||
+        IERC20(reserve.aTokenAddress).totalSupply() >= amount,
+      Errors.INVALID_AMOUNT
+    );
   }
 
   struct ValidateLiquidationCallLocalVars {
