@@ -1,67 +1,43 @@
-name: foundry-test
+name: Test
 
 on:
   pull_request:
   push:
     branches:
       - main
-  workflow_call:
-    inputs:
-      testCommand:
-        default: forge test -vv
-        description: the command responsible for running the test
-        type: string
-        required: false
-    secrets:
-      RPC_MAINNET:
-        required: false
-      RPC_POLYGON:
-        required: false
-      RPC_AVALANCHE:
-        required: false
-      RPC_OPTIMISM:
-        required: false
-      RPC_ARBITRUM:
-        required: false
-      COMMENT_PAT:
-        required: false
 
 jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: oven-sh/setup-bun@8f24390df009a496891208e5e36b8a1de1f45135
+      - name: Install node dependencies
+        run: bun install
+      - name: lint
+        run: bun run lint --check
+
   test:
     name: Foundry build n test
     runs-on: ubuntu-latest
     env:
       FOUNDRY_PROFILE: ci
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
-
-      - name: Setup env
-        run: |
-          if [[ "${{ secrets.RPC_MAINNET }}" != "" ]] ; then echo "RPC_MAINNET=${{ secrets.RPC_MAINNET }}" >> $GITHUB_ENV ; fi
-          if [[ "${{ secrets.RPC_POLYGON }}" != "" ]] ; then echo "RPC_POLYGON=${{ secrets.RPC_POLYGON }}" >> $GITHUB_ENV ; fi
-          if [[ "${{ secrets.RPC_AVALANCHE }}" != "" ]] ; then echo "RPC_AVALANCHE=${{ secrets.RPC_AVALANCHE }}" >> $GITHUB_ENV ; fi
-          if [[ "${{ secrets.RPC_OPTIMISM }}" != "" ]] ; then echo "RPC_OPTIMISM=${{ secrets.RPC_OPTIMISM }}" >> $GITHUB_ENV ; fi
-          if [[ "${{ secrets.RPC_ARBITRUM }}" != "" ]] ; then echo "RPC_ARBITRUM=${{ secrets.RPC_ARBITRUM }}" >> $GITHUB_ENV ; fi
+      - uses: oven-sh/setup-bun@8f24390df009a496891208e5e36b8a1de1f45135
 
       - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
+        uses: foundry-rs/foundry-toolchain@8f1998e9878d786675189ef566a2e4bf24869773
         with:
           version: nightly
 
-      - name: Copy .env
-        run: |
-          cp .env.example .env 2> /dev/null || :
-
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          registry-url: "https://registry.npmjs.org"
-          cache: "yarn"
-
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
+      - name: Install node dependencies
+        run: bun install
 
       - name: Run Forge build
         run: |
