@@ -1,5 +1,5 @@
-
 ## Aave v3.1 features
+
 Aave v3.1 is an upgrade on top of Aave 3.0.2 is clearly focused in 2 fields: redundant security and optimisation of the logic to reduce operational overhead.
 With those principles in mind, the following is an detailed list of the changes/improvements included into this release.
 
@@ -28,7 +28,7 @@ This new feature doesn’t create any incompatibility with Aave v3 integrations,
 
 Given its implications and criticality, virtual accounting can be considered the major feature of Aave 3.1.
 
-*Important*. Virtual balance doesn't fix the imprecision caused by other components of the protocol, its objective is to add stricter validations, reducing any type of vector to the minimum.
+_Important_. Virtual balance doesn't fix the imprecision caused by other components of the protocol, its objective is to add stricter validations, reducing any type of vector to the minimum.
 
 <br>
 
@@ -45,7 +45,7 @@ However, as the rate strategy for this 3.1 needed to be changed to support virtu
 Implementation-wise, this feature:
 
 - Defines a single default interest rate smart contract, to be connected to all assets listed, including those requiring a fixed rate like GHO. We kept the option to still use totally custom strategies for new listings with special dynamics on the underlying asset.
-- Adds an `_interestRateData`  data field on the rate strategy contract, containing all the previous rate configurations for each asset (e.g. base variable borrow rate, slope1, slope2).
+- Adds an `_interestRateData` data field on the rate strategy contract, containing all the previous rate configurations for each asset (e.g. base variable borrow rate, slope1, slope2).
 - Adds stricter upper limits for rates. The rationale is that on very high configured rates (e.g. hundred thousands %), predicting how the protocol reacts with specific assets’ configurations becomes very chaotic. This upper limit is defined as the maximum value that base variable borrow rate + slope 1 + slope 2 can reach, and currently is configured to 1000%, a value we think it should never be reached.
 - All components of the protocol connected with or depending on the rate have been updated accordingly.
 
@@ -70,7 +70,7 @@ We introduced an additional contract on top ([FreezingSteward](https://github.co
 
 On Aave v3 (and v2), whenever an interest rate strategy address is replaced for an asset or the Reserve Factor changes, the reserve data is not updated (calculate liquidity/variable debt index until now and “cache” rates on the asset data).
 
-This was simply a design choice, and even if perfectly acceptable, we decided to change it as 1) is counter-intuitive, as we think indexes until now should be updated *with the old rate strategy/old RF* and 2) whenever an asset is frozen or in any state of partial functionality, the update of the rate will be factually delayed until an user makes an action.
+This was simply a design choice, and even if perfectly acceptable, we decided to change it as 1) is counter-intuitive, as we think indexes until now should be updated _with the old rate strategy/old RF_ and 2) whenever an asset is frozen or in any state of partial functionality, the update of the rate will be factually delayed until an user makes an action.
 
 On 3.1 we introduce logic to update reserve data whenever the rate strategy or RF of an asset changes anyhow via the `PoolConfigurator`.
 
@@ -98,9 +98,9 @@ During one security incident that required pausing the protocol we noticed that 
 
 Initially we followed the same approach as with the FreezingSteward mentioned before, and introduced on Aave v2 (the system that was affected by the pause) a `LiquidationsGraceSentinel` registry/steward contract, allowing for the emergency admin to define a “delayed” pause for any asset.
 
-However, at that point in time the mechanism was not needed on Aave v3 and slightly more complex to implement. So we postponed it until now, to make it a fully native mechanism to Aave v3. 
+However, at that point in time the mechanism was not needed on Aave v3 and slightly more complex to implement. So we postponed it until now, to make it a fully native mechanism to Aave v3.
 
-Implementation-wise, this feature adds a  `gracePeriod` input parameter to pass whenever an asset is to be unpaused, which will act as a delay for liquidations.
+Implementation-wise, this feature adds a `gracePeriod` input parameter to pass whenever an asset is to be unpaused, which will act as a delay for liquidations.
 Apart from being totally optional (it is possible to just unpause without any delay), it is heavily limited to a maximum value of 4 hours and we will recommend risk provider to always use it with maximum caution, as even if for users affected will give a window to refill collateral, it will still allow to borrow.
 
 <br>
@@ -122,7 +122,7 @@ For this reason, in this 3.1 we have added setting LTV to 0 atomically when free
 
 ### 8. **Permission-less movement of stable positions to variable**
 
-Consequence of a security vulnerability detected end of next year related with stable rate mode and affecting more on Aave v2, [we proposed to completely deprecate it](https://governance.aave.com/t/bgd-full-deprecation-of-stable-rate/16473). 
+Consequence of a security vulnerability detected end of next year related with stable rate mode and affecting more on Aave v2, [we proposed to completely deprecate it](https://governance.aave.com/t/bgd-full-deprecation-of-stable-rate/16473).
 
 After getting extra approval by the community on the [ARFC stage](https://snapshot.org/#/aave.eth/proposal/0xb58ef33b4b7f4c35b7a6834b24f11b282d713b5e9f527f29d782aef04886c189), we have included on this 3.1 a function to allow permission-less movement of stable rate debt positions to variable, which factually will off-board all users borrowing at stable to variable.
 
@@ -155,7 +155,7 @@ The less strict, but still correct approach we added is to allow enabling of the
 
 Operationally and tooling-wise, historically has been problematic to fetch the smart contract addresses of different Solidity libraries connected to the Pool or the PoolConfigurator (e.g. `PoolLogic`, `BorrowLogic`, etc).
 
-To solve that, we have added specific getters for each library on the Pool, like `getPoolLogic()`  or `getBorrowLogic()` , returning their addresses, and opening for simple usage both on-chain and off-chain.
+To solve that, we have added specific getters for each library on the Pool, like `getPoolLogic()` or `getBorrowLogic()` , returning their addresses, and opening for simple usage both on-chain and off-chain.
 
 <br>
 

@@ -9,8 +9,8 @@ Documentation for CVT and the specification language are available
 
 Initial step: if certora prover is not installed follow the steps [here](https://docs.certora.com/en/latest/docs/user-guide/getting-started/install.html)
 
-
 First step is to create the munged/ directory. Enter the certora/ directory and run the following:
+
 ```sh
 touch applyHarness.patch
 ```

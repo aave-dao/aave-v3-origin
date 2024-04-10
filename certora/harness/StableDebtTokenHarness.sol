@@ -5,13 +5,13 @@ import {IncentivizedERC20} from '../munged/core/contracts/protocol/tokenization/
 import {IPool} from '../munged/core/contracts/interfaces/IPool.sol';
 
 contract StableDebtTokenHarness is StableDebtTokenInstance {
-    constructor(IPool pool) public StableDebtTokenInstance(pool) {}
+  constructor(IPool pool) public StableDebtTokenInstance(pool) {}
 
-    function additionalData(address user) public view returns (uint128) {
-        return _userState[user].additionalData;
-    }
+  function additionalData(address user) public view returns (uint128) {
+    return _userState[user].additionalData;
+  }
 
-    function debtTotalSupply() public view returns (uint256) {
-        return super.totalSupply();
-    }
+  function debtTotalSupply() public view returns (uint256) {
+    return super.totalSupply();
+  }
 }
