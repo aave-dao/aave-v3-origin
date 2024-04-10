@@ -7,29 +7,37 @@ on:
       - main
 
 jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: oven-sh/setup-bun@8f24390df009a496891208e5e36b8a1de1f45135
+      - name: Install node dependencies
+        run: bun install
+      - name: lint
+        run: bun run lint --check
+
   test:
     name: Foundry build n test
     runs-on: ubuntu-latest
     env:
       FOUNDRY_PROFILE: ci
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
+      - uses: oven-sh/setup-bun@8f24390df009a496891208e5e36b8a1de1f45135
 
       - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
+        uses: foundry-rs/foundry-toolchain@8f1998e9878d786675189ef566a2e4bf24869773
         with:
           version: nightly
 
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          registry-url: "https://registry.npmjs.org"
-          cache: "yarn"
-
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
+      - name: Install node dependencies
+        run: bun install
 
       - name: Run Forge build
         run: |

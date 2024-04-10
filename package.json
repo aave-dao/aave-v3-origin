@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "lint": "prettier ./",
-    "lint:fix": "npm run lint -- --write"
+    "lint:fix": "bun run lint -- --write"
   },
   "repository": {
     "type": "git",
