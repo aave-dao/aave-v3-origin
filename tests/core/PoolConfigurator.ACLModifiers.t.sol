@@ -16,7 +16,7 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
     ConfiguratorInputTypes.InitReserveInput[] memory input;
     vm.assume(
       !contracts.aclManager.isPoolAdmin(caller) &&
-      !contracts.aclManager.isAssetListingAdmin(caller) &&
+        !contracts.aclManager.isAssetListingAdmin(caller) &&
         caller != address(contracts.poolAddressesProvider)
     );
 
@@ -29,7 +29,7 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
   function test_reverts_notAdmin_dropReserve(address caller) public {
     vm.assume(
       !contracts.aclManager.isPoolAdmin(caller) &&
-      caller != address(contracts.poolAddressesProvider)
+        caller != address(contracts.poolAddressesProvider)
     );
 
     vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
@@ -42,7 +42,7 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
     ConfiguratorInputTypes.UpdateATokenInput memory input;
     vm.assume(
       !contracts.aclManager.isPoolAdmin(caller) &&
-      caller != address(contracts.poolAddressesProvider)
+        caller != address(contracts.poolAddressesProvider)
     );
 
     vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
@@ -55,7 +55,7 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
     ConfiguratorInputTypes.UpdateDebtTokenInput memory input;
     vm.assume(
       !contracts.aclManager.isPoolAdmin(caller) &&
-      caller != address(contracts.poolAddressesProvider)
+        caller != address(contracts.poolAddressesProvider)
     );
 
     vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
@@ -68,7 +68,7 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
     ConfiguratorInputTypes.UpdateDebtTokenInput memory input;
     vm.assume(
       !contracts.aclManager.isPoolAdmin(caller) &&
-      caller != address(contracts.poolAddressesProvider)
+        caller != address(contracts.poolAddressesProvider)
     );
 
     vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
@@ -80,7 +80,7 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
   function test_reverts_notAdmin_setReserveActive(address caller) public {
     vm.assume(
       !contracts.aclManager.isPoolAdmin(caller) &&
-      caller != address(contracts.poolAddressesProvider)
+        caller != address(contracts.poolAddressesProvider)
     );
 
     vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
@@ -92,7 +92,7 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
   function test_reverts_notAdmin_updateFlashLoanPremiumTotal(address caller) public {
     vm.assume(
       !contracts.aclManager.isPoolAdmin(caller) &&
-      caller != address(contracts.poolAddressesProvider)
+        caller != address(contracts.poolAddressesProvider)
     );
 
     vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
@@ -104,7 +104,7 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
   function test_reverts_notAdmin_updateFlashLoanPremiumProtocol(address caller) public {
     vm.assume(
       !contracts.aclManager.isPoolAdmin(caller) &&
-      caller != address(contracts.poolAddressesProvider)
+        caller != address(contracts.poolAddressesProvider)
     );
 
     vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
@@ -155,8 +155,8 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
   function test_reverts_notRiskOrPoolOrEmergencyAdmin_setReserveFreeze(address caller) public {
     vm.assume(
       !contracts.aclManager.isPoolAdmin(caller) &&
-      !contracts.aclManager.isRiskAdmin(caller) &&
-      !contracts.aclManager.isEmergencyAdmin(caller) &&
+        !contracts.aclManager.isRiskAdmin(caller) &&
+        !contracts.aclManager.isEmergencyAdmin(caller) &&
         caller != address(contracts.poolAddressesProvider)
     );
 
@@ -222,7 +222,10 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
     );
   }
 
-  function test_reverts_notRiskAdmin_setReserveInterestRateData(address caller, address asset) public {
+  function test_reverts_notRiskAdmin_setReserveInterestRateData(
+    address caller,
+    address asset
+  ) public {
     vm.assume(
       !contracts.aclManager.isPoolAdmin(caller) &&
         !contracts.aclManager.isRiskAdmin(caller) &&
@@ -232,10 +235,7 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
     vm.expectRevert(bytes(Errors.CALLER_NOT_RISK_OR_POOL_ADMIN));
 
     vm.prank(caller);
-    contracts.poolConfiguratorProxy.setReserveInterestRateData(
-      asset,
-      bytes('0')
-    );
+    contracts.poolConfiguratorProxy.setReserveInterestRateData(asset, bytes('0'));
   }
 
   function test_reverts_notRiskAdmin_setEModeCategory(address caller) public {
