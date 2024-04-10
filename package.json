@@ -2,7 +2,7 @@
   "name": "aave-v3-origin",
   "version": "1.0.0",
   "scripts": {
-    "lint": "prettier ./",
+    "lint": "prettier .",
     "lint:fix": "bun run lint -- --write"
   },
   "repository": {

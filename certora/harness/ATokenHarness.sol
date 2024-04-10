@@ -13,29 +13,33 @@ import {IScaledBalanceToken} from '../munged/core/contracts/interfaces/IScaledBa
  * @dev Certora's harness contract for the verification of Aave ERC20 AToken.
  */
 contract ATokenHarness is ATokenInstance {
-
-using WadRayMath for uint256;
+  using WadRayMath for uint256;
 
   constructor(Pool pool) public ATokenInstance(pool) {}
 
-  function scaledTotalSupply() public view override(IScaledBalanceToken,ScaledBalanceTokenBase) returns (uint256) {
-      uint256 val = super.scaledTotalSupply();
-      return val;
+  function scaledTotalSupply()
+    public
+    view
+    override(IScaledBalanceToken, ScaledBalanceTokenBase)
+    returns (uint256)
+  {
+    uint256 val = super.scaledTotalSupply();
+    return val;
   }
 
   function additionalData(address user) public view returns (uint128) {
-      return _userState[user].additionalData;
+    return _userState[user].additionalData;
   }
-  
+
   function scaledBalanceOfToBalanceOf(uint256 bal) public view returns (uint256) {
-      return bal.rayMul(POOL.getReserveNormalizedIncome(_underlyingAsset));
+    return bal.rayMul(POOL.getReserveNormalizedIncome(_underlyingAsset));
   }
-  
+
   function ATokenBalanceOf(address user) public view returns (uint256) {
-      return super.balanceOf(user);
+    return super.balanceOf(user);
   }
 
   function superBalance(address user) public view returns (uint256) {
-      return scaledBalanceOf(user);
+    return scaledBalanceOf(user);
   }
 }

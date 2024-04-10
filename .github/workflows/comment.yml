@@ -16,6 +16,7 @@ jobs:
           name: pr_number
           path: pr/
           run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
 
       - name: Read pr number
         id: get_pr_number
@@ -26,6 +27,7 @@ jobs:
           name: ${{ github.event.workflow_run.head_sha }}
           path: tmp/
           run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
 
       - name: Find Comment
         uses: peter-evans/find-comment@782f37b1a8a2b3e2eb9e86a994f0871e9dc146e3

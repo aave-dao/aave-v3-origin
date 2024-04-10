@@ -7,8 +7,6 @@ Aave v3.1 complete codebase, Foundry-based.
 [![Coverage badge](./report/coverage.svg)](https://aave-dao.github.io/aave-v3-origin)
 <br>
 
-
-
 ## Dependencies
 
 - Foundry, [how-to install](https://book.getfoundry.sh/getting-started/installation) (we recommend also update to the last version with `foundryup`)
