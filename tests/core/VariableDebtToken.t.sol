@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 
-import {VariableDebtTokenInstance} from 'aave-v3-core/instances/VariableDebtTokenInstance.sol';
+import {VariableDebtTokenHarness as VariableDebtTokenInstance} from '../harness/VariableDebtToken.sol';
 import {IAaveIncentivesController} from 'aave-v3-core/contracts/interfaces/IAaveIncentivesController.sol';
 import {Errors} from 'aave-v3-core/contracts/protocol/libraries/helpers/Errors.sol';
 import {TestnetERC20} from 'aave-v3-periphery/contracts/mocks/testnet-helpers/TestnetERC20.sol';
@@ -160,6 +160,11 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
       listing.variableDebtTokenSymbol,
       listing.params
     );
+  }
+
+  function test_default_revision() public {
+    VariableDebtTokenInstance varDebtToken = new VariableDebtTokenInstance(IPool(report.poolProxy));
+    assertEq(varDebtToken._getRevision(), varDebtToken.DEBT_TOKEN_REVISION());
   }
 
   function test_mint_variableDebt_caller_alice() public {
