@@ -6,6 +6,13 @@ on:
     types:
       - completed
 
+permissions:
+  actions: read
+  issues: write
+  checks: read
+  statuses: read
+  pull-requests: write
+
 jobs:
   comment:
     name: Comment Bot
