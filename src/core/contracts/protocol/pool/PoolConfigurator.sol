@@ -43,14 +43,6 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
   }
 
   /**
-   * @dev Only emergency admin can call functions marked by this modifier.
-   */
-  modifier onlyEmergencyAdmin() {
-    _onlyEmergencyAdmin();
-    _;
-  }
-
-  /**
    * @dev Only emergency or pool admin can call functions marked by this modifier.
    */
   modifier onlyEmergencyOrPoolAdmin() {
@@ -269,7 +261,6 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
     bool paused,
     uint40 gracePeriod
   ) public override onlyEmergencyOrPoolAdmin {
-    // Only setting grace period if the transition is paused -> unpaused
     if (!paused && gracePeriod != 0) {
       require(gracePeriod <= MAX_GRACE_PERIOD, Errors.INVALID_GRACE_PERIOD);
 
@@ -601,11 +592,6 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
   function _onlyPoolAdmin() internal view {
     IACLManager aclManager = IACLManager(_addressesProvider.getACLManager());
     require(aclManager.isPoolAdmin(msg.sender), Errors.CALLER_NOT_POOL_ADMIN);
-  }
-
-  function _onlyEmergencyAdmin() internal view {
-    IACLManager aclManager = IACLManager(_addressesProvider.getACLManager());
-    require(aclManager.isEmergencyAdmin(msg.sender), Errors.CALLER_NOT_EMERGENCY_ADMIN);
   }
 
   function _onlyPoolOrEmergencyAdmin() internal view {

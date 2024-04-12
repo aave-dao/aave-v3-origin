@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 
-import {StableDebtTokenInstance} from 'aave-v3-core/instances/StableDebtTokenInstance.sol';
+import {StableDebtTokenHarness as StableDebtTokenInstance} from '../harness/StableDebtToken.sol';
 import {Errors} from 'aave-v3-core/contracts/protocol/libraries/helpers/Errors.sol';
 import {IAaveIncentivesController} from 'aave-v3-core/contracts/interfaces/IAaveIncentivesController.sol';
 import {TestnetERC20} from 'aave-v3-periphery/contracts/mocks/testnet-helpers/TestnetERC20.sol';
@@ -206,6 +206,11 @@ contract StableDebtTokenEventsTests is TestnetProcedures {
 
     vm.expectRevert(bytes(Errors.OPERATION_NOT_SUPPORTED));
     stDebtToken.burn(address(0), 0);
+  }
+
+  function test_default_revision() public {
+    StableDebtTokenInstance stDebtToken = new StableDebtTokenInstance(IPool(report.poolProxy));
+    assertEq(stDebtToken._getRevision(), stDebtToken.DEBT_TOKEN_REVISION());
   }
 
   function test_getAverageStableRate() public view {

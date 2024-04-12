@@ -12,122 +12,209 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
     initTestEnvironment();
   }
 
-  function test_reverts_notAdmin_initReserves() public {
+  function test_reverts_notAdmin_initReserves(address caller) public {
     ConfiguratorInputTypes.InitReserveInput[] memory input;
+    vm.assume(
+      !contracts.aclManager.isPoolAdmin(caller) &&
+        !contracts.aclManager.isAssetListingAdmin(caller) &&
+        caller != address(contracts.poolAddressesProvider)
+    );
+
     vm.expectRevert(bytes(Errors.CALLER_NOT_ASSET_LISTING_OR_POOL_ADMIN));
 
-    vm.prank(alice);
+    vm.prank(caller);
     contracts.poolConfiguratorProxy.initReserves(input);
   }
 
-  function test_reverts_notAdmin_dropReserve() public {
+  function test_reverts_notAdmin_dropReserve(address caller) public {
+    vm.assume(
+      !contracts.aclManager.isPoolAdmin(caller) &&
+        caller != address(contracts.poolAddressesProvider)
+    );
+
     vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
 
-    vm.prank(alice);
+    vm.prank(caller);
     contracts.poolConfiguratorProxy.dropReserve(tokenList.usdx);
   }
 
-  function test_reverts_notAdmin_updateAToken() public {
+  function test_reverts_notAdmin_updateAToken(address caller) public {
     ConfiguratorInputTypes.UpdateATokenInput memory input;
+    vm.assume(
+      !contracts.aclManager.isPoolAdmin(caller) &&
+        caller != address(contracts.poolAddressesProvider)
+    );
 
     vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
 
-    vm.prank(alice);
+    vm.prank(caller);
     contracts.poolConfiguratorProxy.updateAToken(input);
   }
 
-  function test_reverts_notAdmin_updateVariableDebtToken() public {
+  function test_reverts_notAdmin_updateVariableDebtToken(address caller) public {
     ConfiguratorInputTypes.UpdateDebtTokenInput memory input;
+    vm.assume(
+      !contracts.aclManager.isPoolAdmin(caller) &&
+        caller != address(contracts.poolAddressesProvider)
+    );
 
     vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
 
-    vm.prank(alice);
+    vm.prank(caller);
     contracts.poolConfiguratorProxy.updateVariableDebtToken(input);
   }
 
-  function test_reverts_notAdmin_updateStableDebtToken() public {
+  function test_reverts_notAdmin_updateStableDebtToken(address caller) public {
     ConfiguratorInputTypes.UpdateDebtTokenInput memory input;
+    vm.assume(
+      !contracts.aclManager.isPoolAdmin(caller) &&
+        caller != address(contracts.poolAddressesProvider)
+    );
 
     vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
 
-    vm.prank(alice);
+    vm.prank(caller);
     contracts.poolConfiguratorProxy.updateStableDebtToken(input);
   }
 
-  function test_reverts_notAdmin_setReserveActive() public {
+  function test_reverts_notAdmin_setReserveActive(address caller) public {
+    vm.assume(
+      !contracts.aclManager.isPoolAdmin(caller) &&
+        caller != address(contracts.poolAddressesProvider)
+    );
+
     vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
 
-    vm.prank(alice);
+    vm.prank(caller);
     contracts.poolConfiguratorProxy.setReserveActive(tokenList.usdx, true);
   }
 
-  function test_reverts_notAdmin_updateFlashLoanPremiumTotal() public {
+  function test_reverts_notAdmin_updateFlashLoanPremiumTotal(address caller) public {
+    vm.assume(
+      !contracts.aclManager.isPoolAdmin(caller) &&
+        caller != address(contracts.poolAddressesProvider)
+    );
+
     vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
 
-    vm.prank(alice);
+    vm.prank(caller);
     contracts.poolConfiguratorProxy.updateFlashloanPremiumTotal(1);
   }
 
-  function test_reverts_notAdmin_updateFlashLoanPremiumProtocol() public {
+  function test_reverts_notAdmin_updateFlashLoanPremiumProtocol(address caller) public {
+    vm.assume(
+      !contracts.aclManager.isPoolAdmin(caller) &&
+        caller != address(contracts.poolAddressesProvider)
+    );
+
     vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
 
-    vm.prank(alice);
+    vm.prank(caller);
     contracts.poolConfiguratorProxy.updateFlashloanPremiumToProtocol(1);
   }
 
-  function test_reverts_notRiskAdmin_setReserveBorrowing() public {
+  function test_reverts_notRiskAdmin_setReserveBorrowing(address caller) public {
+    vm.assume(
+      !contracts.aclManager.isPoolAdmin(caller) &&
+        !contracts.aclManager.isRiskAdmin(caller) &&
+        caller != address(contracts.poolAddressesProvider)
+    );
+
     vm.expectRevert(bytes(Errors.CALLER_NOT_RISK_OR_POOL_ADMIN));
 
-    vm.prank(alice);
+    vm.prank(caller);
     contracts.poolConfiguratorProxy.setReserveBorrowing(address(0), true);
   }
 
-  function test_reverts_notRiskAdmin_configureReserveAsCollateral() public {
+  function test_reverts_notRiskAdmin_configureReserveAsCollateral(address caller) public {
+    vm.assume(
+      !contracts.aclManager.isPoolAdmin(caller) &&
+        !contracts.aclManager.isRiskAdmin(caller) &&
+        caller != address(contracts.poolAddressesProvider)
+    );
+
     vm.expectRevert(bytes(Errors.CALLER_NOT_RISK_OR_POOL_ADMIN));
 
-    vm.prank(alice);
+    vm.prank(caller);
     contracts.poolConfiguratorProxy.configureReserveAsCollateral(address(0), 1, 1, 1);
   }
 
-  function test_reverts_notRiskAdmin_setReserveStableRateBorrowing() public {
+  function test_reverts_notRiskAdmin_setReserveStableRateBorrowing(address caller) public {
+    vm.assume(
+      !contracts.aclManager.isPoolAdmin(caller) &&
+        !contracts.aclManager.isRiskAdmin(caller) &&
+        caller != address(contracts.poolAddressesProvider)
+    );
+
     vm.expectRevert(bytes(Errors.CALLER_NOT_RISK_OR_POOL_ADMIN));
 
-    vm.prank(alice);
+    vm.prank(caller);
     contracts.poolConfiguratorProxy.setReserveStableRateBorrowing(address(0), true);
   }
 
-  function test_reverts_notRiskOrPoolOrEmergencyAdmin_setReserveFreeze() public {
+  function test_reverts_notRiskOrPoolOrEmergencyAdmin_setReserveFreeze(address caller) public {
+    vm.assume(
+      !contracts.aclManager.isPoolAdmin(caller) &&
+        !contracts.aclManager.isRiskAdmin(caller) &&
+        !contracts.aclManager.isEmergencyAdmin(caller) &&
+        caller != address(contracts.poolAddressesProvider)
+    );
+
     vm.expectRevert(bytes(Errors.CALLER_NOT_RISK_OR_POOL_OR_EMERGENCY_ADMIN));
 
-    vm.prank(alice);
+    vm.prank(caller);
     contracts.poolConfiguratorProxy.setReserveFreeze(address(0), true);
   }
 
-  function test_reverts_notRiskAdmin_setReserveFactor() public {
+  function test_reverts_notRiskAdmin_setReserveFactor(address caller) public {
+    vm.assume(
+      !contracts.aclManager.isPoolAdmin(caller) &&
+        !contracts.aclManager.isRiskAdmin(caller) &&
+        caller != address(contracts.poolAddressesProvider)
+    );
+
     vm.expectRevert(bytes(Errors.CALLER_NOT_RISK_OR_POOL_ADMIN));
 
-    vm.prank(alice);
+    vm.prank(caller);
     contracts.poolConfiguratorProxy.setReserveFactor(address(0), 10);
   }
 
-  function test_reverts_notRiskAdmin_setBorrowCap() public {
+  function test_reverts_notRiskAdmin_setBorrowCap(address caller) public {
+    vm.assume(
+      !contracts.aclManager.isPoolAdmin(caller) &&
+        !contracts.aclManager.isRiskAdmin(caller) &&
+        caller != address(contracts.poolAddressesProvider)
+    );
+
     vm.expectRevert(bytes(Errors.CALLER_NOT_RISK_OR_POOL_ADMIN));
 
-    vm.prank(alice);
+    vm.prank(caller);
     contracts.poolConfiguratorProxy.setBorrowCap(address(0), 10);
   }
 
-  function test_reverts_notRiskAdmin_setSupplyCap() public {
+  function test_reverts_notRiskAdmin_setSupplyCap(address caller) public {
+    vm.assume(
+      !contracts.aclManager.isPoolAdmin(caller) &&
+        !contracts.aclManager.isRiskAdmin(caller) &&
+        caller != address(contracts.poolAddressesProvider)
+    );
+
     vm.expectRevert(bytes(Errors.CALLER_NOT_RISK_OR_POOL_ADMIN));
 
-    vm.prank(alice);
+    vm.prank(caller);
     contracts.poolConfiguratorProxy.setSupplyCap(address(0), 10);
   }
 
-  function test_reverts_notRiskAdmin_setReserveInterestRateStrategyAddress() public {
+  function test_reverts_notRiskAdmin_setReserveInterestRateStrategyAddress(address caller) public {
+    vm.assume(
+      !contracts.aclManager.isPoolAdmin(caller) &&
+        !contracts.aclManager.isRiskAdmin(caller) &&
+        caller != address(contracts.poolAddressesProvider)
+    );
+
     vm.expectRevert(bytes(Errors.CALLER_NOT_RISK_OR_POOL_ADMIN));
 
-    vm.prank(alice);
+    vm.prank(caller);
     contracts.poolConfiguratorProxy.setReserveInterestRateStrategyAddress(
       address(0),
       address(0),
@@ -135,24 +222,58 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
     );
   }
 
-  function test_reverts_notRiskAdmin_setEModeCategory() public {
+  function test_reverts_notRiskAdmin_setReserveInterestRateData(
+    address caller,
+    address asset
+  ) public {
+    vm.assume(
+      !contracts.aclManager.isPoolAdmin(caller) &&
+        !contracts.aclManager.isRiskAdmin(caller) &&
+        caller != address(contracts.poolAddressesProvider)
+    );
+
     vm.expectRevert(bytes(Errors.CALLER_NOT_RISK_OR_POOL_ADMIN));
 
-    vm.prank(alice);
+    vm.prank(caller);
+    contracts.poolConfiguratorProxy.setReserveInterestRateData(asset, bytes('0'));
+  }
+
+  function test_reverts_notRiskAdmin_setEModeCategory(address caller) public {
+    vm.assume(
+      !contracts.aclManager.isPoolAdmin(caller) &&
+        !contracts.aclManager.isRiskAdmin(caller) &&
+        caller != address(contracts.poolAddressesProvider)
+    );
+
+    vm.expectRevert(bytes(Errors.CALLER_NOT_RISK_OR_POOL_ADMIN));
+
+    vm.prank(caller);
     contracts.poolConfiguratorProxy.setEModeCategory(1, 1, 1, 1, address(0), '');
   }
 
-  function test_reverts_notRiskAdmin_setAssetEModeCategory() public {
+  function test_reverts_notRiskAdmin_setAssetEModeCategory(address caller) public {
+    vm.assume(
+      !contracts.aclManager.isPoolAdmin(caller) &&
+        !contracts.aclManager.isRiskAdmin(caller) &&
+        caller != address(contracts.poolAddressesProvider)
+    );
+
     vm.expectRevert(bytes(Errors.CALLER_NOT_RISK_OR_POOL_ADMIN));
 
-    vm.prank(alice);
+    vm.prank(caller);
     contracts.poolConfiguratorProxy.setAssetEModeCategory(address(0), 1);
   }
 
-  function test_reverts_setDebtCeiling() public {
+  function test_reverts_setDebtCeiling(address caller) public {
+    vm.assume(
+      !contracts.aclManager.isPoolAdmin(caller) &&
+        !contracts.aclManager.isRiskAdmin(caller) &&
+        caller != address(contracts.poolAddressesProvider)
+    );
+
     vm.expectRevert(bytes(Errors.CALLER_NOT_RISK_OR_POOL_ADMIN));
 
-    vm.prank(alice);
+    vm.prank(caller);
     contracts.poolConfiguratorProxy.setDebtCeiling(address(0), 1);
   }
 
@@ -221,6 +342,10 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
     vm.prank(caller);
     vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_OR_EMERGENCY_ADMIN));
     contracts.poolConfiguratorProxy.setPoolPause(paused, gracePeriod);
+
+    vm.prank(caller);
+    vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_OR_EMERGENCY_ADMIN));
+    contracts.poolConfiguratorProxy.setPoolPause(paused);
   }
 
   function test_reverts_setPoolPause_noGracePeriod_unauth(address caller, bool paused) public {

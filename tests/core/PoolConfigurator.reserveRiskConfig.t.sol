@@ -734,20 +734,38 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
   }
 
   function test_setLiquidationGracePeriodReserve(uint40 gracePeriod) public {
-    vm.assume(gracePeriod <= contracts.poolConfiguratorProxy.MAX_GRACE_PERIOD());
+    vm.assume(
+      gracePeriod <= contracts.poolConfiguratorProxy.MAX_GRACE_PERIOD() && gracePeriod != 0
+    );
 
     address asset = tokenList.usdx;
 
     uint40 until = uint40(block.timestamp) + gracePeriod;
 
-    vm.prank(poolAdmin);
+    vm.startPrank(poolAdmin);
 
-    if (gracePeriod != 0) {
-      vm.expectEmit(address(contracts.poolConfiguratorProxy));
-      emit LiquidationGracePeriodChanged(asset, until);
-      contracts.poolConfiguratorProxy.setReservePause(asset, false, gracePeriod);
-      assertEq(contracts.poolProxy.getLiquidationGracePeriod(asset), until);
-    }
+    // reserve unpause -> unpause, liquidationGracePeriod would be set
+    vm.expectEmit(address(contracts.poolConfiguratorProxy));
+    emit LiquidationGracePeriodChanged(asset, until);
+    contracts.poolConfiguratorProxy.setReservePause(asset, false, gracePeriod);
+    assertEq(contracts.poolProxy.getLiquidationGracePeriod(asset), until);
+
+    // reserve unpause -> pause, liquidationGracePeriod would not be set
+    contracts.poolConfiguratorProxy.setReservePause(asset, true, gracePeriod + 1);
+    assertEq(contracts.poolProxy.getLiquidationGracePeriod(asset), until);
+    assertTrue(contracts.protocolDataProvider.getPaused(asset));
+
+    // reserve pause -> pause, liquidationGracePeriod would not be set
+    contracts.poolConfiguratorProxy.setReservePause(asset, true, gracePeriod + 1);
+    assertEq(contracts.poolProxy.getLiquidationGracePeriod(asset), until);
+
+    // reserve pause -> unpause, liquidationGracePeriod would be set
+    vm.expectEmit(address(contracts.poolConfiguratorProxy));
+    emit LiquidationGracePeriodChanged(asset, until + 1);
+    contracts.poolConfiguratorProxy.setReservePause(asset, false, gracePeriod + 1);
+    assertEq(contracts.poolProxy.getLiquidationGracePeriod(asset), until + 1);
+
+    vm.stopPrank();
   }
 
   function test_setLiquidationGracePeriodPool(uint40 gracePeriod) public {

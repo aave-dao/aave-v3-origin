@@ -56,7 +56,8 @@ abstract contract FfiUtils {
   }
 
   function _librariesPathExists() internal returns (bool) {
-    string memory checkCommand = 'grep -q "FOUNDRY_LIBRARIES" .env && echo true || echo false';
+    string
+      memory checkCommand = '[ -e .env ] && grep -q "FOUNDRY_LIBRARIES" .env && echo true || echo false';
     string[] memory command = new string[](3);
 
     command[0] = 'bash';

@@ -923,6 +923,20 @@ contract ParaswapAdaptersTest is TestnetProcedures {
     vm.stopPrank();
   }
 
+  function test_withdrawSwapAdapter_reverts_flashloan() public {
+    _seedMarket();
+
+    vm.prank(alice);
+    vm.expectRevert('NOT_SUPPORTED');
+    contracts.poolProxy.flashLoanSimple(
+      address(paraSwapWithdrawSwapAdapter),
+      tokenList.weth,
+      1 ether,
+      '',
+      0
+    );
+  }
+
   function test_rescueTokens() public {
     deal(tokenList.usdx, address(paraSwapRepayAdapter), 100e6);
 
