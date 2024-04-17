@@ -31,7 +31,7 @@ bash certora/scripts/run-all.sh
 _Note: When running the rules locally, please remove the solc version from the `.conf` files as when using solc-select solc version should not be specified in `.conf`_
 
 After the jobs are complete, the results will be available on
-[the staging Certora portal](https://prover.certora.com/).
+[the Certora portal](https://prover.certora.com/).
 
 ## Adapting to changes
 
