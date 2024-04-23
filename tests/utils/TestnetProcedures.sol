@@ -310,7 +310,6 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
 
       input[x] = ConfiguratorInputTypes.InitReserveInput(
         r.aToken,
-        r.stableDebtToken,
         r.variableDebtToken,
         listingToken.decimals(),
         true,
@@ -322,8 +321,6 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
         t.aTokenSymbol,
         t.variableDebtName,
         t.variableDebtSymbol,
-        t.stableDebtName,
-        t.stableDebtSymbol,
         t.emptyParams,
         t.interestRateData
       );
@@ -352,7 +349,6 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
 
   function _calculateInterestRates(
     uint256 borrowAmount,
-    uint256 borrowMode,
     address token
   ) internal view returns (uint256) {
     DataTypes.ReserveDataLegacy memory reserveData = IPool(report.poolProxy).getReserveData(token);
@@ -365,22 +361,15 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
       unbacked: 0,
       liquidityAdded: 0,
       liquidityTaken: borrowAmount,
-      totalStableDebt: borrowMode == 1 ? borrowAmount : 0,
-      totalVariableDebt: borrowMode == 2 ? borrowAmount : 0,
-      averageStableBorrowRate: 0,
+      totalDebt: borrowAmount,
       reserveFactor: reserveConfig.reserveFactor,
       reserve: token,
       usingVirtualBalance: IPool(report.poolProxy).getConfiguration(token).getIsVirtualAccActive(),
       virtualUnderlyingBalance: IPool(report.poolProxy).getVirtualUnderlyingBalance(token)
     });
 
-    if (borrowMode == 2) {
-      (, , uint256 expectedVariableBorrowRate) = rateStrategy.calculateInterestRates(input);
-      return expectedVariableBorrowRate;
-    } else {
-      (, uint256 stableRate, ) = rateStrategy.calculateInterestRates(input);
-      return stableRate;
-    }
+    (, uint256 expectedVariableBorrowRate) = rateStrategy.calculateInterestRates(input);
+    return expectedVariableBorrowRate;
   }
 
   function _deployInterestRateStrategy() internal returns (address) {

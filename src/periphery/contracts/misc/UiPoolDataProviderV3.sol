@@ -7,7 +7,6 @@ import {IPool} from 'aave-v3-core/contracts/interfaces/IPool.sol';
 import {IAaveOracle} from 'aave-v3-core/contracts/interfaces/IAaveOracle.sol';
 import {IAToken} from 'aave-v3-core/contracts/interfaces/IAToken.sol';
 import {IVariableDebtToken} from 'aave-v3-core/contracts/interfaces/IVariableDebtToken.sol';
-import {IStableDebtToken} from 'aave-v3-core/contracts/interfaces/IStableDebtToken.sol';
 import {IDefaultInterestRateStrategyV2} from 'aave-v3-core/contracts/interfaces/IDefaultInterestRateStrategyV2.sol';
 import {AaveProtocolDataProvider} from 'aave-v3-core/contracts/misc/AaveProtocolDataProvider.sol';
 import {WadRayMath} from 'aave-v3-core/contracts/protocol/libraries/math/WadRayMath.sol';
@@ -71,11 +70,8 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
       reserveData.liquidityRate = baseData.currentLiquidityRate;
       //the current variable borrow rate. Expressed in ray
       reserveData.variableBorrowRate = baseData.currentVariableBorrowRate;
-      //the current stable borrow rate. Expressed in ray
-      reserveData.stableBorrowRate = baseData.currentStableBorrowRate;
       reserveData.lastUpdateTimestamp = baseData.lastUpdateTimestamp;
       reserveData.aTokenAddress = baseData.aTokenAddress;
-      reserveData.stableDebtTokenAddress = baseData.stableDebtTokenAddress;
       reserveData.variableDebtTokenAddress = baseData.variableDebtTokenAddress;
       //address of the interest rate strategy
       reserveData.interestRateStrategyAddress = baseData.interestRateStrategyAddress;
@@ -86,12 +82,6 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
       reserveData.availableLiquidity = IERC20Detailed(reserveData.underlyingAsset).balanceOf(
         reserveData.aTokenAddress
       );
-      (
-        reserveData.totalPrincipalStableDebt,
-        ,
-        reserveData.averageStableRate,
-        reserveData.stableDebtLastUpdateTimestamp
-      ) = IStableDebtToken(reserveData.stableDebtTokenAddress).getSupplyData();
       reserveData.totalScaledVariableDebt = IVariableDebtToken(reserveData.variableDebtTokenAddress)
         .scaledTotalSupply();
 
@@ -123,7 +113,6 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
         reserveData.isActive,
         reserveData.isFrozen,
         reserveData.borrowingEnabled,
-        reserveData.stableBorrowRateEnabled,
         reserveData.isPaused
       ) = reserveConfigurationMap.getFlags();
 
@@ -138,9 +127,6 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
         reserveData.variableRateSlope2 = res.variableRateSlope2;
         reserveData.optimalUsageRatio = res.optimalUsageRatio;
       } catch {}
-      reserveData.stableRateSlope1 = 0;
-      reserveData.stableRateSlope2 = 0;
-      reserveData.baseStableBorrowRate = 0;
 
       // v3 only
       reserveData.eModeCategoryId = uint8(eModeCategoryId);
@@ -237,15 +223,6 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
         userReservesData[i].scaledVariableDebt = IVariableDebtToken(
           baseData.variableDebtTokenAddress
         ).scaledBalanceOf(user);
-        userReservesData[i].principalStableDebt = IStableDebtToken(baseData.stableDebtTokenAddress)
-          .principalBalanceOf(user);
-        if (userReservesData[i].principalStableDebt != 0) {
-          userReservesData[i].stableBorrowRate = IStableDebtToken(baseData.stableDebtTokenAddress)
-            .getUserStableRate(user);
-          userReservesData[i].stableBorrowLastUpdateTimestamp = IStableDebtToken(
-            baseData.stableDebtTokenAddress
-          ).getUserLastUpdated(user);
-        }
       }
     }
 

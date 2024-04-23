@@ -93,7 +93,7 @@ contract WalletBalanceProvider {
         reservesWithEth[j]
       );
 
-      (bool isActive, , , , ) = configuration.getFlags();
+      (bool isActive, , , ) = configuration.getFlags();
 
       if (!isActive) {
         balances[j] = 0;

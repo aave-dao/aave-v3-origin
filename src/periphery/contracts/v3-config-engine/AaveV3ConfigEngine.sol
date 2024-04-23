@@ -30,7 +30,6 @@ contract AaveV3ConfigEngine is IAaveV3ConfigEngine {
   IAaveOracle public immutable ORACLE;
   address public immutable ATOKEN_IMPL;
   address public immutable VTOKEN_IMPL;
-  address public immutable STOKEN_IMPL;
   address public immutable REWARDS_CONTROLLER;
   address public immutable COLLECTOR;
   address public immutable DEFAULT_INTEREST_RATE_STRATEGY;
@@ -47,14 +46,12 @@ contract AaveV3ConfigEngine is IAaveV3ConfigEngine {
    * @dev Constructor.
    * @param aTokenImpl The address of default aToken implementation.
    * @param vTokenImpl The address of default variable debt token implementation.
-   * @param sTokenImpl The address of default stable debt token implementation.
    * @param engineConstants The struct containing all the engine constants.
    * @param engineLibraries The struct containing the addresses of stateless libraries containing the engine logic.
    */
   constructor(
     address aTokenImpl,
     address vTokenImpl,
-    address sTokenImpl,
     EngineConstants memory engineConstants,
     EngineLibraries memory engineLibraries
   ) {
@@ -68,10 +65,7 @@ contract AaveV3ConfigEngine is IAaveV3ConfigEngine {
       'ONLY_NONZERO_ENGINE_CONSTANTS'
     );
 
-    require(
-      aTokenImpl != address(0) && vTokenImpl != address(0) && sTokenImpl != address(0),
-      'ONLY_NONZERO_TOKEN_IMPLS'
-    );
+    require(aTokenImpl != address(0) && vTokenImpl != address(0), 'ONLY_NONZERO_TOKEN_IMPLS');
 
     require(
       engineLibraries.borrowEngine != address(0) &&
@@ -84,7 +78,6 @@ contract AaveV3ConfigEngine is IAaveV3ConfigEngine {
 
     ATOKEN_IMPL = aTokenImpl;
     VTOKEN_IMPL = vTokenImpl;
-    STOKEN_IMPL = sTokenImpl;
     POOL = engineConstants.pool;
     POOL_CONFIGURATOR = engineConstants.poolConfigurator;
     ORACLE = engineConstants.oracle;
@@ -108,11 +101,7 @@ contract AaveV3ConfigEngine is IAaveV3ConfigEngine {
     for (uint256 i = 0; i < listings.length; i++) {
       customListings[i] = ListingWithCustomImpl({
         base: listings[i],
-        implementations: TokenImplementations({
-          aToken: ATOKEN_IMPL,
-          vToken: VTOKEN_IMPL,
-          sToken: STOKEN_IMPL
-        })
+        implementations: TokenImplementations({aToken: ATOKEN_IMPL, vToken: VTOKEN_IMPL})
       });
     }
 

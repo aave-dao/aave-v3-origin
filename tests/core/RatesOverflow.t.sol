@@ -27,11 +27,6 @@ contract RatesOverflowCheckTests is TestnetProcedures {
       address(mockRateStrategy),
       _getDefaultInterestRatesStrategyData()
     );
-
-    IPoolConfigurator(report.poolConfiguratorProxy).setReserveStableRateBorrowing(
-      tokenList.usdx,
-      true
-    );
     vm.stopPrank();
   }
 

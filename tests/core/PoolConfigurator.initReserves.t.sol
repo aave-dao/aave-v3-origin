@@ -31,8 +31,6 @@ contract PoolConfiguratorInitReservesTest is TestnetProcedures {
     t.aTokenSymbol = 'aMISC';
     t.variableDebtName = 'Variable Debt Misc';
     t.variableDebtSymbol = 'varDebtMISC';
-    t.stableDebtName = 'Stable Debt Misc';
-    t.stableDebtSymbol = 'stableDebtMISC';
     t.rateStrategy = report.defaultInterestRateStrategyV2;
     t.interestRateData = abi.encode(
       IDefaultInterestRateStrategyV2.InterestRateData({
@@ -49,7 +47,6 @@ contract PoolConfiguratorInitReservesTest is TestnetProcedures {
 
     input[0] = ConfiguratorInputTypes.InitReserveInput(
       report.aToken,
-      report.stableDebtToken,
       report.variableDebtToken,
       newToken.decimals(),
       isVirtualAccActive,
@@ -61,8 +58,6 @@ contract PoolConfiguratorInitReservesTest is TestnetProcedures {
       t.aTokenSymbol,
       t.variableDebtName,
       t.variableDebtSymbol,
-      t.stableDebtName,
-      t.stableDebtSymbol,
       t.emptyParams,
       t.interestRateData
     );
@@ -81,7 +76,7 @@ contract PoolConfiguratorInitReservesTest is TestnetProcedures {
 
     // Perform assertions
     {
-      (address aTokenProxy, address stableDebtProxy, address variableDebtProxy) = contracts
+      (address aTokenProxy, , address variableDebtProxy) = contracts
         .protocolDataProvider
         .getReserveTokensAddresses(address(newToken));
 
@@ -92,15 +87,6 @@ contract PoolConfiguratorInitReservesTest is TestnetProcedures {
       assertEq(AToken(aTokenProxy).UNDERLYING_ASSET_ADDRESS(), address(newToken));
       assertEq(
         address(AToken(aTokenProxy).getIncentivesController()),
-        report.rewardsControllerProxy
-      );
-
-      assertEq(AToken(stableDebtProxy).name(), t.stableDebtName);
-      assertEq(AToken(stableDebtProxy).symbol(), t.stableDebtSymbol);
-      assertEq(AToken(stableDebtProxy).decimals(), newToken.decimals());
-      assertEq(AToken(stableDebtProxy).UNDERLYING_ASSET_ADDRESS(), address(newToken));
-      assertEq(
-        address(AToken(stableDebtProxy).getIncentivesController()),
         report.rewardsControllerProxy
       );
 
@@ -127,7 +113,6 @@ contract PoolConfiguratorInitReservesTest is TestnetProcedures {
     assertEq(c.reserveFactor, 0);
     assertEq(c.usageAsCollateralEnabled, false);
     assertEq(c.borrowingEnabled, false);
-    assertEq(c.stableBorrowRateEnabled, false);
     assertEq(c.isVirtualAccActive, isVirtualAccActive);
 
     assertEq(contracts.poolProxy.getReservesList().length, previousListedAssets + 1);
@@ -161,7 +146,7 @@ contract PoolConfiguratorInitReservesTest is TestnetProcedures {
       ConfiguratorInputTypes.InitReserveInput memory reserveInput = input[y];
 
       {
-        (address aTokenProxy, address stableDebtProxy, address variableDebtProxy) = contracts
+        (address aTokenProxy, , address variableDebtProxy) = contracts
           .protocolDataProvider
           .getReserveTokensAddresses(reserveInput.underlyingAsset);
 
@@ -172,15 +157,6 @@ contract PoolConfiguratorInitReservesTest is TestnetProcedures {
         assertEq(AToken(aTokenProxy).UNDERLYING_ASSET_ADDRESS(), reserveInput.underlyingAsset);
         assertEq(
           address(AToken(aTokenProxy).getIncentivesController()),
-          reserveInput.incentivesController
-        );
-
-        assertEq(AToken(stableDebtProxy).name(), reserveInput.stableDebtTokenName);
-        assertEq(AToken(stableDebtProxy).symbol(), reserveInput.stableDebtTokenSymbol);
-        assertEq(AToken(stableDebtProxy).decimals(), reserveInput.underlyingAssetDecimals);
-        assertEq(AToken(stableDebtProxy).UNDERLYING_ASSET_ADDRESS(), reserveInput.underlyingAsset);
-        assertEq(
-          address(AToken(stableDebtProxy).getIncentivesController()),
           reserveInput.incentivesController
         );
 
@@ -213,7 +189,6 @@ contract PoolConfiguratorInitReservesTest is TestnetProcedures {
       assertEq(c.reserveFactor, 0);
       assertEq(c.usageAsCollateralEnabled, false);
       assertEq(c.borrowingEnabled, false);
-      assertEq(c.stableBorrowRateEnabled, false);
     }
     assertEq(contracts.poolProxy.getReservesList().length, previousListedAssets + input.length);
   }
@@ -255,8 +230,6 @@ contract PoolConfiguratorInitReservesTest is TestnetProcedures {
     t.aTokenSymbol = 'aMISC';
     t.variableDebtName = 'Variable Debt Misc';
     t.variableDebtSymbol = 'varDebtMISC';
-    t.stableDebtName = 'Stable Debt Misc';
-    t.stableDebtSymbol = 'stableDebtMISC';
     t.rateStrategy = report.defaultInterestRateStrategyV2;
     t.interestRateData = abi.encode(
       IDefaultInterestRateStrategyV2.InterestRateData({
@@ -272,7 +245,6 @@ contract PoolConfiguratorInitReservesTest is TestnetProcedures {
 
     input[0] = ConfiguratorInputTypes.InitReserveInput(
       report.aToken,
-      report.stableDebtToken,
       report.variableDebtToken,
       newToken.decimals(),
       true,
@@ -284,8 +256,6 @@ contract PoolConfiguratorInitReservesTest is TestnetProcedures {
       t.aTokenSymbol,
       t.variableDebtName,
       t.variableDebtSymbol,
-      t.stableDebtName,
-      t.stableDebtSymbol,
       t.emptyParams,
       t.interestRateData
     );

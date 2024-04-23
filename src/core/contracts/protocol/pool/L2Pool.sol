@@ -80,24 +80,6 @@ abstract contract L2Pool is Pool, IL2Pool {
   }
 
   /// @inheritdoc IL2Pool
-  function swapBorrowRateMode(bytes32 args) external override {
-    (address asset, uint256 interestRateMode) = CalldataLogic.decodeSwapBorrowRateModeParams(
-      _reservesList,
-      args
-    );
-    swapBorrowRateMode(asset, interestRateMode);
-  }
-
-  /// @inheritdoc IL2Pool
-  function rebalanceStableBorrowRate(bytes32 args) external override {
-    (address asset, address user) = CalldataLogic.decodeRebalanceStableBorrowRateParams(
-      _reservesList,
-      args
-    );
-    rebalanceStableBorrowRate(asset, user);
-  }
-
-  /// @inheritdoc IL2Pool
   function setUserUseReserveAsCollateral(bytes32 args) external override {
     (address asset, bool useAsCollateral) = CalldataLogic.decodeSetUserUseReserveAsCollateralParams(
       _reservesList,

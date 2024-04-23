@@ -120,6 +120,7 @@ library FlashLoanLogic {
       Errors.INVALID_FLASHLOAN_EXECUTOR_RETURN
     );
 
+    // TODO: try to remove i from vars
     for (vars.i = 0; vars.i < params.assets.length; vars.i++) {
       vars.currentAsset = params.assets[vars.i];
       vars.currentAmount = params.amounts[vars.i];
@@ -152,11 +153,8 @@ library FlashLoanLogic {
             user: msg.sender,
             onBehalfOf: params.onBehalfOf,
             amount: vars.currentAmount,
-            interestRateMode: DataTypes.InterestRateMode(params.interestRateModes[vars.i]),
             referralCode: params.referralCode,
             releaseUnderlying: false,
-            maxStableRateBorrowSizePercent: IPool(params.pool)
-              .MAX_STABLE_RATE_BORROW_SIZE_PERCENT(),
             reservesCount: IPool(params.pool).getReservesCount(),
             oracle: IPoolAddressesProvider(params.addressesProvider).getPriceOracle(),
             userEModeCategory: IPool(params.pool).getUserEMode(params.onBehalfOf).toUint8(),

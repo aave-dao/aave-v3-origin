@@ -93,24 +93,6 @@ interface IL2Pool {
   function repayWithATokens(bytes32 args) external returns (uint256);
 
   /**
-   * @notice Calldata efficient wrapper of the swapBorrowRateMode function
-   * @param args Arguments for the swapBorrowRateMode function packed in one bytes32
-   *    232 bits            8 bits             16 bits
-   * | 0-padding | shortenedInterestRateMode | assetId |
-   * @dev assetId is the index of the asset in the reservesList.
-   */
-  function swapBorrowRateMode(bytes32 args) external;
-
-  /**
-   * @notice Calldata efficient wrapper of the rebalanceStableBorrowRate function
-   * @param args Arguments for the rebalanceStableBorrowRate function packed in one bytes32
-   *    80 bits      160 bits     16 bits
-   * | 0-padding | user address | assetId |
-   * @dev assetId is the index of the asset in the reservesList.
-   */
-  function rebalanceStableBorrowRate(bytes32 args) external;
-
-  /**
    * @notice Calldata efficient wrapper of the setUserUseReserveAsCollateral function
    * @param args Arguments for the setUserUseReserveAsCollateral function packed in one bytes32
    *    239 bits         1 bit       16 bits

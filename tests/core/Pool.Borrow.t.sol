@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 
-import {IStableDebtToken} from 'aave-v3-core/contracts/interfaces/IStableDebtToken.sol';
 import {IVariableDebtToken} from 'aave-v3-core/contracts/interfaces/IVariableDebtToken.sol';
 import {IAaveOracle} from 'aave-v3-core/contracts/interfaces/IAaveOracle.sol';
 import {Errors} from 'aave-v3-core/contracts/protocol/libraries/helpers/Errors.sol';
@@ -23,7 +22,6 @@ contract PoolBorrowTests is TestnetProcedures {
   using UserConfiguration for DataTypes.UserConfigurationMap;
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
 
-  IStableDebtToken internal staDebtUSDX;
   IVariableDebtToken internal varDebtUSDX;
   address internal aUSDX;
 
@@ -39,30 +37,20 @@ contract PoolBorrowTests is TestnetProcedures {
     uint256 borrowRate,
     uint16 indexed referralCode
   );
-  event RebalanceStableBorrowRate(address indexed reserve, address indexed user);
-  event SwapBorrowRateMode(
-    address indexed reserve,
-    address indexed user,
-    DataTypes.InterestRateMode interestRateMode
-  );
   event IsolationModeTotalDebtUpdated(address indexed asset, uint256 totalDebt);
 
   function setUp() public {
     initTestEnvironment();
 
-    (address atoken, address stableDebtUSDX, address variableDebtUSDX) = contracts
+    (address atoken, , address variableDebtUSDX) = contracts
       .protocolDataProvider
       .getReserveTokensAddresses(tokenList.usdx);
     aUSDX = atoken;
-    staDebtUSDX = IStableDebtToken(stableDebtUSDX);
     varDebtUSDX = IVariableDebtToken(variableDebtUSDX);
 
     vm.startPrank(carol);
     contracts.poolProxy.supply(tokenList.usdx, 100_000e6, carol, 0);
     vm.stopPrank();
-
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setReserveStableRateBorrowing(tokenList.usdx, true);
 
     sequencerOracleMock = new SequencerOracle(poolAdmin);
     priceOracleSentinel = new PriceOracleSentinel(
@@ -95,9 +83,7 @@ contract PoolBorrowTests is TestnetProcedures {
       unbacked: 0,
       liquidityAdded: 0,
       liquidityTaken: 800e6,
-      totalStableDebt: 0,
-      totalVariableDebt: 800e6,
-      averageStableBorrowRate: 0,
+      totalDebt: 800e6,
       reserveFactor: 1000,
       reserve: tokenList.usdx,
       usingVirtualBalance: contracts
@@ -107,7 +93,7 @@ contract PoolBorrowTests is TestnetProcedures {
       virtualUnderlyingBalance: contracts.poolProxy.getVirtualUnderlyingBalance(tokenList.usdx)
     });
 
-    (, , uint256 expectedVariableBorrowRate) = rateStrategy.calculateInterestRates(input);
+    (, uint256 expectedVariableBorrowRate) = rateStrategy.calculateInterestRates(input);
 
     vm.expectEmit(true, true, true, true, address(contracts.poolProxy));
     emit Borrow(
@@ -131,19 +117,6 @@ contract PoolBorrowTests is TestnetProcedures {
     assertEq(contracts.poolProxy.getUserConfiguration(alice).isBorrowing(reserveData.id), true);
   }
 
-  function test_stable_borrow() public {
-    uint256 amount = 1e8;
-    uint256 borrowAmount = 800e6;
-    vm.startPrank(alice);
-
-    contracts.poolProxy.supply(tokenList.wbtc, amount, alice, 0);
-
-    vm.expectRevert(bytes(Errors.OPERATION_NOT_SUPPORTED));
-
-    contracts.poolProxy.borrow(tokenList.usdx, borrowAmount, 1, 0, alice);
-    vm.stopPrank();
-  }
-
   function test_borrow_variable_in_isolation() public {
     uint256 borrowAmount = 100e6;
     vm.startPrank(poolAdmin);
@@ -157,7 +130,6 @@ contract PoolBorrowTests is TestnetProcedures {
     contracts.poolProxy.setUserUseReserveAsCollateral(tokenList.wbtc, true);
 
     uint256 balanceBefore = usdx.balanceOf(alice);
-    uint256 debtBalanceBefore = staDebtUSDX.principalBalanceOf(alice);
     DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
       tokenList.usdx
     );
@@ -169,9 +141,7 @@ contract PoolBorrowTests is TestnetProcedures {
       unbacked: 0,
       liquidityAdded: 0,
       liquidityTaken: borrowAmount,
-      totalStableDebt: 0,
-      totalVariableDebt: borrowAmount,
-      averageStableBorrowRate: 0,
+      totalDebt: borrowAmount,
       reserveFactor: 1000,
       reserve: tokenList.usdx,
       usingVirtualBalance: contracts
@@ -181,7 +151,7 @@ contract PoolBorrowTests is TestnetProcedures {
       virtualUnderlyingBalance: contracts.poolProxy.getVirtualUnderlyingBalance(tokenList.usdx)
     });
 
-    (, , uint256 expectedVariableBorrowRate) = rateStrategy.calculateInterestRates(input);
+    (, uint256 expectedVariableBorrowRate) = rateStrategy.calculateInterestRates(input);
 
     vm.expectEmit(address(contracts.poolProxy));
     emit IsolationModeTotalDebtUpdated(tokenList.wbtc, 100_00);
@@ -204,7 +174,7 @@ contract PoolBorrowTests is TestnetProcedures {
     uint256 debtBalanceAfter = varDebtUSDX.scaledBalanceOf(alice);
 
     assertEq(balanceAfter, balanceBefore + borrowAmount);
-    assertEq(debtBalanceAfter, debtBalanceBefore + borrowAmount);
+    assertEq(debtBalanceAfter, borrowAmount);
     assertEq(contracts.poolProxy.getUserConfiguration(alice).isBorrowing(reserveData.id), true);
   }
 
@@ -243,7 +213,7 @@ contract PoolBorrowTests is TestnetProcedures {
     vm.expectRevert(bytes(Errors.RESERVE_INACTIVE));
 
     vm.prank(alice);
-    contracts.poolProxy.borrow(tokenList.wbtc, 0.2e8, 1, 0, alice);
+    contracts.poolProxy.borrow(tokenList.wbtc, 0.2e8, 2, 0, alice);
   }
 
   function test_reverts_borrow_reservePaused() public {
@@ -253,7 +223,7 @@ contract PoolBorrowTests is TestnetProcedures {
     vm.expectRevert(bytes(Errors.RESERVE_PAUSED));
 
     vm.prank(alice);
-    contracts.poolProxy.borrow(tokenList.wbtc, 0.2e8, 1, 0, alice);
+    contracts.poolProxy.borrow(tokenList.wbtc, 0.2e8, 2, 0, alice);
   }
 
   function test_reverts_borrow_reserveFrozen() public {
@@ -263,7 +233,7 @@ contract PoolBorrowTests is TestnetProcedures {
     vm.expectRevert(bytes(Errors.RESERVE_FROZEN));
 
     vm.prank(alice);
-    contracts.poolProxy.borrow(tokenList.wbtc, 0.2e8, 1, 0, alice);
+    contracts.poolProxy.borrow(tokenList.wbtc, 0.2e8, 2, 0, alice);
   }
 
   function test_reverts_borrow_cap() public {
@@ -276,21 +246,7 @@ contract PoolBorrowTests is TestnetProcedures {
 
     vm.expectRevert(bytes(Errors.BORROW_CAP_EXCEEDED));
 
-    contracts.poolProxy.borrow(tokenList.wbtc, 10e8, 1, 0, alice);
-  }
-
-  function test_reverts_borrow_invalid_rate() public {
-    vm.startPrank(alice);
-    contracts.poolProxy.supply(tokenList.wbtc, 50e8, alice, 0);
-    vm.stopPrank();
-
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setBorrowCap(tokenList.wbtc, 1);
-
-    vm.expectRevert(bytes(Errors.INVALID_INTEREST_RATE_MODE_SELECTED));
-
-    vm.prank(alice);
-    contracts.poolProxy.borrow(tokenList.wbtc, 100, 0, 0, alice);
+    contracts.poolProxy.borrow(tokenList.wbtc, 10e8, 2, 0, alice);
   }
 
   function test_reverts_borrow_sentinel_oracle_down() public {
@@ -310,19 +266,6 @@ contract PoolBorrowTests is TestnetProcedures {
 
     vm.prank(alice);
     contracts.poolProxy.borrow(tokenList.wbtc, 100, 2, 0, alice);
-  }
-
-  function test_reverts_borrow_stable_borrow_not_enabled() public {
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setReserveStableRateBorrowing(tokenList.usdx, false);
-
-    vm.prank(alice);
-    contracts.poolProxy.supply(tokenList.wbtc, 50e8, alice, 0);
-
-    vm.expectRevert(bytes(Errors.STABLE_BORROWING_NOT_ENABLED));
-
-    vm.prank(alice);
-    contracts.poolProxy.borrow(tokenList.usdx, 100e6, 1, 0, alice);
   }
 
   function test_reverts_borrow_not_borrowable_isolation() public {
@@ -389,7 +332,7 @@ contract PoolBorrowTests is TestnetProcedures {
     vm.expectRevert(bytes(Errors.COLLATERAL_BALANCE_IS_ZERO));
 
     vm.prank(alice);
-    contracts.poolProxy.borrow(tokenList.usdx, 0.2e8, 1, 0, alice);
+    contracts.poolProxy.borrow(tokenList.usdx, 0.2e8, 2, 0, alice);
   }
 
   function test_reverts_borrow_collateral_can_not_cover() public {
@@ -423,26 +366,6 @@ contract PoolBorrowTests is TestnetProcedures {
 
     vm.prank(alice);
     contracts.poolProxy.borrow(tokenList.usdx, 10001e6, 2, 0, alice);
-  }
-
-  function test_reverts_borrow_stable_collateral_same_borrow() public {
-    vm.startPrank(alice);
-
-    contracts.poolProxy.supply(tokenList.usdx, 100e6, alice, 0);
-
-    vm.expectRevert(bytes(Errors.COLLATERAL_SAME_AS_BORROWING_CURRENCY));
-    contracts.poolProxy.borrow(tokenList.usdx, 10e6, 1, 0, alice);
-    vm.stopPrank();
-  }
-
-  function test_reverts_borrow_stable_amount_gt_max_loan_size_stable() public {
-    vm.startPrank(alice);
-
-    contracts.poolProxy.supply(tokenList.wbtc, 100e8, alice, 0);
-
-    vm.expectRevert(bytes(Errors.AMOUNT_BIGGER_THAN_MAX_LOAN_SIZE_STABLE));
-    contracts.poolProxy.borrow(tokenList.usdx, 60_000e6, 1, 0, alice);
-    vm.stopPrank();
   }
 
   function test_reverts_borrow_sioled_borrowing_violation() public {
@@ -490,119 +413,5 @@ contract PoolBorrowTests is TestnetProcedures {
     vm.expectRevert(bytes(Errors.DEBT_CEILING_EXCEEDED));
     contracts.poolProxy.borrow(tokenList.usdx, 10001e6, 2, 0, alice);
     vm.stopPrank();
-  }
-
-  function test_reverts_rebalance_borrow_rate_reserve_inactive() public {
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setReserveActive(tokenList.wbtc, false);
-
-    vm.expectRevert(bytes(Errors.RESERVE_INACTIVE));
-
-    vm.prank(alice);
-    contracts.poolProxy.rebalanceStableBorrowRate(tokenList.wbtc, alice);
-  }
-
-  function test_reverts_rebalance_borrow_rate_reserve_paused() public {
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setReservePause(tokenList.wbtc, true, 0);
-
-    vm.expectRevert(bytes(Errors.RESERVE_PAUSED));
-    vm.prank(alice);
-    contracts.poolProxy.rebalanceStableBorrowRate(tokenList.wbtc, alice);
-  }
-
-  function test_reverts_rebalance_borrow_rate_conditions_not_met() public {
-    vm.startPrank(alice);
-
-    contracts.poolProxy.supply(tokenList.wbtc, 1e8, alice, 0);
-    contracts.poolProxy.borrow(tokenList.usdx, 15000e6, 2, 0, alice);
-
-    vm.expectRevert(bytes(Errors.INTEREST_RATE_REBALANCE_CONDITIONS_NOT_MET));
-    contracts.poolProxy.rebalanceStableBorrowRate(tokenList.usdx, alice);
-    vm.stopPrank();
-  }
-
-  function test_rebalance_borrow_rate() public {
-    DataTypes.ReserveDataLegacy memory usdxReserveData = contracts.poolProxy.getReserveData(
-      tokenList.usdx
-    );
-
-    vm.mockCall(
-      address(usdxReserveData.interestRateStrategyAddress),
-      abi.encodeWithSelector(IReserveInterestRateStrategy.calculateInterestRates.selector),
-      abi.encode(0, 0, 0)
-    );
-
-    vm.expectRevert(bytes(Errors.OPERATION_NOT_SUPPORTED));
-
-    contracts.poolProxy.rebalanceStableBorrowRate(tokenList.usdx, alice);
-    vm.clearMockedCalls();
-  }
-
-  function test_swap_borrow_rate_from_variable_to_stable() public {
-    vm.startPrank(alice);
-    contracts.poolProxy.supply(tokenList.wbtc, 100e8, alice, 0);
-    contracts.poolProxy.borrow(tokenList.usdx, 2000e6, 2, 0, alice);
-
-    vm.expectRevert(bytes(Errors.OPERATION_NOT_SUPPORTED));
-
-    contracts.poolProxy.swapBorrowRateMode(tokenList.usdx, 2);
-    vm.stopPrank();
-  }
-
-  function test_reverts_swap_borrow_rate_reserve_inactive() public {
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setReserveActive(tokenList.wbtc, false);
-
-    vm.expectRevert(bytes(Errors.RESERVE_INACTIVE));
-
-    vm.prank(alice);
-    contracts.poolProxy.swapBorrowRateMode(tokenList.wbtc, 1);
-  }
-
-  function test_reverts_swap_borrow_rate_reserve_paused() public {
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setReservePause(tokenList.usdx, true, 0);
-
-    vm.expectRevert(bytes(Errors.RESERVE_PAUSED));
-
-    vm.prank(alice);
-    contracts.poolProxy.swapBorrowRateMode(tokenList.usdx, 2);
-  }
-
-  function test_swap_borrow_rate_reserve_frozen() public {
-    vm.startPrank(alice);
-    contracts.poolProxy.supply(tokenList.wbtc, 100e8, alice, 0);
-    contracts.poolProxy.borrow(tokenList.usdx, 2000e6, 2, 0, alice);
-    vm.stopPrank();
-
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setReserveFreeze(tokenList.usdx, true);
-
-    vm.expectRevert(bytes(Errors.OPERATION_NOT_SUPPORTED));
-
-    vm.prank(alice);
-    contracts.poolProxy.swapBorrowRateMode(tokenList.usdx, 2);
-  }
-
-  function test_reverts_swap_borrow_rate_reserve_variable_no_debt() public {
-    vm.expectRevert(bytes(Errors.NO_OUTSTANDING_VARIABLE_DEBT));
-
-    vm.prank(alice);
-    contracts.poolProxy.swapBorrowRateMode(tokenList.usdx, 2);
-  }
-
-  function test_reverts_swap_borrow_rate_reserve_stable_no_debt() public {
-    vm.expectRevert(bytes(Errors.NO_OUTSTANDING_STABLE_DEBT));
-
-    vm.prank(alice);
-    contracts.poolProxy.swapBorrowRateMode(tokenList.usdx, 1);
-  }
-
-  function test_reverts_swap_borrow_rate_reserve_invalid_rate_mode() public {
-    vm.expectRevert(bytes(Errors.INVALID_INTEREST_RATE_MODE_SELECTED));
-
-    vm.prank(alice);
-    contracts.poolProxy.swapBorrowRateMode(tokenList.usdx, 0);
   }
 }

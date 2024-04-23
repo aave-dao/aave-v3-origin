@@ -22,6 +22,15 @@ contract DefaultReserveInterestRateStrategyV2 is IDefaultInterestRateStrategyV2 
   using WadRayMath for uint256;
   using PercentageMath for uint256;
 
+  struct CalcInterestRatesLocalVars {
+    uint256 availableLiquidity;
+    uint256 currentVariableBorrowRate;
+    uint256 currentLiquidityRate;
+    uint256 borrowUsageRatio;
+    uint256 supplyUsageRatio;
+    uint256 availableLiquidityPlusDebt;
+  }
+
   /// @inheritdoc IDefaultInterestRateStrategyV2
   IPoolAddressesProvider public immutable ADDRESSES_PROVIDER;
 
@@ -114,35 +123,33 @@ contract DefaultReserveInterestRateStrategyV2 is IDefaultInterestRateStrategyV2 
   /// @inheritdoc IReserveInterestRateStrategy
   function calculateInterestRates(
     DataTypes.CalculateInterestRatesParams memory params
-  ) public view virtual override returns (uint256, uint256, uint256) {
+  ) public view virtual override returns (uint256, uint256) {
     InterestRateDataRay memory rateData = _rayifyRateData(_interestRateData[params.reserve]);
 
     // @note This is a short circuit to allow mintable assets, which by definition cannot be supplied
     // and thus do not use virtual underlying balances.
     if (!params.usingVirtualBalance) {
-      return (0, 0, rateData.baseVariableBorrowRate);
+      return (0, rateData.baseVariableBorrowRate);
     }
 
     CalcInterestRatesLocalVars memory vars;
 
-    vars.totalDebt = params.totalStableDebt + params.totalVariableDebt;
-
     vars.currentLiquidityRate = 0;
     vars.currentVariableBorrowRate = rateData.baseVariableBorrowRate;
 
-    if (vars.totalDebt != 0) {
+    if (params.totalDebt != 0) {
       vars.availableLiquidity =
         params.virtualUnderlyingBalance +
         params.liquidityAdded -
         params.liquidityTaken;
 
-      vars.availableLiquidityPlusDebt = vars.availableLiquidity + vars.totalDebt;
-      vars.borrowUsageRatio = vars.totalDebt.rayDiv(vars.availableLiquidityPlusDebt);
-      vars.supplyUsageRatio = vars.totalDebt.rayDiv(
+      vars.availableLiquidityPlusDebt = vars.availableLiquidity + params.totalDebt;
+      vars.borrowUsageRatio = params.totalDebt.rayDiv(vars.availableLiquidityPlusDebt);
+      vars.supplyUsageRatio = params.totalDebt.rayDiv(
         vars.availableLiquidityPlusDebt + params.unbacked
       );
     } else {
-      return (0, 0, vars.currentVariableBorrowRate);
+      return (0, vars.currentVariableBorrowRate);
     }
 
     if (vars.borrowUsageRatio > rateData.optimalUsageRatio) {
@@ -160,50 +167,18 @@ contract DefaultReserveInterestRateStrategyV2 is IDefaultInterestRateStrategyV2 
         .rayDiv(rateData.optimalUsageRatio);
     }
 
-    vars.currentLiquidityRate = _getOverallBorrowRate(
-      params.totalStableDebt,
-      params.totalVariableDebt,
-      vars.currentVariableBorrowRate,
-      params.averageStableBorrowRate
-    ).rayMul(vars.supplyUsageRatio).percentMul(
-        PercentageMath.PERCENTAGE_FACTOR - params.reserveFactor
-      );
+    vars.currentLiquidityRate = vars
+      .currentVariableBorrowRate
+      .rayMul(vars.supplyUsageRatio)
+      .percentMul(PercentageMath.PERCENTAGE_FACTOR - params.reserveFactor);
 
-    return (vars.currentLiquidityRate, 0, vars.currentVariableBorrowRate);
-  }
-
-  /**
-   * @dev Calculates the overall borrow rate as the weighted average between the total variable debt and total stable
-   * debt
-   * @param totalStableDebt The total borrowed from the reserve at a stable rate
-   * @param totalVariableDebt The total borrowed from the reserve at a variable rate
-   * @param currentVariableBorrowRate The current variable borrow rate of the reserve
-   * @param currentAverageStableBorrowRate The current weighted average of all the stable rate loans
-   * @return The weighted averaged borrow rate
-   */
-  function _getOverallBorrowRate(
-    uint256 totalStableDebt,
-    uint256 totalVariableDebt,
-    uint256 currentVariableBorrowRate,
-    uint256 currentAverageStableBorrowRate
-  ) internal pure returns (uint256) {
-    uint256 totalDebt = totalStableDebt + totalVariableDebt;
-
-    uint256 weightedVariableRate = totalVariableDebt.wadToRay().rayMul(currentVariableBorrowRate);
-
-    uint256 weightedStableRate = totalStableDebt.wadToRay().rayMul(currentAverageStableBorrowRate);
-
-    uint256 overallBorrowRate = (weightedVariableRate + weightedStableRate).rayDiv(
-      totalDebt.wadToRay()
-    );
-
-    return overallBorrowRate;
+    return (vars.currentLiquidityRate, vars.currentVariableBorrowRate);
   }
 
   /**
    * @dev Doing validations and data update for an asset
    * @param reserve address of the underlying asset of the reserve
-   * @param rateData Encoded eserve interest rate data to apply
+   * @param rateData Encoded reserve interest rate data to apply
    */
   function _setInterestRateParams(address reserve, InterestRateData memory rateData) internal {
     require(reserve != address(0), Errors.ZERO_ADDRESS_NOT_VALID);

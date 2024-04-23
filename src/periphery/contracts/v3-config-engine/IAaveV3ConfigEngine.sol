@@ -67,7 +67,6 @@ interface IAaveV3ConfigEngine {
    *   }),
    *   enabledToBorrow: EngineFlags.ENABLED,
    *   flashloanable: EngineFlags.ENABLED,
-   *   stableRateModeEnabled: EngineFlags.DISABLED,
    *   borrowableInIsolation: EngineFlags.ENABLED,
    *   withSiloedBorrowing:, EngineFlags.DISABLED,
    *   ltv: 70_50, // 70.5%
@@ -87,7 +86,6 @@ interface IAaveV3ConfigEngine {
     address priceFeed;
     InterestRateInputData rateStrategyParams; // Mandatory, no matter if enabled for borrowing or not
     uint256 enabledToBorrow;
-    uint256 stableRateModeEnabled; // Only considered is enabledToBorrow == EngineFlags.ENABLED (true)
     uint256 borrowableInIsolation; // Only considered is enabledToBorrow == EngineFlags.ENABLED (true)
     uint256 withSiloedBorrowing; // Only considered if enabledToBorrow == EngineFlags.ENABLED (true)
     uint256 flashloanable; // Independent from enabled to borrow: an asset can be flashloanble and not enabled to borrow
@@ -116,7 +114,6 @@ interface IAaveV3ConfigEngine {
   struct TokenImplementations {
     address aToken;
     address vToken;
-    address sToken;
   }
 
   struct ListingWithCustomImpl {
@@ -176,7 +173,6 @@ interface IAaveV3ConfigEngine {
    *   asset: AaveV3EthereumAssets.AAVE_UNDERLYING,
    *   enabledToBorrow: EngineFlags.ENABLED,
    *   flashloanable: EngineFlags.KEEP_CURRENT,
-   *   stableRateModeEnabled: EngineFlags.KEEP_CURRENT,
    *   borrowableInIsolation: EngineFlags.KEEP_CURRENT,
    *   withSiloedBorrowing: EngineFlags.KEEP_CURRENT,
    *   reserveFactor: 15_00, // 15%
@@ -186,7 +182,6 @@ interface IAaveV3ConfigEngine {
     address asset;
     uint256 enabledToBorrow;
     uint256 flashloanable;
-    uint256 stableRateModeEnabled;
     uint256 borrowableInIsolation;
     uint256 withSiloedBorrowing;
     uint256 reserveFactor;
@@ -325,8 +320,6 @@ interface IAaveV3ConfigEngine {
   function ATOKEN_IMPL() external view returns (address);
 
   function VTOKEN_IMPL() external view returns (address);
-
-  function STOKEN_IMPL() external view returns (address);
 
   function REWARDS_CONTROLLER() external view returns (address);
 

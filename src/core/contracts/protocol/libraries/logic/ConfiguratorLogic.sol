@@ -31,11 +31,6 @@ library ConfiguratorLogic {
     address indexed proxy,
     address indexed implementation
   );
-  event StableDebtTokenUpgraded(
-    address indexed asset,
-    address indexed proxy,
-    address indexed implementation
-  );
   event VariableDebtTokenUpgraded(
     address indexed asset,
     address indexed proxy,
@@ -67,20 +62,6 @@ library ConfiguratorLogic {
       )
     );
 
-    address stableDebtTokenProxyAddress = _initTokenWithProxy(
-      input.stableDebtTokenImpl,
-      abi.encodeWithSelector(
-        IInitializableDebtToken.initialize.selector,
-        pool,
-        input.underlyingAsset,
-        input.incentivesController,
-        input.underlyingAssetDecimals,
-        input.stableDebtTokenName,
-        input.stableDebtTokenSymbol,
-        input.params
-      )
-    );
-
     address variableDebtTokenProxyAddress = _initTokenWithProxy(
       input.variableDebtTokenImpl,
       abi.encodeWithSelector(
@@ -98,7 +79,6 @@ library ConfiguratorLogic {
     pool.initReserve(
       input.underlyingAsset,
       aTokenProxyAddress,
-      stableDebtTokenProxyAddress,
       variableDebtTokenProxyAddress,
       input.interestRateStrategyAddress
     );
@@ -122,7 +102,7 @@ library ConfiguratorLogic {
     emit ReserveInitialized(
       input.underlyingAsset,
       aTokenProxyAddress,
-      stableDebtTokenProxyAddress,
+      address(0),
       variableDebtTokenProxyAddress,
       input.interestRateStrategyAddress
     );
@@ -157,44 +137,6 @@ library ConfiguratorLogic {
     _upgradeTokenImplementation(reserveData.aTokenAddress, input.implementation, encodedCall);
 
     emit ATokenUpgraded(input.asset, reserveData.aTokenAddress, input.implementation);
-  }
-
-  /**
-   * @notice Updates the stable debt token implementation and initializes it
-   * @dev Emits the `StableDebtTokenUpgraded` event
-   * @param cachedPool The Pool containing the reserve with the stable debt token
-   * @param input The parameters needed for the initialize call
-   */
-  function executeUpdateStableDebtToken(
-    IPool cachedPool,
-    ConfiguratorInputTypes.UpdateDebtTokenInput calldata input
-  ) public {
-    DataTypes.ReserveDataLegacy memory reserveData = cachedPool.getReserveData(input.asset);
-
-    (, , , uint256 decimals, , ) = cachedPool.getConfiguration(input.asset).getParams();
-
-    bytes memory encodedCall = abi.encodeWithSelector(
-      IInitializableDebtToken.initialize.selector,
-      cachedPool,
-      input.asset,
-      input.incentivesController,
-      decimals,
-      input.name,
-      input.symbol,
-      input.params
-    );
-
-    _upgradeTokenImplementation(
-      reserveData.stableDebtTokenAddress,
-      input.implementation,
-      encodedCall
-    );
-
-    emit StableDebtTokenUpgraded(
-      input.asset,
-      reserveData.stableDebtTokenAddress,
-      input.implementation
-    );
   }
 
   /**

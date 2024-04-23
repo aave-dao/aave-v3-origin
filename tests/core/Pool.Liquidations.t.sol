@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 
-import {IStableDebtToken} from 'aave-v3-core/contracts/interfaces/IStableDebtToken.sol';
 import {IVariableDebtToken} from 'aave-v3-core/contracts/interfaces/IVariableDebtToken.sol';
 import {IAaveOracle} from 'aave-v3-core/contracts/interfaces/IAaveOracle.sol';
 import {IPoolAddressesProvider} from 'aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol';
@@ -31,7 +30,6 @@ contract PoolLiquidationTests is TestnetProcedures {
   using ReserveLogic for DataTypes.ReserveCache;
   using ReserveLogic for DataTypes.ReserveData;
 
-  IStableDebtToken internal staDebtUSDX;
   IVariableDebtToken internal varDebtUSDX;
   address internal aUSDX;
 
@@ -45,20 +43,16 @@ contract PoolLiquidationTests is TestnetProcedures {
   function setUp() public {
     initTestEnvironment();
 
-    (address atoken, address stableDebtUSDX, address variableDebtUSDX) = contracts
+    (address atoken, , address variableDebtUSDX) = contracts
       .protocolDataProvider
       .getReserveTokensAddresses(tokenList.usdx);
     aUSDX = atoken;
-    staDebtUSDX = IStableDebtToken(stableDebtUSDX);
     varDebtUSDX = IVariableDebtToken(variableDebtUSDX);
 
     vm.startPrank(carol);
     contracts.poolProxy.supply(tokenList.usdx, 100_000e6, carol, 0);
     contracts.poolProxy.supply(tokenList.weth, 100e18, carol, 0);
     vm.stopPrank();
-
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setReserveStableRateBorrowing(tokenList.usdx, true);
 
     sequencerOracleMock = new SequencerOracle(poolAdmin);
     priceOracleSentinel = new PriceOracleSentinel(
@@ -1100,11 +1094,9 @@ contract PoolLiquidationTests is TestnetProcedures {
     tempReserveData.currentLiquidityRate = reserveDataLegacy.currentLiquidityRate;
     tempReserveData.variableBorrowIndex = reserveDataLegacy.variableBorrowIndex;
     tempReserveData.currentVariableBorrowRate = reserveDataLegacy.currentVariableBorrowRate;
-    tempReserveData.currentStableBorrowRate = reserveDataLegacy.currentStableBorrowRate;
     tempReserveData.lastUpdateTimestamp = reserveDataLegacy.lastUpdateTimestamp;
     tempReserveData.id = reserveDataLegacy.id;
     tempReserveData.aTokenAddress = reserveDataLegacy.aTokenAddress;
-    tempReserveData.stableDebtTokenAddress = reserveDataLegacy.stableDebtTokenAddress;
     tempReserveData.variableDebtTokenAddress = reserveDataLegacy.variableDebtTokenAddress;
     tempReserveData.interestRateStrategyAddress = reserveDataLegacy.interestRateStrategyAddress;
     tempReserveData.accruedToTreasury = reserveDataLegacy.accruedToTreasury;

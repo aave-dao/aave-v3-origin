@@ -5,11 +5,10 @@ import 'forge-std/Test.sol';
 
 import {AToken} from 'aave-v3-core/contracts/protocol/tokenization/AToken.sol';
 import {VariableDebtToken} from 'aave-v3-core/contracts/protocol/tokenization/VariableDebtToken.sol';
-import {StableDebtToken} from 'aave-v3-core/contracts/protocol/tokenization/StableDebtToken.sol';
 import {Errors} from 'aave-v3-core/contracts/protocol/libraries/helpers/Errors.sol';
 import {ConfiguratorInputTypes, IPool, IPoolAddressesProvider} from 'aave-v3-core/contracts/protocol/pool/PoolConfigurator.sol';
 import {MockATokenRepayment} from 'aave-v3-core/contracts/mocks/tokens/MockATokenRepayment.sol';
-import {MockVariableDebtToken, MockStableDebtToken} from 'aave-v3-core/contracts/mocks/tokens/MockDebtTokens.sol';
+import {MockVariableDebtToken} from 'aave-v3-core/contracts/mocks/tokens/MockDebtTokens.sol';
 import {DataTypes} from 'aave-v3-core/contracts/protocol/libraries/types/DataTypes.sol';
 import {ReserveLogic} from 'aave-v3-core/contracts/protocol/libraries/logic/ReserveLogic.sol';
 
@@ -31,13 +30,9 @@ contract PoolConfiguratorUpgradeabilityTests is TestnetProcedures {
     address newStrategy
   );
 
-  event ATokenUpgraded(
-    address indexed asset,
-    address indexed proxy,
-    address indexed implementation
-  );
+  event ReserveInterestRateDataChanged(address indexed asset, address indexed strategy, bytes data);
 
-  event StableDebtTokenUpgraded(
+  event ATokenUpgraded(
     address indexed asset,
     address indexed proxy,
     address indexed implementation
@@ -83,6 +78,32 @@ contract PoolConfiguratorUpgradeabilityTests is TestnetProcedures {
     );
 
     assertEq(newInterestRateStrategy, updatedInterestsRateStrategy);
+  }
+
+  function test_setReserveInterestRateData() public {
+    address currentInterestRateStrategy = contracts
+      .protocolDataProvider
+      .getInterestRateStrategyAddress(tokenList.usdx);
+
+    bytes memory newInterestRateData = _getDefaultInterestRatesStrategyData();
+
+    vm.expectEmit(address(contracts.poolConfiguratorProxy));
+    emit ReserveInterestRateDataChanged(
+      tokenList.usdx,
+      currentInterestRateStrategy,
+      newInterestRateData
+    );
+
+    vm.prank(poolAdmin);
+    contracts.poolConfiguratorProxy.setReserveInterestRateData(
+      tokenList.usdx,
+      _getDefaultInterestRatesStrategyData()
+    );
+
+    address newInterestRateStrategy = contracts.protocolDataProvider.getInterestRateStrategyAddress(
+      tokenList.usdx
+    );
+    assertEq(currentInterestRateStrategy, newInterestRateStrategy);
   }
 
   function test_interestRateStrategy_update() public {
@@ -131,6 +152,7 @@ contract PoolConfiguratorUpgradeabilityTests is TestnetProcedures {
     assertEq(updatedCache.currVariableBorrowRate, 107585394738663515131637198);
   }
 
+  // TODO: deduplicate, reuse in vTokenUpdate too
   function test_updateAToken() public {
     ConfiguratorInputTypes.UpdateATokenInput memory input = ConfiguratorInputTypes
       .UpdateATokenInput({
@@ -212,49 +234,6 @@ contract PoolConfiguratorUpgradeabilityTests is TestnetProcedures {
     assertEq(VariableDebtToken(variableDebtProxy).symbol(), input.symbol);
     assertEq(
       address(VariableDebtToken(variableDebtProxy).getIncentivesController()),
-      input.incentivesController
-    );
-  }
-
-  function test_updateStableDebtToken() public {
-    (, address stableDebtToken, ) = contracts.protocolDataProvider.getReserveTokensAddresses(
-      tokenList.usdx
-    );
-    ConfiguratorInputTypes.UpdateDebtTokenInput memory input = ConfiguratorInputTypes
-      .UpdateDebtTokenInput({
-        asset: tokenList.usdx,
-        incentivesController: report.rewardsControllerProxy,
-        name: 'New Stable Debt Test USDX',
-        symbol: 'newTestStaDebtUSDX',
-        implementation: address(new MockStableDebtToken(IPool(report.poolProxy))),
-        params: bytes('')
-      });
-
-    address previousImplementation = SlotParser.loadAddressFromSlot(
-      stableDebtToken,
-      bytes32(uint256(keccak256('eip1967.proxy.implementation')) - 1)
-    );
-
-    vm.startPrank(poolAdmin);
-
-    vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit StableDebtTokenUpgraded(tokenList.usdx, stableDebtToken, input.implementation);
-
-    // Perform upgrade
-    contracts.poolConfiguratorProxy.updateStableDebtToken(input);
-    vm.stopPrank();
-
-    address upgradedImplementation = SlotParser.loadAddressFromSlot(
-      stableDebtToken,
-      bytes32(uint256(keccak256('eip1967.proxy.implementation')) - 1)
-    );
-
-    assertTrue(upgradedImplementation != previousImplementation);
-    assertEq(upgradedImplementation, input.implementation);
-    assertEq(StableDebtToken(stableDebtToken).name(), input.name);
-    assertEq(StableDebtToken(stableDebtToken).symbol(), input.symbol);
-    assertEq(
-      address(StableDebtToken(stableDebtToken).getIncentivesController()),
       input.incentivesController
     );
   }

@@ -15,7 +15,6 @@ import {EModeLogic} from './EModeLogic.sol';
 import {UserConfiguration} from '../../libraries/configuration/UserConfiguration.sol';
 import {ReserveConfiguration} from '../../libraries/configuration/ReserveConfiguration.sol';
 import {IAToken} from '../../../interfaces/IAToken.sol';
-import {IStableDebtToken} from '../../../interfaces/IStableDebtToken.sol';
 import {IVariableDebtToken} from '../../../interfaces/IVariableDebtToken.sol';
 import {IPriceOracleGetter} from '../../../interfaces/IPriceOracleGetter.sol';
 
@@ -69,7 +68,6 @@ library LiquidationLogic {
 
   struct LiquidationCallLocalVars {
     uint256 userCollateralBalance;
-    uint256 userVariableDebt;
     uint256 userTotalDebt;
     uint256 actualDebtToLiquidate;
     uint256 actualCollateralToLiquidate;
@@ -121,7 +119,7 @@ library LiquidationLogic {
       })
     );
 
-    (vars.userVariableDebt, vars.userTotalDebt, vars.actualDebtToLiquidate) = _calculateDebt(
+    (vars.userTotalDebt, vars.actualDebtToLiquidate) = _calculateDebt(
       vars.debtReserveCache,
       params,
       vars.healthFactor
@@ -325,29 +323,9 @@ library LiquidationLogic {
     DataTypes.ExecuteLiquidationCallParams memory params,
     LiquidationCallLocalVars memory vars
   ) internal {
-    if (vars.userVariableDebt >= vars.actualDebtToLiquidate) {
-      vars.debtReserveCache.nextScaledVariableDebt = IVariableDebtToken(
-        vars.debtReserveCache.variableDebtTokenAddress
-      ).burn(
-          params.user,
-          vars.actualDebtToLiquidate,
-          vars.debtReserveCache.nextVariableBorrowIndex
-        );
-    } else {
-      // If the user doesn't have variable debt, no need to try to burn variable debt tokens
-      if (vars.userVariableDebt != 0) {
-        vars.debtReserveCache.nextScaledVariableDebt = IVariableDebtToken(
-          vars.debtReserveCache.variableDebtTokenAddress
-        ).burn(params.user, vars.userVariableDebt, vars.debtReserveCache.nextVariableBorrowIndex);
-      }
-      (
-        vars.debtReserveCache.nextTotalStableDebt,
-        vars.debtReserveCache.nextAvgStableBorrowRate
-      ) = IStableDebtToken(vars.debtReserveCache.stableDebtTokenAddress).burn(
-        params.user,
-        vars.actualDebtToLiquidate - vars.userVariableDebt
-      );
-    }
+    vars.debtReserveCache.nextScaledVariableDebt = IVariableDebtToken(
+      vars.debtReserveCache.variableDebtTokenAddress
+    ).burn(params.user, vars.actualDebtToLiquidate, vars.debtReserveCache.nextVariableBorrowIndex);
   }
 
   /**
@@ -357,7 +335,6 @@ library LiquidationLogic {
    * @param debtReserveCache The reserve cache data object of the debt reserve
    * @param params The additional parameters needed to execute the liquidation function
    * @param healthFactor The health factor of the position
-   * @return The variable debt of the user
    * @return The total debt of the user
    * @return The actual debt to liquidate as a function of the closeFactor
    */
@@ -365,13 +342,8 @@ library LiquidationLogic {
     DataTypes.ReserveCache memory debtReserveCache,
     DataTypes.ExecuteLiquidationCallParams memory params,
     uint256 healthFactor
-  ) internal view returns (uint256, uint256, uint256) {
-    (uint256 userStableDebt, uint256 userVariableDebt) = Helpers.getUserCurrentDebt(
-      params.user,
-      debtReserveCache
-    );
-
-    uint256 userTotalDebt = userStableDebt + userVariableDebt;
+  ) internal view returns (uint256, uint256) {
+    uint256 userTotalDebt = Helpers.getUserCurrentDebt(params.user, debtReserveCache);
 
     uint256 closeFactor = healthFactor > CLOSE_FACTOR_HF_THRESHOLD
       ? DEFAULT_LIQUIDATION_CLOSE_FACTOR
@@ -383,7 +355,7 @@ library LiquidationLogic {
       ? maxLiquidatableDebt
       : params.debtToCover;
 
-    return (userVariableDebt, userTotalDebt, actualDebtToLiquidate);
+    return (userTotalDebt, actualDebtToLiquidate);
   }
 
   /**

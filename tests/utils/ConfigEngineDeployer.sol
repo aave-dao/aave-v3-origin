@@ -51,7 +51,6 @@ library ConfigEngineDeployer {
         new AaveV3ConfigEngine(
           report.aToken,
           report.variableDebtToken,
-          report.stableDebtToken,
           engineConstants,
           engineLibraries
         )

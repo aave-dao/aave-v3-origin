@@ -239,7 +239,6 @@ library AaveV3BatchOrchestration {
     report.aclManager = setupReport.aclManager;
     report.aToken = tokensReport.aToken;
     report.variableDebtToken = tokensReport.variableDebtToken;
-    report.stableDebtToken = tokensReport.stableDebtToken;
     report.defaultInterestRateStrategyV2 = peripheryReport.defaultInterestRateStrategyV2;
 
     return report;

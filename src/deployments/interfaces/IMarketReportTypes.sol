@@ -7,7 +7,6 @@ import 'aave-v3-core/contracts/interfaces/IPoolConfigurator.sol';
 import 'aave-v3-core/contracts/interfaces/IAaveOracle.sol';
 import 'aave-v3-core/contracts/interfaces/IAToken.sol';
 import 'aave-v3-core/contracts/interfaces/IVariableDebtToken.sol';
-import 'aave-v3-core/contracts/interfaces/IStableDebtToken.sol';
 import 'aave-v3-core/contracts/interfaces/IACLManager.sol';
 import 'aave-v3-core/contracts/interfaces/IDefaultInterestRateStrategyV2.sol';
 import 'aave-v3-core/contracts/misc/AaveProtocolDataProvider.sol';
@@ -48,7 +47,6 @@ struct ContractsReport {
   L2Encoder l2Encoder;
   IAToken aToken;
   IVariableDebtToken variableDebtToken;
-  IStableDebtToken stableDebtToken;
   IEmissionManager emissionManager;
   IRewardsController rewardsControllerImplementation;
   IRewardsController rewardsControllerProxy;

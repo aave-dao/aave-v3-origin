@@ -74,8 +74,6 @@ contract PoolTests is TestnetProcedures {
 
   event ReserveUsedAsCollateralDisabled(address indexed reserve, address indexed user);
 
-  event RebalanceStableBorrowRate(address indexed reserve, address indexed user);
-
   event FlashLoan(
     address indexed target,
     address initiator,
@@ -116,7 +114,6 @@ contract PoolTests is TestnetProcedures {
     p.initialize(IPoolAddressesProvider(report.poolAddressesProvider));
 
     // Default values after deployment and initialized
-    assertEq(p.MAX_STABLE_RATE_BORROW_SIZE_PERCENT(), 2500);
     assertEq(p.MAX_NUMBER_RESERVES(), 128);
     assertEq(address(p.ADDRESSES_PROVIDER()), report.poolAddressesProvider);
     assertEq(p.FLASHLOAN_PREMIUM_TOTAL(), 0);
@@ -129,7 +126,7 @@ contract PoolTests is TestnetProcedures {
 
     vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_CONFIGURATOR));
     vm.prank(caller);
-    pool.initReserve(address(0), address(0), address(0), address(0), address(0));
+    pool.initReserve(address(0), address(0), address(0), address(0));
   }
 
   function test_setUserUseReserveAsCollateral_false() public {
@@ -251,7 +248,7 @@ contract PoolTests is TestnetProcedures {
     DataTypes.EModeCategory memory category;
 
     vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_CONFIGURATOR));
-    pool.initReserve(address(0), address(0), address(0), address(0), address(0));
+    pool.initReserve(address(0), address(0), address(0), address(0));
 
     vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_CONFIGURATOR));
     pool.dropReserve(address(0));
@@ -283,7 +280,7 @@ contract PoolTests is TestnetProcedures {
       tokenList.usdx
     );
     assertTrue(pA != address(0));
-    assertTrue(pS != address(0));
+    assertTrue(pS == address(0));
     assertTrue(pV != address(0));
 
     vm.prank(report.poolConfiguratorProxy);
@@ -301,7 +298,7 @@ contract PoolTests is TestnetProcedures {
       uint256 reserveFactor,
       bool usageAsCollateralEnabled,
       bool borrowingEnabled,
-      bool stableBorrowRateEnabled,
+      ,
       bool isActive,
       bool isFrozen
     ) = contracts.protocolDataProvider.getReserveConfigurationData(tokenList.usdx);
@@ -316,7 +313,6 @@ contract PoolTests is TestnetProcedures {
     assertEq(reserveFactor, 0);
     assertEq(usageAsCollateralEnabled, false);
     assertEq(borrowingEnabled, false);
-    assertEq(stableBorrowRateEnabled, false);
     assertEq(isActive, false);
     assertEq(isFrozen, false);
   }

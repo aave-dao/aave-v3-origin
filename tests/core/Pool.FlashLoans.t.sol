@@ -469,7 +469,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
           alice,
           amounts[x],
           DataTypes.InterestRateMode(modes[x]),
-          _calculateInterestRates(amounts[x], modes[x], assets[x]),
+          _calculateInterestRates(amounts[x], assets[x]),
           0
         );
       }

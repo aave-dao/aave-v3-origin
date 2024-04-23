@@ -46,23 +46,17 @@ contract ZeroReserveInterestRateStrategyTests is TestnetProcedures {
       unbacked: 0,
       liquidityAdded: 0,
       liquidityTaken: 0,
-      totalStableDebt: 0,
-      totalVariableDebt: 0,
-      averageStableBorrowRate: 0,
+      totalDebt: 0,
       reserveFactor: reserveFactor,
       reserve: tokenList.usdx,
       usingVirtualBalance: true,
       virtualUnderlyingBalance: 0
     });
 
-    (
-      uint256 currentLiquidityRate,
-      uint256 currentStableBorrowRate,
-      uint256 currentVariableBorrowRate
-    ) = rateStrategy.calculateInterestRates(input);
+    (uint256 currentLiquidityRate, uint256 currentVariableBorrowRate) = rateStrategy
+      .calculateInterestRates(input);
 
     assertEq(currentLiquidityRate, 0);
-    assertEq(currentStableBorrowRate, 0);
     assertEq(currentVariableBorrowRate, 0);
   }
 }

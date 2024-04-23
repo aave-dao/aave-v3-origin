@@ -64,19 +64,6 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
     contracts.poolConfiguratorProxy.updateVariableDebtToken(input);
   }
 
-  function test_reverts_notAdmin_updateStableDebtToken(address caller) public {
-    ConfiguratorInputTypes.UpdateDebtTokenInput memory input;
-    vm.assume(
-      !contracts.aclManager.isPoolAdmin(caller) &&
-        caller != address(contracts.poolAddressesProvider)
-    );
-
-    vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
-
-    vm.prank(caller);
-    contracts.poolConfiguratorProxy.updateStableDebtToken(input);
-  }
-
   function test_reverts_notAdmin_setReserveActive(address caller) public {
     vm.assume(
       !contracts.aclManager.isPoolAdmin(caller) &&
@@ -137,19 +124,6 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
 
     vm.prank(caller);
     contracts.poolConfiguratorProxy.configureReserveAsCollateral(address(0), 1, 1, 1);
-  }
-
-  function test_reverts_notRiskAdmin_setReserveStableRateBorrowing(address caller) public {
-    vm.assume(
-      !contracts.aclManager.isPoolAdmin(caller) &&
-        !contracts.aclManager.isRiskAdmin(caller) &&
-        caller != address(contracts.poolAddressesProvider)
-    );
-
-    vm.expectRevert(bytes(Errors.CALLER_NOT_RISK_OR_POOL_ADMIN));
-
-    vm.prank(caller);
-    contracts.poolConfiguratorProxy.setReserveStableRateBorrowing(address(0), true);
   }
 
   function test_reverts_notRiskOrPoolOrEmergencyAdmin_setReserveFreeze(address caller) public {
@@ -244,7 +218,6 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
         !contracts.aclManager.isRiskAdmin(caller) &&
         caller != address(contracts.poolAddressesProvider)
     );
-
     vm.expectRevert(bytes(Errors.CALLER_NOT_RISK_OR_POOL_ADMIN));
 
     vm.prank(caller);
@@ -290,7 +263,6 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
     );
 
     vm.prank(caller);
-
     vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_OR_EMERGENCY_ADMIN));
     contracts.poolConfiguratorProxy.setReservePause(asset, paused, gracePeriod);
   }

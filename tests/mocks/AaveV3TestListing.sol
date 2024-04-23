@@ -27,7 +27,6 @@ contract AaveV3TestListing is AaveV3Payload {
 
   address immutable ATOKEN_IMPLEMENTATION;
   address immutable VARIABLE_DEBT_TOKEN_IMPLEMENTATION;
-  address immutable STABLE_DEBT_TOKEN_IMPLEMENTATION;
 
   ACLManager immutable ACL_MANAGER;
 
@@ -48,7 +47,6 @@ contract AaveV3TestListing is AaveV3Payload {
 
     ATOKEN_IMPLEMENTATION = report.aToken;
     VARIABLE_DEBT_TOKEN_IMPLEMENTATION = report.variableDebtToken;
-    STABLE_DEBT_TOKEN_IMPLEMENTATION = report.stableDebtToken;
 
     ACL_MANAGER = ACLManager(report.aclManager);
   }
@@ -75,7 +73,6 @@ contract AaveV3TestListing is AaveV3Payload {
         priceFeed: USDX_MOCK_PRICE_FEED,
         rateStrategyParams: rateParams,
         enabledToBorrow: EngineFlags.ENABLED,
-        stableRateModeEnabled: EngineFlags.DISABLED,
         borrowableInIsolation: EngineFlags.DISABLED,
         withSiloedBorrowing: EngineFlags.DISABLED,
         flashloanable: EngineFlags.ENABLED,
@@ -91,8 +88,7 @@ contract AaveV3TestListing is AaveV3Payload {
       }),
       IEngine.TokenImplementations({
         aToken: ATOKEN_IMPLEMENTATION,
-        vToken: VARIABLE_DEBT_TOKEN_IMPLEMENTATION,
-        sToken: STABLE_DEBT_TOKEN_IMPLEMENTATION
+        vToken: VARIABLE_DEBT_TOKEN_IMPLEMENTATION
       })
     );
 
@@ -103,7 +99,6 @@ contract AaveV3TestListing is AaveV3Payload {
         priceFeed: WBTC_MOCK_PRICE_FEED,
         rateStrategyParams: rateParams,
         enabledToBorrow: EngineFlags.ENABLED,
-        stableRateModeEnabled: EngineFlags.DISABLED,
         borrowableInIsolation: EngineFlags.DISABLED,
         withSiloedBorrowing: EngineFlags.DISABLED,
         flashloanable: EngineFlags.ENABLED,
@@ -119,8 +114,7 @@ contract AaveV3TestListing is AaveV3Payload {
       }),
       IEngine.TokenImplementations({
         aToken: ATOKEN_IMPLEMENTATION,
-        vToken: VARIABLE_DEBT_TOKEN_IMPLEMENTATION,
-        sToken: STABLE_DEBT_TOKEN_IMPLEMENTATION
+        vToken: VARIABLE_DEBT_TOKEN_IMPLEMENTATION
       })
     );
 
@@ -131,7 +125,6 @@ contract AaveV3TestListing is AaveV3Payload {
         priceFeed: WETH_MOCK_PRICE_FEED,
         rateStrategyParams: rateParams,
         enabledToBorrow: EngineFlags.ENABLED,
-        stableRateModeEnabled: EngineFlags.DISABLED,
         borrowableInIsolation: EngineFlags.DISABLED,
         withSiloedBorrowing: EngineFlags.DISABLED,
         flashloanable: EngineFlags.ENABLED,
@@ -147,8 +140,7 @@ contract AaveV3TestListing is AaveV3Payload {
       }),
       IEngine.TokenImplementations({
         aToken: ATOKEN_IMPLEMENTATION,
-        vToken: VARIABLE_DEBT_TOKEN_IMPLEMENTATION,
-        sToken: STABLE_DEBT_TOKEN_IMPLEMENTATION
+        vToken: VARIABLE_DEBT_TOKEN_IMPLEMENTATION
       })
     );
 

@@ -448,7 +448,6 @@ contract ProtocolV3TestBase is DiffUtils {
       localConfig.isActive,
       localConfig.isFrozen,
       localConfig.borrowingEnabled,
-      localConfig.stableBorrowRateEnabled,
       localConfig.isPaused
     ) = configuration.getFlags();
     localConfig.symbol = reserve.symbol;

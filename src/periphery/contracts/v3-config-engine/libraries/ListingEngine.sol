@@ -115,7 +115,6 @@ library ListingEngine {
         asset: listings[i].base.asset,
         enabledToBorrow: listings[i].base.enabledToBorrow,
         flashloanable: listings[i].base.flashloanable,
-        stableRateModeEnabled: listings[i].base.stableRateModeEnabled,
         borrowableInIsolation: listings[i].base.borrowableInIsolation,
         withSiloedBorrowing: listings[i].base.withSiloedBorrowing,
         reserveFactor: listings[i].base.reserveFactor
@@ -182,7 +181,6 @@ library ListingEngine {
 
       initReserveInputs[i] = ConfiguratorInputTypes.InitReserveInput({
         aTokenImpl: basics[i].implementations.aToken,
-        stableDebtTokenImpl: basics[i].implementations.sToken,
         variableDebtTokenImpl: basics[i].implementations.vToken,
         underlyingAssetDecimals: decimals,
         interestRateStrategyAddress: rateStrategy,
@@ -201,17 +199,6 @@ library ListingEngine {
         ),
         variableDebtTokenSymbol: string.concat(
           'variableDebt',
-          context.networkAbbreviation,
-          basics[i].assetSymbol
-        ),
-        stableDebtTokenName: string.concat(
-          'Aave ',
-          context.networkName,
-          ' Stable Debt ',
-          basics[i].assetSymbol
-        ),
-        stableDebtTokenSymbol: string.concat(
-          'stableDebt',
           context.networkAbbreviation,
           basics[i].assetSymbol
         ),

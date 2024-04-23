@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 
-import {IStableDebtToken} from 'aave-v3-core/contracts/interfaces/IStableDebtToken.sol';
 import {IVariableDebtToken} from 'aave-v3-core/contracts/interfaces/IVariableDebtToken.sol';
 import {IPoolAddressesProvider} from 'aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol';
 import {ISequencerOracle} from 'aave-v3-core/contracts/interfaces/ISequencerOracle.sol';
@@ -20,7 +19,6 @@ import {EIP712SigUtils} from '../utils/EIP712SigUtils.sol';
 contract PoolRepayTests is TestnetProcedures {
   using UserConfiguration for DataTypes.UserConfigurationMap;
 
-  IStableDebtToken internal staDebtUSDX;
   IVariableDebtToken internal varDebtUSDX;
   address internal aUSDX;
 
@@ -32,19 +30,15 @@ contract PoolRepayTests is TestnetProcedures {
   function setUp() public {
     initTestEnvironment();
 
-    (address atoken, address stableDebtUSDX, address variableDebtUSDX) = contracts
+    (address atoken, , address variableDebtUSDX) = contracts
       .protocolDataProvider
       .getReserveTokensAddresses(tokenList.usdx);
     aUSDX = atoken;
-    staDebtUSDX = IStableDebtToken(stableDebtUSDX);
     varDebtUSDX = IVariableDebtToken(variableDebtUSDX);
 
     vm.startPrank(carol);
     contracts.poolProxy.supply(tokenList.usdx, 100_000e6, carol, 0);
     vm.stopPrank();
-
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setReserveStableRateBorrowing(tokenList.usdx, true);
 
     sequencerOracleMock = new SequencerOracle(poolAdmin);
     priceOracleSentinel = new PriceOracleSentinel(

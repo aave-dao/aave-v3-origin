@@ -209,7 +209,7 @@ library GenericLogic {
 
   /**
    * @notice Calculates total debt of the user in the based currency used to normalize the values of the assets
-   * @dev This fetches the `balanceOf` of the stable and variable debt tokens for the user. For gas reasons, the
+   * @dev This fetches the `balanceOf` of the variable debt token for the user. For gas reasons, the
    * variable debt balance is calculated by fetching `scaledBalancesOf` normalized debt, which is cheaper than
    * fetching `balanceOf`
    * @param user The address of the user
@@ -228,14 +228,11 @@ library GenericLogic {
     uint256 userTotalDebt = IScaledBalanceToken(reserve.variableDebtTokenAddress).scaledBalanceOf(
       user
     );
-    if (userTotalDebt != 0) {
-      userTotalDebt = userTotalDebt.rayMul(reserve.getNormalizedDebt());
+    if (userTotalDebt == 0) {
+      return 0;
     }
 
-    userTotalDebt = userTotalDebt + IERC20(reserve.stableDebtTokenAddress).balanceOf(user);
-
-    userTotalDebt = assetPrice * userTotalDebt;
-
+    userTotalDebt = userTotalDebt.rayMul(reserve.getNormalizedDebt()) * assetPrice;
     unchecked {
       return userTotalDebt / assetUnit;
     }

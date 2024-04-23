@@ -40,7 +40,6 @@ library MarketReportUtils {
         l2Encoder: L2Encoder(report.l2Encoder),
         aToken: IAToken(report.aToken),
         variableDebtToken: IVariableDebtToken(report.variableDebtToken),
-        stableDebtToken: IStableDebtToken(report.stableDebtToken),
         emissionManager: IEmissionManager(report.emissionManager),
         rewardsControllerImplementation: IRewardsController(report.rewardsControllerImplementation),
         rewardsControllerProxy: IRewardsController(report.rewardsControllerProxy)

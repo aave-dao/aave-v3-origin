@@ -6,7 +6,6 @@ import {AaveOracle} from 'aave-v3-core/contracts/misc/AaveOracle.sol';
 import {WrappedTokenGatewayV3} from 'aave-v3-periphery/contracts/misc/WrappedTokenGatewayV3.sol';
 import {AaveProtocolDataProvider} from 'aave-v3-core/contracts/misc/AaveProtocolDataProvider.sol';
 import {AToken} from 'aave-v3-core/contracts/protocol/tokenization/AToken.sol';
-import {StableDebtToken} from 'aave-v3-core/contracts/protocol/tokenization/StableDebtToken.sol';
 import {VariableDebtToken} from 'aave-v3-core/contracts/protocol/tokenization/VariableDebtToken.sol';
 import {DataTypes} from 'aave-v3-core/contracts/protocol/libraries/types/DataTypes.sol';
 import {EIP712SigUtils} from '../utils/EIP712SigUtils.sol';
@@ -46,10 +45,8 @@ contract WrappedTokenGatewayTests is TestnetProcedures {
   WrappedTokenGatewayV3 internal wrappedTokenGatewayV3;
 
   AToken internal aWEth;
-  StableDebtToken internal wEthStableDebtToken;
   VariableDebtToken internal wEthVariableDebtToken;
   AToken internal aUsdx;
-  StableDebtToken internal usdxStableDebtToken;
   VariableDebtToken internal usdxVariableDebtToken;
   uint256 internal depositSize = 5e18;
   uint256 internal usdxSize = 10000e18;
@@ -68,17 +65,15 @@ contract WrappedTokenGatewayTests is TestnetProcedures {
     );
     wrappedTokenGatewayV3 = WrappedTokenGatewayV3(payable(report.wrappedTokenGateway));
     contracts.protocolDataProvider = AaveProtocolDataProvider(report.protocolDataProvider);
-    (address aWEthAddr, address wEthStableDebt, address wEthVariableDebt) = contracts
+    (address aWEthAddr, , address wEthVariableDebt) = contracts
       .protocolDataProvider
       .getReserveTokensAddresses(tokenList.weth);
     aWEth = AToken(aWEthAddr);
-    wEthStableDebtToken = StableDebtToken(wEthStableDebt);
     wEthVariableDebtToken = VariableDebtToken(wEthVariableDebt);
-    (address aUsdxAddr, address usdxStableDebt, address usdxVariableDebt) = contracts
+    (address aUsdxAddr, , address usdxVariableDebt) = contracts
       .protocolDataProvider
       .getReserveTokensAddresses(tokenList.usdx);
     aUsdx = AToken(aUsdxAddr);
-    usdxStableDebtToken = StableDebtToken(usdxStableDebt);
     usdxVariableDebtToken = VariableDebtToken(usdxVariableDebt);
   }
 

@@ -197,7 +197,6 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
 
     assertTrue(r.aToken != address(0), 'report.aToken');
     assertTrue(r.variableDebtToken != address(0), 'report.variableDebtToken');
-    assertTrue(r.stableDebtToken != address(0), 'report.stableDebtToken');
     assertTrue(r.emissionManager != address(0), 'report.emissionManager');
     assertTrue(
       r.rewardsControllerImplementation != address(0),
@@ -264,8 +263,6 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
       t.aTokenName = _concatStr('a ', x);
       t.variableDebtName = _concatStr('Variable Debt Misc', x);
       t.variableDebtSymbol = _concatStr('varDebtMISC ', x);
-      t.stableDebtName = _concatStr('Stable Debt Misc ', x);
-      t.stableDebtSymbol = _concatStr('stableDebtMISC ', x);
       t.rateStrategy = r.defaultInterestRateStrategyV2;
       t.interestRateData = abi.encode(
         IDefaultInterestRateStrategyV2.InterestRateData({
@@ -278,7 +275,6 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
 
       input[x] = ConfiguratorInputTypes.InitReserveInput(
         r.aToken,
-        r.stableDebtToken,
         r.variableDebtToken,
         listingToken.decimals(),
         true,
@@ -290,8 +286,6 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
         t.aTokenSymbol,
         t.variableDebtName,
         t.variableDebtSymbol,
-        t.stableDebtName,
-        t.stableDebtSymbol,
         t.emptyParams,
         t.interestRateData
       );
