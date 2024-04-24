@@ -18,7 +18,7 @@ library DataTypes {
     //the current variable borrow rate. Expressed in ray
     uint128 currentVariableBorrowRate;
     // DEPRECATED on v3.2.0
-    uint128 __deprecatedStableBorrowRate;
+    uint128 stableBorrowRate;
     //timestamp of last update
     uint40 lastUpdateTimestamp;
     //the id of the reserve. Represents the position in the list of the active reserves
@@ -26,7 +26,7 @@ library DataTypes {
     //aToken address
     address aTokenAddress;
     // DEPRECATED on v3.2.0
-    address __deprecatedStableDebtTokenAddress;
+    address stableDebtTokenAddress;
     //variableDebtToken address
     address variableDebtTokenAddress;
     //address of the interest rate strategy
