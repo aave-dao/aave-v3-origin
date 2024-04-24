@@ -17,6 +17,7 @@ library DataTypes {
     uint128 variableBorrowIndex;
     //the current variable borrow rate. Expressed in ray
     uint128 currentVariableBorrowRate;
+    // DEPRECATED on v3.2.0
     uint128 __deprecatedStableBorrowRate;
     //timestamp of last update
     uint40 lastUpdateTimestamp;
@@ -24,6 +25,7 @@ library DataTypes {
     uint16 id;
     //aToken address
     address aTokenAddress;
+    // DEPRECATED on v3.2.0
     address __deprecatedStableDebtTokenAddress;
     //variableDebtToken address
     address variableDebtTokenAddress;
@@ -48,6 +50,7 @@ library DataTypes {
     uint128 variableBorrowIndex;
     //the current variable borrow rate. Expressed in ray
     uint128 currentVariableBorrowRate;
+    // DEPRECATED on v3.2.0
     uint128 __deprecatedStableBorrowRate;
     //timestamp of last update
     uint40 lastUpdateTimestamp;
@@ -57,6 +60,7 @@ library DataTypes {
     uint40 liquidationGracePeriodUntil;
     //aToken address
     address aTokenAddress;
+    // DEPRECATED on v3.2.0
     address __deprecatedStableDebtTokenAddress;
     //variableDebtToken address
     address variableDebtTokenAddress;
@@ -126,11 +130,6 @@ library DataTypes {
   struct ReserveCache {
     uint256 currScaledVariableDebt;
     uint256 nextScaledVariableDebt;
-    //    uint256 currPrincipalStableDebt;
-    //    uint256 currAvgStableBorrowRate; TODO: cleanup
-    //    uint256 currTotalStableDebt;
-    //    uint256 nextAvgStableBorrowRate;
-    //    uint256 nextTotalStableDebt;
     uint256 currLiquidityIndex;
     uint256 nextLiquidityIndex;
     uint256 currVariableBorrowIndex;
@@ -140,10 +139,8 @@ library DataTypes {
     uint256 reserveFactor;
     ReserveConfigurationMap reserveConfiguration;
     address aTokenAddress;
-    //    address stableDebtTokenAddress; TODO: cleanup
     address variableDebtTokenAddress;
     uint40 reserveLastUpdateTimestamp;
-    //    uint40 stableDebtLastUpdateTimestamp; TODO: cleanup
   }
 
   struct ExecuteLiquidationCallParams {
@@ -170,10 +167,8 @@ library DataTypes {
     address user;
     address onBehalfOf;
     uint256 amount;
-    //    InterestRateMode interestRateMode;
     uint16 referralCode;
     bool releaseUnderlying;
-    //    uint256 maxStableRateBorrowSizePercent;
     uint256 reservesCount;
     address oracle;
     uint8 userEModeCategory;
@@ -225,7 +220,6 @@ library DataTypes {
     uint16 referralCode;
     uint256 flashLoanPremiumToProtocol;
     uint256 flashLoanPremiumTotal;
-    //    uint256 maxStableRateBorrowSizePercent;
     uint256 reservesCount;
     address addressesProvider;
     address pool;
@@ -266,8 +260,6 @@ library DataTypes {
     address asset;
     address userAddress;
     uint256 amount;
-    //    InterestRateMode interestRateMode;
-    //    uint256 maxStableLoanPercent;
     uint256 reservesCount;
     address oracle;
     uint8 userEModeCategory;
@@ -298,7 +290,6 @@ library DataTypes {
   struct InitReserveParams {
     address asset;
     address aTokenAddress;
-    //    address stableDebtAddress;
     address variableDebtAddress;
     address interestRateStrategyAddress;
     uint16 reservesCount;

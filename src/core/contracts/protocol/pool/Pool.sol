@@ -548,12 +548,6 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
   }
 
   /// @inheritdoc IPool
-  // @notice stable debt deprecated in v3.2.0
-  function MAX_STABLE_RATE_BORROW_SIZE_PERCENT() public view virtual override returns (uint256) {
-    return 0;
-  }
-
-  /// @inheritdoc IPool
   function BRIDGE_PROTOCOL_FEE() public view virtual override returns (uint256) {
     return _bridgeProtocolFee;
   }

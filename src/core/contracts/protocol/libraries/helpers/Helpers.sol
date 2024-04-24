@@ -10,7 +10,7 @@ import {DataTypes} from '../types/DataTypes.sol';
  */
 library Helpers {
   /**
-   * @notice Fetches the user current stable and variable debt balances
+   * @notice Fetches the user current variable debt balance
    * @param user The user address
    * @param reserveCache The reserve cache data object
    * @return The variable debt balance

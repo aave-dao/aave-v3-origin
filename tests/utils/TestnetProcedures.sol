@@ -27,8 +27,6 @@ struct TestVars {
   string aTokenSymbol;
   string variableDebtName;
   string variableDebtSymbol;
-  string stableDebtName;
-  string stableDebtSymbol;
   address rateStrategy;
   bytes interestRateData;
   bytes emptyParams;
@@ -42,7 +40,6 @@ struct TestReserveConfig {
   uint256 reserveFactor;
   bool usageAsCollateralEnabled;
   bool borrowingEnabled;
-  bool stableBorrowRateEnabled;
   bool isActive;
   bool isFrozen;
   bool isPaused;
@@ -252,7 +249,7 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
       uint256 reserveFactor,
       bool usageAsCollateralEnabled,
       bool borrowingEnabled,
-      bool stableBorrowRateEnabled,
+      ,
       bool isActive,
       bool isFrozen
     ) = IPoolDataProvider(dataProvider).getReserveConfigurationData(reserve);
@@ -263,7 +260,6 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     c.reserveFactor = reserveFactor;
     c.usageAsCollateralEnabled = usageAsCollateralEnabled;
     c.borrowingEnabled = borrowingEnabled;
-    c.stableBorrowRateEnabled = stableBorrowRateEnabled;
     c.isActive = isActive;
     c.isFrozen = isFrozen;
     c.isPaused = IPoolDataProvider(dataProvider).getPaused(reserve);
@@ -296,8 +292,6 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
       t.aTokenName = _concatStr('a ', x);
       t.variableDebtName = _concatStr('Variable Debt Misc', x);
       t.variableDebtSymbol = _concatStr('varDebtMISC ', x);
-      t.stableDebtName = _concatStr('Stable Debt Misc ', x);
-      t.stableDebtSymbol = _concatStr('stableDebtMISC ', x);
       t.rateStrategy = r.defaultInterestRateStrategyV2;
       t.interestRateData = abi.encode(
         IDefaultInterestRateStrategyV2.InterestRateData({

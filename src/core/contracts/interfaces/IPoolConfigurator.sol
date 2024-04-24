@@ -14,7 +14,7 @@ interface IPoolConfigurator {
    * @dev Emitted when a reserve is initialized.
    * @param asset The address of the underlying asset of the reserve
    * @param aToken The address of the associated aToken contract
-   * @param stableDebtToken DEPRECATED in v3.2.0
+   * @param stableDebtToken, DEPRECATED in v3.2.0
    * @param variableDebtToken The address of the associated variable rate debt token
    * @param interestRateStrategyAddress The address of the interest rate strategy for the reserve
    */

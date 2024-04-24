@@ -11,7 +11,7 @@ import {DataTypes} from 'aave-v3-core/contracts/protocol/libraries/types/DataTyp
  */
 library DataTypesHelper {
   /**
-   * @notice Fetches the user current stable and variable debt balances
+   * @notice Fetches the user current variable debt balances
    * @param user The user address
    * @param reserve The reserve data object
    * @return The variable debt balance

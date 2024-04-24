@@ -10,7 +10,7 @@ import {EIP712Base} from './EIP712Base.sol';
 /**
  * @title DebtTokenBase
  * @author Aave
- * @notice Base contract for different types of debt tokens, like StableDebtToken or VariableDebtToken
+ * @notice Base contract for different types of debt tokens, like VariableDebtToken
  */
 abstract contract DebtTokenBase is
   VersionedInitializable,

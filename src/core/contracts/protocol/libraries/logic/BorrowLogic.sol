@@ -44,12 +44,6 @@ library BorrowLogic {
     uint256 amount,
     bool useATokens
   );
-  event RebalanceStableBorrowRate(address indexed reserve, address indexed user);
-  event SwapBorrowRateMode(
-    address indexed reserve,
-    address indexed user,
-    DataTypes.InterestRateMode interestRateMode
-  );
   event IsolationModeTotalDebtUpdated(address indexed asset, uint256 totalDebt);
   event ReserveUsedAsCollateralDisabled(address indexed reserve, address indexed user);
 
