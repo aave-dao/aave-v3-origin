@@ -316,17 +316,17 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     }
 
     ConfiguratorInputTypes.InitReserveInput memory input;
-    input.aTokenImpl = report.aToken;
+    input.aTokenImpl = r.aToken;
     input.underlyingAsset = address(
       new TestnetERC20('Misc Token', 'MISC', t.underlyingDecimals, poolAdminUser)
     );
-    input.stableDebtTokenImpl = report.stableDebtToken;
-    input.variableDebtTokenImpl = report.variableDebtToken;
+    input.stableDebtTokenImpl = r.stableDebtToken;
+    input.variableDebtTokenImpl = r.variableDebtToken;
     input.underlyingAssetDecimals = t.underlyingDecimals;
     input.useVirtualBalance = t.useVirtualBalance;
-    input.interestRateStrategyAddress = report.defaultInterestRateStrategyV2;
+    input.interestRateStrategyAddress = r.defaultInterestRateStrategyV2;
     input.treasury = t.treasury;
-    input.incentivesController = report.rewardsControllerProxy;
+    input.incentivesController = r.rewardsControllerProxy;
     input.aTokenName = t.aTokenName;
     input.aTokenSymbol = t.aTokenSymbol;
     input.variableDebtTokenName = t.variableDebtName;

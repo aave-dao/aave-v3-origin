@@ -23,7 +23,7 @@ contract PoolConfiguratorInitReservesTest is TestnetProcedures {
     initTestEnvironment();
   }
 
-  function test_initReserves_singleAsset(TestVars[128] memory t, uint8 length) public {
+  function test_initReserves_validNumberOfAssets(TestVars[128] memory t, uint8 length) public {
     vm.assume(length > 0 && length < 128);
     uint256 previousListedAssets = contracts.poolProxy.getReservesList().length;
     uint256 maxListings = contracts.poolProxy.MAX_NUMBER_RESERVES() - previousListedAssets + 1;
@@ -118,16 +118,16 @@ contract PoolConfiguratorInitReservesTest is TestnetProcedures {
     assertEq(contracts.poolProxy.getReservesList().length, previousListedAssets);
   }
 
-  function test_reverts_initReserves_maxAssets(TestVars[500] memory t, uint8 length) public {
+  function test_reverts_initReserves_maxAssets(TestVars memory t, uint8 lengthSeed) public {
     uint256 previousListedAssets = contracts.poolProxy.getReservesList().length;
 
     uint256 maxListings = contracts.poolProxy.MAX_NUMBER_RESERVES() - previousListedAssets + 1;
-    length += uint8(maxListings);
+    uint256 length = maxListings + lengthSeed;
 
     ConfiguratorInputTypes.InitReserveInput[]
       memory input = new ConfiguratorInputTypes.InitReserveInput[](length);
     for (uint256 i = 0; i < length; i++)
-      input[i] = _generateInitReserveInput(t[i], report, poolAdmin, true);
+      input[i] = _generateInitReserveInput(t, report, poolAdmin, true);
 
     vm.expectRevert(bytes(Errors.NO_MORE_RESERVES_ALLOWED));
     vm.prank(poolAdmin);
