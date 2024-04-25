@@ -310,7 +310,9 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     bool isValidDecimals
   ) internal returns (ConfiguratorInputTypes.InitReserveInput memory) {
     if (isValidDecimals) {
-      vm.assume(t.underlyingDecimals > 5);
+      t.underlyingDecimals = uint8(bound(t.underlyingDecimals, 6, 25));
+    } else {
+      t.underlyingDecimals = uint8(bound(t.underlyingDecimals, 0, 5));
     }
 
     ConfiguratorInputTypes.InitReserveInput memory input;
