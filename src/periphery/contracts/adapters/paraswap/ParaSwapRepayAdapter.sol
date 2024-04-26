@@ -207,7 +207,7 @@ contract ParaSwapRepayAdapter is BaseParaSwapBuyAdapter, ReentrancyGuard {
     address initiator
   ) private view returns (uint256) {
     require(
-      DataTypes.InterestRateMode(rateMode) == DataTypes.InterestRateMode.VARIABLE,
+      DataTypes.InterestRateMode(rateMode) != DataTypes.InterestRateMode.NONE,
       'INVALID_RATE_MODE'
     );
     DataTypes.ReserveDataLegacy memory debtReserveData = _getReserveData(address(debtAsset));
