@@ -178,7 +178,6 @@ library DataTypes {
   struct ExecuteRepayParams {
     address asset;
     uint256 amount;
-    //    InterestRateMode interestRateMode;
     address onBehalfOf;
     bool useATokens;
   }
