@@ -171,20 +171,18 @@ library ReserveLogic {
     uint256 liquidityAdded,
     uint256 liquidityTaken
   ) internal {
-    UpdateInterestRatesAndVirtualBalanceLocalVars memory vars;
-    //TODO: check, maybe local vars can be removed
-    vars.totalVariableDebt = reserveCache.nextScaledVariableDebt.rayMul(
+    uint256 totalVariableDebt = reserveCache.nextScaledVariableDebt.rayMul(
       reserveCache.nextVariableBorrowIndex
     );
 
-    (vars.nextLiquidityRate, vars.nextVariableRate) = IReserveInterestRateStrategy(
+    (uint256 nextLiquidityRate, uint256 nextVariableRate) = IReserveInterestRateStrategy(
       reserve.interestRateStrategyAddress
     ).calculateInterestRates(
         DataTypes.CalculateInterestRatesParams({
           unbacked: reserve.unbacked,
           liquidityAdded: liquidityAdded,
           liquidityTaken: liquidityTaken,
-          totalDebt: vars.totalVariableDebt,
+          totalDebt: totalVariableDebt,
           reserveFactor: reserveCache.reserveFactor,
           reserve: reserveAddress,
           usingVirtualBalance: reserve.configuration.getIsVirtualAccActive(),
@@ -192,8 +190,8 @@ library ReserveLogic {
         })
       );
 
-    reserve.currentLiquidityRate = vars.nextLiquidityRate.toUint128();
-    reserve.currentVariableBorrowRate = vars.nextVariableRate.toUint128();
+    reserve.currentLiquidityRate = nextLiquidityRate.toUint128();
+    reserve.currentVariableBorrowRate = nextVariableRate.toUint128();
 
     // Only affect virtual balance if the reserve uses it
     if (reserve.configuration.getIsVirtualAccActive()) {
@@ -207,9 +205,9 @@ library ReserveLogic {
 
     emit ReserveDataUpdated(
       reserveAddress,
-      vars.nextLiquidityRate,
+      nextLiquidityRate,
       0,
-      vars.nextVariableRate,
+      nextVariableRate,
       reserveCache.nextLiquidityIndex,
       reserveCache.nextVariableBorrowIndex
     );
