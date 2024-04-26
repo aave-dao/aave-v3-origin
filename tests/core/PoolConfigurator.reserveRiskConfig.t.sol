@@ -63,11 +63,12 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     contracts.poolProxy.supply(tokenList.wbtc, 100e8, bob, 0);
   }
 
-  function test_enableBorrowing() public {
-    ConfiguratorInputTypes.InitReserveInput[] memory input = _generateListingInput(
-      1,
+  function test_enableBorrowing(TestVars memory t) public {
+    ConfiguratorInputTypes.InitReserveInput[] memory input = _generateInitConfig(
+      t,
       report,
-      poolAdmin
+      poolAdmin,
+      true
     );
 
     // Perform action
@@ -101,11 +102,12 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     assertEq(borrowingConfigAfter, false);
   }
 
-  function test_enableFlashBorrow() public {
-    ConfiguratorInputTypes.InitReserveInput[] memory input = _generateListingInput(
-      1,
+  function test_enableFlashBorrow(TestVars memory t) public {
+    ConfiguratorInputTypes.InitReserveInput[] memory input = _generateInitConfig(
+      t,
       report,
-      poolAdmin
+      poolAdmin,
+      true
     );
 
     // Perform action
@@ -128,15 +130,16 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     assertEq(valueAfter, false);
   }
 
-  function test_setCollateralConfig() public {
+  function test_setCollateralConfig(TestVars memory t) public {
     uint256 ltv = 80_00;
     uint256 liquidationThreshold = 85_00;
     uint256 liquidationBonus = 105_00;
 
-    ConfiguratorInputTypes.InitReserveInput[] memory input = _generateListingInput(
-      1,
+    ConfiguratorInputTypes.InitReserveInput[] memory input = _generateInitConfig(
+      t,
       report,
-      poolAdmin
+      poolAdmin,
+      true
     );
 
     // Perform action
@@ -167,11 +170,12 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     assertEq(liqBonus, liquidationBonus);
   }
 
-  function test_reverts_setCollateralConfig_invalidParams() public {
-    ConfiguratorInputTypes.InitReserveInput[] memory input = _generateListingInput(
-      1,
+  function test_reverts_setCollateralConfig_invalidParams(TestVars memory t) public {
+    ConfiguratorInputTypes.InitReserveInput[] memory input = _generateInitConfig(
+      t,
       report,
-      poolAdmin
+      poolAdmin,
+      true
     );
 
     // Perform action

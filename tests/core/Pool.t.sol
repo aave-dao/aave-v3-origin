@@ -371,7 +371,7 @@ contract PoolTests is TestnetProcedures {
     address strategy
   ) public {
     address[] memory listedAssets = contracts.poolProxy.getReservesList();
-    for (uint i = 0; i < listedAssets.length; i++) {
+    for (uint256 i = 0; i < listedAssets.length; i++) {
       vm.assume(asset != listedAssets[i]);
     }
 
