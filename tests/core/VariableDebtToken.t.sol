@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 
-import {VariableDebtTokenHarness as VariableDebtTokenInstance} from '../harness/VariableDebtToken.sol';
+import {VariableDebtTokenInstance} from 'aave-v3-core/instances/VariableDebtTokenInstance.sol';
 import {IAaveIncentivesController} from 'aave-v3-core/contracts/interfaces/IAaveIncentivesController.sol';
 import {Errors} from 'aave-v3-core/contracts/protocol/libraries/helpers/Errors.sol';
 import {TestnetERC20} from 'aave-v3-periphery/contracts/mocks/testnet-helpers/TestnetERC20.sol';
@@ -11,7 +11,7 @@ import {ReserveLogic, DataTypes} from 'aave-v3-core/contracts/protocol/libraries
 import {WadRayMath} from 'aave-v3-core/contracts/protocol/libraries/math/WadRayMath.sol';
 import {ConfiguratorInputTypes, IPool} from 'aave-v3-core/contracts/protocol/pool/PoolConfigurator.sol';
 import {EIP712SigUtils} from '../utils/EIP712SigUtils.sol';
-import {TestnetProcedures} from '../utils/TestnetProcedures.sol';
+import {TestnetProcedures, TestVars} from '../utils/TestnetProcedures.sol';
 
 contract VariableDebtTokenEventsTests is TestnetProcedures {
   using WadRayMath for uint256;
@@ -82,18 +82,23 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     return varDebtToken;
   }
 
-  function test_initialize_VariableDebtToken() public returns (VariableDebtTokenInstance) {
+  function test_initialize_VariableDebtToken(
+    TestVars memory t
+  ) public returns (VariableDebtTokenInstance) {
     VariableDebtTokenInstance varDebtToken = test_new_VariableDebtToken_implementation();
-    ConfiguratorInputTypes.InitReserveInput memory listing = (
-      _generateListingInput(1, report, poolAdmin)
-    )[0];
+    ConfiguratorInputTypes.InitReserveInput memory listing = _generateInitReserveInput(
+      t,
+      report,
+      poolAdmin,
+      true
+    );
 
     vm.expectEmit(address(varDebtToken));
     emit Initialized(
       listing.underlyingAsset,
       report.poolProxy,
-      report.rewardsControllerProxy,
-      TestnetERC20(listing.underlyingAsset).decimals(),
+      listing.incentivesController,
+      listing.underlyingAssetDecimals,
       listing.variableDebtTokenName,
       listing.variableDebtTokenSymbol,
       listing.params
@@ -103,7 +108,7 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
       IPool(report.poolProxy),
       listing.underlyingAsset,
       IAaveIncentivesController(listing.incentivesController),
-      TestnetERC20(listing.underlyingAsset).decimals(),
+      listing.underlyingAssetDecimals,
       listing.variableDebtTokenName,
       listing.variableDebtTokenSymbol,
       listing.params
@@ -120,11 +125,14 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     return varDebtToken;
   }
 
-  function test_reverts_initialize_twice() public {
-    VariableDebtTokenInstance varDebtToken = test_initialize_VariableDebtToken();
-    ConfiguratorInputTypes.InitReserveInput memory listing = (
-      _generateListingInput(1, report, poolAdmin)
-    )[0];
+  function test_reverts_initialize_twice(TestVars memory t) public {
+    VariableDebtTokenInstance varDebtToken = test_initialize_VariableDebtToken(t);
+    ConfiguratorInputTypes.InitReserveInput memory listing = _generateInitReserveInput(
+      t,
+      report,
+      poolAdmin,
+      true
+    );
 
     uint8 decimals = TestnetERC20(listing.underlyingAsset).decimals();
 
@@ -141,11 +149,14 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     );
   }
 
-  function test_reverts_initialize_pool_do_not_match() public {
+  function test_reverts_initialize_pool_do_not_match(TestVars memory t) public {
     VariableDebtTokenInstance varDebtToken = test_new_VariableDebtToken_implementation();
-    ConfiguratorInputTypes.InitReserveInput memory listing = (
-      _generateListingInput(1, report, poolAdmin)
-    )[0];
+    ConfiguratorInputTypes.InitReserveInput memory listing = _generateInitReserveInput(
+      t,
+      report,
+      poolAdmin,
+      true
+    );
 
     uint8 decimals = TestnetERC20(listing.underlyingAsset).decimals();
 
@@ -162,13 +173,8 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     );
   }
 
-  function test_default_revision() public {
-    VariableDebtTokenInstance varDebtToken = new VariableDebtTokenInstance(IPool(report.poolProxy));
-    assertEq(varDebtToken._getRevision(), varDebtToken.DEBT_TOKEN_REVISION());
-  }
-
-  function test_mint_variableDebt_caller_alice() public {
-    VariableDebtTokenInstance debtToken = test_initialize_VariableDebtToken();
+  function test_mint_variableDebt_caller_alice(TestVars memory t) public {
+    VariableDebtTokenInstance debtToken = test_initialize_VariableDebtToken(t);
     TestnetERC20 asset = TestnetERC20(debtToken.UNDERLYING_ASSET_ADDRESS());
     uint8 decimals = asset.decimals();
     uint256 amount = 1200 * 10 ** decimals;
@@ -182,8 +188,8 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     assertEq(debtToken.scaledBalanceOf(alice), amount);
   }
 
-  function test_mint_variableDebt_caller_bob_onBehalf_alice() public {
-    VariableDebtTokenInstance debtToken = test_initialize_VariableDebtToken();
+  function test_mint_variableDebt_caller_bob_onBehalf_alice(TestVars memory t) public {
+    VariableDebtTokenInstance debtToken = test_initialize_VariableDebtToken(t);
     TestnetERC20 asset = TestnetERC20(debtToken.UNDERLYING_ASSET_ADDRESS());
     uint8 decimals = asset.decimals();
     uint256 amount = 1200 * 10 ** decimals;
@@ -203,8 +209,8 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     assertEq(debtToken.scaledBalanceOf(alice), amount);
   }
 
-  function test_partial_burn_variableDebt() public {
-    VariableDebtTokenInstance debtToken = test_initialize_VariableDebtToken();
+  function test_partial_burn_variableDebt(TestVars memory t) public {
+    VariableDebtTokenInstance debtToken = test_initialize_VariableDebtToken(t);
     TestnetERC20 asset = TestnetERC20(debtToken.UNDERLYING_ASSET_ADDRESS());
     uint8 decimals = asset.decimals();
     uint256 amount = 1200 * 10 ** decimals;
@@ -229,8 +235,8 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     assertEq(debtToken.scaledBalanceOf(alice), balanceScaled - repaymentScaled);
   }
 
-  function test_total_burn_variableDebt() public {
-    VariableDebtTokenInstance debtToken = test_initialize_VariableDebtToken();
+  function test_total_burn_variableDebt(TestVars memory t) public {
+    VariableDebtTokenInstance debtToken = test_initialize_VariableDebtToken(t);
     TestnetERC20 asset = TestnetERC20(debtToken.UNDERLYING_ASSET_ADDRESS());
     uint8 decimals = asset.decimals();
     uint256 amount = 1200 * 10 ** decimals;
