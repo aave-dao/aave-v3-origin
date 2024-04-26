@@ -47,7 +47,6 @@ library FlashLoanLogic {
   // Helper struct for internal variables used in the `executeFlashLoan` function
   struct FlashLoanLocalVars {
     IFlashLoanReceiver receiver;
-    uint256 i;
     address currentAsset;
     uint256 currentAmount;
     uint256[] totalPremiums;
@@ -90,20 +89,18 @@ library FlashLoanLogic {
       ? (0, 0)
       : (params.flashLoanPremiumTotal, params.flashLoanPremiumToProtocol);
 
-    for (vars.i = 0; vars.i < params.assets.length; vars.i++) {
-      vars.currentAmount = params.amounts[vars.i];
-      vars.totalPremiums[vars.i] = DataTypes.InterestRateMode(params.interestRateModes[vars.i]) ==
+    for (uint256 i = 0; i < params.assets.length; i++) {
+      vars.currentAmount = params.amounts[i];
+      vars.totalPremiums[i] = DataTypes.InterestRateMode(params.interestRateModes[i]) ==
         DataTypes.InterestRateMode.NONE
         ? vars.currentAmount.percentMul(vars.flashloanPremiumTotal)
         : 0;
 
-      if (reservesData[params.assets[vars.i]].configuration.getIsVirtualAccActive()) {
-        reservesData[params.assets[vars.i]].virtualUnderlyingBalance -= vars
-          .currentAmount
-          .toUint128();
+      if (reservesData[params.assets[i]].configuration.getIsVirtualAccActive()) {
+        reservesData[params.assets[i]].virtualUnderlyingBalance -= vars.currentAmount.toUint128();
       }
 
-      IAToken(reservesData[params.assets[vars.i]].aTokenAddress).transferUnderlyingTo(
+      IAToken(reservesData[params.assets[i]].aTokenAddress).transferUnderlyingTo(
         params.receiverAddress,
         vars.currentAmount
       );
@@ -120,14 +117,12 @@ library FlashLoanLogic {
       Errors.INVALID_FLASHLOAN_EXECUTOR_RETURN
     );
 
-    // TODO: try to remove i from vars
-    for (vars.i = 0; vars.i < params.assets.length; vars.i++) {
-      vars.currentAsset = params.assets[vars.i];
-      vars.currentAmount = params.amounts[vars.i];
+    for (uint256 i = 0; i < params.assets.length; i++) {
+      vars.currentAsset = params.assets[i];
+      vars.currentAmount = params.amounts[i];
 
       if (
-        DataTypes.InterestRateMode(params.interestRateModes[vars.i]) ==
-        DataTypes.InterestRateMode.NONE
+        DataTypes.InterestRateMode(params.interestRateModes[i]) == DataTypes.InterestRateMode.NONE
       ) {
         _handleFlashLoanRepayment(
           reservesData[vars.currentAsset],
@@ -135,7 +130,7 @@ library FlashLoanLogic {
             asset: vars.currentAsset,
             receiverAddress: params.receiverAddress,
             amount: vars.currentAmount,
-            totalPremium: vars.totalPremiums[vars.i],
+            totalPremium: vars.totalPremiums[i],
             flashLoanPremiumToProtocol: vars.flashloanPremiumToProtocol,
             referralCode: params.referralCode
           })
@@ -168,7 +163,7 @@ library FlashLoanLogic {
           msg.sender,
           vars.currentAsset,
           vars.currentAmount,
-          DataTypes.InterestRateMode(params.interestRateModes[vars.i]),
+          DataTypes.InterestRateMode(params.interestRateModes[i]),
           0,
           params.referralCode
         );
