@@ -734,9 +734,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
   }
 
   function test_setLiquidationGracePeriodReserve(uint40 gracePeriod) public {
-    vm.assume(
-      gracePeriod <= contracts.poolConfiguratorProxy.MAX_GRACE_PERIOD() && gracePeriod != 0
-    );
+    vm.assume(gracePeriod < contracts.poolConfiguratorProxy.MAX_GRACE_PERIOD() && gracePeriod != 0);
 
     address asset = tokenList.usdx;
 

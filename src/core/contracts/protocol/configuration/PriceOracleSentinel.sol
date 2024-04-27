@@ -55,12 +55,12 @@ contract PriceOracleSentinel is IPriceOracleSentinel {
   }
 
   /// @inheritdoc IPriceOracleSentinel
-  function isBorrowAllowed() public view override returns (bool) {
+  function isBorrowAllowed() external view override returns (bool) {
     return _isUpAndGracePeriodPassed();
   }
 
   /// @inheritdoc IPriceOracleSentinel
-  function isLiquidationAllowed() public view override returns (bool) {
+  function isLiquidationAllowed() external view override returns (bool) {
     return _isUpAndGracePeriodPassed();
   }
 
@@ -74,24 +74,24 @@ contract PriceOracleSentinel is IPriceOracleSentinel {
   }
 
   /// @inheritdoc IPriceOracleSentinel
-  function setSequencerOracle(address newSequencerOracle) public onlyPoolAdmin {
+  function setSequencerOracle(address newSequencerOracle) external onlyPoolAdmin {
     _sequencerOracle = ISequencerOracle(newSequencerOracle);
     emit SequencerOracleUpdated(newSequencerOracle);
   }
 
   /// @inheritdoc IPriceOracleSentinel
-  function setGracePeriod(uint256 newGracePeriod) public onlyRiskOrPoolAdmins {
+  function setGracePeriod(uint256 newGracePeriod) external onlyRiskOrPoolAdmins {
     _gracePeriod = newGracePeriod;
     emit GracePeriodUpdated(newGracePeriod);
   }
 
   /// @inheritdoc IPriceOracleSentinel
-  function getSequencerOracle() public view returns (address) {
+  function getSequencerOracle() external view returns (address) {
     return address(_sequencerOracle);
   }
 
   /// @inheritdoc IPriceOracleSentinel
-  function getGracePeriod() public view returns (uint256) {
+  function getGracePeriod() external view returns (uint256) {
     return _gracePeriod;
   }
 }
