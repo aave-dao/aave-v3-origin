@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import '../../interfaces/IMarketReportTypes.sol';
-import {AaveOracle} from 'aave-v3-core/contracts/misc/AaveOracle.sol';
+import {AaveOracle} from '../../../contracts/misc/AaveOracle.sol';
 
 contract AaveV3OracleProcedure {
   function _deployAaveOracle(

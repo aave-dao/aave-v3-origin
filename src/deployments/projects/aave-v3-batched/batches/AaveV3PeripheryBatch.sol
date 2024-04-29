@@ -4,14 +4,12 @@ pragma solidity ^0.8.0;
 import {AaveV3TreasuryProcedure} from '../../../contracts/procedures/AaveV3TreasuryProcedure.sol';
 import {AaveV3OracleProcedure} from '../../../contracts/procedures/AaveV3OracleProcedure.sol';
 import {AaveV3IncentiveProcedure} from '../../../contracts/procedures/AaveV3IncentiveProcedure.sol';
-import {AaveV3DefaultRateStrategyProcedure} from '../../../contracts/procedures/AaveV3DefaultRateStrategyProcedure.sol';
 import '../../../interfaces/IMarketReportTypes.sol';
 
 contract AaveV3PeripheryBatch is
   AaveV3TreasuryProcedure,
   AaveV3OracleProcedure,
-  AaveV3IncentiveProcedure,
-  AaveV3DefaultRateStrategyProcedure
+  AaveV3IncentiveProcedure
 {
   PeripheryReport internal _report;
 
@@ -34,8 +32,6 @@ contract AaveV3PeripheryBatch is
     (_report.emissionManager, _report.rewardsControllerImplementation) = _deployIncentives(
       setupBatch
     );
-
-    _report.defaultInterestRateStrategyV2 = _deployDefaultRateStrategyV2(poolAddressesProvider);
   }
 
   function getPeripheryReport() external view returns (PeripheryReport memory) {

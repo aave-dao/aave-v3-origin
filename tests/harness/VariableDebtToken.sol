@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {VariableDebtTokenInstance, IPool} from 'aave-v3-core/instances/VariableDebtTokenInstance.sol';
+import {VariableDebtTokenInstance, IPool} from '../../src/contracts/instances/VariableDebtTokenInstance.sol';
 
 contract VariableDebtTokenHarness is VariableDebtTokenInstance {
   constructor(IPool pool) VariableDebtTokenInstance(pool) {}

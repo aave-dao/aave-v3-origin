@@ -1,9 +1,10 @@
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.19;
 pragma experimental ABIEncoderV2;
 
-import {UserConfiguration} from '../munged/core/contracts/protocol/libraries/configuration/UserConfiguration.sol';
-import {DataTypes} from '../munged/core/contracts/protocol/libraries/types/DataTypes.sol';
-import {PoolStorage} from '../munged/core/contracts/protocol/pool/PoolStorage.sol';
+import {UserConfiguration} from '../munged/contracts/protocol/libraries/configuration/UserConfiguration.sol';
+import {DataTypes} from '../munged/contracts/protocol/libraries/types/DataTypes.sol';
+import {PoolStorage} from '../munged/contracts/protocol/pool/PoolStorage.sol';
 
 /*
 A wrapper contract for calling functions from the library UserConfiguration.

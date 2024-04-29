@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Ownable} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/Ownable.sol';
+import {Ownable} from '../../../../contracts/dependencies/openzeppelin/contracts/Ownable.sol';
 import {AaveV3SetupProcedure} from '../../../contracts/procedures/AaveV3SetupProcedure.sol';
 import '../../../contracts/MarketReportStorage.sol';
 
@@ -32,7 +32,8 @@ contract AaveV3SetupBatch is MarketReportStorage, AaveV3SetupProcedure, Ownable 
     address poolConfiguratorImplementation,
     address protocolDataProvider,
     address aaveOracle,
-    address rewardsControllerImplementation
+    address rewardsControllerImplementation,
+    address priceOracleSentinel
   ) external onlyOwner returns (SetupReport memory) {
     _setupReport = _setupAaveV3Market(
       roles,
@@ -42,7 +43,8 @@ contract AaveV3SetupBatch is MarketReportStorage, AaveV3SetupProcedure, Ownable 
       poolConfiguratorImplementation,
       protocolDataProvider,
       aaveOracle,
-      rewardsControllerImplementation
+      rewardsControllerImplementation,
+      priceOracleSentinel
     );
 
     return _setupReport;

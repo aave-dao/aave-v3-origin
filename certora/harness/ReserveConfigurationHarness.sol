@@ -1,8 +1,9 @@
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.19;
 pragma experimental ABIEncoderV2;
 
-import {ReserveConfiguration} from '../munged/core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
-import {DataTypes} from '../munged/core/contracts/protocol/libraries/types/DataTypes.sol';
+import {ReserveConfiguration} from '../munged/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
+import {DataTypes} from '../munged/contracts/protocol/libraries/types/DataTypes.sol';
 
 contract ReserveConfigurationHarness {
   DataTypes.ReserveConfigurationMap public reservesConfig;

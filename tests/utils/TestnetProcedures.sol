@@ -4,23 +4,22 @@ pragma solidity ^0.8.0;
 import 'forge-std/Test.sol';
 
 import '../../src/deployments/interfaces/IMarketReportTypes.sol';
-import {ConfigEngineDeployer} from './ConfigEngineDeployer.sol';
 import {DeployUtils} from '../../src/deployments/contracts/utilities/DeployUtils.sol';
 import {FfiUtils} from '../../src/deployments/contracts/utilities/FfiUtils.sol';
 import {DefaultMarketInput} from '../../src/deployments/inputs/DefaultMarketInput.sol';
 import {AaveV3BatchOrchestration} from '../../src/deployments/projects/aave-v3-batched/AaveV3BatchOrchestration.sol';
-import {IPoolAddressesProvider} from 'aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol';
+import {IPoolAddressesProvider} from '../../src/contracts/interfaces/IPoolAddressesProvider.sol';
 import {AaveV3TestListing} from '../mocks/AaveV3TestListing.sol';
-import {ACLManager, Errors} from 'aave-v3-core/contracts/protocol/configuration/ACLManager.sol';
-import {WETH9} from 'aave-v3-core/contracts/dependencies/weth/WETH9.sol';
-import {TestnetERC20} from 'aave-v3-periphery/contracts/mocks/testnet-helpers/TestnetERC20.sol';
-import {PoolConfigurator} from 'aave-v3-core/contracts/protocol/pool/PoolConfigurator.sol';
-import {DefaultReserveInterestRateStrategyV2} from 'aave-v3-core/contracts/protocol/pool/DefaultReserveInterestRateStrategyV2.sol';
-import {ReserveConfiguration} from 'aave-v3-core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
-import {PercentageMath} from 'aave-v3-core/contracts/protocol/libraries/math/PercentageMath.sol';
-import {AaveProtocolDataProvider} from 'aave-v3-core/contracts/misc/AaveProtocolDataProvider.sol';
+import {ACLManager, Errors} from '../../src/contracts/protocol/configuration/ACLManager.sol';
+import {WETH9} from '../../src/contracts/dependencies/weth/WETH9.sol';
+import {TestnetERC20} from '../../src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
+import {PoolConfigurator} from '../../src/contracts/protocol/pool/PoolConfigurator.sol';
+import {DefaultReserveInterestRateStrategyV2} from '../../src/contracts/misc/DefaultReserveInterestRateStrategyV2.sol';
+import {ReserveConfiguration} from '../../src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
+import {PercentageMath} from '../../src/contracts/protocol/libraries/math/PercentageMath.sol';
+import {AaveProtocolDataProvider} from '../../src/contracts/helpers/AaveProtocolDataProvider.sol';
 import {MarketReportUtils} from '../../src/deployments/contracts/utilities/MarketReportUtils.sol';
-import {AaveV3ConfigEngine, IAaveV3ConfigEngine} from 'aave-v3-periphery/contracts/v3-config-engine/AaveV3ConfigEngine.sol';
+import {AaveV3ConfigEngine, IAaveV3ConfigEngine} from '../../src/contracts/extensions/v3-config-engine/AaveV3ConfigEngine.sol';
 
 struct TestVars {
   string aTokenName;
@@ -111,8 +110,13 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
       MarketReport memory deployedContracts
     ) = _getMarketInput(poolAdmin);
     roleList = roles;
-
     flags.l2 = l2;
+
+    // Etch the create2 factory
+    vm.etch(
+      0x914d7Fec6aaC8cd542e72Bca78B30650d45643d7,
+      hex'7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe03601600081602082378035828234f58015156039578182fd5b8082525050506014600cf3'
+    );
 
     (report, tokenList) = deployAaveV3TestnetAssets(
       poolAdmin,
@@ -218,10 +222,8 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
 
     MarketReport memory r = deployAaveV3Testnet(deployer, roles, config, flags, deployedContracts);
 
-    address engine = ConfigEngineDeployer.deployEngine(vm, r);
-
     AaveV3TestListing testnetListingPayload = new AaveV3TestListing(
-      IAaveV3ConfigEngine(engine),
+      IAaveV3ConfigEngine(r.configEngine),
       roles.poolAdmin,
       assetsList.weth,
       r
@@ -298,7 +300,7 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
       t.variableDebtSymbol = _concatStr('varDebtMISC ', x);
       t.stableDebtName = _concatStr('Stable Debt Misc ', x);
       t.stableDebtSymbol = _concatStr('stableDebtMISC ', x);
-      t.rateStrategy = r.defaultInterestRateStrategyV2;
+      t.rateStrategy = r.defaultInterestRateStrategy;
       t.interestRateData = abi.encode(
         IDefaultInterestRateStrategyV2.InterestRateData({
           optimalUsageRatio: 80_00,

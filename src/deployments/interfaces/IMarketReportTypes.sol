@@ -1,27 +1,28 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-import 'aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol';
-import 'aave-v3-core/contracts/interfaces/IPoolAddressesProviderRegistry.sol';
-import 'aave-v3-core/contracts/interfaces/IPool.sol';
-import 'aave-v3-core/contracts/interfaces/IPoolConfigurator.sol';
-import 'aave-v3-core/contracts/interfaces/IAaveOracle.sol';
-import 'aave-v3-core/contracts/interfaces/IAToken.sol';
-import 'aave-v3-core/contracts/interfaces/IVariableDebtToken.sol';
-import 'aave-v3-core/contracts/interfaces/IStableDebtToken.sol';
-import 'aave-v3-core/contracts/interfaces/IACLManager.sol';
-import 'aave-v3-core/contracts/interfaces/IDefaultInterestRateStrategyV2.sol';
-import 'aave-v3-core/contracts/misc/AaveProtocolDataProvider.sol';
-import 'aave-v3-periphery/contracts/misc/UiPoolDataProviderV3.sol';
-import 'aave-v3-periphery/contracts/misc/UiIncentiveDataProviderV3.sol';
-import 'aave-v3-periphery/contracts/rewards/interfaces/IEmissionManager.sol';
-import 'aave-v3-periphery/contracts/rewards/interfaces/IRewardsController.sol';
-import 'aave-v3-periphery/contracts/misc/WalletBalanceProvider.sol';
-import 'aave-v3-periphery/contracts/adapters/paraswap/ParaSwapLiquiditySwapAdapter.sol';
-import 'aave-v3-periphery/contracts/adapters/paraswap/ParaSwapRepayAdapter.sol';
-import 'aave-v3-periphery/contracts/adapters/paraswap/ParaSwapWithdrawSwapAdapter.sol';
-import 'aave-v3-periphery/contracts/misc/interfaces/IWrappedTokenGatewayV3.sol';
-import 'aave-v3-core/contracts/misc/L2Encoder.sol';
-import {ICollector} from 'aave-v3-periphery/contracts/treasury/ICollector.sol';
+
+import '../../contracts/interfaces/IPoolAddressesProvider.sol';
+import '../../contracts/interfaces/IPoolAddressesProviderRegistry.sol';
+import '../../contracts/interfaces/IPool.sol';
+import '../../contracts/interfaces/IPoolConfigurator.sol';
+import '../../contracts/interfaces/IAaveOracle.sol';
+import '../../contracts/interfaces/IAToken.sol';
+import '../../contracts/interfaces/IVariableDebtToken.sol';
+import '../../contracts/interfaces/IStableDebtToken.sol';
+import '../../contracts/interfaces/IACLManager.sol';
+import '../../contracts/interfaces/IDefaultInterestRateStrategyV2.sol';
+import '../../contracts/helpers/AaveProtocolDataProvider.sol';
+import '../../contracts/helpers/UiPoolDataProviderV3.sol';
+import '../../contracts/helpers/UiIncentiveDataProviderV3.sol';
+import '../../contracts/rewards/interfaces/IEmissionManager.sol';
+import '../../contracts/rewards/interfaces/IRewardsController.sol';
+import '../../contracts/helpers/WalletBalanceProvider.sol';
+import '../../contracts/extensions/paraswap-adapters/ParaSwapLiquiditySwapAdapter.sol';
+import '../../contracts/extensions/paraswap-adapters/ParaSwapRepayAdapter.sol';
+import '../../contracts/extensions/paraswap-adapters/ParaSwapWithdrawSwapAdapter.sol';
+import '../../contracts/helpers/interfaces/IWrappedTokenGatewayV3.sol';
+import '../../contracts/helpers/L2Encoder.sol';
+import {ICollector} from '../../contracts/treasury/ICollector.sol';
 import {ProxyAdmin} from 'solidity-utils/contracts/transparent-proxy/ProxyAdmin.sol';
 
 struct ContractsReport {
@@ -35,7 +36,7 @@ struct ContractsReport {
   IAaveOracle aaveOracle;
   IACLManager aclManager;
   ICollector treasury;
-  IDefaultInterestRateStrategyV2 defaultInterestRateStrategyV2;
+  IDefaultInterestRateStrategyV2 defaultInterestRateStrategy;
   ProxyAdmin proxyAdmin;
   ICollector treasuryImplementation;
   IWrappedTokenGatewayV3 wrappedTokenGateway;
@@ -63,7 +64,8 @@ struct MarketReport {
   address poolConfiguratorImplementation;
   address protocolDataProvider;
   address aaveOracle;
-  address defaultInterestRateStrategyV2;
+  address defaultInterestRateStrategy;
+  address priceOracleSentinel;
   address aclManager;
   address treasury;
   address proxyAdmin;
@@ -83,6 +85,11 @@ struct MarketReport {
   address emissionManager;
   address rewardsControllerImplementation;
   address rewardsControllerProxy;
+  address configEngine;
+  address transparentProxyFactory;
+  address staticATokenFactoryImplementation;
+  address staticATokenFactoryProxy;
+  address staticATokenImplementation;
 }
 
 struct LibrariesReport {
@@ -109,6 +116,8 @@ struct MarketConfig {
   uint8 oracleDecimals;
   address paraswapAugustusRegistry;
   address paraswapFeeClaimer;
+  address l2SequencerUptimeFeed;
+  uint256 l2PriceOracleSentinelGracePeriod;
   uint256 providerId;
   bytes32 salt;
   address wrappedNativeToken;
@@ -124,6 +133,29 @@ struct DeployFlags {
 struct PoolReport {
   address poolImplementation;
   address poolConfiguratorImplementation;
+}
+
+struct MiscReport {
+  address priceOracleSentinel;
+  address defaultInterestRateStrategy;
+}
+
+struct ConfigEngineReport {
+  address configEngine;
+  address listingEngine;
+  address eModeEngine;
+  address borrowEngine;
+  address collateralEngine;
+  address priceFeedEngine;
+  address rateEngine;
+  address capsEngine;
+}
+
+struct StaticATokenReport {
+  address transparentProxyFactory;
+  address staticATokenImplementation;
+  address staticATokenFactoryImplementation;
+  address staticATokenFactoryProxy;
 }
 
 struct InitialReport {
@@ -145,7 +177,6 @@ struct PeripheryReport {
   address treasuryImplementation;
   address emissionManager;
   address rewardsControllerImplementation;
-  address defaultInterestRateStrategyV2;
 }
 
 struct ParaswapReport {

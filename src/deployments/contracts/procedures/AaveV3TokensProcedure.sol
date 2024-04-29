@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {ATokenInstance} from 'aave-v3-core/instances/ATokenInstance.sol';
-import {VariableDebtTokenInstance} from 'aave-v3-core/instances/VariableDebtTokenInstance.sol';
-import {StableDebtTokenInstance} from 'aave-v3-core/instances/StableDebtTokenInstance.sol';
-import {IPool} from 'aave-v3-core/contracts/interfaces/IPool.sol';
-import {IAaveIncentivesController} from 'aave-v3-core/contracts/interfaces/IAaveIncentivesController.sol';
+import {ATokenInstance} from '../../../contracts/instances/ATokenInstance.sol';
+import {VariableDebtTokenInstance} from '../../../contracts/instances/VariableDebtTokenInstance.sol';
+import {StableDebtTokenInstance} from '../../../contracts/instances/StableDebtTokenInstance.sol';
+import {IPool} from '../../../contracts/interfaces/IPool.sol';
+import {IAaveIncentivesController} from '../../../contracts/interfaces/IAaveIncentivesController.sol';
 
 contract AaveV3TokensProcedure {
   struct TokensReport {
