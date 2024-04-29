@@ -35,7 +35,10 @@ contract StataOracleTest is BaseTest {
       uint256 underlyingPrice = contracts.aaveOracle.getAssetPrice(underlying);
 
       assertGe(stataPrice, underlyingPrice);
-      assertEq(stataPrice, (underlyingPrice * StaticATokenLM(staticAToken).convertToAssets(1e18)) / 1e18);
+      assertEq(
+        stataPrice,
+        (underlyingPrice * StaticATokenLM(staticAToken).convertToAssets(1e18)) / 1e18
+      );
     }
   }
 

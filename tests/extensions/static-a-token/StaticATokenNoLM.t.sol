@@ -8,7 +8,6 @@ import {BaseTest, IERC20} from './TestBase.sol';
  * This is a slightly different assumption than a pool that doesn't have LM enabled any more as incentivesController.rewardTokens() will have length=0
  */
 contract StaticATokenNoLMTest is BaseTest {
-
   function setUp() public override {
     super.setUp();
 

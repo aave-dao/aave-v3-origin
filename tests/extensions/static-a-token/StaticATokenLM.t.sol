@@ -464,13 +464,7 @@ contract StaticATokenLMTest is BaseTest {
     POOL.deposit(address(wbtc), 2_000e8, borrowUser, 0);
 
     // borrow all available
-    POOL.borrow(
-      UNDERLYING,
-      underlyingBalanceBefore - (maxRedeemBefore / 2),
-      2,
-      0,
-      borrowUser
-    );
+    POOL.borrow(UNDERLYING, underlyingBalanceBefore - (maxRedeemBefore / 2), 2, 0, borrowUser);
 
     uint256 maxRedeemAfter = staticATokenLM.previewRedeem(staticATokenLM.maxRedeem(address(user)));
     assertApproxEqAbs(maxRedeemAfter, (maxRedeemBefore / 2), 1);
@@ -581,7 +575,9 @@ contract StaticATokenLMTest is BaseTest {
     TestnetERC20(REWARD_TOKEN).mint(EMISSION_ADMIN, 10_000 ether);
     vm.stopPrank();
 
-    RewardsDataTypes.RewardsConfigInput[] memory config = new RewardsDataTypes.RewardsConfigInput[](1);
+    RewardsDataTypes.RewardsConfigInput[] memory config = new RewardsDataTypes.RewardsConfigInput[](
+      1
+    );
     config[0] = RewardsDataTypes.RewardsConfigInput(
       0.00385 ether,
       10_000 ether,

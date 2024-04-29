@@ -31,11 +31,7 @@ contract PoolConfiguratorUpgradeabilityTests is TestnetProcedures {
     address newStrategy
   );
 
-  event ReserveInterestRateDataChanged(
-    address indexed asset,
-    address indexed strategy,
-    bytes data
-  );
+  event ReserveInterestRateDataChanged(address indexed asset, address indexed strategy, bytes data);
 
   event ATokenUpgraded(
     address indexed asset,
@@ -99,7 +95,11 @@ contract PoolConfiguratorUpgradeabilityTests is TestnetProcedures {
     bytes memory newInterestRateData = _getDefaultInterestRatesStrategyData();
 
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit ReserveInterestRateDataChanged(tokenList.usdx, currentInterestRateStrategy, newInterestRateData);
+    emit ReserveInterestRateDataChanged(
+      tokenList.usdx,
+      currentInterestRateStrategy,
+      newInterestRateData
+    );
 
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setReserveInterestRateData(

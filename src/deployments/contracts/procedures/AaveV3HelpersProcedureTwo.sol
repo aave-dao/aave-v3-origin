@@ -17,10 +17,7 @@ contract AaveV3HelpersProcedureTwo is IErrors {
 
     staticATokenReport.transparentProxyFactory = address(new TransparentProxyFactory());
     staticATokenReport.staticATokenImplementation = address(
-      new StaticATokenLM(
-        IPool(pool),
-        IRewardsController(rewardsController)
-      )
+      new StaticATokenLM(IPool(pool), IRewardsController(rewardsController))
     );
     staticATokenReport.staticATokenFactoryImplementation = address(
       new StaticATokenFactory(
@@ -31,11 +28,13 @@ contract AaveV3HelpersProcedureTwo is IErrors {
       )
     );
 
-    staticATokenReport.staticATokenFactoryProxy = ITransparentProxyFactory(staticATokenReport.transparentProxyFactory).create(
-      staticATokenReport.staticATokenFactoryImplementation,
-      proxyAdmin,
-      abi.encodeWithSelector(StaticATokenFactory.initialize.selector)
-    );
+    staticATokenReport.staticATokenFactoryProxy = ITransparentProxyFactory(
+      staticATokenReport.transparentProxyFactory
+    ).create(
+        staticATokenReport.staticATokenFactoryImplementation,
+        proxyAdmin,
+        abi.encodeWithSelector(StaticATokenFactory.initialize.selector)
+      );
 
     return staticATokenReport;
   }

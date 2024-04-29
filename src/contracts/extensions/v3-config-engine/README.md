@@ -35,7 +35,7 @@ Change eMode category of a particular asset? Same as previous, just define the u
 ### Internal aspects to consider
 
 - Frequently, at the same time that you want to do an update of parameters or listing, you also want to do something extra before or after.
-The `Base Aave v3 Payload` defines `_preExecute()` and `_postExecute()` hook functions, that you can redefine on your payload and will the execute before and after all configs changes/listings you define.
+  The `Base Aave v3 Payload` defines `_preExecute()` and `_postExecute()` hook functions, that you can redefine on your payload and will the execute before and after all configs changes/listings you define.
 
 - The payload also allow you to group changes of parameters and listings, just by defining at the same time the aforementioned `newListings()`, `capsUpdate()` and/or `collateralsUpdates()` and so on. For reference, the execution ordering is the following:
   1. `_preExecute()`
@@ -51,6 +51,7 @@ The `Base Aave v3 Payload` defines `_preExecute()` and `_postExecute()` hook fun
   11. `_postExecute()`
 
 ## Links to examples
+
 - [Simple mock listing on Aave v3](../../../../tests/helpers/v3-config-engine/mocks/AaveV3MockListing.sol)
 - [Simple custom mock listing on Aave V3 with custom token impl](../../../../tests/helpers/v3-config-engine/mocks/AaveV3MockListingCustom.sol)
 - [Mock e-mode category update on Aave V3](../../../../tests/helpers/v3-config-engine/mocks/AaveV3MockEModeCategoryUpdate.sol)

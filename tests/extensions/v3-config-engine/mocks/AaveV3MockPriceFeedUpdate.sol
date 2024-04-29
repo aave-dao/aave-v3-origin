@@ -13,7 +13,11 @@ contract AaveV3MockPriceFeedUpdate is AaveV3Payload {
   address public immutable ASSET_ADDRESS;
   address public immutable ASSET_FEED;
 
-  constructor(address assetAddress, address feed, address customEngine) AaveV3Payload(IEngine(customEngine)) {
+  constructor(
+    address assetAddress,
+    address feed,
+    address customEngine
+  ) AaveV3Payload(IEngine(customEngine)) {
     ASSET_ADDRESS = assetAddress;
     ASSET_FEED = feed;
   }
@@ -21,10 +25,7 @@ contract AaveV3MockPriceFeedUpdate is AaveV3Payload {
   function priceFeedsUpdates() public view override returns (IEngine.PriceFeedUpdate[] memory) {
     IEngine.PriceFeedUpdate[] memory priceFeedsUpdate = new IEngine.PriceFeedUpdate[](1);
 
-    priceFeedsUpdate[0] = IEngine.PriceFeedUpdate({
-      asset: ASSET_ADDRESS,
-      priceFeed: ASSET_FEED
-    });
+    priceFeedsUpdate[0] = IEngine.PriceFeedUpdate({asset: ASSET_ADDRESS, priceFeed: ASSET_FEED});
 
     return priceFeedsUpdate;
   }

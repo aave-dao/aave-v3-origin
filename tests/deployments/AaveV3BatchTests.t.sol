@@ -96,12 +96,8 @@ contract AaveV3BatchTests is BatchTestProcedures {
       miscReport,
       tokensReport,
       paraswapReportOne,
-    ) = deployAndSetup(
-      roles,
-      config,
-      flags,
-      deployedContracts
-    );
+
+    ) = deployAndSetup(roles, config, flags, deployedContracts);
   }
 
   function testAaveV3FullBatchOrchestration() public {

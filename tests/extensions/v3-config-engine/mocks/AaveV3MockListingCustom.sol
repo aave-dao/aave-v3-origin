@@ -16,7 +16,14 @@ contract AaveV3MockListingCustom is AaveV3Payload {
   address public immutable V_TOKEN_IMPL;
   address public immutable S_TOKEN_IMPL;
 
-  constructor(address assetAddress, address assetFeed, address customEngine, address aTokenImpl, address vTokenImpl, address sTokenImpl) AaveV3Payload(IEngine(customEngine)) {
+  constructor(
+    address assetAddress,
+    address assetFeed,
+    address customEngine,
+    address aTokenImpl,
+    address vTokenImpl,
+    address sTokenImpl
+  ) AaveV3Payload(IEngine(customEngine)) {
     ASSET_ADDRESS = assetAddress;
     ASSET_FEED = assetFeed;
     A_TOKEN_IMPL = aTokenImpl;

@@ -53,12 +53,7 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
   );
 
   function testListings() public {
-    address asset = address(new TestnetERC20(
-      '1INCH',
-      '1INCH',
-      18,
-      address(this)
-    ));
+    address asset = address(new TestnetERC20('1INCH', '1INCH', 18, address(this)));
 
     address feed = address(new MockAggregator(int256(25e8)));
     AaveV3MockListing payload = new AaveV3MockListing(asset, feed, configEngine);
@@ -133,27 +128,35 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
       AaveV3ConfigEngine(configEngine).DEFAULT_INTEREST_RATE_STRATEGY(),
       IDefaultInterestRateStrategyV2.InterestRateDataRay({
         optimalUsageRatio: _bpsToRay(payload.newListings()[0].rateStrategyParams.optimalUsageRatio),
-        baseVariableBorrowRate: _bpsToRay(payload.newListings()[0].rateStrategyParams.baseVariableBorrowRate),
-        variableRateSlope1: _bpsToRay(payload.newListings()[0].rateStrategyParams.variableRateSlope1),
-        variableRateSlope2: _bpsToRay(payload.newListings()[0].rateStrategyParams.variableRateSlope2)
+        baseVariableBorrowRate: _bpsToRay(
+          payload.newListings()[0].rateStrategyParams.baseVariableBorrowRate
+        ),
+        variableRateSlope1: _bpsToRay(
+          payload.newListings()[0].rateStrategyParams.variableRateSlope1
+        ),
+        variableRateSlope2: _bpsToRay(
+          payload.newListings()[0].rateStrategyParams.variableRateSlope2
+        )
       })
     );
   }
 
   function testListingsCustom() public {
-    address asset = address(new TestnetERC20(
-      'PSP',
-      'PSP',
-      18,
-      address(this)
-    ));
+    address asset = address(new TestnetERC20('PSP', 'PSP', 18, address(this)));
 
     address feed = address(new MockAggregator(int256(15e8)));
     address aTokenImpl = address(new ATokenInstance(contracts.poolProxy));
     address vTokenImpl = address(new VariableDebtTokenInstance(contracts.poolProxy));
     address sTokenImpl = address(new StableDebtTokenInstance(contracts.poolProxy));
 
-    AaveV3MockListingCustom payload = new AaveV3MockListingCustom(asset, feed, configEngine, aTokenImpl, vTokenImpl, sTokenImpl);
+    AaveV3MockListingCustom payload = new AaveV3MockListingCustom(
+      asset,
+      feed,
+      configEngine,
+      aTokenImpl,
+      vTokenImpl,
+      sTokenImpl
+    );
 
     vm.prank(roleList.marketOwner);
     contracts.aclManager.addPoolAdmin(address(payload));
@@ -224,10 +227,18 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
       contracts.protocolDataProvider.getInterestRateStrategyAddress(asset),
       AaveV3ConfigEngine(configEngine).DEFAULT_INTEREST_RATE_STRATEGY(),
       IDefaultInterestRateStrategyV2.InterestRateDataRay({
-        optimalUsageRatio: _bpsToRay(payload.newListingsCustom()[0].base.rateStrategyParams.optimalUsageRatio),
-        baseVariableBorrowRate: _bpsToRay(payload.newListingsCustom()[0].base.rateStrategyParams.baseVariableBorrowRate),
-        variableRateSlope1: _bpsToRay(payload.newListingsCustom()[0].base.rateStrategyParams.variableRateSlope1),
-        variableRateSlope2: _bpsToRay(payload.newListingsCustom()[0].base.rateStrategyParams.variableRateSlope2)
+        optimalUsageRatio: _bpsToRay(
+          payload.newListingsCustom()[0].base.rateStrategyParams.optimalUsageRatio
+        ),
+        baseVariableBorrowRate: _bpsToRay(
+          payload.newListingsCustom()[0].base.rateStrategyParams.baseVariableBorrowRate
+        ),
+        variableRateSlope1: _bpsToRay(
+          payload.newListingsCustom()[0].base.rateStrategyParams.variableRateSlope1
+        ),
+        variableRateSlope2: _bpsToRay(
+          payload.newListingsCustom()[0].base.rateStrategyParams.variableRateSlope2
+        )
       })
     );
   }
@@ -252,16 +263,14 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
       IPool(address(contracts.poolProxy))
     );
 
-    ReserveConfig memory expectedAssetConfig = _findReserveConfig(
-      allConfigsBefore,
-      asset
-    );
+    ReserveConfig memory expectedAssetConfig = _findReserveConfig(allConfigsBefore, asset);
 
     diffReports('preTestEngineCaps', 'postTestEngineCaps');
 
     expectedAssetConfig.supplyCap = 1_000_000;
     _validateReserveConfig(expectedAssetConfig, allConfigsAfter);
   }
+
   function testCollateralsUpdates() public {
     // this asset has been listed before
     address asset = tokenList.usdx;
@@ -282,10 +291,7 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
       IPool(address(contracts.poolProxy))
     );
 
-    ReserveConfig memory expectedAssetConfig = _findReserveConfig(
-      allConfigsBefore,
-      asset
-    );
+    ReserveConfig memory expectedAssetConfig = _findReserveConfig(allConfigsBefore, asset);
 
     diffReports('preTestEngineCollateral', 'postTestEngineCollateral');
 
@@ -305,7 +311,10 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
   function testFailCollateralsUpdatesNoChange() public {
     // this asset has been listed before
     address asset = tokenList.usdx;
-    AaveV3MockCollateralUpdateNoChange payload = new AaveV3MockCollateralUpdateNoChange(asset, configEngine);
+    AaveV3MockCollateralUpdateNoChange payload = new AaveV3MockCollateralUpdateNoChange(
+      asset,
+      configEngine
+    );
 
     vm.prank(roleList.marketOwner);
     contracts.aclManager.addPoolAdmin(address(payload));
@@ -329,7 +338,10 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
   function testCollateralsUpdatesNoChange() public {
     // this asset has been listed before
     address asset = tokenList.usdx;
-    AaveV3MockCollateralUpdateNoChange payload = new AaveV3MockCollateralUpdateNoChange(asset, configEngine);
+    AaveV3MockCollateralUpdateNoChange payload = new AaveV3MockCollateralUpdateNoChange(
+      asset,
+      configEngine
+    );
 
     vm.prank(roleList.marketOwner);
     contracts.aclManager.addPoolAdmin(address(payload));
@@ -348,17 +360,17 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
 
     diffReports('preTestEngineCollateralNoChange', 'postTestEngineCollateralNoChange');
 
-    ReserveConfig memory expectedAssetConfig = _findReserveConfig(
-      allConfigsBefore,
-      asset
-    );
+    ReserveConfig memory expectedAssetConfig = _findReserveConfig(allConfigsBefore, asset);
 
     _validateReserveConfig(expectedAssetConfig, allConfigsAfter);
   }
 
   function testCollateralUpdateWrongBonus() public {
     address asset = tokenList.usdx;
-    AaveV3MockCollateralUpdateWrongBonus payload = new AaveV3MockCollateralUpdateWrongBonus(asset, configEngine);
+    AaveV3MockCollateralUpdateWrongBonus payload = new AaveV3MockCollateralUpdateWrongBonus(
+      asset,
+      configEngine
+    );
 
     vm.prank(roleList.marketOwner);
     contracts.aclManager.addPoolAdmin(address(payload));
@@ -369,7 +381,10 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
 
   function testCollateralUpdateCorrectBonus() public {
     address asset = tokenList.usdx;
-    AaveV3MockCollateralUpdateCorrectBonus payload = new AaveV3MockCollateralUpdateCorrectBonus(asset, configEngine);
+    AaveV3MockCollateralUpdateCorrectBonus payload = new AaveV3MockCollateralUpdateCorrectBonus(
+      asset,
+      configEngine
+    );
 
     vm.prank(roleList.marketOwner);
     contracts.aclManager.addPoolAdmin(address(payload));
@@ -388,10 +403,7 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
 
     diffReports('preTestEngineCollateralEdgeBonus', 'postTestEngineCollateralEdgeBonus');
 
-    ReserveConfig memory expectedAssetConfig = _findReserveConfig(
-      allConfigsBefore,
-      asset
-    );
+    ReserveConfig memory expectedAssetConfig = _findReserveConfig(allConfigsBefore, asset);
     expectedAssetConfig.ltv = 62_00;
     expectedAssetConfig.liquidationThreshold = 90_00;
     expectedAssetConfig.liquidationBonus = 111_00; // 100_00 + 11_00
@@ -420,10 +432,7 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
 
     diffReports('preTestEngineBorrow', 'postTestEngineBorrow');
 
-    ReserveConfig memory expectedAssetConfig = _findReserveConfig(
-      allConfigsBefore,
-      asset
-    );
+    ReserveConfig memory expectedAssetConfig = _findReserveConfig(allConfigsBefore, asset);
     expectedAssetConfig.reserveFactor = 15_00;
     expectedAssetConfig.borrowingEnabled = true;
     expectedAssetConfig.isFlashloanable = false;
@@ -433,7 +442,10 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
 
   function testBorrowUpdatesNoChange() public {
     address asset = tokenList.usdx;
-    AaveV3MockBorrowUpdateNoChange payload = new AaveV3MockBorrowUpdateNoChange(asset, configEngine);
+    AaveV3MockBorrowUpdateNoChange payload = new AaveV3MockBorrowUpdateNoChange(
+      asset,
+      configEngine
+    );
 
     vm.prank(roleList.marketOwner);
     contracts.aclManager.addPoolAdmin(address(payload));
@@ -452,10 +464,7 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
 
     diffReports('preTestEngineBorrowNoChange', 'postTestEngineBorrowNoChange');
 
-    ReserveConfig memory expectedAssetConfig = _findReserveConfig(
-      allConfigsBefore,
-      asset
-    );
+    ReserveConfig memory expectedAssetConfig = _findReserveConfig(allConfigsBefore, asset);
 
     _validateReserveConfig(expectedAssetConfig, allConfigsAfter);
   }
@@ -467,17 +476,11 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
     vm.prank(roleList.marketOwner);
     contracts.aclManager.addPoolAdmin(address(payload));
 
-    createConfigurationSnapshot(
-      'preTestEngineRates',
-      IPool(address(contracts.poolProxy))
-    );
+    createConfigurationSnapshot('preTestEngineRates', IPool(address(contracts.poolProxy)));
 
     payload.execute();
 
-    createConfigurationSnapshot(
-      'postTestEngineRates',
-      IPool(address(contracts.poolProxy))
-    );
+    createConfigurationSnapshot('postTestEngineRates', IPool(address(contracts.poolProxy)));
 
     diffReports('preTestEngineRates', 'postTestEngineRates');
 
@@ -487,7 +490,9 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
       AaveV3ConfigEngine(configEngine).DEFAULT_INTEREST_RATE_STRATEGY(),
       IDefaultInterestRateStrategyV2.InterestRateDataRay({
         optimalUsageRatio: _bpsToRay(payload.rateStrategiesUpdates()[0].params.optimalUsageRatio),
-        baseVariableBorrowRate: _bpsToRay(payload.rateStrategiesUpdates()[0].params.baseVariableBorrowRate),
+        baseVariableBorrowRate: _bpsToRay(
+          payload.rateStrategiesUpdates()[0].params.baseVariableBorrowRate
+        ),
         variableRateSlope1: _bpsToRay(payload.rateStrategiesUpdates()[0].params.variableRateSlope1),
         variableRateSlope2: _bpsToRay(payload.rateStrategiesUpdates()[0].params.variableRateSlope2)
       })
@@ -502,17 +507,11 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
     vm.prank(roleList.marketOwner);
     contracts.aclManager.addPoolAdmin(address(payload));
 
-    createConfigurationSnapshot(
-      'preTestEnginePriceFeed',
-      IPool(address(contracts.poolProxy))
-    );
+    createConfigurationSnapshot('preTestEnginePriceFeed', IPool(address(contracts.poolProxy)));
 
     payload.execute();
 
-    createConfigurationSnapshot(
-      'postTestEnginePriceFeed',
-      IPool(address(contracts.poolProxy))
-    );
+    createConfigurationSnapshot('postTestEnginePriceFeed', IPool(address(contracts.poolProxy)));
 
     diffReports('preTestEnginePriceFeed', 'postTestEnginePriceFeed');
 
@@ -552,11 +551,17 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
     prevEmodeCategoryData.priceSource = address(0);
     prevEmodeCategoryData.label = 'ETH Correlated';
 
-    _validateEmodeCategory(IPoolAddressesProvider(address(contracts.poolAddressesProvider)), 1, prevEmodeCategoryData);
+    _validateEmodeCategory(
+      IPoolAddressesProvider(address(contracts.poolAddressesProvider)),
+      1,
+      prevEmodeCategoryData
+    );
   }
 
   function testEModeCategoryUpdatesWrongBonus() public {
-    AaveV3MockEModeCategoryUpdateEdgeBonus payload = new AaveV3MockEModeCategoryUpdateEdgeBonus(configEngine);
+    AaveV3MockEModeCategoryUpdateEdgeBonus payload = new AaveV3MockEModeCategoryUpdateEdgeBonus(
+      configEngine
+    );
 
     vm.prank(roleList.marketOwner);
     contracts.aclManager.addPoolAdmin(address(payload));
@@ -567,9 +572,13 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
 
   // TODO manage this after testFail* deprecation.
   function testFailEModeCategoryUpdatesNoChange() public {
-    AaveV3MockEModeCategoryUpdateNoChange payload = new AaveV3MockEModeCategoryUpdateNoChange(configEngine);
+    AaveV3MockEModeCategoryUpdateNoChange payload = new AaveV3MockEModeCategoryUpdateNoChange(
+      configEngine
+    );
 
-    DataTypes.EModeCategory memory eModeCategoryDataBefore = contracts.poolProxy.getEModeCategoryData(1);
+    DataTypes.EModeCategory memory eModeCategoryDataBefore = contracts
+      .poolProxy
+      .getEModeCategoryData(1);
 
     vm.prank(roleList.marketOwner);
     contracts.aclManager.addPoolAdmin(address(payload));
@@ -588,18 +597,28 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
 
   // Same as testFailEModeCategoryUpdatesNoChange, but this time should work, as we are not expecting any event emitted
   function testEModeCategoryUpdatesNoChange() public {
-    AaveV3MockEModeCategoryUpdateNoChange payload = new AaveV3MockEModeCategoryUpdateNoChange(configEngine);
+    AaveV3MockEModeCategoryUpdateNoChange payload = new AaveV3MockEModeCategoryUpdateNoChange(
+      configEngine
+    );
 
-    DataTypes.EModeCategory memory eModeCategoryDataBefore = contracts.poolProxy.getEModeCategoryData(1);
+    DataTypes.EModeCategory memory eModeCategoryDataBefore = contracts
+      .poolProxy
+      .getEModeCategoryData(1);
 
     vm.prank(roleList.marketOwner);
     contracts.aclManager.addPoolAdmin(address(payload));
 
-    createConfigurationSnapshot('preTestEngineEModeCategoryNoChange', IPool(address(contracts.poolProxy)));
+    createConfigurationSnapshot(
+      'preTestEngineEModeCategoryNoChange',
+      IPool(address(contracts.poolProxy))
+    );
 
     payload.execute();
 
-    createConfigurationSnapshot('postTestEngineEModeCategoryNoChange', IPool(address(contracts.poolProxy)));
+    createConfigurationSnapshot(
+      'postTestEngineEModeCategoryNoChange',
+      IPool(address(contracts.poolProxy))
+    );
 
     diffReports('preTestEngineEModeCategoryNoChange', 'postTestEngineEModeCategoryNoChange');
 
@@ -610,13 +629,19 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
     prevEmodeCategoryData.priceSource = eModeCategoryDataBefore.priceSource;
     prevEmodeCategoryData.label = eModeCategoryDataBefore.label;
 
-    _validateEmodeCategory(IPoolAddressesProvider(address(contracts.poolAddressesProvider)), 1, prevEmodeCategoryData);
+    _validateEmodeCategory(
+      IPoolAddressesProvider(address(contracts.poolAddressesProvider)),
+      1,
+      prevEmodeCategoryData
+    );
   }
 
   function testAssetEModeUpdates() public {
     address asset = tokenList.usdx;
 
-    AaveV3MockEModeCategoryUpdate payloadToAddEMode = new AaveV3MockEModeCategoryUpdate(configEngine);
+    AaveV3MockEModeCategoryUpdate payloadToAddEMode = new AaveV3MockEModeCategoryUpdate(
+      configEngine
+    );
     AaveV3MockAssetEModeUpdate payload = new AaveV3MockAssetEModeUpdate(asset, configEngine);
 
     vm.startPrank(roleList.marketOwner);
@@ -626,19 +651,20 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
 
     payloadToAddEMode.execute();
 
-    createConfigurationSnapshot('preTestEngineAssetEModeUpdate', IPool(address(contracts.poolProxy)));
+    createConfigurationSnapshot(
+      'preTestEngineAssetEModeUpdate',
+      IPool(address(contracts.poolProxy))
+    );
 
     payload.execute();
 
-    createConfigurationSnapshot('postTestEngineAssetEModeUpdate', IPool(address(contracts.poolProxy)));
+    createConfigurationSnapshot(
+      'postTestEngineAssetEModeUpdate',
+      IPool(address(contracts.poolProxy))
+    );
 
     diffReports('preTestEngineAssetEModeUpdate', 'postTestEngineAssetEModeUpdate');
 
-    assertEq(
-      contracts.protocolDataProvider.getReserveEModeCategory(
-        asset
-      ),
-      1
-    );
+    assertEq(contracts.protocolDataProvider.getReserveEModeCategory(asset), 1);
   }
 }
