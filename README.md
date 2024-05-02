@@ -81,7 +81,7 @@ The following are the security procedures historically applied to Aave v3.X vers
 **-> Aave v3.1 - April 2024**
 
 - [Certora](./audits/30-04-2024_Certora_AaveV3.1.pdf)
-- [MixBytes](./audits/02-05-2024_MixBytes_AaveV3.1.pdf) TBA
+- [MixBytes](./audits/02-05-2024_MixBytes_AaveV3.1.pdf)
 - An internal review by [SterMi](https://twitter.com/stermi) on the virtual accounting feature was conducted on an initial phase of the codebase.
 - Additionally, Certora properties have been improved over time since the Aave v3 release. More details [HERE](./certora/README.md).
 
