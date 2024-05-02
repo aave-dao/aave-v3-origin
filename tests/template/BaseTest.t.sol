@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import {TestnetProcedures, IERC20, IAToken} from '../utils/TestnetProcedures.sol';
 
 // Base test to setup the initial config: deploying the protocol contracts and setting them up locally on foundry
+// command to test: make test-contract filter=BaseTest
 contract BaseTest is TestnetProcedures {
   function setUp() public {
     // this method deploys all the protocol contract and does the inital setup.
