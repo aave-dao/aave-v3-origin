@@ -28,7 +28,12 @@ This new feature doesn’t create any incompatibility with Aave v3 integrations,
 
 Given its implications and criticality, virtual accounting can be considered the major feature of Aave 3.1.
 
-_Important_. Virtual balance doesn't fix the imprecision caused by other components of the protocol, its objective is to add stricter validations, reducing any type of vector to the minimum.
+**Misc considerations & acknowledged limitations**
+
+- Virtual balance doesn't fix the imprecision caused by other components of the protocol, its objective is to add stricter validations, reducing any type of attack vector to the minimum.
+- An extra "soft" protection has been added on borrowing actions (flash loan and borrow): the amount borrowed of underlying should not be higher than the aToken supply. The idea behind is to add more defenses on inflation scenarios, even if we are aware total protection is not achieved (e.g. against certain edge iteration vectors).
+  Not using `accruedToTreasury` in the calculation is intentional.
+- The addition of virtual accounting can create a situation over time that more liquidity will be available in the aToken contract than what the the virtual balance allows to withdraw/borrow. This is intended by design.
 
 <br>
 
