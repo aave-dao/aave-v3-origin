@@ -581,7 +581,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
       emit ReservePaused(reserves[x], true);
     }
     vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setPoolPause(true);
+    contracts.poolConfiguratorProxy.setPoolPause(true, 0);
 
     for (uint16 x; x < reserves.length; ++x) {
       bool isPaused = contracts.protocolDataProvider.getPaused(reserves[x]);
@@ -597,7 +597,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
       emit ReservePaused(reserves[x], false);
     }
     vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setPoolPause(false);
+    contracts.poolConfiguratorProxy.setPoolPause(false, 0);
 
     for (uint16 x; x < reserves.length; ++x) {
       bool isPaused = contracts.protocolDataProvider.getPaused(reserves[x]);
@@ -740,7 +740,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
   }
 
   function test_setLiquidationGracePeriodReserve(uint40 gracePeriod) public {
-    vm.assume(gracePeriod < contracts.poolConfiguratorProxy.MAX_GRACE_PERIOD() && gracePeriod != 0);
+    vm.assume(gracePeriod <= contracts.poolConfiguratorProxy.MAX_GRACE_PERIOD());
 
     address asset = tokenList.usdx;
 
