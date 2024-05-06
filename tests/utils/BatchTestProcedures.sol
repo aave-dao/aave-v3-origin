@@ -175,10 +175,7 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
     assertTrue(r.poolConfiguratorImplementation != address(0), 'r.poolConfiguratorImplementation');
     assertTrue(r.protocolDataProvider != address(0), 'report.protocolDataProvider');
     assertTrue(r.aaveOracle != address(0), 'report.aaveOracle');
-    assertTrue(
-      r.defaultInterestRateStrategy != address(0),
-      'report.defaultInterestRateStrategy'
-    );
+    assertTrue(r.defaultInterestRateStrategy != address(0), 'report.defaultInterestRateStrategy');
     assertTrue(r.aclManager != address(0), 'report.aclManager');
     assertTrue(r.treasury != address(0), 'report.treasury');
     assertTrue(r.proxyAdmin != address(0), 'report.proxyAdmin');
