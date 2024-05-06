@@ -10,9 +10,6 @@ import {AaveV3GettersBatchTwo} from '../../src/deployments/projects/aave-v3-batc
 import {AaveV3PeripheryBatch} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3PeripheryBatch.sol';
 import {AaveV3ParaswapBatch} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3ParaswapBatch.sol';
 import {AaveV3SetupBatch} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3SetupBatch.sol';
-import {AaveV3MiscBatch} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3MiscBatch.sol';
-import {AaveV3HelpersBatchOne} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3HelpersBatchOne.sol';
-import {AaveV3HelpersBatchTwo} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3HelpersBatchTwo.sol';
 import {WETH9} from '../../src/contracts/dependencies/weth/WETH9.sol';
 import {AugustusRegistryMock} from '../mocks/AugustusRegistryMock.sol';
 import {MockParaSwapFeeClaimer} from 'src/contracts/mocks/swap/MockParaSwapFeeClaimer.sol';
@@ -37,14 +34,12 @@ contract AaveV3BatchTests is BatchTestProcedures {
 
   PeripheryReport peripheryReportOne;
   ParaswapReport paraswapReportOne;
-  MiscReport miscReport;
-  ConfigEngineReport configEngineReport;
-  StaticATokenReport staticATokenReport;
-  AaveV3TokensBatch.TokensReport tokensReport;
 
   SetupReport setupReportTwo;
 
   AaveV3SetupBatch aaveV3SetupOne;
+
+  event ReportLog(MarketReport report);
 
   function setUp() public {
     deployer = makeAddr('deployer');
@@ -60,8 +55,6 @@ contract AaveV3BatchTests is BatchTestProcedures {
       8,
       address(new AugustusRegistryMock()),
       address(new MockParaSwapFeeClaimer()),
-      address(0), // l2SequencerUptimeFeed
-      0, // l2PriceOracleSentinelGracePeriod
       8080,
       emptySalt,
       address(new WETH9()),
@@ -71,33 +64,20 @@ contract AaveV3BatchTests is BatchTestProcedures {
     );
     flags = DeployFlags(false);
 
-    // Etch the create2 factory
-    vm.etch(
-      0x914d7Fec6aaC8cd542e72Bca78B30650d45643d7,
-      hex'7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe03601600081602082378035828234f58015156039578182fd5b8082525050506014600cf3'
-    );
-
     (
       marketReportOne,
       gettersReportOne,
       poolReportOne,
       peripheryReportOne,
-      miscReport,
+      paraswapReportOne,
       aaveV3SetupOne
     ) = deployCoreAndPeriphery(roles, config, flags, deployedContracts);
-
-    (
-      ,
-      ,
-      gettersReportTwo,
-      ,
-      setupReportTwo,
-      ,
-      miscReport,
-      tokensReport,
-      paraswapReportOne,
-
-    ) = deployAndSetup(roles, config, flags, deployedContracts);
+    (, , gettersReportTwo, , setupReportTwo, , , ) = deployAndSetup(
+      roles,
+      config,
+      flags,
+      deployedContracts
+    );
   }
 
   function testAaveV3FullBatchOrchestration() public {
@@ -136,7 +116,7 @@ contract AaveV3BatchTests is BatchTestProcedures {
     new AaveV3PoolBatch(marketReportOne.poolAddressesProvider);
   }
 
-  function test3AaveV3L2PoolDeployment() public {
+  function test2AaveV3L2PoolDeployment() public {
     new AaveV3L2PoolBatch(marketReportOne.poolAddressesProvider);
   }
 
@@ -149,16 +129,7 @@ contract AaveV3BatchTests is BatchTestProcedures {
     );
   }
 
-  function test5MiscDeployment() public {
-    new AaveV3MiscBatch(
-      flags.l2,
-      marketReportOne.poolAddressesProvider,
-      config.l2SequencerUptimeFeed,
-      config.l2PriceOracleSentinelGracePeriod
-    );
-  }
-
-  function test6ParaswapRelease() public {
+  function test5PeripheralsRelease() public {
     new AaveV3ParaswapBatch(
       roles.poolAdmin,
       config,
@@ -167,7 +138,7 @@ contract AaveV3BatchTests is BatchTestProcedures {
     );
   }
 
-  function test7SetupMarket() public {
+  function test6SetupMarket() public {
     vm.prank(roles.marketOwner);
     aaveV3SetupOne.setupAaveV3Market(
       roles,
@@ -176,34 +147,11 @@ contract AaveV3BatchTests is BatchTestProcedures {
       poolReportOne.poolConfiguratorImplementation,
       gettersReportOne.protocolDataProvider,
       peripheryReportOne.aaveOracle,
-      peripheryReportOne.rewardsControllerImplementation,
-      miscReport.priceOracleSentinel
+      peripheryReportOne.rewardsControllerImplementation
     );
   }
 
-  function test8TokensMarket() public {
+  function test7TokensMarket() public {
     new AaveV3TokensBatch(setupReportTwo.poolProxy);
-  }
-
-  function test9ConfigEngineDeployment() public {
-    new AaveV3HelpersBatchOne(
-      setupReportTwo.poolProxy,
-      setupReportTwo.poolConfiguratorProxy,
-      miscReport.defaultInterestRateStrategy,
-      peripheryReportOne.aaveOracle,
-      setupReportTwo.rewardsControllerProxy,
-      peripheryReportOne.treasury,
-      tokensReport.aToken,
-      tokensReport.variableDebtToken,
-      tokensReport.stableDebtToken
-    );
-  }
-
-  function test10StaticATokenDeployment() public {
-    new AaveV3HelpersBatchTwo(
-      setupReportTwo.poolProxy,
-      setupReportTwo.rewardsControllerProxy,
-      peripheryReportOne.proxyAdmin
-    );
   }
 }

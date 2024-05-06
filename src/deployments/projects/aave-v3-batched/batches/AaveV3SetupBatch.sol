@@ -32,8 +32,7 @@ contract AaveV3SetupBatch is MarketReportStorage, AaveV3SetupProcedure, Ownable 
     address poolConfiguratorImplementation,
     address protocolDataProvider,
     address aaveOracle,
-    address rewardsControllerImplementation,
-    address priceOracleSentinel
+    address rewardsControllerImplementation
   ) external onlyOwner returns (SetupReport memory) {
     _setupReport = _setupAaveV3Market(
       roles,
@@ -43,8 +42,7 @@ contract AaveV3SetupBatch is MarketReportStorage, AaveV3SetupProcedure, Ownable 
       poolConfiguratorImplementation,
       protocolDataProvider,
       aaveOracle,
-      rewardsControllerImplementation,
-      priceOracleSentinel
+      rewardsControllerImplementation
     );
 
     return _setupReport;

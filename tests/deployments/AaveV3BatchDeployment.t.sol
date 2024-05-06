@@ -3,6 +3,8 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 import '../../src/deployments/interfaces/IMarketReportTypes.sol';
+import {ConfigEngineDeployer} from '../utils/ConfigEngineDeployer.sol';
+
 import {AugustusRegistryMock} from '../mocks/AugustusRegistryMock.sol';
 import {MockParaSwapFeeClaimer} from '../../src/contracts/mocks/swap/MockParaSwapFeeClaimer.sol';
 import {BatchTestProcedures} from '../utils/BatchTestProcedures.sol';
@@ -20,11 +22,13 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
   address public emergencyAdmin;
 
   Roles public roles;
+  MarketConfig public config;
   DeployFlags public flags;
-  MarketConfig config;
   MarketReport deployedContracts;
 
   address public weth9;
+
+  event ReportLog(MarketReport report);
 
   function setUp() public {
     bytes32 emptySalt;
@@ -41,8 +45,6 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
       8,
       address(new AugustusRegistryMock()),
       address(new MockParaSwapFeeClaimer()),
-      address(0), // l2SequencerUptimeFeed
-      0, // l2PriceOracleSentinelGracePeriod
       8080,
       emptySalt,
       weth9,
@@ -62,8 +64,9 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
     );
     checkFullReport(flags, fullReport);
 
+    address engine = ConfigEngineDeployer.deployEngine(vm, fullReport);
     AaveV3TestListing testnetListingPayload = new AaveV3TestListing(
-      IAaveV3ConfigEngine(fullReport.configEngine),
+      IAaveV3ConfigEngine(engine),
       marketOwner,
       weth9,
       fullReport
@@ -79,8 +82,6 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
 
   function testAaveV3L2BatchDeploymentCheck() public {
     flags.l2 = true;
-    config.l2SequencerUptimeFeed = address(new SequencerOracle(poolAdmin));
-    config.l2PriceOracleSentinelGracePeriod = 2 hours;
 
     MarketReport memory fullReport = deployAaveV3Testnet(
       marketOwner,
@@ -92,8 +93,9 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
 
     checkFullReport(flags, fullReport);
 
+    address engine = ConfigEngineDeployer.deployEngine(vm, fullReport);
     AaveV3TestListing testnetListingPayload = new AaveV3TestListing(
-      IAaveV3ConfigEngine(fullReport.configEngine),
+      IAaveV3ConfigEngine(engine),
       marketOwner,
       weth9,
       fullReport

@@ -10,9 +10,6 @@ import {AaveV3GettersProcedureTwo} from '../../contracts/procedures/AaveV3Getter
 import {AaveV3PeripheryBatch} from './batches/AaveV3PeripheryBatch.sol';
 import {AaveV3ParaswapBatch} from './batches/AaveV3ParaswapBatch.sol';
 import {AaveV3SetupBatch} from './batches/AaveV3SetupBatch.sol';
-import {AaveV3HelpersBatchOne} from './batches/AaveV3HelpersBatchOne.sol';
-import {AaveV3HelpersBatchTwo} from './batches/AaveV3HelpersBatchTwo.sol';
-import {AaveV3MiscBatch} from './batches/AaveV3MiscBatch.sol';
 import '../../interfaces/IMarketReportTypes.sol';
 import {IMarketReportStorage} from '../../interfaces/IMarketReportStorage.sol';
 import {IPoolReport} from '../../interfaces/IPoolReport.sol';
@@ -55,13 +52,6 @@ library AaveV3BatchOrchestration {
       address(setupBatch)
     );
 
-    MiscReport memory miscReport = _deployMisc(
-      flags.l2,
-      initialReport.poolAddressesProvider,
-      config.l2SequencerUptimeFeed,
-      config.l2PriceOracleSentinelGracePeriod
-    );
-
     SetupReport memory setupReport = setupBatch.setupAaveV3Market(
       roles,
       config,
@@ -69,8 +59,7 @@ library AaveV3BatchOrchestration {
       poolReport.poolConfiguratorImplementation,
       gettersReport1.protocolDataProvider,
       peripheryReport.aaveOracle,
-      peripheryReport.rewardsControllerImplementation,
-      miscReport.priceOracleSentinel
+      peripheryReport.rewardsControllerImplementation
     );
 
     ParaswapReport memory paraswapReport = _deployParaswapAdapters(
@@ -89,19 +78,6 @@ library AaveV3BatchOrchestration {
 
     AaveV3TokensBatch.TokensReport memory tokensReport = _deployTokens(setupReport.poolProxy);
 
-    ConfigEngineReport memory configEngineReport = _deployHelpersBatch1(
-      setupReport,
-      miscReport,
-      peripheryReport,
-      tokensReport
-    );
-
-    StaticATokenReport memory staticATokenReport = _deployHelpersBatch2(
-      setupReport.poolProxy,
-      setupReport.rewardsControllerProxy,
-      peripheryReport.proxyAdmin
-    );
-
     // Save final report at AaveV3SetupBatch contract
     MarketReport memory report = _generateMarketReport(
       initialReport,
@@ -109,12 +85,9 @@ library AaveV3BatchOrchestration {
       gettersReport2,
       poolReport,
       peripheryReport,
-      miscReport,
       paraswapReport,
       setupReport,
-      tokensReport,
-      configEngineReport,
-      staticATokenReport
+      tokensReport
     );
     setupBatch.setMarketReport(report);
 
@@ -162,57 +135,6 @@ library AaveV3BatchOrchestration {
         wrappedTokenGateway: address(0),
         l2Encoder: address(0)
       });
-  }
-
-  function _deployHelpersBatch1(
-    SetupReport memory setupReport,
-    MiscReport memory miscReport,
-    PeripheryReport memory peripheryReport,
-    AaveV3TokensBatch.TokensReport memory tokensReport
-  ) internal returns (ConfigEngineReport memory) {
-    AaveV3HelpersBatchOne helpersBatchOne = new AaveV3HelpersBatchOne(
-      setupReport.poolProxy,
-      setupReport.poolConfiguratorProxy,
-      miscReport.defaultInterestRateStrategy,
-      peripheryReport.aaveOracle,
-      setupReport.rewardsControllerProxy,
-      peripheryReport.treasury,
-      tokensReport.aToken,
-      tokensReport.variableDebtToken,
-      tokensReport.stableDebtToken
-    );
-
-    return helpersBatchOne.getConfigEngineReport();
-  }
-
-  function _deployHelpersBatch2(
-    address pool,
-    address rewardsController,
-    address proxyAdmin
-  ) internal returns (StaticATokenReport memory) {
-    AaveV3HelpersBatchTwo helpersBatchTwo = new AaveV3HelpersBatchTwo(
-      pool,
-      rewardsController,
-      proxyAdmin
-    );
-
-    return helpersBatchTwo.staticATokenReport();
-  }
-
-  function _deployMisc(
-    bool l2Flag,
-    address poolAddressesProvider,
-    address sequencerUptimeOracle,
-    uint256 gracePeriod
-  ) internal returns (MiscReport memory) {
-    AaveV3MiscBatch miscBatch = new AaveV3MiscBatch(
-      l2Flag,
-      poolAddressesProvider,
-      sequencerUptimeOracle,
-      gracePeriod
-    );
-
-    return miscBatch.getMiscReport();
   }
 
   function _deployPoolImplementations(
@@ -285,12 +207,9 @@ library AaveV3BatchOrchestration {
     AaveV3GettersBatchTwo.GettersReportBatchTwo memory gettersReportTwo,
     PoolReport memory poolReport,
     PeripheryReport memory peripheryReport,
-    MiscReport memory miscReport,
     ParaswapReport memory paraswapReport,
     SetupReport memory setupReport,
-    AaveV3TokensBatch.TokensReport memory tokensReport,
-    ConfigEngineReport memory configEngineReport,
-    StaticATokenReport memory staticATokenReport
+    AaveV3TokensBatch.TokensReport memory tokensReport
   ) internal pure returns (MarketReport memory) {
     MarketReport memory report;
 
@@ -321,13 +240,7 @@ library AaveV3BatchOrchestration {
     report.aToken = tokensReport.aToken;
     report.variableDebtToken = tokensReport.variableDebtToken;
     report.stableDebtToken = tokensReport.stableDebtToken;
-    report.priceOracleSentinel = miscReport.priceOracleSentinel;
-    report.defaultInterestRateStrategy = miscReport.defaultInterestRateStrategy;
-    report.configEngine = configEngineReport.configEngine;
-    report.staticATokenFactoryImplementation = staticATokenReport.staticATokenFactoryImplementation;
-    report.staticATokenFactoryProxy = staticATokenReport.staticATokenFactoryProxy;
-    report.staticATokenImplementation = staticATokenReport.staticATokenImplementation;
-    report.transparentProxyFactory = staticATokenReport.transparentProxyFactory;
+    report.defaultInterestRateStrategy = peripheryReport.defaultInterestRateStrategy;
 
     return report;
   }
