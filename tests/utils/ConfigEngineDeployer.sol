@@ -4,19 +4,19 @@ pragma solidity ^0.8.0;
 import '../../src/deployments/interfaces/IMarketReportTypes.sol';
 import {Vm} from 'forge-std/Vm.sol';
 import {Create2Utils} from '../../src/deployments/contracts/utilities/Create2Utils.sol';
-import {AaveV3ConfigEngine} from 'aave-v3-periphery/contracts/v3-config-engine/AaveV3ConfigEngine.sol';
-import {IAaveV3ConfigEngine} from 'aave-v3-periphery/contracts/v3-config-engine/IAaveV3ConfigEngine.sol';
-import {IPoolAddressesProvider} from '../../src/core/contracts/interfaces/IPoolAddressesProvider.sol';
-import {IPool} from '../../src/core/contracts/interfaces/IPool.sol';
-import {IPoolConfigurator} from '../../src/core/contracts/interfaces/IPoolConfigurator.sol';
-import {IAaveOracle} from '../../src/core/contracts/interfaces/IAaveOracle.sol';
-import {CapsEngine} from 'aave-v3-periphery/contracts/v3-config-engine/libraries/CapsEngine.sol';
-import {BorrowEngine} from 'aave-v3-periphery/contracts/v3-config-engine/libraries/BorrowEngine.sol';
-import {CollateralEngine} from 'aave-v3-periphery/contracts/v3-config-engine/libraries/CollateralEngine.sol';
-import {RateEngine} from 'aave-v3-periphery/contracts/v3-config-engine/libraries/RateEngine.sol';
-import {PriceFeedEngine} from 'aave-v3-periphery/contracts/v3-config-engine/libraries/PriceFeedEngine.sol';
-import {EModeEngine} from 'aave-v3-periphery/contracts/v3-config-engine/libraries/EModeEngine.sol';
-import {ListingEngine} from 'aave-v3-periphery/contracts/v3-config-engine/libraries/ListingEngine.sol';
+import {AaveV3ConfigEngine} from '../../src/contracts/extensions/v3-config-engine/AaveV3ConfigEngine.sol';
+import {IAaveV3ConfigEngine} from '../../src/contracts/extensions/v3-config-engine/AaveV3ConfigEngine.sol';
+import {IPoolAddressesProvider} from '../../src/contracts/interfaces/IPoolAddressesProvider.sol';
+import {IPool} from '../../src/contracts/interfaces/IPool.sol';
+import {IPoolConfigurator} from '../../src/contracts/interfaces/IPoolConfigurator.sol';
+import {IAaveOracle} from '../../src/contracts/interfaces/IAaveOracle.sol';
+import {CapsEngine} from '../../src/contracts/extensions/v3-config-engine/libraries/CapsEngine.sol';
+import {BorrowEngine} from '../../src/contracts/extensions/v3-config-engine/libraries/BorrowEngine.sol';
+import {CollateralEngine} from '../../src/contracts/extensions/v3-config-engine/libraries/CollateralEngine.sol';
+import {RateEngine} from '../../src/contracts/extensions/v3-config-engine/libraries/RateEngine.sol';
+import {PriceFeedEngine} from '../../src/contracts/extensions/v3-config-engine/libraries/PriceFeedEngine.sol';
+import {EModeEngine} from '../../src/contracts/extensions/v3-config-engine/libraries/EModeEngine.sol';
+import {ListingEngine} from '../../src/contracts/extensions/v3-config-engine/libraries/ListingEngine.sol';
 
 library ConfigEngineDeployer {
   function deployEngine(Vm vm, MarketReport memory report) internal returns (address) {
@@ -40,7 +40,7 @@ library ConfigEngineDeployer {
       .EngineConstants({
         pool: IPool(report.poolProxy),
         poolConfigurator: IPoolConfigurator(report.poolConfiguratorProxy),
-        defaultInterestRateStrategy: report.defaultInterestRateStrategyV2,
+        defaultInterestRateStrategy: report.defaultInterestRateStrategy,
         oracle: IAaveOracle(report.aaveOracle),
         rewardsController: report.rewardsControllerProxy,
         collector: report.treasury

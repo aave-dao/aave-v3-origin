@@ -35,7 +35,7 @@ contract AaveV3PeripheryBatch is
       setupBatch
     );
 
-    _report.defaultInterestRateStrategyV2 = _deployDefaultRateStrategyV2(poolAddressesProvider);
+    _report.defaultInterestRateStrategy = _deployDefaultRateStrategyV2(poolAddressesProvider);
   }
 
   function getPeripheryReport() external view returns (PeripheryReport memory) {

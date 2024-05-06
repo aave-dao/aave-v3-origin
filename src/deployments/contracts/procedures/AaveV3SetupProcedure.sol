@@ -3,13 +3,13 @@ pragma solidity ^0.8.0;
 
 import '../../interfaces/IMarketReportTypes.sol';
 import {IOwnable} from 'solidity-utils/contracts/transparent-proxy/interfaces/IOwnable.sol';
-import {ACLManager} from 'aave-v3-core/contracts/protocol/configuration/ACLManager.sol';
-import {IPoolConfigurator} from 'aave-v3-core/contracts/interfaces/IPoolConfigurator.sol';
-import {IPoolAddressesProvider} from 'aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol';
-import {PoolAddressesProvider} from 'aave-v3-core/contracts/protocol/configuration/PoolAddressesProvider.sol';
-import {PoolAddressesProviderRegistry} from 'aave-v3-core/contracts/protocol/configuration/PoolAddressesProviderRegistry.sol';
-import {IEmissionManager} from 'aave-v3-periphery/contracts/rewards/interfaces/IEmissionManager.sol';
-import {IRewardsController} from 'aave-v3-periphery/contracts/rewards/interfaces/IRewardsController.sol';
+import {ACLManager} from '../../../contracts/protocol/configuration/ACLManager.sol';
+import {IPoolConfigurator} from '../../../contracts/interfaces/IPoolConfigurator.sol';
+import {IPoolAddressesProvider} from '../../../contracts/interfaces/IPoolAddressesProvider.sol';
+import {PoolAddressesProvider} from '../../../contracts/protocol/configuration/PoolAddressesProvider.sol';
+import {PoolAddressesProviderRegistry} from '../../../contracts/protocol/configuration/PoolAddressesProviderRegistry.sol';
+import {IEmissionManager} from '../../../contracts/rewards/interfaces/IEmissionManager.sol';
+import {IRewardsController} from '../../../contracts/rewards/interfaces/IRewardsController.sol';
 
 contract AaveV3SetupProcedure {
   function _initialDeployment(

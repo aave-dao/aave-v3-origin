@@ -4,10 +4,10 @@ pragma solidity ^0.8.0;
 import '../../contracts/LibraryReportStorage.sol';
 import {Create2Utils} from '../../contracts/utilities/Create2Utils.sol';
 
-import {FlashLoanLogic} from 'aave-v3-core/contracts/protocol/libraries/logic/FlashLoanLogic.sol';
-import {LiquidationLogic} from 'aave-v3-core/contracts/protocol/libraries/logic/LiquidationLogic.sol';
-import {PoolLogic} from 'aave-v3-core/contracts/protocol/libraries/logic/PoolLogic.sol';
-import {SupplyLogic} from 'aave-v3-core/contracts/protocol/libraries/logic/SupplyLogic.sol';
+import {FlashLoanLogic} from '../../../contracts/protocol/libraries/logic/FlashLoanLogic.sol';
+import {LiquidationLogic} from '../../../contracts/protocol/libraries/logic/LiquidationLogic.sol';
+import {PoolLogic} from '../../../contracts/protocol/libraries/logic/PoolLogic.sol';
+import {SupplyLogic} from '../../../contracts/protocol/libraries/logic/SupplyLogic.sol';
 
 contract AaveV3LibrariesBatch2 is LibraryReportStorage {
   constructor() {

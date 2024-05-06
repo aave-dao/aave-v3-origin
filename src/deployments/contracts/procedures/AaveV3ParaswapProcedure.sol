@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {ParaSwapLiquiditySwapAdapter, IParaSwapAugustusRegistry} from 'aave-v3-periphery/contracts/adapters/paraswap/ParaSwapLiquiditySwapAdapter.sol';
-import {ParaSwapRepayAdapter} from 'aave-v3-periphery/contracts/adapters/paraswap/ParaSwapRepayAdapter.sol';
-import {ParaSwapWithdrawSwapAdapter} from 'aave-v3-periphery/contracts/adapters/paraswap/ParaSwapWithdrawSwapAdapter.sol';
-import {AaveParaSwapFeeClaimer} from 'aave-v3-periphery/contracts/adapters/paraswap/AaveParaSwapFeeClaimer.sol';
-import {IFeeClaimer} from 'aave-v3-periphery/contracts/adapters/paraswap/interfaces/IFeeClaimer.sol';
-import {IPoolAddressesProvider} from 'aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol';
+import {ParaSwapLiquiditySwapAdapter, IParaSwapAugustusRegistry} from '../../../contracts/extensions/paraswap-adapters/ParaSwapLiquiditySwapAdapter.sol';
+import {ParaSwapRepayAdapter} from '../../../contracts/extensions/paraswap-adapters/ParaSwapRepayAdapter.sol';
+import {ParaSwapWithdrawSwapAdapter} from '../../../contracts/extensions/paraswap-adapters/ParaSwapWithdrawSwapAdapter.sol';
+import {AaveParaSwapFeeClaimer} from '../../../contracts/extensions/paraswap-adapters/AaveParaSwapFeeClaimer.sol';
+import {IFeeClaimer} from '../../../contracts/extensions/paraswap-adapters/interfaces/IFeeClaimer.sol';
+import {IPoolAddressesProvider} from '../../../contracts/interfaces/IPoolAddressesProvider.sol';
 
 contract AaveV3ParaswapProcedure {
   struct ParaswapAdapters {

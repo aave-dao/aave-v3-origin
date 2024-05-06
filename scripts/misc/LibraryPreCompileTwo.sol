@@ -71,16 +71,16 @@ contract LibraryPreCompileTwo is FfiUtils, Script, DeployUtils {
       string(
         abi.encodePacked(
           ',',
-          'aave-v3-core/contracts/protocol/libraries/logic/FlashLoanLogic.sol:FlashLoanLogic:',
+          'src/contracts/protocol/libraries/logic/FlashLoanLogic.sol:FlashLoanLogic:',
           vm.toString(report.flashLoanLogic),
           ',',
-          'aave-v3-core/contracts/protocol/libraries/logic/LiquidationLogic.sol:LiquidationLogic:',
+          'src/contracts/protocol/libraries/logic/LiquidationLogic.sol:LiquidationLogic:',
           vm.toString(report.liquidationLogic),
           ',',
-          'aave-v3-core/contracts/protocol/libraries/logic/PoolLogic.sol:PoolLogic:',
+          'src/contracts/protocol/libraries/logic/PoolLogic.sol:PoolLogic:',
           vm.toString(report.poolLogic),
           ',',
-          'aave-v3-core/contracts/protocol/libraries/logic/SupplyLogic.sol:SupplyLogic:',
+          'src/contracts/protocol/libraries/logic/SupplyLogic.sol:SupplyLogic:',
           vm.toString(report.supplyLogic)
         )
       );

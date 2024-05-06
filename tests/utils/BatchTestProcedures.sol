@@ -6,17 +6,18 @@ import '../../src/deployments/interfaces/IMarketReportTypes.sol';
 import {DeployUtils} from '../../src/deployments/contracts/utilities/DeployUtils.sol';
 import {AaveV3GettersBatchOne} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3GettersBatchOne.sol';
 import {AaveV3GettersBatchTwo} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3GettersBatchTwo.sol';
+import {AaveV3TokensBatch} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3TokensBatch.sol';
 import {AaveV3SetupBatch} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3SetupBatch.sol';
 import {FfiUtils} from '../../src/deployments/contracts/utilities/FfiUtils.sol';
 import {DefaultMarketInput} from '../../src/deployments/inputs/DefaultMarketInput.sol';
 import {AaveV3BatchOrchestration} from '../../src/deployments/projects/aave-v3-batched/AaveV3BatchOrchestration.sol';
-import {IPoolAddressesProvider} from 'aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol';
-import {ACLManager} from 'aave-v3-core/contracts/protocol/configuration/ACLManager.sol';
-import {WETH9} from 'aave-v3-core/contracts/dependencies/weth/WETH9.sol';
-import 'aave-v3-periphery/contracts/mocks/testnet-helpers/TestnetERC20.sol';
-import 'aave-v3-core/contracts/protocol/pool/PoolConfigurator.sol';
-import 'aave-v3-core/contracts/protocol/libraries/math/PercentageMath.sol';
-import 'aave-v3-core/contracts/misc/AaveProtocolDataProvider.sol';
+import {IPoolAddressesProvider} from '../../src/contracts/interfaces/IPoolAddressesProvider.sol';
+import {ACLManager} from '../../src/contracts/protocol/configuration/ACLManager.sol';
+import {WETH9} from '../../src/contracts/dependencies/weth/WETH9.sol';
+import '../../src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
+import '../../src/contracts/protocol/pool/PoolConfigurator.sol';
+import '../../src/contracts/protocol/libraries/math/PercentageMath.sol';
+import '../../src/contracts/helpers/AaveProtocolDataProvider.sol';
 import {MarketReportUtils} from '../../src/deployments/contracts/utilities/MarketReportUtils.sol';
 
 struct TestVars {
@@ -174,10 +175,7 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
     assertTrue(r.poolConfiguratorImplementation != address(0), 'r.poolConfiguratorImplementation');
     assertTrue(r.protocolDataProvider != address(0), 'report.protocolDataProvider');
     assertTrue(r.aaveOracle != address(0), 'report.aaveOracle');
-    assertTrue(
-      r.defaultInterestRateStrategyV2 != address(0),
-      'report.defaultInterestRateStrategyV2'
-    );
+    assertTrue(r.defaultInterestRateStrategy != address(0), 'report.defaultInterestRateStrategy');
     assertTrue(r.aclManager != address(0), 'report.aclManager');
     assertTrue(r.treasury != address(0), 'report.treasury');
     assertTrue(r.proxyAdmin != address(0), 'report.proxyAdmin');
@@ -266,7 +264,7 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
       t.variableDebtSymbol = _concatStr('varDebtMISC ', x);
       t.stableDebtName = _concatStr('Stable Debt Misc ', x);
       t.stableDebtSymbol = _concatStr('stableDebtMISC ', x);
-      t.rateStrategy = r.defaultInterestRateStrategyV2;
+      t.rateStrategy = r.defaultInterestRateStrategy;
       t.interestRateData = abi.encode(
         IDefaultInterestRateStrategyV2.InterestRateData({
           optimalUsageRatio: 80_00,

@@ -57,6 +57,11 @@ contract MetadataReporter is IMetadataReporter {
     vm.serializeAddress(jsonReport, 'rewardsControllerProxy', report.rewardsControllerProxy);
     vm.serializeAddress(jsonReport, 'aclManager', report.aclManager);
     vm.serializeAddress(jsonReport, 'protocolDataProvider', report.protocolDataProvider);
+    vm.serializeAddress(
+      jsonReport,
+      'defaultInterestRateStrategy',
+      report.defaultInterestRateStrategy
+    );
 
     vm.serializeAddress(
       jsonReport,
@@ -69,6 +74,7 @@ contract MetadataReporter is IMetadataReporter {
       report.paraSwapWithdrawSwapAdapter
     );
     vm.serializeAddress(jsonReport, 'aaveParaSwapFeeClaimer', report.aaveParaSwapFeeClaimer);
+
     string memory output = vm.serializeAddress(
       jsonReport,
       'paraSwapRepayAdapter',

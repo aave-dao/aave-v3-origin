@@ -9,18 +9,18 @@ import {DeployUtils} from '../../src/deployments/contracts/utilities/DeployUtils
 import {FfiUtils} from '../../src/deployments/contracts/utilities/FfiUtils.sol';
 import {DefaultMarketInput} from '../../src/deployments/inputs/DefaultMarketInput.sol';
 import {AaveV3BatchOrchestration} from '../../src/deployments/projects/aave-v3-batched/AaveV3BatchOrchestration.sol';
-import {IPoolAddressesProvider} from 'aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol';
+import {IPoolAddressesProvider} from '../../src/contracts/interfaces/IPoolAddressesProvider.sol';
 import {AaveV3TestListing} from '../mocks/AaveV3TestListing.sol';
-import {ACLManager, Errors} from 'aave-v3-core/contracts/protocol/configuration/ACLManager.sol';
-import {WETH9} from 'aave-v3-core/contracts/dependencies/weth/WETH9.sol';
-import {TestnetERC20} from 'aave-v3-periphery/contracts/mocks/testnet-helpers/TestnetERC20.sol';
-import {PoolConfigurator} from 'aave-v3-core/contracts/protocol/pool/PoolConfigurator.sol';
-import {DefaultReserveInterestRateStrategyV2} from 'aave-v3-core/contracts/protocol/pool/DefaultReserveInterestRateStrategyV2.sol';
-import {ReserveConfiguration} from 'aave-v3-core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
-import {PercentageMath} from 'aave-v3-core/contracts/protocol/libraries/math/PercentageMath.sol';
-import {AaveProtocolDataProvider} from 'aave-v3-core/contracts/misc/AaveProtocolDataProvider.sol';
+import {ACLManager, Errors} from '../../src/contracts/protocol/configuration/ACLManager.sol';
+import {WETH9} from '../../src/contracts/dependencies/weth/WETH9.sol';
+import {TestnetERC20} from '../../src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
+import {PoolConfigurator} from '../../src/contracts/protocol/pool/PoolConfigurator.sol';
+import {DefaultReserveInterestRateStrategyV2} from '../../src/contracts/misc/DefaultReserveInterestRateStrategyV2.sol';
+import {ReserveConfiguration} from '../../src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
+import {PercentageMath} from '../../src/contracts/protocol/libraries/math/PercentageMath.sol';
+import {AaveProtocolDataProvider} from '../../src/contracts/helpers/AaveProtocolDataProvider.sol';
 import {MarketReportUtils} from '../../src/deployments/contracts/utilities/MarketReportUtils.sol';
-import {AaveV3ConfigEngine, IAaveV3ConfigEngine} from 'aave-v3-periphery/contracts/v3-config-engine/AaveV3ConfigEngine.sol';
+import {AaveV3ConfigEngine, IAaveV3ConfigEngine} from '../../src/contracts/extensions/v3-config-engine/AaveV3ConfigEngine.sol';
 
 struct TestVars {
   uint8 underlyingDecimals;
@@ -324,7 +324,7 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     input.variableDebtTokenImpl = r.variableDebtToken;
     input.underlyingAssetDecimals = t.underlyingDecimals;
     input.useVirtualBalance = t.useVirtualBalance;
-    input.interestRateStrategyAddress = r.defaultInterestRateStrategyV2;
+    input.interestRateStrategyAddress = r.defaultInterestRateStrategy;
     input.treasury = t.treasury;
     input.incentivesController = r.rewardsControllerProxy;
     input.aTokenName = t.aTokenName;

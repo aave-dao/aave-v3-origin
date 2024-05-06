@@ -240,7 +240,7 @@ library AaveV3BatchOrchestration {
     report.aToken = tokensReport.aToken;
     report.variableDebtToken = tokensReport.variableDebtToken;
     report.stableDebtToken = tokensReport.stableDebtToken;
-    report.defaultInterestRateStrategyV2 = peripheryReport.defaultInterestRateStrategyV2;
+    report.defaultInterestRateStrategy = peripheryReport.defaultInterestRateStrategy;
 
     return report;
   }
