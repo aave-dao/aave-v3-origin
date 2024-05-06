@@ -5,15 +5,20 @@ import 'forge-std/Test.sol';
 
 import {Errors} from '../../../../src/contracts/protocol/libraries/helpers/Errors.sol';
 import {ConfiguratorInputTypes} from '../../../../src/contracts/protocol/pool/PoolConfigurator.sol';
-import {TestnetProcedures} from '../../../utils/TestnetProcedures.sol';
+import {TestnetProcedures, TestVars} from '../../../utils/TestnetProcedures.sol';
 
 contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
   function setUp() public {
     initTestEnvironment();
   }
 
-  function test_reverts_notAdmin_initReserves(address caller) public {
-    ConfiguratorInputTypes.InitReserveInput[] memory input;
+  function test_reverts_notAdmin_initReserves(TestVars memory t, address caller) public {
+    ConfiguratorInputTypes.InitReserveInput[] memory input = _generateInitConfig(
+      t,
+      report,
+      poolAdmin,
+      true
+    );
     vm.assume(
       !contracts.aclManager.isPoolAdmin(caller) &&
         !contracts.aclManager.isAssetListingAdmin(caller) &&

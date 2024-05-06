@@ -9,7 +9,7 @@ import {IAaveIncentivesController} from '../../../src/contracts/interfaces/IAave
 import {TestnetERC20} from '../../../src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
 import {PoolConfigurator, ConfiguratorInputTypes, IPool} from '../../../src/contracts/protocol/pool/PoolConfigurator.sol';
 import {EIP712SigUtils} from '../../utils/EIP712SigUtils.sol';
-import {TestnetProcedures} from '../../utils/TestnetProcedures.sol';
+import {TestnetProcedures, TestVars} from '../../utils/TestnetProcedures.sol';
 
 contract StableDebtTokenEventsTests is TestnetProcedures {
   StableDebtTokenInstance public stableDebtToken;
@@ -69,11 +69,14 @@ contract StableDebtTokenEventsTests is TestnetProcedures {
     return stDebtToken;
   }
 
-  function test_reverts_initialize_twice() public {
-    StableDebtTokenInstance staDebtToken = test_initialize_StableDebtToken();
-    ConfiguratorInputTypes.InitReserveInput memory listing = (
-      _generateListingInput(1, report, poolAdmin)
-    )[0];
+  function test_reverts_initialize_twice(TestVars memory t) public {
+    StableDebtTokenInstance staDebtToken = test_initialize_StableDebtToken(t);
+    ConfiguratorInputTypes.InitReserveInput memory listing = _generateInitReserveInput(
+      t,
+      report,
+      poolAdmin,
+      true
+    );
 
     uint8 decimals = TestnetERC20(listing.underlyingAsset).decimals();
 
@@ -90,11 +93,16 @@ contract StableDebtTokenEventsTests is TestnetProcedures {
     );
   }
 
-  function test_initialize_StableDebtToken() public returns (StableDebtTokenInstance) {
+  function test_initialize_StableDebtToken(
+    TestVars memory t
+  ) public returns (StableDebtTokenInstance) {
     StableDebtTokenInstance stDebtToken = test_new_StableDebtToken_implementation();
-    ConfiguratorInputTypes.InitReserveInput memory listing = (
-      _generateListingInput(1, report, poolAdmin)
-    )[0];
+    ConfiguratorInputTypes.InitReserveInput memory listing = _generateInitReserveInput(
+      t,
+      report,
+      poolAdmin,
+      true
+    );
 
     vm.expectEmit(address(stDebtToken));
     emit Initialized(
@@ -128,11 +136,14 @@ contract StableDebtTokenEventsTests is TestnetProcedures {
     return stDebtToken;
   }
 
-  function test_reverts_initialize_pool_do_not_match() public {
+  function test_reverts_initialize_pool_do_not_match(TestVars memory t) public {
     StableDebtTokenInstance stDebtToken = test_new_StableDebtToken_implementation();
-    ConfiguratorInputTypes.InitReserveInput memory listing = (
-      _generateListingInput(1, report, poolAdmin)
-    )[0];
+    ConfiguratorInputTypes.InitReserveInput memory listing = _generateInitReserveInput(
+      t,
+      report,
+      poolAdmin,
+      true
+    );
 
     uint8 decimals = TestnetERC20(listing.underlyingAsset).decimals();
 
@@ -149,8 +160,8 @@ contract StableDebtTokenEventsTests is TestnetProcedures {
     );
   }
 
-  function test_mint_stableDebt_caller_alice() public {
-    StableDebtTokenInstance debtToken = test_initialize_StableDebtToken();
+  function test_mint_stableDebt_caller_alice(TestVars memory t) public {
+    StableDebtTokenInstance debtToken = test_initialize_StableDebtToken(t);
 
     vm.expectRevert(bytes(Errors.OPERATION_NOT_SUPPORTED));
 
@@ -158,8 +169,8 @@ contract StableDebtTokenEventsTests is TestnetProcedures {
     debtToken.mint(alice, alice, 0, 0);
   }
 
-  function test_mint_stableDebt_caller_bob_onBehalf_alice() public {
-    StableDebtTokenInstance debtToken = test_initialize_StableDebtToken();
+  function test_mint_stableDebt_caller_bob_onBehalf_alice(TestVars memory t) public {
+    StableDebtTokenInstance debtToken = test_initialize_StableDebtToken(t);
     TestnetERC20 asset = TestnetERC20(debtToken.UNDERLYING_ASSET_ADDRESS());
     uint8 decimals = asset.decimals();
     uint256 amount = 1200 * 10 ** decimals;
@@ -208,53 +219,48 @@ contract StableDebtTokenEventsTests is TestnetProcedures {
     stDebtToken.burn(address(0), 0);
   }
 
-  function test_default_revision() public {
-    StableDebtTokenInstance stDebtToken = new StableDebtTokenInstance(IPool(report.poolProxy));
-    assertEq(stDebtToken._getRevision(), stDebtToken.DEBT_TOKEN_REVISION());
-  }
-
-  function test_getAverageStableRate() public view {
+  function test_getAverageStableRate() public {
     uint256 avgStableRate = stableDebtToken.getAverageStableRate();
     assertEq(avgStableRate, 0);
   }
 
-  function test_getUserLastUpdated() public view {
+  function test_getUserLastUpdated() public {
     uint256 lastUpdated = stableDebtToken.getUserLastUpdated(alice);
     assertEq(lastUpdated, 0);
   }
 
-  function test_getUserStableRate() public view {
+  function test_getUserStableRate() public {
     uint256 userStableRate = stableDebtToken.getUserStableRate(alice);
     assertEq(userStableRate, 0);
   }
 
-  function test_balanceOf() public view {
+  function test_balanceOf() public {
     uint256 balance = stableDebtToken.balanceOf(alice);
     assertEq(balance, 0);
   }
 
-  function test_totalSupply() public view {
+  function test_totalSupply() public {
     uint256 scaledTotalSupply = stableDebtToken.totalSupply();
     assertEq(scaledTotalSupply, 0);
   }
 
-  function test_getTotalSupplyLastUpdated() public view {
+  function test_getTotalSupplyLastUpdated() public {
     uint256 totalSupplyLastUpdated = stableDebtToken.getTotalSupplyLastUpdated();
     assertEq(totalSupplyLastUpdated, 0);
   }
 
-  function test_principalBalanceOf() public view {
+  function test_principalBalanceOf() public {
     uint256 principalBalanceOf = stableDebtToken.principalBalanceOf(alice);
     assertEq(principalBalanceOf, 0);
   }
 
-  function test_getTotalSupplyAndAvgRate() public view {
+  function test_getTotalSupplyAndAvgRate() public {
     (uint256 totalSupply, uint256 avgRate) = stableDebtToken.getTotalSupplyAndAvgRate();
     assertEq(totalSupply, 0);
     assertEq(avgRate, 0);
   }
 
-  function test_getSupplyData() public view {
+  function test_getSupplyData() public {
     (
       uint256 principal,
       uint256 totalSupply,

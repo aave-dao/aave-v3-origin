@@ -22,6 +22,7 @@ import {MarketReportUtils} from '../../src/deployments/contracts/utilities/Marke
 import {AaveV3ConfigEngine, IAaveV3ConfigEngine} from '../../src/contracts/extensions/v3-config-engine/AaveV3ConfigEngine.sol';
 
 struct TestVars {
+  uint8 underlyingDecimals;
   string aTokenName;
   string aTokenSymbol;
   string variableDebtName;
@@ -29,10 +30,11 @@ struct TestVars {
   string stableDebtName;
   string stableDebtSymbol;
   address rateStrategy;
-  bytes interestRateData;
-  bytes emptyParams;
-  uint256 previousReservesLength;
+  address incentivesController;
+  address treasury;
+  bool useVirtualBalance;
 }
+
 struct TestReserveConfig {
   uint256 decimals;
   uint256 ltv;
@@ -278,58 +280,70 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     return string(abi.encodePacked(a, vm.toString(b)));
   }
 
-  function _generateListingInput(
-    uint256 listings,
+  function _generateInitConfig(
+    TestVars memory t,
     MarketReport memory r,
-    address poolAdminUser
+    address poolAdminUser,
+    bool isValidDecimals
+  ) internal returns (ConfiguratorInputTypes.InitReserveInput[] memory) {
+    TestVars[] memory tArray = new TestVars[](1);
+    tArray[0] = t;
+    return _generateInitConfig(tArray, r, poolAdminUser, isValidDecimals);
+  }
+
+  function _generateInitConfig(
+    TestVars[] memory t,
+    MarketReport memory r,
+    address poolAdminUser,
+    bool isValidDecimals
   ) internal returns (ConfiguratorInputTypes.InitReserveInput[] memory) {
     ConfiguratorInputTypes.InitReserveInput[]
-      memory input = new ConfiguratorInputTypes.InitReserveInput[](listings);
-
-    for (uint256 x; x < listings; ++x) {
-      TestnetERC20 listingToken = new TestnetERC20(
-        _concatStr('Token', x),
-        _concatStr('T', x),
-        uint8(10 + x),
-        poolAdminUser
-      );
-      TestVars memory t;
-      t.aTokenName = _concatStr('AToken ', x);
-      t.aTokenName = _concatStr('a ', x);
-      t.variableDebtName = _concatStr('Variable Debt Misc', x);
-      t.variableDebtSymbol = _concatStr('varDebtMISC ', x);
-      t.stableDebtName = _concatStr('Stable Debt Misc ', x);
-      t.stableDebtSymbol = _concatStr('stableDebtMISC ', x);
-      t.rateStrategy = r.defaultInterestRateStrategy;
-      t.interestRateData = abi.encode(
-        IDefaultInterestRateStrategyV2.InterestRateData({
-          optimalUsageRatio: 80_00,
-          baseVariableBorrowRate: 1_00,
-          variableRateSlope1: 4_00,
-          variableRateSlope2: 60_00
-        })
-      );
-
-      input[x] = ConfiguratorInputTypes.InitReserveInput(
-        r.aToken,
-        r.stableDebtToken,
-        r.variableDebtToken,
-        listingToken.decimals(),
-        true,
-        t.rateStrategy,
-        address(listingToken),
-        r.treasury,
-        r.rewardsControllerProxy,
-        t.aTokenName,
-        t.aTokenSymbol,
-        t.variableDebtName,
-        t.variableDebtSymbol,
-        t.stableDebtName,
-        t.stableDebtSymbol,
-        t.emptyParams,
-        t.interestRateData
-      );
+      memory configurations = new ConfiguratorInputTypes.InitReserveInput[](t.length);
+    for (uint256 i = 0; i < t.length; i++) {
+      configurations[i] = _generateInitReserveInput(t[i], r, poolAdminUser, isValidDecimals);
     }
+    return configurations;
+  }
+
+  function _generateInitReserveInput(
+    TestVars memory t,
+    MarketReport memory r,
+    address poolAdminUser,
+    bool isValidDecimals
+  ) internal returns (ConfiguratorInputTypes.InitReserveInput memory) {
+    if (isValidDecimals) {
+      t.underlyingDecimals = uint8(bound(t.underlyingDecimals, 6, 25));
+    } else {
+      t.underlyingDecimals = uint8(bound(t.underlyingDecimals, 0, 5));
+    }
+
+    ConfiguratorInputTypes.InitReserveInput memory input;
+    input.aTokenImpl = r.aToken;
+    input.underlyingAsset = address(
+      new TestnetERC20('Misc Token', 'MISC', t.underlyingDecimals, poolAdminUser)
+    );
+    input.stableDebtTokenImpl = r.stableDebtToken;
+    input.variableDebtTokenImpl = r.variableDebtToken;
+    input.underlyingAssetDecimals = t.underlyingDecimals;
+    input.useVirtualBalance = t.useVirtualBalance;
+    input.interestRateStrategyAddress = r.defaultInterestRateStrategy;
+    input.treasury = t.treasury;
+    input.incentivesController = r.rewardsControllerProxy;
+    input.aTokenName = t.aTokenName;
+    input.aTokenSymbol = t.aTokenSymbol;
+    input.variableDebtTokenName = t.variableDebtName;
+    input.variableDebtTokenSymbol = t.variableDebtSymbol;
+    input.stableDebtTokenName = t.stableDebtName;
+    input.stableDebtTokenSymbol = t.stableDebtSymbol;
+    input.params = bytes('');
+    input.interestRateData = abi.encode(
+      IDefaultInterestRateStrategyV2.InterestRateData({
+        optimalUsageRatio: 80_00,
+        baseVariableBorrowRate: 1_00,
+        variableRateSlope1: 4_00,
+        variableRateSlope2: 60_00
+      })
+    );
 
     return input;
   }
