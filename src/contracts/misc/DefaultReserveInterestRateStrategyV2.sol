@@ -114,7 +114,7 @@ contract DefaultReserveInterestRateStrategyV2 is IDefaultInterestRateStrategyV2 
   /// @inheritdoc IReserveInterestRateStrategy
   function calculateInterestRates(
     DataTypes.CalculateInterestRatesParams memory params
-  ) public view virtual override returns (uint256, uint256, uint256) {
+  ) external view virtual override returns (uint256, uint256, uint256) {
     InterestRateDataRay memory rateData = _rayifyRateData(_interestRateData[params.reserve]);
 
     // @note This is a short circuit to allow mintable assets, which by definition cannot be supplied
