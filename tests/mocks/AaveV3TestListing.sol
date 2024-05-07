@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import 'aave-v3-periphery/contracts/v3-config-engine/AaveV3Payload.sol';
-import {TestnetERC20} from 'aave-v3-periphery/contracts/mocks/testnet-helpers/TestnetERC20.sol';
-import {MockAggregator} from 'aave-v3-core/contracts/mocks/oracle/CLAggregators/MockAggregator.sol';
-import {ACLManager} from 'aave-v3-core/contracts/protocol/configuration/ACLManager.sol';
-import {MarketReport} from 'src/deployments/interfaces/IMarketReportTypes.sol';
+import '../../src/contracts/extensions/v3-config-engine/AaveV3Payload.sol';
+import {TestnetERC20} from '../../src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
+import {MockAggregator} from '../../src/contracts/mocks/oracle/CLAggregators/MockAggregator.sol';
+import {ACLManager} from '../../src/contracts/protocol/configuration/ACLManager.sol';
+import {MarketReport} from '../../src/deployments/interfaces/IMarketReportTypes.sol';
 
 /**
  * @dev Smart contract for token listing, for testing purposes
@@ -148,7 +148,7 @@ contract AaveV3TestListing is AaveV3Payload {
   }
 
   function getPoolContext() public pure override returns (IEngine.PoolContext memory) {
-    return IEngine.PoolContext({networkName: 'Ethereum Sepolia', networkAbbreviation: 'EthSep'});
+    return IEngine.PoolContext({networkName: 'Local', networkAbbreviation: 'Loc'});
   }
 
   function _postExecute() internal override {

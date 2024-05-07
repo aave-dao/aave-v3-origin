@@ -7,6 +7,7 @@ update:; forge update
 
 # Build & test
 test   :; forge test -vvv --no-match-contract DeploymentsGasLimits
+test-contract :; forge test --match-contract ${filter} -vvv
 test-watch   :; forge test --watch -vvv --no-match-contract DeploymentsGasLimits
 coverage :; forge coverage --report lcov && \
 	lcov --remove ./lcov.info -o ./lcov.info.p \

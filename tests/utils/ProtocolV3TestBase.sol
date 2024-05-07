@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.7.5 <0.9.0;
 
-import {IERC20Detailed} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
-import {IDefaultInterestRateStrategyV2} from 'aave-v3-core/contracts/interfaces/IDefaultInterestRateStrategyV2.sol';
-import {ReserveConfiguration} from 'aave-v3-core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
-import {IPoolAddressesProvider} from 'aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol';
-import {IPoolDataProvider} from 'aave-v3-core/contracts/interfaces/IPoolDataProvider.sol';
-import {IPool} from 'aave-v3-core/contracts/interfaces/IPool.sol';
-import {IAaveOracle} from 'aave-v3-core/contracts/interfaces/IAaveOracle.sol';
-import {DataTypes} from 'aave-v3-core/contracts/protocol/libraries/types/DataTypes.sol';
-import {IPoolConfigurator} from 'aave-v3-core/contracts/interfaces/IPoolConfigurator.sol';
+import {IERC20Detailed} from '../../src/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
+import {IDefaultInterestRateStrategyV2} from '../../src/contracts/interfaces/IDefaultInterestRateStrategyV2.sol';
+import {ReserveConfiguration} from '../../src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
+import {IPoolAddressesProvider} from '../../src/contracts/interfaces/IPoolAddressesProvider.sol';
+import {IPoolDataProvider} from '../../src/contracts/interfaces/IPoolDataProvider.sol';
+import {IPool} from '../../src/contracts/interfaces/IPool.sol';
+import {IAaveOracle} from '../../src/contracts/interfaces/IAaveOracle.sol';
+import {DataTypes} from '../../src/contracts/protocol/libraries/types/DataTypes.sol';
+import {IPoolConfigurator} from '../../src/contracts/interfaces/IPoolConfigurator.sol';
 import {ProxyHelpers} from './ProxyHelpers.sol';
 import {DiffUtils} from './DiffUtils.sol';
 
@@ -108,18 +108,6 @@ struct ReserveConfig {
 struct LocalVars {
   IPoolDataProvider.TokenData[] reserves;
   ReserveConfig[] configs;
-}
-
-struct InterestStrategyValues {
-  address addressesProvider;
-  uint256 optimalUsageRatio;
-  uint256 optimalStableToTotalDebtRatio;
-  uint256 baseStableBorrowRate;
-  uint256 stableRateSlope1;
-  uint256 stableRateSlope2;
-  uint256 baseVariableBorrowRate;
-  uint256 variableRateSlope1;
-  uint256 variableRateSlope2;
 }
 
 /**
@@ -614,7 +602,7 @@ contract ProtocolV3TestBase is DiffUtils {
     address reserve,
     address interestRateStrategyAddress,
     address expectedStrategy,
-    InterestStrategyValues memory expectedStrategyValues
+    IDefaultInterestRateStrategyV2.InterestRateDataRay memory expectedStrategyValues
   ) internal view {
     IDefaultInterestRateStrategyV2 strategy = IDefaultInterestRateStrategyV2(
       interestRateStrategyAddress
@@ -628,10 +616,6 @@ contract ProtocolV3TestBase is DiffUtils {
     require(
       strategy.getOptimalUsageRatio(reserve) == expectedStrategyValues.optimalUsageRatio,
       '_validateInterestRateStrategy() : INVALID_OPTIMAL_RATIO'
-    );
-    require(
-      address(strategy.ADDRESSES_PROVIDER()) == expectedStrategyValues.addressesProvider,
-      '_validateInterestRateStrategy() : INVALID_ADDRESSES_PROVIDER'
     );
     require(
       strategy.getBaseVariableBorrowRate(reserve) == expectedStrategyValues.baseVariableBorrowRate,

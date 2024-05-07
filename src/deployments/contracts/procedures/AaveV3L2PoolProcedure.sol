@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {L2PoolInstance} from 'aave-v3-core/instances/L2PoolInstance.sol';
-import {IPoolAddressesProvider} from 'aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol';
+import {L2PoolInstance} from '../../../contracts/instances/L2PoolInstance.sol';
+import {IPoolAddressesProvider} from '../../../contracts/interfaces/IPoolAddressesProvider.sol';
 import {AaveV3PoolConfigProcedure} from './AaveV3PoolConfigProcedure.sol';
-import {IPool} from 'aave-v3-core/contracts/interfaces/IPool.sol';
+import {IPool} from '../../../contracts/interfaces/IPool.sol';
 import {IErrors} from '../../interfaces/IErrors.sol';
 import '../../interfaces/IMarketReportTypes.sol';
 

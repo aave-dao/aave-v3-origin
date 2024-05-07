@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {EmissionManager} from 'aave-v3-periphery/contracts/rewards/EmissionManager.sol';
-import {RewardsController} from 'aave-v3-periphery/contracts/rewards/RewardsController.sol';
+import {EmissionManager} from '../../../contracts/rewards/EmissionManager.sol';
+import {RewardsController} from '../../../contracts/rewards/RewardsController.sol';
 
 contract AaveV3IncentiveProcedure {
   function _deployIncentives(address tempOwner) internal returns (address, address) {
