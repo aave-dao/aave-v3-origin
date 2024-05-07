@@ -253,7 +253,7 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
   }
 
   /// @inheritdoc IPoolConfigurator
-  function setReservePause(address asset, bool paused) public override onlyEmergencyOrPoolAdmin {
+  function setReservePause(address asset, bool paused) external override onlyEmergencyOrPoolAdmin {
     setReservePause(asset, paused, 0);
   }
 

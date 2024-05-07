@@ -37,14 +37,14 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
 
   function getReservesList(
     IPoolAddressesProvider provider
-  ) public view override returns (address[] memory) {
+  ) external view override returns (address[] memory) {
     IPool pool = IPool(provider.getPool());
     return pool.getReservesList();
   }
 
   function getReservesData(
     IPoolAddressesProvider provider
-  ) public view override returns (AggregatedReserveData[] memory, BaseCurrencyInfo memory) {
+  ) external view override returns (AggregatedReserveData[] memory, BaseCurrencyInfo memory) {
     IAaveOracle oracle = IAaveOracle(provider.getPriceOracle());
     IPool pool = IPool(provider.getPool());
     AaveProtocolDataProvider poolDataProvider = AaveProtocolDataProvider(

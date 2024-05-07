@@ -26,7 +26,7 @@ contract AaveParaSwapFeeClaimer {
    * @dev returns claimable balance for a specified asset
    * @param asset The asset to fetch claimable balance of
    */
-  function getClaimable(address asset) public view returns (uint256) {
+  function getClaimable(address asset) external view returns (uint256) {
     return paraswapFeeClaimer.getBalance(IERC20(asset), address(this));
   }
 
@@ -34,7 +34,7 @@ contract AaveParaSwapFeeClaimer {
    * @dev returns claimable balances for specified assets
    * @param assets The assets to fetch claimable balances of
    */
-  function batchGetClaimable(address[] memory assets) public view returns (uint256[] memory) {
+  function batchGetClaimable(address[] memory assets) external view returns (uint256[] memory) {
     return paraswapFeeClaimer.batchGetBalance(assets, address(this));
   }
 
