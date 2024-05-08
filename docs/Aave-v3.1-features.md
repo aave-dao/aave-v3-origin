@@ -28,12 +28,32 @@ This new feature doesn’t create any incompatibility with Aave v3 integrations,
 
 Given its implications and criticality, virtual accounting can be considered the major feature of Aave 3.1.
 
+<br>
+
 **Misc considerations & acknowledged limitations**
 
 - Virtual balance doesn't fix the imprecision caused by other components of the protocol, its objective is to add stricter validations, reducing any type of attack vector to the minimum.
 - An extra "soft" protection has been added on borrowing actions (flash loan and borrow): the amount borrowed of underlying should not be higher than the aToken supply. The idea behind is to add more defenses on inflation scenarios, even if we are aware total protection is not achieved (e.g. against certain edge iteration vectors).
   Not using `accruedToTreasury` in the calculation is intentional.
 - The addition of virtual accounting can create a situation over time that more liquidity will be available in the aToken contract than what the the virtual balance allows to withdraw/borrow. This is intended by design.
+
+<br>
+
+Files affected:
+- [SupplyLogic](../src/core/contracts/protocol/libraries/logic/SupplyLogic.sol)
+- [BorrowLogic](../src/core/contracts/protocol/libraries/logic/BorrowLogic.sol)
+- [ValidationLogic](../src/core/contracts/protocol/libraries/logic/ValidationLogic.sol)
+- [BridgeLogic](../src/core/contracts/protocol/libraries/logic/BridgeLogic.sol)
+- [ConfiguratorLogic](../src/core/contracts/protocol/libraries/logic/ConfiguratorLogic.sol)
+- [FlashLoanLogic](../src/core/contracts/protocol/libraries/logic/FlashLoanLogic.sol)
+- [LiquidationLogic](../src/core/contracts/protocol/libraries/logic/LiquidationLogic.sol)
+- [ReserveLogic](../src/core/contracts/protocol/libraries/logic/ReserveLogic.sol)
+- [DataTypes](../src/core/contracts/protocol/libraries/types/DataTypes.sol)
+- [ConfigurationInputTypes](../src/core/contracts/protocol/libraries/types/ConfiguratorInputTypes.sol)
+- [ReserveConfiguration](../src/core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol)
+- [Errors](../src/core/contracts/protocol/libraries/helpers/Errors.sol)
+- [Pool](../src/core/contracts/protocol/pool/Pool.sol)
+
 
 <br>
 
@@ -56,6 +76,16 @@ Implementation-wise, this feature:
 
 <br>
 
+Files affected:
+- [DefaultReserveInterestRateStrategyV2](../src/core/contracts/protocol/pool/DefaultReserveInterestRateStrategyV2.sol)
+- [ConfiguratorLogic](../src/core/contracts/protocol/libraries/logic/ConfiguratorLogic.sol)
+- [PoolConfigurator](../src/core/contracts/protocol/pool/PoolConfigurator.sol)
+- [ConfigurationInputTypes](../src/core/contracts/protocol/libraries/types/ConfiguratorInputTypes.sol)
+- [ReserveLogic](../src/core/contracts/protocol/libraries/logic/ReserveLogic.sol)
+- [Errors](../src/core/contracts/protocol/libraries/helpers/Errors.sol)
+
+<br>
+
 ---
 
 <br>
@@ -64,6 +94,11 @@ Implementation-wise, this feature:
 
 Due to legacy reasons, the `PoolConfigurator` didn’t allow the EMERGENCY_GUARDIAN role to freeze an asset, only to pause it.
 We introduced an additional contract on top ([FreezingSteward](https://github.com/bgd-labs/aave-address-book/blob/main/src/AaveV3Ethereum.sol#L60C1-L61C6)) to allow this in the past, but the logic really belongs to the PoolConfigurator, so this is included into 3.1, and the FreezingSteward pattern can be deprecated.
+
+<br>
+
+Files affected:
+- [PoolConfigurator](../src/core/contracts/protocol/pool/PoolConfigurator.sol)
 
 <br>
 
@@ -81,6 +116,11 @@ On 3.1 we introduce logic to update reserve data whenever the rate strategy or R
 
 <br>
 
+Files affected:
+- [PoolConfigurator](../src/core/contracts/protocol/pool/PoolConfigurator.sol)
+
+<br>
+
 ---
 
 <br>
@@ -90,6 +130,11 @@ On 3.1 we introduce logic to update reserve data whenever the rate strategy or R
 Precision is a pretty delicate mechanism on Aave, and historically we have observed that assets with low decimals are prone to create edge case scenarios, for example, regarding inflation attacks.
 
 Given that currently it is a pretty rare case, and usually symptom of very bad practises by the team doing the ERC20 implementation, we have introduced a validation for any asset listed on Aave to have at least 6 decimals.
+
+<br>
+
+Files affected:
+- [PoolConfigurator](../src/core/contracts/protocol/pool/PoolConfigurator.sol)
 
 <br>
 
@@ -110,6 +155,17 @@ Apart from being totally optional (it is possible to just unpause without any de
 
 <br>
 
+Files affected:
+- [PoolConfigurator](../src/core/contracts/protocol/pool/PoolConfigurator.sol)
+- [ValidationLogic](../src/core/contracts/protocol/libraries/logic/ValidationLogic.sol)
+- [PoolLogic](../src/core/contracts/protocol/libraries/logic/PoolLogic.sol)
+- [DataTypes](../src/core/contracts/protocol/libraries/types/DataTypes.sol)
+- [Pool](../src/core/contracts/protocol/pool/Pool.sol)
+- [Errors](../src/core/contracts/protocol/libraries/helpers/Errors.sol)
+
+
+<br>
+
 ---
 
 <br>
@@ -118,6 +174,11 @@ Apart from being totally optional (it is possible to just unpause without any de
 
 On previous freezing incidents, we have also noticed that when freezing an asset on v3, the correct approach, apart from halting deposits and borrows, would be to “remove” the collateral power of the asset for opening or increasing borrow positions.
 For this reason, in this 3.1 we have added setting LTV to 0 atomically when freezing an asset, returning to the previous LTV value when unfreezing.
+
+<br>
+
+Files affected:
+- [PoolConfigurator](../src/core/contracts/protocol/pool/PoolConfigurator.sol)
 
 <br>
 
@@ -137,6 +198,14 @@ This will only affect those v3 instances where stable rate was active at some po
 
 <br>
 
+Files affected:
+- [BorrowLogic](../src/core/contracts/protocol/libraries/logic/BorrowLogic.sol)
+- [Pool](../src/core/contracts/protocol/pool/Pool.sol)
+- [ValidationLogic](../src/core/contracts/protocol/libraries/logic/ValidationLogic.sol)
+
+
+<br>
+
 ---
 
 <br>
@@ -152,6 +221,11 @@ The less strict, but still correct approach we added is to allow enabling of the
 
 <br>
 
+Files affected:
+- [PoolConfigurator](../src/core/contracts/protocol/pool/PoolConfigurator.sol)
+
+<br>
+
 ---
 
 <br>
@@ -161,6 +235,10 @@ The less strict, but still correct approach we added is to allow enabling of the
 Operationally and tooling-wise, historically has been problematic to fetch the smart contract addresses of different Solidity libraries connected to the Pool or the PoolConfigurator (e.g. `PoolLogic`, `BorrowLogic`, etc).
 
 To solve that, we have added specific getters for each library on the Pool, like `getPoolLogic()` or `getBorrowLogic()` , returning their addresses, and opening for simple usage both on-chain and off-chain.
+
+Files affected:
+- [PoolConfigurator](../src/core/contracts/protocol/pool/PoolConfigurator.sol)
+- [Pool](../src/core/contracts/protocol/pool/Pool.sol)
 
 <br>
 
@@ -173,3 +251,9 @@ To solve that, we have added specific getters for each library on the Pool, like
 Over time, some detected problems have received patches on production, creating certain de-sync between Github and deployed contracts, with the latest being the “head” of Aave.
 
 With 3.1 we sync completely production and off-chain code, and in addition, we do different minor bug fixes.
+
+
+Files affected:
+*This only incorporates changes already present in production*
+
+<br>
