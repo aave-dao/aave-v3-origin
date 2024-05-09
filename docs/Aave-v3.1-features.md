@@ -9,8 +9,13 @@ With those principles in mind, the following is an detailed list of the changes/
 ## Features
 
 <br>
+<br>
 
 ### 1. Virtual accounting
+
+<br>
+
+**-> Feature description**
 
 Aave v3, is what we technically call a “dynamic” system in terms of underlying balances of ERC20 tokens. For example, to calculate utilisation and rates, the system checks how is the balance of underlying (e.g. USDC) on its aToken contract (aUSDC), and compares it with outstanding debt. Or to validate if there is enough funds for withdrawals, the system depends on not reverting on transfer() from the aToken to the user withdrawing; so also depending on ERC20 balances.
 
@@ -30,29 +35,52 @@ Given its implications and criticality, virtual accounting can be considered the
 
 <br>
 
-**Misc considerations & acknowledged limitations**
+**-> Misc considerations & acknowledged limitations**
 
 - Virtual balance doesn't fix the imprecision caused by other components of the protocol, its objective is to add stricter validations, reducing any type of attack vector to the minimum.
 - An extra "soft" protection has been added on borrowing actions (flash loan and borrow): the amount borrowed of underlying should not be higher than the aToken supply. The idea behind is to add more defenses on inflation scenarios, even if we are aware total protection is not achieved (e.g. against certain edge iteration vectors).
   Not using `accruedToTreasury` in the calculation is intentional.
 - The addition of virtual accounting can create a situation over time that more liquidity will be available in the aToken contract than what the the virtual balance allows to withdraw/borrow. This is intended by design.
+- "Special" assets like GHO (minted instead of supplied) are to be configured without virtual accounting.
 
 <br>
 
-Files affected:
+
+**-> Files affected and detailed changes**
 - [SupplyLogic](../src/core/contracts/protocol/libraries/logic/SupplyLogic.sol)
+  - Replacement of `updateInterestRates()` by `updateInterestRatesAndVirtualBalance()` to account for virtual balance.
 - [BorrowLogic](../src/core/contracts/protocol/libraries/logic/BorrowLogic.sol)
+  - Replacement of `updateInterestRates()` by `updateInterestRatesAndVirtualBalance()` to account for virtual balance.
 - [ValidationLogic](../src/core/contracts/protocol/libraries/logic/ValidationLogic.sol)
+  - Disable supplying on behalf of the aToken (soft-protection of non-intended behavior).
+  - Disable borrowing more than the aToken total supply.
 - [BridgeLogic](../src/core/contracts/protocol/libraries/logic/BridgeLogic.sol)
+  - Replacement of `updateInterestRates()` by `updateInterestRatesAndVirtualBalance()` to account for virtual balance.
 - [ConfiguratorLogic](../src/core/contracts/protocol/libraries/logic/ConfiguratorLogic.sol)
+  - On `executeInitReserve()` (used on listings), enable/not the flag to use virtual accounting.
 - [FlashLoanLogic](../src/core/contracts/protocol/libraries/logic/FlashLoanLogic.sol)
+  - Replacement of `updateInterestRates()` by `updateInterestRatesAndVirtualBalance()` to account for virtual balance.
+  - Extra accounting required for virtual balance.
 - [LiquidationLogic](../src/core/contracts/protocol/libraries/logic/LiquidationLogic.sol)
+  - Replacement of `updateInterestRates()` by `updateInterestRatesAndVirtualBalance()` to account for virtual balance.
 - [ReserveLogic](../src/core/contracts/protocol/libraries/logic/ReserveLogic.sol)
+  - `updateInterestRates()` now becomes `updateInterestRatesAndVirtualBalance()`, with new logic to 1) pass extra parameters to the interest rate strategy about virtual balance and 2) accounting of virtual balance.
 - [DataTypes](../src/core/contracts/protocol/libraries/types/DataTypes.sol)
+  - A `virtualUnderlyingBalance` is added at the end of the `ReserveData` type, containing all general information of an asset in the pool.
+  - Added a `ReserveDataLegacy` for backwards compatibility.
+  - Modified the internal struct `CalculateInterestRatesParams` to receive virtual accounting related params.
 - [ConfigurationInputTypes](../src/core/contracts/protocol/libraries/types/ConfiguratorInputTypes.sol)
+  - Added flag `useVirtualBalance` for a new listing to use or not virtual balance.
 - [ReserveConfiguration](../src/core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol)
+  - Added logic to store and set/get the new `VIRTUAL_ACC_ACTIVE` flag.
 - [Errors](../src/core/contracts/protocol/libraries/helpers/Errors.sol)
+  - In relation with this feature, added the `WITHDRAW_TO_ATOKEN` and `SUPPLY_TO_ATOKEN` errors.
 - [Pool](../src/core/contracts/protocol/pool/Pool.sol)
+  - Modified `getReserveData()` to return `ReserveDataLegacy` for backwards compatibility.
+  - Added a new `getReserveDataExtended()` returning the new `ReserveData`.
+  - Added a new `getVirtualUnderlyingBalance()` getter.
+- [DefaultReserveInterestRateStrategyV2](../src/core/contracts/protocol/pool/DefaultReserveInterestRateStrategyV2.sol)
+  - Contains the logic to consider virtual balance for calculation of new interest rates (instead of balance).
 
 
 <br>
@@ -62,6 +90,10 @@ Files affected:
 <br>
 
 ### 2. Stateful interest rate strategy
+
+<br>
+
+**-> Feature description**
 
 Having reviewed countless Aave governance rates updates, we noticed time ago that connecting new strategy contracts is a process prone to errors. To solve that, in the past we introduced an on-chain rate strategy factory, that completely removed that error-vector, deploying new rates automatically and efficiently.
 
@@ -76,13 +108,19 @@ Implementation-wise, this feature:
 
 <br>
 
-Files affected:
+**-> Files affected and detailed changes**
 - [DefaultReserveInterestRateStrategyV2](../src/core/contracts/protocol/pool/DefaultReserveInterestRateStrategyV2.sol)
+  - New contract to be connected as rate strategy to all assets, replacing the current `DefaultReserveInterestStrategy` and containing the new `_interestRateData` mapping for all assets using the new stateful interest rate. The approach with it was trying to be as less impact with the previous logic as possible, if not required by design.
 - [ConfiguratorLogic](../src/core/contracts/protocol/libraries/logic/ConfiguratorLogic.sol)
-- [PoolConfigurator](../src/core/contracts/protocol/pool/PoolConfigurator.sol)
+  - On `executeInitReserve()` used for listings, the stateful strategy gets called now to setup the asset's rate params.
+- [PoolConfigurator](../src/core/contracts/protocol/pool/PoolConfigurator.sol).
+  - Emit event on rate's params setup, on `initReserves()`.
+  - Added new `setReserveInterestRateData()` to only set new rates params for an asset, and modified `setReserveInterestRateStrategyAddress()` to accept `rateData` apart from the address (for assets with custom rate).
+  - Logic to update rates data on `_updateInterestRateStrategy()`.
 - [ConfigurationInputTypes](../src/core/contracts/protocol/libraries/types/ConfiguratorInputTypes.sol)
-- [ReserveLogic](../src/core/contracts/protocol/libraries/logic/ReserveLogic.sol)
+  - Added `interestRateData` on the `InitReserveInput` used on listing.
 - [Errors](../src/core/contracts/protocol/libraries/helpers/Errors.sol)
+  - In relation with this feature, added the `INVALID_MAXRATE` and `SLOPE_2_MUST_BE_GTE_SLOPE_1` errors. 
 
 <br>
 
@@ -92,13 +130,20 @@ Files affected:
 
 ### 3. **Freezing by EMERGENCY_GUARDIAN on PoolConfigurator**
 
+<br>
+
+**-> Feature description**
+
 Due to legacy reasons, the `PoolConfigurator` didn’t allow the EMERGENCY_GUARDIAN role to freeze an asset, only to pause it.
 We introduced an additional contract on top ([FreezingSteward](https://github.com/bgd-labs/aave-address-book/blob/main/src/AaveV3Ethereum.sol#L60C1-L61C6)) to allow this in the past, but the logic really belongs to the PoolConfigurator, so this is included into 3.1, and the FreezingSteward pattern can be deprecated.
 
 <br>
 
-Files affected:
+**-> Files affected and detailed changes**
 - [PoolConfigurator](../src/core/contracts/protocol/pool/PoolConfigurator.sol)
+  - Added new `onlyRiskOrPoolOrEmergencyAdmins` modifier, and changing `setReserveFreeze()` to use it.
+- [Errors](../src/core/contracts/protocol/libraries/helpers/Errors.sol)
+  - In relation with this feature, added the `CALLER_NOT_RISK_OR_POOL_OR_EMERGENCY_ADMIN` error. 
 
 <br>
 
@@ -108,6 +153,10 @@ Files affected:
 
 ### 4. **Reserve data update on rate strategy and RF changes**
 
+<br>
+
+**-> Feature description**
+
 On Aave v3 (and v2), whenever an interest rate strategy address is replaced for an asset or the Reserve Factor changes, the reserve data is not updated (calculate liquidity/variable debt index until now and “cache” rates on the asset data).
 
 This was simply a design choice, and even if perfectly acceptable, we decided to change it as 1) is counter-intuitive, as we think indexes until now should be updated _with the old rate strategy/old RF_ and 2) whenever an asset is frozen or in any state of partial functionality, the update of the rate will be factually delayed until an user makes an action.
@@ -116,8 +165,12 @@ On 3.1 we introduce logic to update reserve data whenever the rate strategy or R
 
 <br>
 
-Files affected:
+**-> Files affected and detailed changes**
+- [Pool](../src/core/contracts/protocol/pool/Pool.sol)
+  - Exposed `syncIndexesState()` and `syncRatesState()` functions gated to the `PoolConfigurator`, to be used to "sync" the data (update indexes and rates on reserve data).
 - [PoolConfigurator](../src/core/contracts/protocol/pool/PoolConfigurator.sol)
+  - Addition of sync of indexes and rates on both `setReserveFactor()` and `_updateInterestRateStrategy()`.
+
 
 <br>
 
@@ -127,14 +180,19 @@ Files affected:
 
 ### 5. **Minimum decimals for listed assets**
 
+<br>
+
+**-> Feature description**
+
 Precision is a pretty delicate mechanism on Aave, and historically we have observed that assets with low decimals are prone to create edge case scenarios, for example, regarding inflation attacks.
 
 Given that currently it is a pretty rare case, and usually symptom of very bad practises by the team doing the ERC20 implementation, we have introduced a validation for any asset listed on Aave to have at least 6 decimals.
 
 <br>
 
-Files affected:
+**-> Files affected and detailed changes**
 - [PoolConfigurator](../src/core/contracts/protocol/pool/PoolConfigurator.sol)
+  - Added require on `initReserves()`, to imposed the condition on listings.
 
 <br>
 
@@ -143,6 +201,10 @@ Files affected:
 <br>
 
 ### 6. Liquidations grace sentinel
+
+<br>
+
+**-> Feature description**
 
 During one security incident that required pausing the protocol we noticed that could be important to introduce a grace period for users to refill their positions or repay debt, just after the system is unpaused, for them to avoiding liquidation. This is a similar approach as with the L2 Sentinel, allowing for a grace period (in that case stopping borrowing too) whenever a downtime on a rollup network is detected.
 
@@ -155,13 +217,22 @@ Apart from being totally optional (it is possible to just unpause without any de
 
 <br>
 
-Files affected:
+**-> Files affected and detailed changes**
 - [PoolConfigurator](../src/core/contracts/protocol/pool/PoolConfigurator.sol)
+  - Added a `MAX_GRACE_PERIOD` constant as maximum upper limit of grace period.
+  - New `setReservePause()` function receiving a `gracePeriod` input parameter, to be used on unpause.
+  - Kept another `setReservePause()` with the previous function signature, applying a default 0 grace period.
+  - Same approach with `setPoolPause()`, which is a "batch" `setReservePause()`.
 - [ValidationLogic](../src/core/contracts/protocol/libraries/logic/ValidationLogic.sol)
+  - Added validation of grace period on the `validateLiquidationCall()` function.
 - [PoolLogic](../src/core/contracts/protocol/libraries/logic/PoolLogic.sol)
+  - Added `executeSetLiquidationGracePeriod()` to set on the asset data until when a grace period is active.
 - [DataTypes](../src/core/contracts/protocol/libraries/types/DataTypes.sol)
+  - Added `liquidationGracePeriodUntil` into `ReserveData`, strategically placed after `uint16 id` to efficiently pack the data, while keeping layout compatibility.
 - [Pool](../src/core/contracts/protocol/pool/Pool.sol)
+  - Added getter and setter for grace period: `getLiquidationGracePeriod()` and `setLiquidationGracePeriod()`, this last gated to the `PoolConfigurator`.
 - [Errors](../src/core/contracts/protocol/libraries/helpers/Errors.sol)
+  - In relation with this feature, added the `LIQUIDATION_GRACE_SENTINEL_CHECK_FAILED` and `INVALID_GRACE_PERIOD` errors. 
 
 
 <br>
@@ -172,13 +243,20 @@ Files affected:
 
 ### 7. **LTV0 on freezing**
 
+<br>
+
+**-> Feature description**
+
 On previous freezing incidents, we have also noticed that when freezing an asset on v3, the correct approach, apart from halting deposits and borrows, would be to “remove” the collateral power of the asset for opening or increasing borrow positions.
 For this reason, in this 3.1 we have added setting LTV to 0 atomically when freezing an asset, returning to the previous LTV value when unfreezing.
 
 <br>
 
-Files affected:
+**-> Files affected and detailed changes**
 - [PoolConfigurator](../src/core/contracts/protocol/pool/PoolConfigurator.sol)
+  - Added data variables `_pendingLtv` and `_isPendingLtvSet` to keep persistence on previous LTV value (before LTV0).
+  - Added logic on `configureReserveAsCollateral()` to strictly keep track of LTVs.
+  - Modified `setReserveFreeze()` to set LTV to 0 on freeze, or revert to previous value if unfreezing.
 
 <br>
 
@@ -187,6 +265,10 @@ Files affected:
 <br>
 
 ### 8. **Permission-less movement of stable positions to variable**
+
+<br>
+
+**-> Feature description**
 
 Consequence of a security vulnerability detected end of next year related with stable rate mode and affecting more on Aave v2, [we proposed to completely deprecate it](https://governance.aave.com/t/bgd-full-deprecation-of-stable-rate/16473).
 
@@ -198,10 +280,13 @@ This will only affect those v3 instances where stable rate was active at some po
 
 <br>
 
-Files affected:
+**-> Files affected and detailed changes**
 - [BorrowLogic](../src/core/contracts/protocol/libraries/logic/BorrowLogic.sol)
+  - Adapted `executeSwapBorrowRateMode()` to allow swap to variable for any user holding a stable rate position.
 - [Pool](../src/core/contracts/protocol/pool/Pool.sol)
+  - Exposed `swapToVariable()` function.
 - [ValidationLogic](../src/core/contracts/protocol/libraries/logic/ValidationLogic.sol)
+  - On `validateSwapRateMode()` remove limitation of frozen assets.
 
 
 <br>
@@ -212,6 +297,10 @@ Files affected:
 
 ### 9. Allow setting debt ceiling whenever LT is 0
 
+<nr>
+
+**-> Feature description**
+
 In multiple cases (e.g. stablecoins) an asset is listed as no-collateral and thus no debt ceiling.
 When then at a later point the DAO decides to enable it as isolated collateral it currently can't because of a validation checking that there are no suppliers in the pool.
 
@@ -221,8 +310,9 @@ The less strict, but still correct approach we added is to allow enabling of the
 
 <br>
 
-Files affected:
+**-> Files affected and detailed changes**
 - [PoolConfigurator](../src/core/contracts/protocol/pool/PoolConfigurator.sol)
+  - Added exception of `currentConfig.getLiquidationThreshold() != 0` on `setDebtCeiling()`.
 
 <br>
 
@@ -232,13 +322,21 @@ Files affected:
 
 ### 10. New getters on Pool and PoolConfigurator for library addresses
 
+<br>
+
+**-> Feature description**
+
 Operationally and tooling-wise, historically has been problematic to fetch the smart contract addresses of different Solidity libraries connected to the Pool or the PoolConfigurator (e.g. `PoolLogic`, `BorrowLogic`, etc).
 
 To solve that, we have added specific getters for each library on the Pool, like `getPoolLogic()` or `getBorrowLogic()` , returning their addresses, and opening for simple usage both on-chain and off-chain.
 
-Files affected:
+<br>
+
+**-> Files affected and detailed changes**
 - [PoolConfigurator](../src/core/contracts/protocol/pool/PoolConfigurator.sol)
+  - Added `getConfiguratorLogic()` getter.
 - [Pool](../src/core/contracts/protocol/pool/Pool.sol)
+  - Added getters for all external libraries (e.g. `getFlashLoanLogic()`, `getBorrowLogic()`).
 
 <br>
 
@@ -247,6 +345,10 @@ Files affected:
 <br>
 
 ### 11. Misc minor bug fixes and sync the codebase with the current v3 production
+
+<br>
+
+**-> Feature description**
 
 Over time, some detected problems have received patches on production, creating certain de-sync between Github and deployed contracts, with the latest being the “head” of Aave.
 
