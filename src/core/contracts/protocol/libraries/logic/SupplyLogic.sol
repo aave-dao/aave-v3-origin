@@ -60,9 +60,9 @@ library SupplyLogic {
 
     reserve.updateState(reserveCache);
 
-    ValidationLogic.validateSupply(reserveCache, reserve, params.amount, params.onBehalfOf);
+    ValidationLogic.validateSupply(reserveCache, reserve, params.amount);
 
-    reserve.updateInterestRatesAndVirtualBalance(reserveCache, params.asset, params.amount, 0);
+    reserve.updateInterestRates(reserveCache, params.asset, params.amount, 0);
 
     IERC20(params.asset).safeTransferFrom(msg.sender, reserveCache.aTokenAddress, params.amount);
 
@@ -113,8 +113,6 @@ library SupplyLogic {
     DataTypes.ReserveData storage reserve = reservesData[params.asset];
     DataTypes.ReserveCache memory reserveCache = reserve.cache();
 
-    require(params.to != reserveCache.aTokenAddress, Errors.WITHDRAW_TO_ATOKEN);
-
     reserve.updateState(reserveCache);
 
     uint256 userBalance = IAToken(reserveCache.aTokenAddress).scaledBalanceOf(msg.sender).rayMul(
@@ -129,7 +127,7 @@ library SupplyLogic {
 
     ValidationLogic.validateWithdraw(reserveCache, amountToWithdraw, userBalance);
 
-    reserve.updateInterestRatesAndVirtualBalance(reserveCache, params.asset, 0, amountToWithdraw);
+    reserve.updateInterestRates(reserveCache, params.asset, 0, amountToWithdraw);
 
     bool isCollateral = userConfig.isUsingAsCollateral(reserve.id);
 
@@ -188,9 +186,8 @@ library SupplyLogic {
     ValidationLogic.validateTransfer(reserve);
 
     uint256 reserveId = reserve.id;
-    uint256 scaledAmount = params.amount.rayDiv(reserve.getNormalizedIncome());
 
-    if (params.from != params.to && scaledAmount != 0) {
+    if (params.from != params.to && params.amount != 0) {
       DataTypes.UserConfigurationMap storage fromConfig = usersConfig[params.from];
 
       if (fromConfig.isUsingAsCollateral(reserveId)) {

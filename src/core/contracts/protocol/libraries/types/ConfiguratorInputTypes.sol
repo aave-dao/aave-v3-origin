@@ -7,7 +7,6 @@ library ConfiguratorInputTypes {
     address stableDebtTokenImpl;
     address variableDebtTokenImpl;
     uint8 underlyingAssetDecimals;
-    bool useVirtualBalance;
     address interestRateStrategyAddress;
     address underlyingAsset;
     address treasury;
@@ -19,7 +18,6 @@ library ConfiguratorInputTypes {
     string stableDebtTokenName;
     string stableDebtTokenSymbol;
     bytes params;
-    bytes interestRateData;
   }
 
   struct UpdateATokenInput {

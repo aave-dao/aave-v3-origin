@@ -381,14 +381,6 @@ interface IPool {
   function swapBorrowRateMode(address asset, uint256 interestRateMode) external;
 
   /**
-   * @notice Allows a borrower to swap his debt between stable and variable mode,
-   * @dev introduce in a flavor stable rate deprecation
-   * @param asset The address of the underlying asset borrowed
-   * @param user The address of the user to be swapped
-   */
-  function swapToVariable(address asset, address user) external;
-
-  /**
    * @notice Rebalances the stable interest rate of a user to the current stable rate defined on the reserve.
    * - Users can be rebalanced if the following conditions are satisfied:
    *     1. Usage ratio is above 95%
@@ -533,22 +525,6 @@ interface IPool {
   ) external;
 
   /**
-   * @notice Accumulates interest to all indexes of the reserve
-   * @dev Only callable by the PoolConfigurator contract
-   * @dev To be used when required by the configurator, for example when updating interest rates strategy data
-   * @param asset The address of the underlying asset of the reserve
-   */
-  function syncIndexesState(address asset) external;
-
-  /**
-   * @notice Updates interest rates on the reserve data
-   * @dev Only callable by the PoolConfigurator contract
-   * @dev To be used when required by the configurator, for example when updating interest rates strategy data
-   * @param asset The address of the underlying asset of the reserve
-   */
-  function syncRatesState(address asset) external;
-
-  /**
    * @notice Sets the configuration bitmap of the reserve as a whole
    * @dev Only callable by the PoolConfigurator contract
    * @param asset The address of the underlying asset of the reserve
@@ -603,23 +579,7 @@ interface IPool {
    * @param asset The address of the underlying asset of the reserve
    * @return The state and configuration data of the reserve
    */
-  function getReserveData(address asset) external view returns (DataTypes.ReserveDataLegacy memory);
-
-  /**
-   * @notice Returns the state and configuration of the reserve, including extra data included with Aave v3.1
-   * @param asset The address of the underlying asset of the reserve
-   * @return The state and configuration data of the reserve with virtual accounting
-   */
-  function getReserveDataExtended(
-    address asset
-  ) external view returns (DataTypes.ReserveData memory);
-
-  /**
-   * @notice Returns the virtual underlying balance of the reserve
-   * @param asset The address of the underlying asset of the reserve
-   * @return The reserve virtual underlying balance
-   */
-  function getVirtualUnderlyingBalance(address asset) external view returns (uint128);
+  function getReserveData(address asset) external view returns (DataTypes.ReserveData memory);
 
   /**
    * @notice Validates and finalizes an aToken transfer
@@ -725,22 +685,6 @@ interface IPool {
   function resetIsolationModeTotalDebt(address asset) external;
 
   /**
-   * @notice Sets the liquidation grace period of the given asset
-   * @dev To enable a liquidation grace period, a timestamp in the future should be set,
-   *      To disable a liquidation grace period, any timestamp in the past works, like 0
-   * @param asset The address of the underlying asset to set the liquidationGracePeriod
-   * @param until Timestamp when the liquidation grace period will end
-   **/
-  function setLiquidationGracePeriod(address asset, uint40 until) external;
-
-  /**
-   * @notice Returns the liquidation grace period of the given asset
-   * @param asset The address of the underlying asset
-   * @return Timestamp when the liquidation grace period will end
-   **/
-  function getLiquidationGracePeriod(address asset) external returns (uint40);
-
-  /**
    * @notice Returns the percentage of available liquidity that can be borrowed at once at stable rate
    * @return The percentage of available liquidity to borrow, expressed in bps
    */
@@ -797,39 +741,4 @@ interface IPool {
    *   0 if the action is executed directly by the user, without any middle-man
    */
   function deposit(address asset, uint256 amount, address onBehalfOf, uint16 referralCode) external;
-
-  /**
-   * @notice Gets the address of the external FlashLoanLogic
-   */
-  function getFlashLoanLogic() external returns (address);
-
-  /**
-   * @notice Gets the address of the external BorrowLogic
-   */
-  function getBorrowLogic() external returns (address);
-
-  /**
-   * @notice Gets the address of the external BridgeLogic
-   */
-  function getBridgeLogic() external returns (address);
-
-  /**
-   * @notice Gets the address of the external EModeLogic
-   */
-  function getEModeLogic() external returns (address);
-
-  /**
-   * @notice Gets the address of the external LiquidationLogic
-   */
-  function getLiquidationLogic() external returns (address);
-
-  /**
-   * @notice Gets the address of the external PoolLogic
-   */
-  function getPoolLogic() external returns (address);
-
-  /**
-   * @notice Gets the address of the external SupplyLogic
-   */
-  function getSupplyLogic() external returns (address);
 }

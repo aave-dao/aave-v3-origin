@@ -124,20 +124,6 @@ library PoolLogic {
   }
 
   /**
-   * @notice Sets the liquidation grace period of the asset
-   * @param reservesData The state of all the reserves
-   * @param asset The address of the underlying asset to set the liquidationGracePeriod
-   * @param until Timestamp when the liquidation grace period will end
-   */
-  function executeSetLiquidationGracePeriod(
-    mapping(address => DataTypes.ReserveData) storage reservesData,
-    address asset,
-    uint40 until
-  ) external {
-    reservesData[asset].liquidationGracePeriodUntil = until;
-  }
-
-  /**
    * @notice Drop a reserve
    * @param reservesData The state of all the reserves
    * @param reservesList The addresses of all the active reserves

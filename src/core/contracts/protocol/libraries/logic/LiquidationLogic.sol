@@ -130,7 +130,6 @@ library LiquidationLogic {
     ValidationLogic.validateLiquidationCall(
       userConfig,
       collateralReserve,
-      debtReserve,
       DataTypes.ValidateLiquidationCallParams({
         debtReserveCache: vars.debtReserveCache,
         totalDebt: vars.userTotalDebt,
@@ -179,7 +178,7 @@ library LiquidationLogic {
 
     _burnDebtTokens(params, vars);
 
-    debtReserve.updateInterestRatesAndVirtualBalance(
+    debtReserve.updateInterestRates(
       vars.debtReserveCache,
       params.debtAsset,
       vars.actualDebtToLiquidate,
@@ -256,7 +255,7 @@ library LiquidationLogic {
   ) internal {
     DataTypes.ReserveCache memory collateralReserveCache = collateralReserve.cache();
     collateralReserve.updateState(collateralReserveCache);
-    collateralReserve.updateInterestRatesAndVirtualBalance(
+    collateralReserve.updateInterestRates(
       collateralReserveCache,
       params.collateralAsset,
       0,

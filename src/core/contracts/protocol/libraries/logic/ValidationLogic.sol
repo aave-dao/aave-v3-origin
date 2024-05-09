@@ -66,8 +66,7 @@ library ValidationLogic {
   function validateSupply(
     DataTypes.ReserveCache memory reserveCache,
     DataTypes.ReserveData storage reserve,
-    uint256 amount,
-    address onBehalfOf
+    uint256 amount
   ) internal view {
     require(amount != 0, Errors.INVALID_AMOUNT);
 
@@ -77,7 +76,6 @@ library ValidationLogic {
     require(isActive, Errors.RESERVE_INACTIVE);
     require(!isPaused, Errors.RESERVE_PAUSED);
     require(!isFrozen, Errors.RESERVE_FROZEN);
-    require(onBehalfOf != reserveCache.aTokenAddress, Errors.SUPPLY_TO_ATOKEN);
 
     uint256 supplyCap = reserveCache.reserveConfiguration.getSupplyCap();
     require(
@@ -160,11 +158,6 @@ library ValidationLogic {
     require(!vars.isPaused, Errors.RESERVE_PAUSED);
     require(!vars.isFrozen, Errors.RESERVE_FROZEN);
     require(vars.borrowingEnabled, Errors.BORROWING_NOT_ENABLED);
-    require(
-      !params.reserveCache.reserveConfiguration.getIsVirtualAccActive() ||
-        IERC20(params.reserveCache.aTokenAddress).totalSupply() >= params.amount,
-      Errors.INVALID_AMOUNT
-    );
 
     require(
       params.priceOracleSentinel == address(0) ||
@@ -292,7 +285,7 @@ library ValidationLogic {
         Errors.COLLATERAL_SAME_AS_BORROWING_CURRENCY
       );
 
-      vars.availableLiquidity = reservesData[params.asset].virtualUnderlyingBalance;
+      vars.availableLiquidity = IERC20(params.asset).balanceOf(params.reserveCache.aTokenAddress);
 
       //calculate the max available loan size in stable rate mode as a percentage of the
       //available liquidity
@@ -368,11 +361,12 @@ library ValidationLogic {
     uint256 variableDebt,
     DataTypes.InterestRateMode currentRateMode
   ) internal view {
-    (bool isActive, , , bool stableRateEnabled, bool isPaused) = reserveCache
+    (bool isActive, bool isFrozen, , bool stableRateEnabled, bool isPaused) = reserveCache
       .reserveConfiguration
       .getFlags();
     require(isActive, Errors.RESERVE_INACTIVE);
     require(!isPaused, Errors.RESERVE_PAUSED);
+    require(!isFrozen, Errors.RESERVE_FROZEN);
 
     if (currentRateMode == DataTypes.InterestRateMode.STABLE) {
       require(stableDebt != 0, Errors.NO_OUTSTANDING_STABLE_DEBT);
@@ -430,8 +424,7 @@ library ValidationLogic {
           averageStableBorrowRate: 0,
           reserveFactor: reserveCache.reserveFactor,
           reserve: reserveAddress,
-          usingVirtualBalance: reserve.configuration.getIsVirtualAccActive(),
-          virtualUnderlyingBalance: reserve.virtualUnderlyingBalance
+          aToken: reserveCache.aTokenAddress
         })
       );
 
@@ -471,7 +464,7 @@ library ValidationLogic {
   ) internal view {
     require(assets.length == amounts.length, Errors.INCONSISTENT_FLASHLOAN_PARAMS);
     for (uint256 i = 0; i < assets.length; i++) {
-      validateFlashloanSimple(reservesData[assets[i]], amounts[i]);
+      validateFlashloanSimple(reservesData[assets[i]]);
     }
   }
 
@@ -479,19 +472,11 @@ library ValidationLogic {
    * @notice Validates a flashloan action.
    * @param reserve The state of the reserve
    */
-  function validateFlashloanSimple(
-    DataTypes.ReserveData storage reserve,
-    uint256 amount
-  ) internal view {
+  function validateFlashloanSimple(DataTypes.ReserveData storage reserve) internal view {
     DataTypes.ReserveConfigurationMap memory configuration = reserve.configuration;
     require(!configuration.getPaused(), Errors.RESERVE_PAUSED);
     require(configuration.getActive(), Errors.RESERVE_INACTIVE);
     require(configuration.getFlashLoanEnabled(), Errors.FLASHLOAN_DISABLED);
-    require(
-      !configuration.getIsVirtualAccActive() ||
-        IERC20(reserve.aTokenAddress).totalSupply() >= amount,
-      Errors.INVALID_AMOUNT
-    );
   }
 
   struct ValidateLiquidationCallLocalVars {
@@ -506,13 +491,11 @@ library ValidationLogic {
    * @notice Validates the liquidation action.
    * @param userConfig The user configuration mapping
    * @param collateralReserve The reserve data of the collateral
-   * @param debtReserve The reserve data of the debt
    * @param params Additional parameters needed for the validation
    */
   function validateLiquidationCall(
     DataTypes.UserConfigurationMap storage userConfig,
     DataTypes.ReserveData storage collateralReserve,
-    DataTypes.ReserveData storage debtReserve,
     DataTypes.ValidateLiquidationCallParams memory params
   ) internal view {
     ValidateLiquidationCallLocalVars memory vars;
@@ -534,12 +517,6 @@ library ValidationLogic {
         params.healthFactor < MINIMUM_HEALTH_FACTOR_LIQUIDATION_THRESHOLD ||
         IPriceOracleSentinel(params.priceOracleSentinel).isLiquidationAllowed(),
       Errors.PRICE_ORACLE_SENTINEL_CHECK_FAILED
-    );
-
-    require(
-      collateralReserve.liquidationGracePeriodUntil < uint40(block.timestamp) &&
-        debtReserve.liquidationGracePeriodUntil < uint40(block.timestamp),
-      Errors.LIQUIDATION_GRACE_SENTINEL_CHECK_FAILED
     );
 
     require(

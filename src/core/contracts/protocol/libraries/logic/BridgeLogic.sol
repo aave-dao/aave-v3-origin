@@ -63,7 +63,7 @@ library BridgeLogic {
 
     reserve.updateState(reserveCache);
 
-    ValidationLogic.validateSupply(reserveCache, reserve, amount, onBehalfOf);
+    ValidationLogic.validateSupply(reserveCache, reserve, amount);
 
     uint256 unbackedMintCap = reserveCache.reserveConfiguration.getUnbackedMintCap();
     uint256 reserveDecimals = reserveCache.reserveConfiguration.getDecimals();
@@ -75,7 +75,7 @@ library BridgeLogic {
       Errors.UNBACKED_MINT_CAP_EXCEEDED
     );
 
-    reserve.updateInterestRatesAndVirtualBalance(reserveCache, asset, 0, 0);
+    reserve.updateInterestRates(reserveCache, asset, 0, 0);
 
     bool isFirstSupply = IAToken(reserveCache.aTokenAddress).mint(
       msg.sender,
@@ -139,7 +139,7 @@ library BridgeLogic {
     reserve.accruedToTreasury += feeToProtocol.rayDiv(reserveCache.nextLiquidityIndex).toUint128();
 
     reserve.unbacked -= backingAmount.toUint128();
-    reserve.updateInterestRatesAndVirtualBalance(reserveCache, asset, added, 0);
+    reserve.updateInterestRates(reserveCache, asset, added, 0);
 
     IERC20(asset).safeTransferFrom(msg.sender, reserveCache.aTokenAddress, added);
 

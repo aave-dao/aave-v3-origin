@@ -96,13 +96,6 @@ library FlashLoanLogic {
         DataTypes.InterestRateMode.NONE
         ? vars.currentAmount.percentMul(vars.flashloanPremiumTotal)
         : 0;
-
-      if (reservesData[params.assets[vars.i]].configuration.getIsVirtualAccActive()) {
-        reservesData[params.assets[vars.i]].virtualUnderlyingBalance -= vars
-          .currentAmount
-          .toUint128();
-      }
-
       IAToken(reservesData[params.assets[vars.i]].aTokenAddress).transferUnderlyingTo(
         params.receiverAddress,
         vars.currentAmount
@@ -155,8 +148,7 @@ library FlashLoanLogic {
             interestRateMode: DataTypes.InterestRateMode(params.interestRateModes[vars.i]),
             referralCode: params.referralCode,
             releaseUnderlying: false,
-            maxStableRateBorrowSizePercent: IPool(params.pool)
-              .MAX_STABLE_RATE_BORROW_SIZE_PERCENT(),
+            maxStableRateBorrowSizePercent: IPool(params.pool).MAX_STABLE_RATE_BORROW_SIZE_PERCENT(),
             reservesCount: IPool(params.pool).getReservesCount(),
             oracle: IPoolAddressesProvider(params.addressesProvider).getPriceOracle(),
             userEModeCategory: IPool(params.pool).getUserEMode(params.onBehalfOf).toUint8(),
@@ -196,15 +188,10 @@ library FlashLoanLogic {
     // is altered to (validation -> user payload -> cache -> updateState -> changeState -> updateRates) for flashloans.
     // This is done to protect against reentrance and rate manipulation within the user specified payload.
 
-    ValidationLogic.validateFlashloanSimple(reserve, params.amount);
+    ValidationLogic.validateFlashloanSimple(reserve);
 
     IFlashLoanSimpleReceiver receiver = IFlashLoanSimpleReceiver(params.receiverAddress);
     uint256 totalPremium = params.amount.percentMul(params.flashLoanPremiumTotal);
-
-    if (reserve.configuration.getIsVirtualAccActive()) {
-      reserve.virtualUnderlyingBalance -= params.amount.toUint128();
-    }
-
     IAToken(reserve.aTokenAddress).transferUnderlyingTo(params.receiverAddress, params.amount);
 
     require(
@@ -257,7 +244,7 @@ library FlashLoanLogic {
       .rayDiv(reserveCache.nextLiquidityIndex)
       .toUint128();
 
-    reserve.updateInterestRatesAndVirtualBalance(reserveCache, params.asset, amountPlusPremium, 0);
+    reserve.updateInterestRates(reserveCache, params.asset, amountPlusPremium, 0);
 
     IERC20(params.asset).safeTransferFrom(
       params.receiverAddress,

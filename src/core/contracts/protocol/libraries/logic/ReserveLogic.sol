@@ -154,7 +154,7 @@ library ReserveLogic {
     reserve.interestRateStrategyAddress = interestRateStrategyAddress;
   }
 
-  struct UpdateInterestRatesAndVirtualBalanceLocalVars {
+  struct UpdateInterestRatesLocalVars {
     uint256 nextLiquidityRate;
     uint256 nextStableRate;
     uint256 nextVariableRate;
@@ -169,14 +169,14 @@ library ReserveLogic {
    * @param liquidityAdded The amount of liquidity added to the protocol (supply or repay) in the previous action
    * @param liquidityTaken The amount of liquidity taken from the protocol (redeem or borrow)
    */
-  function updateInterestRatesAndVirtualBalance(
+  function updateInterestRates(
     DataTypes.ReserveData storage reserve,
     DataTypes.ReserveCache memory reserveCache,
     address reserveAddress,
     uint256 liquidityAdded,
     uint256 liquidityTaken
   ) internal {
-    UpdateInterestRatesAndVirtualBalanceLocalVars memory vars;
+    UpdateInterestRatesLocalVars memory vars;
 
     vars.totalVariableDebt = reserveCache.nextScaledVariableDebt.rayMul(
       reserveCache.nextVariableBorrowIndex
@@ -196,24 +196,13 @@ library ReserveLogic {
         averageStableBorrowRate: reserveCache.nextAvgStableBorrowRate,
         reserveFactor: reserveCache.reserveFactor,
         reserve: reserveAddress,
-        usingVirtualBalance: reserve.configuration.getIsVirtualAccActive(),
-        virtualUnderlyingBalance: reserve.virtualUnderlyingBalance
+        aToken: reserveCache.aTokenAddress
       })
     );
 
     reserve.currentLiquidityRate = vars.nextLiquidityRate.toUint128();
     reserve.currentStableBorrowRate = vars.nextStableRate.toUint128();
     reserve.currentVariableBorrowRate = vars.nextVariableRate.toUint128();
-
-    // Only affect virtual balance if the reserve uses it
-    if (reserve.configuration.getIsVirtualAccActive()) {
-      if (liquidityAdded > 0) {
-        reserve.virtualUnderlyingBalance += liquidityAdded.toUint128();
-      }
-      if (liquidityTaken > 0) {
-        reserve.virtualUnderlyingBalance -= liquidityTaken.toUint128();
-      }
-    }
 
     emit ReserveDataUpdated(
       reserveAddress,

@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import {ConfiguratorInputTypes} from '../protocol/libraries/types/ConfiguratorInputTypes.sol';
-import {IDefaultInterestRateStrategyV2} from './IDefaultInterestRateStrategyV2.sol';
 
 /**
  * @title IPoolConfigurator
@@ -39,19 +38,6 @@ interface IPoolConfigurator {
    * @param enabled True if flashloans are enabled, false otherwise
    */
   event ReserveFlashLoaning(address indexed asset, bool enabled);
-
-  /**
-   * @dev Emitted when the ltv is set for the frozen asset.
-   * @param asset The address of the underlying asset of the reserve
-   * @param ltv The loan to value of the asset when used as collateral
-   */
-  event PendingLtvChanged(address indexed asset, uint256 ltv);
-
-  /**
-   * @dev Emitted when the asset is unfrozen and pending ltv is removed.
-   * @param asset The address of the underlying asset of the reserve
-   */
-  event PendingLtvRemoved(address indexed asset);
 
   /**
    * @dev Emitted when the collateralization risk parameters for the specified asset are updated.
@@ -138,13 +124,6 @@ interface IPoolConfigurator {
   event LiquidationProtocolFeeChanged(address indexed asset, uint256 oldFee, uint256 newFee);
 
   /**
-   * @dev Emitted when the liquidation grace period is updated.
-   * @param asset The address of the underlying asset of the reserve
-   * @param gracePeriodUntil Timestamp until when liquidations will not be allowed post-unpause
-   */
-  event LiquidationGracePeriodChanged(address indexed asset, uint40 gracePeriodUntil);
-
-  /**
    * @dev Emitted when the unbacked mint cap of a reserve is updated.
    * @param asset The address of the underlying asset of the reserve
    * @param oldUnbackedMintCap The old unbacked mint cap
@@ -193,13 +172,6 @@ interface IPoolConfigurator {
     address oldStrategy,
     address newStrategy
   );
-
-  /**
-   * @dev Emitted when the data of a reserve interest strategy contract is updated.
-   * @param asset The address of the underlying asset of the reserve
-   * @param data abi encoded data
-   */
-  event ReserveInterestRateDataChanged(address indexed asset, address indexed strategy, bytes data);
 
   /**
    * @dev Emitted when an aToken implementation is upgraded.
@@ -385,19 +357,6 @@ interface IPoolConfigurator {
    * swap interest rate, liquidate, atoken transfers).
    * @param asset The address of the underlying asset of the reserve
    * @param paused True if pausing the reserve, false if unpausing
-   * @param gracePeriod Count of seconds after unpause during which liquidations will not be available
-   *   - Only applicable whenever unpausing (`paused` as false)
-   *   - Passing 0 means no grace period
-   *   - Capped to maximum MAX_GRACE_PERIOD
-   */
-  function setReservePause(address asset, bool paused, uint40 gracePeriod) external;
-
-  /**
-   * @notice Pauses a reserve. A paused reserve does not allow any interaction (supply, borrow, repay,
-   * swap interest rate, liquidate, atoken transfers).
-   * @dev Version with no grace period
-   * @param asset The address of the underlying asset of the reserve
-   * @param paused True if pausing the reserve, false if unpausing
    */
   function setReservePause(address asset, bool paused) external;
 
@@ -412,38 +371,15 @@ interface IPoolConfigurator {
    * @notice Sets the interest rate strategy of a reserve.
    * @param asset The address of the underlying asset of the reserve
    * @param newRateStrategyAddress The address of the new interest strategy contract
-   * @param rateData bytes-encoded rate data. In this format in order to allow the rate strategy contract
-   *  to de-structure custom data
    */
   function setReserveInterestRateStrategyAddress(
     address asset,
-    address newRateStrategyAddress,
-    bytes calldata rateData
+    address newRateStrategyAddress
   ) external;
 
   /**
-   * @notice Sets interest rate data for a reserve
-   * @param asset The address of the underlying asset of the reserve
-   * @param rateData bytes-encoded rate data. In this format in order to allow the rate strategy contract
-   *  to de-structure custom data
-   */
-  function setReserveInterestRateData(address asset, bytes calldata rateData) external;
-
-  /**
    * @notice Pauses or unpauses all the protocol reserves. In the paused state all the protocol interactions
    * are suspended.
-   * @param paused True if protocol needs to be paused, false otherwise
-   * @param gracePeriod Count of seconds after unpause during which liquidations will not be available
-   *   - Only applicable whenever unpausing (`paused` as false)
-   *   - Passing 0 means no grace period
-   *   - Capped to maximum MAX_GRACE_PERIOD
-   */
-  function setPoolPause(bool paused, uint40 gracePeriod) external;
-
-  /**
-   * @notice Pauses or unpauses all the protocol reserves. In the paused state all the protocol interactions
-   * are suspended.
-   * @dev Version with no grace period
    * @param paused True if protocol needs to be paused, false otherwise
    */
   function setPoolPause(bool paused) external;
@@ -547,20 +483,4 @@ interface IPoolConfigurator {
    * @param siloed The new siloed borrowing state
    */
   function setSiloedBorrowing(address asset, bool siloed) external;
-
-  /**
-   * @notice Gets pending ltv value and flag if it is set
-   * @param asset The new siloed borrowing state
-   */
-  function getPendingLtv(address asset) external returns (uint256, bool);
-
-  /**
-   * @notice Gets the address of the external ConfiguratorLogic
-   */
-  function getConfiguratorLogic() external returns (address);
-
-  /**
-   * @notice Gets the maximum liquidations grace period allowed, in seconds
-   */
-  function MAX_GRACE_PERIOD() external returns (uint40);
 }

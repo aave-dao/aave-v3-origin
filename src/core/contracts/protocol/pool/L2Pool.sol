@@ -12,7 +12,15 @@ import {CalldataLogic} from '../libraries/logic/CalldataLogic.sol';
  * @notice Calldata optimized extension of the Pool contract allowing users to pass compact calldata representation
  * to reduce transaction costs on rollups.
  */
-abstract contract L2Pool is Pool, IL2Pool {
+contract L2Pool is Pool, IL2Pool {
+  /**
+   * @dev Constructor.
+   * @param provider The address of the PoolAddressesProvider contract
+   */
+  constructor(IPoolAddressesProvider provider) Pool(provider) {
+    // Intentionally left blank
+  }
+
   /// @inheritdoc IL2Pool
   function supply(bytes32 args) external override {
     (address asset, uint256 amount, uint16 referralCode) = CalldataLogic.decodeSupplyParams(

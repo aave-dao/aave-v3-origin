@@ -36,9 +36,10 @@ import {PoolStorage} from './PoolStorage.sol';
  * @dev All admin functions are callable by the PoolConfigurator contract defined also in the
  *   PoolAddressesProvider
  */
-abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
+contract Pool is VersionedInitializable, PoolStorage, IPool {
   using ReserveLogic for DataTypes.ReserveData;
 
+  uint256 public constant POOL_REVISION = 0x3;
   IPoolAddressesProvider public immutable ADDRESSES_PROVIDER;
 
   /**
@@ -86,6 +87,10 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
     );
   }
 
+  function getRevision() internal pure virtual override returns (uint256) {
+    return POOL_REVISION;
+  }
+
   /**
    * @dev Constructor.
    * @param provider The address of the PoolAddressesProvider contract
@@ -101,7 +106,10 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
    * @dev Caching the address of the PoolAddressesProvider in order to reduce gas consumption on subsequent operations
    * @param provider The address of the PoolAddressesProvider
    */
-  function initialize(IPoolAddressesProvider provider) external virtual;
+  function initialize(IPoolAddressesProvider provider) external virtual initializer {
+    require(provider == ADDRESSES_PROVIDER, Errors.INVALID_ADDRESSES_PROVIDER);
+    _maxStableRateBorrowSizePercent = 0.25e4;
+  }
 
   /// @inheritdoc IPool
   function mintUnbacked(
@@ -162,17 +170,15 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
     bytes32 permitR,
     bytes32 permitS
   ) public virtual override {
-    try
-      IERC20WithPermit(asset).permit(
-        msg.sender,
-        address(this),
-        amount,
-        deadline,
-        permitV,
-        permitR,
-        permitS
-      )
-    {} catch {}
+    IERC20WithPermit(asset).permit(
+      msg.sender,
+      address(this),
+      amount,
+      deadline,
+      permitV,
+      permitR,
+      permitS
+    );
     SupplyLogic.executeSupply(
       _reserves,
       _reservesList,
@@ -272,7 +278,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
     bytes32 permitR,
     bytes32 permitS
   ) public virtual override returns (uint256) {
-    try
+    {
       IERC20WithPermit(asset).permit(
         msg.sender,
         address(this),
@@ -281,9 +287,8 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
         permitV,
         permitR,
         permitS
-      )
-    {} catch {}
-
+      );
+    }
     {
       DataTypes.ExecuteRepayParams memory params = DataTypes.ExecuteRepayParams({
         asset: asset,
@@ -323,19 +328,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
       _reserves[asset],
       _usersConfig[msg.sender],
       asset,
-      msg.sender,
       DataTypes.InterestRateMode(interestRateMode)
-    );
-  }
-
-  /// @inheritdoc IPool
-  function swapToVariable(address asset, address user) public virtual override {
-    BorrowLogic.executeSwapBorrowRateMode(
-      _reserves[asset],
-      _usersConfig[user],
-      asset,
-      user,
-      DataTypes.InterestRateMode.STABLE
     );
   }
 
@@ -454,42 +447,10 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
   }
 
   /// @inheritdoc IPool
-  function getReserveDataExtended(
-    address asset
-  ) external view returns (DataTypes.ReserveData memory) {
-    return _reserves[asset];
-  }
-
-  /// @inheritdoc IPool
   function getReserveData(
     address asset
-  ) external view virtual override returns (DataTypes.ReserveDataLegacy memory) {
-    DataTypes.ReserveData memory reserve = _reserves[asset];
-    DataTypes.ReserveDataLegacy memory res;
-
-    res.configuration = reserve.configuration;
-    res.liquidityIndex = reserve.liquidityIndex;
-    res.currentLiquidityRate = reserve.currentLiquidityRate;
-    res.variableBorrowIndex = reserve.variableBorrowIndex;
-    res.currentVariableBorrowRate = reserve.currentVariableBorrowRate;
-    res.currentStableBorrowRate = reserve.currentStableBorrowRate;
-    res.lastUpdateTimestamp = reserve.lastUpdateTimestamp;
-    res.id = reserve.id;
-    res.aTokenAddress = reserve.aTokenAddress;
-    res.stableDebtTokenAddress = reserve.stableDebtTokenAddress;
-    res.variableDebtTokenAddress = reserve.variableDebtTokenAddress;
-    res.interestRateStrategyAddress = reserve.interestRateStrategyAddress;
-    res.accruedToTreasury = reserve.accruedToTreasury;
-    res.unbacked = reserve.unbacked;
-    res.isolationModeTotalDebt = reserve.isolationModeTotalDebt;
-    return res;
-  }
-
-  /// @inheritdoc IPool
-  function getVirtualUnderlyingBalance(
-    address asset
-  ) external view virtual override returns (uint128) {
-    return _reserves[asset].virtualUnderlyingBalance;
+  ) external view virtual override returns (DataTypes.ReserveData memory) {
+    return _reserves[asset];
   }
 
   /// @inheritdoc IPool
@@ -676,24 +637,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
   ) external virtual override onlyPoolConfigurator {
     require(asset != address(0), Errors.ZERO_ADDRESS_NOT_VALID);
     require(_reserves[asset].id != 0 || _reservesList[0] == asset, Errors.ASSET_NOT_LISTED);
-
     _reserves[asset].interestRateStrategyAddress = rateStrategyAddress;
-  }
-
-  /// @inheritdoc IPool
-  function syncIndexesState(address asset) external virtual override onlyPoolConfigurator {
-    DataTypes.ReserveData storage reserve = _reserves[asset];
-    DataTypes.ReserveCache memory reserveCache = reserve.cache();
-
-    reserve.updateState(reserveCache);
-  }
-
-  /// @inheritdoc IPool
-  function syncRatesState(address asset) external virtual override onlyPoolConfigurator {
-    DataTypes.ReserveData storage reserve = _reserves[asset];
-    DataTypes.ReserveCache memory reserveCache = reserve.cache();
-
-    ReserveLogic.updateInterestRatesAndVirtualBalance(reserve, reserveCache, asset, 0, 0);
   }
 
   /// @inheritdoc IPool
@@ -768,20 +712,6 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
   }
 
   /// @inheritdoc IPool
-  function getLiquidationGracePeriod(address asset) external virtual override returns (uint40) {
-    return _reserves[asset].liquidationGracePeriodUntil;
-  }
-
-  /// @inheritdoc IPool
-  function setLiquidationGracePeriod(
-    address asset,
-    uint40 until
-  ) external virtual override onlyPoolConfigurator {
-    require(_reserves[asset].id != 0 || _reservesList[0] == asset, Errors.ASSET_NOT_LISTED);
-    PoolLogic.executeSetLiquidationGracePeriod(_reserves, asset, until);
-  }
-
-  /// @inheritdoc IPool
   function rescueTokens(
     address token,
     address to,
@@ -809,40 +739,5 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
         referralCode: referralCode
       })
     );
-  }
-
-  /// @inheritdoc IPool
-  function getFlashLoanLogic() external pure returns (address) {
-    return address(FlashLoanLogic);
-  }
-
-  /// @inheritdoc IPool
-  function getBorrowLogic() external pure returns (address) {
-    return address(BorrowLogic);
-  }
-
-  /// @inheritdoc IPool
-  function getBridgeLogic() external pure returns (address) {
-    return address(BridgeLogic);
-  }
-
-  /// @inheritdoc IPool
-  function getEModeLogic() external pure returns (address) {
-    return address(EModeLogic);
-  }
-
-  /// @inheritdoc IPool
-  function getLiquidationLogic() external pure returns (address) {
-    return address(LiquidationLogic);
-  }
-
-  /// @inheritdoc IPool
-  function getPoolLogic() external pure returns (address) {
-    return address(PoolLogic);
-  }
-
-  /// @inheritdoc IPool
-  function getSupplyLogic() external pure returns (address) {
-    return address(SupplyLogic);
   }
 }
