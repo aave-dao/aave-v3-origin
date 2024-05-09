@@ -45,8 +45,8 @@ Given its implications and criticality, virtual accounting can be considered the
 
 <br>
 
-
 **-> Files affected and detailed changes**
+
 - [SupplyLogic](../src/core/contracts/protocol/libraries/logic/SupplyLogic.sol)
   - Replacement of `updateInterestRates()` by `updateInterestRatesAndVirtualBalance()` to account for virtual balance.
 - [BorrowLogic](../src/core/contracts/protocol/libraries/logic/BorrowLogic.sol)
@@ -82,7 +82,6 @@ Given its implications and criticality, virtual accounting can be considered the
 - [DefaultReserveInterestRateStrategyV2](../src/core/contracts/protocol/pool/DefaultReserveInterestRateStrategyV2.sol)
   - Contains the logic to consider virtual balance for calculation of new interest rates (instead of balance).
 
-
 <br>
 
 ---
@@ -109,6 +108,7 @@ Implementation-wise, this feature:
 <br>
 
 **-> Files affected and detailed changes**
+
 - [DefaultReserveInterestRateStrategyV2](../src/core/contracts/protocol/pool/DefaultReserveInterestRateStrategyV2.sol)
   - New contract to be connected as rate strategy to all assets, replacing the current `DefaultReserveInterestStrategy` and containing the new `_interestRateData` mapping for all assets using the new stateful interest rate. The approach with it was trying to be as less impact with the previous logic as possible, if not required by design.
 - [ConfiguratorLogic](../src/core/contracts/protocol/libraries/logic/ConfiguratorLogic.sol)
@@ -120,7 +120,7 @@ Implementation-wise, this feature:
 - [ConfigurationInputTypes](../src/core/contracts/protocol/libraries/types/ConfiguratorInputTypes.sol)
   - Added `interestRateData` on the `InitReserveInput` used on listing.
 - [Errors](../src/core/contracts/protocol/libraries/helpers/Errors.sol)
-  - In relation with this feature, added the `INVALID_MAXRATE` and `SLOPE_2_MUST_BE_GTE_SLOPE_1` errors. 
+  - In relation with this feature, added the `INVALID_MAXRATE` and `SLOPE_2_MUST_BE_GTE_SLOPE_1` errors.
 
 <br>
 
@@ -140,10 +140,11 @@ We introduced an additional contract on top ([FreezingSteward](https://github.co
 <br>
 
 **-> Files affected and detailed changes**
+
 - [PoolConfigurator](../src/core/contracts/protocol/pool/PoolConfigurator.sol)
   - Added new `onlyRiskOrPoolOrEmergencyAdmins` modifier, and changing `setReserveFreeze()` to use it.
 - [Errors](../src/core/contracts/protocol/libraries/helpers/Errors.sol)
-  - In relation with this feature, added the `CALLER_NOT_RISK_OR_POOL_OR_EMERGENCY_ADMIN` error. 
+  - In relation with this feature, added the `CALLER_NOT_RISK_OR_POOL_OR_EMERGENCY_ADMIN` error.
 
 <br>
 
@@ -166,11 +167,11 @@ On 3.1 we introduce logic to update reserve data whenever the rate strategy or R
 <br>
 
 **-> Files affected and detailed changes**
+
 - [Pool](../src/core/contracts/protocol/pool/Pool.sol)
   - Exposed `syncIndexesState()` and `syncRatesState()` functions gated to the `PoolConfigurator`, to be used to "sync" the data (update indexes and rates on reserve data).
 - [PoolConfigurator](../src/core/contracts/protocol/pool/PoolConfigurator.sol)
   - Addition of sync of indexes and rates on both `setReserveFactor()` and `_updateInterestRateStrategy()`.
-
 
 <br>
 
@@ -191,6 +192,7 @@ Given that currently it is a pretty rare case, and usually symptom of very bad p
 <br>
 
 **-> Files affected and detailed changes**
+
 - [PoolConfigurator](../src/core/contracts/protocol/pool/PoolConfigurator.sol)
   - Added require on `initReserves()`, to imposed the condition on listings.
 
@@ -218,6 +220,7 @@ Apart from being totally optional (it is possible to just unpause without any de
 <br>
 
 **-> Files affected and detailed changes**
+
 - [PoolConfigurator](../src/core/contracts/protocol/pool/PoolConfigurator.sol)
   - Added a `MAX_GRACE_PERIOD` constant as maximum upper limit of grace period.
   - New `setReservePause()` function receiving a `gracePeriod` input parameter, to be used on unpause.
@@ -232,8 +235,7 @@ Apart from being totally optional (it is possible to just unpause without any de
 - [Pool](../src/core/contracts/protocol/pool/Pool.sol)
   - Added getter and setter for grace period: `getLiquidationGracePeriod()` and `setLiquidationGracePeriod()`, this last gated to the `PoolConfigurator`.
 - [Errors](../src/core/contracts/protocol/libraries/helpers/Errors.sol)
-  - In relation with this feature, added the `LIQUIDATION_GRACE_SENTINEL_CHECK_FAILED` and `INVALID_GRACE_PERIOD` errors. 
-
+  - In relation with this feature, added the `LIQUIDATION_GRACE_SENTINEL_CHECK_FAILED` and `INVALID_GRACE_PERIOD` errors.
 
 <br>
 
@@ -253,6 +255,7 @@ For this reason, in this 3.1 we have added setting LTV to 0 atomically when free
 <br>
 
 **-> Files affected and detailed changes**
+
 - [PoolConfigurator](../src/core/contracts/protocol/pool/PoolConfigurator.sol)
   - Added data variables `_pendingLtv` and `_isPendingLtvSet` to keep persistence on previous LTV value (before LTV0).
   - Added logic on `configureReserveAsCollateral()` to strictly keep track of LTVs.
@@ -281,13 +284,13 @@ This will only affect those v3 instances where stable rate was active at some po
 <br>
 
 **-> Files affected and detailed changes**
+
 - [BorrowLogic](../src/core/contracts/protocol/libraries/logic/BorrowLogic.sol)
   - Adapted `executeSwapBorrowRateMode()` to allow swap to variable for any user holding a stable rate position.
 - [Pool](../src/core/contracts/protocol/pool/Pool.sol)
   - Exposed `swapToVariable()` function.
 - [ValidationLogic](../src/core/contracts/protocol/libraries/logic/ValidationLogic.sol)
   - On `validateSwapRateMode()` remove limitation of frozen assets.
-
 
 <br>
 
@@ -311,6 +314,7 @@ The less strict, but still correct approach we added is to allow enabling of the
 <br>
 
 **-> Files affected and detailed changes**
+
 - [PoolConfigurator](../src/core/contracts/protocol/pool/PoolConfigurator.sol)
   - Added exception of `currentConfig.getLiquidationThreshold() != 0` on `setDebtCeiling()`.
 
@@ -333,6 +337,7 @@ To solve that, we have added specific getters for each library on the Pool, like
 <br>
 
 **-> Files affected and detailed changes**
+
 - [PoolConfigurator](../src/core/contracts/protocol/pool/PoolConfigurator.sol)
   - Added `getConfiguratorLogic()` getter.
 - [Pool](../src/core/contracts/protocol/pool/Pool.sol)
@@ -354,8 +359,7 @@ Over time, some detected problems have received patches on production, creating 
 
 With 3.1 we sync completely production and off-chain code, and in addition, we do different minor bug fixes.
 
-
 Files affected:
-*This only incorporates changes already present in production*
+_This only incorporates changes already present in production_
 
 <br>
