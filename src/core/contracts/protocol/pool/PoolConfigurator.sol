@@ -225,10 +225,13 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
     bool freeze
   ) external override onlyRiskOrPoolOrEmergencyAdmins {
     DataTypes.ReserveConfigurationMap memory currentConfig = _pool.getConfiguration(asset);
-    uint256 liquidationThreshold = currentConfig.getLiquidationThreshold();
-    uint256 liquidationBonus = currentConfig.getLiquidationBonus();
+
+    require(freeze != currentConfig.getFrozen(), Errors.INVALID_FREEZE_STATE);
 
     currentConfig.setFrozen(freeze);
+
+    uint256 liquidationThreshold = currentConfig.getLiquidationThreshold();
+    uint256 liquidationBonus = currentConfig.getLiquidationBonus();
 
     if (freeze) {
       uint256 currentLtv = currentConfig.getLtv();

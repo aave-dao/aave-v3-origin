@@ -377,15 +377,48 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
   }
 
   function test_setReserveFreeze_false() public {
-    vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit ReserveFrozen(tokenList.usdx, false);
+    vm.startPrank(poolAdmin);
+    // freeze reserve
+    contracts.poolConfiguratorProxy.setReserveFreeze(tokenList.usdx, true);
 
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setReserveFreeze(tokenList.usdx, false);
     (, , , , , , , , , bool isFrozen) = contracts.protocolDataProvider.getReserveConfigurationData(
       tokenList.usdx
     );
+    assertEq(isFrozen, true);
+
+    // unfreeze reserve
+    vm.expectEmit(address(contracts.poolConfiguratorProxy));
+    emit ReserveFrozen(tokenList.usdx, false);
+
+    contracts.poolConfiguratorProxy.setReserveFreeze(tokenList.usdx, false);
+    (, , , , , , , , , isFrozen) = contracts.protocolDataProvider.getReserveConfigurationData(
+      tokenList.usdx
+    );
     assertEq(isFrozen, false);
+
+    vm.stopPrank();
+  }
+
+  function test_setUnfrozenReserveFreeze_false_revert() public {
+    vm.expectRevert(bytes(Errors.INVALID_FREEZE_STATE));
+
+    vm.prank(poolAdmin);
+    contracts.poolConfiguratorProxy.setReserveFreeze(tokenList.usdx, false);
+  }
+
+  function test_setFrozenReserveFreeze_true_revert() public {
+    vm.startPrank(poolAdmin);
+
+    contracts.poolConfiguratorProxy.setReserveFreeze(tokenList.usdx, true);
+    (, , , , , , , , , bool isFrozen) = contracts.protocolDataProvider.getReserveConfigurationData(
+      tokenList.usdx
+    );
+    assertEq(isFrozen, true);
+
+    vm.expectRevert(bytes(Errors.INVALID_FREEZE_STATE));
+    contracts.poolConfiguratorProxy.setReserveFreeze(tokenList.usdx, true);
+
+    vm.stopPrank();
   }
 
   function test_setBorrowableInIsolation_true() public {
