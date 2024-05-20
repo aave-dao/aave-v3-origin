@@ -9,18 +9,43 @@ import {DataTypes} from 'aave-v3-core/contracts/protocol/libraries/types/DataTyp
 import {TestnetProcedures} from '../utils/TestnetProcedures.sol';
 
 contract PoolConfiguratorPendingLtvTests is TestnetProcedures {
+  event PendingLtvChanged(address indexed asset, uint256 ltv);
+
+  event CollateralConfigurationChanged(
+    address indexed asset,
+    uint256 ltv,
+    uint256 liquidationThreshold,
+    uint256 liquidationBonus
+  );
+
   function setUp() public {
     initTestEnvironment();
   }
 
   function test_freezeReserve_ltvSetTo0() public {
     // check current ltv
-    (, uint256 ltv, , , , , , , , bool isFrozen) = contracts
-      .protocolDataProvider
-      .getReserveConfigurationData(tokenList.usdx);
+    (
+      ,
+      uint256 ltv,
+      uint256 liquidationThreshold,
+      uint256 liquidationBonus,
+      ,
+      ,
+      ,
+      ,
+      ,
+      bool isFrozen
+    ) = contracts.protocolDataProvider.getReserveConfigurationData(tokenList.usdx);
 
     assertTrue(ltv > 0);
     assertEq(isFrozen, false);
+
+    // expect events to be emitted
+    vm.expectEmit(address(contracts.poolConfiguratorProxy));
+    emit PendingLtvChanged(tokenList.usdx, ltv);
+
+    vm.expectEmit(address(contracts.poolConfiguratorProxy));
+    emit CollateralConfigurationChanged(tokenList.usdx, 0, liquidationThreshold, liquidationBonus);
 
     // freeze reserve
     vm.prank(poolAdmin);
@@ -44,9 +69,18 @@ contract PoolConfiguratorPendingLtvTests is TestnetProcedures {
 
   function test_unfreezeReserve_pendingSetToLtv() public {
     // check ltv
-    (, uint256 originalLtv, , , , , , , , ) = contracts
-      .protocolDataProvider
-      .getReserveConfigurationData(tokenList.usdx);
+    (
+      ,
+      uint256 originalLtv,
+      uint256 liquidationThreshold,
+      uint256 liquidationBonus,
+      ,
+      ,
+      ,
+      ,
+      ,
+
+    ) = contracts.protocolDataProvider.getReserveConfigurationData(tokenList.usdx);
 
     // freeze reserve
     vm.startPrank(poolAdmin);
@@ -62,6 +96,14 @@ contract PoolConfiguratorPendingLtvTests is TestnetProcedures {
 
     // check pending ltv
     (uint256 pendingLtv, ) = contracts.poolConfiguratorProxy.getPendingLtv(tokenList.usdx);
+
+    vm.expectEmit(address(contracts.poolConfiguratorProxy));
+    emit CollateralConfigurationChanged(
+      tokenList.usdx,
+      originalLtv,
+      liquidationThreshold,
+      liquidationBonus
+    );
 
     // unfreeze reserve
     contracts.poolConfiguratorProxy.setReserveFreeze(tokenList.usdx, false);
@@ -97,8 +139,6 @@ contract PoolConfiguratorPendingLtvTests is TestnetProcedures {
     vm.assume(ltvToSet < liquidationThreshold);
     vm.assume(ltvToSet != originalLtv);
 
-    console.logUint(ltvToSet);
-
     // set original ltv
     vm.startPrank(poolAdmin);
     contracts.poolConfiguratorProxy.configureReserveAsCollateral(
@@ -114,6 +154,13 @@ contract PoolConfiguratorPendingLtvTests is TestnetProcedures {
     // check pending ltv
     (uint256 pendingLtv, ) = contracts.poolConfiguratorProxy.getPendingLtv(tokenList.usdx);
     assertEq(pendingLtv, originalLtv);
+
+    // expect events to be emitted
+    vm.expectEmit(address(contracts.poolConfiguratorProxy));
+    emit PendingLtvChanged(tokenList.usdx, ltvToSet);
+
+    vm.expectEmit(address(contracts.poolConfiguratorProxy));
+    emit CollateralConfigurationChanged(tokenList.usdx, 0, liquidationThreshold, liquidationBonus);
 
     // setLtv
     contracts.poolConfiguratorProxy.configureReserveAsCollateral(
@@ -148,7 +195,6 @@ contract PoolConfiguratorPendingLtvTests is TestnetProcedures {
     vm.assume(ltvToSet > 0);
     vm.assume(ltvToSet < liquidationThreshold);
 
-    // freeze reserve
     vm.startPrank(poolAdmin);
 
     // setLtv

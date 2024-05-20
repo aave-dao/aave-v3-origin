@@ -164,9 +164,12 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
       _checkNoSuppliers(asset);
     }
 
+    uint256 updatedLtv = ltv;
+
     if (currentConfig.getFrozen()) {
       _pendingLtv[asset] = ltv;
       _isPendingLtvSet[asset] = true;
+      updatedLtv = 0;
 
       emit PendingLtvChanged(asset, ltv);
     } else {
@@ -178,7 +181,7 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
 
     _pool.setConfiguration(asset, currentConfig);
 
-    emit CollateralConfigurationChanged(asset, ltv, liquidationThreshold, liquidationBonus);
+    emit CollateralConfigurationChanged(asset, updatedLtv, liquidationThreshold, liquidationBonus);
   }
 
   /// @inheritdoc IPoolConfigurator
@@ -222,14 +225,19 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
     bool freeze
   ) external override onlyRiskOrPoolOrEmergencyAdmins {
     DataTypes.ReserveConfigurationMap memory currentConfig = _pool.getConfiguration(asset);
+    uint256 liquidationThreshold = currentConfig.getLiquidationThreshold();
+    uint256 liquidationBonus = currentConfig.getLiquidationBonus();
+
     currentConfig.setFrozen(freeze);
 
     if (freeze) {
-      _pendingLtv[asset] = currentConfig.getLtv();
+      uint256 currentLtv = currentConfig.getLtv();
+      _pendingLtv[asset] = currentLtv;
       _isPendingLtvSet[asset] = true;
       currentConfig.setLtv(0);
 
-      emit PendingLtvChanged(asset, currentConfig.getLtv());
+      emit PendingLtvChanged(asset, currentLtv);
+      emit CollateralConfigurationChanged(asset, 0, liquidationThreshold, liquidationBonus);
     } else if (_isPendingLtvSet[asset]) {
       uint256 ltv = _pendingLtv[asset];
       currentConfig.setLtv(ltv);
@@ -238,6 +246,7 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
       delete _isPendingLtvSet[asset];
 
       emit PendingLtvRemoved(asset);
+      emit CollateralConfigurationChanged(asset, ltv, liquidationThreshold, liquidationBonus);
     }
 
     _pool.setConfiguration(asset, currentConfig);
