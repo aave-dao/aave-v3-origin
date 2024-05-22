@@ -420,7 +420,11 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
     for (uint256 i = 0; i < reserves.length; i++) {
       DataTypes.ReserveConfigurationMap memory currentConfig = _pool.getConfiguration(reserves[i]);
       if (categoryId == currentConfig.getEModeCategory()) {
-        require(ltv > currentConfig.getLtv(), Errors.INVALID_EMODE_CATEGORY_PARAMS);
+        uint256 currentLtv = _isPendingLtvSet[reserves[i]]
+          ? _pendingLtv[reserves[i]]
+          : currentConfig.getLtv();
+        require(ltv > currentLtv, Errors.INVALID_EMODE_CATEGORY_PARAMS);
+
         require(
           liquidationThreshold > currentConfig.getLiquidationThreshold(),
           Errors.INVALID_EMODE_CATEGORY_PARAMS
