@@ -930,10 +930,11 @@ contract PoolLiquidationTests is TestnetProcedures {
     contracts.poolProxy.liquidationCall(tokenList.usdx, tokenList.wbtc, bob, 100e6, false);
   }
 
-  function test_liquidation_when_grace_period_disabled(
-    uint40 liquidationGracePeriod
-  ) public {
-    vm.assume(liquidationGracePeriod <= contracts.poolConfiguratorProxy.MAX_GRACE_PERIOD() && liquidationGracePeriod != 0);
+  function test_liquidation_when_grace_period_disabled(uint40 liquidationGracePeriod) public {
+    vm.assume(
+      liquidationGracePeriod <= contracts.poolConfiguratorProxy.MAX_GRACE_PERIOD() &&
+        liquidationGracePeriod != 0
+    );
     address[] memory assetsInGrace = new address[](1);
     assetsInGrace[0] = tokenList.usdx;
 
