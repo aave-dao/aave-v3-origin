@@ -5,7 +5,6 @@ import {GPv2SafeERC20} from '../../../dependencies/gnosis/contracts/GPv2SafeERC2
 import {IERC20} from '../../../dependencies/openzeppelin/contracts/IERC20.sol';
 import {IPriceOracleGetter} from '../../../interfaces/IPriceOracleGetter.sol';
 import {UserConfiguration} from '../configuration/UserConfiguration.sol';
-import {Errors} from '../helpers/Errors.sol';
 import {WadRayMath} from '../math/WadRayMath.sol';
 import {PercentageMath} from '../math/PercentageMath.sol';
 import {DataTypes} from '../types/DataTypes.sol';
