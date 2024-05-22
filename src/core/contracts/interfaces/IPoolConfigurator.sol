@@ -295,6 +295,8 @@ interface IPoolConfigurator {
 
   /**
    * @notice Initializes multiple reserves.
+   * @dev param useVirtualBalance of the input struct should be true for all normal assets and should be false
+   *  only in special cases (ex. GHO) where an asset is minted instead of supplied.
    * @param input The array of initialization parameters
    */
   function initReserves(ConfiguratorInputTypes.InitReserveInput[] calldata input) external;

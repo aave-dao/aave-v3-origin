@@ -562,6 +562,8 @@ library ReserveConfiguration {
 
   /**
    * @notice Gets the virtual account active/not state of the reserve
+   * @dev The state should be true for all normal assets and should be false
+   *  only in special cases (ex. GHO) where an asset is minted instead of supplied.
    * @param self The reserve configuration
    * @return The active state
    */
