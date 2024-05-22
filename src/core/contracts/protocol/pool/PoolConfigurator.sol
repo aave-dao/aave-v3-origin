@@ -281,6 +281,15 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
   }
 
   /// @inheritdoc IPoolConfigurator
+  function disableLiquidationGracePeriod(address asset) external override onlyEmergencyOrPoolAdmin {
+    // set the liquidation grace period in the past to disable liquidation grace period
+    uint40 until = uint40(block.timestamp) - 1;
+    _pool.setLiquidationGracePeriod(asset, until);
+
+    emit LiquidationGracePeriodDisabled(asset);
+  }
+
+  /// @inheritdoc IPoolConfigurator
   function setReserveFactor(
     address asset,
     uint256 newReserveFactor
