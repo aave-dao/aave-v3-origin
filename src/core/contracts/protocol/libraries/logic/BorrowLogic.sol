@@ -309,6 +309,7 @@ library BorrowLogic {
    * @param userConfig The user configuration mapping that tracks the supplied/borrowed assets
    * @param asset The asset of the position being swapped
    * @param interestRateMode The current interest rate mode of the position being swapped
+   * @param user The user whose debt position is being swapped
    */
   function executeSwapBorrowRateMode(
     DataTypes.ReserveData storage reserve,
