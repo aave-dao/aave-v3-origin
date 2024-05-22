@@ -81,9 +81,8 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
     ConfiguratorInputTypes.InitReserveInput[] calldata input
   ) external override onlyAssetListingOrPoolAdmins {
     IPool cachedPool = _pool;
-    for (uint256 i = 0; i < input.length; i++) {
-      require(IERC20Detailed(input[i].underlyingAsset).decimals() > 5, Errors.INVALID_DECIMALS);
 
+    for (uint256 i = 0; i < input.length; i++) {
       ConfiguratorLogic.executeInitReserve(cachedPool, input[i]);
       emit ReserveInterestRateDataChanged(
         input[i].underlyingAsset,

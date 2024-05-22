@@ -8,7 +8,9 @@ import {InitializableImmutableAdminUpgradeabilityProxy} from '../aave-upgradeabi
 import {IReserveInterestRateStrategy} from '../../../interfaces/IReserveInterestRateStrategy.sol';
 import {ReserveConfiguration} from '../configuration/ReserveConfiguration.sol';
 import {DataTypes} from '../types/DataTypes.sol';
+import {Errors} from '../helpers/Errors.sol';
 import {ConfiguratorInputTypes} from '../types/ConfiguratorInputTypes.sol';
+import {IERC20Detailed} from '../../../dependencies/openzeppelin/contracts/IERC20Detailed.sol';
 
 /**
  * @title ConfiguratorLogic library
@@ -52,6 +54,9 @@ library ConfiguratorLogic {
     IPool pool,
     ConfiguratorInputTypes.InitReserveInput calldata input
   ) external {
+    uint8 underlyingAssetDecimals = IERC20Detailed(input.underlyingAsset).decimals();
+    require(underlyingAssetDecimals > 5, Errors.INVALID_DECIMALS);
+
     address aTokenProxyAddress = _initTokenWithProxy(
       input.aTokenImpl,
       abi.encodeWithSelector(
@@ -60,7 +65,7 @@ library ConfiguratorLogic {
         input.treasury,
         input.underlyingAsset,
         input.incentivesController,
-        input.underlyingAssetDecimals,
+        underlyingAssetDecimals,
         input.aTokenName,
         input.aTokenSymbol,
         input.params
@@ -74,7 +79,7 @@ library ConfiguratorLogic {
         pool,
         input.underlyingAsset,
         input.incentivesController,
-        input.underlyingAssetDecimals,
+        underlyingAssetDecimals,
         input.stableDebtTokenName,
         input.stableDebtTokenSymbol,
         input.params
@@ -88,7 +93,7 @@ library ConfiguratorLogic {
         pool,
         input.underlyingAsset,
         input.incentivesController,
-        input.underlyingAssetDecimals,
+        underlyingAssetDecimals,
         input.variableDebtTokenName,
         input.variableDebtTokenSymbol,
         input.params
@@ -105,7 +110,7 @@ library ConfiguratorLogic {
 
     DataTypes.ReserveConfigurationMap memory currentConfig = DataTypes.ReserveConfigurationMap(0);
 
-    currentConfig.setDecimals(input.underlyingAssetDecimals);
+    currentConfig.setDecimals(underlyingAssetDecimals);
 
     currentConfig.setActive(true);
     currentConfig.setPaused(false);

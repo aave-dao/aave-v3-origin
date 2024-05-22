@@ -6,7 +6,6 @@ library ConfiguratorInputTypes {
     address aTokenImpl;
     address stableDebtTokenImpl;
     address variableDebtTokenImpl;
-    uint8 underlyingAssetDecimals;
     bool useVirtualBalance;
     address interestRateStrategyAddress;
     address underlyingAsset;
