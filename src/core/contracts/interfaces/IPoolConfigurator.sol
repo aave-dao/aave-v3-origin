@@ -48,12 +48,6 @@ interface IPoolConfigurator {
   event PendingLtvChanged(address indexed asset, uint256 ltv);
 
   /**
-   * @dev Emitted when the asset is unfrozen and pending ltv is removed.
-   * @param asset The address of the underlying asset of the reserve
-   */
-  event PendingLtvRemoved(address indexed asset);
-
-  /**
    * @dev Emitted when the collateralization risk parameters for the specified asset are updated.
    * @param asset The address of the underlying asset of the reserve
    * @param ltv The loan to value of the asset when used as collateral
@@ -549,10 +543,10 @@ interface IPoolConfigurator {
   function setSiloedBorrowing(address asset, bool siloed) external;
 
   /**
-   * @notice Gets pending ltv value and flag if it is set
+   * @notice Gets pending ltv value
    * @param asset The new siloed borrowing state
    */
-  function getPendingLtv(address asset) external returns (uint256, bool);
+  function getPendingLtv(address asset) external returns (uint256);
 
   /**
    * @notice Gets the address of the external ConfiguratorLogic

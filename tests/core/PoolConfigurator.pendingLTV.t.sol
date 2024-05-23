@@ -59,12 +59,9 @@ contract PoolConfiguratorPendingLtvTests is TestnetProcedures {
     assertEq(updatedIsFrozen, true);
 
     // check pending ltv is set
-    (uint256 pendingLtv, bool isPendingLtvSet) = contracts.poolConfiguratorProxy.getPendingLtv(
-      tokenList.usdx
-    );
+    uint256 pendingLtv = contracts.poolConfiguratorProxy.getPendingLtv(tokenList.usdx);
 
     assertEq(pendingLtv, ltv);
-    assertEq(isPendingLtvSet, true);
   }
 
   function test_unfreezeReserve_pendingSetToLtv() public {
@@ -95,7 +92,7 @@ contract PoolConfiguratorPendingLtvTests is TestnetProcedures {
     assertEq(isFrozen, true);
 
     // check pending ltv
-    (uint256 pendingLtv, ) = contracts.poolConfiguratorProxy.getPendingLtv(tokenList.usdx);
+    uint256 pendingLtv = contracts.poolConfiguratorProxy.getPendingLtv(tokenList.usdx);
 
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
     emit CollateralConfigurationChanged(
@@ -118,17 +115,14 @@ contract PoolConfiguratorPendingLtvTests is TestnetProcedures {
     assertEq(updatedIsFrozen, false);
 
     // check pending ltv is set to zero
-    (uint256 updatedPendingLtv, bool updatedIsPendingLtvSet) = contracts
-      .poolConfiguratorProxy
-      .getPendingLtv(tokenList.usdx);
+    uint256 updatedPendingLtv = contracts.poolConfiguratorProxy.getPendingLtv(tokenList.usdx);
 
     assertEq(updatedPendingLtv, 0);
-    assertEq(updatedIsPendingLtvSet, false);
 
     vm.stopPrank();
   }
 
-  function test_setLtvToFrozen_ltvSetToPending(uint256 originalLtv, uint256 ltvToSet) public {
+  function test_setLtv_ltvSetPendingLtvSet(uint256 originalLtv, uint256 ltvToSet) public {
     uint256 liquidationThreshold = 86_00;
     uint256 liquidationBonus = 10_500;
 
@@ -152,7 +146,7 @@ contract PoolConfiguratorPendingLtvTests is TestnetProcedures {
     contracts.poolConfiguratorProxy.setReserveFreeze(tokenList.usdx, true);
 
     // check pending ltv
-    (uint256 pendingLtv, ) = contracts.poolConfiguratorProxy.getPendingLtv(tokenList.usdx);
+    uint256 pendingLtv = contracts.poolConfiguratorProxy.getPendingLtv(tokenList.usdx);
     assertEq(pendingLtv, originalLtv);
 
     // expect events to be emitted
@@ -160,7 +154,12 @@ contract PoolConfiguratorPendingLtvTests is TestnetProcedures {
     emit PendingLtvChanged(tokenList.usdx, ltvToSet);
 
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit CollateralConfigurationChanged(tokenList.usdx, 0, liquidationThreshold, liquidationBonus);
+    emit CollateralConfigurationChanged(
+      tokenList.usdx,
+      ltvToSet,
+      liquidationThreshold,
+      liquidationBonus
+    );
 
     // setLtv
     contracts.poolConfiguratorProxy.configureReserveAsCollateral(
@@ -175,42 +174,12 @@ contract PoolConfiguratorPendingLtvTests is TestnetProcedures {
       tokenList.usdx
     );
 
-    assertEq(ltv, 0);
+    assertEq(ltv, ltvToSet);
 
     // check pending ltv
-    (uint256 updatedPendingLtv, bool updatedIsPendingLtvSet) = contracts
-      .poolConfiguratorProxy
-      .getPendingLtv(tokenList.usdx);
+    uint256 updatedPendingLtv = contracts.poolConfiguratorProxy.getPendingLtv(tokenList.usdx);
 
     assertEq(updatedPendingLtv, ltvToSet);
-    assertEq(updatedIsPendingLtvSet, true);
-
-    vm.stopPrank();
-  }
-
-  function test_setLtv_ltvSet(uint256 ltvToSet) public {
-    uint256 liquidationThreshold = 86_00;
-    uint256 liquidationBonus = 10_500;
-
-    vm.assume(ltvToSet > 0);
-    vm.assume(ltvToSet < liquidationThreshold);
-
-    vm.startPrank(poolAdmin);
-
-    // setLtv
-    contracts.poolConfiguratorProxy.configureReserveAsCollateral(
-      tokenList.usdx,
-      ltvToSet,
-      liquidationThreshold,
-      liquidationBonus
-    );
-
-    // check ltv is updated
-    (, uint256 ltv, , , , , , , , ) = contracts.protocolDataProvider.getReserveConfigurationData(
-      tokenList.usdx
-    );
-
-    assertEq(ltv, ltvToSet);
 
     vm.stopPrank();
   }
