@@ -727,7 +727,7 @@ interface IPool {
   /**
    * @notice Sets the liquidation grace period of the given asset
    * @dev To enable a liquidation grace period, a timestamp in the future should be set,
-   *      To disable a liquidation grace period, any timestamp in the past works, like block.timestamp - 1
+   *      To disable a liquidation grace period, any timestamp in the past works, like 0
    * @param asset The address of the underlying asset to set the liquidationGracePeriod
    * @param until Timestamp when the liquidation grace period will end
    **/
