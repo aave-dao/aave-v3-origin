@@ -145,6 +145,12 @@ interface IPoolConfigurator {
   event LiquidationGracePeriodChanged(address indexed asset, uint40 gracePeriodUntil);
 
   /**
+   * @dev Emitted when the liquidation grace period is disabled.
+   * @param asset The address of the underlying asset of the reserve
+   */
+  event LiquidationGracePeriodDisabled(address indexed asset);
+
+  /**
    * @dev Emitted when the unbacked mint cap of a reserve is updated.
    * @param asset The address of the underlying asset of the reserve
    * @param oldUnbackedMintCap The old unbacked mint cap
@@ -289,6 +295,8 @@ interface IPoolConfigurator {
 
   /**
    * @notice Initializes multiple reserves.
+   * @dev param useVirtualBalance of the input struct should be true for all normal assets and should be false
+   *  only in special cases (ex. GHO) where an asset is minted instead of supplied.
    * @param input The array of initialization parameters
    */
   function initReserves(ConfiguratorInputTypes.InitReserveInput[] calldata input) external;
@@ -400,6 +408,13 @@ interface IPoolConfigurator {
    * @param paused True if pausing the reserve, false if unpausing
    */
   function setReservePause(address asset, bool paused) external;
+
+  /**
+   * @notice Disables liquidation grace period for the asset. The liquidation grace period is set in the past
+   * so that liquidations are allowed for the asset.
+   * @param asset The address of the underlying asset of the reserve
+   */
+  function disableLiquidationGracePeriod(address asset) external;
 
   /**
    * @notice Updates the reserve factor of a reserve.

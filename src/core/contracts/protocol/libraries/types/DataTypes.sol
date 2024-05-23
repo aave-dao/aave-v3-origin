@@ -56,7 +56,7 @@ library DataTypes {
     uint40 lastUpdateTimestamp;
     //the id of the reserve. Represents the position in the list of the active reserves
     uint16 id;
-    //timestamp in the future, until when liquidations are not allowed on the reserve
+    //timestamp until when liquidations are not allowed on the reserve, if set to past liquidations will be allowed
     uint40 liquidationGracePeriodUntil;
     //aToken address
     address aTokenAddress;

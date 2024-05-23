@@ -766,6 +766,22 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     vm.stopPrank();
   }
 
+  function test_disableLiquidationGracePeriod() public {
+    uint40 gracePeriod = 2 hours;
+    address asset = tokenList.usdx;
+    uint40 until = uint40(block.timestamp) + 2 hours;
+
+    vm.startPrank(poolAdmin);
+
+    contracts.poolConfiguratorProxy.setReservePause(asset, false, gracePeriod);
+    assertEq(contracts.poolProxy.getLiquidationGracePeriod(asset), until);
+
+    contracts.poolConfiguratorProxy.disableLiquidationGracePeriod(asset);
+    assertEq(contracts.poolProxy.getLiquidationGracePeriod(asset), block.timestamp - 1);
+
+    vm.stopPrank();
+  }
+
   function test_setLiquidationGracePeriodPool(uint40 gracePeriod) public {
     vm.assume(gracePeriod <= contracts.poolConfiguratorProxy.MAX_GRACE_PERIOD());
 
