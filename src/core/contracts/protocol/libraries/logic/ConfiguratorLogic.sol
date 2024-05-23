@@ -54,6 +54,7 @@ library ConfiguratorLogic {
     IPool pool,
     ConfiguratorInputTypes.InitReserveInput calldata input
   ) external {
+    // It is an assumption that the asset listed is non-malicious, and the external call doesn't create re-entrancies
     uint8 underlyingAssetDecimals = IERC20Detailed(input.underlyingAsset).decimals();
     require(underlyingAssetDecimals > 5, Errors.INVALID_DECIMALS);
 
