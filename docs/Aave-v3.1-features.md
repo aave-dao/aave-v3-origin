@@ -72,7 +72,7 @@ Given its implications and criticality, virtual accounting can be considered the
 - [ConfigurationInputTypes](../src/core/contracts/protocol/libraries/types/ConfiguratorInputTypes.sol)
   - Added flag `useVirtualBalance` for a new listing to use or not virtual balance.
 - [ReserveConfiguration](../src/core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol)
-  - Added logic to store and set/get the new `VIRTUAL_ACC_ACTIVE_MASK` flag.
+  - Added logic to set/get the new configuration flag for if a reserve has virtual account active.
 - [Errors](../src/core/contracts/protocol/libraries/helpers/Errors.sol)
   - In relation with this feature, added the `WITHDRAW_TO_ATOKEN` and `SUPPLY_TO_ATOKEN` errors.
 - [Pool](../src/core/contracts/protocol/pool/Pool.sol)
