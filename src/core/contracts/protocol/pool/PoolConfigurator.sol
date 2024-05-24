@@ -163,7 +163,9 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
       _checkNoSuppliers(asset);
     }
 
-    _pendingLtv[asset] = ltv;
+    if (currentConfig.getFrozen()) {
+      _pendingLtv[asset] = ltv;
+    }
 
     currentConfig.setLtv(ltv);
 
@@ -222,24 +224,26 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
 
     currentConfig.setFrozen(freeze);
 
-    uint256 liquidationThreshold = currentConfig.getLiquidationThreshold();
-    uint256 liquidationBonus = currentConfig.getLiquidationBonus();
+    uint256 currentLtv;
+    uint256 pendingLtv;
 
     if (freeze) {
-      uint256 currentLtv = currentConfig.getLtv();
+      currentLtv = currentConfig.getLtv();
+    } else {
+      pendingLtv = _pendingLtv[asset];
+    }
+
+    if (currentLtv != pendingLtv) {
       _pendingLtv[asset] = currentLtv;
-      currentConfig.setLtv(0);
+      currentConfig.setLtv(pendingLtv);
 
       emit PendingLtvChanged(asset, currentLtv);
-      emit CollateralConfigurationChanged(asset, 0, liquidationThreshold, liquidationBonus);
-    } else if (_pendingLtv[asset] > 0) {
-      uint256 ltv = _pendingLtv[asset];
-      currentConfig.setLtv(ltv);
-
-      delete _pendingLtv[asset];
-
-      emit PendingLtvChanged(asset, 0);
-      emit CollateralConfigurationChanged(asset, ltv, liquidationThreshold, liquidationBonus);
+      emit CollateralConfigurationChanged(
+        asset,
+        pendingLtv,
+        currentConfig.getLiquidationThreshold(),
+        currentConfig.getLiquidationBonus()
+      );
     }
 
     _pool.setConfiguration(asset, currentConfig);
@@ -410,7 +414,7 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
     for (uint256 i = 0; i < reserves.length; i++) {
       DataTypes.ReserveConfigurationMap memory currentConfig = _pool.getConfiguration(reserves[i]);
       if (categoryId == currentConfig.getEModeCategory()) {
-        uint256 currentLtv = _pendingLtv[reserves[i]] > 0 && currentConfig.getFrozen()
+        uint256 currentLtv = currentConfig.getFrozen()
           ? _pendingLtv[reserves[i]]
           : currentConfig.getLtv();
         require(ltv > currentLtv, Errors.INVALID_EMODE_CATEGORY_PARAMS);
