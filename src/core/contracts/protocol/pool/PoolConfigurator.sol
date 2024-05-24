@@ -165,6 +165,7 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
 
     if (currentConfig.getFrozen()) {
       _pendingLtv[asset] = ltv;
+      emit PendingLtvChanged(asset, ltv);
     }
 
     currentConfig.setLtv(ltv);
@@ -174,7 +175,6 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
 
     _pool.setConfiguration(asset, currentConfig);
 
-    emit PendingLtvChanged(asset, ltv);
     emit CollateralConfigurationChanged(asset, ltv, liquidationThreshold, liquidationBonus);
   }
 
