@@ -42,6 +42,7 @@ bun install
 - [Aave v3 technical Paper](./techpaper/Aave_V3_Technical_Paper.pdf)
 - [v3 to v3.0.2 production upgrade](https://github.com/bgd-labs/proposal-3.0.2-upgrade/blob/main/README.md)
 - [Aave v3.1 features](./docs/Aave-v3.1-features.md)
+- [Set Ltv to 0 on Freeze Feature State diagram](./docs/freeze-ltv0-states.png)
 
 <br>
 

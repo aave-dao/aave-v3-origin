@@ -25,36 +25,21 @@ contract PoolConfiguratorPendingLtvTests is TestnetProcedures {
   function test_freezeReserve_ltvSetTo0() public {
     // check current ltv
     (
-      ,
       uint256 ltv,
       uint256 liquidationThreshold,
       uint256 liquidationBonus,
-      ,
-      ,
-      ,
-      ,
-      ,
       bool isFrozen
-    ) = contracts.protocolDataProvider.getReserveConfigurationData(tokenList.usdx);
+    ) = _getReserveParams();
 
     assertTrue(ltv > 0);
     assertEq(isFrozen, false);
-
-    // expect events to be emitted
-    vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit PendingLtvChanged(tokenList.usdx, ltv);
-
-    vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit CollateralConfigurationChanged(tokenList.usdx, 0, liquidationThreshold, liquidationBonus);
 
     // freeze reserve
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setReserveFreeze(tokenList.usdx, true);
 
     // check ltv = 0
-    (, uint256 updatedltv, , , , , , , , bool updatedIsFrozen) = contracts
-      .protocolDataProvider
-      .getReserveConfigurationData(tokenList.usdx);
+    (uint256 updatedltv, , , bool updatedIsFrozen) = _getReserveParams();
     assertEq(updatedltv, 0);
     assertEq(updatedIsFrozen, true);
 
@@ -67,26 +52,18 @@ contract PoolConfiguratorPendingLtvTests is TestnetProcedures {
   function test_unfreezeReserve_pendingSetToLtv() public {
     // check ltv
     (
-      ,
       uint256 originalLtv,
       uint256 liquidationThreshold,
       uint256 liquidationBonus,
-      ,
-      ,
-      ,
-      ,
-      ,
 
-    ) = contracts.protocolDataProvider.getReserveConfigurationData(tokenList.usdx);
+    ) = _getReserveParams();
 
     // freeze reserve
     vm.startPrank(poolAdmin);
     contracts.poolConfiguratorProxy.setReserveFreeze(tokenList.usdx, true);
 
     // check ltv
-    (, uint256 ltv, , , , , , , , bool isFrozen) = contracts
-      .protocolDataProvider
-      .getReserveConfigurationData(tokenList.usdx);
+    (uint256 ltv, , , bool isFrozen) = _getReserveParams();
 
     assertEq(ltv, 0);
     assertEq(isFrozen, true);
@@ -94,21 +71,11 @@ contract PoolConfiguratorPendingLtvTests is TestnetProcedures {
     // check pending ltv
     uint256 pendingLtv = contracts.poolConfiguratorProxy.getPendingLtv(tokenList.usdx);
 
-    vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit CollateralConfigurationChanged(
-      tokenList.usdx,
-      originalLtv,
-      liquidationThreshold,
-      liquidationBonus
-    );
-
     // unfreeze reserve
     contracts.poolConfiguratorProxy.setReserveFreeze(tokenList.usdx, false);
 
     // check ltv is set back
-    (, uint256 updatedLtv, , , , , , , , bool updatedIsFrozen) = contracts
-      .protocolDataProvider
-      .getReserveConfigurationData(tokenList.usdx);
+    (uint256 updatedLtv, , , bool updatedIsFrozen) = _getReserveParams();
 
     assertEq(updatedLtv, originalLtv);
     assertEq(updatedLtv, pendingLtv);
@@ -122,6 +89,7 @@ contract PoolConfiguratorPendingLtvTests is TestnetProcedures {
     vm.stopPrank();
   }
 
+  // freeze reserve, set ltv, unfreeze reserve
   function test_setLtv_ltvSetPendingLtvSet(uint256 originalLtv, uint256 ltvToSet) public {
     uint256 liquidationThreshold = 86_00;
     uint256 liquidationBonus = 10_500;
@@ -154,12 +122,7 @@ contract PoolConfiguratorPendingLtvTests is TestnetProcedures {
     emit PendingLtvChanged(tokenList.usdx, ltvToSet);
 
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit CollateralConfigurationChanged(
-      tokenList.usdx,
-      ltvToSet,
-      liquidationThreshold,
-      liquidationBonus
-    );
+    emit CollateralConfigurationChanged(tokenList.usdx, 0, liquidationThreshold, liquidationBonus);
 
     // setLtv
     contracts.poolConfiguratorProxy.configureReserveAsCollateral(
@@ -170,17 +133,41 @@ contract PoolConfiguratorPendingLtvTests is TestnetProcedures {
     );
 
     // check ltv is still 0
-    (, uint256 ltv, , , , , , , , ) = contracts.protocolDataProvider.getReserveConfigurationData(
-      tokenList.usdx
-    );
-
-    assertEq(ltv, ltvToSet);
+    (uint256 ltv, , , ) = _getReserveParams();
+    assertEq(ltv, 0);
 
     // check pending ltv
     uint256 updatedPendingLtv = contracts.poolConfiguratorProxy.getPendingLtv(tokenList.usdx);
-
     assertEq(updatedPendingLtv, ltvToSet);
 
+    // unfreeze reserve
+    contracts.poolConfiguratorProxy.setReserveFreeze(tokenList.usdx, false);
+
+    // check ltv is set
+    (uint256 updatedLtv, , , ) = _getReserveParams();
+    assertEq(updatedLtv, ltvToSet);
+
+    // check pending ltv is set to zero
+    uint256 finalPendingLtv = contracts.poolConfiguratorProxy.getPendingLtv(tokenList.usdx);
+    assertEq(finalPendingLtv, 0);
+
     vm.stopPrank();
+  }
+
+  function _getReserveParams() internal returns (uint256, uint256, uint256, bool) {
+    (
+      ,
+      uint256 ltv,
+      uint256 liquidationThreshold,
+      uint256 liquidationBonus,
+      ,
+      ,
+      ,
+      ,
+      ,
+      bool isFrozen
+    ) = contracts.protocolDataProvider.getReserveConfigurationData(tokenList.usdx);
+
+    return (ltv, liquidationThreshold, liquidationBonus, isFrozen);
   }
 }

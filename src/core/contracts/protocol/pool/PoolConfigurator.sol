@@ -162,19 +162,23 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
       _checkNoSuppliers(asset);
     }
 
+    uint256 newLtv = ltv;
+
     if (currentConfig.getFrozen()) {
       _pendingLtv[asset] = ltv;
-      emit PendingLtvChanged(asset, ltv);
-    }
+      newLtv = 0;
 
-    currentConfig.setLtv(ltv);
+      emit PendingLtvChanged(asset, ltv);
+    } else {
+      currentConfig.setLtv(ltv);
+    }
 
     currentConfig.setLiquidationThreshold(liquidationThreshold);
     currentConfig.setLiquidationBonus(liquidationBonus);
 
     _pool.setConfiguration(asset, currentConfig);
 
-    emit CollateralConfigurationChanged(asset, ltv, liquidationThreshold, liquidationBonus);
+    emit CollateralConfigurationChanged(asset, newLtv, liquidationThreshold, liquidationBonus);
   }
 
   /// @inheritdoc IPoolConfigurator
@@ -223,27 +227,26 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
 
     currentConfig.setFrozen(freeze);
 
-    uint256 currentLtv;
-    uint256 pendingLtv;
+    uint256 ltvSet;
+    uint256 pendingLtvSet;
 
     if (freeze) {
-      currentLtv = currentConfig.getLtv();
+      pendingLtvSet = currentConfig.getLtv();
+      _pendingLtv[asset] = pendingLtvSet;
+      currentConfig.setLtv(0);
     } else {
-      pendingLtv = _pendingLtv[asset];
+      ltvSet = _pendingLtv[asset];
+      currentConfig.setLtv(ltvSet);
+      delete _pendingLtv[asset];
     }
 
-    if (currentLtv != pendingLtv) {
-      _pendingLtv[asset] = currentLtv;
-      currentConfig.setLtv(pendingLtv);
-
-      emit PendingLtvChanged(asset, currentLtv);
-      emit CollateralConfigurationChanged(
-        asset,
-        pendingLtv,
-        currentConfig.getLiquidationThreshold(),
-        currentConfig.getLiquidationBonus()
-      );
-    }
+    emit PendingLtvChanged(asset, pendingLtvSet);
+    emit CollateralConfigurationChanged(
+      asset,
+      ltvSet,
+      currentConfig.getLiquidationThreshold(),
+      currentConfig.getLiquidationBonus()
+    );
 
     _pool.setConfiguration(asset, currentConfig);
     emit ReserveFrozen(asset, freeze);
