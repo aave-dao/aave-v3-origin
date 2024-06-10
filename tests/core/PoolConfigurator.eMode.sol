@@ -239,6 +239,39 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
     vm.stopPrank();
   }
 
+  function test_reverts_configureEmodeCategory_input_ltv_lt_reserve_emode_pendingLtv() public {
+    EModeCategoryInput memory ct = _genCategoryOne();
+    vm.startPrank(poolAdmin);
+
+    contracts.poolConfiguratorProxy.setEModeCategory(
+      ct.id,
+      ct.ltv,
+      ct.lt,
+      ct.lb,
+      ct.oracle,
+      ct.label
+    );
+    contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.usdx, ct.id);
+
+    (, uint256 ltv, , , , , , , , ) = contracts.protocolDataProvider.getReserveConfigurationData(
+      tokenList.usdx
+    );
+
+    // freeze asset
+    contracts.poolConfiguratorProxy.setReserveFreeze(tokenList.usdx, true);
+
+    vm.expectRevert(bytes(Errors.INVALID_EMODE_CATEGORY_PARAMS));
+    contracts.poolConfiguratorProxy.setEModeCategory(
+      ct.id,
+      uint16(ltv) - 1,
+      ct.lt,
+      ct.lb,
+      ct.oracle,
+      ct.label
+    );
+    vm.stopPrank();
+  }
+
   function test_reverts_configureEmodeCategory_input_lt_lt_reserve_emode_lt() public {
     EModeCategoryInput memory ct = _genCategoryOne();
     vm.startPrank(poolAdmin);

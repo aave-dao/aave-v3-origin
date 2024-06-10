@@ -5,8 +5,6 @@ import {IERC20} from '../../../dependencies/openzeppelin/contracts/IERC20.sol';
 import {Address} from '../../../dependencies/openzeppelin/contracts/Address.sol';
 import {GPv2SafeERC20} from '../../../dependencies/gnosis/contracts/GPv2SafeERC20.sol';
 import {IReserveInterestRateStrategy} from '../../../interfaces/IReserveInterestRateStrategy.sol';
-import {IStableDebtToken} from '../../../interfaces/IStableDebtToken.sol';
-import {IScaledBalanceToken} from '../../../interfaces/IScaledBalanceToken.sol';
 import {IPriceOracleGetter} from '../../../interfaces/IPriceOracleGetter.sol';
 import {IAToken} from '../../../interfaces/IAToken.sol';
 import {IPriceOracleSentinel} from '../../../interfaces/IPriceOracleSentinel.sol';
@@ -471,6 +469,9 @@ library ValidationLogic {
   ) internal view {
     require(assets.length == amounts.length, Errors.INCONSISTENT_FLASHLOAN_PARAMS);
     for (uint256 i = 0; i < assets.length; i++) {
+      for (uint256 j = i + 1; j < assets.length; j++) {
+        require(assets[i] != assets[j], Errors.INCONSISTENT_FLASHLOAN_PARAMS);
+      }
       validateFlashloanSimple(reservesData[assets[i]], amounts[i]);
     }
   }

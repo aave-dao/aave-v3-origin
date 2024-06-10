@@ -381,10 +381,10 @@ interface IPool {
   function swapBorrowRateMode(address asset, uint256 interestRateMode) external;
 
   /**
-   * @notice Allows a borrower to swap his debt between stable and variable mode,
-   * @dev introduce in a flavor stable rate deprecation
+   * @notice Permissionless method which allows anyone to swap a users stable debt to variable debt
+   * @dev Introduced in favor of stable rate deprecation
    * @param asset The address of the underlying asset borrowed
-   * @param user The address of the user to be swapped
+   * @param user The address of the user whose debt will be swapped from stable to variable
    */
   function swapToVariable(address asset, address user) external;
 
