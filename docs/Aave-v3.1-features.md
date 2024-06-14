@@ -120,7 +120,7 @@ Implementation-wise, this feature:
 - [ConfigurationInputTypes](../src/core/contracts/protocol/libraries/types/ConfiguratorInputTypes.sol)
   - Added `interestRateData` on the `InitReserveInput` used on listing.
 - [Errors](../src/core/contracts/protocol/libraries/helpers/Errors.sol)
-  - In relation with this feature, added the `INVALID_MAXRATE` and `SLOPE_2_MUST_BE_GTE_SLOPE_1` errors.
+  - In relation with this feature, added the `INVALID_MAX_RATE` and `SLOPE_2_MUST_BE_GTE_SLOPE_1` errors.
 
 <br>
 
