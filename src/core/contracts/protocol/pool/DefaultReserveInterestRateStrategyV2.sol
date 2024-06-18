@@ -37,7 +37,6 @@ contract DefaultReserveInterestRateStrategyV2 is IDefaultInterestRateStrategyV2 
   /// @dev Map of reserves address and their interest rate data (reserveAddress => interestRateData)
   mapping(address => InterestRateData) internal _interestRateData;
 
-
   modifier onlyPoolConfigurator() {
     require(
       msg.sender == ADDRESSES_PROVIDER.getPoolConfigurator(),
@@ -119,7 +118,7 @@ contract DefaultReserveInterestRateStrategyV2 is IDefaultInterestRateStrategyV2 
   ) external view virtual override returns (uint256, uint256, uint256) {
     InterestRateDataRay memory rateData = _rayifyRateData(_interestRateData[params.reserve]);
 
-    // @note This is a short circuit to allow mintable assets, which by definition cannot be supplied
+    // @note This is a short circuit to allow mintable assets (ex. GHO), which by definition cannot be supplied
     // and thus do not use virtual underlying balances.
     if (!params.usingVirtualBalance) {
       return (0, 0, rateData.baseVariableBorrowRate);

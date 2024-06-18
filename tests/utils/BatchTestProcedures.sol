@@ -280,7 +280,6 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
         r.aToken,
         r.stableDebtToken,
         r.variableDebtToken,
-        listingToken.decimals(),
         true,
         t.rateStrategy,
         address(listingToken),
