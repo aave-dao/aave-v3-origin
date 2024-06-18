@@ -119,7 +119,7 @@ contract DefaultReserveInterestRateStrategyV2 is IDefaultInterestRateStrategyV2 
   ) external view virtual override returns (uint256, uint256, uint256) {
     InterestRateDataRay memory rateData = _rayifyRateData(_interestRateData[params.reserve]);
 
-    // @note This is a short circuit to allow mintable assets, which by definition cannot be supplied
+    // @note This is a short circuit to allow mintable assets (ex. GHO), which by definition cannot be supplied
     // and thus do not use virtual underlying balances.
     if (!params.usingVirtualBalance) {
       return (0, 0, rateData.baseVariableBorrowRate);

@@ -308,6 +308,7 @@ library BorrowLogic {
    * @param reserve The of the reserve of the asset being repaid
    * @param userConfig The user configuration mapping that tracks the supplied/borrowed assets
    * @param asset The asset of the position being swapped
+   * @param user The user whose debt position is being swapped
    * @param interestRateMode The current interest rate mode of the position being swapped
    */
   function executeSwapBorrowRateMode(

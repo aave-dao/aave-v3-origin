@@ -51,7 +51,6 @@ contract PoolConfiguratorInitReservesTest is TestnetProcedures {
       report.aToken,
       report.stableDebtToken,
       report.variableDebtToken,
-      newToken.decimals(),
       isVirtualAccActive,
       t.rateStrategy,
       address(newToken),
@@ -167,7 +166,10 @@ contract PoolConfiguratorInitReservesTest is TestnetProcedures {
 
         assertEq(AToken(aTokenProxy).name(), reserveInput.aTokenName);
         assertEq(AToken(aTokenProxy).symbol(), reserveInput.aTokenSymbol);
-        assertEq(AToken(aTokenProxy).decimals(), reserveInput.underlyingAssetDecimals);
+        assertEq(
+          AToken(aTokenProxy).decimals(),
+          TestnetERC20(reserveInput.underlyingAsset).decimals()
+        );
         assertEq(AToken(aTokenProxy).RESERVE_TREASURY_ADDRESS(), reserveInput.treasury);
         assertEq(AToken(aTokenProxy).UNDERLYING_ASSET_ADDRESS(), reserveInput.underlyingAsset);
         assertEq(
@@ -177,7 +179,10 @@ contract PoolConfiguratorInitReservesTest is TestnetProcedures {
 
         assertEq(AToken(stableDebtProxy).name(), reserveInput.stableDebtTokenName);
         assertEq(AToken(stableDebtProxy).symbol(), reserveInput.stableDebtTokenSymbol);
-        assertEq(AToken(stableDebtProxy).decimals(), reserveInput.underlyingAssetDecimals);
+        assertEq(
+          AToken(stableDebtProxy).decimals(),
+          TestnetERC20(reserveInput.underlyingAsset).decimals()
+        );
         assertEq(AToken(stableDebtProxy).UNDERLYING_ASSET_ADDRESS(), reserveInput.underlyingAsset);
         assertEq(
           address(AToken(stableDebtProxy).getIncentivesController()),
@@ -186,7 +191,10 @@ contract PoolConfiguratorInitReservesTest is TestnetProcedures {
 
         assertEq(AToken(variableDebtProxy).name(), reserveInput.variableDebtTokenName);
         assertEq(AToken(variableDebtProxy).symbol(), reserveInput.variableDebtTokenSymbol);
-        assertEq(AToken(variableDebtProxy).decimals(), reserveInput.underlyingAssetDecimals);
+        assertEq(
+          AToken(variableDebtProxy).decimals(),
+          TestnetERC20(reserveInput.underlyingAsset).decimals()
+        );
         assertEq(
           AToken(variableDebtProxy).UNDERLYING_ASSET_ADDRESS(),
           reserveInput.underlyingAsset
@@ -205,7 +213,7 @@ contract PoolConfiguratorInitReservesTest is TestnetProcedures {
       assertEq(c.isActive, true);
       assertEq(c.isFrozen, false);
       assertEq(c.isPaused, false);
-      assertEq(c.decimals, reserveInput.underlyingAssetDecimals);
+      assertEq(c.decimals, TestnetERC20(reserveInput.underlyingAsset).decimals());
 
       assertEq(c.ltv, 0);
       assertEq(c.liquidationThreshold, 0);
@@ -274,7 +282,6 @@ contract PoolConfiguratorInitReservesTest is TestnetProcedures {
       report.aToken,
       report.stableDebtToken,
       report.variableDebtToken,
-      newToken.decimals(),
       true,
       t.rateStrategy,
       address(newToken),
