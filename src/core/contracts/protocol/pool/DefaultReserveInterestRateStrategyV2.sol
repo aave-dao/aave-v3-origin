@@ -37,7 +37,6 @@ contract DefaultReserveInterestRateStrategyV2 is IDefaultInterestRateStrategyV2 
   /// @dev Map of reserves address and their interest rate data (reserveAddress => interestRateData)
   mapping(address => InterestRateData) internal _interestRateData;
 
-
   modifier onlyPoolConfigurator() {
     require(
       msg.sender == ADDRESSES_PROVIDER.getPoolConfigurator(),
