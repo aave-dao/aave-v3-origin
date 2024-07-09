@@ -7,12 +7,13 @@ import {SigUtils} from '../../utils/SigUtils.sol';
 import {BaseTest, IAToken, IRewardsController, DataTypes} from './TestBase.sol';
 
 contract StaticATokenMetaTransactions is BaseTest {
-
   function setUp() public override {
     super.setUp();
 
     // Testing meta transactions with USDX as WETH does not support permit
-    DataTypes.ReserveDataLegacy memory reserveDataUSDX = contracts.poolProxy.getReserveData(address(usdx));
+    DataTypes.ReserveDataLegacy memory reserveDataUSDX = contracts.poolProxy.getReserveData(
+      address(usdx)
+    );
     UNDERLYING = address(usdx);
     A_TOKEN = reserveDataUSDX.aTokenAddress;
 

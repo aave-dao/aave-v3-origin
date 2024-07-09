@@ -93,12 +93,8 @@ contract DeploymentsGasLimits is BatchTestProcedures {
       miscReport,
       tokensReport,
       paraswapReportOne,
-    ) = deployAndSetup(
-      roles,
-      config,
-      flags,
-      deployedContracts
-    );
+
+    ) = deployAndSetup(roles, config, flags, deployedContracts);
   }
 
   function test0AaveV3SetupDeployment() public {

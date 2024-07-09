@@ -13,7 +13,11 @@ contract AaveV3MockListing is AaveV3Payload {
   address public immutable ASSET_ADDRESS;
   address public immutable ASSET_FEED;
 
-  constructor(address assetAddress, address assetFeed, address customEngine) AaveV3Payload(IEngine(customEngine)) {
+  constructor(
+    address assetAddress,
+    address assetFeed,
+    address customEngine
+  ) AaveV3Payload(IEngine(customEngine)) {
     ASSET_ADDRESS = assetAddress;
     ASSET_FEED = assetFeed;
   }

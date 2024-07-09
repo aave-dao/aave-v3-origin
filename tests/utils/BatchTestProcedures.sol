@@ -99,14 +99,7 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
       config.l2PriceOracleSentinelGracePeriod
     );
 
-    return (
-      initialReport,
-      gettersReport1,
-      poolReport,
-      peripheryReport,
-      miscReport,
-      setupContract
-    );
+    return (initialReport, gettersReport1, poolReport, peripheryReport, miscReport, setupContract);
   }
 
   function deployAndSetup(
@@ -189,10 +182,7 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
     assertTrue(r.poolConfiguratorImplementation != address(0), 'r.poolConfiguratorImplementation');
     assertTrue(r.protocolDataProvider != address(0), 'report.protocolDataProvider');
     assertTrue(r.aaveOracle != address(0), 'report.aaveOracle');
-    assertTrue(
-      r.defaultInterestRateStrategy != address(0),
-      'report.defaultInterestRateStrategy'
-    );
+    assertTrue(r.defaultInterestRateStrategy != address(0), 'report.defaultInterestRateStrategy');
     assertTrue(r.aclManager != address(0), 'report.aclManager');
     assertTrue(r.treasury != address(0), 'report.treasury');
     assertTrue(r.proxyAdmin != address(0), 'report.proxyAdmin');
@@ -221,7 +211,10 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
     );
     assertTrue(r.rewardsControllerProxy != address(0), 'report.rewardsControllerProxy');
     assertTrue(r.configEngine != address(0), 'report.configEngine');
-    assertTrue(r.staticATokenFactoryImplementation != address(0), 'report.staticATokenFactoryImplementation');
+    assertTrue(
+      r.staticATokenFactoryImplementation != address(0),
+      'report.staticATokenFactoryImplementation'
+    );
     assertTrue(r.staticATokenFactoryProxy != address(0), 'report.staticATokenFactoryProxy');
     assertTrue(r.staticATokenImplementation != address(0), 'report.staticATokenImplementation');
     assertTrue(r.transparentProxyFactory != address(0), 'report.transparentProxyFactory');

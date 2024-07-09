@@ -50,13 +50,7 @@ contract AaveV3HelpersProcedureOne {
     configEngineReport.capsEngine = engineLibraries.capsEngine;
 
     configEngineReport.configEngine = address(
-      new AaveV3ConfigEngine(
-        aTokenImpl,
-        vTokenImpl,
-        sTokenImpl,
-        engineConstants,
-        engineLibraries
-      )
+      new AaveV3ConfigEngine(aTokenImpl, vTokenImpl, sTokenImpl, engineConstants, engineLibraries)
     );
     return configEngineReport;
   }

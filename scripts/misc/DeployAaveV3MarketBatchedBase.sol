@@ -46,7 +46,8 @@ abstract contract DeployAaveV3MarketBatchedBase is DeployUtils, MarketInput, Scr
     }
     if (
       (flags.l2 &&
-        (config.l2SequencerUptimeFeed == address(0) || config.l2PriceOracleSentinelGracePeriod == 0))
+        (config.l2SequencerUptimeFeed == address(0) ||
+          config.l2PriceOracleSentinelGracePeriod == 0))
     ) {
       console.log(
         'Warning: L2 Sequencer uptime feed wont be set at deployment due missing config.l2SequencerUptimeFeed config.l2PriceOracleSentinelGracePeriod'

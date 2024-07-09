@@ -7,16 +7,8 @@ import '../../../interfaces/IMarketReportTypes.sol';
 contract AaveV3HelpersBatchTwo is AaveV3HelpersProcedureTwo {
   StaticATokenReport internal _report;
 
-  constructor(
-    address pool,
-    address rewardsController,
-    address proxyAdmin
-  ) {
-    _report = _deployStaticAToken(
-      pool,
-      rewardsController,
-      proxyAdmin
-    );
+  constructor(address pool, address rewardsController, address proxyAdmin) {
+    _report = _deployStaticAToken(pool, rewardsController, proxyAdmin);
   }
 
   function staticATokenReport() external view returns (StaticATokenReport memory) {
