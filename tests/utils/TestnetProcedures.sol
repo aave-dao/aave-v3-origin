@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import 'forge-std/Test.sol';
 
 import '../../src/deployments/interfaces/IMarketReportTypes.sol';
-import {ConfigEngineDeployer} from './ConfigEngineDeployer.sol';
 import {DeployUtils} from '../../src/deployments/contracts/utilities/DeployUtils.sol';
 import {FfiUtils} from '../../src/deployments/contracts/utilities/FfiUtils.sol';
 import {DefaultMarketInput} from '../../src/deployments/inputs/DefaultMarketInput.sol';

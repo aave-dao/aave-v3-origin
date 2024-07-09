@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 import '../src/deployments/interfaces/IMarketReportTypes.sol';
-import {ConfigEngineDeployer} from './utils/ConfigEngineDeployer.sol';
 
 import {AugustusRegistryMock} from './mocks/AugustusRegistryMock.sol';
 import {MockParaSwapFeeClaimer} from 'aave-v3-periphery/contracts/mocks/swap/MockParaSwapFeeClaimer.sol';
