@@ -21,8 +21,8 @@ library MarketReportUtils {
         aaveOracle: IAaveOracle(report.aaveOracle),
         aclManager: IACLManager(report.aclManager),
         treasury: ICollector(report.treasury),
-        defaultInterestRateStrategyV2: IDefaultInterestRateStrategyV2(
-          report.defaultInterestRateStrategyV2
+        defaultInterestRateStrategy: IDefaultInterestRateStrategyV2(
+          report.defaultInterestRateStrategy
         ),
         proxyAdmin: ProxyAdmin(report.proxyAdmin),
         treasuryImplementation: ICollector(report.treasuryImplementation),

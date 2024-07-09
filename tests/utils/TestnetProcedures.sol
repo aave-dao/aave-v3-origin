@@ -111,8 +111,13 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
       MarketReport memory deployedContracts
     ) = _getMarketInput(poolAdmin);
     roleList = roles;
-
     flags.l2 = l2;
+
+    // Etch the create2 factory
+    vm.etch(
+      0x914d7Fec6aaC8cd542e72Bca78B30650d45643d7,
+      hex'7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe03601600081602082378035828234f58015156039578182fd5b8082525050506014600cf3'
+    );
 
     (report, tokenList) = deployAaveV3TestnetAssets(
       poolAdmin,
@@ -218,10 +223,8 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
 
     MarketReport memory r = deployAaveV3Testnet(deployer, roles, config, flags, deployedContracts);
 
-    address engine = ConfigEngineDeployer.deployEngine(vm, r);
-
     AaveV3TestListing testnetListingPayload = new AaveV3TestListing(
-      IAaveV3ConfigEngine(engine),
+      IAaveV3ConfigEngine(r.configEngine),
       roles.poolAdmin,
       assetsList.weth,
       r
@@ -298,7 +301,7 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
       t.variableDebtSymbol = _concatStr('varDebtMISC ', x);
       t.stableDebtName = _concatStr('Stable Debt Misc ', x);
       t.stableDebtSymbol = _concatStr('stableDebtMISC ', x);
-      t.rateStrategy = r.defaultInterestRateStrategyV2;
+      t.rateStrategy = r.defaultInterestRateStrategy;
       t.interestRateData = abi.encode(
         IDefaultInterestRateStrategyV2.InterestRateData({
           optimalUsageRatio: 80_00,

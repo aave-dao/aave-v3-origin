@@ -40,7 +40,7 @@ library ConfigEngineDeployer {
       .EngineConstants({
         pool: IPool(report.poolProxy),
         poolConfigurator: IPoolConfigurator(report.poolConfiguratorProxy),
-        defaultInterestRateStrategy: report.defaultInterestRateStrategyV2,
+        defaultInterestRateStrategy: report.defaultInterestRateStrategy,
         oracle: IAaveOracle(report.aaveOracle),
         rewardsController: report.rewardsControllerProxy,
         collector: report.treasury
