@@ -15,7 +15,7 @@ import {IERC20WithPermit} from 'solidity-utils/contracts/oz-common/interfaces/IE
 
 import {IStaticATokenLM} from './interfaces/IStaticATokenLM.sol';
 import {IAToken} from './interfaces/IAToken.sol';
-import {ERC20} from '../../../core/contracts/dependencies/solmate/ERC20.sol';
+import {ERC20} from '../dependencies/solmate/ERC20.sol';
 import {IInitializableStaticATokenLM} from './interfaces/IInitializableStaticATokenLM.sol';
 import {StaticATokenErrors} from './StaticATokenErrors.sol';
 import {RayMathExplicitRounding, Rounding} from '../libraries/RayMathExplicitRounding.sol';
