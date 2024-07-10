@@ -5,4 +5,5 @@ interface IErrors {
   error L2MustBeEnabled();
   error L2MustBeDisabled();
   error ProviderNotFound();
+  error ProxyAdminNotFound();
 }

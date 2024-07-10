@@ -35,7 +35,7 @@ struct ContractsReport {
   IAaveOracle aaveOracle;
   IACLManager aclManager;
   ICollector treasury;
-  IDefaultInterestRateStrategyV2 defaultInterestRateStrategyV2;
+  IDefaultInterestRateStrategyV2 defaultInterestRateStrategy;
   ProxyAdmin proxyAdmin;
   ICollector treasuryImplementation;
   IWrappedTokenGatewayV3 wrappedTokenGateway;
@@ -63,7 +63,8 @@ struct MarketReport {
   address poolConfiguratorImplementation;
   address protocolDataProvider;
   address aaveOracle;
-  address defaultInterestRateStrategyV2;
+  address defaultInterestRateStrategy;
+  address priceOracleSentinel;
   address aclManager;
   address treasury;
   address proxyAdmin;
@@ -83,6 +84,11 @@ struct MarketReport {
   address emissionManager;
   address rewardsControllerImplementation;
   address rewardsControllerProxy;
+  address configEngine;
+  address transparentProxyFactory;
+  address staticATokenFactoryImplementation;
+  address staticATokenFactoryProxy;
+  address staticATokenImplementation;
 }
 
 struct LibrariesReport {
@@ -109,6 +115,8 @@ struct MarketConfig {
   uint8 oracleDecimals;
   address paraswapAugustusRegistry;
   address paraswapFeeClaimer;
+  address l2SequencerUptimeFeed;
+  uint256 l2PriceOracleSentinelGracePeriod;
   uint256 providerId;
   bytes32 salt;
   address wrappedNativeToken;
@@ -124,6 +132,29 @@ struct DeployFlags {
 struct PoolReport {
   address poolImplementation;
   address poolConfiguratorImplementation;
+}
+
+struct MiscReport {
+  address priceOracleSentinel;
+  address defaultInterestRateStrategy;
+}
+
+struct ConfigEngineReport {
+  address configEngine;
+  address listingEngine;
+  address eModeEngine;
+  address borrowEngine;
+  address collateralEngine;
+  address priceFeedEngine;
+  address rateEngine;
+  address capsEngine;
+}
+
+struct StaticATokenReport {
+  address transparentProxyFactory;
+  address staticATokenImplementation;
+  address staticATokenFactoryImplementation;
+  address staticATokenFactoryProxy;
 }
 
 struct InitialReport {
@@ -145,7 +176,6 @@ struct PeripheryReport {
   address treasuryImplementation;
   address emissionManager;
   address rewardsControllerImplementation;
-  address defaultInterestRateStrategyV2;
 }
 
 struct ParaswapReport {

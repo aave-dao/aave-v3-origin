@@ -110,18 +110,6 @@ struct LocalVars {
   ReserveConfig[] configs;
 }
 
-struct InterestStrategyValues {
-  address addressesProvider;
-  uint256 optimalUsageRatio;
-  uint256 optimalStableToTotalDebtRatio;
-  uint256 baseStableBorrowRate;
-  uint256 stableRateSlope1;
-  uint256 stableRateSlope2;
-  uint256 baseVariableBorrowRate;
-  uint256 variableRateSlope1;
-  uint256 variableRateSlope2;
-}
-
 /**
  * only applicable to harmony at this point
  */
@@ -615,7 +603,7 @@ contract ProtocolV3TestBase is DiffUtils {
     address reserve,
     address interestRateStrategyAddress,
     address expectedStrategy,
-    InterestStrategyValues memory expectedStrategyValues
+    IDefaultInterestRateStrategyV2.InterestRateDataRay memory expectedStrategyValues
   ) internal view {
     IDefaultInterestRateStrategyV2 strategy = IDefaultInterestRateStrategyV2(
       interestRateStrategyAddress
@@ -629,10 +617,6 @@ contract ProtocolV3TestBase is DiffUtils {
     require(
       strategy.getOptimalUsageRatio(reserve) == expectedStrategyValues.optimalUsageRatio,
       '_validateInterestRateStrategy() : INVALID_OPTIMAL_RATIO'
-    );
-    require(
-      address(strategy.ADDRESSES_PROVIDER()) == expectedStrategyValues.addressesProvider,
-      '_validateInterestRateStrategy() : INVALID_ADDRESSES_PROVIDER'
     );
     require(
       strategy.getBaseVariableBorrowRate(reserve) == expectedStrategyValues.baseVariableBorrowRate,

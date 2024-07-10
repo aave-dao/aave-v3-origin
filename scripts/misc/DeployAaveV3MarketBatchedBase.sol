@@ -25,7 +25,7 @@ abstract contract DeployAaveV3MarketBatchedBase is DeployUtils, MarketInput, Scr
 
     (roles, config, flags, report) = _getMarketInput(msg.sender);
 
-    _loadWarnings(config);
+    _loadWarnings(config, flags);
 
     vm.startBroadcast();
     report = AaveV3BatchOrchestration.deployAaveV3(msg.sender, roles, config, flags, report);
@@ -38,10 +38,19 @@ abstract contract DeployAaveV3MarketBatchedBase is DeployUtils, MarketInput, Scr
     metadataReporter.writeJsonReportMarket(report);
   }
 
-  function _loadWarnings(MarketConfig memory config) internal view {
+  function _loadWarnings(MarketConfig memory config, DeployFlags memory flags) internal view {
     if (config.paraswapAugustusRegistry == address(0)) {
       console.log(
         'Warning: Paraswap Adapters will be skipped at deployment due missing config.paraswapAugustusRegistry'
+      );
+    }
+    if (
+      (flags.l2 &&
+        (config.l2SequencerUptimeFeed == address(0) ||
+          config.l2PriceOracleSentinelGracePeriod == 0))
+    ) {
+      console.log(
+        'Warning: L2 Sequencer uptime feed wont be set at deployment due missing config.l2SequencerUptimeFeed config.l2PriceOracleSentinelGracePeriod'
       );
     }
     if (

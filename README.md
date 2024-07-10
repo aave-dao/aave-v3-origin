@@ -1,6 +1,6 @@
 # Aave V3.1 Origin
 
-![Aave v3.1 Origin_banner](./v3-1-banner.jpeg)
+![Aave v3.1 Origin_banner](./resources/v3-1-banner.jpeg)
 
 Aave v3.1 complete codebase, Foundry-based.
 

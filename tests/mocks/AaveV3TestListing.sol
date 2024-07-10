@@ -156,7 +156,7 @@ contract AaveV3TestListing is AaveV3Payload {
   }
 
   function getPoolContext() public pure override returns (IEngine.PoolContext memory) {
-    return IEngine.PoolContext({networkName: 'Ethereum Sepolia', networkAbbreviation: 'EthSep'});
+    return IEngine.PoolContext({networkName: 'Local', networkAbbreviation: 'Loc'});
   }
 
   function _postExecute() internal override {

@@ -33,7 +33,7 @@ contract PoolConfiguratorInitReservesTest is TestnetProcedures {
     t.variableDebtSymbol = 'varDebtMISC';
     t.stableDebtName = 'Stable Debt Misc';
     t.stableDebtSymbol = 'stableDebtMISC';
-    t.rateStrategy = report.defaultInterestRateStrategyV2;
+    t.rateStrategy = report.defaultInterestRateStrategy;
     t.interestRateData = abi.encode(
       IDefaultInterestRateStrategyV2.InterestRateData({
         optimalUsageRatio: 80_00,
@@ -265,7 +265,7 @@ contract PoolConfiguratorInitReservesTest is TestnetProcedures {
     t.variableDebtSymbol = 'varDebtMISC';
     t.stableDebtName = 'Stable Debt Misc';
     t.stableDebtSymbol = 'stableDebtMISC';
-    t.rateStrategy = report.defaultInterestRateStrategyV2;
+    t.rateStrategy = report.defaultInterestRateStrategy;
     t.interestRateData = abi.encode(
       IDefaultInterestRateStrategyV2.InterestRateData({
         optimalUsageRatio: 80_00,
