@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 import '../src/deployments/interfaces/IMarketReportTypes.sol';
-import {ConfigEngineDeployer} from './utils/ConfigEngineDeployer.sol';
 
 import {AugustusRegistryMock} from './mocks/AugustusRegistryMock.sol';
 import {MockParaSwapFeeClaimer} from 'aave-v3-periphery/contracts/mocks/swap/MockParaSwapFeeClaimer.sol';
@@ -15,19 +14,18 @@ import {IPoolAddressesProvider} from 'aave-v3-core/contracts/interfaces/IPoolAdd
 import {IAaveV3ConfigEngine} from 'aave-v3-periphery/contracts/v3-config-engine/IAaveV3ConfigEngine.sol';
 import {IPool} from 'aave-v3-core/contracts/interfaces/IPool.sol';
 import {AaveV3ConfigEngine} from 'aave-v3-periphery/contracts/v3-config-engine/AaveV3ConfigEngine.sol';
+import {SequencerOracle} from 'aave-v3-core/contracts/mocks/oracle/SequencerOracle.sol';
 
 contract AaveV3BatchDeployment is BatchTestProcedures {
   address public marketOwner;
   address public emergencyAdmin;
 
   Roles public roles;
-  MarketConfig public config;
   DeployFlags public flags;
+  MarketConfig config;
   MarketReport deployedContracts;
 
   address public weth9;
-
-  event ReportLog(MarketReport report);
 
   function setUp() public {
     bytes32 emptySalt;
@@ -44,6 +42,8 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
       8,
       address(new AugustusRegistryMock()),
       address(new MockParaSwapFeeClaimer()),
+      address(0), // l2SequencerUptimeFeed
+      0, // l2PriceOracleSentinelGracePeriod
       8080,
       emptySalt,
       weth9,
@@ -63,9 +63,8 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
     );
     checkFullReport(flags, fullReport);
 
-    address engine = ConfigEngineDeployer.deployEngine(vm, fullReport);
     AaveV3TestListing testnetListingPayload = new AaveV3TestListing(
-      IAaveV3ConfigEngine(engine),
+      IAaveV3ConfigEngine(fullReport.configEngine),
       marketOwner,
       weth9,
       fullReport
@@ -81,6 +80,8 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
 
   function testAaveV3L2BatchDeploymentCheck() public {
     flags.l2 = true;
+    config.l2SequencerUptimeFeed = address(new SequencerOracle(poolAdmin));
+    config.l2PriceOracleSentinelGracePeriod = 2 hours;
 
     MarketReport memory fullReport = deployAaveV3Testnet(
       marketOwner,
@@ -92,9 +93,8 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
 
     checkFullReport(flags, fullReport);
 
-    address engine = ConfigEngineDeployer.deployEngine(vm, fullReport);
     AaveV3TestListing testnetListingPayload = new AaveV3TestListing(
-      IAaveV3ConfigEngine(engine),
+      IAaveV3ConfigEngine(fullReport.configEngine),
       marketOwner,
       weth9,
       fullReport

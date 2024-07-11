@@ -11,9 +11,13 @@ import {AaveV3GettersBatchTwo} from '../src/deployments/projects/aave-v3-batched
 import {AaveV3PeripheryBatch} from '../src/deployments/projects/aave-v3-batched/batches/AaveV3PeripheryBatch.sol';
 import {AaveV3ParaswapBatch} from '../src/deployments/projects/aave-v3-batched/batches/AaveV3ParaswapBatch.sol';
 import {AaveV3SetupBatch} from '../src/deployments/projects/aave-v3-batched/batches/AaveV3SetupBatch.sol';
+import {AaveV3MiscBatch} from '../src/deployments/projects/aave-v3-batched/batches/AaveV3MiscBatch.sol';
+import {AaveV3HelpersBatchOne} from '../src/deployments/projects/aave-v3-batched/batches/AaveV3HelpersBatchOne.sol';
+import {AaveV3HelpersBatchTwo} from '../src/deployments/projects/aave-v3-batched/batches/AaveV3HelpersBatchTwo.sol';
 import {WETH9} from 'aave-v3-core/contracts/dependencies/weth/WETH9.sol';
 import {AugustusRegistryMock} from './mocks/AugustusRegistryMock.sol';
 import {MockParaSwapFeeClaimer} from 'aave-v3-periphery/contracts/mocks/swap/MockParaSwapFeeClaimer.sol';
+import {SequencerOracle} from '../src/core/contracts/mocks/oracle/SequencerOracle.sol';
 import {BatchTestProcedures} from './utils/BatchTestProcedures.sol';
 
 contract DeploymentsGasLimits is BatchTestProcedures {
@@ -30,6 +34,8 @@ contract DeploymentsGasLimits is BatchTestProcedures {
 
   PeripheryReport peripheryReportOne;
   ParaswapReport paraswapReportOne;
+  MiscReport miscReport;
+  AaveV3TokensBatch.TokensReport tokensReport;
 
   SetupReport setupReportTwo;
 
@@ -51,6 +57,8 @@ contract DeploymentsGasLimits is BatchTestProcedures {
       8,
       address(new AugustusRegistryMock()), // replace with mock of augustus registry
       address(new MockParaSwapFeeClaimer()),
+      address(new SequencerOracle(poolAdmin)),
+      2 hours, // l2PriceOracleSentinelGracePeriod
       8080,
       empty,
       address(new WETH9()),
@@ -58,22 +66,35 @@ contract DeploymentsGasLimits is BatchTestProcedures {
       0.0005e4,
       0.0004e4
     );
-    flags = DeployFlags(false);
+    flags = DeployFlags(true);
+
+    // Etch the create2 factory
+    vm.etch(
+      0x914d7Fec6aaC8cd542e72Bca78B30650d45643d7,
+      hex'7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe03601600081602082378035828234f58015156039578182fd5b8082525050506014600cf3'
+    );
 
     (
       marketReportOne,
       gettersReportOne,
       poolReportOne,
       peripheryReportOne,
-      paraswapReportOne,
+      miscReport,
       aaveV3SetupOne
     ) = deployCoreAndPeriphery(roles, config, flags, deployedContracts);
-    (, , gettersReportTwo, , setupReportTwo, , , ) = deployAndSetup(
-      roles,
-      config,
-      flags,
-      deployedContracts
-    );
+
+    (
+      ,
+      ,
+      gettersReportTwo,
+      ,
+      setupReportTwo,
+      ,
+      miscReport,
+      tokensReport,
+      paraswapReportOne,
+
+    ) = deployAndSetup(roles, config, flags, deployedContracts);
   }
 
   function test0AaveV3SetupDeployment() public {
@@ -114,7 +135,16 @@ contract DeploymentsGasLimits is BatchTestProcedures {
     );
   }
 
-  function test6ParaswapDeployment() public {
+  function test6MiscDeployment() public {
+    new AaveV3MiscBatch(
+      flags.l2,
+      marketReportOne.poolAddressesProvider,
+      config.l2SequencerUptimeFeed,
+      config.l2PriceOracleSentinelGracePeriod
+    );
+  }
+
+  function test7ParaswapDeployment() public {
     new AaveV3ParaswapBatch(
       roles.poolAdmin,
       config,
@@ -123,7 +153,7 @@ contract DeploymentsGasLimits is BatchTestProcedures {
     );
   }
 
-  function test7SetupMarket() public {
+  function test8SetupMarket() public {
     vm.prank(roles.marketOwner);
     aaveV3SetupOne.setupAaveV3Market(
       roles,
@@ -132,12 +162,35 @@ contract DeploymentsGasLimits is BatchTestProcedures {
       poolReportOne.poolConfiguratorImplementation,
       gettersReportOne.protocolDataProvider,
       peripheryReportOne.aaveOracle,
-      peripheryReportOne.rewardsControllerImplementation
+      peripheryReportOne.rewardsControllerImplementation,
+      miscReport.priceOracleSentinel
     );
   }
 
-  function test8TokensMarket() public {
+  function test9TokensMarket() public {
     new AaveV3TokensBatch(setupReportTwo.poolProxy);
+  }
+
+  function test10ConfigEngineDeployment() public {
+    new AaveV3HelpersBatchOne(
+      setupReportTwo.poolProxy,
+      setupReportTwo.poolConfiguratorProxy,
+      miscReport.defaultInterestRateStrategy,
+      peripheryReportOne.aaveOracle,
+      setupReportTwo.rewardsControllerProxy,
+      peripheryReportOne.treasury,
+      tokensReport.aToken,
+      tokensReport.variableDebtToken,
+      tokensReport.stableDebtToken
+    );
+  }
+
+  function test11StaticATokenDeployment() public {
+    new AaveV3HelpersBatchTwo(
+      setupReportTwo.poolProxy,
+      setupReportTwo.rewardsControllerProxy,
+      peripheryReportOne.proxyAdmin
+    );
   }
 
   function testCheckInitCodeSizeBatchs() public view {
@@ -147,10 +200,13 @@ contract DeploymentsGasLimits is BatchTestProcedures {
     console.log('AaveV3L2PoolBatch', type(AaveV3L2PoolBatch).creationCode.length);
     console.log('AaveV3PoolBatch', type(AaveV3PoolBatch).creationCode.length);
     console.log('AaveV3PeripheryBatch', type(AaveV3PeripheryBatch).creationCode.length);
+    console.log('AaveV3MiscBatch', type(AaveV3MiscBatch).creationCode.length);
     console.log('AaveV3ParaswapBatch', type(AaveV3ParaswapBatch).creationCode.length);
     console.log('AaveV3GettersBatchOne', type(AaveV3GettersBatchOne).creationCode.length);
     console.log('AaveV3GettersBatchTwo', type(AaveV3GettersBatchTwo).creationCode.length);
     console.log('AaveV3TokensBatch', type(AaveV3TokensBatch).creationCode.length);
+    console.log('AaveV3HelpersBatchOne', type(AaveV3HelpersBatchOne).creationCode.length);
+    console.log('AaveV3HelpersBatchTwo', type(AaveV3HelpersBatchTwo).creationCode.length);
 
     assertLe(
       type(AaveV3SetupBatch).creationCode.length,
@@ -173,6 +229,11 @@ contract DeploymentsGasLimits is BatchTestProcedures {
       'AaveV3PeripheryBatch max init code size'
     );
     assertLe(
+      type(AaveV3MiscBatch).creationCode.length,
+      maxInitCodeSize,
+      'AaveV3MiscBatch max init code size'
+    );
+    assertLe(
       type(AaveV3ParaswapBatch).creationCode.length,
       maxInitCodeSize,
       'AaveV3ParaswapBatch max init code size'
@@ -191,6 +252,16 @@ contract DeploymentsGasLimits is BatchTestProcedures {
       type(AaveV3TokensBatch).creationCode.length,
       maxInitCodeSize,
       'AaveV3TokensBatch max init code size'
+    );
+    assertLe(
+      type(AaveV3HelpersBatchOne).creationCode.length,
+      maxInitCodeSize,
+      'AaveV3HelpersBatchOne max init code size'
+    );
+    assertLe(
+      type(AaveV3HelpersBatchTwo).creationCode.length,
+      maxInitCodeSize,
+      'AaveV3HelpersBatchTwo max init code size'
     );
   }
 }

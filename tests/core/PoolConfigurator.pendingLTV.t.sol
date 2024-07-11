@@ -24,12 +24,7 @@ contract PoolConfiguratorPendingLtvTests is TestnetProcedures {
 
   function test_freezeReserve_ltvSetTo0() public {
     // check current ltv
-    (
-      uint256 ltv,
-      uint256 liquidationThreshold,
-      uint256 liquidationBonus,
-      bool isFrozen
-    ) = _getReserveParams();
+    (uint256 ltv, , , bool isFrozen) = _getReserveParams();
 
     assertTrue(ltv > 0);
     assertEq(isFrozen, false);
@@ -51,12 +46,7 @@ contract PoolConfiguratorPendingLtvTests is TestnetProcedures {
 
   function test_unfreezeReserve_pendingSetToLtv() public {
     // check ltv
-    (
-      uint256 originalLtv,
-      uint256 liquidationThreshold,
-      uint256 liquidationBonus,
-
-    ) = _getReserveParams();
+    (uint256 originalLtv, , , ) = _getReserveParams();
 
     // freeze reserve
     vm.startPrank(poolAdmin);
@@ -154,7 +144,7 @@ contract PoolConfiguratorPendingLtvTests is TestnetProcedures {
     vm.stopPrank();
   }
 
-  function _getReserveParams() internal returns (uint256, uint256, uint256, bool) {
+  function _getReserveParams() internal view returns (uint256, uint256, uint256, bool) {
     (
       ,
       uint256 ltv,
