@@ -12,6 +12,7 @@ import {SafeERC20} from 'solidity-utils/contracts/oz-common/SafeERC20.sol';
 import {IERC20Metadata} from 'solidity-utils/contracts/oz-common/interfaces/IERC20Metadata.sol';
 import {IERC20} from 'solidity-utils/contracts/oz-common/interfaces/IERC20.sol';
 import {IERC20WithPermit} from 'solidity-utils/contracts/oz-common/interfaces/IERC20WithPermit.sol';
+import {Rescuable, IRescuable} from 'solidity-utils/contracts/utils/Rescuable.sol';
 
 import {IStaticATokenLM} from './interfaces/IStaticATokenLM.sol';
 import {IAToken} from './interfaces/IAToken.sol';
@@ -32,7 +33,8 @@ contract StaticATokenLM is
   Initializable,
   ERC20('STATIC__aToken_IMPL', 'STATIC__aToken_IMPL', 18),
   IStaticATokenLM,
-  IERC4626
+  IERC4626,
+  Rescuable
 {
   using SafeERC20 for IERC20;
   using SafeCast for uint256;
@@ -48,7 +50,7 @@ contract StaticATokenLM is
       'Withdraw(address owner,address receiver,uint256 shares,uint256 assets,bool withdrawFromAave,uint256 nonce,uint256 deadline)'
     );
 
-  uint256 public constant STATIC__ATOKEN_LM_REVISION = 2;
+  uint256 public constant STATIC__ATOKEN_LM_REVISION = 3;
 
   IPool public immutable POOL;
   IRewardsController public immutable INCENTIVES_CONTROLLER;
@@ -85,6 +87,11 @@ contract StaticATokenLM is
     }
 
     emit Initialized(newAToken, staticATokenName, staticATokenSymbol);
+  }
+
+  /// @inheritdoc IRescuable
+  function whoCanRescue() public view override returns (address) {
+    return POOL.ADDRESSES_PROVIDER().getACLAdmin();
   }
 
   ///@inheritdoc IStaticATokenLM
