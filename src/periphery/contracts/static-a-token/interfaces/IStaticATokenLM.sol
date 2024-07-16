@@ -210,4 +210,10 @@ interface IStaticATokenLM is IInitializableStaticATokenLM, IERC4626 {
    * @return bool signaling if token is a registered reward.
    */
   function isRegisteredRewardToken(address reward) external view returns (bool);
+
+  /**
+   * @notice Returns the current asset price of the stataToken, priced by aave-oracle * exchangeRate.
+   * @return int256 the current asset price in 8 decimals.
+   */
+  function latestAnswer() external view returns (int256);
 }

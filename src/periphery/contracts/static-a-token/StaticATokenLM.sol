@@ -443,14 +443,6 @@ contract StaticATokenLM is
     return assets;
   }
 
-  function latestAnswer() external view returns (int256) {
-    return
-      int256(
-        (IAaveOracle(POOL_ADDRESSES_PROVIDER.getPriceOracle()).getAssetPrice(_aTokenUnderlying) *
-          POOL.getReserveNormalizedIncome(_aTokenUnderlying)) / 1e27
-      );
-  }
-
   ///@inheritdoc IStaticATokenLM
   function redeem(
     uint256 shares,
@@ -459,6 +451,15 @@ contract StaticATokenLM is
     bool withdrawFromAave
   ) external virtual returns (uint256, uint256) {
     return _withdraw(owner, receiver, shares, 0, withdrawFromAave);
+  }
+
+  ///@inheritdoc IStaticATokenLM
+  function latestAnswer() external view returns (int256) {
+    return
+      int256(
+        (IAaveOracle(POOL_ADDRESSES_PROVIDER.getPriceOracle()).getAssetPrice(_aTokenUnderlying) *
+          POOL.getReserveNormalizedIncome(_aTokenUnderlying)) / 1e27
+      );
   }
 
   function _deposit(
