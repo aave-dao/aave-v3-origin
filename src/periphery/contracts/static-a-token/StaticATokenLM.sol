@@ -94,7 +94,7 @@ contract StaticATokenLM is
 
   /// @inheritdoc IRescuable
   function whoCanRescue() public view override returns (address) {
-    return POOL.ADDRESSES_PROVIDER().getACLAdmin();
+    return POOL_ADDRESSES_PROVIDER.getACLAdmin();
   }
 
   ///@inheritdoc IStaticATokenLM
