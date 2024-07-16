@@ -52,6 +52,13 @@ contract StaticATokenLMTest is BaseTest {
     );
   }
 
+  function test_latestAnswer() public view {
+    uint256 stataPrice = uint256(staticATokenLM.latestAnswer());
+    uint256 underlyingPrice = contracts.aaveOracle.getAssetPrice(UNDERLYING);
+    assertGe(stataPrice, underlyingPrice);
+    assertEq(stataPrice, (underlyingPrice * staticATokenLM.convertToAssets(1e18)) / 1e18);
+  }
+
   function test_convertersAndPreviews() public view {
     uint128 amount = 5 ether;
     uint256 shares = staticATokenLM.convertToShares(amount);
