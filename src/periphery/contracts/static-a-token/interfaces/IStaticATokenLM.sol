@@ -2,9 +2,10 @@
 pragma solidity ^0.8.10;
 
 import {IERC20} from 'solidity-utils/contracts/oz-common/interfaces/IERC20.sol';
+import {IERC4626} from './IERC4626.sol';
 import {IInitializableStaticATokenLM} from './IInitializableStaticATokenLM.sol';
 
-interface IStaticATokenLM is IInitializableStaticATokenLM {
+interface IStaticATokenLM is IInitializableStaticATokenLM, IERC4626 {
   struct SignatureParams {
     uint8 v;
     bytes32 r;
