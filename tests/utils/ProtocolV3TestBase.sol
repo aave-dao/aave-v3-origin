@@ -103,6 +103,9 @@ struct ReserveConfig {
   uint256 borrowCap;
   uint256 debtCeiling;
   uint256 eModeCategory;
+  bool virtualAccActive;
+  uint256 virtualBalance;
+  uint256 aTokenUnderlyingBalance;
 }
 
 struct LocalVars {
@@ -187,42 +190,43 @@ contract ProtocolV3TestBase is DiffUtils {
     // keys for json stringification
     string memory strategiesKey = 'stategies';
     string memory content = '{}';
+    vm.serializeJson(strategiesKey, '{}');
 
-    address[] memory usedStrategies = new address[](configs.length);
     for (uint256 i = 0; i < configs.length; i++) {
-      if (!_isInAddressArray(usedStrategies, configs[i].interestRateStrategy)) {
-        usedStrategies[i] = configs[i].interestRateStrategy;
-        IDefaultInterestRateStrategyV2 strategy = IDefaultInterestRateStrategyV2(
-          configs[i].interestRateStrategy
-        );
-        string memory key = vm.toString(address(strategy));
-        vm.serializeString(
-          key,
-          'baseVariableBorrowRate',
-          vm.toString(strategy.getBaseVariableBorrowRate(configs[i].underlying))
-        );
-        vm.serializeString(
-          key,
-          'variableRateSlope1',
-          vm.toString(strategy.getVariableRateSlope1(configs[i].underlying))
-        );
-        vm.serializeString(
-          key,
-          'variableRateSlope2',
-          vm.toString(strategy.getVariableRateSlope2(configs[i].underlying))
-        );
-        vm.serializeString(
-          key,
-          'maxVariableBorrowRate',
-          vm.toString(strategy.getMaxVariableBorrowRate(configs[i].underlying))
-        );
-        string memory object = vm.serializeString(
-          key,
-          'optimalUsageRatio',
-          vm.toString(strategy.getOptimalUsageRatio(configs[i].underlying))
-        );
-        content = vm.serializeString(strategiesKey, key, object);
-      }
+      address asset = configs[i].underlying;
+      string memory key = vm.toString(asset);
+      vm.serializeJson(key, '{}');
+      vm.serializeString(key, 'address', vm.toString(configs[i].interestRateStrategy));
+      IDefaultInterestRateStrategyV2 strategy = IDefaultInterestRateStrategyV2(
+        configs[i].interestRateStrategy
+      );
+      vm.serializeString(
+        key,
+        'baseVariableBorrowRate',
+        vm.toString(strategy.getBaseVariableBorrowRate(asset))
+      );
+      vm.serializeString(
+        key,
+        'variableRateSlope1',
+        vm.toString(strategy.getVariableRateSlope1(asset))
+      );
+      vm.serializeString(
+        key,
+        'variableRateSlope2',
+        vm.toString(strategy.getVariableRateSlope2(asset))
+      );
+      vm.serializeString(
+        key,
+        'maxVariableBorrowRate',
+        vm.toString(strategy.getMaxVariableBorrowRate(asset))
+      );
+      string memory object = vm.serializeString(
+        key,
+        'optimalUsageRatio',
+        vm.toString(strategy.getOptimalUsageRatio(asset))
+      );
+
+      content = vm.serializeString(strategiesKey, key, object);
     }
     string memory output = vm.serializeString('root', 'strategies', content);
     vm.writeJson(output, path);
@@ -327,6 +331,11 @@ contract ProtocolV3TestBase is DiffUtils {
           } catch {}
         }
       }
+
+      vm.serializeBool(key, 'virtualAccountingActive', config.virtualAccActive);
+      vm.serializeUint(key, 'virtualBalance', config.virtualBalance);
+      vm.serializeUint(key, 'aTokenUnderlyingBalance', config.aTokenUnderlyingBalance);
+
       string memory out = vm.serializeUint(
         key,
         'oracleLatestAnswer',
@@ -450,6 +459,16 @@ contract ProtocolV3TestBase is DiffUtils {
 
     localConfig.isFlashloanable = configuration.getFlashLoanEnabled();
 
+    // 3.1 configurations
+    localConfig.virtualAccActive = configuration.getIsVirtualAccActive();
+
+    if (localConfig.virtualAccActive) {
+      localConfig.virtualBalance = pool.getVirtualUnderlyingBalance(reserve.tokenAddress);
+      localConfig.aTokenUnderlyingBalance = IERC20Detailed(reserve.tokenAddress).balanceOf(
+        localConfig.aToken
+      );
+    }
+
     return localConfig;
   }
 
@@ -481,7 +500,10 @@ contract ProtocolV3TestBase is DiffUtils {
         supplyCap: config.supplyCap,
         borrowCap: config.borrowCap,
         debtCeiling: config.debtCeiling,
-        eModeCategory: config.eModeCategory
+        eModeCategory: config.eModeCategory,
+        virtualAccActive: config.virtualAccActive,
+        virtualBalance: config.virtualBalance,
+        aTokenUnderlyingBalance: config.aTokenUnderlyingBalance
       });
   }
 
