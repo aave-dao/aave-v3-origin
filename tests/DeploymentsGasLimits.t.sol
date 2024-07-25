@@ -64,7 +64,11 @@ contract DeploymentsGasLimits is BatchTestProcedures {
       address(new WETH9()),
       address(0),
       0.0005e4,
-      0.0004e4
+      0.0004e4,
+      address(0),
+      address(0),
+      address(0),
+      0
     );
     flags = DeployFlags(true);
 
@@ -190,6 +194,17 @@ contract DeploymentsGasLimits is BatchTestProcedures {
       setupReportTwo.poolProxy,
       setupReportTwo.rewardsControllerProxy,
       peripheryReportOne.proxyAdmin
+    );
+  }
+
+  function test12PeripheralsTreasuryPartner() public {
+    config.treasuryPartner = address(1);
+    config.treasurySplitPercent = 5000;
+    new AaveV3PeripheryBatch(
+      roles.poolAdmin,
+      config,
+      marketReportOne.poolAddressesProvider,
+      address(aaveV3SetupOne)
     );
   }
 

@@ -173,7 +173,11 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
     );
   }
 
-  function checkFullReport(DeployFlags memory flags, MarketReport memory r) internal pure {
+  function checkFullReport(
+    MarketConfig memory config,
+    DeployFlags memory flags,
+    MarketReport memory r
+  ) internal pure {
     assertTrue(r.poolAddressesProviderRegistry != address(0), 'r.poolAddressesProviderRegistry');
     assertTrue(r.poolAddressesProvider != address(0), 'report.poolAddressesProvider');
     assertTrue(r.poolProxy != address(0), 'report.poolProxy');
@@ -218,6 +222,10 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
     assertTrue(r.staticATokenFactoryProxy != address(0), 'report.staticATokenFactoryProxy');
     assertTrue(r.staticATokenImplementation != address(0), 'report.staticATokenImplementation');
     assertTrue(r.transparentProxyFactory != address(0), 'report.transparentProxyFactory');
+
+    if (config.treasuryPartner != address(0)) {
+      assertTrue(r.revenueSplitter != address(0), 'report.revenueSplitter');
+    }
   }
 
   function deployAaveV3Testnet(
