@@ -188,9 +188,14 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
     assertTrue(r.aaveOracle != address(0), 'report.aaveOracle');
     assertTrue(r.defaultInterestRateStrategy != address(0), 'report.defaultInterestRateStrategy');
     assertTrue(r.aclManager != address(0), 'report.aclManager');
-    assertTrue(r.treasury != address(0), 'report.treasury');
     assertTrue(r.proxyAdmin != address(0), 'report.proxyAdmin');
-    assertTrue(r.treasuryImplementation != address(0), 'report.treasuryImplementation');
+    if (config.treasury == address(0)) {
+      assertTrue(r.treasury != address(0), 'report.treasury');
+      assertTrue(r.treasuryImplementation != address(0), 'report.treasuryImplementation');
+    } else {
+      assertTrue(r.treasury == config.treasury, 'report.treasury');
+      assertTrue(r.treasuryImplementation == address(0), 'report.treasuryImplementation');
+    }
     assertTrue(r.wrappedTokenGateway != address(0), 'report.wrappedTokenGateway');
     assertTrue(r.walletBalanceProvider != address(0), 'report.walletBalanceProvider');
     assertTrue(r.uiIncentiveDataProvider != address(0), 'report.uiIncentiveDataProvider');
@@ -209,11 +214,23 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
     assertTrue(r.variableDebtToken != address(0), 'report.variableDebtToken');
     assertTrue(r.stableDebtToken != address(0), 'report.stableDebtToken');
     assertTrue(r.emissionManager != address(0), 'report.emissionManager');
-    assertTrue(
-      r.rewardsControllerImplementation != address(0),
-      'r.rewardsControllerImplementation'
-    );
-    assertTrue(r.rewardsControllerProxy != address(0), 'report.rewardsControllerProxy');
+    if (config.incentivesProxy == address(0)) {
+      assertTrue(
+        r.rewardsControllerImplementation != address(0),
+        'r.rewardsControllerImplementation'
+      );
+      assertTrue(r.rewardsControllerProxy != address(0), 'report.rewardsControllerProxy');
+    } else {
+      assertTrue(
+        r.rewardsControllerImplementation == address(0),
+        'r.rewardsControllerImplementation'
+      );
+      assertTrue(
+        r.rewardsControllerProxy == config.incentivesProxy,
+        'report.rewardsControllerProxy'
+      );
+    }
+
     assertTrue(r.configEngine != address(0), 'report.configEngine');
     assertTrue(
       r.staticATokenFactoryImplementation != address(0),

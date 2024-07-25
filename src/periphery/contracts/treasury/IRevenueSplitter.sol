@@ -8,11 +8,17 @@ interface IRevenueSplitterErrors {
 }
 
 interface IRevenueSplitter is IRevenueSplitterErrors {
+  /// @notice Split token balances in RevenueSplitter and transfer between two recipients
+  /// @param tokens List of tokens to check balance and split amounts
   function splitRevenue(IERC20[] memory tokens) external;
 
-  function RECIPIENT_A() external view returns (address);
+  /// @notice Split native currency in RevenueSplitter and transfer between two recipients
+  function splitNativeRevenue() external;
 
-  function RECIPIENT_B() external view returns (address);
+  function RECIPIENT_A() external view returns (address payable);
 
+  function RECIPIENT_B() external view returns (address payable);
+
+  /// @dev Percentage of the split that goes to RECIPIENT_A, the diff goes to RECIPIENT_B, from 1 to 99_99
   function SPLIT_PERCENTAGE_RECIPIENT_A() external view returns (uint16);
 }

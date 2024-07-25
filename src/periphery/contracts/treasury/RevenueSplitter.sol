@@ -16,8 +16,8 @@ contract RevenueSplitter is IRevenueSplitter {
   using GPv2SafeERC20 for IERC20;
   using PercentageMath for uint256;
 
-  address public immutable RECIPIENT_A;
-  address public immutable RECIPIENT_B;
+  address payable public immutable RECIPIENT_A;
+  address payable public immutable RECIPIENT_B;
 
   uint16 public immutable SPLIT_PERCENTAGE_RECIPIENT_A;
 
@@ -28,8 +28,8 @@ contract RevenueSplitter is IRevenueSplitter {
     ) {
       revert InvalidPercentSplit();
     }
-    RECIPIENT_A = recipientA;
-    RECIPIENT_B = recipientB;
+    RECIPIENT_A = payable(recipientA);
+    RECIPIENT_B = payable(recipientB);
     SPLIT_PERCENTAGE_RECIPIENT_A = splitPercentageRecipientA;
   }
 
@@ -49,4 +49,22 @@ contract RevenueSplitter is IRevenueSplitter {
       tokens[x].safeTransfer(RECIPIENT_B, amount_B);
     }
   }
+
+  /// @inheritdoc IRevenueSplitter
+  function splitNativeRevenue() external {
+    uint256 balance = address(this).balance;
+
+    if (balance == 0) {
+      return;
+    }
+
+    uint256 amount_A = balance.percentMul(SPLIT_PERCENTAGE_RECIPIENT_A);
+    uint256 amount_B = balance - amount_A;
+
+    // Do not revert if fails to send to RECIPIENT_A or RECIPIENT_B, to prevent one recipient from blocking the other if recipient does not accept native currency via fallback function or receive.
+    RECIPIENT_A.call{value: amount_A}('');
+    RECIPIENT_B.call{value: amount_B}('');
+  }
+
+  receive() external payable {}
 }

@@ -222,6 +222,10 @@ contract DeploymentsGasLimits is BatchTestProcedures {
     console.log('AaveV3TokensBatch', type(AaveV3TokensBatch).creationCode.length);
     console.log('AaveV3HelpersBatchOne', type(AaveV3HelpersBatchOne).creationCode.length);
     console.log('AaveV3HelpersBatchTwo', type(AaveV3HelpersBatchTwo).creationCode.length);
+    console.log(
+      'AaveV3PeripheryBatchTreasuryPartner',
+      type(AaveV3PeripheryBatch).creationCode.length
+    );
 
     assertLe(
       type(AaveV3SetupBatch).creationCode.length,

@@ -74,6 +74,15 @@ contract RevenueSplitterTest is StdUtils, Test {
     _splitFunds_action(amountA, amountB);
   }
 
+  function test_splitNativeFunds_fuzz_max(uint256 amountA) public {
+    vm.assume(
+      amountA <=
+        (type(uint256).max - HALF_PERCENTAGE_FACTOR) /
+          revenueSplitter.SPLIT_PERCENTAGE_RECIPIENT_A()
+    );
+    _splitNativeFunds_action(amountA);
+  }
+
   function test_splitFunds_fuzz_realistic(uint256 amountA, uint256 amountB) public {
     vm.assume(amountA < 100_000_000_000_000e18);
     vm.assume(amountB < 100_000_000_000_000e18);
@@ -107,8 +116,38 @@ contract RevenueSplitterTest is StdUtils, Test {
     assertEq(tokenB.balanceOf(recipientB), recipientBBalanceB, 'Token B balance of recipient B');
   }
 
+  function _splitNativeFunds_action(uint256 amountA) internal {
+    address sender = makeAddr('SENDER');
+    deal(sender, amountA);
+
+    vm.prank(sender);
+    payable(revenueSplitter).transfer(amountA);
+
+    uint256 recipientABalanceA = amountA.percentMul(revenueSplitter.SPLIT_PERCENTAGE_RECIPIENT_A());
+
+    uint256 recipientBBalanceA = amountA - recipientABalanceA;
+
+    assertEq(
+      address(revenueSplitter).balance,
+      amountA,
+      'Splitter balance should be amount received by fallback'
+    );
+    assertEq(recipientA.balance, 0, 'ETH balance of recipient A');
+    assertEq(recipientB.balance, 0, 'ETH balance of recipient B');
+
+    revenueSplitter.splitNativeRevenue();
+
+    assertEq(recipientA.balance, recipientABalanceA, 'ETH balance of recipient A');
+    assertEq(recipientB.balance, recipientBBalanceA, 'ETH balance of recipient B');
+    assertEq(address(revenueSplitter).balance, 0, 'Splitter balance should be zero');
+  }
+
   function test_splitFund_zeroAmount_noOp() public {
     _splitFunds_action(0, 0);
+  }
+
+  function test_splitNativeFund_zeroAmount_noOp() public {
+    _splitNativeFunds_action(0);
   }
 
   function test_splitFund_zeroTokens_noOp() public {
@@ -157,6 +196,10 @@ contract RevenueSplitterTest is StdUtils, Test {
     assertEq(tokenB.balanceOf(recipientB), 0, 'Token B balance of recipient B');
     assertEq(tokenA.balanceOf(address(revenueSplitter)), 0, 'Splitter balance token A');
     assertEq(tokenB.balanceOf(address(revenueSplitter)), 0, 'Splitter balance token B');
+  }
+
+  function test_splitNativeFund_fixedAmount() public {
+    _splitNativeFunds_action(11 ether);
   }
 
   function test_splitFund_oneToken() public {

@@ -17,6 +17,8 @@ import {AaveV3ConfigEngine} from 'aave-v3-periphery/contracts/v3-config-engine/A
 import {SequencerOracle} from 'aave-v3-core/contracts/mocks/oracle/SequencerOracle.sol';
 import {IPoolDataProvider} from 'aave-v3-core/contracts/interfaces/IPoolDataProvider.sol';
 import {IAToken} from 'aave-v3-core/contracts/interfaces/IAToken.sol';
+import {IncentivizedERC20} from 'aave-v3-core/contracts/protocol/tokenization/base/IncentivizedERC20.sol';
+import {RewardsController} from 'aave-v3-periphery/contracts/rewards/RewardsController.sol';
 
 contract AaveV3BatchDeployment is BatchTestProcedures {
   address public marketOwner;
@@ -159,5 +161,43 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
       .getReserveTokensAddresses(weth9);
 
     assertEq(IAToken(aToken).RESERVE_TREASURY_ADDRESS(), fullReport.revenueSplitter);
+  }
+
+  function testAaveV3ReuseTreasuryAndIncentives() public {
+    config.treasury = makeAddr('COLLECTOR');
+    config.incentivesProxy = address(new RewardsController(roles.poolAdmin));
+
+    MarketReport memory fullReport = deployAaveV3Testnet(
+      marketOwner,
+      roles,
+      config,
+      flags,
+      deployedContracts
+    );
+
+    assertEq(fullReport.treasury, config.treasury);
+    assertEq(fullReport.rewardsControllerProxy, config.incentivesProxy);
+
+    checkFullReport(config, flags, fullReport);
+
+    AaveV3TestListing testnetListingPayload = new AaveV3TestListing(
+      IAaveV3ConfigEngine(fullReport.configEngine),
+      marketOwner,
+      weth9,
+      fullReport
+    );
+
+    ACLManager manager = ACLManager(fullReport.aclManager);
+
+    vm.prank(poolAdmin);
+    manager.addPoolAdmin(address(testnetListingPayload));
+
+    testnetListingPayload.execute();
+
+    (address aToken, , ) = IPoolDataProvider(fullReport.protocolDataProvider)
+      .getReserveTokensAddresses(weth9);
+
+    assertEq(IAToken(aToken).RESERVE_TREASURY_ADDRESS(), config.treasury);
+    assertEq(address(IncentivizedERC20(aToken).getIncentivesController()), config.incentivesProxy);
   }
 }
