@@ -186,7 +186,10 @@ contract ProtocolV3TestBase is DiffUtils {
     vm.writeJson(output, path);
   }
 
-  function _writeStrategyConfigs(string memory path, ReserveConfig[] memory configs) internal {
+  function _writeStrategyConfigs(
+    string memory path,
+    ReserveConfig[] memory configs
+  ) internal virtual {
     // keys for json stringification
     string memory strategiesKey = 'stategies';
     string memory content = '{}';
