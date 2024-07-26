@@ -5,6 +5,7 @@ import {IRevenueSplitter} from './IRevenueSplitter.sol';
 import {IERC20} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
 import {GPv2SafeERC20} from 'aave-v3-core/contracts/dependencies/gnosis/contracts/GPv2SafeERC20.sol';
 import {PercentageMath} from 'aave-v3-core/contracts/protocol/libraries/math/PercentageMath.sol';
+import {ReentrancyGuard} from 'aave-v3-periphery/contracts/dependencies/openzeppelin/ReentrancyGuard.sol';
 
 /**
  * @title RevenueSplitter
@@ -12,7 +13,7 @@ import {PercentageMath} from 'aave-v3-core/contracts/protocol/libraries/math/Per
  * @dev This periphery contract is responsible for splitting funds between two recipients.
  *      Replace COLLECTOR in ATokens or Debt Tokens with RevenueSplitter, and them set COLLECTORs as recipients.
  */
-contract RevenueSplitter is IRevenueSplitter {
+contract RevenueSplitter is IRevenueSplitter, ReentrancyGuard {
   using GPv2SafeERC20 for IERC20;
   using PercentageMath for uint256;
 
@@ -34,7 +35,7 @@ contract RevenueSplitter is IRevenueSplitter {
   }
 
   /// @inheritdoc IRevenueSplitter
-  function splitRevenue(IERC20[] memory tokens) external {
+  function splitRevenue(IERC20[] memory tokens) external nonReentrant {
     for (uint8 x; x < tokens.length; ++x) {
       uint256 balance = tokens[x].balanceOf(address(this));
 
@@ -51,7 +52,7 @@ contract RevenueSplitter is IRevenueSplitter {
   }
 
   /// @inheritdoc IRevenueSplitter
-  function splitNativeRevenue() external {
+  function splitNativeRevenue() external nonReentrant {
     uint256 balance = address(this).balance;
 
     if (balance == 0) {
