@@ -26,7 +26,7 @@ contract AaveV3TreasuryProcedure {
       Collector treasuryImplementation = new Collector{salt: salt}();
       treasuryImplementation.initialize(address(0), 0);
       treasuryReport.treasuryImplementation = address(treasuryImplementation);
-      
+
       treasuryReport.treasury = address(
         new TransparentUpgradeableProxy{salt: salt}(
           treasuryReport.treasuryImplementation,
