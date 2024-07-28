@@ -128,7 +128,7 @@ contract ProtocolV3TestBase is DiffUtils {
   function createConfigurationSnapshot(
     string memory reportName,
     IPool pool
-  ) public returns (ReserveConfig[] memory) {
+  ) public virtual returns (ReserveConfig[] memory) {
     return createConfigurationSnapshot(reportName, pool, true, true, true, true);
   }
 
@@ -139,7 +139,7 @@ contract ProtocolV3TestBase is DiffUtils {
     bool strategyConfigs,
     bool eModeConigs,
     bool poolConfigs
-  ) public returns (ReserveConfig[] memory) {
+  ) public virtual returns (ReserveConfig[] memory) {
     string memory path = string(abi.encodePacked('./reports/', reportName, '.json'));
     // overwrite with empty json to later be extended
     vm.writeFile(
@@ -160,7 +160,7 @@ contract ProtocolV3TestBase is DiffUtils {
     string memory path,
     ReserveConfig[] memory configs,
     IPool pool
-  ) internal {
+  ) internal virtual {
     // keys for json stringification
     string memory eModesKey = 'emodes';
     string memory content = '{}';
@@ -239,7 +239,7 @@ contract ProtocolV3TestBase is DiffUtils {
     string memory path,
     ReserveConfig[] memory configs,
     IPool pool
-  ) internal {
+  ) internal virtual {
     // keys for json stringification
     string memory reservesKey = 'reserves';
     string memory content = '{}';
@@ -350,7 +350,7 @@ contract ProtocolV3TestBase is DiffUtils {
     vm.writeJson(output, path);
   }
 
-  function _writePoolConfiguration(string memory path, IPool pool) internal {
+  function _writePoolConfiguration(string memory path, IPool pool) internal virtual {
     // keys for json stringification
     string memory poolConfigKey = 'poolConfig';
 
@@ -391,7 +391,7 @@ contract ProtocolV3TestBase is DiffUtils {
     vm.writeJson(output, path);
   }
 
-  function _getReservesConfigs(IPool pool) internal view returns (ReserveConfig[] memory) {
+  function _getReservesConfigs(IPool pool) internal view virtual returns (ReserveConfig[] memory) {
     IPoolAddressesProvider addressesProvider = IPoolAddressesProvider(pool.ADDRESSES_PROVIDER());
     IPoolDataProvider poolDataProvider = IPoolDataProvider(addressesProvider.getPoolDataProvider());
     LocalVars memory vars;
@@ -410,7 +410,7 @@ contract ProtocolV3TestBase is DiffUtils {
   function _getStructReserveTokens(
     IPoolDataProvider pdp,
     address underlyingAddress
-  ) internal view returns (ReserveTokens memory) {
+  ) internal view virtual returns (ReserveTokens memory) {
     ReserveTokens memory reserveTokens;
     (reserveTokens.aToken, reserveTokens.stableDebtToken, reserveTokens.variableDebtToken) = pdp
       .getReserveTokensAddresses(underlyingAddress);
@@ -478,7 +478,7 @@ contract ProtocolV3TestBase is DiffUtils {
   }
 
   // TODO This should probably be simplified with assembly, too much boilerplate
-  function _clone(ReserveConfig memory config) internal pure returns (ReserveConfig memory) {
+  function _clone(ReserveConfig memory config) internal pure virtual returns (ReserveConfig memory) {
     return
       ReserveConfig({
         symbol: config.symbol,
@@ -515,7 +515,7 @@ contract ProtocolV3TestBase is DiffUtils {
   function _findReserveConfig(
     ReserveConfig[] memory configs,
     address underlying
-  ) internal pure returns (ReserveConfig memory) {
+  ) internal pure virtual returns (ReserveConfig memory) {
     for (uint256 i = 0; i < configs.length; i++) {
       if (configs[i].underlying == underlying) {
         // Important to clone the struct, to avoid unexpected side effect if modifying the returned config
@@ -528,7 +528,7 @@ contract ProtocolV3TestBase is DiffUtils {
   function _findReserveConfigBySymbol(
     ReserveConfig[] memory configs,
     string memory symbolOfUnderlying
-  ) internal pure returns (ReserveConfig memory) {
+  ) internal pure virtual returns (ReserveConfig memory) {
     for (uint256 i = 0; i < configs.length; i++) {
       if (
         keccak256(abi.encodePacked(configs[i].symbol)) ==
