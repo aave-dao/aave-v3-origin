@@ -478,7 +478,9 @@ contract ProtocolV3TestBase is DiffUtils {
   }
 
   // TODO This should probably be simplified with assembly, too much boilerplate
-  function _clone(ReserveConfig memory config) internal pure virtual returns (ReserveConfig memory) {
+  function _clone(
+    ReserveConfig memory config
+  ) internal pure virtual returns (ReserveConfig memory) {
     return
       ReserveConfig({
         symbol: config.symbol,
