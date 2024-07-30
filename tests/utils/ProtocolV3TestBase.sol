@@ -191,7 +191,7 @@ contract ProtocolV3TestBase is DiffUtils {
     ReserveConfig[] memory configs
   ) internal virtual {
     // keys for json stringification
-    string memory strategiesKey = 'stategies';
+    string memory strategiesKey = 'strategies';
     string memory content = '{}';
     vm.serializeJson(strategiesKey, '{}');
 
@@ -243,6 +243,7 @@ contract ProtocolV3TestBase is DiffUtils {
     // keys for json stringification
     string memory reservesKey = 'reserves';
     string memory content = '{}';
+    vm.serializeJson(reservesKey, '{}');
 
     IPoolAddressesProvider addressesProvider = IPoolAddressesProvider(pool.ADDRESSES_PROVIDER());
     IAaveOracle oracle = IAaveOracle(addressesProvider.getPriceOracle());
@@ -253,6 +254,7 @@ contract ProtocolV3TestBase is DiffUtils {
       );
 
       string memory key = vm.toString(config.underlying);
+      vm.serializeJson(key, '{}');
       vm.serializeString(key, 'symbol', config.symbol);
       vm.serializeUint(key, 'ltv', config.ltv);
       vm.serializeUint(key, 'liquidationThreshold', config.liquidationThreshold);
