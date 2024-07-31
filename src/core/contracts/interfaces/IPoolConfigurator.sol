@@ -561,15 +561,15 @@ interface IPoolConfigurator {
    * @notice Gets pending ltv value
    * @param asset The new siloed borrowing state
    */
-  function getPendingLtv(address asset) external returns (uint256);
+  function getPendingLtv(address asset) external view returns (uint256);
 
   /**
    * @notice Gets the address of the external ConfiguratorLogic
    */
-  function getConfiguratorLogic() external returns (address);
+  function getConfiguratorLogic() external view returns (address);
 
   /**
    * @notice Gets the maximum liquidations grace period allowed, in seconds
    */
-  function MAX_GRACE_PERIOD() external returns (uint40);
+  function MAX_GRACE_PERIOD() external view returns (uint40);
 }
