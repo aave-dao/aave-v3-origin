@@ -21,6 +21,9 @@ import {IInitializableStaticATokenLM} from './interfaces/IInitializableStaticATo
 import {StaticATokenErrors} from './StaticATokenErrors.sol';
 import {RayMathExplicitRounding, Rounding} from '../libraries/RayMathExplicitRounding.sol';
 import {IERC4626} from './interfaces/IERC4626.sol';
+import {UpgradableOwnableWithGuardian} from 'solidity-utils/contracts/access-control/UpgradableOwnableWithGuardian.sol';
+import {PausableUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/utils/PausableUpgradeable.sol';
+import {DeprecationGap} from './DeprecationGap.sol';
 
 /**
  * @title StaticATokenLM
@@ -30,10 +33,12 @@ import {IERC4626} from './interfaces/IERC4626.sol';
  * @author BGD labs
  */
 contract StaticATokenLM is
-  Initializable,
+  DeprecationGap,
   ERC20('STATIC__aToken_IMPL', 'STATIC__aToken_IMPL', 18),
   IStaticATokenLM,
-  Rescuable
+  Rescuable,
+  UpgradableOwnableWithGuardian,
+  PausableUpgradeable
 {
   using SafeERC20 for IERC20;
   using SafeCast for uint256;
