@@ -30,7 +30,6 @@ library SigUtils {
     bool fromUnderlying;
     uint256 nonce;
     uint256 deadline;
-    IStaticATokenLM.PermitParams permit;
   }
 
   // computes the hash of a permit

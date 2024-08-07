@@ -50,8 +50,7 @@ contract StaticATokenMetaTransactions is BaseTest {
       referralCode: 0,
       fromUnderlying: true,
       nonce: staticATokenLM.nonces(user),
-      deadline: block.timestamp + 1 days,
-      permit: permitParams
+      deadline: block.timestamp + 1 days
     });
     bytes32 digest = SigUtils.getTypedDepositHash(
       metaDepositParams,
@@ -114,8 +113,7 @@ contract StaticATokenMetaTransactions is BaseTest {
       referralCode: 0,
       fromUnderlying: true,
       nonce: staticATokenLM.nonces(user),
-      deadline: permit.deadline,
-      permit: permitParams
+      deadline: permit.deadline
     });
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(
       userPrivateKey,
@@ -181,8 +179,7 @@ contract StaticATokenMetaTransactions is BaseTest {
       referralCode: 0,
       fromUnderlying: false,
       nonce: staticATokenLM.nonces(user),
-      deadline: permit.deadline,
-      permit: permitParams
+      deadline: permit.deadline
     });
     bytes32 digest = SigUtils.getTypedDepositHash(
       metaDepositParams,
