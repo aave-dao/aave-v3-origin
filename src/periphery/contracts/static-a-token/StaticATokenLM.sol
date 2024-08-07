@@ -42,7 +42,7 @@ contract StaticATokenLM is
 
   bytes32 public constant METADEPOSIT_TYPEHASH =
     keccak256(
-      'Deposit(address depositor,address receiver,uint256 assets,uint16 referralCode,bool depositToAave,uint256 nonce,uint256 deadline,PermitParams permit)'
+      'Deposit(address depositor,address receiver,uint256 assets,uint16 referralCode,bool depositToAave,uint256 nonce,uint256 deadline)'
     );
   bytes32 public constant METAWITHDRAWAL_TYPEHASH =
     keccak256(
@@ -149,8 +149,7 @@ contract StaticATokenLM is
               referralCode,
               depositToAave,
               nonce,
-              deadline,
-              permit
+              deadline
             )
           )
         )

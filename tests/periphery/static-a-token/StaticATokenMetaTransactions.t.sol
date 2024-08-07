@@ -43,10 +43,10 @@ contract StaticATokenMetaTransactions is BaseTest {
     IStaticATokenLM.PermitParams memory permitParams;
 
     // generate combined permit
-    SigUtils.DepositPermit memory depositPermit = SigUtils.DepositPermit({
-      owner: user,
-      spender: spender,
-      value: 1e6,
+    SigUtils.MetaDepositParams memory metaDepositParams = SigUtils.MetaDepositParams({
+      depositor: user,
+      receiver: spender,
+      assets: 1e6,
       referralCode: 0,
       fromUnderlying: true,
       nonce: staticATokenLM.nonces(user),
@@ -54,7 +54,7 @@ contract StaticATokenMetaTransactions is BaseTest {
       permit: permitParams
     });
     bytes32 digest = SigUtils.getTypedDepositHash(
-      depositPermit,
+      metaDepositParams,
       staticATokenLM.METADEPOSIT_TYPEHASH(),
       staticATokenLM.DOMAIN_SEPARATOR()
     );
@@ -62,19 +62,19 @@ contract StaticATokenMetaTransactions is BaseTest {
 
     IStaticATokenLM.SignatureParams memory sigParams = IStaticATokenLM.SignatureParams(v, r, s);
 
-    uint256 previewDeposit = staticATokenLM.previewDeposit(depositPermit.value);
+    uint256 previewDeposit = staticATokenLM.previewDeposit(metaDepositParams.assets);
     staticATokenLM.metaDeposit(
-      depositPermit.owner,
-      depositPermit.spender,
-      depositPermit.value,
-      depositPermit.referralCode,
-      depositPermit.fromUnderlying,
-      depositPermit.deadline,
+      metaDepositParams.depositor,
+      metaDepositParams.receiver,
+      metaDepositParams.assets,
+      metaDepositParams.referralCode,
+      metaDepositParams.fromUnderlying,
+      metaDepositParams.deadline,
       permitParams,
       sigParams
     );
 
-    assertEq(staticATokenLM.balanceOf(depositPermit.spender), previewDeposit);
+    assertEq(staticATokenLM.balanceOf(metaDepositParams.receiver), previewDeposit);
   }
 
   function test_metaDepositATokenUnderlying() public {
@@ -99,8 +99,6 @@ contract StaticATokenMetaTransactions is BaseTest {
     (uint8 pV, bytes32 pR, bytes32 pS) = vm.sign(userPrivateKey, permitDigest);
 
     IStaticATokenLM.PermitParams memory permitParams = IStaticATokenLM.PermitParams(
-      permit.owner,
-      permit.spender,
       permit.value,
       permit.deadline,
       pV,
@@ -109,10 +107,10 @@ contract StaticATokenMetaTransactions is BaseTest {
     );
 
     // generate combined permit
-    SigUtils.DepositPermit memory depositPermit = SigUtils.DepositPermit({
-      owner: user,
-      spender: spender,
-      value: permit.value,
+    SigUtils.MetaDepositParams memory metaDepositParams = SigUtils.MetaDepositParams({
+      depositor: user,
+      receiver: spender,
+      assets: permit.value,
       referralCode: 0,
       fromUnderlying: true,
       nonce: staticATokenLM.nonces(user),
@@ -122,7 +120,7 @@ contract StaticATokenMetaTransactions is BaseTest {
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(
       userPrivateKey,
       SigUtils.getTypedDepositHash(
-        depositPermit,
+        metaDepositParams,
         staticATokenLM.METADEPOSIT_TYPEHASH(),
         staticATokenLM.DOMAIN_SEPARATOR()
       )
@@ -130,19 +128,19 @@ contract StaticATokenMetaTransactions is BaseTest {
 
     IStaticATokenLM.SignatureParams memory sigParams = IStaticATokenLM.SignatureParams(v, r, s);
 
-    uint256 previewDeposit = staticATokenLM.previewDeposit(depositPermit.value);
+    uint256 previewDeposit = staticATokenLM.previewDeposit(metaDepositParams.assets);
     uint256 shares = staticATokenLM.metaDeposit(
-      depositPermit.owner,
-      depositPermit.spender,
-      depositPermit.value,
-      depositPermit.referralCode,
-      depositPermit.fromUnderlying,
-      depositPermit.deadline,
+      metaDepositParams.depositor,
+      metaDepositParams.receiver,
+      metaDepositParams.assets,
+      metaDepositParams.referralCode,
+      metaDepositParams.fromUnderlying,
+      metaDepositParams.deadline,
       permitParams,
       sigParams
     );
     assertEq(shares, previewDeposit);
-    assertEq(staticATokenLM.balanceOf(depositPermit.spender), previewDeposit);
+    assertEq(staticATokenLM.balanceOf(metaDepositParams.receiver), previewDeposit);
   }
 
   function test_metaDepositAToken() public {
@@ -168,8 +166,6 @@ contract StaticATokenMetaTransactions is BaseTest {
     (uint8 pV, bytes32 pR, bytes32 pS) = vm.sign(userPrivateKey, permitDigest);
 
     IStaticATokenLM.PermitParams memory permitParams = IStaticATokenLM.PermitParams(
-      permit.owner,
-      permit.spender,
       permit.value,
       permit.deadline,
       pV,
@@ -178,10 +174,10 @@ contract StaticATokenMetaTransactions is BaseTest {
     );
 
     // generate combined permit
-    SigUtils.DepositPermit memory depositPermit = SigUtils.DepositPermit({
-      owner: user,
-      spender: spender,
-      value: permit.value,
+    SigUtils.MetaDepositParams memory metaDepositParams = SigUtils.MetaDepositParams({
+      depositor: user,
+      receiver: spender,
+      assets: permit.value,
       referralCode: 0,
       fromUnderlying: false,
       nonce: staticATokenLM.nonces(user),
@@ -189,7 +185,7 @@ contract StaticATokenMetaTransactions is BaseTest {
       permit: permitParams
     });
     bytes32 digest = SigUtils.getTypedDepositHash(
-      depositPermit,
+      metaDepositParams,
       staticATokenLM.METADEPOSIT_TYPEHASH(),
       staticATokenLM.DOMAIN_SEPARATOR()
     );
@@ -197,20 +193,20 @@ contract StaticATokenMetaTransactions is BaseTest {
 
     IStaticATokenLM.SignatureParams memory sigParams = IStaticATokenLM.SignatureParams(v, r, s);
 
-    uint256 previewDeposit = staticATokenLM.previewDeposit(depositPermit.value);
+    uint256 previewDeposit = staticATokenLM.previewDeposit(metaDepositParams.assets);
 
     staticATokenLM.metaDeposit(
-      depositPermit.owner,
-      depositPermit.spender,
-      depositPermit.value,
-      depositPermit.referralCode,
-      depositPermit.fromUnderlying,
-      depositPermit.deadline,
+      metaDepositParams.depositor,
+      metaDepositParams.receiver,
+      metaDepositParams.assets,
+      metaDepositParams.referralCode,
+      metaDepositParams.fromUnderlying,
+      metaDepositParams.deadline,
       permitParams,
       sigParams
     );
 
-    assertEq(staticATokenLM.balanceOf(depositPermit.spender), previewDeposit);
+    assertEq(staticATokenLM.balanceOf(metaDepositParams.receiver), previewDeposit);
   }
 
   function test_metaWithdraw() public {
@@ -219,7 +215,7 @@ contract StaticATokenMetaTransactions is BaseTest {
 
     _depositAToken(amountToDeposit, user);
 
-    SigUtils.WithdrawPermit memory permit = SigUtils.WithdrawPermit({
+    SigUtils.MetaWithdrawParams memory permit = SigUtils.MetaWithdrawParams({
       owner: user,
       spender: spender,
       staticAmount: 0,
