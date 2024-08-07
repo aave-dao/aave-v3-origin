@@ -22,8 +22,8 @@ import {StaticATokenErrors} from './StaticATokenErrors.sol';
 import {RayMathExplicitRounding, Rounding} from '../libraries/RayMathExplicitRounding.sol';
 import {IERC4626} from './interfaces/IERC4626.sol';
 import {UpgradableOwnableWithGuardian} from 'solidity-utils/contracts/access-control/UpgradableOwnableWithGuardian.sol';
-import {PausableUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/utils/PausableUpgradeable.sol';
 import {DeprecationGap} from './DeprecationGap.sol';
+import {PausableUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/utils/PausableUpgradeable.sol';
 
 /**
  * @title StaticATokenLM
@@ -66,6 +66,7 @@ contract StaticATokenLM is
   mapping(address => mapping(address => UserRewardsData)) internal _userRewardsData;
 
   constructor(IPool pool, IRewardsController rewardsController) {
+    _disableInitializers();
     POOL = pool;
     INCENTIVES_CONTROLLER = rewardsController;
   }
@@ -93,9 +94,20 @@ contract StaticATokenLM is
     emit Initialized(newAToken, staticATokenName, staticATokenSymbol);
   }
 
+  function initializeV2(address owner, address guardian) external reinitializer(2) {
+    __Ownable_init(owner);
+    __Ownable_With_Guardian_init(guardian);
+  }
+
   /// @inheritdoc IRescuable
   function whoCanRescue() public view override returns (address) {
-    return POOL.ADDRESSES_PROVIDER().getACLAdmin();
+    return owner();
+  }
+
+  ///@inheritdoc IStaticATokenLM
+  function setPaused(bool paused) external onlyOwnerOrGuardian {
+    if (paused) _pause();
+    else _unpause();
   }
 
   ///@inheritdoc IStaticATokenLM
@@ -545,7 +557,7 @@ contract StaticATokenLM is
    * @param from The address of the sender of tokens
    * @param to The address of the receiver of tokens
    */
-  function _beforeTokenTransfer(address from, address to, uint256) internal override {
+  function _beforeTokenTransfer(address from, address to, uint256) internal override whenNotPaused {
     for (uint256 i = 0; i < _rewardTokens.length; i++) {
       address rewardToken = address(_rewardTokens[i]);
       uint256 rewardsIndex = getCurrentRewardsIndex(rewardToken);
