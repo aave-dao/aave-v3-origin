@@ -43,3 +43,12 @@ For this project, the security procedures applied/being finished are:
 - The static A tokens are given a `rescuable`, which can be used by the ACL admin to rescue tokens locked to the contract.
 - Permit params have been excluded from the METADEPOSIT_TYPEHASH as they are not necessary. Even if someone were to frontrun the permit via mempool observation the permit is wrapped in a `try..catch` to prevent griefing attacks.
 - The static a token not implements pausability, which allows the ACL admin to pause all transfers.
+
+The storage layout diff was generated via:
+```
+git checkout main
+forge inspect src/periphery/contracts/static-a-token/StaticATokenLM.sol:StaticATokenLM storage-layout --pretty > reports/StaticATokenStorageBefore.md
+git checkout project-a
+forge inspect src/periphery/contracts/static-a-token/StaticATokenLM.sol:StaticATokenLM storage-layout --pretty > reports/StaticATokenStorageAfter.md
+make git-diff before=reports/StaticATokenStorageBefore.md after=reports/StaticATokenStorageAfter.md out=StaticATokenStorageDiff
+```
