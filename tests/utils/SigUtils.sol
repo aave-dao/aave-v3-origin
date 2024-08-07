@@ -12,7 +12,7 @@ library SigUtils {
     uint256 deadline;
   }
 
-  struct WithdrawPermit {
+  struct MetaWithdrawParams {
     address owner;
     address spender;
     uint256 staticAmount;
@@ -22,15 +22,14 @@ library SigUtils {
     uint256 deadline;
   }
 
-  struct DepositPermit {
-    address owner;
-    address spender;
-    uint256 value;
+  struct MetaDepositParams {
+    address depositor;
+    address receiver;
+    uint256 assets;
     uint16 referralCode;
     bool fromUnderlying;
     uint256 nonce;
     uint256 deadline;
-    IStaticATokenLM.PermitParams permit;
   }
 
   // computes the hash of a permit
@@ -49,7 +48,7 @@ library SigUtils {
   }
 
   function getWithdrawHash(
-    WithdrawPermit memory permit,
+    MetaWithdrawParams memory permit,
     bytes32 typehash
   ) internal pure returns (bytes32) {
     return
@@ -68,21 +67,20 @@ library SigUtils {
   }
 
   function getDepositHash(
-    DepositPermit memory permit,
+    MetaDepositParams memory params,
     bytes32 typehash
   ) internal pure returns (bytes32) {
     return
       keccak256(
         abi.encode(
           typehash,
-          permit.owner,
-          permit.spender,
-          permit.value,
-          permit.referralCode,
-          permit.fromUnderlying,
-          permit.nonce,
-          permit.deadline,
-          permit.permit
+          params.depositor,
+          params.receiver,
+          params.assets,
+          params.referralCode,
+          params.fromUnderlying,
+          params.nonce,
+          params.deadline
         )
       );
   }
@@ -98,20 +96,20 @@ library SigUtils {
   }
 
   function getTypedWithdrawHash(
-    WithdrawPermit memory permit,
+    MetaWithdrawParams memory params,
     bytes32 typehash,
     bytes32 domainSeparator
   ) public pure returns (bytes32) {
     return
-      keccak256(abi.encodePacked('\x19\x01', domainSeparator, getWithdrawHash(permit, typehash)));
+      keccak256(abi.encodePacked('\x19\x01', domainSeparator, getWithdrawHash(params, typehash)));
   }
 
   function getTypedDepositHash(
-    DepositPermit memory permit,
+    MetaDepositParams memory params,
     bytes32 typehash,
     bytes32 domainSeparator
   ) public pure returns (bytes32) {
     return
-      keccak256(abi.encodePacked('\x19\x01', domainSeparator, getDepositHash(permit, typehash)));
+      keccak256(abi.encodePacked('\x19\x01', domainSeparator, getDepositHash(params, typehash)));
   }
 }
