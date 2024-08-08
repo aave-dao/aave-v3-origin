@@ -94,7 +94,7 @@ contract StaticATokenLM is
     emit Initialized(newAToken, staticATokenName, staticATokenSymbol);
   }
 
-  function initializeV2(address owner, address guardian) external reinitializer(2) {
+  function initializeRev2(address owner, address guardian) external reinitializer(2) {
     __Ownable_init(owner);
     __Ownable_With_Guardian_init(guardian);
   }

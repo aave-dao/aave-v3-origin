@@ -29,4 +29,6 @@ interface IInitializableStaticATokenLM {
     string calldata staticATokenName,
     string calldata staticATokenSymbol
   ) external;
+
+  function initializeRev2(address owner, address guardian) external;
 }

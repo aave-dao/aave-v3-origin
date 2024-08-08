@@ -4,6 +4,7 @@ pragma solidity ^0.8.10;
 import {IPool, DataTypes} from '../../../core/contracts/interfaces/IPool.sol';
 import {IERC20Metadata} from 'solidity-utils/contracts/oz-common/interfaces/IERC20Metadata.sol';
 import {ITransparentProxyFactory} from 'solidity-utils/contracts/transparent-proxy/interfaces/ITransparentProxyFactory.sol';
+import {ProxyAdmin} from 'solidity-utils/contracts/transparent-proxy/ProxyAdmin.sol';
 import {Initializable} from 'solidity-utils/contracts/transparent-proxy/Initializable.sol';
 import {StaticATokenLM} from './StaticATokenLM.sol';
 import {IStaticATokenFactory} from './interfaces/IStaticATokenFactory.sol';
@@ -17,7 +18,7 @@ import {IStaticATokenFactory} from './interfaces/IStaticATokenFactory.sol';
  */
 contract StaticATokenFactory is Initializable, IStaticATokenFactory {
   IPool public immutable POOL;
-  address public immutable ADMIN;
+  address public immutable PROXY_ADMIN;
   ITransparentProxyFactory public immutable TRANSPARENT_PROXY_FACTORY;
   address public immutable STATIC_A_TOKEN_IMPL;
 
@@ -33,7 +34,7 @@ contract StaticATokenFactory is Initializable, IStaticATokenFactory {
     address staticATokenImpl
   ) {
     POOL = pool;
-    ADMIN = proxyAdmin;
+    PROXY_ADMIN = proxyAdmin;
     TRANSPARENT_PROXY_FACTORY = transparentProxyFactory;
     STATIC_A_TOKEN_IMPL = staticATokenImpl;
   }
@@ -54,7 +55,7 @@ contract StaticATokenFactory is Initializable, IStaticATokenFactory {
         );
         address staticAToken = TRANSPARENT_PROXY_FACTORY.createDeterministic(
           STATIC_A_TOKEN_IMPL,
-          ADMIN,
+          PROXY_ADMIN,
           abi.encodeWithSelector(
             StaticATokenLM.initialize.selector,
             reserveData.aTokenAddress,
@@ -63,6 +64,11 @@ contract StaticATokenFactory is Initializable, IStaticATokenFactory {
           ),
           bytes32(uint256(uint160(underlyings[i])))
         );
+        StaticATokenLM(staticAToken).initializeRev2(
+          POOL.ADDRESSES_PROVIDER().getACLAdmin(),
+          address(0) // TODO: how to find guardian?
+        );
+
         _underlyingToStaticAToken[underlyings[i]] = staticAToken;
         staticATokens[i] = staticAToken;
         _staticATokens.push(staticAToken);
