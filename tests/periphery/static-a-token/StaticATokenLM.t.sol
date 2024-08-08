@@ -1,22 +1,18 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.10;
 
+import {IRescuable} from 'solidity-utils/contracts/utils/Rescuable.sol';
+import {Initializable} from 'openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol';
 import {AToken} from '../../../src/core/contracts/protocol/tokenization/AToken.sol';
 import {DataTypes} from '../../../src/core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
 import {IERC20, IERC20Metadata} from '../../../src/periphery/contracts/static-a-token/StaticATokenLM.sol';
 import {RayMathExplicitRounding} from '../../../src/periphery/contracts/libraries/RayMathExplicitRounding.sol';
-import {PullRewardsTransferStrategy} from '../../../src/periphery/contracts/rewards/transfer-strategies/PullRewardsTransferStrategy.sol';
-import {RewardsDataTypes} from '../../../src/periphery/contracts/rewards/libraries/RewardsDataTypes.sol';
-import {ITransferStrategyBase} from '../../../src/periphery/contracts/rewards/interfaces/ITransferStrategyBase.sol';
-import {IEACAggregatorProxy} from '../../../src/periphery/contracts/misc/interfaces/IEACAggregatorProxy.sol';
 import {IStaticATokenLM} from '../../../src/periphery/contracts/static-a-token/interfaces/IStaticATokenLM.sol';
 import {SigUtils} from '../../utils/SigUtils.sol';
 import {BaseTest, TestnetERC20} from './TestBase.sol';
 
 contract StaticATokenLMTest is BaseTest {
   using RayMathExplicitRounding for uint256;
-
-  address public constant EMISSION_ADMIN = address(25);
 
   function setUp() public override {
     super.setUp();
@@ -29,8 +25,8 @@ contract StaticATokenLMTest is BaseTest {
 
   function test_initializeShouldRevert() public {
     address impl = factory.STATIC_A_TOKEN_IMPL();
-    vm.expectRevert();
-    IStaticATokenLM(impl).initialize(0xe50fA9b3c56FfB159cB0FCA61F5c9D750e8128c8, 'hey', 'ho');
+    vm.expectRevert(Initializable.InvalidInitialization.selector);
+    IStaticATokenLM(impl).initialize(A_TOKEN, 'hey', 'ho');
   }
 
   function test_getters() public view {
@@ -556,42 +552,24 @@ contract StaticATokenLMTest is BaseTest {
     staticATokenLM.permit(permit.owner, permit.spender, permit.value, permit.deadline, v, r, s);
   }
 
-  function _configureLM() internal {
-    PullRewardsTransferStrategy strat = new PullRewardsTransferStrategy(
-      report.rewardsControllerProxy,
-      EMISSION_ADMIN,
-      EMISSION_ADMIN
+  function test_rescuable_shouldRevertForInvalidCaller() external {
+    deal(tokenList.usdx, address(staticATokenLM), 1 ether);
+    vm.expectRevert('ONLY_RESCUE_GUARDIAN');
+    IRescuable(address(staticATokenLM)).emergencyTokenTransfer(
+      tokenList.usdx,
+      address(this),
+      1 ether
     );
+  }
 
+  function test_rescuable_shouldSuceedForOwner() external {
+    deal(tokenList.usdx, address(staticATokenLM), 1 ether);
     vm.startPrank(poolAdmin);
-    contracts.emissionManager.setEmissionAdmin(REWARD_TOKEN, EMISSION_ADMIN);
-    vm.stopPrank();
-
-    vm.startPrank(EMISSION_ADMIN);
-    IERC20(REWARD_TOKEN).approve(address(strat), 10_000 ether);
-    vm.stopPrank();
-
-    vm.startPrank(OWNER);
-    TestnetERC20(REWARD_TOKEN).mint(EMISSION_ADMIN, 10_000 ether);
-    vm.stopPrank();
-
-    RewardsDataTypes.RewardsConfigInput[] memory config = new RewardsDataTypes.RewardsConfigInput[](
-      1
+    IRescuable(address(staticATokenLM)).emergencyTokenTransfer(
+      tokenList.usdx,
+      address(this),
+      1 ether
     );
-    config[0] = RewardsDataTypes.RewardsConfigInput(
-      0.00385 ether,
-      10_000 ether,
-      uint32(block.timestamp + 30 days),
-      A_TOKEN,
-      REWARD_TOKEN,
-      ITransferStrategyBase(strat),
-      IEACAggregatorProxy(address(2))
-    );
-
-    vm.prank(EMISSION_ADMIN);
-    contracts.emissionManager.configureAssets(config);
-
-    staticATokenLM.refreshRewardTokens();
   }
 
   function _openSupplyAndBorrowPositions() internal {

@@ -3,11 +3,11 @@ pragma solidity ^0.8.10;
 
 import {IPool} from '../../../core/contracts/interfaces/IPool.sol';
 import {DataTypes, ReserveConfiguration} from '../../../core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
-import {IRewardsController} from '../rewards/interfaces/IRewardsController.sol';
 import {WadRayMath} from '../../../core/contracts/protocol/libraries/math/WadRayMath.sol';
 import {MathUtils} from '../../../core/contracts/protocol/libraries/math/MathUtils.sol';
+import {IACLManager} from '../../../core/contracts/interfaces/IACLManager.sol';
+import {IRewardsController} from '../rewards/interfaces/IRewardsController.sol';
 import {SafeCast} from 'solidity-utils/contracts/oz-common/SafeCast.sol';
-import {Initializable} from 'solidity-utils/contracts/transparent-proxy/Initializable.sol';
 import {SafeERC20} from 'solidity-utils/contracts/oz-common/SafeERC20.sol';
 import {IERC20Metadata} from 'solidity-utils/contracts/oz-common/interfaces/IERC20Metadata.sol';
 import {IERC20} from 'solidity-utils/contracts/oz-common/interfaces/IERC20.sol';
@@ -21,6 +21,8 @@ import {IInitializableStaticATokenLM} from './interfaces/IInitializableStaticATo
 import {StaticATokenErrors} from './StaticATokenErrors.sol';
 import {RayMathExplicitRounding, Rounding} from '../libraries/RayMathExplicitRounding.sol';
 import {IERC4626} from './interfaces/IERC4626.sol';
+import {PausableUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/utils/PausableUpgradeable.sol';
+import {DeprecationGap} from './DeprecationGap.sol';
 
 /**
  * @title StaticATokenLM
@@ -30,10 +32,11 @@ import {IERC4626} from './interfaces/IERC4626.sol';
  * @author BGD labs
  */
 contract StaticATokenLM is
-  Initializable,
+  DeprecationGap,
   ERC20('STATIC__aToken_IMPL', 'STATIC__aToken_IMPL', 18),
   IStaticATokenLM,
-  Rescuable
+  Rescuable,
+  PausableUpgradeable
 {
   using SafeERC20 for IERC20;
   using SafeCast for uint256;
@@ -61,8 +64,18 @@ contract StaticATokenLM is
   mapping(address => mapping(address => UserRewardsData)) internal _userRewardsData;
 
   constructor(IPool pool, IRewardsController rewardsController) {
+    _disableInitializers();
     POOL = pool;
     INCENTIVES_CONTROLLER = rewardsController;
+  }
+
+  modifier onlyPauseGuardian() {
+    if (!canPause(msg.sender)) revert OnlyPauseGuardian(msg.sender);
+    _;
+  }
+
+  function canPause(address actor) public view returns (bool) {
+    return IACLManager(POOL.ADDRESSES_PROVIDER().getACLManager()).isEmergencyAdmin(actor);
   }
 
   ///@inheritdoc IInitializableStaticATokenLM
@@ -91,6 +104,12 @@ contract StaticATokenLM is
   /// @inheritdoc IRescuable
   function whoCanRescue() public view override returns (address) {
     return POOL.ADDRESSES_PROVIDER().getACLAdmin();
+  }
+
+  ///@inheritdoc IStaticATokenLM
+  function setPaused(bool paused) external onlyPauseGuardian {
+    if (paused) _pause();
+    else _unpause();
   }
 
   ///@inheritdoc IStaticATokenLM
@@ -540,7 +559,7 @@ contract StaticATokenLM is
    * @param from The address of the sender of tokens
    * @param to The address of the receiver of tokens
    */
-  function _beforeTokenTransfer(address from, address to, uint256) internal override {
+  function _beforeTokenTransfer(address from, address to, uint256) internal override whenNotPaused {
     for (uint256 i = 0; i < _rewardTokens.length; i++) {
       address rewardToken = address(_rewardTokens[i]);
       uint256 rewardsIndex = getCurrentRewardsIndex(rewardToken);
@@ -633,7 +652,7 @@ contract StaticATokenLM is
     address onBehalfOf,
     address receiver,
     address[] memory rewards
-  ) internal {
+  ) internal whenNotPaused {
     for (uint256 i = 0; i < rewards.length; i++) {
       if (address(rewards[i]) == address(0)) {
         continue;
