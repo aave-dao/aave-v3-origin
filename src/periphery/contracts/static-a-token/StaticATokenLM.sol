@@ -2,12 +2,12 @@
 pragma solidity ^0.8.10;
 
 import {IPool} from '../../../core/contracts/interfaces/IPool.sol';
+import {IPool} from '../../../core/contracts/interfaces/IPool.sol';
 import {DataTypes, ReserveConfiguration} from '../../../core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
 import {IRewardsController} from '../rewards/interfaces/IRewardsController.sol';
 import {WadRayMath} from '../../../core/contracts/protocol/libraries/math/WadRayMath.sol';
 import {MathUtils} from '../../../core/contracts/protocol/libraries/math/MathUtils.sol';
 import {SafeCast} from 'solidity-utils/contracts/oz-common/SafeCast.sol';
-import {Initializable} from 'solidity-utils/contracts/transparent-proxy/Initializable.sol';
 import {SafeERC20} from 'solidity-utils/contracts/oz-common/SafeERC20.sol';
 import {IERC20Metadata} from 'solidity-utils/contracts/oz-common/interfaces/IERC20Metadata.sol';
 import {IERC20} from 'solidity-utils/contracts/oz-common/interfaces/IERC20.sol';
@@ -21,9 +21,9 @@ import {IInitializableStaticATokenLM} from './interfaces/IInitializableStaticATo
 import {StaticATokenErrors} from './StaticATokenErrors.sol';
 import {RayMathExplicitRounding, Rounding} from '../libraries/RayMathExplicitRounding.sol';
 import {IERC4626} from './interfaces/IERC4626.sol';
-import {UpgradableOwnableWithGuardian} from 'solidity-utils/contracts/access-control/UpgradableOwnableWithGuardian.sol';
-import {DeprecationGap} from './DeprecationGap.sol';
 import {PausableUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/utils/PausableUpgradeable.sol';
+import {DeprecationGap} from './DeprecationGap.sol';
+import {IACLManager} from '../../../core/contracts/interfaces/IACLManager.sol';
 
 /**
  * @title StaticATokenLM
@@ -37,7 +37,6 @@ contract StaticATokenLM is
   ERC20('STATIC__aToken_IMPL', 'STATIC__aToken_IMPL', 18),
   IStaticATokenLM,
   Rescuable,
-  UpgradableOwnableWithGuardian,
   PausableUpgradeable
 {
   using SafeERC20 for IERC20;
@@ -66,9 +65,18 @@ contract StaticATokenLM is
   mapping(address => mapping(address => UserRewardsData)) internal _userRewardsData;
 
   constructor(IPool pool, IRewardsController rewardsController) {
-    _disableInitializers();
+      _disableInitializers();
     POOL = pool;
     INCENTIVES_CONTROLLER = rewardsController;
+  }
+
+  modifier onlyPauseGuardian() {
+      if(!canPause(msg.sender)) revert OnlyPauseGuardian(msg.sender);
+    _;
+  }
+
+  function canPause(address actor) public returns(bool) {
+      return IACLManager(POOL.ADDRESSES_PROVIDER().getACLManager()).isEmergencyAdmin(actor);
   }
 
   ///@inheritdoc IInitializableStaticATokenLM
@@ -94,18 +102,13 @@ contract StaticATokenLM is
     emit Initialized(newAToken, staticATokenName, staticATokenSymbol);
   }
 
-  function initializeRev2(address owner, address guardian) external reinitializer(2) {
-    __Ownable_init(owner);
-    __Ownable_With_Guardian_init(guardian);
-  }
-
   /// @inheritdoc IRescuable
   function whoCanRescue() public view override returns (address) {
-    return owner();
+    return POOL.ADDRESSES_PROVIDER().getACLAdmin();
   }
 
   ///@inheritdoc IStaticATokenLM
-  function setPaused(bool paused) external onlyOwnerOrGuardian {
+  function setPaused(bool paused) external onlyPauseGuardian {
     if (paused) _pause();
     else _unpause();
   }

@@ -2,6 +2,7 @@
 pragma solidity ^0.8.10;
 
 import {IRescuable} from 'solidity-utils/contracts/utils/Rescuable.sol';
+import {Initializable} from 'openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol';
 import {AToken} from '../../../src/core/contracts/protocol/tokenization/AToken.sol';
 import {DataTypes} from '../../../src/core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
 import {IERC20, IERC20Metadata} from '../../../src/periphery/contracts/static-a-token/StaticATokenLM.sol';
@@ -30,8 +31,8 @@ contract StaticATokenLMTest is BaseTest {
 
   function test_initializeShouldRevert() public {
     address impl = factory.STATIC_A_TOKEN_IMPL();
-    vm.expectRevert();
-    IStaticATokenLM(impl).initialize(0xe50fA9b3c56FfB159cB0FCA61F5c9D750e8128c8, 'hey', 'ho');
+    vm.expectRevert(Initializable.InvalidInitialization.selector);
+    IStaticATokenLM(impl).initialize(A_TOKEN, 'hey', 'ho');
   }
 
   function test_getters() public view {

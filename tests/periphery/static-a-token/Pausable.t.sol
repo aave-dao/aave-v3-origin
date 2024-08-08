@@ -22,7 +22,7 @@ contract Pausable is BaseTest {
     vm.assume(actor != poolAdmin && actor != proxyAdmin);
     vm.expectRevert(
       abi.encodeWithSelector(
-        UpgradableOwnableWithGuardian.OnlyGuardianOrOwnerInvalidCaller.selector,
+        IStaticATokenLM.OnlyPauseGuardian.selector,
         actor
       )
     );
@@ -42,7 +42,7 @@ contract Pausable is BaseTest {
     IERC20(UNDERLYING).approve(address(staticATokenLM), amountToDeposit);
     vm.stopPrank();
 
-    _setPausedAsOwner(true);
+    _setPausedAsAclAdmin(true);
     vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
     vm.prank(user);
     staticATokenLM.deposit(amountToDeposit, user, 0, true);
@@ -56,7 +56,7 @@ contract Pausable is BaseTest {
     vm.stopPrank();
 
     uint256 sharesToMint = staticATokenLM.previewDeposit(amountToDeposit);
-    _setPausedAsOwner(true);
+    _setPausedAsAclAdmin(true);
     vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
     vm.prank(user);
     staticATokenLM.mint(sharesToMint, user);
@@ -71,7 +71,7 @@ contract Pausable is BaseTest {
 
     assertEq(staticATokenLM.maxRedeem(user), staticATokenLM.balanceOf(user));
 
-    _setPausedAsOwner(true);
+    _setPausedAsAclAdmin(true);
     uint256 maxRedeem = staticATokenLM.maxRedeem(user);
     vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
     vm.prank(user);
@@ -86,7 +86,7 @@ contract Pausable is BaseTest {
     vm.stopPrank();
 
     uint256 maxWithdraw = staticATokenLM.maxWithdraw(user);
-    _setPausedAsOwner(true);
+    _setPausedAsAclAdmin(true);
     vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
     vm.prank(user);
     staticATokenLM.withdraw(maxWithdraw, user, user);
@@ -99,13 +99,13 @@ contract Pausable is BaseTest {
     _depositAToken(amountToDeposit, user);
     vm.stopPrank();
 
-    _setPausedAsOwner(true);
+    _setPausedAsAclAdmin(true);
     vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
     vm.prank(user);
     staticATokenLM.transfer(user1, amountToDeposit);
   }
 
-  function _setPausedAsOwner(bool paused) internal {
+  function _setPausedAsAclAdmin(bool paused) internal {
     _setPaused(poolAdmin, paused);
   }
 

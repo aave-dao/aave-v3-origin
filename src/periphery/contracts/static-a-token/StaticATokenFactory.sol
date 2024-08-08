@@ -64,10 +64,6 @@ contract StaticATokenFactory is Initializable, IStaticATokenFactory {
           ),
           bytes32(uint256(uint160(underlyings[i])))
         );
-        StaticATokenLM(staticAToken).initializeRev2(
-          POOL.ADDRESSES_PROVIDER().getACLAdmin(),
-          address(0) // TODO: how to find guardian?
-        );
 
         _underlyingToStaticAToken[underlyings[i]] = staticAToken;
         staticATokens[i] = staticAToken;

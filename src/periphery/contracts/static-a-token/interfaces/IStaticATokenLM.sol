@@ -30,6 +30,8 @@ interface IStaticATokenLM is IInitializableStaticATokenLM, IERC4626 {
     uint248 lastUpdatedIndex;
   }
 
+  error OnlyPauseGuardian(address caller);
+
   event RewardTokenRegistered(address indexed reward, uint256 startIndex);
 
   /**
