@@ -4,7 +4,6 @@ pragma solidity ^0.8.10;
 import {IPool, DataTypes} from '../../../core/contracts/interfaces/IPool.sol';
 import {IERC20Metadata} from 'solidity-utils/contracts/oz-common/interfaces/IERC20Metadata.sol';
 import {ITransparentProxyFactory} from 'solidity-utils/contracts/transparent-proxy/interfaces/ITransparentProxyFactory.sol';
-import {ProxyAdmin} from 'solidity-utils/contracts/transparent-proxy/ProxyAdmin.sol';
 import {Initializable} from 'solidity-utils/contracts/transparent-proxy/Initializable.sol';
 import {StaticATokenLM} from './StaticATokenLM.sol';
 import {IStaticATokenFactory} from './interfaces/IStaticATokenFactory.sol';

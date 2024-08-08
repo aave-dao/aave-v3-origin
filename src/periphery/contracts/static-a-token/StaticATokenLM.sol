@@ -2,11 +2,11 @@
 pragma solidity ^0.8.10;
 
 import {IPool} from '../../../core/contracts/interfaces/IPool.sol';
-import {IPool} from '../../../core/contracts/interfaces/IPool.sol';
 import {DataTypes, ReserveConfiguration} from '../../../core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
-import {IRewardsController} from '../rewards/interfaces/IRewardsController.sol';
 import {WadRayMath} from '../../../core/contracts/protocol/libraries/math/WadRayMath.sol';
 import {MathUtils} from '../../../core/contracts/protocol/libraries/math/MathUtils.sol';
+import {IACLManager} from '../../../core/contracts/interfaces/IACLManager.sol';
+import {IRewardsController} from '../rewards/interfaces/IRewardsController.sol';
 import {SafeCast} from 'solidity-utils/contracts/oz-common/SafeCast.sol';
 import {SafeERC20} from 'solidity-utils/contracts/oz-common/SafeERC20.sol';
 import {IERC20Metadata} from 'solidity-utils/contracts/oz-common/interfaces/IERC20Metadata.sol';
@@ -23,7 +23,6 @@ import {RayMathExplicitRounding, Rounding} from '../libraries/RayMathExplicitRou
 import {IERC4626} from './interfaces/IERC4626.sol';
 import {PausableUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/utils/PausableUpgradeable.sol';
 import {DeprecationGap} from './DeprecationGap.sol';
-import {IACLManager} from '../../../core/contracts/interfaces/IACLManager.sol';
 
 /**
  * @title StaticATokenLM
