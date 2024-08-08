@@ -2,6 +2,8 @@
 pragma solidity ^0.8.10;
 
 import {IPool} from '../../../core/contracts/interfaces/IPool.sol';
+import {IPoolAddressesProvider} from '../../../core/contracts/interfaces/IPoolAddressesProvider.sol';
+import {IAaveOracle} from '../../../core/contracts/interfaces/IAaveOracle.sol';
 import {DataTypes, ReserveConfiguration} from '../../../core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
 import {WadRayMath} from '../../../core/contracts/protocol/libraries/math/WadRayMath.sol';
 import {MathUtils} from '../../../core/contracts/protocol/libraries/math/MathUtils.sol';
@@ -55,6 +57,7 @@ contract StaticATokenLM is
   uint256 public constant STATIC__ATOKEN_LM_REVISION = 3;
 
   IPool public immutable POOL;
+  IPoolAddressesProvider immutable POOL_ADDRESSES_PROVIDER;
   IRewardsController public immutable INCENTIVES_CONTROLLER;
 
   IERC20 internal _aToken;
@@ -67,6 +70,7 @@ contract StaticATokenLM is
     _disableInitializers();
     POOL = pool;
     INCENTIVES_CONTROLLER = rewardsController;
+    POOL_ADDRESSES_PROVIDER = pool.ADDRESSES_PROVIDER();
   }
 
   modifier onlyPauseGuardian() {
@@ -75,7 +79,7 @@ contract StaticATokenLM is
   }
 
   function canPause(address actor) public view returns (bool) {
-    return IACLManager(POOL.ADDRESSES_PROVIDER().getACLManager()).isEmergencyAdmin(actor);
+    return IACLManager(POOL_ADDRESSES_PROVIDER.getACLManager()).isEmergencyAdmin(actor);
   }
 
   ///@inheritdoc IInitializableStaticATokenLM
@@ -103,7 +107,7 @@ contract StaticATokenLM is
 
   /// @inheritdoc IRescuable
   function whoCanRescue() public view override returns (address) {
-    return POOL.ADDRESSES_PROVIDER().getACLAdmin();
+    return POOL_ADDRESSES_PROVIDER.getACLAdmin();
   }
 
   ///@inheritdoc IStaticATokenLM
@@ -466,6 +470,15 @@ contract StaticATokenLM is
     bool withdrawFromAave
   ) external virtual returns (uint256, uint256) {
     return _withdraw(owner, receiver, shares, 0, withdrawFromAave);
+  }
+
+  ///@inheritdoc IStaticATokenLM
+  function latestAnswer() external view returns (int256) {
+    return
+      int256(
+        (IAaveOracle(POOL_ADDRESSES_PROVIDER.getPriceOracle()).getAssetPrice(_aTokenUnderlying) *
+          POOL.getReserveNormalizedIncome(_aTokenUnderlying)) / 1e27
+      );
   }
 
   function _deposit(

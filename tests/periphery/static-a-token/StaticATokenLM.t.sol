@@ -10,6 +10,7 @@ import {RayMathExplicitRounding} from '../../../src/periphery/contracts/librarie
 import {IStaticATokenLM} from '../../../src/periphery/contracts/static-a-token/interfaces/IStaticATokenLM.sol';
 import {SigUtils} from '../../utils/SigUtils.sol';
 import {BaseTest, TestnetERC20} from './TestBase.sol';
+import {IPool} from '../../../src/core/contracts/interfaces/IPool.sol';
 
 contract StaticATokenLMTest is BaseTest {
   using RayMathExplicitRounding for uint256;
@@ -46,6 +47,34 @@ contract StaticATokenLMTest is BaseTest {
       address(staticATokenLM.INCENTIVES_CONTROLLER()),
       address(AToken(A_TOKEN).getIncentivesController())
     );
+  }
+
+  function test_latestAnswer_priceShouldBeEqualOnDefaultIndex() public {
+    vm.mockCall(
+      address(POOL),
+      abi.encodeWithSelector(IPool.getReserveNormalizedIncome.selector),
+      abi.encode(1e27)
+    );
+    uint256 stataPrice = uint256(staticATokenLM.latestAnswer());
+    uint256 underlyingPrice = contracts.aaveOracle.getAssetPrice(UNDERLYING);
+    assertEq(stataPrice, underlyingPrice);
+  }
+
+  function test_latestAnswer_priceShouldReflectIndexAccrual(uint256 liquidityIndex) public {
+    liquidityIndex = bound(liquidityIndex, 1e27, 1e29);
+    vm.mockCall(
+      address(POOL),
+      abi.encodeWithSelector(IPool.getReserveNormalizedIncome.selector),
+      abi.encode(liquidityIndex)
+    );
+    uint256 stataPrice = uint256(staticATokenLM.latestAnswer());
+    uint256 underlyingPrice = contracts.aaveOracle.getAssetPrice(UNDERLYING);
+    uint256 expectedStataPrice = (underlyingPrice * liquidityIndex) / 1e27;
+    assertEq(stataPrice, expectedStataPrice);
+
+    // reverse the math to ensure precision loss is within bounds
+    uint256 reversedUnderlying = (stataPrice * 1e27) / liquidityIndex;
+    assertApproxEqAbs(underlyingPrice, reversedUnderlying, 1);
   }
 
   function test_convertersAndPreviews() public view {
