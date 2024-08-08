@@ -105,6 +105,20 @@ contract Pausable is BaseTest {
     staticATokenLM.transfer(user1, amountToDeposit);
   }
 
+  function test_claimingRewards_shouldRevert() external {
+      _configureLM();
+    uint128 amountToDeposit = 10 ether;
+    vm.startPrank(user);
+    _fundUser(amountToDeposit, user);
+    _depositAToken(amountToDeposit, user);
+    vm.stopPrank();
+
+    _setPausedAsAclAdmin(true);
+    vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
+    vm.prank(user);
+    staticATokenLM.claimRewardsToSelf(rewardTokens);
+  }
+
   function _setPausedAsAclAdmin(bool paused) internal {
     _setPaused(poolAdmin, paused);
   }

@@ -7,18 +7,12 @@ import {AToken} from '../../../src/core/contracts/protocol/tokenization/AToken.s
 import {DataTypes} from '../../../src/core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
 import {IERC20, IERC20Metadata} from '../../../src/periphery/contracts/static-a-token/StaticATokenLM.sol';
 import {RayMathExplicitRounding} from '../../../src/periphery/contracts/libraries/RayMathExplicitRounding.sol';
-import {PullRewardsTransferStrategy} from '../../../src/periphery/contracts/rewards/transfer-strategies/PullRewardsTransferStrategy.sol';
-import {RewardsDataTypes} from '../../../src/periphery/contracts/rewards/libraries/RewardsDataTypes.sol';
-import {ITransferStrategyBase} from '../../../src/periphery/contracts/rewards/interfaces/ITransferStrategyBase.sol';
-import {IEACAggregatorProxy} from '../../../src/periphery/contracts/misc/interfaces/IEACAggregatorProxy.sol';
 import {IStaticATokenLM} from '../../../src/periphery/contracts/static-a-token/interfaces/IStaticATokenLM.sol';
 import {SigUtils} from '../../utils/SigUtils.sol';
 import {BaseTest, TestnetERC20} from './TestBase.sol';
 
 contract StaticATokenLMTest is BaseTest {
   using RayMathExplicitRounding for uint256;
-
-  address public constant EMISSION_ADMIN = address(25);
 
   function setUp() public override {
     super.setUp();
@@ -578,43 +572,6 @@ contract StaticATokenLMTest is BaseTest {
     );
   }
 
-  function _configureLM() internal {
-    PullRewardsTransferStrategy strat = new PullRewardsTransferStrategy(
-      report.rewardsControllerProxy,
-      EMISSION_ADMIN,
-      EMISSION_ADMIN
-    );
-
-    vm.startPrank(poolAdmin);
-    contracts.emissionManager.setEmissionAdmin(REWARD_TOKEN, EMISSION_ADMIN);
-    vm.stopPrank();
-
-    vm.startPrank(EMISSION_ADMIN);
-    IERC20(REWARD_TOKEN).approve(address(strat), 10_000 ether);
-    vm.stopPrank();
-
-    vm.startPrank(OWNER);
-    TestnetERC20(REWARD_TOKEN).mint(EMISSION_ADMIN, 10_000 ether);
-    vm.stopPrank();
-
-    RewardsDataTypes.RewardsConfigInput[] memory config = new RewardsDataTypes.RewardsConfigInput[](
-      1
-    );
-    config[0] = RewardsDataTypes.RewardsConfigInput(
-      0.00385 ether,
-      10_000 ether,
-      uint32(block.timestamp + 30 days),
-      A_TOKEN,
-      REWARD_TOKEN,
-      ITransferStrategyBase(strat),
-      IEACAggregatorProxy(address(2))
-    );
-
-    vm.prank(EMISSION_ADMIN);
-    contracts.emissionManager.configureAssets(config);
-
-    staticATokenLM.refreshRewardTokens();
-  }
 
   function _openSupplyAndBorrowPositions() internal {
     // this is to open borrow positions so that the aToken balance increases

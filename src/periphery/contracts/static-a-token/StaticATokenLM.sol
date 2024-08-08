@@ -652,7 +652,7 @@ contract StaticATokenLM is
     address onBehalfOf,
     address receiver,
     address[] memory rewards
-  ) internal {
+  ) internal whenNotPaused {
     for (uint256 i = 0; i < rewards.length; i++) {
       if (address(rewards[i]) == address(0)) {
         continue;
