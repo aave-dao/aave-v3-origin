@@ -74,7 +74,7 @@ contract StaticATokenLM is
     _;
   }
 
-  function canPause(address actor) public returns(bool) {
+  function canPause(address actor) public view returns(bool) {
       return IACLManager(POOL.ADDRESSES_PROVIDER().getACLManager()).isEmergencyAdmin(actor);
   }
 
