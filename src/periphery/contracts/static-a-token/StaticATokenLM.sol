@@ -64,18 +64,18 @@ contract StaticATokenLM is
   mapping(address => mapping(address => UserRewardsData)) internal _userRewardsData;
 
   constructor(IPool pool, IRewardsController rewardsController) {
-      _disableInitializers();
+    _disableInitializers();
     POOL = pool;
     INCENTIVES_CONTROLLER = rewardsController;
   }
 
   modifier onlyPauseGuardian() {
-      if(!canPause(msg.sender)) revert OnlyPauseGuardian(msg.sender);
+    if (!canPause(msg.sender)) revert OnlyPauseGuardian(msg.sender);
     _;
   }
 
-  function canPause(address actor) public view returns(bool) {
-      return IACLManager(POOL.ADDRESSES_PROVIDER().getACLManager()).isEmergencyAdmin(actor);
+  function canPause(address actor) public view returns (bool) {
+    return IACLManager(POOL.ADDRESSES_PROVIDER().getACLManager()).isEmergencyAdmin(actor);
   }
 
   ///@inheritdoc IInitializableStaticATokenLM

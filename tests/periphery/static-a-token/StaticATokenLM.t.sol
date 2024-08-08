@@ -572,7 +572,6 @@ contract StaticATokenLMTest is BaseTest {
     );
   }
 
-
   function _openSupplyAndBorrowPositions() internal {
     // this is to open borrow positions so that the aToken balance increases
     address whale = address(79);

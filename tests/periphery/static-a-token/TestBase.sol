@@ -66,44 +66,43 @@ abstract contract BaseTest is TestnetProcedures {
     staticATokenLM = StaticATokenLM(factory.getStaticAToken(UNDERLYING));
   }
 
-
   function _configureLM() internal {
-      PullRewardsTransferStrategy strat = new PullRewardsTransferStrategy(
-        report.rewardsControllerProxy,
-        EMISSION_ADMIN,
-        EMISSION_ADMIN
-      );
+    PullRewardsTransferStrategy strat = new PullRewardsTransferStrategy(
+      report.rewardsControllerProxy,
+      EMISSION_ADMIN,
+      EMISSION_ADMIN
+    );
 
-      vm.startPrank(poolAdmin);
-      contracts.emissionManager.setEmissionAdmin(REWARD_TOKEN, EMISSION_ADMIN);
-      vm.stopPrank();
+    vm.startPrank(poolAdmin);
+    contracts.emissionManager.setEmissionAdmin(REWARD_TOKEN, EMISSION_ADMIN);
+    vm.stopPrank();
 
-      vm.startPrank(EMISSION_ADMIN);
-      IERC20(REWARD_TOKEN).approve(address(strat), 10_000 ether);
-      vm.stopPrank();
+    vm.startPrank(EMISSION_ADMIN);
+    IERC20(REWARD_TOKEN).approve(address(strat), 10_000 ether);
+    vm.stopPrank();
 
-      vm.startPrank(OWNER);
-      TestnetERC20(REWARD_TOKEN).mint(EMISSION_ADMIN, 10_000 ether);
-      vm.stopPrank();
+    vm.startPrank(OWNER);
+    TestnetERC20(REWARD_TOKEN).mint(EMISSION_ADMIN, 10_000 ether);
+    vm.stopPrank();
 
-      RewardsDataTypes.RewardsConfigInput[] memory config = new RewardsDataTypes.RewardsConfigInput[](
-        1
-      );
-      config[0] = RewardsDataTypes.RewardsConfigInput(
-        0.00385 ether,
-        10_000 ether,
-        uint32(block.timestamp + 30 days),
-        A_TOKEN,
-        REWARD_TOKEN,
-        ITransferStrategyBase(strat),
-        IEACAggregatorProxy(address(2))
-      );
+    RewardsDataTypes.RewardsConfigInput[] memory config = new RewardsDataTypes.RewardsConfigInput[](
+      1
+    );
+    config[0] = RewardsDataTypes.RewardsConfigInput(
+      0.00385 ether,
+      10_000 ether,
+      uint32(block.timestamp + 30 days),
+      A_TOKEN,
+      REWARD_TOKEN,
+      ITransferStrategyBase(strat),
+      IEACAggregatorProxy(address(2))
+    );
 
-      vm.prank(EMISSION_ADMIN);
-      contracts.emissionManager.configureAssets(config);
+    vm.prank(EMISSION_ADMIN);
+    contracts.emissionManager.configureAssets(config);
 
-      staticATokenLM.refreshRewardTokens();
-    }
+    staticATokenLM.refreshRewardTokens();
+  }
 
   function _fundUser(uint128 amountToDeposit, address targetUser) internal {
     deal(UNDERLYING, targetUser, amountToDeposit);

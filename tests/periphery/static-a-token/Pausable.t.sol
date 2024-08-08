@@ -20,12 +20,7 @@ contract Pausable is BaseTest {
 
   function test_setPaused_shouldRevertForInvalidCaller(address actor) external {
     vm.assume(actor != poolAdmin && actor != proxyAdmin);
-    vm.expectRevert(
-      abi.encodeWithSelector(
-        IStaticATokenLM.OnlyPauseGuardian.selector,
-        actor
-      )
-    );
+    vm.expectRevert(abi.encodeWithSelector(IStaticATokenLM.OnlyPauseGuardian.selector, actor));
     _setPaused(actor, true);
   }
 
@@ -106,7 +101,7 @@ contract Pausable is BaseTest {
   }
 
   function test_claimingRewards_shouldRevert() external {
-      _configureLM();
+    _configureLM();
     uint128 amountToDeposit = 10 ether;
     vm.startPrank(user);
     _fundUser(amountToDeposit, user);
