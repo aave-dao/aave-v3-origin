@@ -42,7 +42,7 @@ The following are the security procedures historically applied to Aave v3.X vers
 - [Trail of Bits](./audits/07-01-2022_TrailOfBits_AaveV3.pdf)
 - [Peckshield](./audits/14-01-2022_PeckShield_AaveV3.pdf)
 - [SigmaPrime](./audits/27-01-2022_SigmaPrime_AaveV3.pdf)
-- [Certora](./certora/Aave_V3_Formal_Verification_Report_Jan2022.pdf)
+- [Certora](./audits/24_01_2022_Certora_AaveV3)
 
 <br>
 
@@ -50,6 +50,7 @@ The following are the security procedures historically applied to Aave v3.X vers
 
 - [PeckShield](./audits/09-12-2022_PeckShield_AaveV3-0-1.pdf)
 - [SigmaPrime](./audits/23-12-2022_SigmaPrime_AaveV3-0-1.pdf)
+- [Certora](./audits/25-12-2022_Certora_AaveV3.0.1)
 
 <br>
 
