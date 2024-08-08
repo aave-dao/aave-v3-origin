@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.10;
 
+import {IRescuable} from 'solidity-utils/contracts/utils/Rescuable.sol';
 import {AToken} from '../../../src/core/contracts/protocol/tokenization/AToken.sol';
 import {DataTypes} from '../../../src/core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
 import {IERC20, IERC20Metadata} from '../../../src/periphery/contracts/static-a-token/StaticATokenLM.sol';
@@ -554,6 +555,26 @@ contract StaticATokenLMTest is BaseTest {
 
     vm.expectRevert('INVALID_SIGNER');
     staticATokenLM.permit(permit.owner, permit.spender, permit.value, permit.deadline, v, r, s);
+  }
+
+  function test_rescuable_shouldRevertForInvalidCaller() external {
+    deal(tokenList.usdx, address(staticATokenLM), 1 ether);
+    vm.expectRevert('ONLY_RESCUE_GUARDIAN');
+    IRescuable(address(staticATokenLM)).emergencyTokenTransfer(
+      tokenList.usdx,
+      address(this),
+      1 ether
+    );
+  }
+
+  function test_rescuable_shouldSuceedForOwner() external {
+    deal(tokenList.usdx, address(staticATokenLM), 1 ether);
+    vm.startPrank(poolAdmin);
+    IRescuable(address(staticATokenLM)).emergencyTokenTransfer(
+      tokenList.usdx,
+      address(this),
+      1 ether
+    );
   }
 
   function _configureLM() internal {
