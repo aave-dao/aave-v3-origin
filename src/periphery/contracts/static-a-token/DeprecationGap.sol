@@ -8,5 +8,5 @@ pragma solidity ^0.8.10;
  * https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable/blob/master/contracts/proxy/utils/Initializable.sol#L60
  */
 contract DeprecationGap {
-  uint256 internal __deprecated_initializable_gap;
+  uint256 internal __deprecated;
 }

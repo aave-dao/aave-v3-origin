@@ -39,12 +39,39 @@ For this project, the security procedures applied/being finished are:
 
 ## Upgrade Notes Umbrella
 
-- Interface inheritance has been changed so that `IStaticATokenLM` implements `IERC4626`, making it easier for integrators to work with the interface.
-- The static A tokens are given a `rescuable`, which can be used by the ACL admin to rescue tokens locked to the contract.
-- Permit params have been excluded from the METADEPOSIT_TYPEHASH as they are not necessary. Even if someone were to frontrun the permit via mempool observation the permit is wrapped in a `try..catch` to prevent griefing attacks.
-- The static a token not implements pausability, which allows the ACL admin to pause all transfers.
+### Inheritance
 
-The storage layout diff was generated via:
+Interface inheritance has been changed so that `IStaticATokenLM` implements `IERC4626`, making it easier for integrators to work with the interface.
+The current `Initializable` has been removed in favor of the new [Initializable](https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable/blob/9a47a37c4b8ce2ac465e8656f31d32ac6fe26eaa/contracts/proxy/utils/Initializable.sol) following the [`ERC-7201`](https://eips.ethereum.org/EIPS/eip-7201) standard.
+To account for the shift in storage, a new `DeprecationGap` has been introduced to maintain the remaining storage at the current position.
+
+### Misc
+
+Permit params have been excluded from the METADEPOSIT_TYPEHASH as they are not necessary.
+Potential frontrunning of the permit via mempool observation is unavoidable, but due to wrapping the permit execution in a `try..catch` griefing is impossible.
+
+### Features
+
+#### Rescuable
+
+[Rescuable](https://github.com/bgd-labs/solidity-utils/blob/main/src/contracts/utils/Rescuable.sol) has been applied to
+the `StaticATokenLM` which will allow the ACL_ADMIN of the corresponding `POOL` to rescue any tokens on the contract.
+
+#### Pausability
+
+The `StaticATokenLM` implements the [PausableUpgradeable](https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable/blob/9a47a37c4b8ce2ac465e8656f31d32ac6fe26eaa/contracts/utils/PausableUpgradeable.sol) allowing any emergency admin to pause the vault in case of an emergency.
+As long as the vault is paused, minting, burning, transfers and claiming of rewards is impossible..
+
+#### LatestAnswer
+
+While there are already mechanisms to price the `StaticATokenLM` implemented by 3th parties for improved UX/DX the `StaticATokenLM` now exposes `latestAnswer`.
+`latestAnswer` returns the asset price priced as `underlying_price * excahngeRate`.
+It is important to note that:
+- `underlying_price` is fetched from the AaveOracle, which means it is subject to mechanisms implemented by the DAO on top of the Chainlink price feeds.
+- the `latestAnswer` is a scaled response returning the price in the same denomination as `underlying_price` which means the sprice can be undervalued by up to 1 wei
+- while this should be obvious deviations in the price - even when limited to 1 wei per share - will compound per full share
+
+### Storage diff
 
 ```
 git checkout main
@@ -52,4 +79,20 @@ forge inspect src/periphery/contracts/static-a-token/StaticATokenLM.sol:StaticAT
 git checkout project-a
 forge inspect src/periphery/contracts/static-a-token/StaticATokenLM.sol:StaticATokenLM storage-layout --pretty > reports/StaticATokenStorageAfter.md
 make git-diff before=reports/StaticATokenStorageBefore.md after=reports/StaticATokenStorageAfter.md out=StaticATokenStorageDiff
+```
+
+```diff
+diff --git a/reports/StaticATokenStorageBefore.md b/reports/StaticATokenStorageAfter.md
+index a7e3105..89e0967 100644
+--- a/reports/StaticATokenStorageBefore.md
++++ b/reports/StaticATokenStorageAfter.md
+@@ -1,7 +1,6 @@
+ | Name               | Type                                                                           | Slot | Offset | Bytes | Contract                                                                 |
+ | ------------------ | ------------------------------------------------------------------------------ | ---- | ------ | ----- | ------------------------------------------------------------------------ |
+-| \_initialized      | uint8                                                                          | 0    | 0      | 1     | src/periphery/contracts/static-a-token/StaticATokenLM.sol:StaticATokenLM |
+-| \_initializing     | bool                                                                           | 0    | 1      | 1     | src/periphery/contracts/static-a-token/StaticATokenLM.sol:StaticATokenLM |
++| \_\_deprecated     | uint256                                                                        | 0    | 0      | 32    | src/periphery/contracts/static-a-token/StaticATokenLM.sol:StaticATokenLM |
+ | name               | string                                                                         | 1    | 0      | 32    | src/periphery/contracts/static-a-token/StaticATokenLM.sol:StaticATokenLM |
+ | symbol             | string                                                                         | 2    | 0      | 32    | src/periphery/contracts/static-a-token/StaticATokenLM.sol:StaticATokenLM |
+ | decimals           | uint8                                                                          | 3    | 0      | 1     | src/periphery/contracts/static-a-token/StaticATokenLM.sol:StaticATokenLM |
 ```
