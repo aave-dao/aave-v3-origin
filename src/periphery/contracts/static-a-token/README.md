@@ -60,7 +60,7 @@ the `StaticATokenLM` which will allow the ACL_ADMIN of the corresponding `POOL` 
 #### Pausability
 
 The `StaticATokenLM` implements the [PausableUpgradeable](https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable/blob/9a47a37c4b8ce2ac465e8656f31d32ac6fe26eaa/contracts/utils/PausableUpgradeable.sol) allowing any emergency admin to pause the vault in case of an emergency.
-As long as the vault is paused, minting, burning, transfers and claiming of rewards is impossible..
+As long as the vault is paused, minting, burning, transfers and claiming of rewards is impossible.
 
 #### LatestAnswer
 
@@ -96,3 +96,10 @@ index a7e3105..89e0967 100644
  | symbol             | string                                                                         | 2    | 0      | 32    | src/periphery/contracts/static-a-token/StaticATokenLM.sol:StaticATokenLM |
  | decimals           | uint8                                                                          | 3    | 0      | 1     | src/periphery/contracts/static-a-token/StaticATokenLM.sol:StaticATokenLM |
 ```
+
+### Umbrella upgrade plan
+
+The upgrade can be performed independent(before) from any umbrella changes as it has no dependencies.
+The upgrade will need to:
+- upgrade the `StaticATokenFactory` with a new version, replacing the `STATIC_A_TOKEN_IMPL`.
+- upgrade existing stata tokens via `upgradeToAndCall` to the new implementation. While the tokens are already initialized, due to changing the `Initializable` the corresponding storage is lost.
