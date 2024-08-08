@@ -215,7 +215,7 @@ interface IStaticATokenLM is IInitializableStaticATokenLM, IERC4626 {
   function isRegisteredRewardToken(address reward) external view returns (bool);
 
   /**
-   * @notice Pauses the token which will forbid all transfers
+   * @notice Pauses/unpauses all system's operations
    * @param paused boolean determining if the token should be paused or unpaused
    */
   function setPaused(bool paused) external;
