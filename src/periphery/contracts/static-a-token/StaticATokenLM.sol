@@ -1,6 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.10;
 
+import {PausableUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/utils/PausableUpgradeable.sol';
+import {ERC20Upgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol';
+import {ERC20PermitUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC20PermitUpgradeable.sol';
+import {ERC20PausableUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC20PausableUpgradeable.sol';
+import {ERC4626Upgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC4626Upgradeable.sol';
+import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
+
 import {IPool} from '../../../core/contracts/interfaces/IPool.sol';
 import {IPoolAddressesProvider} from '../../../core/contracts/interfaces/IPoolAddressesProvider.sol';
 import {IAaveOracle} from '../../../core/contracts/interfaces/IAaveOracle.sol';
@@ -22,11 +29,6 @@ import {ERC20} from '../dependencies/solmate/ERC20.sol';
 import {IInitializableStaticATokenLM} from './interfaces/IInitializableStaticATokenLM.sol';
 import {StaticATokenErrors} from './StaticATokenErrors.sol';
 import {RayMathExplicitRounding, Rounding} from '../libraries/RayMathExplicitRounding.sol';
-import {IERC4626} from './interfaces/IERC4626.sol';
-import {PausableUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/utils/PausableUpgradeable.sol';
-import {ERC20Upgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol';
-import {ERC20PermitUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC20PermitUpgradeable.sol';
-import {ERC20PausableUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC20PausableUpgradeable.sol';
 
 /**
  * @title StaticATokenLM
@@ -39,6 +41,7 @@ contract StaticATokenLM is
   ERC20Upgradeable,
   ERC20PermitUpgradeable,
   ERC20PausableUpgradeable,
+  ERC4626Upgradeable,
   IStaticATokenLM,
   Rescuable
 {
@@ -105,7 +108,7 @@ contract StaticATokenLM is
     emit Initialized(newAToken, staticATokenName, staticATokenSymbol);
   }
 
-  function decimals() public view override returns (uint8) {
+  function decimals() public view override(ERC20Upgradeable, ERC4626Upgradeable) returns (uint8) {
     return IERC20Metadata(address(_aToken)).decimals();
   }
 
@@ -244,26 +247,6 @@ contract StaticATokenLM is
   //   return _withdraw(owner, receiver, shares, assets, withdrawFromAave);
   // }
 
-  ///@inheritdoc IERC4626
-  function previewRedeem(uint256 shares) public view virtual returns (uint256) {
-    return _convertToAssets(shares, Rounding.DOWN);
-  }
-
-  ///@inheritdoc IERC4626
-  function previewMint(uint256 shares) public view virtual returns (uint256) {
-    return _convertToAssets(shares, Rounding.UP);
-  }
-
-  ///@inheritdoc IERC4626
-  function previewWithdraw(uint256 assets) public view virtual returns (uint256) {
-    return _convertToShares(assets, Rounding.UP);
-  }
-
-  ///@inheritdoc IERC4626
-  function previewDeposit(uint256 assets) public view virtual returns (uint256) {
-    return _convertToShares(assets, Rounding.DOWN);
-  }
-
   ///@inheritdoc IStaticATokenLM
   function rate() public view returns (uint256) {
     return POOL.getReserveNormalizedIncome(_aTokenUnderlying);
@@ -336,7 +319,7 @@ contract StaticATokenLM is
   }
 
   ///@inheritdoc IERC4626
-  function asset() external view returns (address) {
+  function asset() public view override returns (address) {
     return address(_aTokenUnderlying);
   }
 
@@ -351,35 +334,35 @@ contract StaticATokenLM is
   }
 
   ///@inheritdoc IERC4626
-  function totalAssets() external view returns (uint256) {
+  function totalAssets() public view override returns (uint256) {
     return _aToken.balanceOf(address(this));
   }
 
   ///@inheritdoc IERC4626
-  function convertToShares(uint256 assets) external view returns (uint256) {
+  function convertToShares(uint256 assets) public view override returns (uint256) {
     return _convertToShares(assets, Rounding.DOWN);
   }
 
   ///@inheritdoc IERC4626
-  function convertToAssets(uint256 shares) external view returns (uint256) {
+  function convertToAssets(uint256 shares) public view override returns (uint256) {
     return _convertToAssets(shares, Rounding.DOWN);
   }
 
   ///@inheritdoc IERC4626
-  function maxMint(address) public view virtual returns (uint256) {
+  function maxMint(address) public view override returns (uint256) {
     uint256 assets = maxDeposit(address(0));
     if (assets == type(uint256).max) return type(uint256).max;
     return _convertToShares(assets, Rounding.DOWN);
   }
 
   ///@inheritdoc IERC4626
-  function maxWithdraw(address owner) public view virtual returns (uint256) {
+  function maxWithdraw(address owner) public view override returns (uint256) {
     uint256 shares = maxRedeem(owner);
     return _convertToAssets(shares, Rounding.DOWN);
   }
 
   ///@inheritdoc IERC4626
-  function maxRedeem(address owner) public view virtual returns (uint256) {
+  function maxRedeem(address owner) public view override returns (uint256) {
     address cachedATokenUnderlying = _aTokenUnderlying;
     DataTypes.ReserveDataLegacy memory reserveData = POOL.getReserveData(cachedATokenUnderlying);
 
@@ -404,7 +387,7 @@ contract StaticATokenLM is
   }
 
   ///@inheritdoc IERC4626
-  function maxDeposit(address) public view virtual returns (uint256) {
+  function maxDeposit(address) public view override returns (uint256) {
     DataTypes.ReserveDataLegacy memory reserveData = POOL.getReserveData(_aTokenUnderlying);
 
     // if inactive, paused or frozen users cannot deposit underlying
@@ -427,13 +410,13 @@ contract StaticATokenLM is
   }
 
   ///@inheritdoc IERC4626
-  function deposit(uint256 assets, address receiver) external virtual returns (uint256) {
+  function deposit(uint256 assets, address receiver) public override returns (uint256) {
     (uint256 shares, ) = _deposit(msg.sender, receiver, 0, assets, 0, true);
     return shares;
   }
 
   ///@inheritdoc IERC4626
-  function mint(uint256 shares, address receiver) external virtual returns (uint256) {
+  function mint(uint256 shares, address receiver) public override returns (uint256) {
     (, uint256 assets) = _deposit(msg.sender, receiver, shares, 0, 0, true);
 
     return assets;
@@ -444,7 +427,7 @@ contract StaticATokenLM is
     uint256 assets,
     address receiver,
     address owner
-  ) external virtual returns (uint256) {
+  ) public override returns (uint256) {
     (uint256 shares, ) = _withdraw(owner, receiver, 0, assets, true);
 
     return shares;
@@ -455,7 +438,7 @@ contract StaticATokenLM is
     uint256 shares,
     address receiver,
     address owner
-  ) external virtual returns (uint256) {
+  ) public override returns (uint256) {
     (, uint256 assets) = _withdraw(owner, receiver, shares, 0, true);
 
     return assets;
@@ -467,7 +450,7 @@ contract StaticATokenLM is
     address receiver,
     address owner,
     bool withdrawFromAave
-  ) external virtual returns (uint256, uint256) {
+  ) external returns (uint256, uint256) {
     return _withdraw(owner, receiver, shares, 0, withdrawFromAave);
   }
 
