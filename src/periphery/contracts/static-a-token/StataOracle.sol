@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.10;
 
+import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IPool} from '../../../core/contracts/interfaces/IPool.sol';
 import {IPoolAddressesProvider} from '../../../core/contracts/interfaces/IPoolAddressesProvider.sol';
 import {IAaveOracle} from '../../../core/contracts/interfaces/IAaveOracle.sol';
 import {IStataOracle} from './interfaces/IStataOracle.sol';
-import {IERC4626} from './interfaces/IERC4626.sol';
 
 /**
  * @title StataOracle
