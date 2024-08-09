@@ -2,6 +2,7 @@
 pragma solidity ^0.8.10;
 
 import {IRescuable} from 'solidity-utils/contracts/utils/Rescuable.sol';
+import {ERC20PermitUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC20PermitUpgradeable.sol';
 import {Initializable} from 'openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol';
 import {AToken} from '../../../src/core/contracts/protocol/tokenization/AToken.sol';
 import {DataTypes} from '../../../src/core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
@@ -528,7 +529,7 @@ contract StaticATokenLMTest is BaseTest {
 
     bytes32 permitDigest = SigUtils.getTypedDataHash(
       permit,
-      staticATokenLM.PERMIT_TYPEHASH(),
+      PERMIT_TYPEHASH,
       staticATokenLM.DOMAIN_SEPARATOR()
     );
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(userPrivateKey, permitDigest);
@@ -552,12 +553,17 @@ contract StaticATokenLMTest is BaseTest {
 
     bytes32 permitDigest = SigUtils.getTypedDataHash(
       permit,
-      staticATokenLM.PERMIT_TYPEHASH(),
+      PERMIT_TYPEHASH,
       staticATokenLM.DOMAIN_SEPARATOR()
     );
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(userPrivateKey, permitDigest);
 
-    vm.expectRevert('PERMIT_DEADLINE_EXPIRED');
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        ERC20PermitUpgradeable.ERC2612ExpiredSignature.selector,
+        permit.deadline
+      )
+    );
     staticATokenLM.permit(permit.owner, permit.spender, permit.value, permit.deadline, v, r, s);
   }
 
@@ -572,12 +578,18 @@ contract StaticATokenLMTest is BaseTest {
 
     bytes32 permitDigest = SigUtils.getTypedDataHash(
       permit,
-      staticATokenLM.PERMIT_TYPEHASH(),
+      PERMIT_TYPEHASH,
       staticATokenLM.DOMAIN_SEPARATOR()
     );
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(userPrivateKey, permitDigest);
 
-    vm.expectRevert('INVALID_SIGNER');
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        ERC20PermitUpgradeable.ERC2612InvalidSigner.selector,
+        user,
+        permit.owner
+      )
+    );
     staticATokenLM.permit(permit.owner, permit.spender, permit.value, permit.deadline, v, r, s);
   }
 

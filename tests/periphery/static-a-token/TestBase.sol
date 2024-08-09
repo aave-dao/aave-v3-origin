@@ -16,6 +16,10 @@ import {TestnetProcedures, TestnetERC20} from '../../utils/TestnetProcedures.sol
 import {DataTypes} from '../../../src/core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
 
 abstract contract BaseTest is TestnetProcedures {
+
+    bytes32 internal constant PERMIT_TYPEHASH =
+        keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
+
   address constant OWNER = address(1234);
   address public constant EMISSION_ADMIN = address(25);
 
