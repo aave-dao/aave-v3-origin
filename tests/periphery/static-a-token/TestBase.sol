@@ -10,7 +10,7 @@ import {TransparentUpgradeableProxy} from 'solidity-utils/contracts/transparent-
 import {ITransparentProxyFactory} from 'solidity-utils/contracts/transparent-proxy/TransparentProxyFactory.sol';
 import {IPool} from '../../../src/core/contracts/interfaces/IPool.sol';
 import {StaticATokenFactory} from '../../../src/periphery/contracts/static-a-token/StaticATokenFactory.sol';
-import {StaticATokenLM, IStaticATokenLM, IERC20, IERC20Metadata, ERC20} from '../../../src/periphery/contracts/static-a-token/StaticATokenLM.sol';
+import {StaticATokenLM, IStaticATokenLM, IERC20, IERC20Metadata} from '../../../src/periphery/contracts/static-a-token/StaticATokenLM.sol';
 import {IAToken} from '../../../src/core/contracts/interfaces/IAToken.sol';
 import {TestnetProcedures, TestnetERC20} from '../../utils/TestnetProcedures.sol';
 import {DataTypes} from '../../../src/core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
