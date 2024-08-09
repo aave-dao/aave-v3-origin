@@ -67,6 +67,7 @@ As long as the vault is paused, minting, burning, transfers and claiming of rewa
 While there are already mechanisms to price the `StaticATokenLM` implemented by 3th parties for improved UX/DX the `StaticATokenLM` now exposes `latestAnswer`.
 `latestAnswer` returns the asset price priced as `underlying_price * excahngeRate`.
 It is important to note that:
+
 - `underlying_price` is fetched from the AaveOracle, which means it is subject to mechanisms implemented by the DAO on top of the Chainlink price feeds.
 - the `latestAnswer` is a scaled response returning the price in the same denomination as `underlying_price` which means the sprice can be undervalued by up to 1 wei
 - while this should be obvious deviations in the price - even when limited to 1 wei per share - will compound per full share
@@ -101,5 +102,6 @@ index a7e3105..89e0967 100644
 
 The upgrade can be performed independent(before) from any umbrella changes as it has no dependencies.
 The upgrade will need to:
+
 - upgrade the `StaticATokenFactory` with a new version, replacing the `STATIC_A_TOKEN_IMPL`.
 - upgrade existing stata tokens via `upgradeToAndCall` to the new implementation. While the tokens are already initialized, due to changing the `Initializable` the corresponding storage is lost.
