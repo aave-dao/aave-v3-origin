@@ -66,6 +66,7 @@ contract StaticATokenLM is
 
   IERC20 internal _aToken;
   address internal _aTokenUnderlying;
+  uint8 internal _decimals;
   address[] internal _rewardTokens;
   mapping(address => RewardIndexCache) internal _startIndex;
   mapping(address => mapping(address => UserRewardsData)) internal _userRewardsData;
@@ -96,6 +97,7 @@ contract StaticATokenLM is
     __ERC20_init(staticATokenName, staticATokenSymbol);
     __ERC20Permit_init(staticATokenName);
     _aToken = IERC20(newAToken);
+    _decimals = IERC20Metadata(address(_aToken)).decimals();
 
     _aTokenUnderlying = IAToken(newAToken).UNDERLYING_ASSET_ADDRESS();
     IERC20(_aTokenUnderlying).forceApprove(address(POOL), type(uint256).max);
@@ -108,7 +110,7 @@ contract StaticATokenLM is
   }
 
   function decimals() public view override(ERC20Upgradeable, ERC4626Upgradeable) returns (uint8) {
-    return IERC20Metadata(address(_aToken)).decimals();
+    return _decimals;
   }
 
   /// @inheritdoc IRescuable
@@ -594,19 +596,17 @@ contract StaticATokenLM is
    * @param balance The balance of the user
    * @param rewardsIndexOnLastInteraction The index which was on the last interaction of the user
    * @param currentRewardsIndex The current rewards index in the system
-   * @param assetUnit One unit of asset (10**decimals)
    * @return The amount of pending rewards in WAD
    */
   function _getPendingRewards(
     uint256 balance,
     uint256 rewardsIndexOnLastInteraction,
-    uint256 currentRewardsIndex,
-    uint256 assetUnit
-  ) internal pure returns (uint256) {
+    uint256 currentRewardsIndex
+  ) internal view returns (uint256) {
     if (balance == 0) {
       return 0;
     }
-    return (balance * (currentRewardsIndex - rewardsIndexOnLastInteraction)) / assetUnit;
+    return (balance * (currentRewardsIndex - rewardsIndexOnLastInteraction)) / 10 ** decimals();
   }
 
   /**
@@ -626,7 +626,6 @@ contract StaticATokenLM is
     RewardIndexCache memory rewardsIndexCache = _startIndex[reward];
     require(rewardsIndexCache.isRegistered == true, StaticATokenErrors.REWARD_NOT_INITIALIZED);
     UserRewardsData memory currentUserRewardsData = _userRewardsData[user][reward];
-    uint256 assetUnit = 10 ** decimals();
     return
       currentUserRewardsData.unclaimedRewards +
       _getPendingRewards(
@@ -634,8 +633,7 @@ contract StaticATokenLM is
         currentUserRewardsData.rewardsIndexOnLastInteraction == 0
           ? rewardsIndexCache.lastUpdatedIndex
           : currentUserRewardsData.rewardsIndexOnLastInteraction,
-        currentRewardsIndex,
-        assetUnit
+        currentRewardsIndex
       );
   }
 

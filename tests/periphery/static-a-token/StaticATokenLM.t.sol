@@ -223,6 +223,16 @@ contract StaticATokenLMTest is BaseTest {
     assertEq(IERC20(REWARD_TOKEN).balanceOf(address(staticATokenLM)), claimable);
   }
 
+  function test_claimableRewards() external {
+      uint128 amountToDeposit = 5 ether;
+      _fundUser(amountToDeposit, user);
+      _depositAToken(amountToDeposit, user);
+
+      vm.warp(block.timestamp + 200);
+      uint256 claimable = staticATokenLM.getClaimableRewards(user, REWARD_TOKEN);
+      assertEq(claimable, 200 * 0.00385 ether);
+  }
+
   function test_claimRewardsToSelf() public {
     uint128 amountToDeposit = 5 ether;
     _fundUser(amountToDeposit, user);
