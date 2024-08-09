@@ -18,11 +18,18 @@
   "homepage": "https://github.com/aave-dao/aave-v3-origin#readme",
   "type": "module",
   "devDependencies": {
+    "@types/bluebird": "^3.5.38",
+    "@types/node-fetch": "^2.6.3",
+    "bluebird": "^3.7.2",
+    "ethers": "^6.6.2",
     "prettier": "^2.8.3",
     "prettier-plugin-solidity": "^1.1.1"
   },
   "dependencies": {
+    "@bgd-labs/aave-address-book": "3.1.0",
     "@bgd-labs/aave-cli": "^0.16.2",
-    "catapulta-verify": "^1.1.1"
+    "catapulta-verify": "^1.1.1",
+    "ts-command-line-args": "^2.5.0",
+    "ts-node": "^10.9.1"
   }
 }
