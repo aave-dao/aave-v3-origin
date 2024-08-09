@@ -26,6 +26,7 @@ import {IERC4626} from './interfaces/IERC4626.sol';
 import {PausableUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/utils/PausableUpgradeable.sol';
 import {ERC20Upgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol';
 import {ERC20PermitUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC20PermitUpgradeable.sol';
+import {ERC20PausableUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC20PausableUpgradeable.sol';
 
 /**
  * @title StaticATokenLM
@@ -37,9 +38,9 @@ import {ERC20PermitUpgradeable} from 'openzeppelin-contracts-upgradeable/contrac
 contract StaticATokenLM is
   ERC20Upgradeable,
   ERC20PermitUpgradeable,
+  ERC20PausableUpgradeable,
   IStaticATokenLM,
-  Rescuable,
-  PausableUpgradeable
+  Rescuable
 {
   using SafeERC20 for IERC20;
   using SafeCast for uint256;
@@ -568,7 +569,11 @@ contract StaticATokenLM is
    * @param from The address of the sender of tokens
    * @param to The address of the receiver of tokens
    */
-  function _update(address from, address to, uint256 amount) internal override whenNotPaused {
+  function _update(
+    address from,
+    address to,
+    uint256 amount
+  ) internal override(ERC20Upgradeable, ERC20PausableUpgradeable) whenNotPaused {
     for (uint256 i = 0; i < _rewardTokens.length; i++) {
       address rewardToken = address(_rewardTokens[i]);
       uint256 rewardsIndex = getCurrentRewardsIndex(rewardToken);
