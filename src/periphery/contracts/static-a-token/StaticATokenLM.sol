@@ -24,7 +24,6 @@ import {StaticATokenErrors} from './StaticATokenErrors.sol';
 import {RayMathExplicitRounding, Rounding} from '../libraries/RayMathExplicitRounding.sol';
 import {IERC4626} from './interfaces/IERC4626.sol';
 import {PausableUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/utils/PausableUpgradeable.sol';
-import {DeprecationGap} from './DeprecationGap.sol';
 
 /**
  * @title StaticATokenLM
@@ -34,7 +33,6 @@ import {DeprecationGap} from './DeprecationGap.sol';
  * @author BGD labs
  */
 contract StaticATokenLM is
-  DeprecationGap,
   ERC20('STATIC__aToken_IMPL', 'STATIC__aToken_IMPL', 18),
   IStaticATokenLM,
   Rescuable,
