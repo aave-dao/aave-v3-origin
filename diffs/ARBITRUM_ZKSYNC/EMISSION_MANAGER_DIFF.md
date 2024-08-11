@@ -3,53 +3,16 @@ diff --git a/./downloads/ARBITRUM/EMISSION_MANAGER.sol b/./downloads/ZKSYNC/EMIS
 index be75e57..16d9cb7 100644
 --- a/./downloads/ARBITRUM/EMISSION_MANAGER.sol
 +++ b/./downloads/ZKSYNC/EMISSION_MANAGER.sol
-@@ -1,30 +1,7 @@
--// SPDX-License-Identifier: agpl-3.0
--pragma solidity =0.8.10;
-+// SPDX-License-Identifier: BUSL-1.1
-+pragma solidity ^0.8.10;
- 
--// downloads/ARBITRUM/EMISSION_MANAGER/EmissionManager/@aave/core-v3/contracts/dependencies/openzeppelin/contracts/Context.sol
--
--/*
-- * @dev Provides information about the current execution context, including the
-- * sender of the transaction and its data. While these are generally available
-- * via msg.sender and msg.data, they should not be accessed in such a direct
-- * manner, since when dealing with GSN meta-transactions the account sending and
-- * paying for execution may not be the actual sender (as far as an application
-- * is concerned).
-- *
-- * This contract is only required for intermediate, library-like contracts.
-- */
--abstract contract Context {
--  function _msgSender() internal view virtual returns (address payable) {
--    return payable(msg.sender);
--  }
--
--  function _msgData() internal view virtual returns (bytes memory) {
--    this; // silence state mutability warning without generating bytecode - see https://github.com/ethereum/solidity/issues/2691
--    return msg.data;
--  }
--}
--
--// downloads/ARBITRUM/EMISSION_MANAGER/EmissionManager/@aave/periphery-v3/contracts/misc/interfaces/IEACAggregatorProxy.sol
-+// downloads/ZKSYNC/EMISSION_MANAGER/EmissionManager/src/periphery/contracts/misc/interfaces/IEACAggregatorProxy.sol
- 
- interface IEACAggregatorProxy {
-   function decimals() external view returns (uint8);
-@@ -43,7 +20,7 @@ interface IEACAggregatorProxy {
-   event NewRound(uint256 indexed roundId, address indexed startedBy);
- }
- 
+
 -// downloads/ARBITRUM/EMISSION_MANAGER/EmissionManager/@aave/periphery-v3/contracts/rewards/interfaces/IRewardsDistributor.sol
 +// downloads/ZKSYNC/EMISSION_MANAGER/EmissionManager/src/periphery/contracts/rewards/interfaces/IRewardsDistributor.sol
- 
+
  /**
   * @title IRewardsDistributor
 @@ -89,16 +66,6 @@ interface IRewardsDistributor {
      uint256 rewardsAccrued
    );
- 
+
 -  /**
 -   * @dev Emitted when the emission manager address is updated.
 -   * @param oldEmissionManager The address of the old emission manager
@@ -66,7 +29,7 @@ index be75e57..16d9cb7 100644
 @@ -154,6 +121,15 @@ interface IRewardsDistributor {
      address reward
    ) external view returns (uint256, uint256, uint256, uint256);
- 
+
 +  /**
 +   * @dev Calculates the next value of an specific distribution index, with validations.
 +   * @param asset The incentivized asset
@@ -98,56 +61,15 @@ index be75e57..16d9cb7 100644
 -   */
 -  function setEmissionManager(address emissionManager) external;
  }
- 
--// downloads/ARBITRUM/EMISSION_MANAGER/EmissionManager/@aave/periphery-v3/contracts/rewards/interfaces/ITransferStrategyBase.sol
-+// downloads/ZKSYNC/EMISSION_MANAGER/EmissionManager/src/periphery/contracts/rewards/interfaces/ITransferStrategyBase.sol
- 
- interface ITransferStrategyBase {
-   event EmergencyWithdrawal(
-@@ -258,7 +235,30 @@ interface ITransferStrategyBase {
-   function emergencyWithdrawal(address token, address to, uint256 amount) external;
- }
- 
--// downloads/ARBITRUM/EMISSION_MANAGER/EmissionManager/@aave/core-v3/contracts/dependencies/openzeppelin/contracts/Ownable.sol
-+// src/core/contracts/dependencies/openzeppelin/contracts/Context.sol
-+
-+/*
-+ * @dev Provides information about the current execution context, including the
-+ * sender of the transaction and its data. While these are generally available
-+ * via msg.sender and msg.data, they should not be accessed in such a direct
-+ * manner, since when dealing with GSN meta-transactions the account sending and
-+ * paying for execution may not be the actual sender (as far as an application
-+ * is concerned).
-+ *
-+ * This contract is only required for intermediate, library-like contracts.
-+ */
-+abstract contract Context {
-+  function _msgSender() internal view virtual returns (address payable) {
-+    return payable(msg.sender);
-+  }
-+
-+  function _msgData() internal view virtual returns (bytes memory) {
-+    this; // silence state mutability warning without generating bytecode - see https://github.com/ethereum/solidity/issues/2691
-+    return msg.data;
-+  }
-+}
-+
-+// src/core/contracts/dependencies/openzeppelin/contracts/Ownable.sol
- 
- /**
-  * @dev Contract module which provides a basic access control mechanism, where
-@@ -324,7 +324,7 @@ contract Ownable is Context {
-   }
- }
- 
+
 -// downloads/ARBITRUM/EMISSION_MANAGER/EmissionManager/@aave/periphery-v3/contracts/rewards/libraries/RewardsDataTypes.sol
 +// downloads/ZKSYNC/EMISSION_MANAGER/EmissionManager/src/periphery/contracts/rewards/libraries/RewardsDataTypes.sol
- 
+
  library RewardsDataTypes {
    struct RewardsConfigInput {
 @@ -344,27 +344,38 @@ library RewardsDataTypes {
    }
- 
+
    struct UserData {
 -    uint104 index; // matches reward index
 +    // Liquidity index of the reward distribution for the user
@@ -155,7 +77,7 @@ index be75e57..16d9cb7 100644
 +    // Amount of accrued rewards for the user since last user index update
      uint128 accrued;
    }
- 
+
    struct RewardData {
 +    // Liquidity index of the reward distribution
      uint104 index;
@@ -168,7 +90,7 @@ index be75e57..16d9cb7 100644
 +    // Map of user addresses and their rewards data (userAddress => userData)
      mapping(address => UserData) usersData;
    }
- 
+
    struct AssetData {
 +    // Map of reward token addresses and their data (rewardTokenAddress => rewardData)
      mapping(address => RewardData) rewards;
@@ -180,15 +102,15 @@ index be75e57..16d9cb7 100644
      uint8 decimals;
    }
  }
- 
+
 -// downloads/ARBITRUM/EMISSION_MANAGER/EmissionManager/@aave/periphery-v3/contracts/rewards/interfaces/IRewardsController.sol
 +// downloads/ZKSYNC/EMISSION_MANAGER/EmissionManager/src/periphery/contracts/rewards/interfaces/IRewardsController.sol
- 
+
  /**
   * @title IRewardsController
 @@ -470,12 +481,13 @@ interface IRewardsController is IRewardsDistributor {
    function configureAssets(RewardsDataTypes.RewardsConfigInput[] memory config) external;
- 
+
    /**
 -   * @dev Called by the corresponding asset on any update that affects the rewards distribution
 -   * @param user The address of the user
@@ -202,22 +124,22 @@ index be75e57..16d9cb7 100644
     **/
 -  function handleAction(address user, uint256 userBalance, uint256 totalSupply) external;
 +  function handleAction(address user, uint256 totalSupply, uint256 userBalance) external;
- 
+
    /**
     * @dev Claims reward for a user to the desired address, on all the assets of the pool, accumulating the pending rewards
 @@ -561,7 +573,7 @@ interface IRewardsController is IRewardsDistributor {
    ) external returns (address[] memory rewardsList, uint256[] memory claimedAmounts);
  }
- 
+
 -// downloads/ARBITRUM/EMISSION_MANAGER/EmissionManager/@aave/periphery-v3/contracts/rewards/interfaces/IEmissionManager.sol
 +// downloads/ZKSYNC/EMISSION_MANAGER/EmissionManager/src/periphery/contracts/rewards/interfaces/IEmissionManager.sol
- 
+
  /**
   * @title IEmissionManager
 @@ -645,13 +657,6 @@ interface IEmissionManager {
     */
    function setClaimer(address user, address claimer) external;
- 
+
 -  /**
 -   * @dev Updates the address of the emission manager
 -   * @dev Only callable by the owner of the EmissionManager
@@ -231,14 +153,14 @@ index be75e57..16d9cb7 100644
 @@ -681,7 +686,7 @@ interface IEmissionManager {
    function getEmissionAdmin(address reward) external view returns (address);
  }
- 
+
 -// downloads/ARBITRUM/EMISSION_MANAGER/EmissionManager/@aave/periphery-v3/contracts/rewards/EmissionManager.sol
 +// downloads/ZKSYNC/EMISSION_MANAGER/EmissionManager/src/periphery/contracts/rewards/EmissionManager.sol
- 
+
  /**
   * @title EmissionManager
 @@ -704,11 +709,9 @@ contract EmissionManager is Ownable, IEmissionManager {
- 
+
    /**
     * Constructor.
 -   * @param controller The address of the RewardsController contract
@@ -249,11 +171,11 @@ index be75e57..16d9cb7 100644
 +  constructor(address owner) {
      transferOwnership(owner);
    }
- 
+
 @@ -762,11 +765,6 @@ contract EmissionManager is Ownable, IEmissionManager {
      _rewardsController.setClaimer(user, claimer);
    }
- 
+
 -  /// @inheritdoc IEmissionManager
 -  function setEmissionManager(address emissionManager) external override onlyOwner {
 -    _rewardsController.setEmissionManager(emissionManager);
