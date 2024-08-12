@@ -245,12 +245,12 @@ contract RevenueSplitterTest is StdUtils, Test {
       'Splitter balance should be equal to amountA'
     );
     assertEq(recipientA.balance, 0, 'ETH balance of recipient A');
-    assertEq(recipientC.balance, 0, 'ETH balance of recipient B');
+    assertEq(recipientC.balance, 0, 'ETH balance of recipient C');
 
     revenueSplitterInstance.splitNativeRevenue();
 
     assertEq(recipientA.balance, recipientABalanceA, 'ETH balance of recipient A');
-    assertEq(recipientC.balance, 0, 'ETH balance of recipient B should be zero due it does not contain fallback function');
+    assertEq(recipientC.balance, 0, 'ETH balance of recipient C should be zero due it does not contain fallback function');
     assertEq(address(revenueSplitterInstance).balance, remaining, 'Splitter balance should be the remaining');
   }
 }
