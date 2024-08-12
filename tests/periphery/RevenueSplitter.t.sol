@@ -9,6 +9,9 @@ import 'forge-std/Test.sol';
 import 'forge-std/console2.sol';
 import 'forge-std/StdUtils.sol';
 
+/// @dev Simple mock of contract without fallback function
+contract WalletMock {}
+
 contract RevenueSplitterTest is StdUtils, Test {
   using PercentageMath for uint256;
 
@@ -223,5 +226,31 @@ contract RevenueSplitterTest is StdUtils, Test {
     assertEq(tokenB.balanceOf(recipientB), 0, 'Token B balance of recipient B');
     assertEq(tokenA.balanceOf(address(revenueSplitter)), 0, 'Splitter balance token A');
     assertEq(tokenB.balanceOf(address(revenueSplitter)), amountB, 'Splitter balance token B');
+  }
+
+  /// @dev Test that the contract does not revert if one of the recipients does not accept native currency, for preventing one recipient from blocking the other or for rescuing in case of an account does not support receiving native currency.
+  function test_splitNativeFund_walletNotAcceptingFunds() public {
+    uint256 amountA = 10 ether;
+    address recipientC = address(new WalletMock());
+    RevenueSplitter revenueSplitterInstance = new RevenueSplitter(recipientA, recipientC, 2000);
+
+    deal(address(revenueSplitterInstance), amountA);
+
+    uint256 recipientABalanceA = amountA.percentMul(revenueSplitterInstance.SPLIT_PERCENTAGE_RECIPIENT_A());
+    uint256 remaining = amountA - recipientABalanceA;
+
+    assertEq(
+      address(revenueSplitterInstance).balance,
+      amountA,
+      'Splitter balance should be equal to amountA'
+    );
+    assertEq(recipientA.balance, 0, 'ETH balance of recipient A');
+    assertEq(recipientC.balance, 0, 'ETH balance of recipient B');
+
+    revenueSplitterInstance.splitNativeRevenue();
+
+    assertEq(recipientA.balance, recipientABalanceA, 'ETH balance of recipient A');
+    assertEq(recipientC.balance, 0, 'ETH balance of recipient B should be zero due it does not contain fallback function');
+    assertEq(address(revenueSplitterInstance).balance, remaining, 'Splitter balance should be the remaining');
   }
 }

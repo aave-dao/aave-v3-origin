@@ -62,7 +62,9 @@ contract RevenueSplitter is IRevenueSplitter, ReentrancyGuard {
     uint256 amount_A = balance.percentMul(SPLIT_PERCENTAGE_RECIPIENT_A);
     uint256 amount_B = balance - amount_A;
 
-    // Do not revert if fails to send to RECIPIENT_A or RECIPIENT_B, to prevent one recipient from blocking the other if recipient does not accept native currency via fallback function or receive.
+    // Do not revert if fails to send to RECIPIENT_A or RECIPIENT_B, to prevent one recipient from blocking the other
+    // if recipient does not accept native currency via fallback function or receive.
+    // This can also be used as a manual recovery mechanism in case of an account does not support receiving native currency.
     RECIPIENT_A.call{value: amount_A}('');
     RECIPIENT_B.call{value: amount_B}('');
   }
