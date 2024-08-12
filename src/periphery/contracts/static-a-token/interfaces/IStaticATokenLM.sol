@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import {IERC20} from 'solidity-utils/contracts/oz-common/interfaces/IERC20.sol';
-import {IERC4626} from './IERC4626.sol';
+import {IERC20} from 'openzeppelin-contracts/contracts/interfaces/IERC20.sol';
 import {IInitializableStaticATokenLM} from './IInitializableStaticATokenLM.sol';
 
-interface IStaticATokenLM is IInitializableStaticATokenLM, IERC4626 {
+interface IStaticATokenLM is IInitializableStaticATokenLM {
   struct SignatureParams {
     uint8 v;
     bytes32 r;
@@ -68,57 +67,6 @@ interface IStaticATokenLM is IInitializableStaticATokenLM, IERC4626 {
     uint16 referralCode,
     bool depositToAave
   ) external returns (uint256);
-
-  /**
-   * @notice Allows to deposit on Aave via meta-transaction
-   * https://github.com/ethereum/EIPs/blob/8a34d644aacf0f9f8f00815307fd7dd5da07655f/EIPS/eip-2612.md
-   * @param depositor Address from which the funds to deposit are going to be pulled
-   * @param receiver Address that will receive the staticATokens, in the average case, same as the `depositor`
-   * @param assets The amount to deposit
-   * @param referralCode Code used to register the integrator originating the operation, for potential rewards.
-   *   0 if the action is executed directly by the user, without any middle-man
-   * @param depositToAave bool
-   * - `true` if the msg.sender comes with underlying tokens (e.g. USDC)
-   * - `false` if the msg.sender comes already with aTokens (e.g. aUSDC)
-   * @param deadline The deadline timestamp, type(uint256).max for max deadline
-   * @param sigParams Signature params: v,r,s
-   * @return uint256 The amount of StaticAToken minted, static balance
-   */
-  function metaDeposit(
-    address depositor,
-    address receiver,
-    uint256 assets,
-    uint16 referralCode,
-    bool depositToAave,
-    uint256 deadline,
-    PermitParams calldata permit,
-    SignatureParams calldata sigParams
-  ) external returns (uint256);
-
-  /**
-   * @notice Allows to withdraw from Aave via meta-transaction
-   * https://github.com/ethereum/EIPs/blob/8a34d644aacf0f9f8f00815307fd7dd5da07655f/EIPS/eip-2612.md
-   * @param owner Address owning the staticATokens
-   * @param receiver Address that will receive the underlying withdrawn from Aave
-   * @param shares The amount of staticAToken to withdraw. If > 0, `assets` needs to be 0
-   * @param assets The amount of underlying/aToken to withdraw. If > 0, `shares` needs to be 0
-   * @param withdrawFromAave bool
-   * - `true` for the receiver to get underlying tokens (e.g. USDC)
-   * - `false` for the receiver to get aTokens (e.g. aUSDC)
-   * @param deadline The deadline timestamp, type(uint256).max for max deadline
-   * @param sigParams Signature params: v,r,s
-   * @return amountToBurn: StaticATokens burnt, static balance
-   * @return amountToWithdraw: underlying/aToken send to `receiver`, dynamic balance
-   */
-  function metaWithdraw(
-    address owner,
-    address receiver,
-    uint256 shares,
-    uint256 assets,
-    bool withdrawFromAave,
-    uint256 deadline,
-    SignatureParams calldata sigParams
-  ) external returns (uint256, uint256);
 
   /**
    * @notice Returns the Aave liquidity index of the underlying aToken, denominated rate here
@@ -213,6 +161,13 @@ interface IStaticATokenLM is IInitializableStaticATokenLM, IERC4626 {
    * @return bool signaling if token is a registered reward.
    */
   function isRegisteredRewardToken(address reward) external view returns (bool);
+
+  /**
+   * @notice Checks if the passed actor is permissioned emergency admin.
+   * @param actor The reward to claim
+   * @return bool signaling if actor can pause the vault.
+   */
+  function canPause(address actor) external view returns (bool);
 
   /**
    * @notice Pauses/unpauses all system's operations

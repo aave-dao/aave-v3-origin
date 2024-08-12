@@ -5,7 +5,7 @@ import {AToken} from '../../../src/core/contracts/protocol/tokenization/AToken.s
 import {IERC20} from '../../../src/periphery/contracts/static-a-token/StaticATokenLM.sol';
 import {BaseTest} from './TestBase.sol';
 
-contract StataTokenRewardsTest is BaseTest {
+contract StataRewardsTest is BaseTest {
   function setUp() public override {
     super.setUp();
 
@@ -152,5 +152,48 @@ contract StataTokenRewardsTest is BaseTest {
     assertEq(staticATokenLM.getClaimableRewards(user, REWARD_TOKEN), 0);
     assertEq(staticATokenLM.getTotalClaimableRewards(REWARD_TOKEN), 0);
     assertGe(AToken(UNDERLYING).balanceOf(user), 5 ether);
+  }
+
+  function test_transfer() public {
+    uint128 amountToDeposit = 10 ether;
+    _fundUser(amountToDeposit, user);
+
+    _depositAToken(amountToDeposit, user);
+
+    // transfer to 2nd user
+    staticATokenLM.transfer(user1, amountToDeposit / 2);
+    assertEq(staticATokenLM.getClaimableRewards(user1, REWARD_TOKEN), 0);
+
+    // forward time
+    _skipBlocks(60);
+
+    // redeem for both
+    uint256 claimableUser = staticATokenLM.getClaimableRewards(user, REWARD_TOKEN);
+    staticATokenLM.redeem(staticATokenLM.maxRedeem(user), user, user);
+    staticATokenLM.claimRewardsToSelf(rewardTokens);
+    assertEq(IERC20(REWARD_TOKEN).balanceOf(user), claimableUser);
+    vm.stopPrank();
+    vm.startPrank(user1);
+    uint256 claimableUser1 = staticATokenLM.getClaimableRewards(user1, REWARD_TOKEN);
+    staticATokenLM.redeem(staticATokenLM.maxRedeem(user1), user1, user1);
+    staticATokenLM.claimRewardsToSelf(rewardTokens);
+    assertEq(IERC20(REWARD_TOKEN).balanceOf(user1), claimableUser1);
+    assertGt(claimableUser1, 0);
+
+    assertEq(staticATokenLM.getTotalClaimableRewards(REWARD_TOKEN), 0);
+    assertEq(staticATokenLM.getClaimableRewards(user, REWARD_TOKEN), 0);
+    assertEq(staticATokenLM.getClaimableRewards(user1, REWARD_TOKEN), 0);
+  }
+
+  // getUnclaimedRewards
+  function test_getUnclaimedRewards() public {
+    uint128 amountToDeposit = 5 ether;
+    _fundUser(amountToDeposit, user);
+
+    uint256 shares = _depositAToken(amountToDeposit, user);
+    assertEq(staticATokenLM.getUnclaimedRewards(user, REWARD_TOKEN), 0);
+    _skipBlocks(1000);
+    staticATokenLM.redeem(shares, user, user);
+    assertGt(staticATokenLM.getUnclaimedRewards(user, REWARD_TOKEN), 0);
   }
 }

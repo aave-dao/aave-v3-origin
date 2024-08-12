@@ -15,7 +15,7 @@ import {IStaticATokenLM} from '../../../src/periphery/contracts/static-a-token/i
 import {SigUtils} from '../../utils/SigUtils.sol';
 import {BaseTest, TestnetERC20} from './TestBase.sol';
 
-contract Pausable is BaseTest {
+contract StataPausableTest is BaseTest {
   using RayMathExplicitRounding for uint256;
 
   function test_setPaused_shouldRevertForInvalidCaller(address actor) external {

@@ -4,6 +4,7 @@ pragma solidity ^0.8.10;
 import {StataOracle} from '../../../src/periphery/contracts/static-a-token/StataOracle.sol';
 import {StaticATokenLM} from '../../../src/periphery/contracts/static-a-token/StaticATokenLM.sol';
 import {BaseTest} from './TestBase.sol';
+import {IPool} from '../../../src/core/contracts/interfaces/IPool.sol';
 
 contract StataOracleTest is BaseTest {
   StataOracle public oracle;
@@ -16,6 +17,7 @@ contract StataOracleTest is BaseTest {
     contracts.poolConfiguratorProxy.setSupplyCap(UNDERLYING, 1_000_000);
   }
 
+  // ### tests for the dedicated oracle aggregator
   function test_assetPrice() public view {
     uint256 stataPrice = oracle.getAssetPrice(address(staticATokenLM));
     uint256 underlyingPrice = contracts.aaveOracle.getAssetPrice(UNDERLYING);
@@ -53,5 +55,34 @@ contract StataOracleTest is BaseTest {
       (pricePerAsset * assets) / 1e18,
       (assets / 1e18) + 1 // there can be imprecision of 1 wei, which will accumulate for each asset
     );
+  }
+
+  // ### tests for the token internal oracle
+  function test_latestAnswer_priceShouldBeEqualOnDefaultIndex() public {
+    vm.mockCall(
+      address(POOL),
+      abi.encodeWithSelector(IPool.getReserveNormalizedIncome.selector),
+      abi.encode(1e27)
+    );
+    uint256 stataPrice = uint256(staticATokenLM.latestAnswer());
+    uint256 underlyingPrice = contracts.aaveOracle.getAssetPrice(UNDERLYING);
+    assertEq(stataPrice, underlyingPrice);
+  }
+
+  function test_latestAnswer_priceShouldReflectIndexAccrual(uint256 liquidityIndex) public {
+    liquidityIndex = bound(liquidityIndex, 1e27, 1e29);
+    vm.mockCall(
+      address(POOL),
+      abi.encodeWithSelector(IPool.getReserveNormalizedIncome.selector),
+      abi.encode(liquidityIndex)
+    );
+    uint256 stataPrice = uint256(staticATokenLM.latestAnswer());
+    uint256 underlyingPrice = contracts.aaveOracle.getAssetPrice(UNDERLYING);
+    uint256 expectedStataPrice = (underlyingPrice * liquidityIndex) / 1e27;
+    assertEq(stataPrice, expectedStataPrice);
+
+    // reverse the math to ensure precision loss is within bounds
+    uint256 reversedUnderlying = (stataPrice * 1e27) / liquidityIndex;
+    assertApproxEqAbs(underlyingPrice, reversedUnderlying, 1);
   }
 }
