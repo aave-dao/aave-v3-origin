@@ -236,7 +236,9 @@ contract RevenueSplitterTest is StdUtils, Test {
 
     deal(address(revenueSplitterInstance), amountA);
 
-    uint256 recipientABalanceA = amountA.percentMul(revenueSplitterInstance.SPLIT_PERCENTAGE_RECIPIENT_A());
+    uint256 recipientABalanceA = amountA.percentMul(
+      revenueSplitterInstance.SPLIT_PERCENTAGE_RECIPIENT_A()
+    );
     uint256 remaining = amountA - recipientABalanceA;
 
     assertEq(
@@ -250,7 +252,15 @@ contract RevenueSplitterTest is StdUtils, Test {
     revenueSplitterInstance.splitNativeRevenue();
 
     assertEq(recipientA.balance, recipientABalanceA, 'ETH balance of recipient A');
-    assertEq(recipientC.balance, 0, 'ETH balance of recipient C should be zero due it does not contain fallback function');
-    assertEq(address(revenueSplitterInstance).balance, remaining, 'Splitter balance should be the remaining');
+    assertEq(
+      recipientC.balance,
+      0,
+      'ETH balance of recipient C should be zero due it does not contain fallback function'
+    );
+    assertEq(
+      address(revenueSplitterInstance).balance,
+      remaining,
+      'Splitter balance should be the remaining'
+    );
   }
 }
