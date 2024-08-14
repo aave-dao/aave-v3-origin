@@ -144,6 +144,30 @@ contract PoolFlashLoansTests is TestnetProcedures {
     );
   }
 
+  function test_reverts_flashLoan_same_asset_more_then_once(uint8 length) public {
+    vm.assume(length > 1);
+    bytes memory emptyParams;
+    address[] memory assets = new address[](length);
+    uint256[] memory amounts = new uint256[](length);
+    uint256[] memory modes = new uint256[](length);
+    for (uint256 i = 0; i < length; i++) {
+      assets[i] = tokenList.weth;
+      amounts[i] = 1;
+    }
+
+    vm.expectRevert(bytes(Errors.INCONSISTENT_FLASHLOAN_PARAMS));
+    vm.prank(alice);
+    contracts.poolProxy.flashLoan(
+      address(mockFlashReceiver),
+      assets,
+      amounts,
+      modes,
+      alice,
+      emptyParams,
+      0
+    );
+  }
+
   function test_reverts_flashLoan_simple_invalid_return() public {
     bytes memory emptyParams;
 

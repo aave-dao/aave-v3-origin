@@ -34,16 +34,8 @@ contract DefaultReserveInterestRateStrategyV2 is IDefaultInterestRateStrategyV2 
   /// @inheritdoc IDefaultInterestRateStrategyV2
   uint256 public constant MAX_OPTIMAL_POINT = 99_00;
 
-  /// @dev Underlying asset listed on the Aave pool => rate data
-  mapping(address reserve => InterestRateData) internal _interestRateData;
-
-  /**
-   * @param provider The address of the PoolAddressesProvider of the associated Aave pool
-   */
-  constructor(address provider) {
-    require(provider != address(0), Errors.INVALID_ADDRESSES_PROVIDER);
-    ADDRESSES_PROVIDER = IPoolAddressesProvider(provider);
-  }
+  /// @dev Map of reserves address and their interest rate data (reserveAddress => interestRateData)
+  mapping(address => InterestRateData) internal _interestRateData;
 
   modifier onlyPoolConfigurator() {
     require(
@@ -51,6 +43,15 @@ contract DefaultReserveInterestRateStrategyV2 is IDefaultInterestRateStrategyV2 
       Errors.CALLER_NOT_POOL_CONFIGURATOR
     );
     _;
+  }
+
+  /**
+   * @dev Constructor.
+   * @param provider The address of the PoolAddressesProvider of the associated Aave pool
+   */
+  constructor(address provider) {
+    require(provider != address(0), Errors.INVALID_ADDRESSES_PROVIDER);
+    ADDRESSES_PROVIDER = IPoolAddressesProvider(provider);
   }
 
   /// @inheritdoc IReserveInterestRateStrategy
@@ -117,7 +118,7 @@ contract DefaultReserveInterestRateStrategyV2 is IDefaultInterestRateStrategyV2 
   ) external view virtual override returns (uint256, uint256, uint256) {
     InterestRateDataRay memory rateData = _rayifyRateData(_interestRateData[params.reserve]);
 
-    // @note This is a short circuit to allow mintable assets, which by definition cannot be supplied
+    // @note This is a short circuit to allow mintable assets (ex. GHO), which by definition cannot be supplied
     // and thus do not use virtual underlying balances.
     if (!params.usingVirtualBalance) {
       return (0, 0, rateData.baseVariableBorrowRate);
@@ -203,7 +204,7 @@ contract DefaultReserveInterestRateStrategyV2 is IDefaultInterestRateStrategyV2 
   /**
    * @dev Doing validations and data update for an asset
    * @param reserve address of the underlying asset of the reserve
-   * @param rateData Encoded eserve interest rate data to apply
+   * @param rateData Encoded reserve interest rate data to apply
    */
   function _setInterestRateParams(address reserve, InterestRateData memory rateData) internal {
     require(reserve != address(0), Errors.ZERO_ADDRESS_NOT_VALID);
@@ -225,7 +226,7 @@ contract DefaultReserveInterestRateStrategyV2 is IDefaultInterestRateStrategyV2 
         uint256(rateData.variableRateSlope1) +
         uint256(rateData.variableRateSlope2) <=
         MAX_BORROW_RATE,
-      Errors.INVALID_MAXRATE
+      Errors.INVALID_MAX_RATE
     );
 
     _interestRateData[reserve] = rateData;

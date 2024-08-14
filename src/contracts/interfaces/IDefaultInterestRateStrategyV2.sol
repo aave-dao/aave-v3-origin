@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import './IReserveInterestRateStrategy.sol';
+import {IReserveInterestRateStrategy} from './IReserveInterestRateStrategy.sol';
 import {IPoolAddressesProvider} from './IPoolAddressesProvider.sol';
 
 /**

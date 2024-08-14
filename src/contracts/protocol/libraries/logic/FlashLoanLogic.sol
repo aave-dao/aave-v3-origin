@@ -9,7 +9,6 @@ import {IPool} from '../../../interfaces/IPool.sol';
 import {IFlashLoanReceiver} from '../../../misc/flashloan/interfaces/IFlashLoanReceiver.sol';
 import {IFlashLoanSimpleReceiver} from '../../../misc/flashloan/interfaces/IFlashLoanSimpleReceiver.sol';
 import {IPoolAddressesProvider} from '../../../interfaces/IPoolAddressesProvider.sol';
-import {UserConfiguration} from '../configuration/UserConfiguration.sol';
 import {ReserveConfiguration} from '../configuration/ReserveConfiguration.sol';
 import {Errors} from '../helpers/Errors.sol';
 import {WadRayMath} from '../math/WadRayMath.sol';

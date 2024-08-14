@@ -1,6 +1,6 @@
 # Aave V3.1 Origin
 
-![Aave v3.1 Origin_banner](./v3-1-banner.jpeg)
+![Aave v3.1 Origin_banner](./resources/v3-1-banner.jpeg)
 
 Aave v3.1 complete codebase, Foundry-based.
 
@@ -39,9 +39,10 @@ bun install
 
 ## Documentation
 
-- [Aave v3 technical Paper](./techpaper/Aave_V3_Technical_Paper.pdf)
+- [Aave v3 technical Paper](./docs/Aave_V3_Technical_Paper.pdf)
 - [v3 to v3.0.2 production upgrade](https://github.com/bgd-labs/proposal-3.0.2-upgrade/blob/main/README.md)
 - [Aave v3.1 features](./docs/Aave-v3.1-features.md)
+- [Set Ltv to 0 on Freeze Feature State diagram](./docs/freeze-ltv0-states.png)
 
 <br>
 
@@ -83,6 +84,7 @@ The following are the security procedures historically applied to Aave v3.X vers
 - [Certora](./audits/30-04-2024_Certora_AaveV3.1.pdf)
 - [MixBytes](./audits/02-05-2024_MixBytes_AaveV3.1.pdf)
 - An internal review by [SterMi](https://twitter.com/stermi) on the virtual accounting feature was conducted on an initial phase of the codebase.
+- [Cantina competition report](./audits/02-06-2024-Cantina-contest-AaveV3.1.pdf)
 - Additionally, Certora properties have been improved over time since the Aave v3 release. More details [HERE](./certora/README.md).
 
 <br>

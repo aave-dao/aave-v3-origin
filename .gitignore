@@ -5,6 +5,9 @@ out/
 # general
 .env
 .env.bk
+.assets
+
+# artifacts
 reports/
 diffs/
 downloads/

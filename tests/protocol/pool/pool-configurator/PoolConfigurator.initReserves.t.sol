@@ -58,7 +58,10 @@ contract PoolConfiguratorInitReservesTest is TestnetProcedures {
 
         assertEq(AToken(aTokenProxy).name(), initConfig.aTokenName);
         assertEq(AToken(aTokenProxy).symbol(), initConfig.aTokenSymbol);
-        assertEq(AToken(aTokenProxy).decimals(), initConfig.underlyingAssetDecimals);
+        assertEq(
+          AToken(aTokenProxy).decimals(),
+          TestnetERC20(initConfig.underlyingAsset).decimals()
+        );
         assertEq(AToken(aTokenProxy).RESERVE_TREASURY_ADDRESS(), initConfig.treasury);
         assertEq(AToken(aTokenProxy).UNDERLYING_ASSET_ADDRESS(), initConfig.underlyingAsset);
         assertEq(
@@ -68,7 +71,10 @@ contract PoolConfiguratorInitReservesTest is TestnetProcedures {
 
         assertEq(AToken(stableDebtProxy).name(), initConfig.stableDebtTokenName);
         assertEq(AToken(stableDebtProxy).symbol(), initConfig.stableDebtTokenSymbol);
-        assertEq(AToken(stableDebtProxy).decimals(), initConfig.underlyingAssetDecimals);
+        assertEq(
+          AToken(stableDebtProxy).decimals(),
+          TestnetERC20(initConfig.underlyingAsset).decimals()
+        );
         assertEq(AToken(stableDebtProxy).UNDERLYING_ASSET_ADDRESS(), initConfig.underlyingAsset);
         assertEq(
           address(AToken(stableDebtProxy).getIncentivesController()),
@@ -77,7 +83,10 @@ contract PoolConfiguratorInitReservesTest is TestnetProcedures {
 
         assertEq(AToken(variableDebtProxy).name(), initConfig.variableDebtTokenName);
         assertEq(AToken(variableDebtProxy).symbol(), initConfig.variableDebtTokenSymbol);
-        assertEq(AToken(variableDebtProxy).decimals(), initConfig.underlyingAssetDecimals);
+        assertEq(
+          AToken(variableDebtProxy).decimals(),
+          TestnetERC20(initConfig.underlyingAsset).decimals()
+        );
         assertEq(AToken(variableDebtProxy).UNDERLYING_ASSET_ADDRESS(), initConfig.underlyingAsset);
         assertEq(
           address(AToken(variableDebtProxy).getIncentivesController()),
@@ -93,7 +102,7 @@ contract PoolConfiguratorInitReservesTest is TestnetProcedures {
       assertEq(c.isActive, true);
       assertEq(c.isFrozen, false);
       assertEq(c.isPaused, false);
-      assertEq(c.decimals, initConfig.underlyingAssetDecimals);
+      assertEq(c.decimals, TestnetERC20(initConfig.underlyingAsset).decimals());
 
       assertEq(c.ltv, 0);
       assertEq(c.liquidationThreshold, 0);

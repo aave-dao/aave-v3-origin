@@ -10,8 +10,7 @@ import '../../../interfaces/IMarketReportTypes.sol';
 contract AaveV3PeripheryBatch is
   AaveV3TreasuryProcedure,
   AaveV3OracleProcedure,
-  AaveV3IncentiveProcedure,
-  AaveV3DefaultRateStrategyProcedure
+  AaveV3IncentiveProcedure
 {
   PeripheryReport internal _report;
 
@@ -34,8 +33,6 @@ contract AaveV3PeripheryBatch is
     (_report.emissionManager, _report.rewardsControllerImplementation) = _deployIncentives(
       setupBatch
     );
-
-    _report.defaultInterestRateStrategy = _deployDefaultRateStrategyV2(poolAddressesProvider);
   }
 
   function getPeripheryReport() external view returns (PeripheryReport memory) {

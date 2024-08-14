@@ -525,7 +525,7 @@ contract RateStrategyTests is TestnetProcedures {
 
     vm.prank(report.poolConfiguratorProxy);
 
-    vm.expectRevert(bytes(Errors.INVALID_MAXRATE));
+    vm.expectRevert(bytes(Errors.INVALID_MAX_RATE));
     rateStrategy.setInterestRateParams(tokenList.usdx, abi.encode(rateData));
   }
 
@@ -556,7 +556,7 @@ contract RateStrategyTests is TestnetProcedures {
 
     vm.prank(report.poolConfiguratorProxy);
 
-    vm.expectRevert(bytes(Errors.INVALID_MAXRATE));
+    vm.expectRevert(bytes(Errors.INVALID_MAX_RATE));
     rateStrategy.setInterestRateParams(tokenList.usdx, rateData);
   }
 

@@ -31,6 +31,7 @@ fantom_testnet = "${RPC_FANTOM_TESTNET}"
 harmony = "${RPC_HARMONY}"
 sepolia = "${RPC_SEPOLIA}"
 mumbai = "${RPC_MUMBAI}"
+amoy = "${RPC_AMOY}"
 bnb_testnet = "${RPC_BNB_TESTNET}"
 bnb = "${RPC_BNB}"
 gnosis = "${RPC_GNOSIS}"
@@ -45,8 +46,9 @@ arbitrum={key="${ETHERSCAN_API_KEY_ARBITRUM}",chainId=42161}
 fantom={key="${ETHERSCAN_API_KEY_FANTOM}",chainId=250}
 scroll={key="${ETHERSCAN_API_KEY_SCROLL}",chainId=534352, url='https://api.scrollscan.com/api\?'}
 celo={key="${ETHERSCAN_API_KEY_CELO}",chainId=42220}
-sepolia={key="${ETHERSCAN_API_KEY_SEPOLIA}",chainId=11155111}
-mumbai={key="${ETHERSCAN_API_KEY_MUMBAI}",chainId=11155111}
+sepolia={key="${ETHERSCAN_API_KEY_MAINNET}",chainId=11155111}
+mumbai={key="${ETHERSCAN_API_KEY_POLYGON}",chainId=80001}
+amoy={key="${ETHERSCAN_API_KEY_POLYGON}",chainId=80002}
 bnb_testnet={key="${ETHERSCAN_API_KEY_BNB}",chainId=97,url='https://api-testnet.bscscan.com/api'}
 bnb={key="${ETHERSCAN_API_KEY_BNB}",chainId=56,url='https://api.bscscan.com/api'}
 base={key="${ETHERSCAN_API_KEY_BASE}",chain=8453}
