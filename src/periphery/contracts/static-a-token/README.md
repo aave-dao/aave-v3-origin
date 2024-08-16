@@ -47,11 +47,11 @@ To allow more flexibility the new `StataTokenV2`(v2) is based on [open-zeppelin-
 The implementation is seperated in two ERC20 extentions and one actual "merger" contract stitching functionality together.
 
 1. `ERC20AaveLM` is an abstract contract implementing the forwarding of liquidity mining from an underlying AaveERC20 - an ERC20 implementing `scaled` functions - to holders of a wrapper contract.
-The abstract contract is following `ERC-7201` and acts as erc20 extension.
+   The abstract contract is following `ERC-7201` and acts as erc20 extension.
 2. `ERC4626StataToken` is an abstract contract implementing the [EIP-4626](https://eips.ethereum.org/EIPS/eip-4626) methods for an underlying aToken.
-The abstract contract is following `ERC-7201` and acts as erc20 extension.
-The extension considers pool limitations like pausing, caps and available liquidity.
-In addition it adds a `latestAnswer` priceFeed, which returns the share price based on how aave prices the underlying.
+   The abstract contract is following `ERC-7201` and acts as erc20 extension.
+   The extension considers pool limitations like pausing, caps and available liquidity.
+   In addition it adds a `latestAnswer` priceFeed, which returns the share price based on how aave prices the underlying.
 3. `StataTokenV2` is the main contract inheriting `ERC20AaveLM` and `ERC4626StataToken`, while also adding `Pausability`, `Rescuability`, `Permit` and the actual initialization.
 
 ### MetaTransactions
