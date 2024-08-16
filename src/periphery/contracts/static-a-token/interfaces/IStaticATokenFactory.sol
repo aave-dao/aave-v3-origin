@@ -2,6 +2,8 @@
 pragma solidity ^0.8.10;
 
 interface IStaticATokenFactory {
+  error NotListedUnderlying(address underlying);
+
   /**
    * @notice Creates new staticATokens
    * @param underlyings the addresses of the underlyings to create.

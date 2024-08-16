@@ -53,7 +53,7 @@ contract PoolConfiguratorUpgradeabilityTests is TestnetProcedures {
     initTestEnvironment();
   }
 
-  function test_getConfiguratorLogic() public {
+  function test_getConfiguratorLogic() public view {
     assertNotEq(contracts.poolConfiguratorProxy.getConfiguratorLogic(), address(0));
   }
 

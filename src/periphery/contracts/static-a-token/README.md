@@ -17,7 +17,7 @@ The static-a-token contains an [EIP-4626](https://eips.ethereum.org/EIPS/eip-462
 - **Upgradable by the Aave governance.** Similar to other contracts of the Aave ecosystem, the Level 1 executor (short executor) will be able to add new features to the deployed instances of the `stataTokens`.
 - **Powered by a stataToken Factory.** Whenever a token will be listed on Aave v3, anybody will be able to call the stataToken Factory to deploy an instance for the new asset, permissionless, but still assuring the code used and permissions are properly configured without any extra headache.
 
-See [IStaticATokenLM.sol](./interfaces/IStaticATokenLM.sol) for detailed method documentation.
+See [IStata4626LM.sol](./interfaces/IERC20AaveLM.sol) for detailed method documentation.
 
 ## Deployed Addresses
 
@@ -37,71 +37,46 @@ For this project, the security procedures applied/being finished are:
 - The test suite of the codebase itself.
 - Certora audit/property checking for all the dynamics of the `stataToken`, including respecting all the specs of [EIP-4626](https://eips.ethereum.org/EIPS/eip-4626).
 
-## Upgrade Notes Umbrella
+## Upgrade Notes StataTokenV2
 
 ### Inheritance
 
-Interface inheritance has been changed so that `IStaticATokenLM` implements `IERC4626`, making it easier for integrators to work with the interface.
-The current `Initializable` has been removed in favor of the new [Initializable](https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable/blob/9a47a37c4b8ce2ac465e8656f31d32ac6fe26eaa/contracts/proxy/utils/Initializable.sol) following the [`ERC-7201`](https://eips.ethereum.org/EIPS/eip-7201) standard.
-To account for the shift in storage, a new `DeprecationGap` has been introduced to maintain the remaining storage at the current position.
+The `StaticATokenLM`(v1) was based on solmate.
+To allow more flexibility the new `StataTokenV2`(v2) is based on [open-zeppelin-upgradeable](https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable) which relies on [`ERC-7201`](https://eips.ethereum.org/EIPS/eip-7201) which isolates storage per contract.
 
-### Misc
+The `StataTokenV2` is seperated in 3 different contracts, where `StataTokenV2` inherits `ERC4626StataToken` and `ERC20AaveLM`.
 
-Permit params have been excluded from the METADEPOSIT_TYPEHASH as they are not necessary.
-Potential frontrunning of the permit via mempool observation is unavoidable, but due to wrapping the permit execution in a `try..catch` griefing is impossible.
+- `ERC20AaveLM` is an abstract contract implementing the forwarding of liquidity mining from an underlying AaveERC20 - an ERC20 implementing `scaled` functions - to a wrapper contract.
+- `ERC4626StataToken` is an abstract contract implementing the [EIP-4626](https://eips.ethereum.org/EIPS/eip-4626) methods for an underlying aToken. In addition it adds a `latestAnswer`.
+- `StataTokenV2` is the main contract stritching things together, while adding `Pausability`, `Rescuability`, `Permit` and the actual initialization.
 
-### Features
+### MetaTransactions
+
+MetaTransactions have been removed as there was no clear use-case besides permit based deposits ever used.
+To account for that specific use-case a dedicated `depositWithPermit` was added.
+
+### Direct AToken Interaction
+
+In v1 deposit was overleaded to allow underlying & aToken deposits.
+While this appraoch was fine it seemed unclean and caused some confusion with integrators.
+Therefore v2 introduces dedicated `depositATokens` and `redeemATokens` methods.
 
 #### Rescuable
 
 [Rescuable](https://github.com/bgd-labs/solidity-utils/blob/main/src/contracts/utils/Rescuable.sol) has been applied to
-the `StaticATokenLM` which will allow the ACL_ADMIN of the corresponding `POOL` to rescue any tokens on the contract.
+the `StataTokenV2` which will allow the ACL_ADMIN of the corresponding `POOL` to rescue any tokens on the contract.
 
 #### Pausability
 
-The `StaticATokenLM` implements the [PausableUpgradeable](https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable/blob/9a47a37c4b8ce2ac465e8656f31d32ac6fe26eaa/contracts/utils/PausableUpgradeable.sol) allowing any emergency admin to pause the vault in case of an emergency.
+The `StataTokenV2` implements the [PausableUpgradeable](https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable/blob/9a47a37c4b8ce2ac465e8656f31d32ac6fe26eaa/contracts/utils/PausableUpgradeable.sol) allowing any emergency admin to pause the vault in case of an emergency.
 As long as the vault is paused, minting, burning, transfers and claiming of rewards is impossible.
 
 #### LatestAnswer
 
-While there are already mechanisms to price the `StaticATokenLM` implemented by 3th parties for improved UX/DX the `StaticATokenLM` now exposes `latestAnswer`.
-`latestAnswer` returns the asset price priced as `underlying_price * excahngeRate`.
+While there are already mechanisms to price the `StataTokenV2` implemented by 3th parties for improved UX/DX the `StataTokenV2` now exposes `latestAnswer`.
+`latestAnswer` returns the asset price priced as `underlying_price * exchangeRate`.
 It is important to note that:
 
 - `underlying_price` is fetched from the AaveOracle, which means it is subject to mechanisms implemented by the DAO on top of the Chainlink price feeds.
 - the `latestAnswer` is a scaled response returning the price in the same denomination as `underlying_price` which means the sprice can be undervalued by up to 1 wei
 - while this should be obvious deviations in the price - even when limited to 1 wei per share - will compound per full share
-
-### Storage diff
-
-```
-git checkout main
-forge inspect src/periphery/contracts/static-a-token/StaticATokenLM.sol:StaticATokenLM storage-layout --pretty > reports/StaticATokenStorageBefore.md
-git checkout project-a
-forge inspect src/periphery/contracts/static-a-token/StaticATokenLM.sol:StaticATokenLM storage-layout --pretty > reports/StaticATokenStorageAfter.md
-make git-diff before=reports/StaticATokenStorageBefore.md after=reports/StaticATokenStorageAfter.md out=StaticATokenStorageDiff
-```
-
-```diff
-diff --git a/reports/StaticATokenStorageBefore.md b/reports/StaticATokenStorageAfter.md
-index a7e3105..89e0967 100644
---- a/reports/StaticATokenStorageBefore.md
-+++ b/reports/StaticATokenStorageAfter.md
-@@ -1,7 +1,6 @@
- | Name               | Type                                                                           | Slot | Offset | Bytes | Contract                                                                 |
- | ------------------ | ------------------------------------------------------------------------------ | ---- | ------ | ----- | ------------------------------------------------------------------------ |
--| \_initialized      | uint8                                                                          | 0    | 0      | 1     | src/periphery/contracts/static-a-token/StaticATokenLM.sol:StaticATokenLM |
--| \_initializing     | bool                                                                           | 0    | 1      | 1     | src/periphery/contracts/static-a-token/StaticATokenLM.sol:StaticATokenLM |
-+| \_\_deprecated     | uint256                                                                        | 0    | 0      | 32    | src/periphery/contracts/static-a-token/StaticATokenLM.sol:StaticATokenLM |
- | name               | string                                                                         | 1    | 0      | 32    | src/periphery/contracts/static-a-token/StaticATokenLM.sol:StaticATokenLM |
- | symbol             | string                                                                         | 2    | 0      | 32    | src/periphery/contracts/static-a-token/StaticATokenLM.sol:StaticATokenLM |
- | decimals           | uint8                                                                          | 3    | 0      | 1     | src/periphery/contracts/static-a-token/StaticATokenLM.sol:StaticATokenLM |
-```
-
-### Umbrella upgrade plan
-
-The upgrade can be performed independent(before) from any umbrella changes as it has no dependencies.
-The upgrade will need to:
-
-- upgrade the `StaticATokenFactory` with a new version, replacing the `STATIC_A_TOKEN_IMPL`.
-- upgrade existing stata tokens via `upgradeToAndCall` to the new implementation. While the tokens are already initialized, due to changing the `Initializable` the corresponding storage is lost.

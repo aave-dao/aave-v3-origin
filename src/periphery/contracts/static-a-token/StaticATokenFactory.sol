@@ -5,7 +5,7 @@ import {IPool, DataTypes} from '../../../core/contracts/interfaces/IPool.sol';
 import {IERC20Metadata} from 'solidity-utils/contracts/oz-common/interfaces/IERC20Metadata.sol';
 import {ITransparentProxyFactory} from 'solidity-utils/contracts/transparent-proxy/interfaces/ITransparentProxyFactory.sol';
 import {Initializable} from 'solidity-utils/contracts/transparent-proxy/Initializable.sol';
-import {StaticATokenLM} from './StaticATokenLM.sol';
+import {StataTokenV2} from './StataTokenV2.sol';
 import {IStaticATokenFactory} from './interfaces/IStaticATokenFactory.sol';
 
 /**
@@ -47,18 +47,22 @@ contract StaticATokenFactory is Initializable, IStaticATokenFactory {
       address cachedStaticAToken = _underlyingToStaticAToken[underlyings[i]];
       if (cachedStaticAToken == address(0)) {
         DataTypes.ReserveDataLegacy memory reserveData = POOL.getReserveData(underlyings[i]);
-        require(reserveData.aTokenAddress != address(0), 'UNDERLYING_NOT_LISTED');
+        if (reserveData.aTokenAddress == address(0))
+          revert NotListedUnderlying(reserveData.aTokenAddress);
         bytes memory symbol = abi.encodePacked(
           'stat',
-          IERC20Metadata(reserveData.aTokenAddress).symbol()
+          IERC20Metadata(reserveData.aTokenAddress).symbol(),
+          'v2'
         );
         address staticAToken = TRANSPARENT_PROXY_FACTORY.createDeterministic(
           STATIC_A_TOKEN_IMPL,
           PROXY_ADMIN,
           abi.encodeWithSelector(
-            StaticATokenLM.initialize.selector,
+            StataTokenV2.initialize.selector,
             reserveData.aTokenAddress,
-            string(abi.encodePacked('Static ', IERC20Metadata(reserveData.aTokenAddress).name())),
+            string(
+              abi.encodePacked('Static ', IERC20Metadata(reserveData.aTokenAddress).name(), ' v2')
+            ),
             string(symbol)
           ),
           bytes32(uint256(uint160(underlyings[i])))
