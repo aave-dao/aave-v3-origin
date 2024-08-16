@@ -85,7 +85,7 @@ contract ERC20AaveLMUpgradableTest is TestnetProcedures {
     contracts.emissionManager.setEmissionAdmin(rewardToken, emissionAdmin);
   }
 
-  function test_2701() external view {
+  function test_2701() external pure {
     assertEq(
       keccak256(abi.encode(uint256(keccak256('aave-dao.storage.ERC20AaveLM')) - 1)) &
         ~bytes32(uint256(0xff)),

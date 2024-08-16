@@ -7,10 +7,6 @@ import {IERC20Permit} from 'openzeppelin-contracts/contracts/token/ERC20/extensi
 import {IPool} from '../../../src/core/contracts/interfaces/IPool.sol';
 import {TestnetProcedures, TestnetERC20} from '../../utils/TestnetProcedures.sol';
 import {ERC4626Upgradeable, ERC4626StataTokenUpgradeable, IERC4626StataToken} from '../../../src/periphery/contracts/static-a-token/ERC4626StataTokenUpgradeable.sol';
-import {IRewardsController} from '../../../src/periphery/contracts/rewards/interfaces/IRewardsController.sol';
-import {PullRewardsTransferStrategy, ITransferStrategyBase} from '../../../src/periphery/contracts/rewards/transfer-strategies/PullRewardsTransferStrategy.sol';
-import {RewardsDataTypes} from '../../../src/periphery/contracts/rewards/libraries/RewardsDataTypes.sol';
-import {IEACAggregatorProxy} from '../../../src/periphery/contracts/misc/interfaces/IEACAggregatorProxy.sol';
 import {DataTypes} from '../../../src/core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
 import {SigUtils} from '../../utils/SigUtils.sol';
 
@@ -46,7 +42,7 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
     erc4626Upgradeable.mockInit(address(reserveData.aTokenAddress));
   }
 
-  function test_2701() external view {
+  function test_2701() external pure {
     assertEq(
       keccak256(abi.encode(uint256(keccak256('aave-dao.storage.ERC4626StataToken')) - 1)) &
         ~bytes32(uint256(0xff)),
@@ -66,7 +62,7 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
 
   // ### DEPOSIT TESTS ###
   function test_depositATokens(uint128 assets, address receiver) public {
-    vm.assume(receiver != address(0));
+    _validateReceiver(receiver);
     TestEnv memory env = _setupTestEnv(assets);
     _fundAToken(env.amount, user);
 
@@ -106,7 +102,7 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
     uint128 assets,
     address receiver
   ) external {
-    vm.assume(receiver != address(0));
+    _validateReceiver(receiver);
     TestEnv memory env = _setupTestEnv(assets);
     _fundUnderlying(env.amount, user);
     IERC4626StataToken.SignatureParams memory sig;
@@ -130,7 +126,7 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
     uint128 assets,
     address receiver
   ) external {
-    vm.assume(receiver != address(0));
+    _validateReceiver(receiver);
     TestEnv memory env = _setupTestEnv(assets);
     _fundAToken(env.amount, user);
     IERC4626StataToken.SignatureParams memory sig;
@@ -151,7 +147,7 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
   }
 
   function test_depositWithPermit_underlying(uint128 assets, address receiver) external {
-    vm.assume(receiver != address(0));
+    _validateReceiver(receiver);
     TestEnv memory env = _setupTestEnv(assets);
     _fundUnderlying(env.amount, user);
 
@@ -220,7 +216,7 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
 
   // ### REDEEM TESTS ###
   function test_redeemATokens(uint256 assets, address receiver) public {
-    vm.assume(receiver != address(0));
+    _validateReceiver(receiver);
     TestEnv memory env = _setupTestEnv(assets);
     uint256 shares = _fund4626(env.amount, user);
 
@@ -266,7 +262,7 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
   }
 
   function test_redeem(uint256 assets, address receiver) external {
-    vm.assume(receiver != address(0));
+    _validateReceiver(receiver);
     TestEnv memory env = _setupTestEnv(assets);
     uint256 shares = _fund4626(env.amount, user);
 
@@ -278,7 +274,7 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
 
   // ### withdraw TESTS ###
   function test_withdraw(uint256 assets, address receiver) public {
-    vm.assume(receiver != address(0));
+    _validateReceiver(receiver);
     TestEnv memory env = _setupTestEnv(assets);
     uint256 shares = _fund4626(env.amount, user);
 
@@ -291,7 +287,7 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
   }
 
   function test_withdraw_shouldRevert_moreThenAvailable(uint256 assets, address receiver) public {
-    vm.assume(receiver != address(0));
+    _validateReceiver(receiver);
     TestEnv memory env = _setupTestEnv(assets);
     _fund4626(env.amount, user);
 
@@ -309,7 +305,7 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
 
   // ### mint TESTS ###
   function test_mint(uint256 assets, address receiver) public {
-    vm.assume(receiver != address(0));
+    _validateReceiver(receiver);
     TestEnv memory env = _setupTestEnv(assets);
     _fundUnderlying(env.amount, user);
 
@@ -331,7 +327,7 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
     uint256 shares = erc4626Upgradeable.previewDeposit(env.amount);
 
     vm.expectRevert();
-    uint256 assetsUsedForMinting = erc4626Upgradeable.mint(shares + 1, receiver);
+    erc4626Upgradeable.mint(shares + 1, receiver);
   }
 
   // ### maxDeposit TESTS ###
@@ -400,7 +396,7 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
   function test_maxRedeem_inSufficientAvailableLiquidity(uint256 amountToBorrow) public {
     uint128 assets = 1e8;
     amountToBorrow = bound(amountToBorrow, 1, assets);
-    uint256 shares = _fund4626(assets, user);
+    _fund4626(assets, user);
 
     // borrow out some assets
     address borrowUser = address(99);
@@ -448,29 +444,33 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
     uint256 amount;
   }
 
-  function _setupTestEnv(uint256 amount) internal returns (TestEnv memory) {
+  function _validateReceiver(address receiver) internal view {
+    vm.assume(receiver != address(0) && receiver != address(aToken));
+  }
+
+  function _setupTestEnv(uint256 amount) internal pure returns (TestEnv memory) {
     TestEnv memory env;
     env.amount = bound(amount, 1, type(uint96).max);
     return env;
   }
 
-  function _fundUnderlying(uint256 assets, address user) internal {
-    deal(underlying, user, assets);
+  function _fundUnderlying(uint256 assets, address receiver) internal {
+    deal(underlying, receiver, assets);
   }
 
-  function _fundAToken(uint256 assets, address user) internal {
-    _fundUnderlying(assets, user);
-    vm.startPrank(user);
+  function _fundAToken(uint256 assets, address receiver) internal {
+    _fundUnderlying(assets, receiver);
+    vm.startPrank(receiver);
     IERC20(underlying).approve(address(contracts.poolProxy), assets);
-    contracts.poolProxy.deposit(underlying, assets, user, 0);
+    contracts.poolProxy.deposit(underlying, assets, receiver, 0);
     vm.stopPrank();
   }
 
-  function _fund4626(uint256 assets, address user) internal returns (uint256) {
-    _fundAToken(assets, user);
-    vm.startPrank(user);
+  function _fund4626(uint256 assets, address receiver) internal returns (uint256) {
+    _fundAToken(assets, receiver);
+    vm.startPrank(receiver);
     IERC20(aToken).approve(address(erc4626Upgradeable), assets);
-    uint256 shares = erc4626Upgradeable.depositATokens(assets, user);
+    uint256 shares = erc4626Upgradeable.depositATokens(assets, receiver);
     vm.stopPrank();
     return shares;
   }
