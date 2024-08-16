@@ -72,23 +72,23 @@ abstract contract BaseTest is TestnetProcedures {
     vm.stopPrank();
   }
 
-  function _fundUnderlying(uint256 assets, address user) internal {
-    deal(underlying, user, assets);
+  function _fundUnderlying(uint256 assets, address receiver) internal {
+    deal(underlying, receiver, assets);
   }
 
-  function _fundAToken(uint256 assets, address user) internal {
-    _fundUnderlying(assets, user);
-    vm.startPrank(user);
+  function _fundAToken(uint256 assets, address receiver) internal {
+    _fundUnderlying(assets, receiver);
+    vm.startPrank(receiver);
     IERC20(underlying).approve(address(contracts.poolProxy), assets);
-    contracts.poolProxy.deposit(underlying, assets, user, 0);
+    contracts.poolProxy.deposit(underlying, assets, receiver, 0);
     vm.stopPrank();
   }
 
-  function _fund4626(uint256 assets, address user) internal returns (uint256) {
-    _fundAToken(assets, user);
-    vm.startPrank(user);
+  function _fund4626(uint256 assets, address receiver) internal returns (uint256) {
+    _fundAToken(assets, receiver);
+    vm.startPrank(receiver);
     IERC20(aToken).approve(address(stataTokenV2), assets);
-    uint256 shares = stataTokenV2.depositATokens(assets, user);
+    uint256 shares = stataTokenV2.depositATokens(assets, receiver);
     vm.stopPrank();
     return shares;
   }

@@ -7,11 +7,11 @@ import {IERC4626StataToken} from '../../../src/periphery/contracts/static-a-toke
 import {BaseTest} from './TestBase.sol';
 
 contract StataTokenV2PausableTest is BaseTest {
-  function test_canPause() external {
+  function test_canPause() external view {
     assertEq(stataTokenV2.canPause(poolAdmin), true);
   }
 
-  function test_canPause_shouldReturnFalse(address actor) external {
+  function test_canPause_shouldReturnFalse(address actor) external view {
     vm.assume(actor != poolAdmin);
     assertEq(stataTokenV2.canPause(actor), false);
   }

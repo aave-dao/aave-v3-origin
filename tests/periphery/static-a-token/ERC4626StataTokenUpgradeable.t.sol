@@ -181,7 +181,7 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
   }
 
   function test_depositWithPermit_aToken(uint128 assets, address receiver) external {
-    vm.assume(receiver != address(0));
+    _validateReceiver(receiver);
     TestEnv memory env = _setupTestEnv(assets);
     _fundAToken(env.amount, user);
 
@@ -318,7 +318,7 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
   }
 
   function test_mint_shouldRevert_mintMoreThenBalance(uint256 assets, address receiver) public {
-    vm.assume(receiver != address(0));
+    _validateReceiver(receiver);
     TestEnv memory env = _setupTestEnv(assets);
     _fundUnderlying(env.amount, user);
 

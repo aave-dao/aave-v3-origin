@@ -242,7 +242,7 @@ contract ERC20AaveLMUpgradableTest is TestnetProcedures {
     address receiver,
     uint256 sendAmount
   ) external {
-    vm.assume(user != receiver);
+    vm.assume(user != receiver && receiver != address(0));
     TestEnv memory env = _setupTestEnvironment(
       depositAmount,
       emissionEnd,
@@ -395,10 +395,10 @@ contract ERC20AaveLMUpgradableTest is TestnetProcedures {
    * @dev funds the given user with the lm token and updates total supply.
    * Maintains consistency by also funding the underlying to the lmUpgradeable
    */
-  function _fund(uint256 amount, address user) internal {
-    underlying.mint(user, amount);
-    lmUpgradeable.mint(user, amount);
-    vm.prank(user);
+  function _fund(uint256 amount, address receiver) internal {
+    underlying.mint(receiver, amount);
+    lmUpgradeable.mint(receiver, amount);
+    vm.prank(receiver);
     underlying.transfer(address(lmUpgradeable), amount);
   }
 }
