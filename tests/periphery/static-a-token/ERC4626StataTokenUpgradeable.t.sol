@@ -42,7 +42,7 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
     erc4626Upgradeable.mockInit(address(reserveData.aTokenAddress));
   }
 
-  function test_2701() external pure {
+  function test_7201() external pure {
     assertEq(
       keccak256(abi.encode(uint256(keccak256('aave-dao.storage.ERC4626StataToken')) - 1)) &
         ~bytes32(uint256(0xff)),
