@@ -42,7 +42,7 @@ For this project, the security procedures applied/being finished are:
 ### Inheritance
 
 The `StaticATokenLM`(v1) was based on solmate.
-To allow more flexibility the new `StataTokenV2`(v2) is based on [open-zeppelin-upgradeable](https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable) which relies on [`ERC-7201`](https://eips.ethereum.org/EIPS/eip-7201) which isolates storage per contract.
+To allow more flexibility the new `StataTokenV2`(v2) is based on [openzeppelin-contracts-upgradeable](https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable) which relies on [`ERC-7201`](https://eips.ethereum.org/EIPS/eip-7201) which isolates storage per contract.
 
 The implementation is seperated in two ERC20 extentions and one actual "merger" contract stitching functionality together.
 
@@ -53,6 +53,11 @@ The implementation is seperated in two ERC20 extentions and one actual "merger" 
    The extension considers pool limitations like pausing, caps and available liquidity.
    In addition it adds a `latestAnswer` priceFeed, which returns the share price based on how aave prices the underlying.
 3. `StataTokenV2` is the main contract inheriting `ERC20AaveLM` and `ERC4626StataToken`, while also adding `Pausability`, `Rescuability`, `Permit` and the actual initialization.
+
+### Libraries
+
+The previous `StaticATokenLM` relied on `WadRayMath` and `WadRayMathExplicitRounding` - a custom version where one can specify the rounding behavior - for math operations.
+To align the system with the other open zeppelin contracts, all usage has been replaced by the [openzeppelin math](https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/Math.sol) library.
 
 ### MetaTransactions
 
