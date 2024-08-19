@@ -118,7 +118,7 @@ contract RateStrategySettersTests is RateStrategyBase {
 
     vm.prank(report.poolConfiguratorProxy);
 
-    vm.expectRevert(bytes(Errors.INVALID_MAXRATE));
+    vm.expectRevert(bytes(Errors.INVALID_MAX_RATE));
     _setInterestRateParams(tokenList.usdx, rateData);
   }
 

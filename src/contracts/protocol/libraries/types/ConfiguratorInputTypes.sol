@@ -5,7 +5,6 @@ library ConfiguratorInputTypes {
   struct InitReserveInput {
     address aTokenImpl;
     address variableDebtTokenImpl;
-    uint8 underlyingAssetDecimals;
     bool useVirtualBalance;
     address interestRateStrategyAddress;
     address underlyingAsset;

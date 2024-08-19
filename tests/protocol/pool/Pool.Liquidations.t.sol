@@ -924,6 +924,58 @@ contract PoolLiquidationTests is TestnetProcedures {
     contracts.poolProxy.liquidationCall(tokenList.usdx, tokenList.wbtc, bob, 100e6, false);
   }
 
+  function test_liquidation_when_grace_period_disabled(uint40 liquidationGracePeriod) public {
+    vm.assume(
+      liquidationGracePeriod <= contracts.poolConfiguratorProxy.MAX_GRACE_PERIOD() &&
+        liquidationGracePeriod != 0
+    );
+    address[] memory assetsInGrace = new address[](1);
+    assetsInGrace[0] = tokenList.usdx;
+
+    _setLiquidationGracePeriod(assetsInGrace, liquidationGracePeriod);
+
+    vm.startPrank(alice);
+    contracts.poolProxy.supply(tokenList.wbtc, 1.25e8, alice, 0);
+    contracts.poolProxy.borrow(tokenList.usdx, 22_500e6, 2, 0, alice);
+    vm.stopPrank();
+
+    LiquidationInput memory params = _loadLiquidationInput(
+      alice,
+      tokenList.wbtc, // collateral
+      tokenList.usdx, // debt
+      5_000e6,
+      tokenList.wbtc,
+      25_00
+    );
+
+    vm.startPrank(bob);
+    // check that liquidations are not allowed after grace period activation
+    vm.expectRevert(bytes(Errors.LIQUIDATION_GRACE_SENTINEL_CHECK_FAILED));
+    contracts.poolProxy.liquidationCall(
+      params.collateralAsset,
+      params.debtAsset,
+      params.user,
+      params.liquidationAmountInput,
+      params.receiveAToken
+    );
+    vm.stopPrank();
+
+    vm.startPrank(poolAdmin);
+    contracts.poolConfiguratorProxy.disableLiquidationGracePeriod(assetsInGrace[0]);
+    vm.stopPrank();
+
+    vm.startPrank(bob);
+    // check that liquidations are allowed after grace period disabled
+    contracts.poolProxy.liquidationCall(
+      params.collateralAsset,
+      params.debtAsset,
+      params.user,
+      params.liquidationAmountInput,
+      params.receiveAToken
+    );
+    vm.stopPrank();
+  }
+
   function test_liquidation_with_liquidation_grace_period_collateral_active(
     uint40 liquidationGracePeriod
   ) public {

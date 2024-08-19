@@ -4,6 +4,9 @@ pragma solidity ^0.8.0;
 import './RateStrategy.template.sol';
 
 contract RateStrategyBaseTests is RateStrategyBase {
+  using WadRayMath for uint256;
+  using PercentageMath for uint256;
+
   //----------------------------------------------------------------------------------------------------
   //                                      INITIALIZATION TESTS
   //----------------------------------------------------------------------------------------------------
@@ -90,5 +93,186 @@ contract RateStrategyBaseTests is RateStrategyBase {
     vm.expectRevert(bytes("SafeCast: value doesn't fit in 128 bits"));
     contracts.poolProxy.borrow(tokenList.usdx, 10e6, 2, 0, alice);
     vm.stopPrank();
+  }
+
+  function test_new_SetReserveInterestRateParams_when_not_configurator(
+    IDefaultInterestRateStrategyV2.InterestRateData memory rateDataToSet
+  ) public {
+    _validateSetRateParams(rateDataToSet);
+
+    vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_CONFIGURATOR));
+    rateStrategy.setInterestRateParams(tokenList.usdx, abi.encode(rateDataToSet));
+  }
+
+  function test_new_SetReserveInterestRateParams_override_method(
+    IDefaultInterestRateStrategyV2.InterestRateData memory rateDataToSet
+  ) public setRateParams(rateDataToSet, tokenList.usdx) {
+    assertEq(address(rateStrategy.ADDRESSES_PROVIDER()), report.poolAddressesProvider);
+    assertEq(
+      rateStrategy.getOptimalUsageRatio(tokenList.usdx),
+      uint256(rateDataToSet.optimalUsageRatio) * 1e23
+    );
+    assertEq(
+      rateStrategy.getVariableRateSlope1(tokenList.usdx),
+      uint256(rateDataToSet.variableRateSlope1) * 1e23
+    );
+    assertEq(
+      rateStrategy.getVariableRateSlope2(tokenList.usdx),
+      uint256(rateDataToSet.variableRateSlope2) * 1e23
+    );
+    assertEq(
+      rateStrategy.getBaseVariableBorrowRate(tokenList.usdx),
+      uint256(rateDataToSet.baseVariableBorrowRate) * 1e23
+    );
+    assertEq(
+      rateStrategy.getMaxVariableBorrowRate(tokenList.usdx),
+      uint256(
+        rateDataToSet.baseVariableBorrowRate +
+          rateDataToSet.variableRateSlope1 +
+          rateDataToSet.variableRateSlope2
+      ) * 1e23
+    );
+  }
+
+  function test_new_SetReserveInterestRateParams(
+    IDefaultInterestRateStrategyV2.InterestRateData memory rateDataToSet
+  ) public {
+    _validateSetRateParams(rateDataToSet);
+
+    vm.prank(report.poolConfiguratorProxy);
+    vm.expectEmit(true, false, false, true);
+    emit RateDataUpdate(
+      tokenList.usdx,
+      uint256(rateDataToSet.optimalUsageRatio),
+      uint256(rateDataToSet.baseVariableBorrowRate),
+      uint256(rateDataToSet.variableRateSlope1),
+      uint256(rateDataToSet.variableRateSlope2)
+    );
+    rateStrategy.setInterestRateParams(tokenList.usdx, abi.encode(rateDataToSet));
+
+    assertEq(address(rateStrategy.ADDRESSES_PROVIDER()), report.poolAddressesProvider);
+    assertEq(
+      rateStrategy.getOptimalUsageRatio(tokenList.usdx),
+      uint256(rateDataToSet.optimalUsageRatio) * 1e23
+    );
+    assertEq(
+      rateStrategy.getVariableRateSlope1(tokenList.usdx),
+      uint256(rateDataToSet.variableRateSlope1) * 1e23
+    );
+    assertEq(
+      rateStrategy.getVariableRateSlope2(tokenList.usdx),
+      uint256(rateDataToSet.variableRateSlope2) * 1e23
+    );
+    assertEq(
+      rateStrategy.getBaseVariableBorrowRate(tokenList.usdx),
+      uint256(rateDataToSet.baseVariableBorrowRate) * 1e23
+    );
+    assertEq(
+      rateStrategy.getMaxVariableBorrowRate(tokenList.usdx),
+      uint256(
+        rateDataToSet.baseVariableBorrowRate +
+          rateDataToSet.variableRateSlope1 +
+          rateDataToSet.variableRateSlope2
+      ) * 1e23
+    );
+  }
+
+  function test_reverts_SetReserveInterestRateParams_when_reserve_0(
+    IDefaultInterestRateStrategyV2.InterestRateData memory rateDataToSet
+  ) public {
+    vm.prank(report.poolConfiguratorProxy);
+    vm.expectRevert(bytes(Errors.ZERO_ADDRESS_NOT_VALID));
+    rateStrategy.setInterestRateParams(address(0), abi.encode(rateDataToSet));
+    // Override
+    vm.prank(report.poolConfiguratorProxy);
+    vm.expectRevert(bytes(Errors.ZERO_ADDRESS_NOT_VALID));
+    rateStrategy.setInterestRateParams(address(0), rateDataToSet);
+  }
+
+  function test_reverts_SetReserveInterestRateParams_when_gt_max_op(
+    IDefaultInterestRateStrategyV2.InterestRateData memory rateDataToSet
+  ) public {
+    vm.assume(rateDataToSet.optimalUsageRatio > rateStrategy.MAX_OPTIMAL_POINT());
+
+    vm.prank(report.poolConfiguratorProxy);
+    vm.expectRevert(bytes(Errors.INVALID_OPTIMAL_USAGE_RATIO));
+    rateStrategy.setInterestRateParams(tokenList.usdx, abi.encode(rateDataToSet));
+
+    // Override
+    vm.prank(report.poolConfiguratorProxy);
+    vm.expectRevert(bytes(Errors.INVALID_OPTIMAL_USAGE_RATIO));
+    rateStrategy.setInterestRateParams(tokenList.usdx, rateDataToSet);
+  }
+
+  function test_reverts_SetReserveInterestRateParams_when_lt_min_op(
+    IDefaultInterestRateStrategyV2.InterestRateData memory rateDataToSet
+  ) public {
+    vm.assume(rateDataToSet.optimalUsageRatio < rateStrategy.MIN_OPTIMAL_POINT());
+
+    vm.prank(report.poolConfiguratorProxy);
+    vm.expectRevert(bytes(Errors.INVALID_OPTIMAL_USAGE_RATIO));
+    rateStrategy.setInterestRateParams(tokenList.usdx, abi.encode(rateDataToSet));
+
+    // Override
+    vm.prank(report.poolConfiguratorProxy);
+    vm.expectRevert(bytes(Errors.INVALID_OPTIMAL_USAGE_RATIO));
+    rateStrategy.setInterestRateParams(tokenList.usdx, rateDataToSet);
+  }
+
+  function test_reverts_SetReserveInterestRateParams_when_gt_maxRate(
+    IDefaultInterestRateStrategyV2.InterestRateData memory rateDataToSet
+  ) public {
+    vm.assume(
+      rateDataToSet.optimalUsageRatio >= rateStrategy.MIN_OPTIMAL_POINT() &&
+        rateDataToSet.optimalUsageRatio <= rateStrategy.MAX_OPTIMAL_POINT()
+    );
+
+    vm.assume(rateDataToSet.variableRateSlope1 <= rateDataToSet.variableRateSlope2);
+    vm.assume(
+      uint256(rateDataToSet.baseVariableBorrowRate) +
+        uint256(rateDataToSet.variableRateSlope1) +
+        uint256(rateDataToSet.variableRateSlope2) >
+        rateStrategy.MAX_BORROW_RATE()
+    );
+
+    vm.prank(report.poolConfiguratorProxy);
+    vm.expectRevert(bytes(Errors.INVALID_MAX_RATE));
+    rateStrategy.setInterestRateParams(tokenList.usdx, abi.encode(rateDataToSet));
+
+    // Override
+    vm.prank(report.poolConfiguratorProxy);
+    vm.expectRevert(bytes(Errors.INVALID_MAX_RATE));
+    rateStrategy.setInterestRateParams(tokenList.usdx, rateDataToSet);
+  }
+
+  function test_reverts_SetReserveInterestRateParams_when_slope1_gt_slope2(
+    uint16 optimalUsageRatio,
+    uint32 baseVariableBorrowRate,
+    uint32 variableRateSlope1,
+    uint32 variableRateSlope2
+  ) public {
+    vm.assume(
+      optimalUsageRatio >= rateStrategy.MIN_OPTIMAL_POINT() &&
+        optimalUsageRatio <= rateStrategy.MAX_OPTIMAL_POINT()
+    );
+
+    vm.assume(variableRateSlope1 > variableRateSlope2);
+
+    IDefaultInterestRateStrategyV2.InterestRateData memory rateData = IDefaultInterestRateStrategyV2
+      .InterestRateData({
+        optimalUsageRatio: optimalUsageRatio,
+        baseVariableBorrowRate: baseVariableBorrowRate,
+        variableRateSlope1: variableRateSlope1,
+        variableRateSlope2: variableRateSlope2
+      });
+
+    vm.prank(report.poolConfiguratorProxy);
+    vm.expectRevert(bytes(Errors.SLOPE_2_MUST_BE_GTE_SLOPE_1));
+    rateStrategy.setInterestRateParams(tokenList.usdx, abi.encode(rateData));
+
+    // Override
+    vm.prank(report.poolConfiguratorProxy);
+    vm.expectRevert(bytes(Errors.SLOPE_2_MUST_BE_GTE_SLOPE_1));
+    rateStrategy.setInterestRateParams(tokenList.usdx, abi.encode(rateData));
   }
 }

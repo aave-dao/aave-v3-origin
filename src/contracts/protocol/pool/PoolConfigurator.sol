@@ -30,7 +30,6 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
   IPool internal _pool;
 
   mapping(address => uint256) internal _pendingLtv;
-  mapping(address => bool) internal _isPendingLtvSet;
 
   uint40 public constant MAX_GRACE_PERIOD = 4 hours;
 
@@ -81,9 +80,8 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
     ConfiguratorInputTypes.InitReserveInput[] calldata input
   ) external override onlyAssetListingOrPoolAdmins {
     IPool cachedPool = _pool;
-    for (uint256 i = 0; i < input.length; i++) {
-      require(IERC20Detailed(input[i].underlyingAsset).decimals() > 5, Errors.INVALID_DECIMALS);
 
+    for (uint256 i = 0; i < input.length; i++) {
       ConfiguratorLogic.executeInitReserve(cachedPool, input[i]);
       emit ReserveInterestRateDataChanged(
         input[i].underlyingAsset,
@@ -154,9 +152,11 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
       _checkNoSuppliers(asset);
     }
 
+    uint256 newLtv = ltv;
+
     if (currentConfig.getFrozen()) {
       _pendingLtv[asset] = ltv;
-      _isPendingLtvSet[asset] = true;
+      newLtv = 0;
 
       emit PendingLtvChanged(asset, ltv);
     } else {
@@ -168,7 +168,7 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
 
     _pool.setConfiguration(asset, currentConfig);
 
-    emit CollateralConfigurationChanged(asset, ltv, liquidationThreshold, liquidationBonus);
+    emit CollateralConfigurationChanged(asset, newLtv, liquidationThreshold, liquidationBonus);
   }
 
   /// @inheritdoc IPoolConfigurator
@@ -198,23 +198,31 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
     bool freeze
   ) external override onlyRiskOrPoolOrEmergencyAdmins {
     DataTypes.ReserveConfigurationMap memory currentConfig = _pool.getConfiguration(asset);
+
+    require(freeze != currentConfig.getFrozen(), Errors.INVALID_FREEZE_STATE);
+
     currentConfig.setFrozen(freeze);
 
+    uint256 ltvSet;
+    uint256 pendingLtvSet;
+
     if (freeze) {
-      _pendingLtv[asset] = currentConfig.getLtv();
-      _isPendingLtvSet[asset] = true;
+      pendingLtvSet = currentConfig.getLtv();
+      _pendingLtv[asset] = pendingLtvSet;
       currentConfig.setLtv(0);
-
-      emit PendingLtvChanged(asset, currentConfig.getLtv());
-    } else if (_isPendingLtvSet[asset]) {
-      uint256 ltv = _pendingLtv[asset];
-      currentConfig.setLtv(ltv);
-
+    } else {
+      ltvSet = _pendingLtv[asset];
+      currentConfig.setLtv(ltvSet);
       delete _pendingLtv[asset];
-      delete _isPendingLtvSet[asset];
-
-      emit PendingLtvRemoved(asset);
     }
+
+    emit PendingLtvChanged(asset, pendingLtvSet);
+    emit CollateralConfigurationChanged(
+      asset,
+      ltvSet,
+      currentConfig.getLiquidationThreshold(),
+      currentConfig.getLiquidationBonus()
+    );
 
     _pool.setConfiguration(asset, currentConfig);
     emit ReserveFrozen(asset, freeze);
@@ -255,6 +263,14 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
   /// @inheritdoc IPoolConfigurator
   function setReservePause(address asset, bool paused) external override onlyEmergencyOrPoolAdmin {
     setReservePause(asset, paused, 0);
+  }
+
+  /// @inheritdoc IPoolConfigurator
+  function disableLiquidationGracePeriod(address asset) external override onlyEmergencyOrPoolAdmin {
+    // set the liquidation grace period in the past to disable liquidation grace period
+    _pool.setLiquidationGracePeriod(asset, 0);
+
+    emit LiquidationGracePeriodDisabled(asset);
   }
 
   /// @inheritdoc IPoolConfigurator
@@ -385,7 +401,11 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
     for (uint256 i = 0; i < reserves.length; i++) {
       DataTypes.ReserveConfigurationMap memory currentConfig = _pool.getConfiguration(reserves[i]);
       if (categoryId == currentConfig.getEModeCategory()) {
-        require(ltv > currentConfig.getLtv(), Errors.INVALID_EMODE_CATEGORY_PARAMS);
+        uint256 currentLtv = currentConfig.getFrozen()
+          ? _pendingLtv[reserves[i]]
+          : currentConfig.getLtv();
+        require(ltv > currentLtv, Errors.INVALID_EMODE_CATEGORY_PARAMS);
+
         require(
           liquidationThreshold > currentConfig.getLiquidationThreshold(),
           Errors.INVALID_EMODE_CATEGORY_PARAMS
@@ -514,8 +534,8 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
   }
 
   /// @inheritdoc IPoolConfigurator
-  function getPendingLtv(address asset) external view override returns (uint256, bool) {
-    return (_pendingLtv[asset], _isPendingLtvSet[asset]);
+  function getPendingLtv(address asset) external view override returns (uint256) {
+    return _pendingLtv[asset];
   }
 
   /// @inheritdoc IPoolConfigurator

@@ -305,6 +305,22 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
     contracts.poolConfiguratorProxy.setReservePause(asset, paused);
   }
 
+  function test_reverts_disableLiquidationGracePeriod_on_unauth(
+    address caller,
+    address asset
+  ) public {
+    vm.assume(
+      !contracts.aclManager.isPoolAdmin(caller) &&
+        !contracts.aclManager.isEmergencyAdmin(caller) &&
+        caller != address(contracts.poolAddressesProvider)
+    );
+
+    vm.prank(caller);
+
+    vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_OR_EMERGENCY_ADMIN));
+    contracts.poolConfiguratorProxy.disableLiquidationGracePeriod(asset);
+  }
+
   function test_reverts_setPoolPause_unauth(
     address caller,
     bool paused,

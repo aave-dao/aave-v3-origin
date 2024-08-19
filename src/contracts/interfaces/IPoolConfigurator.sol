@@ -48,12 +48,6 @@ interface IPoolConfigurator {
   event PendingLtvChanged(address indexed asset, uint256 ltv);
 
   /**
-   * @dev Emitted when the asset is unfrozen and pending ltv is removed.
-   * @param asset The address of the underlying asset of the reserve
-   */
-  event PendingLtvRemoved(address indexed asset);
-
-  /**
    * @dev Emitted when the collateralization risk parameters for the specified asset are updated.
    * @param asset The address of the underlying asset of the reserve
    * @param ltv The loan to value of the asset when used as collateral
@@ -144,6 +138,12 @@ interface IPoolConfigurator {
    * @param gracePeriodUntil Timestamp until when liquidations will not be allowed post-unpause
    */
   event LiquidationGracePeriodChanged(address indexed asset, uint40 gracePeriodUntil);
+
+  /**
+   * @dev Emitted when the liquidation grace period is disabled.
+   * @param asset The address of the underlying asset of the reserve
+   */
+  event LiquidationGracePeriodDisabled(address indexed asset);
 
   /**
    * @dev Emitted when the unbacked mint cap of a reserve is updated.
@@ -291,6 +291,8 @@ interface IPoolConfigurator {
 
   /**
    * @notice Initializes multiple reserves.
+   * @dev param useVirtualBalance of the input struct should be true for all normal assets and should be false
+   *  only in special cases (ex. GHO) where an asset is minted instead of supplied.
    * @param input The array of initialization parameters
    */
   function initReserves(ConfiguratorInputTypes.InitReserveInput[] calldata input) external;
@@ -385,6 +387,13 @@ interface IPoolConfigurator {
    * @param paused True if pausing the reserve, false if unpausing
    */
   function setReservePause(address asset, bool paused) external;
+
+  /**
+   * @notice Disables liquidation grace period for the asset. The liquidation grace period is set in the past
+   * so that liquidations are allowed for the asset.
+   * @param asset The address of the underlying asset of the reserve
+   */
+  function disableLiquidationGracePeriod(address asset) external;
 
   /**
    * @notice Updates the reserve factor of a reserve.
@@ -534,18 +543,18 @@ interface IPoolConfigurator {
   function setSiloedBorrowing(address asset, bool siloed) external;
 
   /**
-   * @notice Gets pending ltv value and flag if it is set
+   * @notice Gets pending ltv value
    * @param asset The new siloed borrowing state
    */
-  function getPendingLtv(address asset) external returns (uint256, bool);
+  function getPendingLtv(address asset) external view returns (uint256);
 
   /**
    * @notice Gets the address of the external ConfiguratorLogic
    */
-  function getConfiguratorLogic() external returns (address);
+  function getConfiguratorLogic() external view returns (address);
 
   /**
    * @notice Gets the maximum liquidations grace period allowed, in seconds
    */
-  function MAX_GRACE_PERIOD() external returns (uint40);
+  function MAX_GRACE_PERIOD() external view returns (uint40);
 }

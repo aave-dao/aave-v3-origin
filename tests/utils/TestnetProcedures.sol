@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import 'forge-std/Test.sol';
 
 import '../../src/deployments/interfaces/IMarketReportTypes.sol';
-import {ConfigEngineDeployer} from './ConfigEngineDeployer.sol';
 import {DeployUtils} from '../../src/deployments/contracts/utilities/DeployUtils.sol';
 import {FfiUtils} from '../../src/deployments/contracts/utilities/FfiUtils.sol';
 import {DefaultMarketInput} from '../../src/deployments/inputs/DefaultMarketInput.sol';
@@ -110,8 +109,13 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
       MarketReport memory deployedContracts
     ) = _getMarketInput(poolAdmin);
     roleList = roles;
-
     flags.l2 = l2;
+
+    // Etch the create2 factory
+    vm.etch(
+      0x914d7Fec6aaC8cd542e72Bca78B30650d45643d7,
+      hex'7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe03601600081602082378035828234f58015156039578182fd5b8082525050506014600cf3'
+    );
 
     (report, tokenList) = deployAaveV3TestnetAssets(
       poolAdmin,
@@ -217,10 +221,8 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
 
     MarketReport memory r = deployAaveV3Testnet(deployer, roles, config, flags, deployedContracts);
 
-    address engine = ConfigEngineDeployer.deployEngine(vm, r);
-
     AaveV3TestListing testnetListingPayload = new AaveV3TestListing(
-      IAaveV3ConfigEngine(engine),
+      IAaveV3ConfigEngine(r.configEngine),
       roles.poolAdmin,
       assetsList.weth,
       r
@@ -317,7 +319,6 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
       new TestnetERC20('Misc Token', 'MISC', t.underlyingDecimals, poolAdminUser)
     );
     input.variableDebtTokenImpl = r.variableDebtToken;
-    input.underlyingAssetDecimals = t.underlyingDecimals;
     input.useVirtualBalance = t.useVirtualBalance;
     input.interestRateStrategyAddress = r.defaultInterestRateStrategy;
     input.treasury = t.treasury;

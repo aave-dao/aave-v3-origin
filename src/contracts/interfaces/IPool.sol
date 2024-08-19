@@ -189,7 +189,7 @@ interface IPool {
    * @dev Emitted when the state of a reserve is updated.
    * @param reserve The address of the underlying asset of the reserve
    * @param liquidityRate The next liquidity rate
-   * @param stableBorrowRate The next stable borrow rate
+   * @param stableBorrowRate The next stable borrow rate @note deprecated on v3.2.0
    * @param variableBorrowRate The next variable borrow rate
    * @param liquidityIndex The next liquidity index
    * @param variableBorrowIndex The next variable borrow index
@@ -765,35 +765,35 @@ interface IPool {
   /**
    * @notice Gets the address of the external FlashLoanLogic
    */
-  function getFlashLoanLogic() external returns (address);
+  function getFlashLoanLogic() external view returns (address);
 
   /**
    * @notice Gets the address of the external BorrowLogic
    */
-  function getBorrowLogic() external returns (address);
+  function getBorrowLogic() external view returns (address);
 
   /**
    * @notice Gets the address of the external BridgeLogic
    */
-  function getBridgeLogic() external returns (address);
+  function getBridgeLogic() external view returns (address);
 
   /**
    * @notice Gets the address of the external EModeLogic
    */
-  function getEModeLogic() external returns (address);
+  function getEModeLogic() external view returns (address);
 
   /**
    * @notice Gets the address of the external LiquidationLogic
    */
-  function getLiquidationLogic() external returns (address);
+  function getLiquidationLogic() external view returns (address);
 
   /**
    * @notice Gets the address of the external PoolLogic
    */
-  function getPoolLogic() external returns (address);
+  function getPoolLogic() external view returns (address);
 
   /**
    * @notice Gets the address of the external SupplyLogic
    */
-  function getSupplyLogic() external returns (address);
+  function getSupplyLogic() external view returns (address);
 }

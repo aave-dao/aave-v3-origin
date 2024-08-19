@@ -326,6 +326,9 @@ library ValidationLogic {
   ) internal view {
     require(assets.length == amounts.length, Errors.INCONSISTENT_FLASHLOAN_PARAMS);
     for (uint256 i = 0; i < assets.length; i++) {
+      for (uint256 j = i + 1; j < assets.length; j++) {
+        require(assets[i] != assets[j], Errors.INCONSISTENT_FLASHLOAN_PARAMS);
+      }
       validateFlashloanSimple(reservesData[assets[i]], amounts[i]);
     }
   }

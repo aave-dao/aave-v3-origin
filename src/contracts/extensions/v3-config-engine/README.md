@@ -52,12 +52,12 @@ Change eMode category of a particular asset? Same as previous, just define the u
 
 ## Links to examples
 
-- [Simple mock listing on Aave v3](../../../../tests/helpers/v3-config-engine/mocks/AaveV3MockListing.sol)
-- [Simple custom mock listing on Aave V3 with custom token impl](../../../../tests/helpers/v3-config-engine/mocks/AaveV3MockListingCustom.sol)
-- [Mock e-mode category update on Aave V3](../../../../tests/helpers/v3-config-engine/mocks/AaveV3MockEModeCategoryUpdate.sol)
-- [Mock e-mode asset update on Aave V3](../../../../tests/helpers/v3-config-engine/mocks/AaveV3MockAssetEModeUpdate.sol)
-- [Mock caps updates (only supply, keeping current borrow cap) on Aave v3](../../../../tests/helpers/v3-config-engine/mocks/AaveV3MockCapUpdate.sol)
-- [Mock collateral updates (changing some, keeping current values on others), on Aave v3](../../../../tests/helpers/v3-config-engine/mocks/AaveV3MockCollateralUpdate.sol)
-- [Mock borrow updates (changing some, keeping current values on others), on Aave v3](../../../../tests/helpers/v3-config-engine/mocks/AaveV3MockBorrowUpdate.sol)
-- [Mock rates updates (changing some, keeping current values on others), on Aave v3](../../../../tests/helpers/v3-config-engine/mocks/AaveV3MockRatesUpdate.sol)
-- [Mock price feed updates on Aave v3](../../../../tests/helpers/v3-config-engine/mocks/AaveV3MockPriceFeedUpdate.sol)
+- [Simple mock listing on Aave v3](../../../../tests/periphery/v3-config-engine/mocks/AaveV3MockListing.sol)
+- [Simple custom mock listing on Aave V3 with custom token impl](../../../../tests/periphery/v3-config-engine/mocks/AaveV3MockListingCustom.sol)
+- [Mock e-mode category update on Aave V3](../../../../tests/periphery/v3-config-engine/mocks/AaveV3MockEModeCategoryUpdate.sol)
+- [Mock e-mode asset update on Aave V3](../../../../tests/periphery/v3-config-engine/mocks/AaveV3MockAssetEModeUpdate.sol)
+- [Mock caps updates (only supply, keeping current borrow cap) on Aave v3](../../../../tests/periphery/v3-config-engine/mocks/AaveV3MockCapUpdate.sol)
+- [Mock collateral updates (changing some, keeping current values on others), on Aave v3](../../../../tests/periphery/v3-config-engine/mocks/AaveV3MockCollateralUpdate.sol)
+- [Mock borrow updates (changing some, keeping current values on others), on Aave v3](../../../../tests/periphery/v3-config-engine/mocks/AaveV3MockBorrowUpdate.sol)
+- [Mock rates updates (changing some, keeping current values on others), on Aave v3](../../../../tests/periphery/v3-config-engine/mocks/AaveV3MockRatesUpdate.sol)
+- [Mock price feed updates on Aave v3](../../../../tests/periphery/v3-config-engine/mocks/AaveV3MockPriceFeedUpdate.sol)

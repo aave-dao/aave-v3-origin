@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.18;
 
-import {IERC20Metadata} from 'solidity-utils/contracts/oz-common/interfaces/IERC20Metadata.sol';
 import {IAaveV3ConfigEngine as IEngine, IPoolConfigurator, IPool, IDefaultInterestRateStrategyV2} from '../IAaveV3ConfigEngine.sol';
 import {PriceFeedEngine} from './PriceFeedEngine.sol';
 import {CapsEngine} from './CapsEngine.sol';
@@ -176,13 +175,9 @@ library ListingEngine {
       memory initReserveInputs = new ConfiguratorInputTypes.InitReserveInput[](ids.length);
 
     for (uint256 i = 0; i < ids.length; i++) {
-      uint8 decimals = IERC20Metadata(ids[i]).decimals();
-      require(decimals > 0, 'INVALID_ASSET_DECIMALS');
-
       initReserveInputs[i] = ConfiguratorInputTypes.InitReserveInput({
         aTokenImpl: basics[i].implementations.aToken,
         variableDebtTokenImpl: basics[i].implementations.vToken,
-        underlyingAssetDecimals: decimals,
         interestRateStrategyAddress: rateStrategy,
         interestRateData: abi.encode(rates[i]),
         underlyingAsset: ids[i],

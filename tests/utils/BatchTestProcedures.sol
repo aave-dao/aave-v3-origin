@@ -63,7 +63,7 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
       AaveV3GettersBatchOne.GettersReportBatchOne memory gettersReport1,
       PoolReport memory poolReport,
       PeripheryReport memory peripheryReport,
-      ParaswapReport memory paraswapReport,
+      MiscReport memory miscReport,
       AaveV3SetupBatch setupContract
     )
   {
@@ -92,21 +92,14 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
       address(setupContract)
     );
 
-    paraswapReport = AaveV3BatchOrchestration._deployParaswapAdapters(
-      roles,
-      config,
+    miscReport = AaveV3BatchOrchestration._deployMisc(
+      flags.l2,
       initialReport.poolAddressesProvider,
-      peripheryReport.treasury
+      config.l2SequencerUptimeFeed,
+      config.l2PriceOracleSentinelGracePeriod
     );
 
-    return (
-      initialReport,
-      gettersReport1,
-      poolReport,
-      peripheryReport,
-      paraswapReport,
-      setupContract
-    );
+    return (initialReport, gettersReport1, poolReport, peripheryReport, miscReport, setupContract);
   }
 
   function deployAndSetup(
@@ -123,6 +116,8 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
       PoolReport memory poolReport,
       SetupReport memory setupReport,
       PeripheryReport memory peripheryReport,
+      MiscReport memory miscReport,
+      AaveV3TokensBatch.TokensReport memory tokensReport,
       ParaswapReport memory paraswapReport,
       AaveV3SetupBatch setupContract
     )
@@ -132,7 +127,7 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
       gettersReport1,
       poolReport,
       peripheryReport,
-      paraswapReport,
+      miscReport,
       setupContract
     ) = deployCoreAndPeriphery(roles, config, flags, deployedContracts);
 
@@ -144,7 +139,15 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
       poolReport.poolConfiguratorImplementation,
       gettersReport1.protocolDataProvider,
       peripheryReport.aaveOracle,
-      peripheryReport.rewardsControllerImplementation
+      peripheryReport.rewardsControllerImplementation,
+      miscReport.priceOracleSentinel
+    );
+
+    paraswapReport = AaveV3BatchOrchestration._deployParaswapAdapters(
+      roles,
+      config,
+      initialReport.poolAddressesProvider,
+      peripheryReport.treasury
     );
 
     gettersReport2 = AaveV3BatchOrchestration._deployGettersBatch2(
@@ -154,6 +157,8 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
       flags.l2
     );
 
+    tokensReport = AaveV3BatchOrchestration._deployTokens(setupReport.poolProxy);
+
     return (
       initialReport,
       gettersReport1,
@@ -161,6 +166,8 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
       poolReport,
       setupReport,
       peripheryReport,
+      miscReport,
+      tokensReport,
       paraswapReport,
       setupContract
     );
@@ -191,6 +198,7 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
 
     if (flags.l2) {
       assertTrue(r.l2Encoder != address(0), 'report.l2Encoder');
+      assertTrue(r.priceOracleSentinel != address(0), 'report.priceOracleSentinel');
     }
 
     assertTrue(r.aToken != address(0), 'report.aToken');
@@ -201,6 +209,14 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
       'r.rewardsControllerImplementation'
     );
     assertTrue(r.rewardsControllerProxy != address(0), 'report.rewardsControllerProxy');
+    assertTrue(r.configEngine != address(0), 'report.configEngine');
+    assertTrue(
+      r.staticATokenFactoryImplementation != address(0),
+      'report.staticATokenFactoryImplementation'
+    );
+    assertTrue(r.staticATokenFactoryProxy != address(0), 'report.staticATokenFactoryProxy');
+    assertTrue(r.staticATokenImplementation != address(0), 'report.staticATokenImplementation');
+    assertTrue(r.transparentProxyFactory != address(0), 'report.transparentProxyFactory');
   }
 
   function deployAaveV3Testnet(
@@ -211,6 +227,12 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
     MarketReport memory deployedContracts
   ) internal returns (MarketReport memory testReport) {
     detectFoundryLibrariesAndDelete();
+
+    // Etch the create2 factory
+    vm.etch(
+      0x914d7Fec6aaC8cd542e72Bca78B30650d45643d7,
+      hex'7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe03601600081602082378035828234f58015156039578182fd5b8082525050506014600cf3'
+    );
 
     vm.startPrank(deployer);
     MarketReport memory deployReport = AaveV3BatchOrchestration.deployAaveV3(
@@ -274,7 +296,6 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
       input[x] = ConfiguratorInputTypes.InitReserveInput(
         r.aToken,
         r.variableDebtToken,
-        listingToken.decimals(),
         true,
         t.rateStrategy,
         address(listingToken),

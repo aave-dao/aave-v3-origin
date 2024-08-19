@@ -15,7 +15,6 @@ import {DiffUtils} from './DiffUtils.sol';
 
 struct ReserveTokens {
   address aToken;
-  address stableDebtToken;
   address variableDebtToken;
 }
 
@@ -81,7 +80,6 @@ struct ReserveConfig {
   string symbol;
   address underlying;
   address aToken;
-  address stableDebtToken;
   address variableDebtToken;
   uint256 decimals;
   uint256 ltv;
@@ -92,7 +90,6 @@ struct ReserveConfig {
   bool usageAsCollateralEnabled;
   bool borrowingEnabled;
   address interestRateStrategy;
-  bool stableBorrowRateEnabled;
   bool isPaused;
   bool isActive;
   bool isFrozen;
@@ -103,6 +100,9 @@ struct ReserveConfig {
   uint256 borrowCap;
   uint256 debtCeiling;
   uint256 eModeCategory;
+  bool virtualAccActive;
+  uint256 virtualBalance;
+  uint256 aTokenUnderlyingBalance;
 }
 
 struct LocalVars {
@@ -125,7 +125,7 @@ contract ProtocolV3TestBase is DiffUtils {
   function createConfigurationSnapshot(
     string memory reportName,
     IPool pool
-  ) public returns (ReserveConfig[] memory) {
+  ) public virtual returns (ReserveConfig[] memory) {
     return createConfigurationSnapshot(reportName, pool, true, true, true, true);
   }
 
@@ -136,7 +136,7 @@ contract ProtocolV3TestBase is DiffUtils {
     bool strategyConfigs,
     bool eModeConigs,
     bool poolConfigs
-  ) public returns (ReserveConfig[] memory) {
+  ) public virtual returns (ReserveConfig[] memory) {
     string memory path = string(abi.encodePacked('./reports/', reportName, '.json'));
     // overwrite with empty json to later be extended
     vm.writeFile(
@@ -157,7 +157,7 @@ contract ProtocolV3TestBase is DiffUtils {
     string memory path,
     ReserveConfig[] memory configs,
     IPool pool
-  ) internal {
+  ) internal virtual {
     // keys for json stringification
     string memory eModesKey = 'emodes';
     string memory content = '{}';
@@ -183,46 +183,50 @@ contract ProtocolV3TestBase is DiffUtils {
     vm.writeJson(output, path);
   }
 
-  function _writeStrategyConfigs(string memory path, ReserveConfig[] memory configs) internal {
+  function _writeStrategyConfigs(
+    string memory path,
+    ReserveConfig[] memory configs
+  ) internal virtual {
     // keys for json stringification
-    string memory strategiesKey = 'stategies';
+    string memory strategiesKey = 'strategies';
     string memory content = '{}';
+    vm.serializeJson(strategiesKey, '{}');
 
-    address[] memory usedStrategies = new address[](configs.length);
     for (uint256 i = 0; i < configs.length; i++) {
-      if (!_isInAddressArray(usedStrategies, configs[i].interestRateStrategy)) {
-        usedStrategies[i] = configs[i].interestRateStrategy;
-        IDefaultInterestRateStrategyV2 strategy = IDefaultInterestRateStrategyV2(
-          configs[i].interestRateStrategy
-        );
-        string memory key = vm.toString(address(strategy));
-        vm.serializeString(
-          key,
-          'baseVariableBorrowRate',
-          vm.toString(strategy.getBaseVariableBorrowRate(configs[i].underlying))
-        );
-        vm.serializeString(
-          key,
-          'variableRateSlope1',
-          vm.toString(strategy.getVariableRateSlope1(configs[i].underlying))
-        );
-        vm.serializeString(
-          key,
-          'variableRateSlope2',
-          vm.toString(strategy.getVariableRateSlope2(configs[i].underlying))
-        );
-        vm.serializeString(
-          key,
-          'maxVariableBorrowRate',
-          vm.toString(strategy.getMaxVariableBorrowRate(configs[i].underlying))
-        );
-        string memory object = vm.serializeString(
-          key,
-          'optimalUsageRatio',
-          vm.toString(strategy.getOptimalUsageRatio(configs[i].underlying))
-        );
-        content = vm.serializeString(strategiesKey, key, object);
-      }
+      address asset = configs[i].underlying;
+      string memory key = vm.toString(asset);
+      vm.serializeJson(key, '{}');
+      vm.serializeString(key, 'address', vm.toString(configs[i].interestRateStrategy));
+      IDefaultInterestRateStrategyV2 strategy = IDefaultInterestRateStrategyV2(
+        configs[i].interestRateStrategy
+      );
+      vm.serializeString(
+        key,
+        'baseVariableBorrowRate',
+        vm.toString(strategy.getBaseVariableBorrowRate(asset))
+      );
+      vm.serializeString(
+        key,
+        'variableRateSlope1',
+        vm.toString(strategy.getVariableRateSlope1(asset))
+      );
+      vm.serializeString(
+        key,
+        'variableRateSlope2',
+        vm.toString(strategy.getVariableRateSlope2(asset))
+      );
+      vm.serializeString(
+        key,
+        'maxVariableBorrowRate',
+        vm.toString(strategy.getMaxVariableBorrowRate(asset))
+      );
+      string memory object = vm.serializeString(
+        key,
+        'optimalUsageRatio',
+        vm.toString(strategy.getOptimalUsageRatio(asset))
+      );
+
+      content = vm.serializeString(strategiesKey, key, object);
     }
     string memory output = vm.serializeString('root', 'strategies', content);
     vm.writeJson(output, path);
@@ -232,10 +236,11 @@ contract ProtocolV3TestBase is DiffUtils {
     string memory path,
     ReserveConfig[] memory configs,
     IPool pool
-  ) internal {
+  ) internal virtual {
     // keys for json stringification
     string memory reservesKey = 'reserves';
     string memory content = '{}';
+    vm.serializeJson(reservesKey, '{}');
 
     IPoolAddressesProvider addressesProvider = IPoolAddressesProvider(pool.ADDRESSES_PROVIDER());
     IAaveOracle oracle = IAaveOracle(addressesProvider.getPriceOracle());
@@ -246,6 +251,7 @@ contract ProtocolV3TestBase is DiffUtils {
       );
 
       string memory key = vm.toString(config.underlying);
+      vm.serializeJson(key, '{}');
       vm.serializeString(key, 'symbol', config.symbol);
       vm.serializeUint(key, 'ltv', config.ltv);
       vm.serializeUint(key, 'liquidationThreshold', config.liquidationThreshold);
@@ -259,7 +265,6 @@ contract ProtocolV3TestBase is DiffUtils {
       vm.serializeUint(key, 'eModeCategory', config.eModeCategory);
       vm.serializeBool(key, 'usageAsCollateralEnabled', config.usageAsCollateralEnabled);
       vm.serializeBool(key, 'borrowingEnabled', config.borrowingEnabled);
-      vm.serializeBool(key, 'stableBorrowRateEnabled', config.stableBorrowRateEnabled);
       vm.serializeBool(key, 'isPaused', config.isPaused);
       vm.serializeBool(key, 'isActive', config.isActive);
       vm.serializeBool(key, 'isFrozen', config.isFrozen);
@@ -269,7 +274,6 @@ contract ProtocolV3TestBase is DiffUtils {
       vm.serializeAddress(key, 'interestRateStrategy', config.interestRateStrategy);
       vm.serializeAddress(key, 'underlying', config.underlying);
       vm.serializeAddress(key, 'aToken', config.aToken);
-      vm.serializeAddress(key, 'stableDebtToken', config.stableDebtToken);
       vm.serializeAddress(key, 'variableDebtToken', config.variableDebtToken);
       vm.serializeAddress(
         key,
@@ -278,20 +282,6 @@ contract ProtocolV3TestBase is DiffUtils {
       );
       vm.serializeString(key, 'aTokenSymbol', IERC20Detailed(config.aToken).symbol());
       vm.serializeString(key, 'aTokenName', IERC20Detailed(config.aToken).name());
-      vm.serializeAddress(
-        key,
-        'stableDebtTokenImpl',
-        ProxyHelpers.getInitializableAdminUpgradeabilityProxyImplementation(
-          vm,
-          config.stableDebtToken
-        )
-      );
-      vm.serializeString(
-        key,
-        'stableDebtTokenSymbol',
-        IERC20Detailed(config.stableDebtToken).symbol()
-      );
-      vm.serializeString(key, 'stableDebtTokenName', IERC20Detailed(config.stableDebtToken).name());
       vm.serializeAddress(
         key,
         'variableDebtTokenImpl',
@@ -327,6 +317,11 @@ contract ProtocolV3TestBase is DiffUtils {
           } catch {}
         }
       }
+
+      vm.serializeBool(key, 'virtualAccountingActive', config.virtualAccActive);
+      vm.serializeUint(key, 'virtualBalance', config.virtualBalance);
+      vm.serializeUint(key, 'aTokenUnderlyingBalance', config.aTokenUnderlyingBalance);
+
       string memory out = vm.serializeUint(
         key,
         'oracleLatestAnswer',
@@ -338,7 +333,7 @@ contract ProtocolV3TestBase is DiffUtils {
     vm.writeJson(output, path);
   }
 
-  function _writePoolConfiguration(string memory path, IPool pool) internal {
+  function _writePoolConfiguration(string memory path, IPool pool) internal virtual {
     // keys for json stringification
     string memory poolConfigKey = 'poolConfig';
 
@@ -379,7 +374,7 @@ contract ProtocolV3TestBase is DiffUtils {
     vm.writeJson(output, path);
   }
 
-  function _getReservesConfigs(IPool pool) internal view returns (ReserveConfig[] memory) {
+  function _getReservesConfigs(IPool pool) internal view virtual returns (ReserveConfig[] memory) {
     IPoolAddressesProvider addressesProvider = IPoolAddressesProvider(pool.ADDRESSES_PROVIDER());
     IPoolDataProvider poolDataProvider = IPoolDataProvider(addressesProvider.getPoolDataProvider());
     LocalVars memory vars;
@@ -389,14 +384,7 @@ contract ProtocolV3TestBase is DiffUtils {
     vars.configs = new ReserveConfig[](vars.reserves.length);
 
     for (uint256 i = 0; i < vars.reserves.length; i++) {
-      vars.configs[i] = _getStructReserveConfig(pool, vars.reserves[i]);
-      ReserveTokens memory reserveTokens = _getStructReserveTokens(
-        poolDataProvider,
-        vars.configs[i].underlying
-      );
-      vars.configs[i].aToken = reserveTokens.aToken;
-      vars.configs[i].variableDebtToken = reserveTokens.variableDebtToken;
-      vars.configs[i].stableDebtToken = reserveTokens.stableDebtToken;
+      vars.configs[i] = _getStructReserveConfig(pool, poolDataProvider, vars.reserves[i]);
     }
 
     return vars.configs;
@@ -405,22 +393,32 @@ contract ProtocolV3TestBase is DiffUtils {
   function _getStructReserveTokens(
     IPoolDataProvider pdp,
     address underlyingAddress
-  ) internal view returns (ReserveTokens memory) {
+  ) internal view virtual returns (ReserveTokens memory) {
     ReserveTokens memory reserveTokens;
-    (reserveTokens.aToken, reserveTokens.stableDebtToken, reserveTokens.variableDebtToken) = pdp
-      .getReserveTokensAddresses(underlyingAddress);
+    (reserveTokens.aToken, , reserveTokens.variableDebtToken) = pdp.getReserveTokensAddresses(
+      underlyingAddress
+    );
 
     return reserveTokens;
   }
 
   function _getStructReserveConfig(
     IPool pool,
+    IPoolDataProvider poolDataProvider,
     IPoolDataProvider.TokenData memory reserve
   ) internal view virtual returns (ReserveConfig memory) {
     ReserveConfig memory localConfig;
     DataTypes.ReserveConfigurationMap memory configuration = pool.getConfiguration(
       reserve.tokenAddress
     );
+
+    localConfig.underlying = reserve.tokenAddress;
+    ReserveTokens memory reserveTokens = _getStructReserveTokens(
+      poolDataProvider,
+      reserve.tokenAddress
+    );
+    localConfig.aToken = reserveTokens.aToken;
+    localConfig.variableDebtToken = reserveTokens.variableDebtToken;
     localConfig.interestRateStrategy = pool
       .getReserveData(reserve.tokenAddress)
       .interestRateStrategyAddress;
@@ -439,7 +437,6 @@ contract ProtocolV3TestBase is DiffUtils {
       localConfig.isPaused
     ) = configuration.getFlags();
     localConfig.symbol = reserve.symbol;
-    localConfig.underlying = reserve.tokenAddress;
     localConfig.usageAsCollateralEnabled = localConfig.liquidationThreshold != 0;
     localConfig.isSiloed = configuration.getSiloedBorrowing();
     (localConfig.borrowCap, localConfig.supplyCap) = configuration.getCaps();
@@ -449,17 +446,28 @@ contract ProtocolV3TestBase is DiffUtils {
 
     localConfig.isFlashloanable = configuration.getFlashLoanEnabled();
 
+    // 3.1 configurations
+    localConfig.virtualAccActive = configuration.getIsVirtualAccActive();
+
+    if (localConfig.virtualAccActive) {
+      localConfig.virtualBalance = pool.getVirtualUnderlyingBalance(reserve.tokenAddress);
+    }
+    localConfig.aTokenUnderlyingBalance = IERC20Detailed(reserve.tokenAddress).balanceOf(
+      localConfig.aToken
+    );
+
     return localConfig;
   }
 
   // TODO This should probably be simplified with assembly, too much boilerplate
-  function _clone(ReserveConfig memory config) internal pure returns (ReserveConfig memory) {
+  function _clone(
+    ReserveConfig memory config
+  ) internal pure virtual returns (ReserveConfig memory) {
     return
       ReserveConfig({
         symbol: config.symbol,
         underlying: config.underlying,
         aToken: config.aToken,
-        stableDebtToken: config.stableDebtToken,
         variableDebtToken: config.variableDebtToken,
         decimals: config.decimals,
         ltv: config.ltv,
@@ -470,7 +478,6 @@ contract ProtocolV3TestBase is DiffUtils {
         usageAsCollateralEnabled: config.usageAsCollateralEnabled,
         borrowingEnabled: config.borrowingEnabled,
         interestRateStrategy: config.interestRateStrategy,
-        stableBorrowRateEnabled: config.stableBorrowRateEnabled,
         isPaused: config.isPaused,
         isActive: config.isActive,
         isFrozen: config.isFrozen,
@@ -480,14 +487,17 @@ contract ProtocolV3TestBase is DiffUtils {
         supplyCap: config.supplyCap,
         borrowCap: config.borrowCap,
         debtCeiling: config.debtCeiling,
-        eModeCategory: config.eModeCategory
+        eModeCategory: config.eModeCategory,
+        virtualAccActive: config.virtualAccActive,
+        virtualBalance: config.virtualBalance,
+        aTokenUnderlyingBalance: config.aTokenUnderlyingBalance
       });
   }
 
   function _findReserveConfig(
     ReserveConfig[] memory configs,
     address underlying
-  ) internal pure returns (ReserveConfig memory) {
+  ) internal pure virtual returns (ReserveConfig memory) {
     for (uint256 i = 0; i < configs.length; i++) {
       if (configs[i].underlying == underlying) {
         // Important to clone the struct, to avoid unexpected side effect if modifying the returned config
@@ -500,7 +510,7 @@ contract ProtocolV3TestBase is DiffUtils {
   function _findReserveConfigBySymbol(
     ReserveConfig[] memory configs,
     string memory symbolOfUnderlying
-  ) internal pure returns (ReserveConfig memory) {
+  ) internal pure virtual returns (ReserveConfig memory) {
     for (uint256 i = 0; i < configs.length; i++) {
       if (
         keccak256(abi.encodePacked(configs[i].symbol)) ==
@@ -551,10 +561,6 @@ contract ProtocolV3TestBase is DiffUtils {
     require(
       config.borrowingEnabled == expectedConfig.borrowingEnabled,
       '_validateReserveConfig: INVALID_BORROWING_ENABLED'
-    );
-    require(
-      config.stableBorrowRateEnabled == expectedConfig.stableBorrowRateEnabled,
-      '_validateReserveConfig: INVALID_STABLE_BORROW_ENABLED'
     );
     require(
       config.isActive == expectedConfig.isActive,
@@ -693,10 +699,6 @@ contract ProtocolV3TestBase is DiffUtils {
       '_noReservesConfigsChangesApartNewListings() : UNEXPECTED_A_TOKEN_CHANGED'
     );
     require(
-      config1.stableDebtToken == config2.stableDebtToken,
-      '_noReservesConfigsChangesApartNewListings() : UNEXPECTED_STABLE_DEBT_TOKEN_CHANGED'
-    );
-    require(
       config1.variableDebtToken == config2.variableDebtToken,
       '_noReservesConfigsChangesApartNewListings() : UNEXPECTED_VARIABLE_DEBT_TOKEN_CHANGED'
     );
@@ -735,10 +737,6 @@ contract ProtocolV3TestBase is DiffUtils {
     require(
       config1.interestRateStrategy == config2.interestRateStrategy,
       '_noReservesConfigsChangesApartNewListings() : UNEXPECTED_INTEREST_RATE_STRATEGY_CHANGED'
-    );
-    require(
-      config1.stableBorrowRateEnabled == config2.stableBorrowRateEnabled,
-      '_noReservesConfigsChangesApartNewListings() : UNEXPECTED_STABLE_BORROWING_CHANGED'
     );
     require(
       config1.isActive == config2.isActive,
@@ -804,13 +802,6 @@ contract ProtocolV3TestBase is DiffUtils {
         config.variableDebtToken
       ) == expectedImpls.variableDebtToken,
       '_validateReserveTokensImpls() : INVALID_ATOKEN_IMPL'
-    );
-    require(
-      ProxyHelpers.getInitializableAdminUpgradeabilityProxyImplementation(
-        vm,
-        config.stableDebtToken
-      ) == expectedImpls.stableDebtToken,
-      '_validateReserveTokensImpls() : INVALID_STABLE_DEBT_IMPL'
     );
     vm.stopPrank();
   }

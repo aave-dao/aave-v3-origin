@@ -98,7 +98,7 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
       listing.underlyingAsset,
       report.poolProxy,
       listing.incentivesController,
-      listing.underlyingAssetDecimals,
+      TestnetERC20(listing.underlyingAsset).decimals(),
       listing.variableDebtTokenName,
       listing.variableDebtTokenSymbol,
       listing.params
@@ -108,7 +108,7 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
       IPool(report.poolProxy),
       listing.underlyingAsset,
       IAaveIncentivesController(listing.incentivesController),
-      listing.underlyingAssetDecimals,
+      TestnetERC20(listing.underlyingAsset).decimals(),
       listing.variableDebtTokenName,
       listing.variableDebtTokenSymbol,
       listing.params

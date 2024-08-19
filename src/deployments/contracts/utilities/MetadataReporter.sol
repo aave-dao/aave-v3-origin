@@ -56,11 +56,6 @@ contract MetadataReporter is IMetadataReporter {
     vm.serializeAddress(jsonReport, 'rewardsControllerProxy', report.rewardsControllerProxy);
     vm.serializeAddress(jsonReport, 'aclManager', report.aclManager);
     vm.serializeAddress(jsonReport, 'protocolDataProvider', report.protocolDataProvider);
-    vm.serializeAddress(
-      jsonReport,
-      'defaultInterestRateStrategy',
-      report.defaultInterestRateStrategy
-    );
 
     vm.serializeAddress(
       jsonReport,
@@ -73,6 +68,25 @@ contract MetadataReporter is IMetadataReporter {
       report.paraSwapWithdrawSwapAdapter
     );
     vm.serializeAddress(jsonReport, 'aaveParaSwapFeeClaimer', report.aaveParaSwapFeeClaimer);
+    vm.serializeAddress(
+      jsonReport,
+      'defaultInterestRateStrategy',
+      report.defaultInterestRateStrategy
+    );
+    vm.serializeAddress(jsonReport, 'priceOracleSentinel', report.priceOracleSentinel);
+    vm.serializeAddress(jsonReport, 'configEngine', report.configEngine);
+    vm.serializeAddress(
+      jsonReport,
+      'staticATokenFactoryImplementation',
+      report.staticATokenFactoryImplementation
+    );
+    vm.serializeAddress(jsonReport, 'staticATokenFactoryProxy', report.staticATokenFactoryProxy);
+    vm.serializeAddress(
+      jsonReport,
+      'staticATokenImplementation',
+      report.staticATokenImplementation
+    );
+    vm.serializeAddress(jsonReport, 'transparentProxyFactory', report.transparentProxyFactory);
 
     string memory output = vm.serializeAddress(
       jsonReport,
