@@ -10,6 +10,11 @@ import {ERC4626Upgradeable, ERC4626StataTokenUpgradeable, IPool} from './ERC4626
 import {ERC20AaveLMUpgradeable, IRewardsController} from './ERC20AaveLMUpgradeable.sol';
 import {IStataTokenV2} from './interfaces/IStataTokenV2.sol';
 
+/**
+ * @title StataTokenV2
+ * @notice A 4626 Vault which wrapps aTokens in order to translate the rebasing nature of yield accrual into a non-rebasing value accrual.
+ * @author BGD labs
+ */
 contract StataTokenV2 is
   ERC20PermitUpgradeable,
   ERC20AaveLMUpgradeable,

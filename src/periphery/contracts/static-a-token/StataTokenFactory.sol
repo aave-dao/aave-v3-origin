@@ -6,16 +6,16 @@ import {IERC20Metadata} from 'solidity-utils/contracts/oz-common/interfaces/IERC
 import {ITransparentProxyFactory} from 'solidity-utils/contracts/transparent-proxy/interfaces/ITransparentProxyFactory.sol';
 import {Initializable} from 'solidity-utils/contracts/transparent-proxy/Initializable.sol';
 import {StataTokenV2} from './StataTokenV2.sol';
-import {IStaticATokenFactory} from './interfaces/IStaticATokenFactory.sol';
+import {IStataTokenFactory} from './interfaces/IStataTokenFactory.sol';
 
 /**
- * @title StaticATokenFactory
- * @notice Factory contract that keeps track of all deployed static aToken wrappers for a specified pool.
- * This registry also acts as a factory, allowing to deploy new static aTokens on demand.
- * There can only be one static aToken per underlying on the registry at a time.
+ * @title StataTokenFactory
+ * @notice Factory contract that keeps track of all deployed StataTokens for a specified pool.
+ * This registry also acts as a factory, allowing to deploy new StataTokens on demand.
+ * There can only be one StataToken per underlying on the registry at any time.
  * @author BGD labs
  */
-contract StaticATokenFactory is Initializable, IStaticATokenFactory {
+contract StataTokenFactory is Initializable, IStataTokenFactory {
   IPool public immutable POOL;
   address public immutable PROXY_ADMIN;
   ITransparentProxyFactory public immutable TRANSPARENT_PROXY_FACTORY;
@@ -40,8 +40,8 @@ contract StaticATokenFactory is Initializable, IStaticATokenFactory {
 
   function initialize() external initializer {}
 
-  ///@inheritdoc IStaticATokenFactory
-  function createStaticATokens(address[] memory underlyings) external returns (address[] memory) {
+  ///@inheritdoc IStataTokenFactory
+  function createStataTokens(address[] memory underlyings) external returns (address[] memory) {
     address[] memory staticATokens = new address[](underlyings.length);
     for (uint256 i = 0; i < underlyings.length; i++) {
       address cachedStaticAToken = _underlyingToStaticAToken[underlyings[i]];
@@ -79,13 +79,13 @@ contract StaticATokenFactory is Initializable, IStaticATokenFactory {
     return staticATokens;
   }
 
-  ///@inheritdoc IStaticATokenFactory
-  function getStaticATokens() external view returns (address[] memory) {
+  ///@inheritdoc IStataTokenFactory
+  function getStataTokens() external view returns (address[] memory) {
     return _staticATokens;
   }
 
-  ///@inheritdoc IStaticATokenFactory
-  function getStaticAToken(address underlying) external view returns (address) {
+  ///@inheritdoc IStataTokenFactory
+  function getStataToken(address underlying) external view returns (address) {
     return _underlyingToStaticAToken[underlying];
   }
 }

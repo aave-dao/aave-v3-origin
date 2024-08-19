@@ -6,23 +6,22 @@
 
 ## About
 
-The static-a-token contains an [EIP-4626](https://eips.ethereum.org/EIPS/eip-4626) generic token vault/wrapper for all Aave v3 pools.
+The StataToken in an [EIP-4626](https://eips.ethereum.org/EIPS/eip-4626) generic token vault/wrapper intended to be used with aave v3 aTokens.
 
 ## Features
 
 - **Full [EIP-4626](https://eips.ethereum.org/EIPS/eip-4626) compatibility.**
 - **Accounting for any potential liquidity mining rewards.** Let’s say some team of the Aave ecosystem (or the Aave community itself) decides to incentivize deposits of USDC on Aave v3 Ethereum. By holding `stataUSDC`, the user will still be eligible for those incentives.
   It is important to highlight that while currently the wrapper supports infinite reward tokens by design (e.g. AAVE incentivizing stETH & Lido incentivizing stETH as well), each reward needs to be permissionlessly registered which bears some [⁽¹⁾](#limitations).
-- **Meta-transactions support.** To enable interfaces to offer gas-less transactions to deposit/withdraw on the wrapper/Aave protocol (also supported on Aave v3). Including permit() for transfers of the `stataAToken` itself.
-- **Upgradable by the Aave governance.** Similar to other contracts of the Aave ecosystem, the Level 1 executor (short executor) will be able to add new features to the deployed instances of the `stataTokens`.
-- **Powered by a stataToken Factory.** Whenever a token will be listed on Aave v3, anybody will be able to call the stataToken Factory to deploy an instance for the new asset, permissionless, but still assuring the code used and permissions are properly configured without any extra headache.
+- **Upgradable by the Aave governance.** Similar to other contracts of the Aave ecosystem, the Level 1 executor (short executor) will be able to add new features to the deployed instances of the `StataTokens`.
+- **Powered by a StataTokenFactory.** Whenever a token will be listed on Aave v3, anybody will be able to call the StataTokenFactory to deploy an instance for the new asset, permissionless, but still assuring the code used and permissions are properly configured without any extra headache.
 
 See [IStata4626LM.sol](./interfaces/IERC20AaveLM.sol) for detailed method documentation.
 
 ## Deployed Addresses
 
-The staticATokenFactory is deployed for all major Aave v3 pools.
-An up to date address can be fetched from the respective [address-book pool library](https://github.com/bgd-labs/aave-address-book/blob/main/src/AaveV3Ethereum.sol).
+The StataTokenFactory is deployed for all major Aave v3 pools.
+An up to date address can be fetched from the respective [address-book pool library](https://search.onaave.com/?q=stata%20factory).
 
 ## Limitations
 
@@ -36,6 +35,8 @@ For this project, the security procedures applied/being finished are:
 
 - The test suite of the codebase itself.
 - Certora audit/property checking for all the dynamics of the `stataToken`, including respecting all the specs of [EIP-4626](https://eips.ethereum.org/EIPS/eip-4626).
+
+---
 
 ## Upgrade Notes StataTokenV2
 
@@ -53,6 +54,8 @@ The implementation is seperated in two ERC20 extentions and one actual "merger" 
    The extension considers pool limitations like pausing, caps and available liquidity.
    In addition it adds a `latestAnswer` priceFeed, which returns the share price based on how aave prices the underlying.
 3. `StataTokenV2` is the main contract inheriting `ERC20AaveLM` and `ERC4626StataToken`, while also adding `Pausability`, `Rescuability`, `Permit` and the actual initialization.
+
+![inheritance graph](./inheritance.png)
 
 ### Libraries
 
