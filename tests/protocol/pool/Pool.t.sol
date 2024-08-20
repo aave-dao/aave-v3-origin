@@ -657,31 +657,31 @@ contract PoolTests is TestnetProcedures {
     assertEq(50_000e6, virtualBalance);
   }
 
-  function test_getFlashLoanLogic() public {
+  function test_getFlashLoanLogic() public view {
     assertNotEq(pool.getFlashLoanLogic(), address(0));
   }
 
-  function test_getBorrowLogic() public {
+  function test_getBorrowLogic() public view {
     assertNotEq(pool.getBorrowLogic(), address(0));
   }
 
-  function test_getBridgeLogic() public {
+  function test_getBridgeLogic() public view {
     assertNotEq(pool.getBridgeLogic(), address(0));
   }
 
-  function test_getEModeLogic() public {
+  function test_getEModeLogic() public view {
     assertNotEq(pool.getEModeLogic(), address(0));
   }
 
-  function test_getLiquidationLogic() public {
+  function test_getLiquidationLogic() public view {
     assertNotEq(pool.getLiquidationLogic(), address(0));
   }
 
-  function test_getPoolLogic() public {
+  function test_getPoolLogic() public view {
     assertNotEq(pool.getPoolLogic(), address(0));
   }
 
-  function test_getSupplyLogic() public {
+  function test_getSupplyLogic() public view {
     assertNotEq(pool.getSupplyLogic(), address(0));
   }
 

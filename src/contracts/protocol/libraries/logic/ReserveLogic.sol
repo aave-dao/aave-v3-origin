@@ -150,12 +150,6 @@ library ReserveLogic {
     reserve.interestRateStrategyAddress = interestRateStrategyAddress;
   }
 
-  struct UpdateInterestRatesAndVirtualBalanceLocalVars {
-    uint256 nextLiquidityRate;
-    uint256 nextVariableRate;
-    uint256 totalVariableDebt;
-  }
-
   /**
    * @notice Updates the reserve current variable borrow rate and the current liquidity rate.
    * @param reserve The reserve reserve to be updated
