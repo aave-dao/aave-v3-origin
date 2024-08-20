@@ -114,7 +114,7 @@ library CalldataLogic {
    * @param args The packed repay params
    * @return The address of the underlying reserve
    * @return The amount to repay
-   * @return The interestRateMode, 1 and 2 for variable debt (changed on v3.2.0)
+   * @return The interestRateMode, 2 for variable debt, 1 is deprecated (changed on v3.2.0)
    */
   function decodeRepayParams(
     mapping(uint256 => address) storage reservesList,
@@ -165,28 +165,6 @@ library CalldataLogic {
     }
 
     return (asset, amount, interestRateMode, deadline, permitV);
-  }
-
-  /**
-   * @notice Decodes compressed swap borrow rate mode params to standard params
-   * @param reservesList The addresses of all the active reserves
-   * @param args The packed swap borrow rate mode params
-   * @return The address of the underlying reserve
-   * @return The interest rate mode, 1 and 2 for variable debt (changed on v3.2.0)
-   */
-  function decodeSwapBorrowRateModeParams(
-    mapping(uint256 => address) storage reservesList,
-    bytes32 args
-  ) internal view returns (address, uint256) {
-    uint16 assetId;
-    uint256 interestRateMode;
-
-    assembly {
-      assetId := and(args, 0xFFFF)
-      interestRateMode := and(shr(16, args), 0xFF)
-    }
-
-    return (reservesList[assetId], interestRateMode);
   }
 
   /**

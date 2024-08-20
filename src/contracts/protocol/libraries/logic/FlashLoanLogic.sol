@@ -147,6 +147,7 @@ library FlashLoanLogic {
             user: msg.sender,
             onBehalfOf: params.onBehalfOf,
             amount: vars.currentAmount,
+            interestRateMode: DataTypes.InterestRateMode(params.interestRateModes[i]),
             referralCode: params.referralCode,
             releaseUnderlying: false,
             reservesCount: IPool(params.pool).getReservesCount(),
@@ -268,7 +269,7 @@ library FlashLoanLogic {
       msg.sender,
       params.asset,
       params.amount,
-      DataTypes.InterestRateMode(0),
+      DataTypes.InterestRateMode.NONE,
       params.totalPremium,
       params.referralCode
     );

@@ -88,6 +88,20 @@ contract PoolRepayTests is TestnetProcedures {
     );
   }
 
+  function test_revert_repay_full_stable_borrow() public {
+    uint256 amount = 2000e6;
+    uint256 borrowAmount = 800e6;
+    vm.startPrank(alice);
+
+    contracts.poolProxy.supply(tokenList.usdx, amount, alice, 0);
+    contracts.poolProxy.borrow(tokenList.usdx, borrowAmount, 2, 0, alice);
+    vm.warp(block.timestamp + 10 days);
+
+    vm.expectRevert(bytes(Errors.DEPRECATED_BORROW_RATE_MODE));
+    contracts.poolProxy.repay(tokenList.usdx, UINT256_MAX, 2, alice);
+    vm.stopPrank();
+  }
+
   function test_repayWithATokens_full_variable_borrow() public {
     uint256 amount = 2000e6;
     uint256 borrowAmount = 800e6;

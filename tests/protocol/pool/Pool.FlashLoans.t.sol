@@ -419,6 +419,30 @@ contract PoolFlashLoansTests is TestnetProcedures {
     );
   }
 
+  function test_revert_flashloan_borrow_stable() public {
+    vm.prank(alice);
+    contracts.poolProxy.supply(tokenList.wbtc, 0.5e8, alice, 0);
+
+    (
+      address[] memory assets,
+      uint256[] memory amounts,
+      uint256[] memory modes,
+      bytes memory emptyParams
+    ) = _defaultInput(false, 1);
+
+    vm.prank(alice);
+    vm.expectRevert(bytes(Errors.DEPRECATED_BORROW_RATE_MODE));
+    contracts.poolProxy.flashLoan(
+      address(mockFlashReceiver),
+      assets,
+      amounts,
+      modes,
+      alice,
+      emptyParams,
+      0
+    );
+  }
+
   function _defaultInput()
     internal
     returns (address[] memory, uint256[] memory, uint256[] memory, bytes memory)

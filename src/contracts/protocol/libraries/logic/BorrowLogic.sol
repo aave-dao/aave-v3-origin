@@ -86,6 +86,7 @@ library BorrowLogic {
         asset: params.asset,
         userAddress: params.onBehalfOf,
         amount: params.amount,
+        interestRateMode: params.interestRateMode,
         reservesCount: params.reservesCount,
         oracle: params.oracle,
         userEModeCategory: params.userEModeCategory,
@@ -163,7 +164,13 @@ library BorrowLogic {
 
     uint256 variableDebt = Helpers.getUserCurrentDebt(params.onBehalfOf, reserveCache);
 
-    ValidationLogic.validateRepay(reserveCache, params.amount, params.onBehalfOf, variableDebt);
+    ValidationLogic.validateRepay(
+      reserveCache,
+      params.amount,
+      params.interestRateMode,
+      params.onBehalfOf,
+      variableDebt
+    );
 
     uint256 paybackAmount = variableDebt;
 

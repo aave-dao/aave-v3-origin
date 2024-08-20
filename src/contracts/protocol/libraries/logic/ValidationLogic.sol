@@ -141,6 +141,10 @@ library ValidationLogic {
     DataTypes.ValidateBorrowParams memory params
   ) internal view {
     require(params.amount != 0, Errors.INVALID_AMOUNT);
+    require(
+      params.interestRateMode == DataTypes.InterestRateMode.VARIABLE,
+      Errors.DEPRECATED_BORROW_RATE_MODE
+    );
 
     ValidateBorrowLocalVars memory vars;
 
@@ -281,10 +285,15 @@ library ValidationLogic {
   function validateRepay(
     DataTypes.ReserveCache memory reserveCache,
     uint256 amountSent,
+    DataTypes.InterestRateMode interestRateMode,
     address onBehalfOf,
     uint256 debt
   ) internal view {
     require(amountSent != 0, Errors.INVALID_AMOUNT);
+    require(
+      interestRateMode == DataTypes.InterestRateMode.VARIABLE,
+      Errors.DEPRECATED_BORROW_RATE_MODE
+    );
     require(
       amountSent != type(uint256).max || msg.sender == onBehalfOf,
       Errors.NO_EXPLICIT_AMOUNT_TO_REPAY_ON_BEHALF

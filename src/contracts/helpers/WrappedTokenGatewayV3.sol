@@ -76,9 +76,13 @@ contract WrappedTokenGatewayV3 is IWrappedTokenGatewayV3, Ownable {
   function repayETH(
     address,
     uint256 amount,
-    uint256,
+    uint256 rateMode,
     address onBehalfOf
   ) external payable override {
+    require(
+      rateMode == uint256(DataTypes.InterestRateMode.VARIABLE),
+      'DEPRECATED_BORROW_RATE_MODE'
+    );
     uint256 paybackAmount = DataTypesHelper.getUserCurrentDebt(
       onBehalfOf,
       POOL.getReserveData(address(WETH))
@@ -105,7 +109,16 @@ contract WrappedTokenGatewayV3 is IWrappedTokenGatewayV3, Ownable {
    * @param amount the amount of ETH to borrow
    * @param referralCode integrators are assigned a referral code and can potentially receive rewards
    */
-  function borrowETH(address, uint256 amount, uint256, uint16 referralCode) external override {
+  function borrowETH(
+    address,
+    uint256 amount,
+    uint256 rateMode,
+    uint16 referralCode
+  ) external override {
+    require(
+      rateMode == uint256(DataTypes.InterestRateMode.VARIABLE),
+      'DEPRECATED_BORROW_RATE_MODE'
+    );
     POOL.borrow(
       address(WETH),
       amount,

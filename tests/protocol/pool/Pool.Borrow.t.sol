@@ -199,6 +199,17 @@ contract PoolBorrowTests is TestnetProcedures {
     contracts.poolProxy.borrow(tokenList.usdx, borrowAmount, 2, 0, alice);
   }
 
+  function test_reverts_deprecated_stable_borrow() public {
+    uint256 amount = 2000e6;
+    uint256 borrowAmount = 100;
+    vm.startPrank(alice);
+    contracts.poolProxy.supply(tokenList.usdx, amount, alice, 0);
+
+    vm.expectRevert(bytes(Errors.DEPRECATED_BORROW_RATE_MODE));
+
+    contracts.poolProxy.borrow(tokenList.wbtc, borrowAmount, 1, 0, alice);
+  }
+
   function test_reverts_borrow_invalidAmount() public {
     vm.expectRevert(bytes(Errors.INVALID_AMOUNT));
 

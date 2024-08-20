@@ -60,12 +60,6 @@ contract PoolTests is TestnetProcedures {
     bool useATokens
   );
 
-  event SwapBorrowRateMode(
-    address indexed reserve,
-    address indexed user,
-    DataTypes.InterestRateMode interestRateMode
-  );
-
   event IsolationModeTotalDebtUpdated(address indexed asset, uint256 totalDebt);
 
   event UserEModeSet(address indexed user, uint8 categoryId);

@@ -74,7 +74,8 @@ contract TestnetERC20 is IERC20WithPermit, ERC20, Ownable {
    * @param value The amount of tokens to mint.
    * @return A boolean that indicates if the operation was successful.
    */
-  function mint(uint256 value) public virtual onlyOwner returns (bool) {
+  // TODO: check
+  function mint(uint256 value) public virtual returns (bool) {
     _mint(_msgSender(), value);
     return true;
   }

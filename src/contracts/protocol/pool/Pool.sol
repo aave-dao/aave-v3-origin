@@ -212,7 +212,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
   function borrow(
     address asset,
     uint256 amount,
-    uint256, // @notice deprecated interestRateMode
+    uint256 interestRateMode,
     uint16 referralCode,
     address onBehalfOf
   ) public virtual override {
@@ -226,6 +226,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
         user: msg.sender,
         onBehalfOf: onBehalfOf,
         amount: amount,
+        interestRateMode: DataTypes.InterestRateMode(interestRateMode),
         referralCode: referralCode,
         releaseUnderlying: true,
         reservesCount: _reservesCount,
@@ -240,7 +241,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
   function repay(
     address asset,
     uint256 amount,
-    uint256, // @notice deprecated interestRateMode
+    uint256 interestRateMode,
     address onBehalfOf
   ) public virtual override returns (uint256) {
     return
@@ -251,6 +252,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
         DataTypes.ExecuteRepayParams({
           asset: asset,
           amount: amount,
+          interestRateMode: DataTypes.InterestRateMode(interestRateMode),
           onBehalfOf: onBehalfOf,
           useATokens: false
         })
@@ -261,7 +263,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
   function repayWithPermit(
     address asset,
     uint256 amount,
-    uint256, // @notice deprecated interestRateMode
+    uint256 interestRateMode,
     address onBehalfOf,
     uint256 deadline,
     uint8 permitV,
@@ -284,6 +286,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
       DataTypes.ExecuteRepayParams memory params = DataTypes.ExecuteRepayParams({
         asset: asset,
         amount: amount,
+        interestRateMode: DataTypes.InterestRateMode(interestRateMode),
         onBehalfOf: onBehalfOf,
         useATokens: false
       });
@@ -295,7 +298,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
   function repayWithATokens(
     address asset,
     uint256 amount,
-    uint256 // @notice deprecated interestRateMode
+    uint256 interestRateMode
   ) public virtual override returns (uint256) {
     return
       BorrowLogic.executeRepay(
@@ -305,6 +308,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
         DataTypes.ExecuteRepayParams({
           asset: asset,
           amount: amount,
+          interestRateMode: DataTypes.InterestRateMode(interestRateMode),
           onBehalfOf: msg.sender,
           useATokens: true
         })
