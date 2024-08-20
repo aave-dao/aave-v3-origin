@@ -11,7 +11,6 @@ import {ReserveConfiguration} from '../protocol/libraries/configuration/ReserveC
 import {UserConfiguration} from '../protocol/libraries/configuration/UserConfiguration.sol';
 import {DataTypes} from '../protocol/libraries/types/DataTypes.sol';
 import {IWrappedTokenGatewayV3} from './interfaces/IWrappedTokenGatewayV3.sol';
-import {DataTypesHelper} from '../misc/libraries/DataTypesHelper.sol';
 
 /**
  * @dev This contract is an upgrade of the WrappedTokenGatewayV3 contract, with immutable pool address.
@@ -83,10 +82,8 @@ contract WrappedTokenGatewayV3 is IWrappedTokenGatewayV3, Ownable {
       rateMode == uint256(DataTypes.InterestRateMode.VARIABLE),
       'DEPRECATED_BORROW_RATE_MODE'
     );
-    uint256 paybackAmount = DataTypesHelper.getUserCurrentDebt(
-      onBehalfOf,
-      POOL.getReserveData(address(WETH))
-    );
+    uint256 paybackAmount = IERC20((POOL.getReserveData(address(WETH))).variableDebtTokenAddress)
+      .balanceOf(onBehalfOf);
 
     if (amount < paybackAmount) {
       paybackAmount = amount;

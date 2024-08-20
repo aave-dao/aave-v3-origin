@@ -8,7 +8,6 @@ import {IVariableDebtToken} from '../../../interfaces/IVariableDebtToken.sol';
 import {IAToken} from '../../../interfaces/IAToken.sol';
 import {UserConfiguration} from '../configuration/UserConfiguration.sol';
 import {ReserveConfiguration} from '../configuration/ReserveConfiguration.sol';
-import {Helpers} from '../helpers/Helpers.sol';
 import {DataTypes} from '../types/DataTypes.sol';
 import {ValidationLogic} from './ValidationLogic.sol';
 import {ReserveLogic} from './ReserveLogic.sol';
@@ -162,7 +161,9 @@ library BorrowLogic {
     DataTypes.ReserveCache memory reserveCache = reserve.cache();
     reserve.updateState(reserveCache);
 
-    uint256 variableDebt = Helpers.getUserCurrentDebt(params.onBehalfOf, reserveCache);
+    uint256 variableDebt = IERC20(reserveCache.variableDebtTokenAddress).balanceOf(
+      params.onBehalfOf
+    );
 
     ValidationLogic.validateRepay(
       reserveCache,

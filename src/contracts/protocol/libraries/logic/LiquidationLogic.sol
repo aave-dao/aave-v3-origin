@@ -5,7 +5,6 @@ import {IERC20} from '../../../dependencies/openzeppelin/contracts//IERC20.sol';
 import {GPv2SafeERC20} from '../../../dependencies/gnosis/contracts/GPv2SafeERC20.sol';
 import {PercentageMath} from '../../libraries/math/PercentageMath.sol';
 import {WadRayMath} from '../../libraries/math/WadRayMath.sol';
-import {Helpers} from '../../libraries/helpers/Helpers.sol';
 import {DataTypes} from '../../libraries/types/DataTypes.sol';
 import {ReserveLogic} from './ReserveLogic.sol';
 import {ValidationLogic} from './ValidationLogic.sol';
@@ -343,19 +342,21 @@ library LiquidationLogic {
     DataTypes.ExecuteLiquidationCallParams memory params,
     uint256 healthFactor
   ) internal view returns (uint256, uint256) {
-    uint256 userTotalDebt = Helpers.getUserCurrentDebt(params.user, debtReserveCache);
+    uint256 userVariableDebt = IERC20(debtReserveCache.variableDebtTokenAddress).balanceOf(
+      params.user
+    );
 
     uint256 closeFactor = healthFactor > CLOSE_FACTOR_HF_THRESHOLD
       ? DEFAULT_LIQUIDATION_CLOSE_FACTOR
       : MAX_LIQUIDATION_CLOSE_FACTOR;
 
-    uint256 maxLiquidatableDebt = userTotalDebt.percentMul(closeFactor);
+    uint256 maxLiquidatableDebt = userVariableDebt.percentMul(closeFactor);
 
     uint256 actualDebtToLiquidate = params.debtToCover > maxLiquidatableDebt
       ? maxLiquidatableDebt
       : params.debtToCover;
 
-    return (userTotalDebt, actualDebtToLiquidate);
+    return (userVariableDebt, actualDebtToLiquidate);
   }
 
   /**
