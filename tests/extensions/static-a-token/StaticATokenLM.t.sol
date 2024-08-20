@@ -3,13 +3,13 @@ pragma solidity ^0.8.10;
 
 import {AToken} from '../../../src/contracts/protocol/tokenization/AToken.sol';
 import {DataTypes} from '../../../src/contracts/protocol/libraries/types/DataTypes.sol';
-import {IERC20, IERC20Metadata} from '../../../src/periphery/contracts/static-a-token/StaticATokenLM.sol';
+import {IERC20, IERC20Metadata} from '../../../src/contracts/extensions/static-a-token/StaticATokenLM.sol';
 import {RayMathExplicitRounding} from '../../../src/contracts/misc/libraries/RayMathExplicitRounding.sol';
 import {PullRewardsTransferStrategy} from '../../../src/contracts/rewards/transfer-strategies/PullRewardsTransferStrategy.sol';
 import {RewardsDataTypes} from '../../../src/contracts/rewards/libraries/RewardsDataTypes.sol';
 import {ITransferStrategyBase} from '../../../src/contracts/rewards/interfaces/ITransferStrategyBase.sol';
 import {IEACAggregatorProxy} from '../../../src/contracts/helpers/interfaces/IEACAggregatorProxy.sol';
-import {IStaticATokenLM} from '../../../src/periphery/contracts/static-a-token/interfaces/IStaticATokenLM.sol';
+import {IStaticATokenLM} from '../../../src/contracts/extensions/static-a-token/interfaces/IStaticATokenLM.sol';
 import {SigUtils} from '../../utils/SigUtils.sol';
 import {BaseTest, TestnetERC20} from './TestBase.sol';
 

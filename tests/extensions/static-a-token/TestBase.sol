@@ -5,8 +5,8 @@ import {IRewardsController} from '../../../src//contracts/rewards/interfaces/IRe
 import {TransparentUpgradeableProxy} from 'solidity-utils/contracts/transparent-proxy/TransparentUpgradeableProxy.sol';
 import {ITransparentProxyFactory} from 'solidity-utils/contracts/transparent-proxy/TransparentProxyFactory.sol';
 import {IPool} from '../../../src/contracts/interfaces/IPool.sol';
-import {StaticATokenFactory} from '../../../src/periphery/contracts/static-a-token/StaticATokenFactory.sol';
-import {StaticATokenLM, IStaticATokenLM, IERC20, IERC20Metadata, ERC20} from '../../../src/periphery/contracts/static-a-token/StaticATokenLM.sol';
+import {StaticATokenFactory} from '../../../src/contracts/extensions/static-a-token/StaticATokenFactory.sol';
+import {StaticATokenLM, IStaticATokenLM, IERC20, IERC20Metadata, ERC20} from '../../../src/contracts/extensions/static-a-token/StaticATokenLM.sol';
 import {IAToken} from '../../../src/contracts/interfaces/IAToken.sol';
 import {TestnetProcedures, TestnetERC20} from '../../utils/TestnetProcedures.sol';
 import {DataTypes} from '../../../src/contracts/protocol/libraries/types/DataTypes.sol';
