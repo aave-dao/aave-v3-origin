@@ -31,7 +31,7 @@ interface IRevenueSplitter is IRevenueSplitterErrors {
   ///      - Rounds in favor of RECIPIENT_B (1 wei round).
   ///      - Anyone can call this function anytime.
   ///      - This method will always send native currency to recipients, and does NOT revert if one or both recipients doesn't support handling native currency. At deployment time is recommended to ensure both recipients can handle ERC20 and native transfers via e2e tests.
-  ///      - Due call success is not check, one recipient can rescue funds from the other recipient in case the other recipient does not support native currency transfers. This is a design decision to prevent funds to be locked or DDOS by one recipient.
+  ///      - If one recipient can not receive native currency, repeatedly calling the function will rescue/drain the funds of the second recipient (50% per call), allowing manual recovery of funds.
   function splitNativeRevenue() external;
 
   function RECIPIENT_A() external view returns (address payable);
