@@ -69,7 +69,10 @@ contract AaveV3BatchTests is BatchTestProcedures {
       address(0),
       0.0005e4,
       0.0004e4,
-      address(0)
+      address(0),
+      address(0),
+      address(0),
+      0
     );
     flags = DeployFlags(false);
 
