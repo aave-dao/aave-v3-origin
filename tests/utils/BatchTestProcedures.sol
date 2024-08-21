@@ -210,15 +210,15 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
     assertTrue(r.variableDebtToken != address(0), 'report.variableDebtToken');
     assertTrue(r.stableDebtToken != address(0), 'report.stableDebtToken');
 
+    assertTrue(r.emissionManager != address(0), 'report.emissionManager');
+    assertTrue(r.rewardsControllerProxy != address(0), 'report.rewardsControllerProxy');
+    
     if (config.incentivesProxy == address(0)) {
-      assertTrue(r.emissionManager != address(0), 'report.emissionManager');
       assertTrue(
         r.rewardsControllerImplementation != address(0),
         'r.rewardsControllerImplementation'
       );
-      assertTrue(r.rewardsControllerProxy != address(0), 'report.rewardsControllerProxy');
     } else {
-      assertTrue(r.emissionManager != address(0), 'report.emissionManager');
       assertEq(
         r.emissionManager,
         IRewardsController(config.incentivesProxy).getEmissionManager(),
