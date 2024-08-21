@@ -68,7 +68,8 @@ contract AaveV3BatchTests is BatchTestProcedures {
       address(new WETH9()),
       address(0),
       0.0005e4,
-      0.0004e4
+      0.0004e4,
+      address(0)
     );
     flags = DeployFlags(false);
 
@@ -111,7 +112,7 @@ contract AaveV3BatchTests is BatchTestProcedures {
       deployedContracts
     );
     vm.stopPrank();
-    checkFullReport(flags, market);
+    checkFullReport(config, flags, market);
   }
 
   function test0AaveV3SetupDeployment() public {

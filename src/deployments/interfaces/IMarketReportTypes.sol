@@ -123,6 +123,7 @@ struct MarketConfig {
   address proxyAdmin;
   uint128 flashLoanPremiumTotal;
   uint128 flashLoanPremiumToProtocol;
+  address incentivesProxy;
 }
 
 struct DeployFlags {
