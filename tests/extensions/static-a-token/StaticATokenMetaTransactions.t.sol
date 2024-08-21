@@ -2,7 +2,7 @@
 pragma solidity ^0.8.10;
 
 import {IERC20WithPermit} from 'solidity-utils/contracts/oz-common/interfaces/IERC20WithPermit.sol';
-import {StaticATokenLM, IStaticATokenLM, IERC20} from '../../../src/periphery/contracts/static-a-token/StaticATokenLM.sol';
+import {StaticATokenLM, IStaticATokenLM, IERC20} from '../../../src/contracts/extensions/static-a-token/StaticATokenLM.sol';
 import {SigUtils} from '../../utils/SigUtils.sol';
 import {BaseTest, IAToken, IRewardsController, DataTypes} from './TestBase.sol';
 

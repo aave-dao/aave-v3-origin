@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.10;
 
-import {IPool} from '../../../contracts/interfaces/IPool.sol';
-import {DataTypes, ReserveConfiguration} from '../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
-import {IRewardsController} from '../../../contracts/rewards/interfaces/IRewardsController.sol';
-import {WadRayMath} from '../../../contracts/protocol/libraries/math/WadRayMath.sol';
-import {MathUtils} from '../../../contracts/protocol/libraries/math/MathUtils.sol';
+import {IPool} from '../../interfaces/IPool.sol';
+import {DataTypes, ReserveConfiguration} from '../../protocol/libraries/configuration/ReserveConfiguration.sol';
+import {IRewardsController} from '../../rewards/interfaces/IRewardsController.sol';
+import {WadRayMath} from '../../protocol/libraries/math/WadRayMath.sol';
+import {MathUtils} from '../../protocol/libraries/math/MathUtils.sol';
 import {SafeCast} from 'solidity-utils/contracts/oz-common/SafeCast.sol';
 import {Initializable} from 'solidity-utils/contracts/transparent-proxy/Initializable.sol';
 import {SafeERC20} from 'solidity-utils/contracts/oz-common/SafeERC20.sol';
@@ -15,10 +15,10 @@ import {IERC20WithPermit} from 'solidity-utils/contracts/oz-common/interfaces/IE
 
 import {IStaticATokenLM} from './interfaces/IStaticATokenLM.sol';
 import {IAToken} from './interfaces/IAToken.sol';
-import {ERC20} from '../dependencies/solmate/ERC20.sol';
+import {ERC20} from '../../dependencies/solmate/ERC20.sol';
 import {IInitializableStaticATokenLM} from './interfaces/IInitializableStaticATokenLM.sol';
 import {StaticATokenErrors} from './StaticATokenErrors.sol';
-import {RayMathExplicitRounding, Rounding} from '../../../contracts/misc/libraries/RayMathExplicitRounding.sol';
+import {RayMathExplicitRounding, Rounding} from '../../misc/libraries/RayMathExplicitRounding.sol';
 import {IERC4626} from './interfaces/IERC4626.sol';
 
 /**

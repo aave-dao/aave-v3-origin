@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.10;
 
-import {IPool} from '../../../contracts/interfaces/IPool.sol';
-import {IPoolAddressesProvider} from '../../../contracts/interfaces/IPoolAddressesProvider.sol';
-import {IAaveOracle} from '../../../contracts/interfaces/IAaveOracle.sol';
+import {IPool} from '../../interfaces/IPool.sol';
+import {IPoolAddressesProvider} from '../../interfaces/IPoolAddressesProvider.sol';
+import {IAaveOracle} from '../../interfaces/IAaveOracle.sol';
 import {IStataOracle} from './interfaces/IStataOracle.sol';
 import {IERC4626} from './interfaces/IERC4626.sol';
 
