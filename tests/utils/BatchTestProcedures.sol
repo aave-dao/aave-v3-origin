@@ -174,7 +174,11 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
     );
   }
 
-  function checkFullReport(MarketConfig memory config, DeployFlags memory flags, MarketReport memory r) internal view {
+  function checkFullReport(
+    MarketConfig memory config,
+    DeployFlags memory flags,
+    MarketReport memory r
+  ) internal view {
     assertTrue(r.poolAddressesProviderRegistry != address(0), 'r.poolAddressesProviderRegistry');
     assertTrue(r.poolAddressesProvider != address(0), 'report.poolAddressesProvider');
     assertTrue(r.poolProxy != address(0), 'report.poolProxy');
@@ -215,12 +219,20 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
       assertTrue(r.rewardsControllerProxy != address(0), 'report.rewardsControllerProxy');
     } else {
       assertTrue(r.emissionManager != address(0), 'report.emissionManager');
-      assertEq(r.emissionManager, IRewardsController(config.incentivesProxy).getEmissionManager(), 'report.emissionManager should match RewardsController(config.incentivesProxy).getEmissionManager()');
+      assertEq(
+        r.emissionManager,
+        IRewardsController(config.incentivesProxy).getEmissionManager(),
+        'report.emissionManager should match RewardsController(config.incentivesProxy).getEmissionManager()'
+      );
       assertTrue(
         r.rewardsControllerImplementation == address(0),
         'r.rewardsControllerImplementation should be empty if incentivesProxy is set'
       );
-      assertEq(r.rewardsControllerProxy, config.incentivesProxy, 'r.rewardsControllerProxy should match config input');
+      assertEq(
+        r.rewardsControllerProxy,
+        config.incentivesProxy,
+        'r.rewardsControllerProxy should match config input'
+      );
     }
     assertTrue(r.configEngine != address(0), 'report.configEngine');
     assertTrue(

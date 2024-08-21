@@ -56,7 +56,7 @@ contract AaveV3SetupProcedure {
     _validateMarketSetup(roles);
 
     SetupReport memory report = _setupPoolAddressesProvider(
-     AddressProviderInput(
+      AddressProviderInput(
         initialReport,
         poolImplementation,
         poolConfiguratorImplementation,
@@ -109,7 +109,7 @@ contract AaveV3SetupProcedure {
   ) internal returns (SetupReport memory) {
     SetupReport memory report;
 
-     IPoolAddressesProvider provider = IPoolAddressesProvider(
+    IPoolAddressesProvider provider = IPoolAddressesProvider(
       input.initialReport.poolAddressesProvider
     );
     provider.setPriceOracle(input.aaveOracle);
