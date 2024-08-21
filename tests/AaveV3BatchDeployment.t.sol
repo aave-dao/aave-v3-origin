@@ -15,6 +15,8 @@ import {IAaveV3ConfigEngine} from 'aave-v3-periphery/contracts/v3-config-engine/
 import {IPool} from 'aave-v3-core/contracts/interfaces/IPool.sol';
 import {AaveV3ConfigEngine} from 'aave-v3-periphery/contracts/v3-config-engine/AaveV3ConfigEngine.sol';
 import {SequencerOracle} from 'aave-v3-core/contracts/mocks/oracle/SequencerOracle.sol';
+import {RewardsController} from 'aave-v3-periphery/contracts/rewards/RewardsController.sol';
+import {EmissionManager} from 'aave-v3-periphery/contracts/rewards/EmissionManager.sol';
 
 contract AaveV3BatchDeployment is BatchTestProcedures {
   address public marketOwner;
@@ -49,7 +51,8 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
       weth9,
       address(0),
       0.0005e4,
-      0.0004e4
+      0.0004e4,
+      address(0)
     );
   }
 
@@ -61,7 +64,7 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
       flags,
       deployedContracts
     );
-    checkFullReport(flags, fullReport);
+    checkFullReport(config, flags, fullReport);
 
     AaveV3TestListing testnetListingPayload = new AaveV3TestListing(
       IAaveV3ConfigEngine(fullReport.configEngine),
@@ -91,7 +94,7 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
       deployedContracts
     );
 
-    checkFullReport(flags, fullReport);
+    checkFullReport(config, flags, fullReport);
 
     AaveV3TestListing testnetListingPayload = new AaveV3TestListing(
       IAaveV3ConfigEngine(fullReport.configEngine),
@@ -110,6 +113,20 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
 
   function testAaveV3BatchDeploy() public {
     checkFullReport(
+      config,
+      flags,
+      deployAaveV3Testnet(marketOwner, roles, config, flags, deployedContracts)
+    );
+  }
+
+  function testAaveV3Batch_reuseIncentivesProxy() public {
+    EmissionManager emissionManager = new EmissionManager(poolAdmin);
+    RewardsController controller = new RewardsController(address(emissionManager));
+
+    config.incentivesProxy = address(controller);
+
+    checkFullReport(
+      config,
       flags,
       deployAaveV3Testnet(marketOwner, roles, config, flags, deployedContracts)
     );

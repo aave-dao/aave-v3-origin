@@ -12,6 +12,7 @@ import {FfiUtils} from '../../src/deployments/contracts/utilities/FfiUtils.sol';
 import {DefaultMarketInput} from '../../src/deployments/inputs/DefaultMarketInput.sol';
 import {AaveV3BatchOrchestration} from '../../src/deployments/projects/aave-v3-batched/AaveV3BatchOrchestration.sol';
 import {IPoolAddressesProvider} from 'aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol';
+import {IRewardsController} from 'aave-v3-periphery/contracts/rewards/interfaces/IRewardsController.sol';
 import {ACLManager} from 'aave-v3-core/contracts/protocol/configuration/ACLManager.sol';
 import {WETH9} from 'aave-v3-core/contracts/dependencies/weth/WETH9.sol';
 import 'aave-v3-periphery/contracts/mocks/testnet-helpers/TestnetERC20.sol';
@@ -173,7 +174,7 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
     );
   }
 
-  function checkFullReport(DeployFlags memory flags, MarketReport memory r) internal pure {
+  function checkFullReport(MarketConfig memory config, DeployFlags memory flags, MarketReport memory r) internal view {
     assertTrue(r.poolAddressesProviderRegistry != address(0), 'r.poolAddressesProviderRegistry');
     assertTrue(r.poolAddressesProvider != address(0), 'report.poolAddressesProvider');
     assertTrue(r.poolProxy != address(0), 'report.poolProxy');
@@ -204,12 +205,23 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
     assertTrue(r.aToken != address(0), 'report.aToken');
     assertTrue(r.variableDebtToken != address(0), 'report.variableDebtToken');
     assertTrue(r.stableDebtToken != address(0), 'report.stableDebtToken');
-    assertTrue(r.emissionManager != address(0), 'report.emissionManager');
-    assertTrue(
-      r.rewardsControllerImplementation != address(0),
-      'r.rewardsControllerImplementation'
-    );
-    assertTrue(r.rewardsControllerProxy != address(0), 'report.rewardsControllerProxy');
+
+    if (config.incentivesProxy == address(0)) {
+      assertTrue(r.emissionManager != address(0), 'report.emissionManager');
+      assertTrue(
+        r.rewardsControllerImplementation != address(0),
+        'r.rewardsControllerImplementation'
+      );
+      assertTrue(r.rewardsControllerProxy != address(0), 'report.rewardsControllerProxy');
+    } else {
+      assertTrue(r.emissionManager != address(0), 'report.emissionManager');
+      assertEq(r.emissionManager, IRewardsController(config.incentivesProxy).getEmissionManager(), 'report.emissionManager should match RewardsController(config.incentivesProxy).getEmissionManager()');
+      assertTrue(
+        r.rewardsControllerImplementation == address(0),
+        'r.rewardsControllerImplementation should be empty if incentivesProxy is set'
+      );
+      assertEq(r.rewardsControllerProxy, config.incentivesProxy, 'r.rewardsControllerProxy should match config input');
+    }
     assertTrue(r.configEngine != address(0), 'report.configEngine');
     assertTrue(
       r.staticATokenFactoryImplementation != address(0),
