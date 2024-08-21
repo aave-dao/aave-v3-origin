@@ -98,19 +98,6 @@ interface IPool {
   );
 
   /**
-   * @dev Emitted on swapBorrowRateMode(), DEPRECATED on v3.2.0
-   * @param reserve The address of the underlying asset of the reserve
-   * @param user The address of the user swapping his rate mode
-   * @param interestRateMode The current interest rate mode of the position being swapped:
-   *        1 for Stable (Deprecated on v3.2.0), 2 for Variable
-   */
-  event SwapBorrowRateMode(
-    address indexed reserve,
-    address indexed user,
-    DataTypes.InterestRateMode interestRateMode
-  );
-
-  /**
    * @dev Emitted on borrow(), repay() and liquidationCall() when using isolated assets
    * @param asset The address of the underlying asset of the reserve
    * @param totalDebt The total isolation mode debt for the reserve
@@ -137,13 +124,6 @@ interface IPool {
    * @param user The address of the user enabling the usage as collateral
    */
   event ReserveUsedAsCollateralDisabled(address indexed reserve, address indexed user);
-
-  /**
-   * @dev Emitted on rebalanceStableBorrowRate(), DEPRECATED on v3.2.0
-   * @param reserve The address of the underlying asset of the reserve
-   * @param user The address of the user for which the rebalance has been executed
-   */
-  event RebalanceStableBorrowRate(address indexed reserve, address indexed user);
 
   /**
    * @dev Emitted on flashLoan()
