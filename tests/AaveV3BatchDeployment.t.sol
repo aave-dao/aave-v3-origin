@@ -19,6 +19,8 @@ import {IPoolDataProvider} from 'aave-v3-core/contracts/interfaces/IPoolDataProv
 import {IAToken} from 'aave-v3-core/contracts/interfaces/IAToken.sol';
 import {IncentivizedERC20} from 'aave-v3-core/contracts/protocol/tokenization/base/IncentivizedERC20.sol';
 import {RewardsController} from 'aave-v3-periphery/contracts/rewards/RewardsController.sol';
+import {RewardsController} from 'aave-v3-periphery/contracts/rewards/RewardsController.sol';
+import {EmissionManager} from 'aave-v3-periphery/contracts/rewards/EmissionManager.sol';
 
 contract AaveV3BatchDeployment is BatchTestProcedures {
   address public marketOwner;
@@ -54,6 +56,7 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
       address(0),
       0.0005e4,
       0.0004e4,
+      address(0),
       address(0),
       address(0),
       0
@@ -121,6 +124,19 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
   }
 
   function testAaveV3BatchDeploy() public {
+    checkFullReport(
+      config,
+      flags,
+      deployAaveV3Testnet(marketOwner, roles, config, flags, deployedContracts)
+    );
+  }
+
+  function testAaveV3Batch_reuseIncentivesProxy() public {
+    EmissionManager emissionManager = new EmissionManager(poolAdmin);
+    RewardsController controller = new RewardsController(address(emissionManager));
+
+    config.incentivesProxy = address(controller);
+
     checkFullReport(
       config,
       flags,

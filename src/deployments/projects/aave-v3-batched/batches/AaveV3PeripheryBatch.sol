@@ -5,6 +5,7 @@ import {AaveV3TreasuryProcedure} from '../../../contracts/procedures/AaveV3Treas
 import {AaveV3OracleProcedure} from '../../../contracts/procedures/AaveV3OracleProcedure.sol';
 import {AaveV3IncentiveProcedure} from '../../../contracts/procedures/AaveV3IncentiveProcedure.sol';
 import {AaveV3DefaultRateStrategyProcedure} from '../../../contracts/procedures/AaveV3DefaultRateStrategyProcedure.sol';
+import {IOwnable} from 'solidity-utils/contracts/transparent-proxy/interfaces/IOwnable.sol';
 import '../../../interfaces/IMarketReportTypes.sol';
 import {IRewardsController} from '../../../../periphery/contracts/rewards/interfaces/IRewardsController.sol';
 import {IOwnable} from 'solidity-utils/contracts/transparent-proxy/interfaces/IOwnable.sol';
@@ -55,9 +56,13 @@ contract AaveV3PeripheryBatch is
       );
     }
 
-    (_report.emissionManager, _report.rewardsControllerImplementation) = _deployIncentives(
-      setupBatch
-    );
+    if (config.incentivesProxy == address(0)) {
+      (_report.emissionManager, _report.rewardsControllerImplementation) = _deployIncentives(
+        setupBatch
+      );
+    } else {
+      _report.emissionManager = IRewardsController(config.incentivesProxy).getEmissionManager();
+    }
   }
 
   function getPeripheryReport() external view returns (PeripheryReport memory) {

@@ -100,7 +100,10 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
       supplyCap: 85_000,
       borrowCap: 60_000,
       debtCeiling: 0,
-      eModeCategory: 0
+      eModeCategory: 0,
+      virtualAccActive: true,
+      virtualBalance: 0,
+      aTokenUnderlyingBalance: 0
     });
 
     _validateReserveConfig(expectedAssetConfig, allConfigsAfter);
@@ -200,7 +203,10 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
       supplyCap: 85_000,
       borrowCap: 60_000,
       debtCeiling: 0,
-      eModeCategory: 0
+      eModeCategory: 0,
+      virtualAccActive: true,
+      virtualBalance: 0,
+      aTokenUnderlyingBalance: 0
     });
 
     _validateReserveConfig(expectedAssetConfig, allConfigsAfter);
