@@ -212,7 +212,7 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
 
     assertTrue(r.emissionManager != address(0), 'report.emissionManager');
     assertTrue(r.rewardsControllerProxy != address(0), 'report.rewardsControllerProxy');
-    
+
     if (config.incentivesProxy == address(0)) {
       assertTrue(
         r.rewardsControllerImplementation != address(0),
