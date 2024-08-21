@@ -67,7 +67,6 @@ contract DeploymentsGasLimits is BatchTestProcedures {
       0.0004e4,
       address(0),
       address(0),
-      address(0),
       0
     );
     flags = DeployFlags(true);

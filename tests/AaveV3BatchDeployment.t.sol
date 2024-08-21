@@ -56,7 +56,6 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
       0.0004e4,
       address(0),
       address(0),
-      address(0),
       0
     );
   }
@@ -161,43 +160,5 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
       .getReserveTokensAddresses(weth9);
 
     assertEq(IAToken(aToken).RESERVE_TREASURY_ADDRESS(), fullReport.revenueSplitter);
-  }
-
-  function testAaveV3ReuseTreasuryAndIncentives() public {
-    config.treasury = makeAddr('COLLECTOR');
-    config.incentivesProxy = address(new RewardsController(roles.poolAdmin));
-
-    MarketReport memory fullReport = deployAaveV3Testnet(
-      marketOwner,
-      roles,
-      config,
-      flags,
-      deployedContracts
-    );
-
-    assertEq(fullReport.treasury, config.treasury);
-    assertEq(fullReport.rewardsControllerProxy, config.incentivesProxy);
-
-    checkFullReport(config, flags, fullReport);
-
-    AaveV3TestListing testnetListingPayload = new AaveV3TestListing(
-      IAaveV3ConfigEngine(fullReport.configEngine),
-      marketOwner,
-      weth9,
-      fullReport
-    );
-
-    ACLManager manager = ACLManager(fullReport.aclManager);
-
-    vm.prank(poolAdmin);
-    manager.addPoolAdmin(address(testnetListingPayload));
-
-    testnetListingPayload.execute();
-
-    (address aToken, , ) = IPoolDataProvider(fullReport.protocolDataProvider)
-      .getReserveTokensAddresses(weth9);
-
-    assertEq(IAToken(aToken).RESERVE_TREASURY_ADDRESS(), config.treasury);
-    assertEq(address(IncentivizedERC20(aToken).getIncentivesController()), config.incentivesProxy);
   }
 }

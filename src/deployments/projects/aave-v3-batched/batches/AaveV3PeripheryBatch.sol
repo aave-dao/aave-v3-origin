@@ -55,13 +55,9 @@ contract AaveV3PeripheryBatch is
       );
     }
 
-    if (config.incentivesProxy == address(0)) {
-      (_report.emissionManager, _report.rewardsControllerImplementation) = _deployIncentives(
-        setupBatch
-      );
-    } else {
-      _report.emissionManager = IRewardsController(config.incentivesProxy).getEmissionManager();
-    }
+    (_report.emissionManager, _report.rewardsControllerImplementation) = _deployIncentives(
+      setupBatch
+    );
   }
 
   function getPeripheryReport() external view returns (PeripheryReport memory) {
