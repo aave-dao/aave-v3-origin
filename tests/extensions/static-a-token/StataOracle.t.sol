@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.10;
 
-import {StataOracle} from '../../../src/periphery/contracts/static-a-token/StataOracle.sol';
-import {StaticATokenLM} from '../../../src/periphery/contracts/static-a-token/StaticATokenLM.sol';
+import {StataOracle} from '../../../src/contracts/extensions/static-a-token/StataOracle.sol';
+import {StaticATokenLM} from '../../../src/contracts/extensions/static-a-token/StaticATokenLM.sol';
 import {BaseTest} from './TestBase.sol';
 
 contract StataOracleTest is BaseTest {
