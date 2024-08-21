@@ -80,7 +80,7 @@ contract WrappedTokenGatewayV3 is IWrappedTokenGatewayV3, Ownable {
   ) external payable override {
     require(
       rateMode == uint256(DataTypes.InterestRateMode.VARIABLE),
-      'DEPRECATED_BORROW_RATE_MODE'
+      'INVALID_INTEREST_RATE_MODE_SELECTED'
     );
     uint256 paybackAmount = IERC20((POOL.getReserveData(address(WETH))).variableDebtTokenAddress)
       .balanceOf(onBehalfOf);
@@ -114,7 +114,7 @@ contract WrappedTokenGatewayV3 is IWrappedTokenGatewayV3, Ownable {
   ) external override {
     require(
       rateMode == uint256(DataTypes.InterestRateMode.VARIABLE),
-      'DEPRECATED_BORROW_RATE_MODE'
+      'INVALID_INTEREST_RATE_MODE_SELECTED'
     );
     POOL.borrow(
       address(WETH),

@@ -141,10 +141,6 @@ library ValidationLogic {
     DataTypes.ValidateBorrowParams memory params
   ) internal view {
     require(params.amount != 0, Errors.INVALID_AMOUNT);
-    require(
-      params.interestRateMode == DataTypes.InterestRateMode.VARIABLE,
-      Errors.DEPRECATED_BORROW_RATE_MODE
-    );
 
     ValidateBorrowLocalVars memory vars;
 
@@ -167,6 +163,12 @@ library ValidationLogic {
       params.priceOracleSentinel == address(0) ||
         IPriceOracleSentinel(params.priceOracleSentinel).isBorrowAllowed(),
       Errors.PRICE_ORACLE_SENTINEL_CHECK_FAILED
+    );
+
+    //validate interest rate mode
+    require(
+      params.interestRateMode == DataTypes.InterestRateMode.VARIABLE,
+      Errors.INVALID_INTEREST_RATE_MODE_SELECTED
     );
 
     vars.reserveDecimals = params.reserveCache.reserveConfiguration.getDecimals();
@@ -292,7 +294,7 @@ library ValidationLogic {
     require(amountSent != 0, Errors.INVALID_AMOUNT);
     require(
       interestRateMode == DataTypes.InterestRateMode.VARIABLE,
-      Errors.DEPRECATED_BORROW_RATE_MODE
+      Errors.INVALID_INTEREST_RATE_MODE_SELECTED
     );
     require(
       amountSent != type(uint256).max || msg.sender == onBehalfOf,

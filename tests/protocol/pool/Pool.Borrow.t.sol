@@ -204,8 +204,9 @@ contract PoolBorrowTests is TestnetProcedures {
     uint256 borrowAmount = 100;
     vm.startPrank(alice);
     contracts.poolProxy.supply(tokenList.usdx, amount, alice, 0);
+    contracts.poolProxy.supply(tokenList.wbtc, borrowAmount, bob, 0);
 
-    vm.expectRevert(bytes(Errors.DEPRECATED_BORROW_RATE_MODE));
+    vm.expectRevert(bytes(Errors.INVALID_INTEREST_RATE_MODE_SELECTED));
 
     contracts.poolProxy.borrow(tokenList.wbtc, borrowAmount, 1, 0, alice);
   }

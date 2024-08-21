@@ -97,7 +97,7 @@ contract PoolRepayTests is TestnetProcedures {
     contracts.poolProxy.borrow(tokenList.usdx, borrowAmount, 2, 0, alice);
     vm.warp(block.timestamp + 10 days);
 
-    vm.expectRevert(bytes(Errors.DEPRECATED_BORROW_RATE_MODE));
+    vm.expectRevert(bytes(Errors.INVALID_INTEREST_RATE_MODE_SELECTED));
     contracts.poolProxy.repay(tokenList.usdx, UINT256_MAX, 1, alice);
     vm.stopPrank();
   }

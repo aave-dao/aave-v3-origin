@@ -431,7 +431,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
     ) = _defaultInput(false, 1);
 
     vm.prank(alice);
-    vm.expectRevert(bytes(Errors.DEPRECATED_BORROW_RATE_MODE));
+    vm.expectRevert(bytes(Errors.INVALID_INTEREST_RATE_MODE_SELECTED));
     contracts.poolProxy.flashLoan(
       address(mockFlashReceiver),
       assets,
