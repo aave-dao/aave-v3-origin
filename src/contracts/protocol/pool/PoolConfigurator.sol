@@ -245,7 +245,6 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
     bool paused,
     uint40 gracePeriod
   ) public override onlyEmergencyOrPoolAdmin {
-    // Only setting grace period if the transition is not paused
     if (!paused && gracePeriod != 0) {
       require(gracePeriod <= MAX_GRACE_PERIOD, Errors.INVALID_GRACE_PERIOD);
 
