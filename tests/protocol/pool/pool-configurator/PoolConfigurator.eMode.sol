@@ -21,7 +21,7 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
     string label
   );
 
-  event EModeAssetCategoryChanged(address indexed asset, uint8 oldCategoryId, uint8 newCategoryId);
+  event AssetEModeCategoryChanged(address indexed asset, uint8 categoryId, bool allowed);
 
   function setUp() public {
     initTestEnvironment();
@@ -40,52 +40,6 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
     assertEq(emodeConfig.liquidationThreshold, ct.lt);
     assertEq(emodeConfig.liquidationBonus, ct.lb);
     assertEq(emodeConfig.label, ct.label);
-  }
-
-  function test_reverts_configureEmodeCategory_bad_ltv() public {
-    DataTypes.ReserveConfigurationMap memory currentConfig = contracts.poolProxy.getConfiguration(
-      tokenList.wbtc
-    );
-
-    EModeCategoryInput memory ct = _genCategoryOne();
-
-    vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(ct.id, ct.ltv, ct.lt, ct.lb, ct.label);
-    contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.wbtc, ct.id);
-
-    vm.expectRevert(bytes(Errors.INVALID_EMODE_CATEGORY_PARAMS));
-
-    contracts.poolConfiguratorProxy.setEModeCategory(
-      ct.id,
-      uint16(currentConfig.getLtv() - 1),
-      uint16(currentConfig.getLiquidationThreshold() + 1),
-      ct.lb,
-      ct.label
-    );
-    vm.stopPrank();
-  }
-
-  function test_reverts_configureEmodeCategory_bad_lq() public {
-    DataTypes.ReserveConfigurationMap memory currentConfig = contracts.poolProxy.getConfiguration(
-      tokenList.wbtc
-    );
-
-    EModeCategoryInput memory ct = _genCategoryOne();
-
-    vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(ct.id, ct.ltv, ct.lt, ct.lb, ct.label);
-    contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.wbtc, ct.id);
-
-    vm.expectRevert(bytes(Errors.INVALID_EMODE_CATEGORY_PARAMS));
-
-    contracts.poolConfiguratorProxy.setEModeCategory(
-      ct.id,
-      uint16(currentConfig.getLtv() + 1),
-      uint16(currentConfig.getLiquidationThreshold() - 1),
-      ct.lb,
-      ct.label
-    );
-    vm.stopPrank();
   }
 
   function test_updateEModeCategory() public {
@@ -181,85 +135,16 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
     );
   }
 
-  function test_reverts_configureEmodeCategory_input_ltv_lt_reserve_emode_ltv() public {
-    EModeCategoryInput memory ct = _genCategoryOne();
-    vm.startPrank(poolAdmin);
-
-    contracts.poolConfiguratorProxy.setEModeCategory(ct.id, ct.ltv, ct.lt, ct.lb, ct.label);
-    contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.usdx, ct.id);
-
-    (, uint256 ltv, , , , , , , , ) = contracts.protocolDataProvider.getReserveConfigurationData(
-      tokenList.usdx
-    );
-
-    vm.expectRevert(bytes(Errors.INVALID_EMODE_CATEGORY_PARAMS));
-    contracts.poolConfiguratorProxy.setEModeCategory(
-      ct.id,
-      uint16(ltv) - 1,
-      ct.lt,
-      ct.lb,
-      ct.label
-    );
-    vm.stopPrank();
-  }
-
-  function test_reverts_configureEmodeCategory_input_ltv_lt_reserve_emode_pendingLtv() public {
-    EModeCategoryInput memory ct = _genCategoryOne();
-    vm.startPrank(poolAdmin);
-
-    contracts.poolConfiguratorProxy.setEModeCategory(ct.id, ct.ltv, ct.lt, ct.lb, ct.label);
-    contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.usdx, ct.id);
-
-    (, uint256 ltv, , , , , , , , ) = contracts.protocolDataProvider.getReserveConfigurationData(
-      tokenList.usdx
-    );
-
-    // freeze asset
-    contracts.poolConfiguratorProxy.setReserveFreeze(tokenList.usdx, true);
-
-    vm.expectRevert(bytes(Errors.INVALID_EMODE_CATEGORY_PARAMS));
-    contracts.poolConfiguratorProxy.setEModeCategory(
-      ct.id,
-      uint16(ltv) - 1,
-      ct.lt,
-      ct.lb,
-      ct.label
-    );
-    vm.stopPrank();
-  }
-
-  function test_reverts_configureEmodeCategory_input_lt_lt_reserve_emode_lt() public {
-    EModeCategoryInput memory ct = _genCategoryOne();
-    vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(ct.id, ct.ltv, ct.lt, ct.lb, ct.label);
-    contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.usdx, ct.id);
-
-    (, , uint256 lt, , , , , , , ) = contracts.protocolDataProvider.getReserveConfigurationData(
-      tokenList.usdx
-    );
-
-    vm.expectRevert(bytes(Errors.INVALID_EMODE_CATEGORY_PARAMS));
-    contracts.poolConfiguratorProxy.setEModeCategory(
-      ct.id,
-      ct.ltv,
-      uint16(lt) - 1,
-      ct.lb,
-      ct.label
-    );
-    vm.stopPrank();
-  }
-
   function test_setAssetEModeCategory() public {
     EModeCategoryInput memory input = _genCategoryOne();
     test_configureEmodeCategory();
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit EModeAssetCategoryChanged(tokenList.usdx, 0, input.id);
+    emit AssetEModeCategoryChanged(tokenList.usdx, input.id, true);
     vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.usdx, input.id);
+    contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.usdx, input.id, true);
   }
 
   function test_updateAssetEModeCategory() public {
-    EModeCategoryInput memory prevCt = _genCategoryOne();
     EModeCategoryInput memory ct = _genCategoryTwo();
     test_setAssetEModeCategory();
 
@@ -267,30 +152,19 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
     contracts.poolConfiguratorProxy.setEModeCategory(ct.id, ct.ltv, ct.lt, ct.lb, ct.label);
 
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit EModeAssetCategoryChanged(tokenList.usdx, prevCt.id, ct.id);
+    emit AssetEModeCategoryChanged(tokenList.usdx, ct.id, true);
 
     vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.usdx, ct.id);
+    contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.usdx, ct.id, true);
   }
 
   function test_removeEModeCategoryFromAsset() public {
     EModeCategoryInput memory prevCt = _genCategoryOne();
     test_setAssetEModeCategory();
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit EModeAssetCategoryChanged(tokenList.usdx, prevCt.id, 0);
+    emit AssetEModeCategoryChanged(tokenList.usdx, prevCt.id, false);
 
     vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.usdx, 0);
-  }
-
-  function test_reverts_setAssetEModeCategory_invalid() public {
-    EModeCategoryInput memory ct = _genCategoryOne();
-
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(ct.id, 50_00, 51_00, ct.lb, ct.label);
-
-    vm.expectRevert(bytes(Errors.INVALID_EMODE_CATEGORY_ASSIGNMENT));
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.usdx, ct.id);
+    contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.usdx, prevCt.id, false);
   }
 }

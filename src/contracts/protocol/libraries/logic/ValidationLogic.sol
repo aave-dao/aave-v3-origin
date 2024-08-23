@@ -209,12 +209,10 @@ library ValidationLogic {
     }
 
     if (params.userEModeCategory != 0) {
-      DataTypes.EModeCategory memory category = eModeCategories[params.userEModeCategory];
       require(
-        params.reserveCache.reserveConfiguration.getEModeCategory() == params.userEModeCategory,
-        Errors.INCONSISTENT_EMODE_CATEGORY
+        eModeCategories[params.userEModeCategory].isBorrowable(reservesData[params.asset].id),
+        Errors.NOT_BORROWABLE_IN_EMODE
       );
-      require(category.isBorrowable(reservesData[params.asset].id), Errors.NOT_BORROWABLE_IN_EMODE);
     }
 
     (
@@ -543,22 +541,18 @@ library ValidationLogic {
 
   /**
    * @notice Validates the action of setting efficiency mode.
-   * @param reservesData The state of all the reserves
-   * @param reservesList The addresses of all the active reserves
    * @param eModeCategories a mapping storing configurations for all efficiency mode categories
    * @param userConfig the user configuration
    * @param reservesCount The total number of valid reserves
    * @param categoryId The id of the category
    */
   function validateSetUserEMode(
-    mapping(address => DataTypes.ReserveData) storage reservesData,
-    mapping(uint256 => address) storage reservesList,
     mapping(uint8 => DataTypes.EModeCategory) storage eModeCategories,
     DataTypes.UserConfigurationMap memory userConfig,
     uint256 reservesCount,
     uint8 categoryId
   ) internal view {
-    DataTypes.EModeCategory memory eModeCategory = eModeCategories[categoryId];
+    DataTypes.EModeCategory storage eModeCategory = eModeCategories[categoryId];
     // category is invalid if the liq threshold is not set
     require(
       categoryId == 0 || eModeCategory.liquidationThreshold != 0,
@@ -576,12 +570,6 @@ library ValidationLogic {
       unchecked {
         for (uint256 i = 0; i < reservesCount; i++) {
           if (userConfig.isBorrowing(i)) {
-            DataTypes.ReserveConfigurationMap memory configuration = reservesData[reservesList[i]]
-              .configuration;
-            require(
-              configuration.getEModeCategory() == categoryId,
-              Errors.INCONSISTENT_EMODE_CATEGORY
-            );
             require(eModeCategory.isBorrowable(i), Errors.NOT_BORROWABLE_IN_EMODE);
           }
         }

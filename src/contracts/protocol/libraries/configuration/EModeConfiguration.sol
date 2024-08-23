@@ -12,6 +12,44 @@ import {ReserveConfiguration} from './ReserveConfiguration.sol';
  */
 library EModeConfiguration {
   /**
+   * @notice Sets if the asset is collateral in the given eMode
+   * @param self The configuration object
+   * @param reserveIndex The index of the reserve in the bitmap
+   * @param collateral True if the asset should be collateral, false otherwise
+   */
+  function setCollateralAsset(
+    DataTypes.EModeCategory memory self,
+    uint256 reserveIndex,
+    bool collateral
+  ) internal pure {
+    unchecked {
+      require(reserveIndex < ReserveConfiguration.MAX_RESERVES_COUNT, Errors.INVALID_RESERVE_INDEX);
+      uint128 bit = uint128(1 << reserveIndex);
+      if (collateral) {
+        self.collateralMask |= bit;
+      } else {
+        self.collateralMask &= ~bit;
+      }
+    }
+  }
+
+  /**
+   * @notice Validates if a reserve can be used as collaterl in a selected eMode
+   * @param self The configuration object
+   * @param reserveIndex The index of the reserve in the bitmap
+   * @return True if the reserve is collateral
+   */
+  function isCollateralAsset(
+    DataTypes.EModeCategory storage self,
+    uint256 reserveIndex
+  ) internal view returns (bool) {
+    unchecked {
+      require(reserveIndex < ReserveConfiguration.MAX_RESERVES_COUNT, Errors.INVALID_RESERVE_INDEX);
+      return (self.collateralMask >> reserveIndex) & 1 != 0;
+    }
+  }
+
+  /**
    * @notice Sets if the asset is borrowable in the given eMode
    * @param self The configuration object
    * @param reserveIndex The index of the reserve in the bitmap
@@ -22,12 +60,14 @@ library EModeConfiguration {
     uint256 reserveIndex,
     bool borrowable
   ) internal pure {
-    require(reserveIndex < ReserveConfiguration.MAX_RESERVES_COUNT, Errors.INVALID_RESERVE_INDEX);
-    uint128 bit = uint128(1 << reserveIndex);
-    if (borrowable) {
-      self.borrowableMask |= bit;
-    } else {
-      self.borrowableMask &= ~bit;
+    unchecked {
+      require(reserveIndex < ReserveConfiguration.MAX_RESERVES_COUNT, Errors.INVALID_RESERVE_INDEX);
+      uint128 bit = uint128(1 << reserveIndex);
+      if (borrowable) {
+        self.borrowableMask |= bit;
+      } else {
+        self.borrowableMask &= ~bit;
+      }
     }
   }
 
@@ -38,10 +78,12 @@ library EModeConfiguration {
    * @return True if the reserve is borrowable
    */
   function isBorrowable(
-    DataTypes.EModeCategory memory self,
+    DataTypes.EModeCategory storage self,
     uint256 reserveIndex
-  ) internal pure returns (bool) {
-    require(reserveIndex < ReserveConfiguration.MAX_RESERVES_COUNT, Errors.INVALID_RESERVE_INDEX);
-    return (self.borrowableMask >> reserveIndex) & 1 != 0;
+  ) internal view returns (bool) {
+    unchecked {
+      require(reserveIndex < ReserveConfiguration.MAX_RESERVES_COUNT, Errors.INVALID_RESERVE_INDEX);
+      return (self.borrowableMask >> reserveIndex) & 1 != 0;
+    }
   }
 }

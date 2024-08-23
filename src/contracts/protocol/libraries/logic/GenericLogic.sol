@@ -6,6 +6,7 @@ import {IScaledBalanceToken} from '../../../interfaces/IScaledBalanceToken.sol';
 import {IPriceOracleGetter} from '../../../interfaces/IPriceOracleGetter.sol';
 import {ReserveConfiguration} from '../configuration/ReserveConfiguration.sol';
 import {UserConfiguration} from '../configuration/UserConfiguration.sol';
+import {EModeConfiguration} from '../configuration/EModeConfiguration.sol';
 import {PercentageMath} from '../math/PercentageMath.sol';
 import {WadRayMath} from '../math/WadRayMath.sol';
 import {DataTypes} from '../types/DataTypes.sol';
@@ -23,6 +24,7 @@ library GenericLogic {
   using PercentageMath for uint256;
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
   using UserConfiguration for DataTypes.UserConfigurationMap;
+  using EModeConfiguration for DataTypes.EModeCategory;
 
   struct CalculateUserAccountDataVars {
     uint256 assetPrice;
@@ -96,14 +98,9 @@ library GenericLogic {
 
       DataTypes.ReserveData storage currentReserve = reservesData[vars.currentReserveAddress];
 
-      (
-        vars.ltv,
-        vars.liquidationThreshold,
-        ,
-        vars.decimals,
-        ,
-        vars.eModeAssetCategory
-      ) = currentReserve.configuration.getParams();
+      (vars.ltv, vars.liquidationThreshold, , vars.decimals, ) = currentReserve
+        .configuration
+        .getParams();
 
       unchecked {
         vars.assetUnit = 10 ** vars.decimals;
@@ -121,10 +118,9 @@ library GenericLogic {
 
         vars.totalCollateralInBaseCurrency += vars.userBalanceInBaseCurrency;
 
-        vars.isInEModeCategory = EModeLogic.isInEModeCategory(
-          params.userEModeCategory,
-          vars.eModeAssetCategory
-        );
+        vars.isInEModeCategory =
+          params.userEModeCategory == 0 &&
+          eModeCategories[params.userEModeCategory].isCollateralAsset(vars.i);
 
         if (vars.ltv != 0) {
           vars.avgLtv +=

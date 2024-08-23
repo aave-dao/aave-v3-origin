@@ -98,14 +98,12 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
 
       //stores the reserve configuration
       DataTypes.ReserveConfigurationMap memory reserveConfigurationMap = baseData.configuration;
-      uint256 eModeCategoryId;
       (
         reserveData.baseLTVasCollateral,
         reserveData.reserveLiquidationThreshold,
         reserveData.reserveLiquidationBonus,
         reserveData.decimals,
-        reserveData.reserveFactor,
-        eModeCategoryId
+        reserveData.reserveFactor
       ) = reserveConfigurationMap.getParams();
       reserveData.usageAsCollateralEnabled = reserveData.baseLTVasCollateral != 0;
 
@@ -129,7 +127,6 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
       } catch {}
 
       // v3 only
-      reserveData.eModeCategoryId = uint8(eModeCategoryId);
       reserveData.debtCeiling = reserveConfigurationMap.getDebtCeiling();
       reserveData.debtCeilingDecimals = poolDataProvider.getDebtCeilingDecimals();
       (reserveData.borrowCap, reserveData.supplyCap) = reserveConfigurationMap.getCaps();
@@ -146,14 +143,6 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
       reserveData.unbacked = baseData.unbacked;
       reserveData.isolationModeTotalDebt = baseData.isolationModeTotalDebt;
       reserveData.accruedToTreasury = baseData.accruedToTreasury;
-
-      DataTypes.EModeCategory memory categoryData = pool.getEModeCategoryData(
-        reserveData.eModeCategoryId
-      );
-      reserveData.eModeLtv = categoryData.ltv;
-      reserveData.eModeLiquidationThreshold = categoryData.liquidationThreshold;
-      reserveData.eModeLiquidationBonus = categoryData.liquidationBonus;
-      reserveData.eModeLabel = categoryData.label;
 
       reserveData.borrowableInIsolation = reserveConfigurationMap.getBorrowableInIsolation();
 
@@ -191,6 +180,18 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
     }
 
     return (reservesData, baseCurrencyInfo);
+  }
+
+  function getEModes(
+    IPoolAddressesProvider provider,
+    uint256[] memory eModes
+  ) external view returns (DataTypes.EModeCategory[] memory) {
+    IPool pool = IPool(provider.getPool());
+    DataTypes.EModeCategory[] memory categories = new DataTypes.EModeCategory[](eModes.length);
+    for (uint8 i = 0; i < eModes.length; i++) {
+      categories[i] = pool.getEModeCategoryData(uint8(eModes[i]));
+    }
+    return categories;
   }
 
   function getUserReservesData(

@@ -239,7 +239,7 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
     vm.expectRevert(bytes(Errors.CALLER_NOT_RISK_OR_POOL_ADMIN));
 
     vm.prank(caller);
-    contracts.poolConfiguratorProxy.setAssetEModeCategory(address(0), 1);
+    contracts.poolConfiguratorProxy.setAssetEModeCategory(address(0), 1, true);
   }
 
   function test_reverts_setDebtCeiling(address caller) public {

@@ -13,6 +13,7 @@ import {IsolationModeLogic} from './IsolationModeLogic.sol';
 import {EModeLogic} from './EModeLogic.sol';
 import {UserConfiguration} from '../../libraries/configuration/UserConfiguration.sol';
 import {ReserveConfiguration} from '../../libraries/configuration/ReserveConfiguration.sol';
+import {EModeConfiguration} from '../../libraries/configuration/EModeConfiguration.sol';
 import {IAToken} from '../../../interfaces/IAToken.sol';
 import {IVariableDebtToken} from '../../../interfaces/IVariableDebtToken.sol';
 import {IPriceOracleGetter} from '../../../interfaces/IPriceOracleGetter.sol';
@@ -29,6 +30,7 @@ library LiquidationLogic {
   using ReserveLogic for DataTypes.ReserveData;
   using UserConfiguration for DataTypes.UserConfigurationMap;
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
+  using EModeConfiguration for DataTypes.EModeCategory;
   using GPv2SafeERC20 for IERC20;
 
   // See `IPool` for descriptions
@@ -381,12 +383,7 @@ library LiquidationLogic {
     address debtPriceSource = params.debtAsset;
 
     if (params.userEModeCategory != 0) {
-      if (
-        EModeLogic.isInEModeCategory(
-          params.userEModeCategory,
-          collateralReserve.configuration.getEModeCategory()
-        )
-      ) {
+      if (eModeCategories[params.userEModeCategory].isCollateralAsset(collateralReserve.id)) {
         liquidationBonus = eModeCategories[params.userEModeCategory].liquidationBonus;
       }
     }

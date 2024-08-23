@@ -5,6 +5,7 @@ import {GPv2SafeERC20} from '../../../dependencies/gnosis/contracts/GPv2SafeERC2
 import {IERC20} from '../../../dependencies/openzeppelin/contracts/IERC20.sol';
 import {IPriceOracleGetter} from '../../../interfaces/IPriceOracleGetter.sol';
 import {UserConfiguration} from '../configuration/UserConfiguration.sol';
+import {EModeConfiguration} from '../configuration/EModeConfiguration.sol';
 import {WadRayMath} from '../math/WadRayMath.sol';
 import {PercentageMath} from '../math/PercentageMath.sol';
 import {DataTypes} from '../types/DataTypes.sol';
@@ -21,6 +22,7 @@ library EModeLogic {
   using ReserveLogic for DataTypes.ReserveData;
   using GPv2SafeERC20 for IERC20;
   using UserConfiguration for DataTypes.UserConfigurationMap;
+  using EModeConfiguration for DataTypes.EModeCategory;
   using WadRayMath for uint256;
   using PercentageMath for uint256;
 
@@ -47,42 +49,24 @@ library EModeLogic {
     DataTypes.ExecuteSetUserEModeParams memory params
   ) external {
     ValidationLogic.validateSetUserEMode(
-      reservesData,
-      reservesList,
       eModeCategories,
       userConfig,
       params.reservesCount,
       params.categoryId
     );
 
-    uint8 prevCategoryId = usersEModeCategory[msg.sender];
     usersEModeCategory[msg.sender] = params.categoryId;
 
-    if (prevCategoryId != 0) {
-      ValidationLogic.validateHealthFactor(
-        reservesData,
-        reservesList,
-        eModeCategories,
-        userConfig,
-        msg.sender,
-        params.categoryId,
-        params.reservesCount,
-        params.oracle
-      );
-    }
+    ValidationLogic.validateHealthFactor(
+      reservesData,
+      reservesList,
+      eModeCategories,
+      userConfig,
+      msg.sender,
+      params.categoryId,
+      params.reservesCount,
+      params.oracle
+    );
     emit UserEModeSet(msg.sender, params.categoryId);
-  }
-
-  /**
-   * @notice Checks if eMode is active for a user and if yes, if the asset belongs to the eMode category chosen
-   * @param eModeUserCategory The user eMode category
-   * @param eModeAssetCategory The asset eMode category
-   * @return True if eMode is active and the asset belongs to the eMode category chosen by the user, false otherwise
-   */
-  function isInEModeCategory(
-    uint256 eModeUserCategory,
-    uint256 eModeAssetCategory
-  ) internal pure returns (bool) {
-    return (eModeUserCategory != 0 && eModeAssetCategory == eModeUserCategory);
   }
 }

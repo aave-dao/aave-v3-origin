@@ -398,22 +398,6 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
       Errors.INVALID_EMODE_CATEGORY_PARAMS
     );
 
-    address[] memory reserves = _pool.getReservesList();
-    for (uint256 i = 0; i < reserves.length; i++) {
-      DataTypes.ReserveConfigurationMap memory currentConfig = _pool.getConfiguration(reserves[i]);
-      if (categoryId == currentConfig.getEModeCategory()) {
-        uint256 currentLtv = currentConfig.getFrozen()
-          ? _pendingLtv[reserves[i]]
-          : currentConfig.getLtv();
-        require(ltv > currentLtv, Errors.INVALID_EMODE_CATEGORY_PARAMS);
-
-        require(
-          liquidationThreshold > currentConfig.getLiquidationThreshold(),
-          Errors.INVALID_EMODE_CATEGORY_PARAMS
-        );
-      }
-    }
-
     _pool.configureEModeCategory(
       categoryId,
       DataTypes.EModeCategory({
@@ -421,7 +405,8 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
         liquidationThreshold: liquidationThreshold,
         liquidationBonus: liquidationBonus,
         label: label,
-        borrowableMask: 0
+        borrowableMask: 0,
+        collateralMask: 0
       })
     );
     emit EModeCategoryAdded(
@@ -437,21 +422,14 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
   /// @inheritdoc IPoolConfigurator
   function setAssetEModeCategory(
     address asset,
-    uint8 newCategoryId
+    uint8 categoryId,
+    bool allowed
   ) external override onlyRiskOrPoolAdmins {
-    DataTypes.ReserveConfigurationMap memory currentConfig = _pool.getConfiguration(asset);
-
-    if (newCategoryId != 0) {
-      DataTypes.EModeCategory memory categoryData = _pool.getEModeCategoryData(newCategoryId);
-      require(
-        categoryData.liquidationThreshold > currentConfig.getLiquidationThreshold(),
-        Errors.INVALID_EMODE_CATEGORY_ASSIGNMENT
-      );
-    }
-    uint256 oldCategoryId = currentConfig.getEModeCategory();
-    currentConfig.setEModeCategory(newCategoryId);
-    _pool.setConfiguration(asset, currentConfig);
-    emit EModeAssetCategoryChanged(asset, uint8(oldCategoryId), newCategoryId);
+    DataTypes.EModeCategory memory categoryData = _pool.getEModeCategoryData(categoryId);
+    DataTypes.ReserveDataLegacy memory reserveData = _pool.getReserveData(asset);
+    categoryData.setCollateralAsset(reserveData.id, allowed);
+    _pool.configureEModeCategory(categoryId, categoryData);
+    emit AssetEModeCategoryChanged(asset, uint8(categoryId), allowed);
   }
 
   /// @inheritdoc IPoolConfigurator

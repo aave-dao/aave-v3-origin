@@ -64,14 +64,8 @@ interface IUiPoolDataProviderV3 {
     //
     uint256 debtCeiling;
     uint256 debtCeilingDecimals;
-    uint8 eModeCategoryId;
     uint256 borrowCap;
     uint256 supplyCap;
-    // eMode
-    uint16 eModeLtv;
-    uint16 eModeLiquidationThreshold;
-    uint16 eModeLiquidationBonus;
-    string eModeLabel;
     bool borrowableInIsolation;
     // v3.1
     bool virtualAccActive;

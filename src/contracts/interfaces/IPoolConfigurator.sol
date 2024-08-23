@@ -158,12 +158,12 @@ interface IPoolConfigurator {
   );
 
   /**
-   * @dev Emitted when the category of an asset in eMode is changed.
+   * @dev Emitted when the asset of category of an asset in eMode is changed.
    * @param asset The address of the underlying asset of the reserve
-   * @param oldCategoryId The old eMode asset category
-   * @param newCategoryId The new eMode asset category
+   * @param categoryId The old eMode asset category
+   * @param allowed True if the asset was added to the eMode
    */
-  event EModeAssetCategoryChanged(address indexed asset, uint8 oldCategoryId, uint8 newCategoryId);
+  event AssetEModeCategoryChanged(address indexed asset, uint8 categoryId, bool allowed);
 
   /**
    * @dev Emitted when the borrowability of an asset in an eMode changed.
@@ -479,13 +479,6 @@ interface IPoolConfigurator {
   function setUnbackedMintCap(address asset, uint256 newUnbackedMintCap) external;
 
   /**
-   * @notice Assign an efficiency mode (eMode) category to asset.
-   * @param asset The address of the underlying asset of the reserve
-   * @param newCategoryId The new category id of the asset
-   */
-  function setAssetEModeCategory(address asset, uint8 newCategoryId) external;
-
-  /**
    * @notice Allows an asset to be borrowed in the specified eMode.
    * - eMode.borrowable always has less priotiry then reserve.eMode
    * @param asset The address of the underlying asset of the reserve
@@ -493,6 +486,14 @@ interface IPoolConfigurator {
    * @param borrowable True if the asset should be borrowable
    */
   function setAssetBorrowableInEMode(address asset, uint8 categoryId, bool borrowable) external;
+
+  /**
+   * @notice Assign an asset to an efficiency mode (eMode) category.
+   * @param asset The address of the underlying asset of the reserve
+   * @param categoryId The new category id of the asset
+   * @param allowed If the asset should be allowed
+   */
+  function setAssetEModeCategory(address asset, uint8 categoryId, bool allowed) external;
 
   /**
    * @notice Adds a new efficiency mode (eMode) category.

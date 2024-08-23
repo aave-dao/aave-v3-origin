@@ -95,7 +95,7 @@ contract AaveProtocolDataProvider is IPoolDataProvider {
     DataTypes.ReserveConfigurationMap memory configuration = IPool(ADDRESSES_PROVIDER.getPool())
       .getConfiguration(asset);
 
-    (ltv, liquidationThreshold, liquidationBonus, decimals, reserveFactor, ) = configuration
+    (ltv, liquidationThreshold, liquidationBonus, decimals, reserveFactor) = configuration
       .getParams();
 
     (isActive, isFrozen, borrowingEnabled, ) = configuration.getFlags();
@@ -104,13 +104,6 @@ contract AaveProtocolDataProvider is IPoolDataProvider {
     stableBorrowRateEnabled = false;
 
     usageAsCollateralEnabled = liquidationThreshold != 0;
-  }
-
-  /// @inheritdoc IPoolDataProvider
-  function getReserveEModeCategory(address asset) external view override returns (uint256) {
-    DataTypes.ReserveConfigurationMap memory configuration = IPool(ADDRESSES_PROVIDER.getPool())
-      .getConfiguration(asset);
-    return configuration.getEModeCategory();
   }
 
   /// @inheritdoc IPoolDataProvider
