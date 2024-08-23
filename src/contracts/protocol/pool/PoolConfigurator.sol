@@ -374,7 +374,6 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
     uint16 ltv,
     uint16 liquidationThreshold,
     uint16 liquidationBonus,
-    address oracle,
     string calldata label
   ) external override onlyRiskOrPoolAdmins {
     require(ltv != 0, Errors.INVALID_EMODE_CATEGORY_PARAMS);
@@ -419,11 +418,17 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
         ltv: ltv,
         liquidationThreshold: liquidationThreshold,
         liquidationBonus: liquidationBonus,
-        priceSource: oracle,
         label: label
       })
     );
-    emit EModeCategoryAdded(categoryId, ltv, liquidationThreshold, liquidationBonus, oracle, label);
+    emit EModeCategoryAdded(
+      categoryId,
+      ltv,
+      liquidationThreshold,
+      liquidationBonus,
+      address(0),
+      label
+    );
   }
 
   /// @inheritdoc IPoolConfigurator

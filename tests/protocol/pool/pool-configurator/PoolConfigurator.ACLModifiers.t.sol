@@ -226,7 +226,7 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
     vm.expectRevert(bytes(Errors.CALLER_NOT_RISK_OR_POOL_ADMIN));
 
     vm.prank(caller);
-    contracts.poolConfiguratorProxy.setEModeCategory(1, 1, 1, 1, address(0), '');
+    contracts.poolConfiguratorProxy.setEModeCategory(1, 1, 1, 1, '');
   }
 
   function test_reverts_notRiskAdmin_setAssetEModeCategory(address caller) public {

@@ -206,7 +206,6 @@ interface IAaveV3ConfigEngine {
    *   ltv: 60_00,
    *   liqThreshold: 70_00,
    *   liqBonus: EngineFlags.KEEP_CURRENT,
-   *   priceSource: EngineFlags.KEEP_CURRENT_ADDRESS,
    *   label: EngineFlags.KEEP_CURRENT_STRING
    * })
    */
@@ -215,7 +214,6 @@ interface IAaveV3ConfigEngine {
     uint256 ltv;
     uint256 liqThreshold;
     uint256 liqBonus;
-    address priceSource;
     string label;
   }
 

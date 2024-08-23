@@ -83,7 +83,6 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     uint16 ltv;
     uint16 lt;
     uint16 lb;
-    address oracle;
     string label;
   }
 
@@ -345,11 +344,11 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
   }
 
   function _genCategoryOne() internal pure returns (EModeCategoryInput memory) {
-    return EModeCategoryInput(1, 95_00, 96_00, 101_00, address(0x0), 'GROUP_A');
+    return EModeCategoryInput(1, 95_00, 96_00, 101_00, 'GROUP_A');
   }
 
   function _genCategoryTwo() internal pure returns (EModeCategoryInput memory) {
-    return EModeCategoryInput(2, 96_00, 97_00, 101_50, address(0x0), 'GROUP_B');
+    return EModeCategoryInput(2, 96_00, 97_00, 101_50, 'GROUP_B');
   }
 
   function _calcPrice(uint256 price, uint256 percent) public pure returns (uint256) {

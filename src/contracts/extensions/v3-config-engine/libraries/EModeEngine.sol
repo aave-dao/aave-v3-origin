@@ -49,14 +49,12 @@ library EModeEngine {
       bool atLeastOneKeepCurrent = updates[i].ltv == EngineFlags.KEEP_CURRENT ||
         updates[i].liqThreshold == EngineFlags.KEEP_CURRENT ||
         updates[i].liqBonus == EngineFlags.KEEP_CURRENT ||
-        updates[i].priceSource == EngineFlags.KEEP_CURRENT_ADDRESS ||
         keccak256(abi.encode(updates[i].label)) ==
         keccak256(abi.encode(EngineFlags.KEEP_CURRENT_STRING));
 
       bool notAllKeepCurrent = updates[i].ltv != EngineFlags.KEEP_CURRENT ||
         updates[i].liqThreshold != EngineFlags.KEEP_CURRENT ||
         updates[i].liqBonus != EngineFlags.KEEP_CURRENT ||
-        updates[i].priceSource != EngineFlags.KEEP_CURRENT_ADDRESS ||
         keccak256(abi.encode(updates[i].label)) !=
         keccak256(abi.encode(EngineFlags.KEEP_CURRENT_STRING));
 
@@ -76,10 +74,6 @@ library EModeEngine {
         if (updates[i].liqBonus == EngineFlags.KEEP_CURRENT) {
           // Subtracting 100_00 to be consistent with the engine as 100_00 gets added while setting the liqBonus
           updates[i].liqBonus = configuration.liquidationBonus - 100_00;
-        }
-
-        if (updates[i].priceSource == EngineFlags.KEEP_CURRENT_ADDRESS) {
-          updates[i].priceSource = configuration.priceSource;
         }
 
         if (
@@ -104,7 +98,6 @@ library EModeEngine {
           // For reference, this is to simplify the interaction with the Aave protocol,
           // as there the definition is as e.g. 105% (5% bonus for liquidators)
           (100_00 + updates[i].liqBonus).toUint16(),
-          updates[i].priceSource,
           updates[i].label
         );
       }

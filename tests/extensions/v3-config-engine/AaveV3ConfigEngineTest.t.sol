@@ -542,7 +542,6 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
     prevEmodeCategoryData.ltv = 97_40;
     prevEmodeCategoryData.liquidationThreshold = 97_60;
     prevEmodeCategoryData.liquidationBonus = 101_50; // 100_00 + 1_50
-    prevEmodeCategoryData.priceSource = address(0);
     prevEmodeCategoryData.label = 'ETH Correlated';
 
     _validateEmodeCategory(
@@ -583,7 +582,7 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
       eModeCategoryDataBefore.ltv,
       eModeCategoryDataBefore.liquidationThreshold,
       eModeCategoryDataBefore.liquidationBonus,
-      eModeCategoryDataBefore.priceSource,
+      address(0),
       eModeCategoryDataBefore.label
     );
     payload.execute();
@@ -620,7 +619,6 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
     prevEmodeCategoryData.ltv = eModeCategoryDataBefore.ltv;
     prevEmodeCategoryData.liquidationThreshold = eModeCategoryDataBefore.liquidationThreshold;
     prevEmodeCategoryData.liquidationBonus = eModeCategoryDataBefore.liquidationBonus;
-    prevEmodeCategoryData.priceSource = eModeCategoryDataBefore.priceSource;
     prevEmodeCategoryData.label = eModeCategoryDataBefore.label;
 
     _validateEmodeCategory(

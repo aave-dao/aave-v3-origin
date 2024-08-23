@@ -495,14 +495,7 @@ contract PoolTests is TestnetProcedures {
   function test_setUserEmode() public {
     EModeCategoryInput memory ct = _genCategoryOne();
     vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(
-      ct.id,
-      ct.ltv,
-      ct.lt,
-      ct.lb,
-      ct.oracle,
-      ct.label
-    );
+    contracts.poolConfiguratorProxy.setEModeCategory(ct.id, ct.ltv, ct.lt, ct.lb, ct.label);
     contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.wbtc, ct.id);
     contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.weth, ct.id);
     vm.stopPrank();
@@ -517,22 +510,8 @@ contract PoolTests is TestnetProcedures {
     EModeCategoryInput memory ct1 = _genCategoryOne();
     EModeCategoryInput memory ct2 = _genCategoryTwo();
     vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(
-      ct1.id,
-      ct1.ltv,
-      ct1.lt,
-      ct1.lb,
-      ct1.oracle,
-      ct1.label
-    );
-    contracts.poolConfiguratorProxy.setEModeCategory(
-      ct2.id,
-      ct2.ltv,
-      ct2.lt,
-      ct2.lb,
-      ct2.oracle,
-      ct2.label
-    );
+    contracts.poolConfiguratorProxy.setEModeCategory(ct1.id, ct1.ltv, ct1.lt, ct1.lb, ct1.label);
+    contracts.poolConfiguratorProxy.setEModeCategory(ct2.id, ct2.ltv, ct2.lt, ct2.lb, ct2.label);
 
     contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.wbtc, ct1.id);
     contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.weth, ct1.id);
@@ -562,22 +541,8 @@ contract PoolTests is TestnetProcedures {
     EModeCategoryInput memory ct1 = _genCategoryOne();
     EModeCategoryInput memory ct2 = _genCategoryTwo();
     vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(
-      ct1.id,
-      ct1.ltv,
-      ct1.lt,
-      ct1.lb,
-      ct1.oracle,
-      ct1.label
-    );
-    contracts.poolConfiguratorProxy.setEModeCategory(
-      ct2.id,
-      ct2.ltv,
-      ct2.lt,
-      ct2.lb,
-      ct2.oracle,
-      ct2.label
-    );
+    contracts.poolConfiguratorProxy.setEModeCategory(ct1.id, ct1.ltv, ct1.lt, ct1.lb, ct1.label);
+    contracts.poolConfiguratorProxy.setEModeCategory(ct2.id, ct2.ltv, ct2.lt, ct2.lb, ct2.label);
 
     contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.wbtc, ct1.id);
     contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.weth, ct1.id);
@@ -611,14 +576,7 @@ contract PoolTests is TestnetProcedures {
 
     EModeCategoryInput memory ct1 = _genCategoryOne();
     vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(
-      ct1.id,
-      ct1.ltv,
-      ct1.lt,
-      ct1.lb,
-      address(0),
-      ct1.label
-    );
+    contracts.poolConfiguratorProxy.setEModeCategory(ct1.id, ct1.ltv, ct1.lt, ct1.lb, ct1.label);
 
     contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.wbtc, ct1.id);
     contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.weth, ct1.id);

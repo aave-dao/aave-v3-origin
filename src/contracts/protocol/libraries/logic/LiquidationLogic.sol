@@ -381,8 +381,6 @@ library LiquidationLogic {
     address debtPriceSource = params.debtAsset;
 
     if (params.userEModeCategory != 0) {
-      address eModePriceSource = eModeCategories[params.userEModeCategory].priceSource;
-
       if (
         EModeLogic.isInEModeCategory(
           params.userEModeCategory,
@@ -390,15 +388,6 @@ library LiquidationLogic {
         )
       ) {
         liquidationBonus = eModeCategories[params.userEModeCategory].liquidationBonus;
-
-        if (eModePriceSource != address(0)) {
-          collateralPriceSource = eModePriceSource;
-        }
-      }
-
-      // when in eMode, debt will always be in the same eMode category, can skip matching category check
-      if (eModePriceSource != address(0)) {
-        debtPriceSource = eModePriceSource;
       }
     }
 

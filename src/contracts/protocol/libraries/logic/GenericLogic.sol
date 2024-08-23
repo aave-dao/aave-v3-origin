@@ -37,7 +37,6 @@ library GenericLogic {
     uint256 totalDebtInBaseCurrency;
     uint256 avgLtv;
     uint256 avgLiquidationThreshold;
-    uint256 eModeAssetPrice;
     uint256 eModeLtv;
     uint256 eModeLiqThreshold;
     uint256 eModeAssetCategory;
@@ -74,11 +73,8 @@ library GenericLogic {
     CalculateUserAccountDataVars memory vars;
 
     if (params.userEModeCategory != 0) {
-      (vars.eModeLtv, vars.eModeLiqThreshold, vars.eModeAssetPrice) = EModeLogic
-        .getEModeConfiguration(
-          eModeCategories[params.userEModeCategory],
-          IPriceOracleGetter(params.oracle)
-        );
+      vars.eModeLtv = eModeCategories[params.userEModeCategory].ltv;
+      vars.eModeLiqThreshold = eModeCategories[params.userEModeCategory].liquidationThreshold;
     }
 
     while (vars.i < params.reservesCount) {
@@ -113,10 +109,7 @@ library GenericLogic {
         vars.assetUnit = 10 ** vars.decimals;
       }
 
-      vars.assetPrice = vars.eModeAssetPrice != 0 &&
-        params.userEModeCategory == vars.eModeAssetCategory
-        ? vars.eModeAssetPrice
-        : IPriceOracleGetter(params.oracle).getAssetPrice(vars.currentReserveAddress);
+      vars.assetPrice = IPriceOracleGetter(params.oracle).getAssetPrice(vars.currentReserveAddress);
 
       if (vars.liquidationThreshold != 0 && params.userConfig.isUsingAsCollateral(vars.i)) {
         vars.userBalanceInBaseCurrency = _getUserBalanceInBaseCurrency(

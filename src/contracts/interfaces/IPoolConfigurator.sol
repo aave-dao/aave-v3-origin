@@ -487,7 +487,6 @@ interface IPoolConfigurator {
    * @param ltv The ltv associated with the category
    * @param liquidationThreshold The liquidation threshold associated with the category
    * @param liquidationBonus The liquidation bonus associated with the category
-   * @param oracle The oracle associated with the category
    * @param label A label identifying the category
    */
   function setEModeCategory(
@@ -495,7 +494,6 @@ interface IPoolConfigurator {
     uint16 ltv,
     uint16 liquidationThreshold,
     uint16 liquidationBonus,
-    address oracle,
     string calldata label
   ) external;
 

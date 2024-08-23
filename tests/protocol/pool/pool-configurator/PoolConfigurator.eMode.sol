@@ -30,23 +30,15 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
   function test_configureEmodeCategory() public {
     EModeCategoryInput memory ct = _genCategoryOne();
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit EModeCategoryAdded(ct.id, ct.ltv, ct.lt, ct.lb, ct.oracle, ct.label);
+    emit EModeCategoryAdded(ct.id, ct.ltv, ct.lt, ct.lb, address(0), ct.label);
 
     vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(
-      ct.id,
-      ct.ltv,
-      ct.lt,
-      ct.lb,
-      ct.oracle,
-      ct.label
-    );
+    contracts.poolConfiguratorProxy.setEModeCategory(ct.id, ct.ltv, ct.lt, ct.lb, ct.label);
 
     DataTypes.EModeCategory memory emodeConfig = contracts.poolProxy.getEModeCategoryData(ct.id);
     assertEq(emodeConfig.ltv, ct.ltv);
     assertEq(emodeConfig.liquidationThreshold, ct.lt);
     assertEq(emodeConfig.liquidationBonus, ct.lb);
-    assertEq(emodeConfig.priceSource, ct.oracle);
     assertEq(emodeConfig.label, ct.label);
   }
 
@@ -58,14 +50,7 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
     EModeCategoryInput memory ct = _genCategoryOne();
 
     vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(
-      ct.id,
-      ct.ltv,
-      ct.lt,
-      ct.lb,
-      ct.oracle,
-      ct.label
-    );
+    contracts.poolConfiguratorProxy.setEModeCategory(ct.id, ct.ltv, ct.lt, ct.lb, ct.label);
     contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.wbtc, ct.id);
 
     vm.expectRevert(bytes(Errors.INVALID_EMODE_CATEGORY_PARAMS));
@@ -75,7 +60,6 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
       uint16(currentConfig.getLtv() - 1),
       uint16(currentConfig.getLiquidationThreshold() + 1),
       ct.lb,
-      ct.oracle,
       ct.label
     );
     vm.stopPrank();
@@ -89,14 +73,7 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
     EModeCategoryInput memory ct = _genCategoryOne();
 
     vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(
-      ct.id,
-      ct.ltv,
-      ct.lt,
-      ct.lb,
-      ct.oracle,
-      ct.label
-    );
+    contracts.poolConfiguratorProxy.setEModeCategory(ct.id, ct.ltv, ct.lt, ct.lb, ct.label);
     contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.wbtc, ct.id);
 
     vm.expectRevert(bytes(Errors.INVALID_EMODE_CATEGORY_PARAMS));
@@ -106,7 +83,6 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
       uint16(currentConfig.getLtv() + 1),
       uint16(currentConfig.getLiquidationThreshold() - 1),
       ct.lb,
-      ct.oracle,
       ct.label
     );
     vm.stopPrank();
@@ -119,7 +95,6 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
       90_00,
       92_00,
       101_00,
-      makeAddr('EMODE_ORACLE'),
       'GROUP_B'
     );
 
@@ -132,7 +107,7 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
       updatedCategory.ltv,
       updatedCategory.lt,
       updatedCategory.lb,
-      updatedCategory.oracle,
+      address(0),
       updatedCategory.label
     );
 
@@ -141,7 +116,6 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
       updatedCategory.ltv,
       updatedCategory.lt,
       updatedCategory.lb,
-      updatedCategory.oracle,
       updatedCategory.label
     );
 
@@ -151,7 +125,6 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
     assertEq(emodeConfig.ltv, updatedCategory.ltv);
     assertEq(emodeConfig.liquidationThreshold, updatedCategory.lt);
     assertEq(emodeConfig.liquidationBonus, updatedCategory.lb);
-    assertEq(emodeConfig.priceSource, updatedCategory.oracle);
     assertEq(emodeConfig.label, updatedCategory.label);
   }
 
@@ -159,33 +132,33 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
     vm.expectRevert(bytes(Errors.INVALID_EMODE_CATEGORY_PARAMS));
 
     vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(1, 0, 80_00, 105_00, address(0), 'LABEL');
+    contracts.poolConfiguratorProxy.setEModeCategory(1, 0, 80_00, 105_00, 'LABEL');
   }
 
   function test_reverts_setEmodeCategory_zero_liqThreshold() public {
     vm.expectRevert(bytes(Errors.INVALID_EMODE_CATEGORY_PARAMS));
 
     vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(1, 80_00, 0, 105_00, address(0), 'LABEL');
+    contracts.poolConfiguratorProxy.setEModeCategory(1, 80_00, 0, 105_00, 'LABEL');
   }
 
   function test_reverts_setEmodeCategory_ltv_gt_liqThreshold() public {
     vm.expectRevert(bytes(Errors.INVALID_EMODE_CATEGORY_PARAMS));
 
     vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(1, 80_00, 79_00, 105_00, address(0), 'LABEL');
+    contracts.poolConfiguratorProxy.setEModeCategory(1, 80_00, 79_00, 105_00, 'LABEL');
   }
 
   function test_reverts_setEmodeCategory_lb_lte_percentageFactor() public {
     vm.expectRevert(bytes(Errors.INVALID_EMODE_CATEGORY_PARAMS));
 
     vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(1, 80_00, 81_00, 100_00, address(0), 'LABEL');
+    contracts.poolConfiguratorProxy.setEModeCategory(1, 80_00, 81_00, 100_00, 'LABEL');
 
     vm.expectRevert(bytes(Errors.INVALID_EMODE_CATEGORY_PARAMS));
 
     vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(1, 80_00, 81_00, 99_00, address(0), 'LABEL');
+    contracts.poolConfiguratorProxy.setEModeCategory(1, 80_00, 81_00, 99_00, 'LABEL');
   }
 
   function test_reverts_setEmodeCategory_liquidation_threshold_doesnt_match_bonus() public {
@@ -204,7 +177,6 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
       90_00,
       liquidationThreshold,
       liquidationBonus,
-      address(0),
       'LABEL'
     );
   }
@@ -213,14 +185,7 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
     EModeCategoryInput memory ct = _genCategoryOne();
     vm.startPrank(poolAdmin);
 
-    contracts.poolConfiguratorProxy.setEModeCategory(
-      ct.id,
-      ct.ltv,
-      ct.lt,
-      ct.lb,
-      ct.oracle,
-      ct.label
-    );
+    contracts.poolConfiguratorProxy.setEModeCategory(ct.id, ct.ltv, ct.lt, ct.lb, ct.label);
     contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.usdx, ct.id);
 
     (, uint256 ltv, , , , , , , , ) = contracts.protocolDataProvider.getReserveConfigurationData(
@@ -233,7 +198,6 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
       uint16(ltv) - 1,
       ct.lt,
       ct.lb,
-      ct.oracle,
       ct.label
     );
     vm.stopPrank();
@@ -243,14 +207,7 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
     EModeCategoryInput memory ct = _genCategoryOne();
     vm.startPrank(poolAdmin);
 
-    contracts.poolConfiguratorProxy.setEModeCategory(
-      ct.id,
-      ct.ltv,
-      ct.lt,
-      ct.lb,
-      ct.oracle,
-      ct.label
-    );
+    contracts.poolConfiguratorProxy.setEModeCategory(ct.id, ct.ltv, ct.lt, ct.lb, ct.label);
     contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.usdx, ct.id);
 
     (, uint256 ltv, , , , , , , , ) = contracts.protocolDataProvider.getReserveConfigurationData(
@@ -266,7 +223,6 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
       uint16(ltv) - 1,
       ct.lt,
       ct.lb,
-      ct.oracle,
       ct.label
     );
     vm.stopPrank();
@@ -275,14 +231,7 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
   function test_reverts_configureEmodeCategory_input_lt_lt_reserve_emode_lt() public {
     EModeCategoryInput memory ct = _genCategoryOne();
     vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(
-      ct.id,
-      ct.ltv,
-      ct.lt,
-      ct.lb,
-      ct.oracle,
-      ct.label
-    );
+    contracts.poolConfiguratorProxy.setEModeCategory(ct.id, ct.ltv, ct.lt, ct.lb, ct.label);
     contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.usdx, ct.id);
 
     (, , uint256 lt, , , , , , , ) = contracts.protocolDataProvider.getReserveConfigurationData(
@@ -295,7 +244,6 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
       ct.ltv,
       uint16(lt) - 1,
       ct.lb,
-      ct.oracle,
       ct.label
     );
     vm.stopPrank();
@@ -316,14 +264,7 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
     test_setAssetEModeCategory();
 
     vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(
-      ct.id,
-      ct.ltv,
-      ct.lt,
-      ct.lb,
-      ct.oracle,
-      ct.label
-    );
+    contracts.poolConfiguratorProxy.setEModeCategory(ct.id, ct.ltv, ct.lt, ct.lb, ct.label);
 
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
     emit EModeAssetCategoryChanged(tokenList.usdx, prevCt.id, ct.id);
@@ -346,14 +287,7 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
     EModeCategoryInput memory ct = _genCategoryOne();
 
     vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(
-      ct.id,
-      50_00,
-      51_00,
-      ct.lb,
-      ct.oracle,
-      ct.label
-    );
+    contracts.poolConfiguratorProxy.setEModeCategory(ct.id, 50_00, 51_00, ct.lb, ct.label);
 
     vm.expectRevert(bytes(Errors.INVALID_EMODE_CATEGORY_ASSIGNMENT));
     vm.prank(poolAdmin);

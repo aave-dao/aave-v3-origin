@@ -116,8 +116,7 @@ library DataTypes {
     uint16 ltv;
     uint16 liquidationThreshold;
     uint16 liquidationBonus;
-    // each eMode category may or may not have a custom oracle to override the individual assets price oracles
-    address priceSource;
+    // uint160 placeHolder;
     string label;
   }
 

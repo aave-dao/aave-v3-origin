@@ -71,7 +71,6 @@ interface IUiPoolDataProviderV3 {
     uint16 eModeLtv;
     uint16 eModeLiquidationThreshold;
     uint16 eModeLiquidationBonus;
-    address eModePriceSource;
     string eModeLabel;
     bool borrowableInIsolation;
     // v3.1

@@ -174,8 +174,7 @@ contract ProtocolV3TestBase is DiffUtils {
         vm.serializeString(key, 'label', category.label);
         vm.serializeUint(key, 'ltv', category.ltv);
         vm.serializeUint(key, 'liquidationThreshold', category.liquidationThreshold);
-        vm.serializeUint(key, 'liquidationBonus', category.liquidationBonus);
-        string memory object = vm.serializeAddress(key, 'priceSource', category.priceSource);
+        string memory object = vm.serializeUint(key, 'liquidationBonus', category.liquidationBonus);
         content = vm.serializeString(eModesKey, key, object);
       }
     }
@@ -870,10 +869,6 @@ contract ProtocolV3TestBase is DiffUtils {
     require(
       currentCategoryData.liquidationBonus == expectedCategoryData.liquidationBonus,
       '_validateEmodeCategory(): INVALID_LB'
-    );
-    require(
-      currentCategoryData.priceSource == expectedCategoryData.priceSource,
-      '_validateEmodeCategory(): INVALID_PRICE_SOURCE'
     );
   }
 

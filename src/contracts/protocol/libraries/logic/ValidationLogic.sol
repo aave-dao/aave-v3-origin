@@ -118,7 +118,6 @@ library ValidationLogic {
     uint256 borrowCap;
     uint256 amountInBaseCurrency;
     uint256 assetUnit;
-    address eModePriceSource;
     address siloedBorrowingAddress;
     bool isActive;
     bool isFrozen;
@@ -212,7 +211,6 @@ library ValidationLogic {
         params.reserveCache.reserveConfiguration.getEModeCategory() == params.userEModeCategory,
         Errors.INCONSISTENT_EMODE_CATEGORY
       );
-      vars.eModePriceSource = eModeCategories[params.userEModeCategory].priceSource;
     }
 
     (
@@ -244,9 +242,7 @@ library ValidationLogic {
     );
 
     vars.amountInBaseCurrency =
-      IPriceOracleGetter(params.oracle).getAssetPrice(
-        vars.eModePriceSource != address(0) ? vars.eModePriceSource : params.asset
-      ) *
+      IPriceOracleGetter(params.oracle).getAssetPrice(params.asset) *
       params.amount;
     unchecked {
       vars.amountInBaseCurrency /= vars.assetUnit;

@@ -153,8 +153,6 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
       reserveData.eModeLtv = categoryData.ltv;
       reserveData.eModeLiquidationThreshold = categoryData.liquidationThreshold;
       reserveData.eModeLiquidationBonus = categoryData.liquidationBonus;
-      // each eMode category may or may not have a custom oracle to override the individual assets price oracles
-      reserveData.eModePriceSource = categoryData.priceSource;
       reserveData.eModeLabel = categoryData.label;
 
       reserveData.borrowableInIsolation = reserveConfigurationMap.getBorrowableInIsolation();
