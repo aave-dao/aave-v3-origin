@@ -13,6 +13,7 @@ import {IPoolAddressesProvider} from '../../../interfaces/IPoolAddressesProvider
 import {IAccessControl} from '../../../dependencies/openzeppelin/contracts/IAccessControl.sol';
 import {ReserveConfiguration} from '../configuration/ReserveConfiguration.sol';
 import {UserConfiguration} from '../configuration/UserConfiguration.sol';
+import {EModeConfiguration} from '../configuration/EModeConfiguration.sol';
 import {Errors} from '../helpers/Errors.sol';
 import {WadRayMath} from '../math/WadRayMath.sol';
 import {PercentageMath} from '../math/PercentageMath.sol';
@@ -35,6 +36,7 @@ library ValidationLogic {
   using GPv2SafeERC20 for IERC20;
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
   using UserConfiguration for DataTypes.UserConfigurationMap;
+  using EModeConfiguration for DataTypes.EModeCategory;
   using Address for address;
 
   // Factor to apply to "only-variable-debt" liquidity rate to get threshold for rebalancing, expressed in bps
@@ -207,10 +209,12 @@ library ValidationLogic {
     }
 
     if (params.userEModeCategory != 0) {
+      DataTypes.EModeCategory memory category = eModeCategories[params.userEModeCategory];
       require(
         params.reserveCache.reserveConfiguration.getEModeCategory() == params.userEModeCategory,
         Errors.INCONSISTENT_EMODE_CATEGORY
       );
+      require(category.isBorrowable(reservesData[params.asset].id), Errors.NOT_BORROWABLE_IN_EMODE);
     }
 
     (
@@ -554,9 +558,10 @@ library ValidationLogic {
     uint256 reservesCount,
     uint8 categoryId
   ) internal view {
+    DataTypes.EModeCategory memory eModeCategory = eModeCategories[categoryId];
     // category is invalid if the liq threshold is not set
     require(
-      categoryId == 0 || eModeCategories[categoryId].liquidationThreshold != 0,
+      categoryId == 0 || eModeCategory.liquidationThreshold != 0,
       Errors.INCONSISTENT_EMODE_CATEGORY
     );
 
@@ -577,6 +582,7 @@ library ValidationLogic {
               configuration.getEModeCategory() == categoryId,
               Errors.INCONSISTENT_EMODE_CATEGORY
             );
+            require(eModeCategory.isBorrowable(i), Errors.NOT_BORROWABLE_IN_EMODE);
           }
         }
       }

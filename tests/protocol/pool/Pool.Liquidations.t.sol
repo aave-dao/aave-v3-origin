@@ -618,6 +618,7 @@ contract PoolLiquidationTests is TestnetProcedures {
     contracts.poolConfiguratorProxy.setEModeCategory(ct.id, ct.ltv, ct.lt, ct.lb, ct.label);
     contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.wbtc, ct.id);
     contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.weth, ct.id);
+    contracts.poolConfiguratorProxy.setAssetBorrowableInEMode(tokenList.weth, ct.id, true);
     vm.stopPrank();
 
     uint256 amount = 1e8;

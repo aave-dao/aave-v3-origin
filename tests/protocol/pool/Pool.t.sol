@@ -546,6 +546,7 @@ contract PoolTests is TestnetProcedures {
 
     contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.wbtc, ct1.id);
     contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.weth, ct1.id);
+    contracts.poolConfiguratorProxy.setAssetBorrowableInEMode(tokenList.weth, ct1.id, true);
     contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.wbtc, ct2.id);
     contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.usdx, ct2.id);
     vm.stopPrank();
@@ -580,6 +581,7 @@ contract PoolTests is TestnetProcedures {
 
     contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.wbtc, ct1.id);
     contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.weth, ct1.id);
+    contracts.poolConfiguratorProxy.setAssetBorrowableInEMode(tokenList.weth, ct1.id, true);
     vm.stopPrank();
 
     vm.prank(alice);

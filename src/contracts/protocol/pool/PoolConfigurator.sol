@@ -3,6 +3,7 @@ pragma solidity ^0.8.10;
 
 import {VersionedInitializable} from '../../misc/aave-upgradeability/VersionedInitializable.sol';
 import {ReserveConfiguration} from '../libraries/configuration/ReserveConfiguration.sol';
+import {EModeConfiguration} from '../libraries/configuration/EModeConfiguration.sol';
 import {IPoolAddressesProvider} from '../../interfaces/IPoolAddressesProvider.sol';
 import {IDefaultInterestRateStrategyV2} from '../../interfaces/IDefaultInterestRateStrategyV2.sol';
 import {Errors} from '../libraries/helpers/Errors.sol';
@@ -25,6 +26,7 @@ import {IERC20Detailed} from '../../dependencies/openzeppelin/contracts/IERC20De
 abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator {
   using PercentageMath for uint256;
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
+  using EModeConfiguration for DataTypes.EModeCategory;
 
   IPoolAddressesProvider internal _addressesProvider;
   IPool internal _pool;
@@ -418,7 +420,8 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
         ltv: ltv,
         liquidationThreshold: liquidationThreshold,
         liquidationBonus: liquidationBonus,
-        label: label
+        label: label,
+        borrowableMask: 0
       })
     );
     emit EModeCategoryAdded(
@@ -449,6 +452,19 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
     currentConfig.setEModeCategory(newCategoryId);
     _pool.setConfiguration(asset, currentConfig);
     emit EModeAssetCategoryChanged(asset, uint8(oldCategoryId), newCategoryId);
+  }
+
+  /// @inheritdoc IPoolConfigurator
+  function setAssetBorrowableInEMode(
+    address asset,
+    uint8 categoryId,
+    bool borrowable
+  ) external override onlyRiskOrPoolAdmins {
+    DataTypes.EModeCategory memory categoryData = _pool.getEModeCategoryData(categoryId);
+    DataTypes.ReserveDataLegacy memory reserveData = _pool.getReserveData(asset);
+    categoryData.setBorrowable(reserveData.id, borrowable);
+    _pool.configureEModeCategory(categoryId, categoryData);
+    emit AssetBorrowableInEModeChanged(asset, categoryId, borrowable);
   }
 
   /// @inheritdoc IPoolConfigurator

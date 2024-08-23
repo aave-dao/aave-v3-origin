@@ -166,6 +166,14 @@ interface IPoolConfigurator {
   event EModeAssetCategoryChanged(address indexed asset, uint8 oldCategoryId, uint8 newCategoryId);
 
   /**
+   * @dev Emitted when the borrowability of an asset in an eMode changed.
+   * @param asset The address of the underlying asset of the reserve
+   * @param categoryId The eMode asset category
+   * @param borrowable True if the asset is borrowable
+   */
+  event AssetBorrowableInEModeChanged(address indexed asset, uint8 categoryId, bool borrowable);
+
+  /**
    * @dev Emitted when a new eMode category is added.
    * @param categoryId The new eMode category id
    * @param ltv The ltv for the asset category in eMode
@@ -476,6 +484,15 @@ interface IPoolConfigurator {
    * @param newCategoryId The new category id of the asset
    */
   function setAssetEModeCategory(address asset, uint8 newCategoryId) external;
+
+  /**
+   * @notice Allows an asset to be borrowed in the specified eMode.
+   * - eMode.borrowable always has less priotiry then reserve.eMode
+   * @param asset The address of the underlying asset of the reserve
+   * @param categoryId The category id
+   * @param borrowable True if the asset should be borrowable
+   */
+  function setAssetBorrowableInEMode(address asset, uint8 categoryId, bool borrowable) external;
 
   /**
    * @notice Adds a new efficiency mode (eMode) category.

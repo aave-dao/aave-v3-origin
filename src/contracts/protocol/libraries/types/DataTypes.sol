@@ -116,6 +116,7 @@ library DataTypes {
     uint16 ltv;
     uint16 liquidationThreshold;
     uint16 liquidationBonus;
+    uint128 borrowableMask;
     // uint160 placeHolder;
     string label;
   }
