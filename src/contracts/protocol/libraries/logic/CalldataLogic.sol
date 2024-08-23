@@ -86,7 +86,7 @@ library CalldataLogic {
    * @param args The packed borrow params
    * @return The address of the underlying reserve
    * @return The amount to borrow
-   * @return The interestRateMode, 1 and 2 for variable debt (changed on v3.2.0)
+   * @return The interestRateMode, 2 for variable debt, 1 is deprecated (changed on v3.2.0)
    * @return The referralCode
    */
   function decodeBorrowParams(
@@ -143,7 +143,7 @@ library CalldataLogic {
    * @param args The packed repay with permit params
    * @return The address of the underlying reserve
    * @return The amount to repay
-   * @return The interestRateMode, 1 and 2 for variable debt (changed on v3.2.0)
+   * @return The interestRateMode, 2 for variable debt, 1 is deprecated (changed on v3.2.0)
    * @return The deadline of the permit
    * @return The V value of the permit signature
    */
