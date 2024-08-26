@@ -420,9 +420,6 @@ contract PoolFlashLoansTests is TestnetProcedures {
   }
 
   function test_revert_flashloan_borrow_stable() public {
-    vm.prank(alice);
-    contracts.poolProxy.supply(tokenList.wbtc, 0.5e8, alice, 0);
-
     (
       address[] memory assets,
       uint256[] memory amounts,
@@ -462,13 +459,12 @@ contract PoolFlashLoansTests is TestnetProcedures {
     assets[0] = tokenList.usdx;
     amounts[0] = 12e6;
     modes[0] = mode;
+    for (uint8 x; x < assets.length; x++) {
+      vm.prank(poolAdmin);
+      TestnetERC20(assets[x]).transferOwnership(address(mockFlashReceiver));
+    }
 
     if (checkEvents) {
-      for (uint8 x; x < assets.length; x++) {
-        vm.prank(poolAdmin);
-        TestnetERC20(assets[x]).transferOwnership(address(mockFlashReceiver));
-      }
-
       _checkFlashLoanEvents(assets, amounts, modes);
     }
     return (assets, amounts, modes, emptyParams);

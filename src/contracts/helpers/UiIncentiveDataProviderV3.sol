@@ -47,7 +47,6 @@ contract UiIncentiveDataProviderV3 is IUiIncentiveDataProviderV3 {
       DataTypes.ReserveDataLegacy memory baseData = pool.getReserveData(reserves[i]);
 
       // Get aTokens rewards information
-      // TODO: check that this is deployed correctly on contract and remove casting
       IRewardsController aTokenIncentiveController = IRewardsController(
         address(IncentivizedERC20(baseData.aTokenAddress).getIncentivesController())
       );
