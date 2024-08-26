@@ -119,7 +119,7 @@ library GenericLogic {
         vars.totalCollateralInBaseCurrency += vars.userBalanceInBaseCurrency;
 
         vars.isInEModeCategory =
-          params.userEModeCategory == 0 &&
+          params.userEModeCategory != 0 &&
           eModeCategories[params.userEModeCategory].isCollateralAsset(vars.i);
 
         if (vars.ltv != 0) {
