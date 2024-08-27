@@ -25,8 +25,8 @@ contract PoolEModeTests is TestnetProcedures {
   event UserEModeSet(address indexed user, uint8 categoryId);
 
   IPool internal pool;
+
   // @notice number of eModes that are created per default
-  uint256 constant E_MODES_SETUP = 2;
 
   function setUp() public virtual {
     initTestEnvironment(false);
@@ -34,7 +34,22 @@ contract PoolEModeTests is TestnetProcedures {
     pool = PoolInstance(report.poolProxy);
   }
 
-  function test_setUserEMode_shouldApplyLtLtv() public {
+  function test_getUserEMode_shouldReflectEMode() public {
+    vm.startPrank(poolAdmin);
+    EModeCategoryInput memory ct1 = _genCategoryOne();
+    contracts.poolConfiguratorProxy.setEModeCategory(ct1.id, ct1.ltv, ct1.lt, ct1.lb, ct1.label);
+    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, ct1.id, true);
+    vm.stopPrank();
+
+    vm.expectEmit(address(pool));
+    emit UserEModeSet(alice, ct1.id);
+    vm.prank(alice);
+    pool.setUserEMode(ct1.id);
+
+    assertEq(pool.getUserEMode(alice), ct1.id);
+  }
+
+  function test_getUserAccountData_shouldReflectEmodeParams() public {
     vm.startPrank(poolAdmin);
     EModeCategoryInput memory ct1 = _genCategoryOne();
     contracts.poolConfiguratorProxy.setEModeCategory(ct1.id, ct1.ltv, ct1.lt, ct1.lb, ct1.label);
@@ -42,21 +57,27 @@ contract PoolEModeTests is TestnetProcedures {
     vm.stopPrank();
 
     vm.prank(alice);
-    vm.expectEmit(address(pool));
-    emit UserEModeSet(alice, ct1.id);
     pool.setUserEMode(ct1.id);
+    // supply some dust so the eMode asset is the only collateral
     _mintTestnetToken(tokenList.usdx, alice, 1);
     _supplyToPool(tokenList.usdx, alice, 1);
 
-    (, , , uint256 currentLt, uint256 currentLtv, ) = contracts.poolProxy.getUserAccountData(alice);
-    assertEq(currentLt, ct1.lt);
-    assertEq(currentLtv, ct1.ltv);
+    (, , , uint256 emodeLT, uint256 emodeLTV, ) = contracts.poolProxy.getUserAccountData(alice);
+    assertEq(emodeLT, ct1.lt);
+    assertEq(emodeLTV, ct1.ltv);
+
+    vm.prank(alice);
+    pool.setUserEMode(0);
+    (, uint256 assetBaseLTV, uint256 assetBaseLT, , , , , , , ) = contracts
+      .protocolDataProvider
+      .getReserveConfigurationData(tokenList.usdx);
+    (, , , uint256 baseLT, uint256 baseLTV, ) = contracts.poolProxy.getUserAccountData(alice);
+    assertEq(assetBaseLTV, baseLTV);
+    assertEq(assetBaseLT, baseLT);
   }
 
-  function test_setUserEMode_switchShouldWorkIfNoBorrows(uint8 eMode) public {
-    // create 2 emodes
-    // 1) wbtc/weth collateral;
-    // 2) wbtc/usdc collateral;
+  function test_setUserEMode_shouldAllowSwitchingIfNoBorrows(uint8 eMode) public {
+    uint256 AVAILABLE_EMODES = 2;
     EModeCategoryInput memory ct1 = _genCategoryOne();
     EModeCategoryInput memory ct2 = _genCategoryTwo();
     vm.startPrank(poolAdmin);
@@ -68,22 +89,18 @@ contract PoolEModeTests is TestnetProcedures {
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, ct2.id, true);
     vm.stopPrank();
 
-    eMode = uint8(bound(eMode, 0, E_MODES_SETUP));
-    vm.expectEmit(address(pool));
-    emit UserEModeSet(alice, eMode);
-
+    eMode = uint8(bound(eMode, 0, AVAILABLE_EMODES));
     vm.prank(alice);
     pool.setUserEMode(eMode);
-    assertEq(pool.getUserEMode(alice), eMode);
-
-    // switching eMode should work as well
-    eMode = uint8(bound(eMode + 1, 0, E_MODES_SETUP));
+    eMode = uint8(bound(eMode + 1, 0, AVAILABLE_EMODES));
     vm.prank(alice);
     pool.setUserEMode(eMode);
     assertEq(pool.getUserEMode(alice), eMode);
   }
 
-  function test_setUserEmode_switchToBetterEModeShouldBePossible(uint104 amount) public {
+  function test_setUserEmode_shouldAllowSwitchingWhenAssetIsBorrowableInEmode(
+    uint104 amount
+  ) public {
     amount = uint104(bound(amount, 1 ether, type(uint104).max));
     vm.startPrank(poolAdmin);
     contracts.poolConfiguratorProxy.setEModeCategory(1, 9000, 9200, 10050, 'usdx eMode low');
@@ -105,6 +122,49 @@ contract PoolEModeTests is TestnetProcedures {
     pool.setUserEMode(2);
     (, , , , , uint256 hfAfter) = contracts.poolProxy.getUserAccountData(alice);
     assertLt(hfBefore, hfAfter);
+  }
+
+  function test_setUserEmode_shouldRevertIfHfWouldFallBelow1(uint104 amount) public {
+    amount = uint104(bound(amount, 1 ether, type(uint104).max));
+    vm.startPrank(poolAdmin);
+    contracts.poolConfiguratorProxy.setEModeCategory(1, 9000, 9200, 10050, 'usdx eMode low');
+    contracts.poolConfiguratorProxy.setEModeCategory(2, 9000, 9700, 10050, 'usdx eMode high');
+    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, 1, true);
+    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, 2, true);
+    contracts.poolConfiguratorProxy.setAssetBorrowableInEMode(tokenList.wbtc, 1, true);
+    contracts.poolConfiguratorProxy.setAssetBorrowableInEMode(tokenList.wbtc, 2, true);
+    vm.stopPrank();
+
+    vm.prank(alice);
+    pool.setUserEMode(2);
+    _mintTestnetToken(tokenList.usdx, alice, amount);
+    _supplyToPool(tokenList.usdx, alice, amount);
+    _borrowMaxLt(tokenList.wbtc, alice);
+
+    vm.prank(alice);
+    vm.expectRevert(bytes(Errors.HEALTH_FACTOR_LOWER_THAN_LIQUIDATION_THRESHOLD));
+    pool.setUserEMode(1);
+  }
+
+  function test_setUserEmode_shouldRevertIfAssetNoLongerBorrowable(uint104 amount) public {
+    amount = uint104(bound(amount, 1 ether, type(uint104).max));
+    vm.startPrank(poolAdmin);
+    contracts.poolConfiguratorProxy.setEModeCategory(1, 9000, 9200, 10050, 'usdx eMode low');
+    contracts.poolConfiguratorProxy.setEModeCategory(2, 9000, 9700, 10050, 'usdx eMode high');
+    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, 1, true);
+    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, 2, true);
+    contracts.poolConfiguratorProxy.setAssetBorrowableInEMode(tokenList.wbtc, 1, true);
+    vm.stopPrank();
+
+    vm.prank(alice);
+    pool.setUserEMode(1);
+    _mintTestnetToken(tokenList.usdx, alice, amount);
+    _supplyToPool(tokenList.usdx, alice, amount);
+    _borrowMaxLt(tokenList.wbtc, alice);
+
+    vm.prank(alice);
+    vm.expectRevert(bytes(Errors.NOT_BORROWABLE_IN_EMODE));
+    pool.setUserEMode(2);
   }
 
   function _mintTestnetToken(address erc20, address user, uint256 amount) internal {
