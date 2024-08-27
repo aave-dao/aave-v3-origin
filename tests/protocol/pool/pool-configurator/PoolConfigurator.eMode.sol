@@ -201,6 +201,23 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
     assertEq(EModeConfiguration.isBorrowableAsset(config.borrowableMask, reserveData.id), true);
   }
 
+  function test_addAnotherAssetBorrowableInEMode() public {
+    EModeCategoryInput memory input = _genCategoryOne();
+    test_setAssetBorrowableInEMode();
+
+    vm.prank(poolAdmin);
+    contracts.poolConfiguratorProxy.setAssetBorrowableInEMode(tokenList.wbtc, input.id, true);
+    DataTypes.EModeCategory memory config = contracts.poolProxy.getEModeCategoryData(input.id);
+    DataTypes.ReserveDataLegacy memory reserveDataUSDX = contracts.poolProxy.getReserveData(
+      tokenList.usdx
+    );
+    DataTypes.ReserveDataLegacy memory reserveDataWBTC = contracts.poolProxy.getReserveData(
+      tokenList.wbtc
+    );
+    assertEq(EModeConfiguration.isBorrowableAsset(config.borrowableMask, reserveDataUSDX.id), true);
+    assertEq(EModeConfiguration.isBorrowableAsset(config.borrowableMask, reserveDataWBTC.id), true);
+  }
+
   function test_removeBorrowableFromEmode() public {
     EModeCategoryInput memory input = _genCategoryOne();
     test_configureEmodeCategory();
