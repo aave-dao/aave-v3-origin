@@ -146,37 +146,32 @@ contract ProtocolV3TestBase is DiffUtils {
     ReserveConfig[] memory configs = _getReservesConfigs(pool);
     if (reserveConfigs) _writeReserveConfigs(path, configs, pool);
     if (strategyConfigs) _writeStrategyConfigs(path, configs);
-    if (eModeConigs) _writeEModeConfigs(path, configs, pool);
+    if (eModeConigs) _writeEModeConfigs(path, pool);
     if (poolConfigs) _writePoolConfiguration(path, pool);
 
     return configs;
   }
 
-  function _writeEModeConfigs(
-    string memory path,
-    ReserveConfig[] memory configs,
-    IPool pool
-  ) internal virtual {
+  function _writeEModeConfigs(string memory path, IPool pool) internal virtual {
     // keys for json stringification
     string memory eModesKey = 'emodes';
     string memory content = '{}';
-
-    uint256[] memory usedCategories = new uint256[](configs.length);
-    // for (uint256 i = 0; i < configs.length; i++) {
-    //   if (!_isInUint256Array(usedCategories, configs[i].eModeCategory)) {
-    //     usedCategories[i] = configs[i].eModeCategory;
-    //     DataTypes.EModeCategory memory category = pool.getEModeCategoryData(
-    //       uint8(configs[i].eModeCategory)
-    //     );
-    //     string memory key = vm.toString(configs[i].eModeCategory);
-    //     vm.serializeUint(key, 'eModeCategory', configs[i].eModeCategory);
-    //     vm.serializeString(key, 'label', category.label);
-    //     vm.serializeUint(key, 'ltv', category.ltv);
-    //     vm.serializeUint(key, 'liquidationThreshold', category.liquidationThreshold);
-    //     string memory object = vm.serializeUint(key, 'liquidationBonus', category.liquidationBonus);
-    //     content = vm.serializeString(eModesKey, key, object);
-    //   }
-    // }
+    uint8 emptyCounter = 0;
+    for (uint8 i = 0; i < 256; i++) {
+      DataTypes.EModeCategory memory category = pool.getEModeCategoryData(i);
+      if (category.liquidationThreshold == 0) {
+        if (++emptyCounter > 2) break;
+      } else {
+        string memory key = vm.toString(i);
+        vm.serializeUint(key, 'eModeCategory', i);
+        vm.serializeString(key, 'label', category.label);
+        vm.serializeUint(key, 'ltv', category.ltv);
+        vm.serializeUint(key, 'liquidationThreshold', category.liquidationThreshold);
+        string memory object = vm.serializeUint(key, 'liquidationBonus', category.liquidationBonus);
+        content = vm.serializeString(eModesKey, key, object);
+        emptyCounter = 0;
+      }
+    }
     string memory output = vm.serializeString('root', 'eModes', content);
     vm.writeJson(output, path);
   }

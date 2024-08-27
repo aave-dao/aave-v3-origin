@@ -383,7 +383,12 @@ library LiquidationLogic {
     address debtPriceSource = params.debtAsset;
 
     if (params.userEModeCategory != 0) {
-      if (eModeCategories[params.userEModeCategory].isCollateralAsset(collateralReserve.id)) {
+      if (
+        EModeConfiguration.isCollateralAsset(
+          eModeCategories[params.userEModeCategory].collateralMask,
+          collateralReserve.id
+        )
+      ) {
         liquidationBonus = eModeCategories[params.userEModeCategory].liquidationBonus;
       }
     }

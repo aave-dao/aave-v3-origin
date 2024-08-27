@@ -210,7 +210,10 @@ library ValidationLogic {
 
     if (params.userEModeCategory != 0) {
       require(
-        eModeCategories[params.userEModeCategory].isBorrowable(reservesData[params.asset].id),
+        EModeConfiguration.isBorrowableAsset(
+          eModeCategories[params.userEModeCategory].borrowableMask,
+          reservesData[params.asset].id
+        ),
         Errors.NOT_BORROWABLE_IN_EMODE
       );
     }
@@ -570,7 +573,10 @@ library ValidationLogic {
       unchecked {
         for (uint256 i = 0; i < reservesCount; i++) {
           if (userConfig.isBorrowing(i)) {
-            require(eModeCategory.isBorrowable(i), Errors.NOT_BORROWABLE_IN_EMODE);
+            require(
+              EModeConfiguration.isBorrowableAsset(eModeCategory.borrowableMask, i),
+              Errors.NOT_BORROWABLE_IN_EMODE
+            );
           }
         }
       }

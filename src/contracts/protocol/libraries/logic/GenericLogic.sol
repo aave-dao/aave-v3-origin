@@ -120,7 +120,10 @@ library GenericLogic {
 
         vars.isInEModeCategory =
           params.userEModeCategory != 0 &&
-          eModeCategories[params.userEModeCategory].isCollateralAsset(vars.i);
+          EModeConfiguration.isCollateralAsset(
+            eModeCategories[params.userEModeCategory].collateralMask,
+            vars.i
+          );
 
         if (vars.ltv != 0) {
           vars.avgLtv +=

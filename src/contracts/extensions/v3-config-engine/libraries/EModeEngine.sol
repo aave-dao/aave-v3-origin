@@ -43,11 +43,11 @@ library EModeEngine {
     IEngine.EModeCollateralUpdate[] memory updates
   ) internal {
     for (uint256 i = 0; i < updates.length; i++) {
-        poolConfigurator.setAssetCollateralInEMode(
-          updates[i].asset,
-          updates[i].eModeCategory,
-          updates[i].enabled
-        );
+      poolConfigurator.setAssetCollateralInEMode(
+        updates[i].asset,
+        updates[i].eModeCategory,
+        updates[i].enabled
+      );
     }
   }
 
@@ -56,11 +56,11 @@ library EModeEngine {
     IEngine.EModeBorrowableUpdate[] memory updates
   ) internal {
     for (uint256 i = 0; i < updates.length; i++) {
-        poolConfigurator.setAssetBorrowableInEMode(
-          updates[i].asset,
-          updates[i].eModeCategory,
-          updates[i].enabled
-        );
+      poolConfigurator.setAssetBorrowableInEMode(
+        updates[i].asset,
+        updates[i].eModeCategory,
+        updates[i].enabled
+      );
     }
   }
 

@@ -35,17 +35,14 @@ library EModeConfiguration {
 
   /**
    * @notice Validates if a reserve can be used as collaterl in a selected eMode
-   * @param self The configuration object
+   * @param mask The collateral mask
    * @param reserveIndex The index of the reserve in the bitmap
    * @return True if the reserve is collateral
    */
-  function isCollateralAsset(
-    DataTypes.EModeCategory storage self,
-    uint256 reserveIndex
-  ) internal view returns (bool) {
+  function isCollateralAsset(uint128 mask, uint256 reserveIndex) internal pure returns (bool) {
     unchecked {
       require(reserveIndex < ReserveConfiguration.MAX_RESERVES_COUNT, Errors.INVALID_RESERVE_INDEX);
-      return (self.collateralMask >> reserveIndex) & 1 != 0;
+      return (mask >> reserveIndex) & 1 != 0;
     }
   }
 
@@ -73,17 +70,14 @@ library EModeConfiguration {
 
   /**
    * @notice Validates if a reserve can be borrowed in a selected eMode
-   * @param self The configuration object
+   * @param mask The borrowable mask
    * @param reserveIndex The index of the reserve in the bitmap
    * @return True if the reserve is borrowable
    */
-  function isBorrowable(
-    DataTypes.EModeCategory storage self,
-    uint256 reserveIndex
-  ) internal view returns (bool) {
+  function isBorrowableAsset(uint128 mask, uint256 reserveIndex) internal pure returns (bool) {
     unchecked {
       require(reserveIndex < ReserveConfiguration.MAX_RESERVES_COUNT, Errors.INVALID_RESERVE_INDEX);
-      return (self.borrowableMask >> reserveIndex) & 1 != 0;
+      return (mask >> reserveIndex) & 1 != 0;
     }
   }
 }
