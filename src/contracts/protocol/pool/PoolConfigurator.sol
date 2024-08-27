@@ -427,7 +427,7 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
   ) external override onlyRiskOrPoolAdmins {
     DataTypes.EModeCategory memory categoryData = _pool.getEModeCategoryData(categoryId);
     DataTypes.ReserveDataLegacy memory reserveData = _pool.getReserveData(asset);
-    categoryData.setCollateralAsset(reserveData.id, allowed);
+    categoryData.setCollateral(reserveData.id, allowed);
     _pool.configureEModeCategory(categoryId, categoryData);
     emit AssetCollateralInEModeChanged(asset, uint8(categoryId), allowed);
   }

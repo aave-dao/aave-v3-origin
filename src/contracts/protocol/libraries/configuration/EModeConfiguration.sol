@@ -17,7 +17,7 @@ library EModeConfiguration {
    * @param reserveIndex The index of the reserve in the bitmap
    * @param collateral True if the asset should be collateral, false otherwise
    */
-  function setCollateralAsset(
+  function setCollateral(
     DataTypes.EModeCategory memory self,
     uint256 reserveIndex,
     bool collateral

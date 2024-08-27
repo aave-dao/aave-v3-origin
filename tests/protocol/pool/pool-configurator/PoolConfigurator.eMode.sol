@@ -6,11 +6,13 @@ import 'forge-std/Test.sol';
 import {Errors} from '../../../../src/contracts/protocol/libraries/helpers/Errors.sol';
 import {PercentageMath} from '../../../../src/contracts/protocol/libraries/math/PercentageMath.sol';
 import {ReserveConfiguration, DataTypes} from '../../../../src/contracts/protocol/pool/PoolConfigurator.sol';
+import {EModeConfiguration} from '../../../../src/contracts/protocol/libraries/configuration/EModeConfiguration.sol';
 import {TestnetProcedures} from '../../../utils/TestnetProcedures.sol';
 
 contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
   using PercentageMath for uint256;
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
+  using EModeConfiguration for DataTypes.EModeCategory;
 
   event EModeCategoryAdded(
     uint8 indexed categoryId,
@@ -22,6 +24,10 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
   );
 
   event AssetCollateralInEModeChanged(address indexed asset, uint8 categoryId, bool allowed);
+  event AssetBorrowableInEModeChanged(address indexed asset, uint8 categoryId, bool borrowable);
+
+  // EModeConfiguration only works with storage, so definint a temp placeholder for assertions
+  DataTypes.EModeCategory internal tempConfig;
 
   function setUp() public {
     initTestEnvironment();
@@ -40,24 +46,26 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
     assertEq(emodeConfig.liquidationThreshold, ct.lt);
     assertEq(emodeConfig.liquidationBonus, ct.lb);
     assertEq(emodeConfig.label, ct.label);
+    assertEq(emodeConfig.collateralMask, 0);
+    assertEq(emodeConfig.borrowableMask, 0);
   }
 
   function test_updateEModeCategory() public {
-    EModeCategoryInput memory ogCategory = _genCategoryOne();
+    test_configureEmodeCategory();
+    EModeCategoryInput memory ct = _genCategoryOne();
+    DataTypes.EModeCategory memory ogCategory = contracts.poolProxy.getEModeCategoryData(ct.id);
     EModeCategoryInput memory updatedCategory = EModeCategoryInput(
-      ogCategory.id,
+      ct.id,
       90_00,
       92_00,
       101_00,
       'GROUP_B'
     );
 
-    test_configureEmodeCategory();
-
     vm.prank(poolAdmin);
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
     emit EModeCategoryAdded(
-      ogCategory.id,
+      ct.id,
       updatedCategory.ltv,
       updatedCategory.lt,
       updatedCategory.lb,
@@ -66,20 +74,20 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
     );
 
     contracts.poolConfiguratorProxy.setEModeCategory(
-      ogCategory.id,
+      ct.id,
       updatedCategory.ltv,
       updatedCategory.lt,
       updatedCategory.lb,
       updatedCategory.label
     );
 
-    DataTypes.EModeCategory memory emodeConfig = contracts.poolProxy.getEModeCategoryData(
-      ogCategory.id
-    );
+    DataTypes.EModeCategory memory emodeConfig = contracts.poolProxy.getEModeCategoryData(ct.id);
     assertEq(emodeConfig.ltv, updatedCategory.ltv);
     assertEq(emodeConfig.liquidationThreshold, updatedCategory.lt);
     assertEq(emodeConfig.liquidationBonus, updatedCategory.lb);
     assertEq(emodeConfig.label, updatedCategory.label);
+    assertEq(emodeConfig.collateralMask, ogCategory.collateralMask);
+    assertEq(emodeConfig.borrowableMask, ogCategory.borrowableMask);
   }
 
   function test_reverts_setEmodeCategory_zero_ltv() public {
@@ -142,23 +150,31 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
     emit AssetCollateralInEModeChanged(tokenList.usdx, input.id, true);
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, input.id, true);
+    tempConfig = contracts.poolProxy.getEModeCategoryData(input.id);
+    DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
+      tokenList.usdx
+    );
+    assertEq(tempConfig.isCollateralAsset(reserveData.id), true);
   }
 
-  function test_updateAssetEModeCategory() public {
-    EModeCategoryInput memory ct = _genCategoryTwo();
+  function test_addAnotherAssetCollateralInEMode() public {
+    EModeCategoryInput memory input = _genCategoryOne();
     test_setAssetCollateralInEMode();
 
     vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(ct.id, ct.ltv, ct.lt, ct.lb, ct.label);
-
-    vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit AssetCollateralInEModeChanged(tokenList.usdx, ct.id, true);
-
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, ct.id, true);
+    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.wbtc, input.id, true);
+    tempConfig = contracts.poolProxy.getEModeCategoryData(input.id);
+    DataTypes.ReserveDataLegacy memory reserveDataUSDX = contracts.poolProxy.getReserveData(
+      tokenList.usdx
+    );
+    DataTypes.ReserveDataLegacy memory reserveDataWBTC = contracts.poolProxy.getReserveData(
+      tokenList.wbtc
+    );
+    assertEq(tempConfig.isCollateralAsset(reserveDataUSDX.id), true);
+    assertEq(tempConfig.isCollateralAsset(reserveDataWBTC.id), true);
   }
 
-  function test_removeEModeCategoryFromAsset() public {
+  function test_removeCollateralFromEmode() public {
     EModeCategoryInput memory prevCt = _genCategoryOne();
     test_setAssetCollateralInEMode();
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
@@ -166,5 +182,39 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
 
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, prevCt.id, false);
+
+    tempConfig = contracts.poolProxy.getEModeCategoryData(prevCt.id);
+    DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
+      tokenList.usdx
+    );
+    assertEq(tempConfig.isCollateralAsset(reserveData.id), false);
+  }
+
+  function test_setAssetBorrowableInEMode() public {
+    EModeCategoryInput memory input = _genCategoryOne();
+    test_configureEmodeCategory();
+    vm.expectEmit(address(contracts.poolConfiguratorProxy));
+    emit AssetBorrowableInEModeChanged(tokenList.usdx, input.id, true);
+    vm.prank(poolAdmin);
+    contracts.poolConfiguratorProxy.setAssetBorrowableInEMode(tokenList.usdx, input.id, true);
+    tempConfig = contracts.poolProxy.getEModeCategoryData(input.id);
+    DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
+      tokenList.usdx
+    );
+    assertEq(tempConfig.isBorrowable(reserveData.id), true);
+  }
+
+  function test_removeBorrowableFromEmode() public {
+    EModeCategoryInput memory input = _genCategoryOne();
+    test_configureEmodeCategory();
+    vm.expectEmit(address(contracts.poolConfiguratorProxy));
+    emit AssetBorrowableInEModeChanged(tokenList.usdx, input.id, false);
+    vm.prank(poolAdmin);
+    contracts.poolConfiguratorProxy.setAssetBorrowableInEMode(tokenList.usdx, input.id, false);
+    tempConfig = contracts.poolProxy.getEModeCategoryData(input.id);
+    DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
+      tokenList.usdx
+    );
+    assertEq(tempConfig.isBorrowable(reserveData.id), false);
   }
 }
