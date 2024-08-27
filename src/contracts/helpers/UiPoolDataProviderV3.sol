@@ -182,14 +182,26 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
     return (reservesData, baseCurrencyInfo);
   }
 
-  function getEModes(
-    IPoolAddressesProvider provider,
-    uint256[] memory eModes
-  ) external view returns (DataTypes.EModeCategory[] memory) {
+  function getEModes(IPoolAddressesProvider provider) external view returns (Emode[] memory) {
     IPool pool = IPool(provider.getPool());
-    DataTypes.EModeCategory[] memory categories = new DataTypes.EModeCategory[](eModes.length);
-    for (uint8 i = 0; i < eModes.length; i++) {
-      categories[i] = pool.getEModeCategoryData(uint8(eModes[i]));
+    Emode[] memory tempCategories = new Emode[](256);
+    uint8 eModesFound = 0;
+    uint8 missCounter = 0;
+    for (uint8 i = 1; i < 256; i++) {
+      DataTypes.EModeCategory memory category = pool.getEModeCategoryData(uint8(i));
+      if (category.liquidationThreshold != 0) {
+        tempCategories[eModesFound] = Emode({eMode: category, id: i});
+        ++eModesFound;
+        missCounter = 0;
+      } else {
+        ++missCounter;
+      }
+      // assumes there will never be a gap > 2 when setting eModes
+      if (++missCounter > 2) break;
+    }
+    Emode[] memory categories = new Emode[](eModesFound);
+    for (uint8 i = 0; i < eModesFound; i++) {
+      categories[i] = tempCategories[i];
     }
     return categories;
   }

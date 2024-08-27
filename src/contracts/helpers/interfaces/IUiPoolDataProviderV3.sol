@@ -2,6 +2,7 @@
 pragma solidity ^0.8.10;
 
 import {IPoolAddressesProvider} from '../../interfaces/IPoolAddressesProvider.sol';
+import {DataTypes} from '../../protocol/libraries/types/DataTypes.sol';
 
 interface IUiPoolDataProviderV3 {
   struct InterestRates {
@@ -87,6 +88,11 @@ interface IUiPoolDataProviderV3 {
     int256 marketReferenceCurrencyPriceInUsd;
     int256 networkBaseTokenPriceInUsd;
     uint8 networkBaseTokenPriceDecimals;
+  }
+
+  struct Emode {
+    uint8 id;
+    DataTypes.EModeCategory eMode;
   }
 
   function getReservesList(
