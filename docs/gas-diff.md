@@ -57,8 +57,8 @@ index 0dec812..9ce5779 100644
  | transfer                                                                                                                | 101595          | 101595  | 101595  | 101595  | 1       |
 -| withdraw                                                                                                                | 239849          | 239849  | 239849  | 239849  | 1       |
 +| withdraw                                                                                                                | 239959          | 239959  | 239959  | 239959  | 1       |
- 
- 
+
+
  | src/contracts/dependencies/weth/WETH9.sol:WETH9 contract |                 |       |        |       |         |
 @@ -66,9 +66,9 @@
  | 546391                                                   | 2423            |       |        |       |         |
@@ -71,16 +71,16 @@ index 0dec812..9ce5779 100644
 +| balanceOf                                                | 541             | 989   | 541    | 2541  | 9205    |
 +| decimals                                                 | 2313            | 2313  | 2313   | 2313  | 632     |
  | symbol                                                   | 1213            | 2250  | 3213   | 3213  | 27      |
- 
- 
+
+
 @@ -91,7 +91,7 @@
  | 2050064                                                                                                           | 10159           |        |        |        |         |
  | Function Name                                                                                                     | min             | avg    | median | max    | # calls |
  | owner                                                                                                             | 386             | 386    | 386    | 386    | 1       |
 -| swapAndDeposit                                                                                                    | 352192          | 443390 | 475524 | 502455 | 3       |
 +| swapAndDeposit                                                                                                    | 352280          | 443455 | 475577 | 502508 | 3       |
- 
- 
+
+
  | src/contracts/extensions/paraswap-adapters/ParaSwapRepayAdapter.sol:ParaSwapRepayAdapter contract |                 |        |        |        |         |
 @@ -101,7 +101,7 @@
  | Function Name                                                                                     | min             | avg    | median | max    | # calls |
@@ -88,8 +88,8 @@ index 0dec812..9ce5779 100644
  | rescueTokens                                                                                      | 36133           | 36133  | 36133  | 36133  | 1       |
 -| swapAndRepay                                                                                      | 405121          | 515303 | 535881 | 584329 | 4       |
 +| swapAndRepay                                                                                      | 404879          | 515029 | 535596 | 584044 | 4       |
- 
- 
+
+
  | src/contracts/extensions/paraswap-adapters/ParaSwapWithdrawSwapAdapter.sol:ParaSwapWithdrawSwapAdapter contract |                 |        |        |        |         |
 @@ -110,7 +110,7 @@
  | 1757703                                                                                                         | 8731            |        |        |        |         |
@@ -97,8 +97,8 @@ index 0dec812..9ce5779 100644
  | owner                                                                                                           | 408             | 408    | 408    | 408    | 1       |
 -| withdrawAndSwap                                                                                                 | 352139          | 378370 | 371176 | 411796 | 3       |
 +| withdrawAndSwap                                                                                                 | 352227          | 378435 | 371229 | 411849 | 3       |
- 
- 
+
+
  | src/contracts/extensions/static-a-token/StataOracle.sol:StataOracle contract |                 |       |        |       |         |
 @@ -118,8 +118,8 @@
  | Deployment Cost                                                              | Deployment Size |       |        |       |         |
@@ -108,8 +108,8 @@ index 0dec812..9ce5779 100644
 -| getAssetsPrices                                                              | 87496           | 87496 | 87496  | 87496 | 1       |
 +| getAssetPrice                                                                | 14814           | 14899 | 14814  | 36814 | 257     |
 +| getAssetsPrices                                                              | 87562           | 87562 | 87562  | 87562 | 1       |
- 
- 
+
+
  | src/contracts/extensions/static-a-token/StaticATokenFactory.sol:StaticATokenFactory contract |                 |         |         |         |         |
 @@ -128,10 +128,10 @@
  | 0                                                                                            | 0               |         |         |         |         |
@@ -121,8 +121,8 @@ index 0dec812..9ce5779 100644
  | getStaticATokens                                                                             | 9587            | 9587    | 9587    | 9587    | 2       |
 -| initialize                                                                                   | 24131           | 24131   | 24131   | 24131   | 624     |
 +| initialize                                                                                   | 24131           | 24131   | 24131   | 24131   | 620     |
- 
- 
+
+
  | src/contracts/extensions/static-a-token/StaticATokenLM.sol:StaticATokenLM contract |                 |        |        |        |         |
 @@ -153,35 +153,35 @@
  | claimRewardsOnBehalf                                                               | 12204           | 12204  | 12204  | 12204  | 1       |
@@ -175,8 +175,8 @@ index 0dec812..9ce5779 100644
  | transfer                                                                           | 72662           | 72662  | 72662  | 72662  | 1       |
 -| withdraw                                                                           | 224942          | 224942 | 224942 | 224942 | 1       |
 +| withdraw                                                                           | 225052          | 225052 | 225052 | 225052 | 1       |
- 
- 
+
+
  | src/contracts/extensions/v3-config-engine/AaveV3ConfigEngine.sol:AaveV3ConfigEngine contract |                 |         |         |         |         |
 @@ -189,16 +189,16 @@
  | Deployment Cost                                                                              | Deployment Size |         |         |         |         |
@@ -202,8 +202,8 @@ index 0dec812..9ce5779 100644
 +| updateEModeCategories                                                                        | 10592           | 51848   | 29691   | 104184  | 5       |
 +| updatePriceFeeds                                                                             | 39360           | 39360   | 39360   | 39360   | 1       |
 +| updateRateStrategies                                                                         | 122202          | 122202  | 122202  | 122202  | 1       |
- 
- 
+
+
  | src/contracts/helpers/AaveProtocolDataProvider.sol:AaveProtocolDataProvider contract |                 |       |        |       |         |
 @@ -206,22 +206,21 @@
  | Deployment Cost                                                                      | Deployment Size |       |        |       |         |
@@ -236,8 +236,8 @@ index 0dec812..9ce5779 100644
 -| getUserReserveData                                                                   | 18944           | 26800 | 27034  | 43944 | 1302    |
 +| getTotalDebt                                                                         | 51890           | 51890 | 51890  | 51890 | 3       |
 +| getUserReserveData                                                                   | 18988           | 26798 | 27013  | 43988 | 1301    |
- 
- 
+
+
  | src/contracts/helpers/L2Encoder.sol:L2Encoder contract |                 |       |        |       |         |
 @@ -229,15 +228,15 @@
  | Deployment Cost                                        | Deployment Size |       |        |       |         |
@@ -261,8 +261,8 @@ index 0dec812..9ce5779 100644
 +| encodeSupplyParams                                     | 34807           | 34807 | 34807  | 34807 | 7       |
 +| encodeSupplyWithPermitParams                           | 35166           | 35166 | 35166  | 35166 | 256     |
 +| encodeWithdrawParams                                   | 7647            | 7681  | 7681   | 7715  | 2       |
- 
- 
+
+
  | src/contracts/helpers/WrappedTokenGatewayV3.sol:WrappedTokenGatewayV3 contract |                 |        |        |        |         |
 @@ -245,16 +244,16 @@
  | Deployment Cost                                                                | Deployment Size |        |        |        |         |
@@ -282,8 +282,8 @@ index 0dec812..9ce5779 100644
 +| repayETH                                                                       | 175668          | 179676 | 177558 | 187389 | 5       |
 +| withdrawETH                                                                    | 231328          | 235398 | 235398 | 239469 | 2       |
 +| withdrawETHWithPermit                                                          | 275613          | 278496 | 278496 | 281379 | 2       |
- 
- 
+
+
  | src/contracts/instances/ATokenInstance.sol:ATokenInstance contract |                 |        |        |        |         |
 @@ -264,35 +263,35 @@
  | Function Name                                                      | min             | avg    | median | max    | # calls |
@@ -335,8 +335,8 @@ index 0dec812..9ce5779 100644
 +| transferFrom                                                       | 87646           | 120962 | 130265 | 145587 | 43      |
 +| transferOnLiquidation                                              | 988             | 30267  | 37548  | 44348  | 1806    |
 +| transferUnderlyingTo                                               | 802             | 19862  | 16500  | 33639  | 2959    |
- 
- 
+
+
  | src/contracts/instances/L2PoolInstance.sol:L2PoolInstance contract |                 |        |        |        |         |
 @@ -302,154 +301,155 @@
  | Function Name                                                      | min             | avg    | median | max    | # calls |
@@ -428,8 +428,8 @@ index 0dec812..9ce5779 100644
 +| updateBridgeProtocolFee                                            | 6262            | 6262   | 6262   | 6262   | 256     |
 +| updateFlashloanPremiums                                            | 1771            | 8165   | 6444   | 21671  | 380     |
 +| withdraw                                                           | 126619          | 129061 | 129061 | 131504 | 2       |
- 
- 
+
+
  | src/contracts/instances/PoolConfiguratorInstance.sol:PoolConfiguratorInstance contract |                 |          |         |           |         |
  |----------------------------------------------------------------------------------------|-----------------|----------|---------|-----------|---------|
  | Deployment Cost                                                                        | Deployment Size |          |         |           |         |
@@ -503,8 +503,8 @@ index 0dec812..9ce5779 100644
 +| updateFlashloanPremiumToProtocol                                                       | 10205           | 11353    | 10205   | 37005     | 903     |
 +| updateFlashloanPremiumTotal                                                            | 14091           | 26958    | 32070   | 36970     | 903     |
 +| updateVariableDebtToken                                                                | 14075           | 14531    | 14075   | 131490    | 257     |
- 
- 
+
+
  | src/contracts/instances/PoolInstance.sol:PoolInstance contract |                 |        |        |        |         |
  |----------------------------------------------------------------|-----------------|--------|--------|--------|---------|
  | Deployment Cost                                                | Deployment Size |        |        |        |         |
@@ -618,8 +618,8 @@ index 0dec812..9ce5779 100644
 +| updateBridgeProtocolFee                                        | 6217            | 7047   | 6217   | 23397  | 269     |
 +| updateFlashloanPremiums                                        | 1726            | 10720  | 6399   | 21626  | 1424    |
 +| withdraw                                                       | 39251           | 105523 | 87824  | 177740 | 51      |
- 
- 
+
+
  | src/contracts/instances/VariableDebtTokenInstance.sol:VariableDebtTokenInstance contract |                 |        |        |        |         |
 @@ -457,22 +457,22 @@
  | Deployment Cost                                                                          | Deployment Size |        |        |        |         |
@@ -653,8 +653,8 @@ index 0dec812..9ce5779 100644
 +| scaledTotalSupply                                                                        | 419             | 2116   | 2419   | 2419   | 19469   |
 +| symbol                                                                                   | 1030            | 1440   | 1347   | 3285   | 9452    |
 +| totalSupply                                                                              | 4014            | 7523   | 6416   | 19014  | 15      |
- 
- 
+
+
  | src/contracts/misc/AaveOracle.sol:AaveOracle contract |                 |       |        |       |         |
 @@ -482,10 +482,10 @@
  | Function Name                                         | min             | avg   | median | max   | # calls |
@@ -668,7 +668,7 @@ index 0dec812..9ce5779 100644
 +| getSourceOfAsset                                      | 553             | 635   | 553    | 2553  | 1139    |
  | setAssetSources                                       | 37348           | 52896 | 61947  | 62187 | 9       |
  | setFallbackOracle                                     | 59544           | 59544 | 59544  | 59544 | 4       |
- 
+
 @@ -499,7 +499,7 @@
  | MAX_BORROW_RATE                                                                                           | 240             | 240   | 240    | 240   | 5382    |
  | MAX_OPTIMAL_POINT                                                                                         | 262             | 262   | 262    | 262   | 6918    |
@@ -685,8 +685,8 @@ index 0dec812..9ce5779 100644
 -| setInterestRateParams(address,(uint16,uint32,uint32,uint32))                                              | 28278           | 29729 | 29075  | 36816 | 2816    |
 +| setInterestRateParams(address,(uint16,uint32,uint32,uint32))                                              | 28290           | 29729 | 29075  | 36804 | 2816    |
  | setInterestRateParams(address,bytes)                                                                      | 28624           | 33084 | 29860  | 37156 | 6405    |
- 
- 
+
+
 @@ -530,26 +530,26 @@
  | Deployment Cost                                                                                                                                   | Deployment Size |          |         |           |         |
  | 465623                                                                                                                                            | 2115            |          |         |           |         |
@@ -937,8 +937,8 @@ index 0dec812..9ce5779 100644
 -| withdraw(bytes32)                                                                                                                                 | 138782          | 145861   | 145861  | 152941    | 2       |
 +| withdraw(address,uint256,address)                                                                                                                 | 66362           | 134766   | 141986  | 204851    | 23      |
 +| withdraw(bytes32)                                                                                                                                 | 138804          | 145883   | 145883  | 152963    | 2       |
- 
- 
+
+
  | src/contracts/mocks/flashloan/MockFlashLoanReceiver.sol:MockFlashLoanReceiver contract |                 |       |        |       |         |
 @@ -703,9 +704,9 @@
  | src/contracts/mocks/helpers/MockPool.sol:MockPoolInherited contract |                 |       |        |       |         |
@@ -949,8 +949,8 @@ index 0dec812..9ce5779 100644
  | Function Name                                                       | min             | avg   | median | max   | # calls |
 -| initialize                                                          | 28462           | 28462 | 28462  | 28462 | 2       |
 +| initialize                                                          | 28397           | 28397 | 28397  | 28397 | 2       |
- 
- 
+
+
  | src/contracts/mocks/oracle/CLAggregators/MockAggregator.sol:MockAggregator contract |                 |      |        |      |         |
 @@ -713,10 +714,10 @@
  | Deployment Cost                                                                     | Deployment Size |      |        |      |         |
@@ -963,8 +963,8 @@ index 0dec812..9ce5779 100644
 -| latestAnswer                                                                        | 281             | 1395 | 2281   | 2281 | 24197   |
 +| latestAnswer                                                                        | 281             | 1396 | 2281   | 2281 | 26529   |
  | name                                                                                | 170             | 170  | 170    | 170  | 83      |
- 
- 
+
+
 @@ -732,10 +733,10 @@
  | src/contracts/mocks/oracle/SequencerOracle.sol:SequencerOracle contract |                 |       |        |       |         |
  |-------------------------------------------------------------------------|-----------------|-------|--------|-------|---------|
@@ -975,8 +975,8 @@ index 0dec812..9ce5779 100644
  | latestRoundData                                                         | 730             | 1533  | 735    | 4735  | 10      |
 -| setAnswer                                                               | 26207           | 27452 | 26207  | 46119 | 73      |
 +| setAnswer                                                               | 26207           | 27469 | 26207  | 46119 | 72      |
- 
- 
+
+
  | src/contracts/mocks/swap/MockParaSwapAugustus.sol:MockParaSwapAugustus contract |                 |        |        |        |         |
 @@ -773,13 +774,13 @@
  | Function Name                                                              | min             | avg   | median | max   | # calls |
@@ -1008,8 +1008,8 @@ index 0dec812..9ce5779 100644
  | percentDiv                                                                         | 321             | 426 | 432    | 432 | 259     |
 -| percentMul                                                                         | 338             | 411 | 435    | 435 | 259     |
 +| percentMul                                                                         | 338             | 402 | 435    | 435 | 259     |
- 
- 
+
+
  | src/contracts/mocks/tests/WadRayMathWrapper.sol:WadRayMathWrapper contract |                 |     |        |     |         |
 @@ -813,16 +814,16 @@
  | 233882                                                                     | 871             |     |        |     |         |
@@ -1030,8 +1030,8 @@ index 0dec812..9ce5779 100644
 -| wadToRay                                                                   | 284             | 355 | 360    | 360 | 485     |
 +| wadMul                                                                     | 338             | 406 | 435    | 435 | 262     |
 +| wadToRay                                                                   | 284             | 355 | 360    | 360 | 488     |
- 
- 
+
+
  | src/contracts/mocks/tokens/MockATokenRepayment.sol:MockATokenRepayment contract |                 |       |        |       |         |
 @@ -907,23 +908,23 @@
  | Deployment Cost                                                         | Deployment Size |       |        |       |         |
@@ -1098,7 +1098,7 @@ index 0dec812..9ce5779 100644
 +| setPoolImpl                                                                                   | 24060           | 279024 | 287080 | 517876 | 4       |
  | setPriceOracle                                                                                | 24083           | 37511  | 39138  | 47688  | 4       |
  | setPriceOracleSentinel                                                                        | 24126           | 40946  | 47731  | 47731  | 6       |
- 
+
 @@ -968,7 +969,7 @@
  | getAddressesProviderAddressById                                                                               | 522             | 522    | 522    | 522    | 4       |
  | getAddressesProviderIdByAddress                                                                               | 559             | 1225   | 559    | 2559   | 6       |
@@ -1107,7 +1107,7 @@ index 0dec812..9ce5779 100644
 +| owner                                                                                                         | 331             | 2327   | 2331   | 2331   | 646     |
  | registerAddressesProvider                                                                                     | 24444           | 104012 | 119926 | 119926 | 6       |
  | unregisterAddressesProvider                                                                                   | 26448           | 39029  | 40004  | 49662  | 4       |
- 
+
 @@ -996,7 +997,7 @@
  | Deployment Cost                                                        | Deployment Size |        |        |        |         |
  | 3183382                                                                | 14716           |        |        |        |         |
@@ -1134,8 +1134,8 @@ index 0dec812..9ce5779 100644
  | Function Name                                           | min             | avg   | median | max   | # calls |
 -| initialize                                              | 90684           | 90684 | 90684  | 90684 | 674     |
 +| initialize                                              | 90684           | 90684 | 90684  | 90684 | 670     |
- 
- 
+
+
  | src/deployments/projects/aave-v3-batched/batches/AaveV3GettersBatchOne.sol:AaveV3GettersBatchOne contract |                 |     |        |     |         |
  |-----------------------------------------------------------------------------------------------------------|-----------------|-----|--------|-----|---------|
  | Deployment Cost                                                                                           | Deployment Size |     |        |     |         |
@@ -1144,8 +1144,8 @@ index 0dec812..9ce5779 100644
  | Function Name                                                                                             | min             | avg | median | max | # calls |
 -| getGettersReportOne                                                                                       | 971             | 971 | 971    | 971 | 672     |
 +| getGettersReportOne                                                                                       | 971             | 971 | 971    | 971 | 668     |
- 
- 
+
+
  | src/deployments/projects/aave-v3-batched/batches/AaveV3GettersBatchTwo.sol:AaveV3GettersBatchTwo contract |                 |     |        |     |         |
 @@ -1071,15 +1072,15 @@
  | Deployment Cost                                                                                           | Deployment Size |     |        |     |         |
@@ -1153,8 +1153,8 @@ index 0dec812..9ce5779 100644
  | Function Name                                                                                             | min             | avg | median | max | # calls |
 -| getGettersReportTwo                                                                                       | 535             | 535 | 535    | 535 | 647     |
 +| getGettersReportTwo                                                                                       | 535             | 535 | 535    | 535 | 643     |
- 
- 
+
+
  | src/deployments/projects/aave-v3-batched/batches/AaveV3HelpersBatchOne.sol:AaveV3HelpersBatchOne contract |                 |      |        |      |         |
  |-----------------------------------------------------------------------------------------------------------|-----------------|------|--------|------|---------|
  | Deployment Cost                                                                                           | Deployment Size |      |        |      |         |
@@ -1163,8 +1163,8 @@ index 0dec812..9ce5779 100644
  | Function Name                                                                                             | min             | avg  | median | max  | # calls |
 -| getConfigEngineReport                                                                                     | 1696            | 1696 | 1696   | 1696 | 622     |
 +| getConfigEngineReport                                                                                     | 1696            | 1696 | 1696   | 1696 | 618     |
- 
- 
+
+
  | src/deployments/projects/aave-v3-batched/batches/AaveV3HelpersBatchTwo.sol:AaveV3HelpersBatchTwo contract |                 |     |        |     |         |
 @@ -1087,15 +1088,15 @@
  | Deployment Cost                                                                                           | Deployment Size |     |        |     |         |
@@ -1172,8 +1172,8 @@ index 0dec812..9ce5779 100644
  | Function Name                                                                                             | min             | avg | median | max | # calls |
 -| staticATokenReport                                                                                        | 971             | 971 | 971    | 971 | 622     |
 +| staticATokenReport                                                                                        | 971             | 971 | 971    | 971 | 618     |
- 
- 
+
+
  | src/deployments/projects/aave-v3-batched/batches/AaveV3L2PoolBatch.sol:AaveV3L2PoolBatch contract |                 |     |        |     |         |
  |---------------------------------------------------------------------------------------------------|-----------------|-----|--------|-----|---------|
  | Deployment Cost                                                                                   | Deployment Size |     |        |     |         |
@@ -1182,8 +1182,8 @@ index 0dec812..9ce5779 100644
  | Function Name                                                                                     | min             | avg | median | max | # calls |
 -| getPoolReport                                                                                     | 535             | 535 | 535    | 535 | 672     |
 +| getPoolReport                                                                                     | 535             | 535 | 535    | 535 | 668     |
- 
- 
+
+
  | src/deployments/projects/aave-v3-batched/batches/AaveV3MiscBatch.sol:AaveV3MiscBatch contract |                 |     |        |     |         |
 @@ -1103,7 +1104,7 @@
  | Deployment Cost                                                                               | Deployment Size |     |        |     |         |
@@ -1191,8 +1191,8 @@ index 0dec812..9ce5779 100644
  | Function Name                                                                                 | min             | avg | median | max | # calls |
 -| getMiscReport                                                                                 | 535             | 535 | 535    | 535 | 672     |
 +| getMiscReport                                                                                 | 535             | 535 | 535    | 535 | 668     |
- 
- 
+
+
  | src/deployments/projects/aave-v3-batched/batches/AaveV3ParaswapBatch.sol:AaveV3ParaswapBatch contract |                 |     |        |     |         |
 @@ -1119,7 +1120,7 @@
  | Deployment Cost                                                                                         | Deployment Size |      |        |      |         |
@@ -1200,8 +1200,8 @@ index 0dec812..9ce5779 100644
  | Function Name                                                                                           | min             | avg  | median | max  | # calls |
 -| getPeripheryReport                                                                                      | 1333            | 1333 | 1333   | 1333 | 672     |
 +| getPeripheryReport                                                                                      | 1333            | 1333 | 1333   | 1333 | 668     |
- 
- 
+
+
  | src/deployments/projects/aave-v3-batched/batches/AaveV3SetupBatch.sol:AaveV3SetupBatch contract |                 |         |         |         |         |
 @@ -1127,9 +1128,9 @@
  | Deployment Cost                                                                                 | Deployment Size |         |         |         |         |
@@ -1213,8 +1213,8 @@ index 0dec812..9ce5779 100644
 +| getInitialReport                                                                                | 554             | 554     | 554     | 554     | 668     |
 +| setMarketReport                                                                                 | 632455          | 634834  | 632455  | 773435  | 618     |
 +| setupAaveV3Market                                                                               | 2709798         | 2710433 | 2709798 | 2735948 | 645     |
- 
- 
+
+
  | src/deployments/projects/aave-v3-batched/batches/AaveV3TokensBatch.sol:AaveV3TokensBatch contract |                 |     |        |     |         |
 @@ -1137,53 +1138,53 @@
  | Deployment Cost                                                                                   | Deployment Size |     |        |     |         |
@@ -1222,8 +1222,8 @@ index 0dec812..9ce5779 100644
  | Function Name                                                                                     | min             | avg | median | max | # calls |
 -| getTokensReport                                                                                   | 535             | 535 | 535    | 535 | 647     |
 +| getTokensReport                                                                                   | 535             | 535 | 535    | 535 | 643     |
- 
- 
+
+
 -| tests/extensions/v3-config-engine/mocks/AaveV3MockAssetEModeUpdate.sol:AaveV3MockAssetEModeUpdate contract |                 |       |        |       |         |
 -|------------------------------------------------------------------------------------------------------------|-----------------|-------|--------|-------|---------|
 -| Deployment Cost                                                                                            | Deployment Size |       |        |       |         |
@@ -1236,8 +1236,8 @@ index 0dec812..9ce5779 100644
 +| 747109                                                                                                     | 3465            |        |        |        |         |
 +| Function Name                                                                                              | min             | avg    | median | max    | # calls |
 +| execute                                                                                                    | 118935          | 118935 | 118935 | 118935 | 1       |
- 
- 
+
+
  | tests/extensions/v3-config-engine/mocks/AaveV3MockBorrowUpdate.sol:AaveV3MockBorrowUpdate contract |                 |        |        |        |         |
  |----------------------------------------------------------------------------------------------------|-----------------|--------|--------|--------|---------|
  | Deployment Cost                                                                                    | Deployment Size |        |        |        |         |
@@ -1246,8 +1246,8 @@ index 0dec812..9ce5779 100644
  | Function Name                                                                                      | min             | avg    | median | max    | # calls |
 -| execute                                                                                            | 159425          | 159425 | 159425 | 159425 | 1       |
 +| execute                                                                                            | 159601          | 159601 | 159601 | 159601 | 1       |
- 
- 
+
+
  | tests/extensions/v3-config-engine/mocks/AaveV3MockBorrowUpdateNoChange.sol:AaveV3MockBorrowUpdateNoChange contract |                 |       |        |       |         |
  |--------------------------------------------------------------------------------------------------------------------|-----------------|-------|--------|-------|---------|
  | Deployment Cost                                                                                                    | Deployment Size |       |        |       |         |
@@ -1256,8 +1256,8 @@ index 0dec812..9ce5779 100644
  | Function Name                                                                                                      | min             | avg   | median | max   | # calls |
 -| execute                                                                                                            | 47089           | 47089 | 47089  | 47089 | 1       |
 +| execute                                                                                                            | 47111           | 47111 | 47111  | 47111 | 1       |
- 
- 
+
+
  | tests/extensions/v3-config-engine/mocks/AaveV3MockCapUpdate.sol:AaveV3MockCapUpdate contract |                 |       |        |       |         |
  |----------------------------------------------------------------------------------------------|-----------------|-------|--------|-------|---------|
  | Deployment Cost                                                                              | Deployment Size |       |        |       |         |
@@ -1266,8 +1266,8 @@ index 0dec812..9ce5779 100644
  | Function Name                                                                                | min             | avg   | median | max   | # calls |
 -| execute                                                                                      | 86135           | 86135 | 86135  | 86135 | 1       |
 +| execute                                                                                      | 86134           | 86134 | 86134  | 86134 | 1       |
- 
- 
+
+
  | tests/extensions/v3-config-engine/mocks/AaveV3MockCollateralUpdate.sol:AaveV3MockCollateralUpdate contract |                 |       |        |       |         |
  |------------------------------------------------------------------------------------------------------------|-----------------|-------|--------|-------|---------|
  | Deployment Cost                                                                                            | Deployment Size |       |        |       |         |
@@ -1276,8 +1276,8 @@ index 0dec812..9ce5779 100644
  | Function Name                                                                                              | min             | avg   | median | max   | # calls |
 -| execute                                                                                                    | 89667           | 89667 | 89667  | 89667 | 1       |
 +| execute                                                                                                    | 89745           | 89745 | 89745  | 89745 | 1       |
- 
- 
+
+
  | tests/extensions/v3-config-engine/mocks/AaveV3MockCollateralUpdateNoChange.sol:AaveV3MockCollateralUpdateNoChange contract |                 |       |        |       |         |
  |----------------------------------------------------------------------------------------------------------------------------|-----------------|-------|--------|-------|---------|
  | Deployment Cost                                                                                                            | Deployment Size |       |        |       |         |
@@ -1285,7 +1285,7 @@ index 0dec812..9ce5779 100644
 +| 783009                                                                                                                     | 3632            |       |        |       |         |
  | Function Name                                                                                                              | min             | avg   | median | max   | # calls |
  | execute                                                                                                                    | 35916           | 35916 | 35916  | 35916 | 2       |
- 
+
 @@ -1191,15 +1192,15 @@
  | tests/extensions/v3-config-engine/mocks/AaveV3MockCollateralUpdateWrongBonus.sol:AaveV3MockCollateralUpdateCorrectBonus contract |                 |       |        |       |         |
  |----------------------------------------------------------------------------------------------------------------------------------|-----------------|-------|--------|-------|---------|
@@ -1295,8 +1295,8 @@ index 0dec812..9ce5779 100644
  | Function Name                                                                                                                    | min             | avg   | median | max   | # calls |
 -| execute                                                                                                                          | 89667           | 89667 | 89667  | 89667 | 1       |
 +| execute                                                                                                                          | 89745           | 89745 | 89745  | 89745 | 1       |
- 
- 
+
+
  | tests/extensions/v3-config-engine/mocks/AaveV3MockCollateralUpdateWrongBonus.sol:AaveV3MockCollateralUpdateWrongBonus contract |                 |       |        |       |         |
  |--------------------------------------------------------------------------------------------------------------------------------|-----------------|-------|--------|-------|---------|
  | Deployment Cost                                                                                                                | Deployment Size |       |        |       |         |
@@ -1304,7 +1304,7 @@ index 0dec812..9ce5779 100644
 +| 777483                                                                                                                         | 3606            |       |        |       |         |
  | Function Name                                                                                                                  | min             | avg   | median | max   | # calls |
  | execute                                                                                                                        | 35332           | 35332 | 35332  | 35332 | 1       |
- 
+
 @@ -1207,59 +1208,59 @@
  | tests/extensions/v3-config-engine/mocks/AaveV3MockEModeCategoryUpdate.sol:AaveV3MockEModeCategoryUpdate contract |                 |        |        |        |         |
  |------------------------------------------------------------------------------------------------------------------|-----------------|--------|--------|--------|---------|
@@ -1314,8 +1314,8 @@ index 0dec812..9ce5779 100644
  | Function Name                                                                                                    | min             | avg    | median | max    | # calls |
 -| execute                                                                                                          | 155461          | 155461 | 155461 | 155461 | 2       |
 +| execute                                                                                                          | 131198          | 131198 | 131198 | 131198 | 2       |
- 
- 
+
+
  | tests/extensions/v3-config-engine/mocks/AaveV3MockEModeCategoryUpdate.sol:AaveV3MockEModeCategoryUpdateEdgeBonus contract |                 |       |        |       |         |
  |---------------------------------------------------------------------------------------------------------------------------|-----------------|-------|--------|-------|---------|
  | Deployment Cost                                                                                                           | Deployment Size |       |        |       |         |
@@ -1324,8 +1324,8 @@ index 0dec812..9ce5779 100644
  | Function Name                                                                                                             | min             | avg   | median | max   | # calls |
 -| execute                                                                                                                   | 53964           | 53964 | 53964  | 53964 | 1       |
 +| execute                                                                                                                   | 56384           | 56384 | 56384  | 56384 | 1       |
- 
- 
+
+
  | tests/extensions/v3-config-engine/mocks/AaveV3MockEModeCategoryUpdateNoChange.sol:AaveV3MockEModeCategoryUpdateNoChange contract |                 |       |        |       |         |
  |----------------------------------------------------------------------------------------------------------------------------------|-----------------|-------|--------|-------|---------|
  | Deployment Cost                                                                                                                  | Deployment Size |       |        |       |         |
@@ -1334,8 +1334,8 @@ index 0dec812..9ce5779 100644
  | Function Name                                                                                                                    | min             | avg   | median | max   | # calls |
 -| execute                                                                                                                          | 38497           | 38497 | 38497  | 38497 | 2       |
 +| execute                                                                                                                          | 37835           | 37835 | 37835  | 37835 | 2       |
- 
- 
+
+
  | tests/extensions/v3-config-engine/mocks/AaveV3MockListing.sol:AaveV3MockListing contract |                 |         |         |         |         |
  |------------------------------------------------------------------------------------------|-----------------|---------|---------|---------|---------|
  | Deployment Cost                                                                          | Deployment Size |         |         |         |         |
@@ -1345,8 +1345,8 @@ index 0dec812..9ce5779 100644
 -| execute                                                                                  | 1836009         | 1836009 | 1836009 | 1836009 | 1       |
 +| execute                                                                                  | 1823723         | 1823723 | 1823723 | 1823723 | 1       |
  | newListings                                                                              | 2820            | 2820    | 2820    | 2820    | 4       |
- 
- 
+
+
  | tests/extensions/v3-config-engine/mocks/AaveV3MockListingCustom.sol:AaveV3MockListingCustom contract |                 |         |         |         |         |
  |------------------------------------------------------------------------------------------------------|-----------------|---------|---------|---------|---------|
  | Deployment Cost                                                                                      | Deployment Size |         |         |         |         |
@@ -1356,8 +1356,8 @@ index 0dec812..9ce5779 100644
 -| execute                                                                                              | 1835953         | 1835953 | 1835953 | 1835953 | 1       |
 +| execute                                                                                              | 1823667         | 1823667 | 1823667 | 1823667 | 1       |
  | newListingsCustom                                                                                    | 3295            | 3295    | 3295    | 3295    | 4       |
- 
- 
+
+
  | tests/extensions/v3-config-engine/mocks/AaveV3MockPriceFeedUpdate.sol:AaveV3MockPriceFeedUpdate contract |                 |       |        |       |         |
  |----------------------------------------------------------------------------------------------------------|-----------------|-------|--------|-------|---------|
  | Deployment Cost                                                                                          | Deployment Size |       |        |       |         |
@@ -1366,8 +1366,8 @@ index 0dec812..9ce5779 100644
  | Function Name                                                                                            | min             | avg   | median | max   | # calls |
 -| execute                                                                                                  | 65371           | 65371 | 65371  | 65371 | 1       |
 +| execute                                                                                                  | 65393           | 65393 | 65393  | 65393 | 1       |
- 
- 
+
+
  | tests/extensions/v3-config-engine/mocks/AaveV3MockRatesUpdate.sol:AaveV3MockRatesUpdate contract |                 |        |        |        |         |
  |--------------------------------------------------------------------------------------------------|-----------------|--------|--------|--------|---------|
  | Deployment Cost                                                                                  | Deployment Size |        |        |        |         |
@@ -1377,8 +1377,8 @@ index 0dec812..9ce5779 100644
 -| execute                                                                                          | 148663          | 148663 | 148663 | 148663 | 1       |
 +| execute                                                                                          | 148773          | 148773 | 148773 | 148773 | 1       |
  | rateStrategiesUpdates                                                                            | 1184            | 1184   | 1184   | 1184   | 4       |
- 
- 
+
+
 @@ -1273,15 +1274,15 @@
  | UNDERLYING_ASSET_ADDRESS                                              | 376             | 1200   | 376    | 2376   | 4354    |
  | allowance                                                             | 909             | 909    | 909    | 909    | 1       |
@@ -1413,13 +1413,13 @@ index 0dec812..9ce5779 100644
 +| USDX_ADDRESS                                                 | 294             | 294     | 294     | 294     | 613     |
 +| WBTC_ADDRESS                                                 | 250             | 250     | 250     | 250     | 613     |
 +| execute                                                      | 5190851         | 5193099 | 5193290 | 5193290 | 615     |
- 
- 
+
+
  | tests/mocks/AugustusRegistryMock.sol:AugustusRegistryMock contract |                 |     |        |     |         |
 @@ -1332,4 +1333,4 @@
- 
- 
- 
+
+
+
 -Ran 56 test suites in 75.93s (123.90s CPU time): 694 tests passed, 0 failed, 0 skipped (694 total tests)
 +Ran 57 test suites in 74.55s (146.31s CPU time): 690 tests passed, 0 failed, 0 skipped (690 total tests)
 ```
