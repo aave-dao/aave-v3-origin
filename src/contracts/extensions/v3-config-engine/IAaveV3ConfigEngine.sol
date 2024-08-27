@@ -97,7 +97,6 @@ interface IAaveV3ConfigEngine {
     uint256 borrowCap; // If passing any value distinct to EngineFlags.KEEP_CURRENT, always configured
     uint256 debtCeiling; // Only considered if liqThreshold > 0
     uint256 liqProtocolFee; // Only considered if liqThreshold > 0
-    uint8 eModeCategory; // If `O`, no eMode category will be set
   }
 
   struct RepackedListings {
@@ -106,7 +105,6 @@ interface IAaveV3ConfigEngine {
     BorrowUpdate[] borrowsUpdates;
     CollateralUpdate[] collateralsUpdates;
     PriceFeedUpdate[] priceFeedsUpdates;
-    AssetEModeUpdate[] assetsEModeUpdates;
     CapsUpdate[] capsUpdates;
     IDefaultInterestRateStrategyV2.InterestRateData[] rates;
   }
@@ -189,14 +187,30 @@ interface IAaveV3ConfigEngine {
 
   /**
    * @dev Example (mock):
-   * AssetEModeUpdate({
+   * EModeCollateralUpdate({
    *   asset: AaveV3EthereumAssets.rETH_UNDERLYING,
    *   eModeCategory: 1, // ETH correlated
+   *   enabled: true,
    * })
    */
-  struct AssetEModeUpdate {
+  struct EModeCollateralUpdate {
     address asset;
     uint8 eModeCategory;
+    bool enabled;
+  }
+
+  /**
+   * @dev Example (mock):
+   * EModeBorrowableUpdate({
+   *   asset: AaveV3EthereumAssets.rETH_UNDERLYING,
+   *   eModeCategory: 1, // ETH correlated
+   *   enabled: true,
+   * })
+   */
+  struct EModeBorrowableUpdate {
+    address asset;
+    uint8 eModeCategory;
+    bool enabled;
   }
 
   /**
@@ -301,11 +315,18 @@ interface IAaveV3ConfigEngine {
   function updateEModeCategories(EModeCategoryUpdate[] memory updates) external;
 
   /**
-   * @notice Performs an update of the e-mode category of the assets, in the Aave pool configured in this engine instance
-   * @param updates `AssetEModeUpdate[]` list of declarative updates containing the new parameters
+   * @notice Performs an update of the e-mode category collateral, in the Aave pool configured in this engine instance
+   * @param updates `EModeCollateralUpdate[]` list of declarative updates containing the new parameters
    *   More information on the documentation of the struct.
    */
-  function updateAssetsEMode(AssetEModeUpdate[] calldata updates) external;
+  function updateEModeCollaterals(EModeCollateralUpdate[] memory updates) external;
+
+  /**
+   * @notice Performs an update of the e-mode category borrowable, in the Aave pool configured in this engine instance
+   * @param updates `EModeCollateralUpdate[]` list of declarative updates containing the new parameters
+   *   More information on the documentation of the struct.
+   */
+  function updateEModeBorrowables(EModeBorrowableUpdate[] memory updates) external;
 
   function DEFAULT_INTEREST_RATE_STRATEGY() external view returns (address);
 

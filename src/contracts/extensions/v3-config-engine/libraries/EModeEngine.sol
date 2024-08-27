@@ -11,13 +11,22 @@ library EModeEngine {
   using PercentageMath for uint256;
   using SafeCast for uint256;
 
-  function executeAssetsEModeUpdate(
+  function executeEModeCollateralUpdate(
     IEngine.EngineConstants calldata engineConstants,
-    IEngine.AssetEModeUpdate[] memory updates
+    IEngine.EModeCollateralUpdate[] memory updates
   ) external {
     require(updates.length != 0, 'AT_LEAST_ONE_UPDATE_REQUIRED');
 
-    _configAssetsEMode(engineConstants.poolConfigurator, updates);
+    _configEModeCollateral(engineConstants.poolConfigurator, updates);
+  }
+
+  function executeEModeBorrowableUpdate(
+    IEngine.EngineConstants calldata engineConstants,
+    IEngine.EModeBorrowableUpdate[] memory updates
+  ) external {
+    require(updates.length != 0, 'AT_LEAST_ONE_UPDATE_REQUIRED');
+
+    _configEModeBorrowable(engineConstants.poolConfigurator, updates);
   }
 
   function executeEModeCategoriesUpdate(
@@ -29,18 +38,29 @@ library EModeEngine {
     _configEModeCategories(engineConstants.poolConfigurator, engineConstants.pool, updates);
   }
 
-  function _configAssetsEMode(
+  function _configEModeCollateral(
     IPoolConfigurator poolConfigurator,
-    IEngine.AssetEModeUpdate[] memory updates
+    IEngine.EModeCollateralUpdate[] memory updates
   ) internal {
     for (uint256 i = 0; i < updates.length; i++) {
-      if (updates[i].eModeCategory != 0 && updates[i].eModeCategory != EngineFlags.KEEP_CURRENT) {
         poolConfigurator.setAssetCollateralInEMode(
           updates[i].asset,
           updates[i].eModeCategory,
-          true
+          updates[i].enabled
         );
-      }
+    }
+  }
+
+  function _configEModeBorrowable(
+    IPoolConfigurator poolConfigurator,
+    IEngine.EModeBorrowableUpdate[] memory updates
+  ) internal {
+    for (uint256 i = 0; i < updates.length; i++) {
+        poolConfigurator.setAssetBorrowableInEMode(
+          updates[i].asset,
+          updates[i].eModeCategory,
+          updates[i].enabled
+        );
     }
   }
 

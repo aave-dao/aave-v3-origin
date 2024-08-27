@@ -49,7 +49,8 @@ abstract contract AaveV3Payload {
     IEngine.BorrowUpdate[] memory borrows = borrowsUpdates();
     IEngine.RateStrategyUpdate[] memory rates = rateStrategiesUpdates();
     IEngine.PriceFeedUpdate[] memory priceFeeds = priceFeedsUpdates();
-    IEngine.AssetEModeUpdate[] memory assetsEMode = assetsEModeUpdates();
+    IEngine.EModeCollateralUpdate[] memory eModeCollaterals = eModeCollateralUpdates();
+    IEngine.EModeBorrowableUpdate[] memory eModeBorrowables = eModeBorrowableUpdates();
     IEngine.CapsUpdate[] memory caps = capsUpdates();
 
     if (eModeCategories.length != 0) {
@@ -98,9 +99,15 @@ abstract contract AaveV3Payload {
       );
     }
 
-    if (assetsEMode.length != 0) {
+    if (eModeCollaterals.length != 0) {
       address(CONFIG_ENGINE).functionDelegateCall(
-        abi.encodeWithSelector(CONFIG_ENGINE.updateAssetsEMode.selector, assetsEMode)
+        abi.encodeWithSelector(CONFIG_ENGINE.updateEModeCollaterals.selector, eModeCollaterals)
+      );
+    }
+
+    if (eModeBorrowables.length != 0) {
+      address(CONFIG_ENGINE).functionDelegateCall(
+        abi.encodeWithSelector(CONFIG_ENGINE.updateEModeBorrowables.selector, eModeBorrowables)
       );
     }
 
@@ -151,8 +158,21 @@ abstract contract AaveV3Payload {
     returns (IEngine.EModeCategoryUpdate[] memory)
   {}
 
-  /// @dev to be defined in the child with a list of assets for which eMode categories to update
-  function assetsEModeUpdates() public view virtual returns (IEngine.AssetEModeUpdate[] memory) {}
+  /// @dev to be defined in the child with a list of assets for which eMode collateral to update
+  function eModeCollateralUpdates()
+    public
+    view
+    virtual
+    returns (IEngine.EModeCollateralUpdate[] memory)
+  {}
+
+  /// @dev to be defined in the child with a list of assets for which eMode borrowable to update
+  function eModeBorrowableUpdates()
+    public
+    view
+    virtual
+    returns (IEngine.EModeBorrowableUpdate[] memory)
+  {}
 
   /// @dev to be defined in the child with a list of set of parameters of rate strategies
   function rateStrategiesUpdates()
