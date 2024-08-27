@@ -35,7 +35,11 @@ library EModeEngine {
   ) internal {
     for (uint256 i = 0; i < updates.length; i++) {
       if (updates[i].eModeCategory != 0 && updates[i].eModeCategory != EngineFlags.KEEP_CURRENT) {
-        poolConfigurator.setAssetEModeCategory(updates[i].asset, updates[i].eModeCategory, true);
+        poolConfigurator.setAssetCollateralInEMode(
+          updates[i].asset,
+          updates[i].eModeCategory,
+          true
+        );
       }
     }
   }

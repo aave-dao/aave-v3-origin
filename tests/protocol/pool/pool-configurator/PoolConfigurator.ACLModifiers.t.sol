@@ -229,7 +229,7 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
     contracts.poolConfiguratorProxy.setEModeCategory(1, 1, 1, 1, '');
   }
 
-  function test_reverts_notRiskAdmin_setAssetEModeCategory(address caller) public {
+  function test_reverts_notRiskAdmin_setAssetCollateralInEMode(address caller) public {
     vm.assume(
       !contracts.aclManager.isPoolAdmin(caller) &&
         !contracts.aclManager.isRiskAdmin(caller) &&
@@ -239,7 +239,7 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
     vm.expectRevert(bytes(Errors.CALLER_NOT_RISK_OR_POOL_ADMIN));
 
     vm.prank(caller);
-    contracts.poolConfiguratorProxy.setAssetEModeCategory(address(0), 1, true);
+    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(address(0), 1, true);
   }
 
   function test_reverts_setDebtCeiling(address caller) public {

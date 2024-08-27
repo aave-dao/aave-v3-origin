@@ -163,7 +163,7 @@ interface IPoolConfigurator {
    * @param categoryId The old eMode asset category
    * @param allowed True if the asset was added to the eMode
    */
-  event AssetEModeCategoryChanged(address indexed asset, uint8 categoryId, bool allowed);
+  event AssetCollateralInEModeChanged(address indexed asset, uint8 categoryId, bool allowed);
 
   /**
    * @dev Emitted when the borrowability of an asset in an eMode changed.
@@ -493,7 +493,7 @@ interface IPoolConfigurator {
    * @param categoryId The new category id of the asset
    * @param allowed If the asset should be allowed
    */
-  function setAssetEModeCategory(address asset, uint8 categoryId, bool allowed) external;
+  function setAssetCollateralInEMode(address asset, uint8 categoryId, bool allowed) external;
 
   /**
    * @notice Adds a new efficiency mode (eMode) category.

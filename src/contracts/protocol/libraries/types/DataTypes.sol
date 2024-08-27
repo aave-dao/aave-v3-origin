@@ -116,9 +116,9 @@ library DataTypes {
     uint16 ltv;
     uint16 liquidationThreshold;
     uint16 liquidationBonus;
-    uint128 borrowableMask;
-    string label;
     uint128 collateralMask;
+    string label;
+    uint128 borrowableMask;
   }
 
   enum InterestRateMode {

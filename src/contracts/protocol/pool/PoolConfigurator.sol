@@ -420,7 +420,7 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
   }
 
   /// @inheritdoc IPoolConfigurator
-  function setAssetEModeCategory(
+  function setAssetCollateralInEMode(
     address asset,
     uint8 categoryId,
     bool allowed
@@ -429,7 +429,7 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
     DataTypes.ReserveDataLegacy memory reserveData = _pool.getReserveData(asset);
     categoryData.setCollateralAsset(reserveData.id, allowed);
     _pool.configureEModeCategory(categoryId, categoryData);
-    emit AssetEModeCategoryChanged(asset, uint8(categoryId), allowed);
+    emit AssetCollateralInEModeChanged(asset, uint8(categoryId), allowed);
   }
 
   /// @inheritdoc IPoolConfigurator

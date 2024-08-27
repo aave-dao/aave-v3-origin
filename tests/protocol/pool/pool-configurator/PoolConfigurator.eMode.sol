@@ -21,7 +21,7 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
     string label
   );
 
-  event AssetEModeCategoryChanged(address indexed asset, uint8 categoryId, bool allowed);
+  event AssetCollateralInEModeChanged(address indexed asset, uint8 categoryId, bool allowed);
 
   function setUp() public {
     initTestEnvironment();
@@ -135,36 +135,36 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
     );
   }
 
-  function test_setAssetEModeCategory() public {
+  function test_setAssetCollateralInEMode() public {
     EModeCategoryInput memory input = _genCategoryOne();
     test_configureEmodeCategory();
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit AssetEModeCategoryChanged(tokenList.usdx, input.id, true);
+    emit AssetCollateralInEModeChanged(tokenList.usdx, input.id, true);
     vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.usdx, input.id, true);
+    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, input.id, true);
   }
 
   function test_updateAssetEModeCategory() public {
     EModeCategoryInput memory ct = _genCategoryTwo();
-    test_setAssetEModeCategory();
+    test_setAssetCollateralInEMode();
 
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setEModeCategory(ct.id, ct.ltv, ct.lt, ct.lb, ct.label);
 
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit AssetEModeCategoryChanged(tokenList.usdx, ct.id, true);
+    emit AssetCollateralInEModeChanged(tokenList.usdx, ct.id, true);
 
     vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.usdx, ct.id, true);
+    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, ct.id, true);
   }
 
   function test_removeEModeCategoryFromAsset() public {
     EModeCategoryInput memory prevCt = _genCategoryOne();
-    test_setAssetEModeCategory();
+    test_setAssetCollateralInEMode();
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit AssetEModeCategoryChanged(tokenList.usdx, prevCt.id, false);
+    emit AssetCollateralInEModeChanged(tokenList.usdx, prevCt.id, false);
 
     vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.usdx, prevCt.id, false);
+    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, prevCt.id, false);
   }
 }
