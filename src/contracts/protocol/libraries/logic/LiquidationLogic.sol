@@ -75,8 +75,6 @@ library LiquidationLogic {
     uint256 liquidationBonus;
     uint256 healthFactor;
     uint256 liquidationProtocolFeeAmount;
-    address collateralPriceSource;
-    address debtPriceSource;
     IAToken collateralAToken;
     DataTypes.ReserveCache debtReserveCache;
   }
@@ -140,8 +138,6 @@ library LiquidationLogic {
 
     (
       vars.collateralAToken,
-      vars.collateralPriceSource,
-      vars.debtPriceSource,
       vars.liquidationBonus
     ) = _getConfigurationData(eModeCategories, collateralReserve, params);
 
@@ -154,8 +150,8 @@ library LiquidationLogic {
     ) = _calculateAvailableCollateralToLiquidate(
       collateralReserve,
       vars.debtReserveCache,
-      vars.collateralPriceSource,
-      vars.debtPriceSource,
+      params.collateralAsset,
+      params.debtAsset,
       vars.actualDebtToLiquidate,
       vars.userCollateralBalance,
       vars.liquidationBonus,
@@ -367,21 +363,15 @@ library LiquidationLogic {
    * @param collateralReserve The data of the collateral reserve
    * @param params The additional parameters needed to execute the liquidation function
    * @return The collateral aToken
-   * @return The address to use as price source for the collateral
-   * @return The address to use as price source for the debt
    * @return The liquidation bonus to apply to the collateral
    */
   function _getConfigurationData(
     mapping(uint8 => DataTypes.EModeCategory) storage eModeCategories,
     DataTypes.ReserveData storage collateralReserve,
     DataTypes.ExecuteLiquidationCallParams memory params
-  ) internal view returns (IAToken, address, address, uint256) {
+  ) internal view returns (IAToken, uint256) {
     IAToken collateralAToken = IAToken(collateralReserve.aTokenAddress);
     uint256 liquidationBonus = collateralReserve.configuration.getLiquidationBonus();
-
-    address collateralPriceSource = params.collateralAsset;
-    address debtPriceSource = params.debtAsset;
-
     if (params.userEModeCategory != 0) {
       if (
         EModeConfiguration.isCollateralAsset(
@@ -393,7 +383,7 @@ library LiquidationLogic {
       }
     }
 
-    return (collateralAToken, collateralPriceSource, debtPriceSource, liquidationBonus);
+    return (collateralAToken, liquidationBonus);
   }
 
   struct AvailableCollateralToLiquidateLocalVars {
