@@ -50,6 +50,8 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
   function test_updateEModeCategory() public {
     test_configureEmodeCategory();
     EModeCategoryInput memory ct = _genCategoryOne();
+    vm.prank(poolAdmin);
+    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.wbtc, 1, true);
     DataTypes.EModeCategory memory ogCategory = contracts.poolProxy.getEModeCategoryData(ct.id);
     EModeCategoryInput memory updatedCategory = EModeCategoryInput(
       ct.id,

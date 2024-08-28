@@ -398,16 +398,15 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
       Errors.INVALID_EMODE_CATEGORY_PARAMS
     );
 
+    DataTypes.EModeCategory memory categoryData = _pool.getEModeCategoryData(categoryId);
+    categoryData.ltv = ltv;
+    categoryData.liquidationThreshold = liquidationThreshold;
+    categoryData.liquidationBonus = liquidationBonus;
+    categoryData.label = label;
+
     _pool.configureEModeCategory(
       categoryId,
-      DataTypes.EModeCategory({
-        ltv: ltv,
-        liquidationThreshold: liquidationThreshold,
-        liquidationBonus: liquidationBonus,
-        label: label,
-        borrowableMask: 0,
-        collateralMask: 0
-      })
+      categoryData
     );
     emit EModeCategoryAdded(
       categoryId,
