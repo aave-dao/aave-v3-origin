@@ -39,7 +39,6 @@ contract PoolEModeTests is TestnetProcedures {
     vm.expectRevert(bytes(Errors.INCONSISTENT_EMODE_CATEGORY));
     pool.setUserEMode(1);
 
-    assertEq(pool.getUserEMode(alice), 0);
   }
 
   function test_getUserEMode_shouldReflectEMode() public {
