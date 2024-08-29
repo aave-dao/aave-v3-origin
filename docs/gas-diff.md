@@ -1,6 +1,6 @@
 ```diff
 diff --git a/reports/gas.old b/reports/gas.new
-index 0dec812..9ce5779 100644
+index 0dec812..fe1d1d0 100644
 --- a/reports/gas.old
 +++ b/reports/gas.new
 @@ -27,37 +27,37 @@
@@ -10,7 +10,7 @@ index 0dec812..9ce5779 100644
 -| convertToAssets                                                                                                         | 3348            | 3493    | 3496    | 3496    | 261     |
 -| convertToShares                                                                                                         | 22946           | 22946   | 22946   | 22946   | 1       |
 -| createStaticATokens                                                                                                     | 2375769         | 2375769 | 2375769 | 2375769 | 46      |
-+| convertToAssets                                                                                                         | 3370            | 3516    | 3518    | 3518    | 261     |
++| convertToAssets                                                                                                         | 3370            | 3514    | 3518    | 3518    | 261     |
 +| convertToShares                                                                                                         | 22968           | 22968   | 22968   | 22968   | 1       |
 +| createStaticATokens                                                                                                     | 2375835         | 2375835 | 2375835 | 2375835 | 46      |
  | decimals                                                                                                                | 3154            | 3154    | 3154    | 3154    | 1       |
@@ -67,9 +67,9 @@ index 0dec812..9ce5779 100644
 -| approve                                                  | 29055           | 46249 | 46467  | 46467 | 1806    |
 -| balanceOf                                                | 541             | 989   | 541    | 2541  | 9310    |
 -| decimals                                                 | 2313            | 2313  | 2313   | 2313  | 636     |
-+| approve                                                  | 29055           | 46246 | 46467  | 46467 | 1785    |
-+| balanceOf                                                | 541             | 989   | 541    | 2541  | 9205    |
-+| decimals                                                 | 2313            | 2313  | 2313   | 2313  | 632     |
++| approve                                                  | 29055           | 46247 | 46467  | 46467 | 1794    |
++| balanceOf                                                | 541             | 989   | 541    | 2541  | 9250    |
++| decimals                                                 | 2313            | 2313  | 2313   | 2313  | 641     |
  | symbol                                                   | 1213            | 2250  | 3213   | 3213  | 27      |
 
 
@@ -120,7 +120,7 @@ index 0dec812..9ce5779 100644
  | getStaticAToken                                                                              | 616             | 616     | 616     | 616     | 52      |
  | getStaticATokens                                                                             | 9587            | 9587    | 9587    | 9587    | 2       |
 -| initialize                                                                                   | 24131           | 24131   | 24131   | 24131   | 624     |
-+| initialize                                                                                   | 24131           | 24131   | 24131   | 24131   | 620     |
++| initialize                                                                                   | 24131           | 24131   | 24131   | 24131   | 629     |
 
 
  | src/contracts/extensions/static-a-token/StaticATokenLM.sol:StaticATokenLM contract |                 |        |        |        |         |
@@ -130,7 +130,7 @@ index 0dec812..9ce5779 100644
  | collectAndUpdateRewards                                                            | 32217           | 73291  | 73291  | 114366 | 2       |
 -| convertToAssets                                                                    | 2550            | 2695   | 2698   | 2698   | 261     |
 -| convertToShares                                                                    | 15648           | 15648  | 15648  | 15648  | 1       |
-+| convertToAssets                                                                    | 2572            | 2718   | 2720   | 2720   | 261     |
++| convertToAssets                                                                    | 2572            | 2716   | 2720   | 2720   | 261     |
 +| convertToShares                                                                    | 15670           | 15670  | 15670  | 15670  | 1       |
  | decimals                                                                           | 2359            | 2359   | 2359   | 2359   | 1       |
 -| deposit                                                                            | 196987          | 215388 | 218294 | 218294 | 22      |
@@ -192,16 +192,16 @@ index 0dec812..9ce5779 100644
 -| updateEModeCategories                                                                        | 11063           | 61143   | 27080   | 128256  | 5       |
 -| updatePriceFeeds                                                                             | 39338           | 39338   | 39338   | 39338   | 1       |
 -| updateRateStrategies                                                                         | 122092          | 122092  | 122092  | 122092  | 1       |
-+| DEFAULT_INTEREST_RATE_STRATEGY                                                               | 227             | 227     | 227     | 227     | 5       |
-+| listAssets                                                                                   | 1832667         | 1832667 | 1832667 | 1832667 | 1       |
-+| listAssetsCustom                                                                             | 1831924         | 5264742 | 5270515 | 5270515 | 616     |
-+| updateAssetsEMode                                                                            | 92916           | 92916   | 92916   | 92916   | 1       |
-+| updateBorrowSide                                                                             | 20101           | 76458   | 76458   | 132816  | 2       |
-+| updateCaps                                                                                   | 59883           | 59883   | 59883   | 59883   | 1       |
-+| updateCollateralSide                                                                         | 8777            | 30499   | 8903    | 62957   | 5       |
-+| updateEModeCategories                                                                        | 10592           | 51848   | 29691   | 104184  | 5       |
-+| updatePriceFeeds                                                                             | 39360           | 39360   | 39360   | 39360   | 1       |
-+| updateRateStrategies                                                                         | 122202          | 122202  | 122202  | 122202  | 1       |
++| DEFAULT_INTEREST_RATE_STRATEGY                                                               | 271             | 271     | 271     | 271     | 5       |
++| listAssets                                                                                   | 1824291         | 1824291 | 1824291 | 1824291 | 1       |
++| listAssetsCustom                                                                             | 1823621         | 5252250 | 5257933 | 5257933 | 625     |
++| updateBorrowSide                                                                             | 20079           | 76436   | 76436   | 132794  | 2       |
++| updateCaps                                                                                   | 59846           | 59846   | 59846   | 59846   | 1       |
++| updateCollateralSide                                                                         | 8777            | 30494   | 8903    | 62945   | 5       |
++| updateEModeCategories                                                                        | 10636           | 53642   | 29735   | 108603  | 5       |
++| updateEModeCollaterals                                                                       | 92981           | 92981   | 92981   | 92981   | 1       |
++| updatePriceFeeds                                                                             | 39331           | 39331   | 39331   | 39331   | 1       |
++| updateRateStrategies                                                                         | 122114          | 122114  | 122114  | 122114  | 1       |
 
 
  | src/contracts/helpers/AaveProtocolDataProvider.sol:AaveProtocolDataProvider contract |                 |       |        |       |         |
@@ -211,7 +211,7 @@ index 0dec812..9ce5779 100644
  | Function Name                                                                        | min             | avg   | median | max   | # calls |
 -| getATokenTotalSupply                                                                 | 11863           | 14153 | 11907  | 24953 | 2140    |
 -| getAllReservesTokens                                                                 | 16222           | 28423 | 31722  | 39722 | 27      |
-+| getATokenTotalSupply                                                                 | 11863           | 14165 | 11907  | 24975 | 2128    |
++| getATokenTotalSupply                                                                 | 11863           | 14145 | 11907  | 24975 | 2155    |
 +| getAllReservesTokens                                                                 | 16155           | 28653 | 39655  | 39655 | 27      |
  | getDebtCeiling                                                                       | 3263            | 3263  | 3263   | 3263  | 4       |
 -| getDebtCeilingDecimals                                                               | 237             | 237   | 237    | 237   | 1       |
@@ -222,20 +222,20 @@ index 0dec812..9ce5779 100644
 -| getLiquidationProtocolFee                                                            | 3174            | 9951  | 5674   | 16674 | 9       |
 -| getPaused                                                                            | 3219            | 3325  | 3263   | 5263  | 8383    |
 +| getInterestRateStrategyAddress                                                       | 8563            | 19558 | 8563   | 40063 | 9       |
-+| getIsVirtualAccActive                                                                | 3242            | 3285  | 3286   | 3286  | 9373    |
++| getIsVirtualAccActive                                                                | 3242            | 3285  | 3286   | 3286  | 8519    |
 +| getLiquidationProtocolFee                                                            | 3285            | 10062 | 5785   | 16785 | 9       |
-+| getPaused                                                                            | 3330            | 3427  | 3374   | 5374  | 9640    |
++| getPaused                                                                            | 3330            | 3433  | 3374   | 5374  | 8786    |
  | getReserveCaps                                                                       | 3286            | 8168  | 3286   | 16786 | 47      |
 -| getReserveConfigurationData                                                          | 3565            | 3773  | 3609   | 17109 | 9714    |
 -| getReserveEModeCategory                                                              | 3199            | 3199  | 3199   | 3199  | 1       |
 -| getReserveTokensAddresses                                                            | 8541            | 14283 | 14585  | 40085 | 9574    |
-+| getReserveConfigurationData                                                          | 3662            | 3851  | 3706   | 17206 | 10968   |
-+| getReserveTokensAddresses                                                            | 8541            | 14320 | 14585  | 40085 | 10826   |
++| getReserveConfigurationData                                                          | 3662            | 3863  | 3706   | 17206 | 10115   |
++| getReserveTokensAddresses                                                            | 8541            | 14298 | 14585  | 40085 | 9972    |
  | getSiloedBorrowing                                                                   | 3289            | 3289  | 3289   | 3289  | 1       |
 -| getTotalDebt                                                                         | 51955           | 51955 | 51955  | 51955 | 3       |
 -| getUserReserveData                                                                   | 18944           | 26800 | 27034  | 43944 | 1302    |
 +| getTotalDebt                                                                         | 51890           | 51890 | 51890  | 51890 | 3       |
-+| getUserReserveData                                                                   | 18988           | 26798 | 27013  | 43988 | 1301    |
++| getUserReserveData                                                                   | 18988           | 26784 | 27013  | 43988 | 1301    |
 
 
  | src/contracts/helpers/L2Encoder.sol:L2Encoder contract |                 |       |        |       |         |
@@ -291,36 +291,36 @@ index 0dec812..9ce5779 100644
  | POOL                                                               | 327             | 327    | 327    | 327    | 151     |
 -| RESERVE_TREASURY_ADDRESS                                           | 420             | 783    | 420    | 2420   | 9917    |
 -| UNDERLYING_ASSET_ADDRESS                                           | 442             | 475    | 442    | 2442   | 8251    |
-+| RESERVE_TREASURY_ADDRESS                                           | 420             | 742    | 420    | 2420   | 11173   |
-+| UNDERLYING_ASSET_ADDRESS                                           | 442             | 471    | 442    | 2442   | 9508    |
++| RESERVE_TREASURY_ADDRESS                                           | 420             | 809    | 420    | 2420   | 10575   |
++| UNDERLYING_ASSET_ADDRESS                                           | 442             | 474    | 442    | 2442   | 8654    |
  | allowance                                                          | 785             | 1554   | 785    | 2785   | 26      |
  | approve                                                            | 24590           | 24590  | 24590  | 24590  | 39      |
 -| balanceOf                                                          | 2744            | 5319   | 4744   | 17744  | 4799    |
 -| burn                                                               | 911             | 35660  | 37180  | 81176  | 2111    |
 -| decimals                                                           | 357             | 403    | 357    | 2357   | 8304    |
-+| balanceOf                                                          | 2766            | 5342   | 4766   | 17766  | 4796    |
-+| burn                                                               | 911             | 35659  | 37180  | 81176  | 2110    |
-+| decimals                                                           | 357             | 397    | 357    | 2357   | 9561    |
++| balanceOf                                                          | 2766            | 5311   | 4766   | 17766  | 5052    |
++| burn                                                               | 911             | 37674  | 37180  | 81176  | 2366    |
++| decimals                                                           | 357             | 401    | 357    | 2357   | 8707    |
  | decreaseAllowance                                                  | 7709            | 7709   | 7709   | 7709   | 1       |
 -| getIncentivesController                                            | 475             | 475    | 475    | 2475   | 8116    |
-+| getIncentivesController                                            | 475             | 475    | 475    | 2475   | 9373    |
++| getIncentivesController                                            | 475             | 475    | 475    | 2475   | 8519    |
  | getPreviousIndex                                                   | 654             | 654    | 654    | 654    | 39      |
  | getScaledUserBalanceAndSupply                                      | 830             | 2419   | 2830   | 4830   | 39      |
 -| handleRepayment                                                    | 597             | 597    | 597    | 597    | 2599    |
-+| handleRepayment                                                    | 597             | 597    | 597    | 597    | 2598    |
++| handleRepayment                                                    | 597             | 597    | 597    | 597    | 2854    |
  | increaseAllowance                                                  | 7776            | 20601  | 24876  | 24876  | 4       |
 -| initialize                                                         | 146515          | 228079 | 231709 | 321646 | 43251   |
 -| mint                                                               | 940             | 59706  | 64435  | 72198  | 4166    |
-+| initialize                                                         | 146515          | 231136 | 231709 | 321646 | 44496   |
-+| mint                                                               | 940             | 60222  | 64435  | 72198  | 4676    |
++| initialize                                                         | 146515          | 228395 | 231709 | 321646 | 43669   |
++| mint                                                               | 940             | 61265  | 64435  | 72198  | 6214    |
  | mintToTreasury                                                     | 444             | 43943  | 49223  | 66323  | 6       |
 -| name                                                               | 1009            | 1454   | 1326   | 3264   | 8351    |
-+| name                                                               | 1009            | 1448   | 1326   | 3264   | 9608    |
++| name                                                               | 1009            | 1454   | 1561   | 3264   | 8754    |
  | nonces                                                             | 655             | 1988   | 2655   | 2655   | 9       |
  | permit                                                             | 1117            | 33566  | 43549  | 53499  | 16      |
  | rescueTokens                                                       | 12040           | 24418  | 14258  | 46957  | 3       |
 -| scaledBalanceOf                                                    | 691             | 1986   | 2691   | 2691   | 10419   |
-+| scaledBalanceOf                                                    | 691             | 1933   | 2691   | 2691   | 11720   |
++| scaledBalanceOf                                                    | 691             | 1909   | 2691   | 2691   | 13978   |
  | scaledTotalSupply                                                  | 375             | 2181   | 2375   | 2375   | 414     |
  | setIncentivesController                                            | 11941           | 14316  | 14316  | 16691  | 2       |
 -| symbol                                                             | 1074            | 1515   | 1391   | 3329   | 8333    |
@@ -329,12 +329,12 @@ index 0dec812..9ce5779 100644
 -| transferFrom                                                       | 87624           | 120965 | 130243 | 145830 | 43      |
 -| transferOnLiquidation                                              | 988             | 30249  | 37526  | 44326  | 1807    |
 -| transferUnderlyingTo                                               | 802             | 18573  | 16500  | 33639  | 2704    |
-+| symbol                                                             | 1074            | 1513   | 1391   | 3329   | 9590    |
-+| totalSupply                                                        | 411             | 4985   | 6479   | 10479  | 5146    |
-+| transfer                                                           | 580             | 116801 | 122712 | 140404 | 275     |
++| symbol                                                             | 1074            | 1514   | 1391   | 3329   | 8736    |
++| totalSupply                                                        | 411             | 5166   | 6479   | 10479  | 5941    |
++| transfer                                                           | 580             | 117696 | 122712 | 140404 | 275     |
 +| transferFrom                                                       | 87646           | 120962 | 130265 | 145587 | 43      |
-+| transferOnLiquidation                                              | 988             | 30267  | 37548  | 44348  | 1806    |
-+| transferUnderlyingTo                                               | 802             | 19862  | 16500  | 33639  | 2959    |
++| transferOnLiquidation                                              | 988             | 31171  | 37548  | 44348  | 2062    |
++| transferUnderlyingTo                                               | 802             | 22711  | 16500  | 33639  | 3727    |
 
 
  | src/contracts/instances/L2PoolInstance.sol:L2PoolInstance contract |                 |        |        |        |         |
@@ -349,16 +349,16 @@ index 0dec812..9ce5779 100644
 -| dropReserve                                                        | 6336            | 6631   | 6336   | 82330  | 257     |
 -| getBorrowLogic                                                     | 282             | 282    | 282    | 282    | 1       |
 +| FLASHLOAN_PREMIUM_TO_PROTOCOL                                      | 415             | 415    | 415    | 415    | 124     |
-+| borrow(address,uint256,uint256,uint16,address)                     | 197850          | 203970 | 203450 | 238567 | 266     |
++| borrow(address,uint256,uint256,uint16,address)                     | 197850          | 203778 | 203450 | 238567 | 266     |
 +| borrow(bytes32)                                                    | 203449          | 203449 | 203449 | 203449 | 3       |
-+| configureEModeCategory                                             | 7310            | 8476   | 7310   | 51792  | 276     |
++| configureEModeCategory                                             | 7310            | 8345   | 7310   | 45792  | 276     |
 +| dropReserve                                                        | 6270            | 6565   | 6270   | 82286  | 257     |
 +| getBorrowLogic                                                     | 304             | 304    | 304    | 304    | 1       |
  | getBridgeLogic                                                     | 346             | 346    | 346    | 346    | 1       |
 -| getConfiguration                                                   | 682             | 728    | 682    | 2682   | 1636    |
 -| getEModeCategoryData                                               | 6141            | 6141   | 6141   | 6141   | 12      |
 +| getConfiguration                                                   | 704             | 714    | 704    | 2704   | 1462    |
-+| getEModeCategoryData                                               | 8379            | 8379   | 8379   | 8379   | 14      |
++| getEModeCategoryData                                               | 8124            | 8302   | 8379   | 8379   | 20      |
  | getEModeLogic                                                      | 279             | 279    | 279    | 279    | 1       |
 -| getFlashLoanLogic                                                  | 348             | 348    | 348    | 348    | 1       |
 -| getLiquidationGracePeriod                                          | 2659            | 2659   | 2659   | 2659   | 256     |
@@ -393,12 +393,12 @@ index 0dec812..9ce5779 100644
 +| getVirtualUnderlyingBalance                                        | 704             | 704    | 704    | 704    | 4       |
 +| initReserve                                                        | 6575            | 41039  | 6575   | 167551 | 656     |
 +| initialize                                                         | 45425           | 45425  | 45425  | 45425  | 62      |
-+| liquidationCall                                                    | 376891          | 376891 | 376891 | 376891 | 1       |
++| liquidationCall                                                    | 376728          | 376728 | 376728 | 376728 | 1       |
 +| mintToTreasury                                                     | 77321           | 78716  | 78716  | 80111  | 2       |
 +| repay(address,uint256,uint256,address)                             | 164652          | 164652 | 164652 | 164652 | 2       |
 +| repay(bytes32)                                                     | 135733          | 135733 | 135733 | 135733 | 1       |
 +| repayWithATokens                                                   | 138767          | 138767 | 138767 | 138767 | 1       |
-+| repayWithPermit                                                    | 183077          | 199368 | 206950 | 210170 | 256     |
++| repayWithPermit                                                    | 183077          | 198894 | 189516 | 210170 | 256     |
 +| rescueTokens                                                       | 48219           | 48219  | 48219  | 48219  | 256     |
  | resetIsolationModeTotalDebt                                        | 4276            | 5590   | 6269   | 15276  | 402     |
 -| setConfiguration                                                   | 2178            | 4409   | 2178   | 24334  | 2004    |
@@ -409,9 +409,9 @@ index 0dec812..9ce5779 100644
 -| setUserUseReserveAsCollateral(bytes32)                             | 73824           | 73824  | 73824  | 73824  | 1       |
 -| supply(address,uint256,address,uint16)                             | 157289          | 207630 | 208589 | 208589 | 284     |
 +| setConfiguration                                                   | 2178            | 4547   | 2178   | 24334  | 1848    |
-+| setLiquidationGracePeriod                                          | 6374            | 11387  | 10862  | 17025  | 768     |
++| setLiquidationGracePeriod                                          | 6374            | 11394  | 10862  | 17025  | 768     |
 +| setReserveInterestRateStrategyAddress                              | 6416            | 7991   | 6525   | 15813  | 769     |
-+| setUserEMode                                                       | 19813           | 42071  | 40892  | 87328  | 7       |
++| setUserEMode                                                       | 19833           | 42074  | 40892  | 87328  | 7       |
 +| setUserUseReserveAsCollateral(address,bool)                        | 53610           | 69578  | 71631  | 102908 | 17      |
 +| setUserUseReserveAsCollateral(bytes32)                             | 73781           | 73781  | 73781  | 73781  | 1       |
 +| supply(address,uint256,address,uint16)                             | 157311          | 207652 | 208611 | 208611 | 284     |
@@ -434,7 +434,7 @@ index 0dec812..9ce5779 100644
  |----------------------------------------------------------------------------------------|-----------------|----------|---------|-----------|---------|
  | Deployment Cost                                                                        | Deployment Size |          |         |           |         |
 -| 4442338                                                                                | 20353           |          |         |           |         |
-+| 4446007                                                                                | 20370           |          |         |           |         |
++| 4462068                                                                                | 20445           |          |         |           |         |
  | Function Name                                                                          | min             | avg      | median  | max       | # calls |
 -| MAX_GRACE_PERIOD                                                                       | 305             | 305      | 305     | 305       | 1792    |
 -| configureReserveAsCollateral                                                           | 12205           | 26298    | 17314   | 95608     | 4169    |
@@ -470,38 +470,38 @@ index 0dec812..9ce5779 100644
 -| updateFlashloanPremiumTotal                                                            | 14136           | 27000    | 32071   | 36971     | 907     |
 -| updateVariableDebtToken                                                                | 14141           | 14597    | 14141   | 131538    | 257     |
 +| MAX_GRACE_PERIOD                                                                       | 261             | 261      | 261     | 261       | 1792    |
-+| configureReserveAsCollateral                                                           | 12283           | 26410    | 17358   | 95708     | 4157    |
++| configureReserveAsCollateral                                                           | 12271           | 26312    | 17358   | 95696     | 4184    |
 +| disableLiquidationGracePeriod                                                          | 17259           | 28403    | 39505   | 39505     | 513     |
 +| dropReserve                                                                            | 14113           | 14970    | 14113   | 104795    | 261     |
 +| getConfiguratorLogic                                                                   | 284             | 284      | 284     | 284       | 1       |
 +| getPendingLtv                                                                          | 643             | 643      | 643     | 643       | 771     |
-+| initReserves                                                                           | 17446           | 26379812 | 1659772 | 213979799 | 2666    |
-+| initialize                                                                             | 72581           | 90425    | 90481   | 90481     | 647     |
-+| setAssetBorrowableInEMode                                                              | 94038           | 94125    | 94126   | 94126     | 517     |
-+| setAssetCollateralInEMode                                                              | 17518           | 68765    | 77122   | 77123     | 1826    |
-+| setBorrowCap                                                                           | 11219           | 12208    | 11285   | 44241     | 2114    |
-+| setBorrowableInIsolation                                                               | 10786           | 11126    | 10852   | 43798     | 1860    |
-+| setDebtCeiling                                                                         | 17301           | 39432    | 39860   | 94933     | 2121    |
-+| setEModeCategory                                                                       | 17827           | 70955    | 84268   | 84268     | 1310    |
-+| setLiquidationProtocolFee                                                              | 11290           | 11499    | 11356   | 44312     | 1855    |
++| initReserves                                                                           | 17446           | 25802050 | 1659767 | 213970339 | 2675    |
++| initialize                                                                             | 72581           | 90426    | 90481   | 90481     | 656     |
++| setAssetBorrowableInEMode                                                              | 74227           | 94101    | 94126   | 94126     | 1545    |
++| setAssetCollateralInEMode                                                              | 17518           | 71246    | 77122   | 77123     | 2597    |
++| setBorrowCap                                                                           | 11219           | 12197    | 11285   | 44241     | 2141    |
++| setBorrowableInIsolation                                                               | 10786           | 11122    | 10852   | 43798     | 1887    |
++| setDebtCeiling                                                                         | 17301           | 39465    | 39860   | 94933     | 2148    |
++| setEModeCategory                                                                       | 17827           | 81478    | 88643   | 88643     | 2594    |
++| setLiquidationProtocolFee                                                              | 11290           | 11498    | 11356   | 44312     | 1882    |
 +| setPoolPause(bool)                                                                     | 17247           | 17670    | 17247   | 90044     | 515     |
-+| setPoolPause(bool,uint40)                                                              | 17359           | 61722    | 48341   | 107751    | 512     |
++| setPoolPause(bool,uint40)                                                              | 17359           | 61500    | 48341   | 107751    | 512     |
 +| setReserveActive                                                                       | 14224           | 17128    | 14224   | 91434     | 267     |
-+| setReserveBorrowing                                                                    | 10960           | 17724    | 11182   | 41836     | 2616    |
-+| setReserveFactor                                                                       | 17346           | 40438    | 36925   | 125233    | 2106    |
-+| setReserveFlashLoaning                                                                 | 10959           | 17755    | 11025   | 43991     | 2361    |
++| setReserveBorrowing                                                                    | 10960           | 17656    | 11182   | 41836     | 2643    |
++| setReserveFactor                                                                       | 17346           | 40478    | 36925   | 125233    | 2133    |
++| setReserveFlashLoaning                                                                 | 10959           | 17680    | 11025   | 43991     | 2388    |
 +| setReserveFreeze                                                                       | 20602           | 48131    | 53013   | 73219     | 782     |
 +| setReserveInterestRateData                                                             | 17605           | 18272    | 17605   | 103713    | 258     |
 +| setReserveInterestRateStrategyAddress                                                  | 17626           | 34359    | 17626   | 162458    | 300     |
 +| setReservePause(address,bool)                                                          | 17392           | 17575    | 17392   | 41114     | 258     |
-+| setReservePause(address,bool,uint40)                                                   | 14464           | 39159    | 47072   | 52184     | 3084    |
-+| setSiloedBorrowing                                                                     | 11332           | 11564    | 11398   | 91272     | 1850    |
-+| setSupplyCap                                                                           | 11176           | 12931    | 11242   | 44198     | 2127    |
++| setReservePause(address,bool,uint40)                                                   | 14464           | 38788    | 47072   | 49384     | 3084    |
++| setSiloedBorrowing                                                                     | 11332           | 11562    | 11398   | 91272     | 1877    |
++| setSupplyCap                                                                           | 11176           | 12919    | 11242   | 44198     | 2154    |
 +| setUnbackedMintCap                                                                     | 44233           | 44233    | 44233   | 44233     | 7       |
 +| updateAToken                                                                           | 14074           | 14554    | 14074   | 137640    | 257     |
 +| updateBridgeProtocolFee                                                                | 14141           | 49349    | 52058   | 52058     | 14      |
-+| updateFlashloanPremiumToProtocol                                                       | 10205           | 11353    | 10205   | 37005     | 903     |
-+| updateFlashloanPremiumTotal                                                            | 14091           | 26958    | 32070   | 36970     | 903     |
++| updateFlashloanPremiumToProtocol                                                       | 10205           | 11342    | 10205   | 37005     | 912     |
++| updateFlashloanPremiumTotal                                                            | 14091           | 27009    | 32070   | 36970     | 912     |
 +| updateVariableDebtToken                                                                | 14075           | 14531    | 14075   | 131490    | 257     |
 
 
@@ -515,17 +515,17 @@ index 0dec812..9ce5779 100644
 -| BRIDGE_PROTOCOL_FEE                                            | 416             | 2176   | 2416   | 2416   | 25      |
 -| FLASHLOAN_PREMIUM_TOTAL                                        | 411             | 1414   | 2411   | 2411   | 1182    |
 -| FLASHLOAN_PREMIUM_TO_PROTOCOL                                  | 415             | 416    | 415    | 2415   | 1179    |
-+| ADDRESSES_PROVIDER                                             | 285             | 285    | 285    | 285    | 3058    |
++| ADDRESSES_PROVIDER                                             | 285             | 285    | 285    | 285    | 3076    |
 +| BRIDGE_PROTOCOL_FEE                                            | 350             | 2110   | 2350   | 2350   | 25      |
-+| FLASHLOAN_PREMIUM_TOTAL                                        | 411             | 1414   | 2411   | 2411   | 1174    |
-+| FLASHLOAN_PREMIUM_TO_PROTOCOL                                  | 437             | 438    | 437    | 2437   | 1171    |
++| FLASHLOAN_PREMIUM_TOTAL                                        | 411             | 1414   | 2411   | 2411   | 1192    |
++| FLASHLOAN_PREMIUM_TO_PROTOCOL                                  | 437             | 438    | 437    | 2437   | 1189    |
  | MAX_NUMBER_RESERVES                                            | 309             | 309    | 309    | 309    | 514     |
 -| backUnbacked                                                   | 98453           | 114633 | 112032 | 133026 | 9       |
 -| borrow                                                         | 46669           | 219345 | 222815 | 262245 | 2435    |
 -| configureEModeCategory                                         | 7207            | 10703  | 7207   | 49424  | 280     |
 +| backUnbacked                                                   | 98475           | 114655 | 112054 | 133048 | 9       |
-+| borrow                                                         | 46603           | 220726 | 222483 | 261668 | 2690    |
-+| configureEModeCategory                                         | 7332            | 24595  | 8814   | 51814  | 3371    |
++| borrow                                                         | 46603           | 224445 | 222483 | 261668 | 3458    |
++| configureEModeCategory                                         | 6014            | 26167  | 25914  | 45814  | 6454    |
  | deposit                                                        | 32854           | 190352 | 208588 | 214736 | 80      |
 -| dropReserve                                                    | 6270            | 7104   | 6270   | 82308  | 262     |
 -| finalizeTransfer                                               | 20766           | 45533  | 48574  | 88370  | 317     |
@@ -533,15 +533,15 @@ index 0dec812..9ce5779 100644
 -| flashLoanSimple                                                | 23431           | 343312 | 189538 | 757563 | 11      |
 -| getBorrowLogic                                                 | 304             | 304    | 304    | 304    | 1       |
 +| dropReserve                                                    | 6292            | 7125   | 6292   | 82265  | 262     |
-+| finalizeTransfer                                               | 20766           | 45011  | 48574  | 88106  | 317     |
-+| flashLoan                                                      | 29764           | 82208  | 65635  | 320653 | 267     |
++| finalizeTransfer                                               | 20766           | 45787  | 48574  | 88106  | 317     |
++| flashLoan                                                      | 29764           | 84224  | 69664  | 320653 | 267     |
 +| flashLoanSimple                                                | 23453           | 343384 | 189604 | 757609 | 11      |
 +| getBorrowLogic                                                 | 326             | 326    | 326    | 326    | 1       |
  | getBridgeLogic                                                 | 280             | 280    | 280    | 280    | 1       |
 -| getConfiguration                                               | 726             | 968    | 726    | 2726   | 53149   |
 -| getEModeCategoryData                                           | 1908            | 5110   | 6163   | 6163   | 43      |
-+| getConfiguration                                               | 748             | 978    | 748    | 2748   | 54971   |
-+| getEModeCategoryData                                           | 2146            | 8374   | 8401   | 8401   | 2086    |
++| getConfiguration                                               | 748             | 988    | 748    | 2748   | 52680   |
++| getEModeCategoryData                                           | 2146            | 8240   | 8401   | 8401   | 6311    |
  | getEModeLogic                                                  | 301             | 301    | 301    | 301    | 1       |
 -| getFlashLoanLogic                                              | 303             | 303    | 303    | 303    | 1       |
 -| getLiquidationGracePeriod                                      | 2681            | 2681   | 2681   | 2681   | 2014    |
@@ -575,48 +575,49 @@ index 0dec812..9ce5779 100644
 -| setUserEMode                                                   | 21974           | 41470  | 40194  | 87548  | 10      |
 -| setUserUseReserveAsCollateral                                  | 53632           | 72191  | 71653  | 103041 | 25      |
 -| supply                                                         | 29467           | 187262 | 208611 | 216374 | 3016    |
-+| getFlashLoanLogic                                              | 325             | 325    | 325    | 325    | 1       |
-+| getLiquidationGracePeriod                                      | 2703            | 2703   | 2703   | 2703   | 2005    |
-+| getLiquidationLogic                                            | 303             | 303    | 303    | 303    | 1       |
-+| getPoolLogic                                                   | 302             | 302    | 302    | 302    | 1       |
-+| getReserveAddressById                                          | 620             | 620    | 620    | 620    | 1       |
-+| getReserveData                                                 | 4261            | 9945   | 10261  | 24261  | 21550   |
-+| getReserveDataExtended                                         | 3438            | 4104   | 3438   | 5438   | 6       |
-+| getReserveNormalizedIncome                                     | 871             | 1142   | 871    | 5333   | 10752   |
-+| getReserveNormalizedVariableDebt                               | 828             | 1005   | 828    | 6426   | 7186    |
-+| getReservesCount                                               | 373             | 373    | 373    | 373    | 2       |
-+| getReservesList                                                | 3116            | 12647  | 11116  | 102626 | 1874    |
-+| getSupplyLogic                                                 | 326             | 326    | 326    | 326    | 1       |
-+| getUserAccountData                                             | 17882           | 21571  | 22382  | 28994  | 1804    |
-+| getUserConfiguration                                           | 728             | 777    | 728    | 2728   | 1821    |
-+| getUserEMode                                                   | 659             | 659    | 659    | 659    | 1548    |
-+| getVirtualUnderlyingBalance                                    | 726             | 726    | 726    | 726    | 2155    |
-+| initReserve                                                    | 6552            | 179760 | 179592 | 207256 | 44864   |
-+| initialize                                                     | 45382           | 45482  | 45382  | 66903  | 589     |
-+| liquidationCall                                                | 53261           | 227732 | 315362 | 376486 | 3514    |
-+| mintToTreasury                                                 | 77343           | 78738  | 78738  | 80133  | 2       |
-+| mintUnbacked                                                   | 12177           | 118400 | 103526 | 165870 | 17      |
-+| repay                                                          | 33261           | 99436  | 95921  | 164631 | 21      |
-+| repayWithATokens                                               | 128164          | 154520 | 155359 | 166023 | 261     |
-+| repayWithPermit                                                | 127039          | 165709 | 154132 | 209835 | 768     |
-+| rescueTokens                                                   | 48176           | 48176  | 48176  | 48176  | 256     |
-+| resetIsolationModeTotalDebt                                    | 4298            | 4569   | 4298   | 15298  | 1962    |
-+| setConfiguration                                               | 2200            | 17083  | 24200  | 24356  | 66881   |
-+| setLiquidationGracePeriod                                      | 6329            | 12432  | 14480  | 16980  | 3485    |
-+| setReserveInterestRateStrategyAddress                          | 6438            | 7977   | 6547   | 15835  | 813     |
-+| setUserEMode                                                   | 18886           | 49402  | 40914  | 94583  | 1034    |
-+| setUserUseReserveAsCollateral                                  | 53676           | 72230  | 71697  | 102974 | 25      |
-+| supply                                                         | 29401           | 190289 | 208545 | 216308 | 3526    |
- | supplyWithPermit                                               | 113813          | 196609 | 218266 | 257750 | 768     |
+-| supplyWithPermit                                               | 113813          | 196609 | 218266 | 257750 | 768     |
 -| syncIndexesState                                               | 7251            | 13978  | 7251   | 62644  | 1763    |
 -| syncRatesState                                                 | 13531           | 16046  | 16072  | 22572  | 1763    |
 -| updateBridgeProtocolFee                                        | 6195            | 7025   | 6195   | 23375  | 269     |
 -| updateFlashloanPremiums                                        | 1704            | 10703  | 6377   | 21604  | 1432    |
 -| withdraw                                                       | 39229           | 105506 | 87802  | 177983 | 51      |
-+| syncIndexesState                                               | 7273            | 14001  | 7273   | 62666  | 1751    |
-+| syncRatesState                                                 | 13553           | 16068  | 16094  | 22594  | 1751    |
++| getFlashLoanLogic                                              | 325             | 325    | 325    | 325    | 1       |
++| getLiquidationGracePeriod                                      | 2703            | 2703   | 2703   | 2703   | 1993    |
++| getLiquidationLogic                                            | 303             | 303    | 303    | 303    | 1       |
++| getPoolLogic                                                   | 302             | 302    | 302    | 302    | 1       |
++| getReserveAddressById                                          | 620             | 620    | 620    | 620    | 1       |
++| getReserveData                                                 | 4261            | 11061  | 10261  | 24261  | 22560   |
++| getReserveDataExtended                                         | 3438            | 4104   | 3438   | 5438   | 6       |
++| getReserveNormalizedIncome                                     | 871             | 1112   | 871    | 5333   | 12032   |
++| getReserveNormalizedVariableDebt                               | 828             | 1000   | 828    | 6426   | 7394    |
++| getReservesCount                                               | 373             | 373    | 373    | 373    | 2       |
++| getReservesList                                                | 3116            | 12284  | 11116  | 101829 | 1874    |
++| getSupplyLogic                                                 | 326             | 326    | 326    | 326    | 1       |
++| getUserAccountData                                             | 12238           | 23068  | 22382  | 39507  | 2574    |
++| getUserConfiguration                                           | 728             | 767    | 728    | 2728   | 1821    |
++| getUserEMode                                                   | 659             | 660    | 659    | 2659   | 1294    |
++| getVirtualUnderlyingBalance                                    | 726             | 726    | 726    | 726    | 2155    |
++| initReserve                                                    | 6552            | 179727 | 179592 | 207256 | 44037   |
++| initialize                                                     | 45382           | 45480  | 45382  | 66903  | 598     |
++| liquidationCall                                                | 53186           | 239514 | 323748 | 383313 | 3720    |
++| mintToTreasury                                                 | 77343           | 78738  | 78738  | 80133  | 2       |
++| mintUnbacked                                                   | 12177           | 118400 | 103526 | 165870 | 17      |
++| repay                                                          | 33261           | 99436  | 95921  | 164631 | 21      |
++| repayWithATokens                                               | 128164          | 154206 | 155359 | 166023 | 261     |
++| repayWithPermit                                                | 127039          | 165740 | 154132 | 210104 | 768     |
++| rescueTokens                                                   | 48176           | 48176  | 48176  | 48176  | 256     |
++| resetIsolationModeTotalDebt                                    | 4298            | 4565   | 4298   | 15298  | 1989    |
++| setConfiguration                                               | 2200            | 16938  | 24200  | 24356  | 66324   |
++| setLiquidationGracePeriod                                      | 6329            | 12223  | 12480  | 16980  | 3435    |
++| setReserveInterestRateStrategyAddress                          | 6438            | 7977   | 6547   | 15835  | 813     |
++| setUserEMode                                                   | 16734           | 48129  | 40914  | 94630  | 2318    |
++| setUserUseReserveAsCollateral                                  | 53676           | 72230  | 71697  | 102974 | 25      |
++| supply                                                         | 29401           | 195831 | 208545 | 216308 | 5064    |
++| supplyWithPermit                                               | 113813          | 196587 | 218266 | 257750 | 768     |
++| syncIndexesState                                               | 7273            | 14000  | 7273   | 62666  | 1778    |
++| syncRatesState                                                 | 13553           | 16069  | 16094  | 22594  | 1778    |
 +| updateBridgeProtocolFee                                        | 6217            | 7047   | 6217   | 23397  | 269     |
-+| updateFlashloanPremiums                                        | 1726            | 10720  | 6399   | 21626  | 1424    |
++| updateFlashloanPremiums                                        | 1726            | 10732  | 6399   | 21626  | 1442    |
 +| withdraw                                                       | 39251           | 105523 | 87824  | 177740 | 51      |
 
 
@@ -626,32 +627,32 @@ index 0dec812..9ce5779 100644
  | 1723145                                                                                  | 8349            |        |        |        |         |
  | Function Name                                                                            | min             | avg    | median | max    | # calls |
 -| UNDERLYING_ASSET_ADDRESS                                                                 | 398             | 398    | 398    | 398    | 8112    |
-+| UNDERLYING_ASSET_ADDRESS                                                                 | 398             | 398    | 398    | 398    | 9369    |
++| UNDERLYING_ASSET_ADDRESS                                                                 | 398             | 398    | 398    | 398    | 8515    |
  | approveDelegation                                                                        | 27012           | 27012  | 27012  | 27012  | 1       |
 -| balanceOf                                                                                | 681             | 4986   | 4771   | 10365  | 7692    |
-+| balanceOf                                                                                | 681             | 4925   | 4706   | 10300  | 7712    |
++| balanceOf                                                                                | 681             | 4919   | 4706   | 10300  | 7918    |
  | borrowAllowance                                                                          | 831             | 831    | 831    | 831    | 5       |
 -| burn                                                                                     | 19204           | 26197  | 26204  | 26205  | 3108    |
 -| decimals                                                                                 | 335             | 335    | 335    | 335    | 8112    |
-+| burn                                                                                     | 19204           | 26197  | 26204  | 26205  | 3107    |
-+| decimals                                                                                 | 335             | 335    | 335    | 335    | 9369    |
++| burn                                                                                     | 19204           | 26197  | 26204  | 26205  | 3363    |
++| decimals                                                                                 | 335             | 335    | 335    | 335    | 8515    |
  | delegationWithSig                                                                        | 1052            | 28689  | 21662  | 55862  | 7       |
 -| getIncentivesController                                                                  | 431             | 431    | 431    | 431    | 8112    |
 -| initialize                                                                               | 123620          | 207871 | 209041 | 299205 | 43251   |
 -| mint                                                                                     | 26385           | 62549  | 62585  | 72374  | 2687    |
 -| name                                                                                     | 1009            | 1421   | 1264   | 3264   | 8202    |
-+| getIncentivesController                                                                  | 431             | 431    | 431    | 431    | 9369    |
-+| initialize                                                                               | 123620          | 206084 | 209041 | 299205 | 44496   |
-+| mint                                                                                     | 26385           | 62552  | 62585  | 72374  | 2942    |
-+| name                                                                                     | 1009            | 1419   | 1264   | 3264   | 9459    |
++| getIncentivesController                                                                  | 431             | 431    | 431    | 431    | 8515    |
++| initialize                                                                               | 123620          | 208766 | 209041 | 299205 | 43669   |
++| mint                                                                                     | 26385           | 62559  | 62585  | 72374  | 3710    |
++| name                                                                                     | 1009            | 1420   | 1326   | 3264   | 8605    |
  | nonces                                                                                   | 577             | 577    | 577    | 577    | 1       |
 -| scaledBalanceOf                                                                          | 691             | 1887   | 2691   | 2691   | 5867    |
 -| scaledTotalSupply                                                                        | 419             | 2102   | 2419   | 2419   | 18707   |
 -| symbol                                                                                   | 1030            | 1440   | 1347   | 3285   | 8195    |
 -| totalSupply                                                                              | 4079            | 7582   | 6481   | 19079  | 15      |
-+| scaledBalanceOf                                                                          | 691             | 1829   | 2691   | 2691   | 6656    |
-+| scaledTotalSupply                                                                        | 419             | 2116   | 2419   | 2419   | 19469   |
-+| symbol                                                                                   | 1030            | 1440   | 1347   | 3285   | 9452    |
++| scaledBalanceOf                                                                          | 691             | 1885   | 2691   | 2691   | 7118    |
++| scaledTotalSupply                                                                        | 419             | 2152   | 2419   | 2419   | 22291   |
++| symbol                                                                                   | 1030            | 1441   | 1347   | 3285   | 8598    |
 +| totalSupply                                                                              | 4014            | 7523   | 6416   | 19014  | 15      |
 
 
@@ -661,7 +662,7 @@ index 0dec812..9ce5779 100644
  | BASE_CURRENCY                                         | 293             | 293   | 293    | 293   | 3       |
  | BASE_CURRENCY_UNIT                                    | 262             | 262   | 262    | 262   | 1       |
 -| getAssetPrice                                         | 679             | 4746  | 7873   | 7873  | 22337   |
-+| getAssetPrice                                         | 0               | 4726  | 7873   | 7873  | 24937   |
++| getAssetPrice                                         | 0               | 4859  | 7873   | 7873  | 29705   |
  | getAssetsPrices                                       | 2300            | 3404  | 2300   | 5614  | 3       |
  | getFallbackOracle                                     | 365             | 1031  | 365    | 2365  | 3       |
 -| getSourceOfAsset                                      | 553             | 635   | 553    | 2553  | 1140    |
@@ -674,43 +675,45 @@ index 0dec812..9ce5779 100644
  | MAX_OPTIMAL_POINT                                                                                         | 262             | 262   | 262    | 262   | 6918    |
  | MIN_OPTIMAL_POINT                                                                                         | 261             | 261   | 261    | 261   | 6918    |
 -| calculateInterestRates                                                                                    | 0               | 4436  | 4271   | 5999  | 16046   |
-+| calculateInterestRates                                                                                    | 0               | 4456  | 4271   | 5999  | 16797   |
++| calculateInterestRates                                                                                    | 0               | 4513  | 4271   | 5999  | 19642   |
  | getBaseVariableBorrowRate                                                                                 | 748             | 776   | 748    | 2748  | 2908    |
  | getInterestRateData                                                                                       | 1804            | 1804  | 1804   | 1804  | 256     |
  | getInterestRateDataBps                                                                                    | 987             | 987   | 987    | 987   | 256     |
-@@ -507,7 +507,7 @@
+@@ -507,8 +507,8 @@
  | getOptimalUsageRatio                                                                                      | 738             | 738   | 738    | 2738  | 2136    |
  | getVariableRateSlope1                                                                                     | 778             | 778   | 778    | 778   | 2140    |
  | getVariableRateSlope2                                                                                     | 799             | 799   | 799    | 799   | 1368    |
 -| setInterestRateParams(address,(uint16,uint32,uint32,uint32))                                              | 28278           | 29729 | 29075  | 36816 | 2816    |
-+| setInterestRateParams(address,(uint16,uint32,uint32,uint32))                                              | 28290           | 29729 | 29075  | 36804 | 2816    |
- | setInterestRateParams(address,bytes)                                                                      | 28624           | 33084 | 29860  | 37156 | 6405    |
+-| setInterestRateParams(address,bytes)                                                                      | 28624           | 33084 | 29860  | 37156 | 6405    |
++| setInterestRateParams(address,(uint16,uint32,uint32,uint32))                                              | 28278           | 29728 | 29075  | 36804 | 2816    |
++| setInterestRateParams(address,bytes)                                                                      | 28612           | 33084 | 29860  | 37156 | 6405    |
 
 
+ | src/contracts/misc/PriceOracleSentinel.sol:PriceOracleSentinel contract |                 |       |        |       |         |
 @@ -530,26 +530,26 @@
  | Deployment Cost                                                                                                                                   | Deployment Size |          |         |           |         |
  | 465623                                                                                                                                            | 2115            |          |         |           |         |
  | Function Name                                                                                                                                     | min             | avg      | median  | max       | # calls |
 -| ADDRESSES_PROVIDER                                                                                                                                | 898             | 4368     | 5398    | 5465      | 3190    |
 -| BRIDGE_PROTOCOL_FEE                                                                                                                               | 1029            | 5311     | 7529    | 7529      | 23      |
-+| ADDRESSES_PROVIDER                                                                                                                                | 898             | 4371     | 5398    | 5465      | 3182    |
++| ADDRESSES_PROVIDER                                                                                                                                | 898             | 4364     | 5398    | 5465      | 3200    |
 +| BRIDGE_PROTOCOL_FEE                                                                                                                               | 963             | 5245     | 7463    | 7463      | 23      |
  | DOMAIN_SEPARATOR                                                                                                                                  | 1071            | 4688     | 4156    | 7571      | 5       |
 -| EMISSION_MANAGER                                                                                                                                  | 940             | 940      | 940     | 940       | 650     |
 -| FLASHLOAN_PREMIUM_TOTAL                                                                                                                           | 1002            | 2033     | 3002    | 7524      | 1304    |
 -| FLASHLOAN_PREMIUM_TO_PROTOCOL                                                                                                                     | 1028            | 1039     | 1028    | 7528      | 1301    |
 -| MAX_GRACE_PERIOD                                                                                                                                  | 5418            | 5418     | 5418    | 5418      | 1792    |
-+| EMISSION_MANAGER                                                                                                                                  | 940             | 940      | 940     | 940       | 646     |
-+| FLASHLOAN_PREMIUM_TOTAL                                                                                                                           | 1002            | 2033     | 3002    | 7524      | 1296    |
-+| FLASHLOAN_PREMIUM_TO_PROTOCOL                                                                                                                     | 1028            | 1052     | 1050    | 7550      | 1293    |
++| EMISSION_MANAGER                                                                                                                                  | 940             | 940      | 940     | 940       | 655     |
++| FLASHLOAN_PREMIUM_TOTAL                                                                                                                           | 1002            | 2033     | 3002    | 7524      | 1314    |
++| FLASHLOAN_PREMIUM_TO_PROTOCOL                                                                                                                     | 1028            | 1052     | 1050    | 7550      | 1311    |
 +| MAX_GRACE_PERIOD                                                                                                                                  | 5374            | 5374     | 5374    | 5374      | 1792    |
  | MAX_NUMBER_RESERVES                                                                                                                               | 922             | 922      | 922     | 922       | 512     |
  | POOL                                                                                                                                              | 940             | 940      | 940     | 940       | 151     |
 -| RESERVE_TREASURY_ADDRESS                                                                                                                          | 1033            | 1397     | 1033    | 7533      | 9918    |
-+| RESERVE_TREASURY_ADDRESS                                                                                                                          | 1033            | 1356     | 1033    | 7533      | 11174   |
++| RESERVE_TREASURY_ADDRESS                                                                                                                          | 1033            | 1422     | 1033    | 7533      | 10576   |
  | REVISION                                                                                                                                          | 874             | 874      | 874     | 874       | 8       |
 -| UNDERLYING_ASSET_ADDRESS                                                                                                                          | 1011            | 1050     | 1055    | 3055      | 16363   |
-+| UNDERLYING_ASSET_ADDRESS                                                                                                                          | 1011            | 1047     | 1055    | 3055      | 18877   |
++| UNDERLYING_ASSET_ADDRESS                                                                                                                          | 1011            | 1049     | 1055    | 3055      | 17169   |
  | admin                                                                                                                                             | 21390           | 21390    | 21390   | 21390     | 8       |
  | allowance                                                                                                                                         | 1404            | 3173     | 3404    | 7904      | 26      |
  | approve                                                                                                                                           | 51293           | 51357    | 51341   | 51653     | 39      |
@@ -720,8 +723,8 @@ index 0dec812..9ce5779 100644
 -| borrow(address,uint256,uint256,uint16,address)                                                                                                    | 74012           | 244274   | 250193  | 289647    | 2700    |
 -| borrow(bytes32)                                                                                                                                   | 230155          | 230155   | 230155  | 230155    | 3       |
 +| backUnbacked                                                                                                                                      | 125336          | 140987   | 138939  | 159945    | 9       |
-+| balanceOf                                                                                                                                         | 1297            | 5820     | 5382    | 22882     | 12508   |
-+| borrow(address,uint256,uint256,uint16,address)                                                                                                    | 73946           | 244911   | 249861  | 289070    | 2955    |
++| balanceOf                                                                                                                                         | 1297            | 5802     | 5382    | 22882     | 12970   |
++| borrow(address,uint256,uint256,uint16,address)                                                                                                    | 73946           | 247047   | 249861  | 289070    | 3723    |
 +| borrow(bytes32)                                                                                                                                   | 229802          | 229802   | 229802  | 229802    | 3       |
  | borrowAllowance                                                                                                                                   | 1450            | 1450     | 1450    | 1450      | 5       |
  | burn                                                                                                                                              | 28132           | 40754    | 28464   | 65668     | 3       |
@@ -734,8 +737,8 @@ index 0dec812..9ce5779 100644
 -| configureReserveAsCollateral                                                                                                                      | 44067           | 64524    | 57732   | 122552    | 2308    |
 -| decimals                                                                                                                                          | 948             | 982      | 970     | 7470      | 16416   |
 +| configureEModeCategory                                                                                                                            | 34733           | 34744    | 34744   | 34755     | 512     |
-+| configureReserveAsCollateral                                                                                                                      | 44111           | 64591    | 57798   | 122652    | 2308    |
-+| decimals                                                                                                                                          | 948             | 979      | 970     | 7470      | 18930   |
++| configureReserveAsCollateral                                                                                                                      | 44111           | 64587    | 57798   | 122640    | 2308    |
++| decimals                                                                                                                                          | 948             | 981      | 970     | 7470      | 17222   |
  | decreaseAllowance                                                                                                                                 | 34424           | 34424    | 34424   | 34424     | 1       |
  | delegationWithSig                                                                                                                                 | 29263           | 56402    | 45264   | 84300     | 7       |
  | deposit                                                                                                                                           | 91067           | 215461   | 232188  | 235808    | 64      |
@@ -743,9 +746,9 @@ index 0dec812..9ce5779 100644
 -| dropReserve                                                                                                                                       | 32591           | 35715    | 32657   | 105072    | 775     |
 -| flashLoan                                                                                                                                         | 59293           | 162000   | 126617  | 374226    | 267     |
 -| flashLoanSimple                                                                                                                                   | 50944           | 311491   | 177238  | 642906    | 11      |
-+| disableLiquidationGracePeriod                                                                                                                     | 43592           | 54914    | 66050   | 66050     | 513     |
++| disableLiquidationGracePeriod                                                                                                                     | 43592           | 54921    | 66050   | 66050     | 513     |
 +| dropReserve                                                                                                                                       | 32591           | 35715    | 32613   | 105072    | 775     |
-+| flashLoan                                                                                                                                         | 59315           | 165996   | 134021  | 374248    | 267     |
++| flashLoan                                                                                                                                         | 59315           | 170319   | 141410  | 374248    | 267     |
 +| flashLoanSimple                                                                                                                                   | 50966           | 311558   | 177304  | 642952    | 11      |
  | getAllUserRewards                                                                                                                                 | 9271            | 9271     | 9271    | 9271      | 1       |
  | getAssetDecimals                                                                                                                                  | 1275            | 1275     | 1275    | 1275      | 2       |
@@ -756,11 +759,11 @@ index 0dec812..9ce5779 100644
  | getClaimer                                                                                                                                        | 1244            | 3410     | 1244    | 7744      | 3       |
 -| getConfiguration                                                                                                                                  | 1298            | 1892     | 1342    | 7842      | 54785   |
 -| getConfiguratorLogic                                                                                                                              | 5353            | 5353     | 5353    | 5353      | 1       |
-+| getConfiguration                                                                                                                                  | 1320            | 1888     | 1364    | 7864      | 56433   |
++| getConfiguration                                                                                                                                  | 1320            | 1913     | 1364    | 7864      | 54142   |
 +| getConfiguratorLogic                                                                                                                              | 5397            | 5397     | 5397    | 5397      | 1       |
  | getDistributionEnd                                                                                                                                | 1411            | 1411     | 1411    | 1411      | 1       |
 -| getEModeCategoryData                                                                                                                              | 2554            | 6313     | 6815    | 11054     | 55      |
-+| getEModeCategoryData                                                                                                                              | 2798            | 13513    | 13559   | 13559     | 2100    |
++| getEModeCategoryData                                                                                                                              | 2798            | 13319    | 13559   | 13559     | 6331    |
  | getEModeLogic                                                                                                                                     | 5392            | 5403     | 5403    | 5414      | 2       |
 -| getFlashLoanLogic                                                                                                                                 | 5416            | 5438     | 5438    | 5461      | 2       |
 -| getIncentivesController                                                                                                                           | 1044            | 1066     | 1088    | 7588      | 16230   |
@@ -769,8 +772,8 @@ index 0dec812..9ce5779 100644
 -| getPendingLtv                                                                                                                                     | 1215            | 1215     | 1215    | 1215      | 771     |
 -| getPoolLogic                                                                                                                                      | 5393            | 5404     | 5404    | 5416      | 2       |
 +| getFlashLoanLogic                                                                                                                                 | 5394            | 5416     | 5416    | 5438      | 2       |
-+| getIncentivesController                                                                                                                           | 1044            | 1066     | 1088    | 7588      | 18744   |
-+| getLiquidationGracePeriod                                                                                                                         | 29229           | 29248    | 29251   | 29251     | 2261    |
++| getIncentivesController                                                                                                                           | 1044            | 1066     | 1088    | 7588      | 17036   |
++| getLiquidationGracePeriod                                                                                                                         | 29229           | 29248    | 29251   | 29251     | 2249    |
 +| getLiquidationLogic                                                                                                                               | 5416            | 5438     | 5438    | 5461      | 2       |
 +| getPendingLtv                                                                                                                                     | 1259            | 1259     | 1259    | 1259      | 771     |
 +| getPoolLogic                                                                                                                                      | 5415            | 5426     | 5426    | 5438      | 2       |
@@ -783,12 +786,12 @@ index 0dec812..9ce5779 100644
 -| getReservesCount                                                                                                                                  | 1050            | 1050     | 1050    | 1050      | 2       |
 -| getReservesList                                                                                                                                   | 3792            | 16242    | 16292   | 103281    | 2164    |
 +| getReserveAddressById                                                                                                                             | 1236            | 1236     | 1236    | 1236      | 1       |
-+| getReserveData                                                                                                                                    | 4911            | 10848    | 10955   | 29455     | 22403   |
++| getReserveData                                                                                                                                    | 4911            | 11914    | 10955   | 29455     | 23413   |
 +| getReserveDataExtended                                                                                                                            | 4144            | 4810     | 4144    | 6144      | 6       |
-+| getReserveNormalizedIncome                                                                                                                        | 1443            | 1979     | 1487    | 10449     | 11044   |
-+| getReserveNormalizedVariableDebt                                                                                                                  | 1444            | 1618     | 1444    | 11542     | 7450    |
++| getReserveNormalizedIncome                                                                                                                        | 1443            | 1927     | 1487    | 10449     | 12324   |
++| getReserveNormalizedVariableDebt                                                                                                                  | 1444            | 1613     | 1444    | 11542     | 7658    |
 +| getReservesCount                                                                                                                                  | 986             | 986      | 986     | 986       | 2       |
-+| getReservesList                                                                                                                                   | 3747            | 16682    | 16247   | 104040    | 2130    |
++| getReservesList                                                                                                                                   | 3747            | 16360    | 16247   | 103236    | 2130    |
  | getRewardOracle                                                                                                                                   | 1268            | 1268     | 1268    | 1268      | 1       |
  | getRewardsByAsset                                                                                                                                 | 2399            | 5698     | 3672    | 10899     | 201     |
  | getRewardsData                                                                                                                                    | 1610            | 1610     | 1610    | 1610      | 3       |
@@ -798,13 +801,13 @@ index 0dec812..9ce5779 100644
 +| getSupplyLogic                                                                                                                                    | 5395            | 5417     | 5417    | 5439      | 2       |
  | getTransferStrategy                                                                                                                               | 1267            | 1267     | 1267    | 1267      | 1       |
 -| getUserAccountData                                                                                                                                | 18764           | 22167    | 23264   | 30029     | 1037    |
-+| getUserAccountData                                                                                                                                | 18522           | 22212    | 23022   | 29634     | 1805    |
++| getUserAccountData                                                                                                                                | 12878           | 23707    | 23022   | 40147     | 2575    |
  | getUserAccruedRewards                                                                                                                             | 2267            | 2267     | 2267    | 2267      | 1       |
  | getUserAssetIndex                                                                                                                                 | 1634            | 1634     | 1634    | 1634      | 1       |
 -| getUserConfiguration                                                                                                                              | 1322            | 1364     | 1322    | 3322      | 1822    |
 -| getUserEMode                                                                                                                                      | 1275            | 1275     | 1275    | 1275      | 1037    |
-+| getUserConfiguration                                                                                                                              | 1344            | 1393     | 1344    | 3344      | 1821    |
-+| getUserEMode                                                                                                                                      | 1275            | 1275     | 1275    | 1275      | 1548    |
++| getUserConfiguration                                                                                                                              | 1344            | 1383     | 1344    | 3344      | 1821    |
++| getUserEMode                                                                                                                                      | 1275            | 1280     | 1275    | 7775      | 1294    |
  | getUserRewards                                                                                                                                    | 5237            | 7340     | 7469    | 10837     | 19      |
 -| getVirtualUnderlyingBalance                                                                                                                       | 1298            | 1319     | 1320    | 1320      | 2161    |
 +| getVirtualUnderlyingBalance                                                                                                                       | 1320            | 1341     | 1342    | 1342      | 2159    |
@@ -814,9 +817,9 @@ index 0dec812..9ce5779 100644
 -| liquidationCall(address,address,address,uint256,bool)                                                                                             | 80856           | 256275   | 351792  | 404755    | 3491    |
 -| liquidationCall(bytes32,bytes32)                                                                                                                  | 404144          | 404144   | 404144  | 404144    | 1       |
 +| initReserve                                                                                                                                       | 33269           | 33280    | 33280   | 33292     | 1024    |
-+| initReserves                                                                                                                                      | 45710           | 33036201 | 1608627 | 216658072 | 2049    |
-+| liquidationCall(address,address,address,uint256,bool)                                                                                             | 80856           | 255326   | 342956  | 404416    | 3514    |
-+| liquidationCall(bytes32,bytes32)                                                                                                                  | 403771          | 403771   | 403771  | 403771    | 1       |
++| initReserves                                                                                                                                      | 45710           | 32395912 | 1608692 | 215319236 | 2049    |
++| liquidationCall(address,address,address,uint256,bool)                                                                                             | 80781           | 267131   | 351342  | 411243    | 3720    |
++| liquidationCall(bytes32,bytes32)                                                                                                                  | 403608          | 403608   | 403608  | 403608    | 1       |
  | mint                                                                                                                                              | 28161           | 73503    | 91286   | 91766     | 7       |
 -| mintToTreasury(address[])                                                                                                                         | 99333           | 100926   | 100926  | 102519    | 4       |
 +| mintToTreasury(address[])                                                                                                                         | 99355           | 100948   | 100948  | 102541    | 4       |
@@ -824,7 +827,7 @@ index 0dec812..9ce5779 100644
 -| mintUnbacked                                                                                                                                      | 39431           | 145665   | 130791  | 193135    | 17      |
 -| name                                                                                                                                              | 1625            | 2063     | 1945    | 8383      | 16555   |
 +| mintUnbacked                                                                                                                                      | 39386           | 145620   | 130746  | 193090    | 17      |
-+| name                                                                                                                                              | 1625            | 2058     | 1945    | 8383      | 19069   |
++| name                                                                                                                                              | 1625            | 2063     | 1945    | 8383      | 17361   |
  | nonces                                                                                                                                            | 1193            | 2463     | 3271    | 3271      | 10      |
  | permit                                                                                                                                            | 29304           | 46376    | 37841   | 81937     | 8       |
 -| repay(address,uint256,uint256,address)                                                                                                            | 60448           | 129350   | 167720  | 187144    | 13      |
@@ -836,10 +839,10 @@ index 0dec812..9ce5779 100644
 -| rescueTokens                                                                                                                                      | 39115           | 70318    | 70428   | 70471     | 515     |
 +| repay(address,uint256,uint256,address)                                                                                                            | 60470           | 129327   | 167677  | 187099    | 13      |
 +| repay(bytes32)                                                                                                                                    | 157445          | 157445   | 157445  | 157445    | 1       |
-+| repayWithATokens(address,uint256,uint256)                                                                                                         | 155001          | 181337   | 182208  | 193232    | 261     |
++| repayWithATokens(address,uint256,uint256)                                                                                                         | 155001          | 181023   | 182208  | 193232    | 261     |
 +| repayWithATokens(bytes32)                                                                                                                         | 160479          | 160479   | 160479  | 160479    | 1       |
-+| repayWithPermit(address,uint256,uint256,address,uint256,uint8,bytes32,bytes32)                                                                    | 155591          | 186031   | 182803  | 218606    | 768     |
-+| repayWithPermit(bytes32,bytes32,bytes32)                                                                                                          | 190590          | 206885   | 214480  | 217827    | 256     |
++| repayWithPermit(address,uint256,uint256,address,uint256,uint8,bytes32,bytes32)                                                                    | 155615          | 186074   | 182779  | 218803    | 768     |
++| repayWithPermit(bytes32,bytes32,bytes32)                                                                                                          | 190566          | 206430   | 197065  | 217839    | 256     |
 +| rescueTokens                                                                                                                                      | 39115           | 70340    | 70450   | 70493     | 515     |
  | resetIsolationModeTotalDebt                                                                                                                       | 32590           | 32636    | 32612   | 41843     | 514     |
 -| scaledBalanceOf                                                                                                                                   | 1307            | 3741     | 3307    | 7807      | 16286   |
@@ -847,17 +850,17 @@ index 0dec812..9ce5779 100644
 -| setAssetEModeCategory                                                                                                                             | 43877           | 48422    | 43877   | 79556     | 296     |
 -| setBorrowCap                                                                                                                                      | 43786           | 44743    | 43786   | 70919     | 267     |
 -| setBorrowableInIsolation                                                                                                                          | 67706           | 70116    | 70508   | 70508     | 13      |
-+| scaledBalanceOf                                                                                                                                   | 1307            | 3711     | 3307    | 7807      | 18376   |
-+| scaledTotalSupply                                                                                                                                 | 988             | 5907     | 7532    | 7532      | 19883   |
-+| setAssetBorrowableInEMode                                                                                                                         | 120872          | 120959   | 120960  | 120960    | 517     |
-+| setAssetCollateralInEMode                                                                                                                         | 44125           | 95562    | 103956  | 103956    | 1825    |
++| scaledBalanceOf                                                                                                                                   | 1307            | 3788     | 3307    | 7807      | 21096   |
++| scaledTotalSupply                                                                                                                                 | 988             | 6068     | 7532    | 7532      | 22705   |
++| setAssetBorrowableInEMode                                                                                                                         | 101049          | 120935   | 120960  | 120960    | 1545    |
++| setAssetCollateralInEMode                                                                                                                         | 44125           | 98055    | 103956  | 103956    | 2596    |
 +| setBorrowCap                                                                                                                                      | 43786           | 44744    | 43786   | 70941     | 267     |
 +| setBorrowableInIsolation                                                                                                                          | 67684           | 70094    | 70486   | 70486     | 13      |
  | setConfiguration                                                                                                                                  | 32805           | 32816    | 32816   | 32827     | 512     |
 -| setDebtCeiling                                                                                                                                    | 43743           | 48112    | 43743   | 121555    | 274     |
 -| setEModeCategory                                                                                                                                  | 45031           | 53892    | 45031   | 135431    | 295     |
 +| setDebtCeiling                                                                                                                                    | 43765           | 48137    | 43765   | 121621    | 274     |
-+| setEModeCategory                                                                                                                                  | 44872           | 98218    | 111566  | 111662    | 1308    |
++| setEModeCategory                                                                                                                                  | 44872           | 108807   | 116025  | 116037    | 2592    |
  | setIncentivesController                                                                                                                           | 38502           | 40869    | 40869   | 43236     | 2       |
 -| setLiquidationGracePeriod                                                                                                                         | 32828           | 37932    | 37350   | 43761     | 1536    |
 -| setLiquidationProtocolFee                                                                                                                         | 43996           | 60606    | 69878   | 70968     | 8       |
@@ -866,10 +869,10 @@ index 0dec812..9ce5779 100644
 -| setReserveActive                                                                                                                                  | 40906           | 43807    | 40906   | 118044    | 267     |
 -| setReserveBorrowing                                                                                                                               | 43833           | 60242    | 68446   | 68448     | 768     |
 -| setReserveFactor                                                                                                                                  | 43766           | 44186    | 43766   | 151823    | 258     |
-+| setLiquidationGracePeriod                                                                                                                         | 32805           | 37924    | 37338   | 43761     | 1536    |
++| setLiquidationGracePeriod                                                                                                                         | 32805           | 37936    | 37338   | 43761     | 1536    |
 +| setLiquidationProtocolFee                                                                                                                         | 44018           | 60642    | 69922   | 71012     | 8       |
-+| setPoolPause(bool)                                                                                                                                | 43568           | 43997    | 43568   | 116349    | 515     |
-+| setPoolPause(bool,uint40)                                                                                                                         | 43811           | 88193    | 74821   | 134211    | 512     |
++| setPoolPause(bool)                                                                                                                                | 43568           | 43997    | 43580   | 116349    | 515     |
++| setPoolPause(bool,uint40)                                                                                                                         | 43811           | 87972    | 74821   | 134211    | 512     |
 +| setReserveActive                                                                                                                                  | 40928           | 43831    | 40928   | 118110    | 267     |
 +| setReserveBorrowing                                                                                                                               | 43877           | 60301    | 68512   | 68514     | 768     |
 +| setReserveFactor                                                                                                                                  | 43810           | 44230    | 43810   | 151933    | 258     |
@@ -887,33 +890,33 @@ index 0dec812..9ce5779 100644
 -| setUserUseReserveAsCollateral(address,bool)                                                                                                       | 80336           | 96356    | 93550   | 129754    | 42      |
 -| setUserUseReserveAsCollateral(bytes32)                                                                                                            | 95329           | 95329    | 95329   | 95329     | 1       |
 +| setReserveFreeze                                                                                                                                  | 47066           | 73158    | 74889   | 99907     | 782     |
-+| setReserveInterestRateData                                                                                                                        | 44370           | 44851    | 44598   | 131179    | 257     |
-+| setReserveInterestRateStrategyAddress(address,address)                                                                                            | 32868           | 34612    | 33217   | 42751     | 1538    |
++| setReserveInterestRateData                                                                                                                        | 44370           | 44856    | 44598   | 131179    | 257     |
++| setReserveInterestRateStrategyAddress(address,address)                                                                                            | 32868           | 34614    | 33217   | 42751     | 1538    |
 +| setReserveInterestRateStrategyAddress(address,address,bytes)                                                                                      | 44513           | 61386    | 44513   | 190298    | 300     |
-+| setReservePause(address,bool)                                                                                                                     | 43856           | 44188    | 44084   | 67802     | 258     |
-+| setReservePause(address,bool,uint40)                                                                                                              | 41299           | 65986    | 73906   | 79018     | 3084    |
++| setReservePause(address,bool)                                                                                                                     | 43856           | 44201    | 44084   | 67802     | 258     |
++| setReservePause(address,bool,uint40)                                                                                                              | 41311           | 65613    | 73900   | 76218     | 3084    |
 +| setSiloedBorrowing                                                                                                                                | 102085          | 111949   | 115804  | 117960    | 3       |
 +| setSupplyCap                                                                                                                                      | 43743           | 45756    | 43743   | 70898     | 279     |
 +| setUnbackedMintCap                                                                                                                                | 70933           | 70933    | 70933   | 70933     | 7       |
-+| setUserEMode                                                                                                                                      | 43191           | 75378    | 67231   | 120900    | 1041    |
++| setUserEMode                                                                                                                                      | 43067           | 74317    | 67231   | 120947    | 2325    |
 +| setUserUseReserveAsCollateral(address,bool)                                                                                                       | 80314           | 96359    | 93573   | 129666    | 42      |
 +| setUserUseReserveAsCollateral(bytes32)                                                                                                            | 95286           | 95286    | 95286   | 95286     | 1       |
  | setValue                                                                                                                                          | 31574           | 31590    | 31598   | 31598     | 3       |
 -| supply(address,uint256,address,uint16)                                                                                                            | 56664           | 214087   | 231043  | 243594    | 3300    |
-+| supply(address,uint256,address,uint16)                                                                                                            | 56598           | 215668   | 226285  | 243528    | 3810    |
++| supply(address,uint256,address,uint16)                                                                                                            | 56598           | 218710   | 226273  | 243528    | 5348    |
  | supply(bytes32)                                                                                                                                   | 237010          | 237010   | 237010  | 237010    | 7       |
 -| supplyWithPermit(address,uint256,address,uint16,uint256,uint8,bytes32,bytes32)                                                                    | 142365          | 216977   | 242026  | 266578    | 768     |
 -| supplyWithPermit(bytes32,bytes32,bytes32)                                                                                                         | 262532          | 262616   | 262592  | 262736    | 256     |
 -| symbol                                                                                                                                            | 1646            | 2128     | 1966    | 8448      | 16530   |
-+| supplyWithPermit(address,uint256,address,uint16,uint256,uint8,bytes32,bytes32)                                                                    | 142365          | 216981   | 242026  | 266578    | 768     |
-+| supplyWithPermit(bytes32,bytes32,bytes32)                                                                                                         | 262566          | 262636   | 262614  | 262758    | 256     |
-+| symbol                                                                                                                                            | 1646            | 2123     | 1988    | 8448      | 19044   |
++| supplyWithPermit(address,uint256,address,uint16,uint256,uint8,bytes32,bytes32)                                                                    | 142365          | 216979   | 242026  | 266578    | 768     |
++| supplyWithPermit(bytes32,bytes32,bytes32)                                                                                                         | 262566          | 262631   | 262602  | 262758    | 256     |
++| symbol                                                                                                                                            | 1646            | 2126     | 1966    | 8448      | 17336   |
  | text                                                                                                                                              | 1789            | 1789     | 1789    | 1789      | 8       |
 -| totalSupply                                                                                                                                       | 1024            | 8279     | 11570   | 15570     | 4914    |
 -| transfer                                                                                                                                          | 27662           | 144188   | 149393  | 167373    | 273     |
 -| transferFrom                                                                                                                                      | 138702          | 138822   | 138822  | 138942    | 2       |
-+| totalSupply                                                                                                                                       | 1024            | 8463     | 11592   | 15592     | 5157    |
-+| transfer                                                                                                                                          | 27662           | 143606   | 149415  | 167131    | 273     |
++| totalSupply                                                                                                                                       | 1024            | 8842     | 11592   | 15592     | 5952    |
++| transfer                                                                                                                                          | 27662           | 144508   | 149415  | 167131    | 273     |
 +| transferFrom                                                                                                                                      | 138724          | 138844   | 138844  | 138964    | 2       |
  | transferOnLiquidation                                                                                                                             | 28063           | 28063    | 28063   | 28063     | 1       |
  | transferUnderlyingTo                                                                                                                              | 27506           | 27506    | 27506   | 27506     | 1       |
@@ -961,16 +964,12 @@ index 0dec812..9ce5779 100644
  | decimals                                                                            | 144             | 144  | 144    | 144  | 83      |
  | description                                                                         | 170             | 170  | 170    | 170  | 83      |
 -| latestAnswer                                                                        | 281             | 1395 | 2281   | 2281 | 24197   |
-+| latestAnswer                                                                        | 281             | 1396 | 2281   | 2281 | 26529   |
++| latestAnswer                                                                        | 281             | 1462 | 2281   | 2281 | 30556   |
  | name                                                                                | 170             | 170  | 170    | 170  | 83      |
 
 
-@@ -732,10 +733,10 @@
- | src/contracts/mocks/oracle/SequencerOracle.sol:SequencerOracle contract |                 |       |        |       |         |
- |-------------------------------------------------------------------------|-----------------|-------|--------|-------|---------|
- | Deployment Cost                                                         | Deployment Size |       |        |       |         |
--| 278266                                                                  | 1393            |       |        |       |         |
-+| 278290                                                                  | 1393            |       |        |       |         |
+@@ -735,7 +736,7 @@
+ | 278266                                                                  | 1393            |       |        |       |         |
  | Function Name                                                           | min             | avg   | median | max   | # calls |
  | latestRoundData                                                         | 730             | 1533  | 735    | 4735  | 10      |
 -| setAnswer                                                               | 26207           | 27452 | 26207  | 46119 | 73      |
@@ -986,14 +985,14 @@ index 0dec812..9ce5779 100644
 -| balanceOf                                                                  | 651             | 991   | 651    | 2651  | 12549   |
 -| decimals                                                                   | 312             | 1481  | 2312   | 2312  | 73384   |
 -| mint                                                                       | 36480           | 58491 | 53592  | 70740 | 4133    |
-+| approve                                                                    | 29140           | 46492 | 46588  | 46588 | 5089    |
++| approve                                                                    | 29140           | 46453 | 46588  | 46588 | 6901    |
 +| balanceOf                                                                  | 651             | 991   | 651    | 2651  | 12547   |
-+| decimals                                                                   | 312             | 1441  | 2312   | 2312  | 78660   |
-+| mint                                                                       | 36480           | 59853 | 53592  | 70800 | 4604    |
++| decimals                                                                   | 312             | 1475  | 2312   | 2312  | 75774   |
++| mint                                                                       | 36480           | 62216 | 70692  | 70800 | 6416    |
  | name                                                                       | 3241            | 3241  | 3241   | 3241  | 2048    |
  | nonces                                                                     | 2604            | 2604  | 2604   | 2604  | 1       |
 -| permit                                                                     | 76466           | 76512 | 76502  | 76670 | 512     |
-+| permit                                                                     | 76454           | 76517 | 76502  | 76670 | 512     |
++| permit                                                                     | 76454           | 76514 | 76502  | 76670 | 512     |
  | symbol                                                                     | 1328            | 2328  | 2328   | 3328  | 56      |
  | transfer                                                                   | 46931           | 51023 | 51707  | 51707 | 7       |
  | transferOwnership                                                          | 28800           | 28800 | 28800  | 28800 | 30      |
@@ -1003,11 +1002,12 @@ index 0dec812..9ce5779 100644
  | Function Name                                                                      | min             | avg | median | max | # calls |
 -| HALF_PERCENTAGE_FACTOR                                                             | 147             | 147 | 147    | 147 | 448     |
 -| PERCENTAGE_FACTOR                                                                  | 224             | 224 | 224    | 224 | 689     |
-+| HALF_PERCENTAGE_FACTOR                                                             | 147             | 147 | 147    | 147 | 422     |
-+| PERCENTAGE_FACTOR                                                                  | 224             | 224 | 224    | 224 | 667     |
- | percentDiv                                                                         | 321             | 426 | 432    | 432 | 259     |
+-| percentDiv                                                                         | 321             | 426 | 432    | 432 | 259     |
 -| percentMul                                                                         | 338             | 411 | 435    | 435 | 259     |
-+| percentMul                                                                         | 338             | 402 | 435    | 435 | 259     |
++| HALF_PERCENTAGE_FACTOR                                                             | 147             | 147 | 147    | 147 | 432     |
++| PERCENTAGE_FACTOR                                                                  | 224             | 224 | 224    | 224 | 661     |
++| percentDiv                                                                         | 321             | 420 | 432    | 432 | 259     |
++| percentMul                                                                         | 338             | 405 | 435    | 435 | 259     |
 
 
  | src/contracts/mocks/tests/WadRayMathWrapper.sol:WadRayMathWrapper contract |                 |     |        |     |         |
@@ -1016,19 +1016,20 @@ index 0dec812..9ce5779 100644
  | Function Name                                                              | min             | avg | median | max | # calls |
  | HALF_RAY                                                                   | 247             | 247 | 247    | 247 | 1       |
 -| HALF_WAD                                                                   | 224             | 224 | 224    | 224 | 443     |
-+| HALF_WAD                                                                   | 224             | 224 | 224    | 224 | 433     |
++| HALF_WAD                                                                   | 224             | 224 | 224    | 224 | 434     |
  | RAY                                                                        | 225             | 225 | 225    | 225 | 1       |
 -| WAD                                                                        | 180             | 180 | 180    | 180 | 658     |
 -| WAD_RAY_RATIO                                                              | 269             | 269 | 269    | 269 | 1762    |
-+| WAD                                                                        | 180             | 180 | 180    | 180 | 649     |
++| WAD                                                                        | 180             | 180 | 180    | 180 | 651     |
 +| WAD_RAY_RATIO                                                              | 269             | 269 | 269    | 269 | 1765    |
  | rayDiv                                                                     | 498             | 498 | 498    | 498 | 4       |
  | rayMul                                                                     | 501             | 501 | 501    | 501 | 3       |
  | rayToWad                                                                   | 387             | 390 | 387    | 401 | 515     |
- | wadDiv                                                                     | 431             | 524 | 542    | 542 | 260     |
+-| wadDiv                                                                     | 431             | 524 | 542    | 542 | 260     |
 -| wadMul                                                                     | 338             | 409 | 435    | 435 | 262     |
 -| wadToRay                                                                   | 284             | 355 | 360    | 360 | 485     |
-+| wadMul                                                                     | 338             | 406 | 435    | 435 | 262     |
++| wadDiv                                                                     | 431             | 523 | 542    | 542 | 260     |
++| wadMul                                                                     | 338             | 407 | 435    | 435 | 262     |
 +| wadToRay                                                                   | 284             | 355 | 360    | 360 | 488     |
 
 
@@ -1038,28 +1039,28 @@ index 0dec812..9ce5779 100644
  | 864174                                                                  | 4235            |       |        |       |         |
  | Function Name                                                           | min             | avg   | median | max   | # calls |
 -| DEFAULT_ADMIN_ROLE                                                      | 284             | 284   | 284    | 284   | 1318    |
-+| DEFAULT_ADMIN_ROLE                                                      | 284             | 284   | 284    | 284   | 1310    |
++| DEFAULT_ADMIN_ROLE                                                      | 284             | 284   | 284    | 284   | 1328    |
  | FLASH_BORROWER_ROLE                                                     | 317             | 317   | 317    | 317   | 20      |
 -| POOL_ADMIN_ROLE                                                         | 294             | 294   | 294    | 294   | 649     |
-+| POOL_ADMIN_ROLE                                                         | 294             | 294   | 294    | 294   | 645     |
++| POOL_ADMIN_ROLE                                                         | 294             | 294   | 294    | 294   | 654     |
  | addAssetListingAdmin                                                    | 50962           | 50962 | 50962  | 50962 | 3       |
  | addBridge                                                               | 51028           | 51028 | 51028  | 51028 | 14      |
  | addEmergencyAdmin                                                       | 50963           | 50963 | 50963  | 50963 | 3       |
  | addFlashBorrower                                                        | 50984           | 52203 | 50984  | 55863 | 4       |
 -| addPoolAdmin                                                            | 50995           | 51006 | 51007  | 51007 | 639     |
-+| addPoolAdmin                                                            | 50995           | 51006 | 51007  | 51007 | 635     |
++| addPoolAdmin                                                            | 50995           | 51006 | 51007  | 51007 | 644     |
  | addRiskAdmin                                                            | 51028           | 51028 | 51028  | 51028 | 14      |
  | grantRole                                                               | 51480           | 52091 | 51480  | 56370 | 8       |
  | hasRole                                                                 | 740             | 2622  | 2740   | 2740  | 17      |
 -| isAssetListingAdmin                                                     | 814             | 2465  | 2814   | 2814  | 3562    |
-+| isAssetListingAdmin                                                     | 814             | 2466  | 2814   | 2814  | 3554    |
++| isAssetListingAdmin                                                     | 814             | 2463  | 2814   | 2814  | 3572    |
  | isBridge                                                                | 2791            | 2791  | 2791   | 2791  | 26      |
  | isEmergencyAdmin                                                        | 747             | 2746  | 2747   | 2747  | 3843    |
  | isFlashBorrower                                                         | 2833            | 2833  | 2833   | 2833  | 268     |
 -| isPoolAdmin                                                             | 757             | 1741  | 757    | 2757  | 45593   |
 -| isRiskAdmin                                                             | 747             | 1420  | 747    | 2747  | 29906   |
-+| isPoolAdmin                                                             | 757             | 1849  | 2757   | 2757  | 46656   |
-+| isRiskAdmin                                                             | 747             | 1594  | 747    | 2747  | 30985   |
++| isPoolAdmin                                                             | 757             | 1899  | 2757   | 2757  | 50045   |
++| isRiskAdmin                                                             | 747             | 1691  | 747    | 2747  | 34338   |
  | removeAssetListingAdmin                                                 | 29054           | 29054 | 29054  | 29054 | 2       |
  | removeBridge                                                            | 29023           | 29023 | 29023  | 29023 | 1       |
  | removeEmergencyAdmin                                                    | 28999           | 28999 | 28999  | 28999 | 1       |
@@ -1070,9 +1071,9 @@ index 0dec812..9ce5779 100644
 -| getACLAdmin                                                                                   | 480             | 551    | 480    | 2480   | 676     |
 -| getACLManager                                                                                 | 534             | 1369   | 534    | 2534   | 39760   |
 -| getAddress                                                                                    | 546             | 549    | 546    | 2546   | 657     |
-+| getACLAdmin                                                                                   | 480             | 551    | 480    | 2480   | 672     |
-+| getACLManager                                                                                 | 534             | 1497   | 534    | 2534   | 40823   |
-+| getAddress                                                                                    | 546             | 549    | 546    | 2546   | 653     |
++| getACLAdmin                                                                                   | 480             | 550    | 480    | 2480   | 681     |
++| getACLManager                                                                                 | 534             | 1563   | 2534   | 2534   | 44212   |
++| getAddress                                                                                    | 546             | 549    | 546    | 2546   | 662     |
  | getMarketId                                                                                   | 1351            | 1351   | 1351   | 1351   | 6       |
 -| getPool                                                                                       | 469             | 682    | 469    | 2469   | 43331   |
 -| getPoolConfigurator                                                                           | 512             | 774    | 512    | 2512   | 182138  |
@@ -1080,12 +1081,12 @@ index 0dec812..9ce5779 100644
 -| getPriceOracle                                                                                | 577             | 2281   | 2577   | 2577   | 7894    |
 -| getPriceOracleSentinel                                                                        | 490             | 2484   | 2490   | 2490   | 6231    |
 -| owner                                                                                         | 365             | 365    | 365    | 365    | 653     |
-+| getPool                                                                                       | 469             | 660    | 469    | 2469   | 48324   |
-+| getPoolConfigurator                                                                           | 512             | 800    | 512    | 2512   | 186919  |
-+| getPoolDataProvider                                                                           | 489             | 1326   | 489    | 2489   | 2191    |
-+| getPriceOracle                                                                                | 577             | 2188   | 2577   | 2577   | 9964    |
-+| getPriceOracleSentinel                                                                        | 490             | 2484   | 2490   | 2490   | 6509    |
-+| owner                                                                                         | 365             | 365    | 365    | 365    | 649     |
++| getPool                                                                                       | 469             | 675    | 469    | 2469   | 44963   |
++| getPoolConfigurator                                                                           | 512             | 832    | 512    | 2512   | 187849  |
++| getPoolDataProvider                                                                           | 489             | 1323   | 489    | 2489   | 2218    |
++| getPriceOracle                                                                                | 577             | 2160   | 2577   | 2577   | 12992   |
++| getPriceOracleSentinel                                                                        | 490             | 2485   | 2490   | 2490   | 7483    |
++| owner                                                                                         | 365             | 365    | 365    | 365    | 658     |
  | setACLAdmin                                                                                   | 24016           | 45798  | 47621  | 47621  | 24      |
  | setACLManager                                                                                 | 24059           | 37487  | 39114  | 47664  | 4       |
  | setAddress                                                                                    | 24625           | 35611  | 31540  | 48640  | 5       |
@@ -1104,7 +1105,7 @@ index 0dec812..9ce5779 100644
  | getAddressesProviderIdByAddress                                                                               | 559             | 1225   | 559    | 2559   | 6       |
  | getAddressesProvidersList                                                                                     | 673             | 3403   | 3292   | 5018   | 5       |
 -| owner                                                                                                         | 331             | 2327   | 2331   | 2331   | 650     |
-+| owner                                                                                                         | 331             | 2327   | 2331   | 2331   | 646     |
++| owner                                                                                                         | 331             | 2327   | 2331   | 2331   | 655     |
  | registerAddressesProvider                                                                                     | 24444           | 104012 | 119926 | 119926 | 6       |
  | unregisterAddressesProvider                                                                                   | 26448           | 39029  | 40004  | 49662  | 4       |
 
@@ -1113,7 +1114,7 @@ index 0dec812..9ce5779 100644
  | 3183382                                                                | 14716           |        |        |        |         |
  | Function Name                                                          | min             | avg    | median | max    | # calls |
 -| EMISSION_MANAGER                                                       | 327             | 327    | 327    | 327    | 653     |
-+| EMISSION_MANAGER                                                       | 327             | 327    | 327    | 327    | 649     |
++| EMISSION_MANAGER                                                       | 327             | 327    | 327    | 327    | 658     |
  | claimAllRewards                                                        | 92349           | 92349  | 92349  | 92349  | 1       |
  | claimAllRewardsOnBehalf                                                | 94649           | 94649  | 94649  | 94649  | 1       |
  | claimAllRewardsToSelf                                                  | 92147           | 92147  | 92147  | 92147  | 1       |
@@ -1123,8 +1124,8 @@ index 0dec812..9ce5779 100644
  | getUserRewards                                                         | 4600            | 6703   | 6832   | 10200  | 19      |
 -| handleAction                                                           | 732             | 2337   | 2732   | 38089  | 17852   |
 -| initialize                                                             | 26067           | 45246  | 45252  | 53156  | 652     |
-+| handleAction                                                           | 732             | 2354   | 2732   | 38089  | 18613   |
-+| initialize                                                             | 26067           | 45246  | 45252  | 53156  | 648     |
++| handleAction                                                           | 732             | 2364   | 2732   | 38089  | 21943   |
++| initialize                                                             | 26067           | 45246  | 45252  | 53156  | 657     |
  | setClaimer                                                             | 24282           | 24282  | 24282  | 24282  | 4       |
  | setDistributionEnd                                                     | 8888            | 8888   | 8888   | 8888   | 2       |
  | setEmissionPerSecond                                                   | 24335           | 24335  | 24335  | 24335  | 2       |
@@ -1133,17 +1134,17 @@ index 0dec812..9ce5779 100644
  | 0                                                       | 0               |       |        |       |         |
  | Function Name                                           | min             | avg   | median | max   | # calls |
 -| initialize                                              | 90684           | 90684 | 90684  | 90684 | 674     |
-+| initialize                                              | 90684           | 90684 | 90684  | 90684 | 670     |
++| initialize                                              | 90684           | 90684 | 90684  | 90684 | 679     |
 
 
  | src/deployments/projects/aave-v3-batched/batches/AaveV3GettersBatchOne.sol:AaveV3GettersBatchOne contract |                 |     |        |     |         |
  |-----------------------------------------------------------------------------------------------------------|-----------------|-----|--------|-----|---------|
  | Deployment Cost                                                                                           | Deployment Size |     |        |     |         |
 -| 5190134                                                                                                   | 33125           |     |        |     |         |
-+| 5144006                                                                                                   | 33345           |     |        |     |         |
++| 5145702                                                                                                   | 33451           |     |        |     |         |
  | Function Name                                                                                             | min             | avg | median | max | # calls |
 -| getGettersReportOne                                                                                       | 971             | 971 | 971    | 971 | 672     |
-+| getGettersReportOne                                                                                       | 971             | 971 | 971    | 971 | 668     |
++| getGettersReportOne                                                                                       | 971             | 971 | 971    | 971 | 677     |
 
 
  | src/deployments/projects/aave-v3-batched/batches/AaveV3GettersBatchTwo.sol:AaveV3GettersBatchTwo contract |                 |     |        |     |         |
@@ -1152,17 +1153,17 @@ index 0dec812..9ce5779 100644
  | 1583555                                                                                                   | 11792           |     |        |     |         |
  | Function Name                                                                                             | min             | avg | median | max | # calls |
 -| getGettersReportTwo                                                                                       | 535             | 535 | 535    | 535 | 647     |
-+| getGettersReportTwo                                                                                       | 535             | 535 | 535    | 535 | 643     |
++| getGettersReportTwo                                                                                       | 535             | 535 | 535    | 535 | 652     |
 
 
  | src/deployments/projects/aave-v3-batched/batches/AaveV3HelpersBatchOne.sol:AaveV3HelpersBatchOne contract |                 |      |        |      |         |
  |-----------------------------------------------------------------------------------------------------------|-----------------|------|--------|------|---------|
  | Deployment Cost                                                                                           | Deployment Size |      |        |      |         |
 -| 7434786                                                                                                   | 35360           |      |        |      |         |
-+| 7379990                                                                                                   | 35117           |      |        |      |         |
++| 7356455                                                                                                   | 35017           |      |        |      |         |
  | Function Name                                                                                             | min             | avg  | median | max  | # calls |
 -| getConfigEngineReport                                                                                     | 1696            | 1696 | 1696   | 1696 | 622     |
-+| getConfigEngineReport                                                                                     | 1696            | 1696 | 1696   | 1696 | 618     |
++| getConfigEngineReport                                                                                     | 1696            | 1696 | 1696   | 1696 | 627     |
 
 
  | src/deployments/projects/aave-v3-batched/batches/AaveV3HelpersBatchTwo.sol:AaveV3HelpersBatchTwo contract |                 |     |        |     |         |
@@ -1171,35 +1172,42 @@ index 0dec812..9ce5779 100644
  | 7169046                                                                                                   | 31590           |     |        |     |         |
  | Function Name                                                                                             | min             | avg | median | max | # calls |
 -| staticATokenReport                                                                                        | 971             | 971 | 971    | 971 | 622     |
-+| staticATokenReport                                                                                        | 971             | 971 | 971    | 971 | 618     |
++| staticATokenReport                                                                                        | 971             | 971 | 971    | 971 | 627     |
 
 
  | src/deployments/projects/aave-v3-batched/batches/AaveV3L2PoolBatch.sol:AaveV3L2PoolBatch contract |                 |     |        |     |         |
  |---------------------------------------------------------------------------------------------------|-----------------|-----|--------|-----|---------|
  | Deployment Cost                                                                                   | Deployment Size |     |        |     |         |
 -| 9289812                                                                                           | 42653           |     |        |     |         |
-+| 9322069                                                                                           | 42803           |     |        |     |         |
++| 9338136                                                                                           | 42878           |     |        |     |         |
  | Function Name                                                                                     | min             | avg | median | max | # calls |
 -| getPoolReport                                                                                     | 535             | 535 | 535    | 535 | 672     |
-+| getPoolReport                                                                                     | 535             | 535 | 535    | 535 | 668     |
++| getPoolReport                                                                                     | 535             | 535 | 535    | 535 | 677     |
 
 
  | src/deployments/projects/aave-v3-batched/batches/AaveV3MiscBatch.sol:AaveV3MiscBatch contract |                 |     |        |     |         |
-@@ -1103,7 +1104,7 @@
+@@ -1103,13 +1104,13 @@
  | Deployment Cost                                                                               | Deployment Size |     |        |     |         |
  | 1062926                                                                                       | 7122            |     |        |     |         |
  | Function Name                                                                                 | min             | avg | median | max | # calls |
 -| getMiscReport                                                                                 | 535             | 535 | 535    | 535 | 672     |
-+| getMiscReport                                                                                 | 535             | 535 | 535    | 535 | 668     |
++| getMiscReport                                                                                 | 535             | 535 | 535    | 535 | 677     |
 
 
  | src/deployments/projects/aave-v3-batched/batches/AaveV3ParaswapBatch.sol:AaveV3ParaswapBatch contract |                 |     |        |     |         |
+ |-------------------------------------------------------------------------------------------------------|-----------------|-----|--------|-----|---------|
+ | Deployment Cost                                                                                       | Deployment Size |     |        |     |         |
+-| 6476447                                                                                               | 33699           |     |        |     |         |
++| 6475775                                                                                               | 33699           |     |        |     |         |
+ | Function Name                                                                                         | min             | avg | median | max | # calls |
+ | getParaswapReport                                                                                     | 971             | 971 | 971    | 971 | 30      |
+
 @@ -1119,7 +1120,7 @@
  | Deployment Cost                                                                                         | Deployment Size |      |        |      |         |
  | 7573451                                                                                                 | 38861           |      |        |      |         |
  | Function Name                                                                                           | min             | avg  | median | max  | # calls |
 -| getPeripheryReport                                                                                      | 1333            | 1333 | 1333   | 1333 | 672     |
-+| getPeripheryReport                                                                                      | 1333            | 1333 | 1333   | 1333 | 668     |
++| getPeripheryReport                                                                                      | 1333            | 1333 | 1333   | 1333 | 677     |
 
 
  | src/deployments/projects/aave-v3-batched/batches/AaveV3SetupBatch.sol:AaveV3SetupBatch contract |                 |         |         |         |         |
@@ -1210,18 +1218,18 @@ index 0dec812..9ce5779 100644
 -| getInitialReport                                                                                | 554             | 554     | 554     | 554     | 672     |
 -| setMarketReport                                                                                 | 632455          | 634818  | 632455  | 773435  | 622     |
 -| setupAaveV3Market                                                                               | 2709798         | 2710437 | 2709798 | 2736039 | 649     |
-+| getInitialReport                                                                                | 554             | 554     | 554     | 554     | 668     |
-+| setMarketReport                                                                                 | 632455          | 634834  | 632455  | 773435  | 618     |
-+| setupAaveV3Market                                                                               | 2709798         | 2710433 | 2709798 | 2735948 | 645     |
++| getInitialReport                                                                                | 554             | 554     | 554     | 554     | 677     |
++| setMarketReport                                                                                 | 632455          | 634799  | 632455  | 773435  | 627     |
++| setupAaveV3Market                                                                               | 2709798         | 2710424 | 2709798 | 2735948 | 654     |
 
 
  | src/deployments/projects/aave-v3-batched/batches/AaveV3TokensBatch.sol:AaveV3TokensBatch contract |                 |     |        |     |         |
-@@ -1137,53 +1138,53 @@
+@@ -1137,130 +1138,130 @@
  | Deployment Cost                                                                                   | Deployment Size |     |        |     |         |
  | 4294582                                                                                           | 20766           |     |        |     |         |
  | Function Name                                                                                     | min             | avg | median | max | # calls |
 -| getTokensReport                                                                                   | 535             | 535 | 535    | 535 | 647     |
-+| getTokensReport                                                                                   | 535             | 535 | 535    | 535 | 643     |
++| getTokensReport                                                                                   | 535             | 535 | 535    | 535 | 652     |
 
 
 -| tests/extensions/v3-config-engine/mocks/AaveV3MockAssetEModeUpdate.sol:AaveV3MockAssetEModeUpdate contract |                 |       |        |       |         |
@@ -1233,160 +1241,166 @@ index 0dec812..9ce5779 100644
 +| tests/extensions/v3-config-engine/mocks/AaveV3MockAssetEModeUpdate.sol:AaveV3MockAssetEModeUpdate contract |                 |        |        |        |         |
 +|------------------------------------------------------------------------------------------------------------|-----------------|--------|--------|--------|---------|
 +| Deployment Cost                                                                                            | Deployment Size |        |        |        |         |
-+| 747109                                                                                                     | 3465            |        |        |        |         |
++| 790748                                                                                                     | 3668            |        |        |        |         |
 +| Function Name                                                                                              | min             | avg    | median | max    | # calls |
-+| execute                                                                                                    | 118935          | 118935 | 118935 | 118935 | 1       |
++| execute                                                                                                    | 119157          | 119157 | 119157 | 119157 | 1       |
 
 
  | tests/extensions/v3-config-engine/mocks/AaveV3MockBorrowUpdate.sol:AaveV3MockBorrowUpdate contract |                 |        |        |        |         |
  |----------------------------------------------------------------------------------------------------|-----------------|--------|--------|--------|---------|
  | Deployment Cost                                                                                    | Deployment Size |        |        |        |         |
 -| 783501                                                                                             | 3634            |        |        |        |         |
-+| 775935                                                                                             | 3599            |        |        |        |         |
++| 816478                                                                                             | 3787            |        |        |        |         |
  | Function Name                                                                                      | min             | avg    | median | max    | # calls |
 -| execute                                                                                            | 159425          | 159425 | 159425 | 159425 | 1       |
-+| execute                                                                                            | 159601          | 159601 | 159601 | 159601 | 1       |
++| execute                                                                                            | 159566          | 159566 | 159566 | 159566 | 1       |
 
 
  | tests/extensions/v3-config-engine/mocks/AaveV3MockBorrowUpdateNoChange.sol:AaveV3MockBorrowUpdateNoChange contract |                 |       |        |       |         |
  |--------------------------------------------------------------------------------------------------------------------|-----------------|-------|--------|-------|---------|
  | Deployment Cost                                                                                                    | Deployment Size |       |        |       |         |
 -| 790396                                                                                                             | 3666            |       |        |       |         |
-+| 782829                                                                                                             | 3631            |       |        |       |         |
++| 823384                                                                                                             | 3819            |       |        |       |         |
  | Function Name                                                                                                      | min             | avg   | median | max   | # calls |
 -| execute                                                                                                            | 47089           | 47089 | 47089  | 47089 | 1       |
-+| execute                                                                                                            | 47111           | 47111 | 47111  | 47111 | 1       |
++| execute                                                                                                            | 47076           | 47076 | 47076  | 47076 | 1       |
 
 
  | tests/extensions/v3-config-engine/mocks/AaveV3MockCapUpdate.sol:AaveV3MockCapUpdate contract |                 |       |        |       |         |
  |----------------------------------------------------------------------------------------------|-----------------|-------|--------|-------|---------|
  | Deployment Cost                                                                              | Deployment Size |       |        |       |         |
 -| 770601                                                                                       | 3574            |       |        |       |         |
-+| 763034                                                                                       | 3539            |       |        |       |         |
++| 803217                                                                                       | 3726            |       |        |       |         |
  | Function Name                                                                                | min             | avg   | median | max   | # calls |
 -| execute                                                                                      | 86135           | 86135 | 86135  | 86135 | 1       |
-+| execute                                                                                      | 86134           | 86134 | 86134  | 86134 | 1       |
++| execute                                                                                      | 86081           | 86081 | 86081  | 86081 | 1       |
 
 
  | tests/extensions/v3-config-engine/mocks/AaveV3MockCollateralUpdate.sol:AaveV3MockCollateralUpdate contract |                 |       |        |       |         |
  |------------------------------------------------------------------------------------------------------------|-----------------|-------|--------|-------|---------|
  | Deployment Cost                                                                                            | Deployment Size |       |        |       |         |
 -| 784137                                                                                                     | 3637            |       |        |       |         |
-+| 776595                                                                                                     | 3602            |       |        |       |         |
++| 817030                                                                                                     | 3790            |       |        |       |         |
  | Function Name                                                                                              | min             | avg   | median | max   | # calls |
 -| execute                                                                                                    | 89667           | 89667 | 89667  | 89667 | 1       |
-+| execute                                                                                                    | 89745           | 89745 | 89745  | 89745 | 1       |
++| execute                                                                                                    | 89720           | 89720 | 89720  | 89720 | 1       |
 
 
  | tests/extensions/v3-config-engine/mocks/AaveV3MockCollateralUpdateNoChange.sol:AaveV3MockCollateralUpdateNoChange contract |                 |       |        |       |         |
  |----------------------------------------------------------------------------------------------------------------------------|-----------------|-------|--------|-------|---------|
  | Deployment Cost                                                                                                            | Deployment Size |       |        |       |         |
 -| 790576                                                                                                                     | 3667            |       |        |       |         |
-+| 783009                                                                                                                     | 3632            |       |        |       |         |
++| 823420                                                                                                                     | 3820            |       |        |       |         |
  | Function Name                                                                                                              | min             | avg   | median | max   | # calls |
- | execute                                                                                                                    | 35916           | 35916 | 35916  | 35916 | 2       |
+-| execute                                                                                                                    | 35916           | 35916 | 35916  | 35916 | 2       |
++| execute                                                                                                                    | 35903           | 35903 | 35903  | 35903 | 2       |
 
-@@ -1191,15 +1192,15 @@
+
  | tests/extensions/v3-config-engine/mocks/AaveV3MockCollateralUpdateWrongBonus.sol:AaveV3MockCollateralUpdateCorrectBonus contract |                 |       |        |       |         |
  |----------------------------------------------------------------------------------------------------------------------------------|-----------------|-------|--------|-------|---------|
  | Deployment Cost                                                                                                                  | Deployment Size |       |        |       |         |
 -| 784137                                                                                                                           | 3637            |       |        |       |         |
-+| 776595                                                                                                                           | 3602            |       |        |       |         |
++| 817030                                                                                                                           | 3790            |       |        |       |         |
  | Function Name                                                                                                                    | min             | avg   | median | max   | # calls |
 -| execute                                                                                                                          | 89667           | 89667 | 89667  | 89667 | 1       |
-+| execute                                                                                                                          | 89745           | 89745 | 89745  | 89745 | 1       |
++| execute                                                                                                                          | 89720           | 89720 | 89720  | 89720 | 1       |
 
 
  | tests/extensions/v3-config-engine/mocks/AaveV3MockCollateralUpdateWrongBonus.sol:AaveV3MockCollateralUpdateWrongBonus contract |                 |       |        |       |         |
  |--------------------------------------------------------------------------------------------------------------------------------|-----------------|-------|--------|-------|---------|
  | Deployment Cost                                                                                                                | Deployment Size |       |        |       |         |
 -| 785049                                                                                                                         | 3641            |       |        |       |         |
-+| 777483                                                                                                                         | 3606            |       |        |       |         |
++| 817894                                                                                                                         | 3794            |       |        |       |         |
  | Function Name                                                                                                                  | min             | avg   | median | max   | # calls |
- | execute                                                                                                                        | 35332           | 35332 | 35332  | 35332 | 1       |
+-| execute                                                                                                                        | 35332           | 35332 | 35332  | 35332 | 1       |
++| execute                                                                                                                        | 35294           | 35294 | 35294  | 35294 | 1       |
 
-@@ -1207,59 +1208,59 @@
+
  | tests/extensions/v3-config-engine/mocks/AaveV3MockEModeCategoryUpdate.sol:AaveV3MockEModeCategoryUpdate contract |                 |        |        |        |         |
  |------------------------------------------------------------------------------------------------------------------|-----------------|--------|--------|--------|---------|
  | Deployment Cost                                                                                                  | Deployment Size |        |        |        |         |
 -| 756400                                                                                                           | 3425            |        |        |        |         |
-+| 745395                                                                                                           | 3374            |        |        |        |         |
++| 785793                                                                                                           | 3562            |        |        |        |         |
  | Function Name                                                                                                    | min             | avg    | median | max    | # calls |
 -| execute                                                                                                          | 155461          | 155461 | 155461 | 155461 | 2       |
-+| execute                                                                                                          | 131198          | 131198 | 131198 | 131198 | 2       |
++| execute                                                                                                          | 135648          | 135648 | 135648 | 135648 | 2       |
 
 
  | tests/extensions/v3-config-engine/mocks/AaveV3MockEModeCategoryUpdate.sol:AaveV3MockEModeCategoryUpdateEdgeBonus contract |                 |       |        |       |         |
  |---------------------------------------------------------------------------------------------------------------------------|-----------------|-------|--------|-------|---------|
  | Deployment Cost                                                                                                           | Deployment Size |       |        |       |         |
 -| 757072                                                                                                                    | 3428            |       |        |       |         |
-+| 746007                                                                                                                    | 3377            |       |        |       |         |
++| 786441                                                                                                                    | 3565            |       |        |       |         |
  | Function Name                                                                                                             | min             | avg   | median | max   | # calls |
 -| execute                                                                                                                   | 53964           | 53964 | 53964  | 53964 | 1       |
-+| execute                                                                                                                   | 56384           | 56384 | 56384  | 56384 | 1       |
++| execute                                                                                                                   | 56434           | 56434 | 56434  | 56434 | 1       |
 
 
  | tests/extensions/v3-config-engine/mocks/AaveV3MockEModeCategoryUpdateNoChange.sol:AaveV3MockEModeCategoryUpdateNoChange contract |                 |       |        |       |         |
  |----------------------------------------------------------------------------------------------------------------------------------|-----------------|-------|--------|-------|---------|
  | Deployment Cost                                                                                                                  | Deployment Size |       |        |       |         |
 -| 770849                                                                                                                           | 3492            |       |        |       |         |
-+| 759832                                                                                                                           | 3441            |       |        |       |         |
++| 800206                                                                                                                           | 3629            |       |        |       |         |
  | Function Name                                                                                                                    | min             | avg   | median | max   | # calls |
 -| execute                                                                                                                          | 38497           | 38497 | 38497  | 38497 | 2       |
-+| execute                                                                                                                          | 37835           | 37835 | 37835  | 37835 | 2       |
++| execute                                                                                                                          | 37910           | 37910 | 37910  | 37910 | 2       |
 
 
  | tests/extensions/v3-config-engine/mocks/AaveV3MockListing.sol:AaveV3MockListing contract |                 |         |         |         |         |
  |------------------------------------------------------------------------------------------|-----------------|---------|---------|---------|---------|
  | Deployment Cost                                                                          | Deployment Size |         |         |         |         |
 -| 853685                                                                                   | 4030            |         |         |         |         |
-+| 849574                                                                                   | 4011            |         |         |         |         |
++| 882403                                                                                   | 4162            |         |         |         |         |
  | Function Name                                                                            | min             | avg     | median  | max     | # calls |
 -| execute                                                                                  | 1836009         | 1836009 | 1836009 | 1836009 | 1       |
-+| execute                                                                                  | 1823723         | 1823723 | 1823723 | 1823723 | 1       |
- | newListings                                                                              | 2820            | 2820    | 2820    | 2820    | 4       |
+-| newListings                                                                              | 2820            | 2820    | 2820    | 2820    | 4       |
++| execute                                                                                  | 1815216         | 1815216 | 1815216 | 1815216 | 1       |
++| newListings                                                                              | 2729            | 2729    | 2729    | 2729    | 4       |
 
 
  | tests/extensions/v3-config-engine/mocks/AaveV3MockListingCustom.sol:AaveV3MockListingCustom contract |                 |         |         |         |         |
  |------------------------------------------------------------------------------------------------------|-----------------|---------|---------|---------|---------|
  | Deployment Cost                                                                                      | Deployment Size |         |         |         |         |
 -| 918454                                                                                               | 4491            |         |         |         |         |
-+| 914350                                                                                               | 4472            |         |         |         |         |
++| 946992                                                                                               | 4623            |         |         |         |         |
  | Function Name                                                                                        | min             | avg     | median  | max     | # calls |
 -| execute                                                                                              | 1835953         | 1835953 | 1835953 | 1835953 | 1       |
-+| execute                                                                                              | 1823667         | 1823667 | 1823667 | 1823667 | 1       |
- | newListingsCustom                                                                                    | 3295            | 3295    | 3295    | 3295    | 4       |
+-| newListingsCustom                                                                                    | 3295            | 3295    | 3295    | 3295    | 4       |
++| execute                                                                                              | 1815233         | 1815233 | 1815233 | 1815233 | 1       |
++| newListingsCustom                                                                                    | 3226            | 3226    | 3226    | 3226    | 4       |
 
 
  | tests/extensions/v3-config-engine/mocks/AaveV3MockPriceFeedUpdate.sol:AaveV3MockPriceFeedUpdate contract |                 |       |        |       |         |
  |----------------------------------------------------------------------------------------------------------|-----------------|-------|--------|-------|---------|
  | Deployment Cost                                                                                          | Deployment Size |       |        |       |         |
 -| 774000                                                                                                   | 3660            |       |        |       |         |
-+| 769896                                                                                                   | 3641            |       |        |       |         |
++| 806996                                                                                                   | 3812            |       |        |       |         |
  | Function Name                                                                                            | min             | avg   | median | max   | # calls |
 -| execute                                                                                                  | 65371           | 65371 | 65371  | 65371 | 1       |
-+| execute                                                                                                  | 65393           | 65393 | 65393  | 65393 | 1       |
++| execute                                                                                                  | 65395           | 65395 | 65395  | 65395 | 1       |
 
 
  | tests/extensions/v3-config-engine/mocks/AaveV3MockRatesUpdate.sol:AaveV3MockRatesUpdate contract |                 |        |        |        |         |
  |--------------------------------------------------------------------------------------------------|-----------------|--------|--------|--------|---------|
  | Deployment Cost                                                                                  | Deployment Size |        |        |        |         |
 -| 772773                                                                                           | 3584            |        |        |        |         |
-+| 768681                                                                                           | 3565            |        |        |        |         |
++| 809091                                                                                           | 3753            |        |        |        |         |
  | Function Name                                                                                    | min             | avg    | median | max    | # calls |
 -| execute                                                                                          | 148663          | 148663 | 148663 | 148663 | 1       |
-+| execute                                                                                          | 148773          | 148773 | 148773 | 148773 | 1       |
- | rateStrategiesUpdates                                                                            | 1184            | 1184   | 1184   | 1184   | 4       |
+-| rateStrategiesUpdates                                                                            | 1184            | 1184   | 1184   | 1184   | 4       |
++| execute                                                                                          | 148672          | 148672 | 148672 | 148672 | 1       |
++| rateStrategiesUpdates                                                                            | 1162            | 1162   | 1162   | 1162   | 4       |
 
 
-@@ -1273,15 +1274,15 @@
+ | tests/harness/VariableDebtToken.sol:VariableDebtTokenHarness contract |                 |        |        |        |         |
+@@ -1273,17 +1274,17 @@
  | UNDERLYING_ASSET_ADDRESS                                              | 376             | 1200   | 376    | 2376   | 4354    |
  | allowance                                                             | 909             | 909    | 909    | 909    | 1       |
  | approve                                                               | 22107           | 22107  | 22107  | 22107  | 1       |
 -| approveDelegation                                                     | 48608           | 48637  | 48632  | 48680  | 256     |
 -| burn                                                                  | 52036           | 52064  | 52060  | 52108  | 512     |
-+| approveDelegation                                                     | 48608           | 48638  | 48632  | 48680  | 256     |
-+| burn                                                                  | 52036           | 52063  | 52060  | 52108  | 512     |
++| approveDelegation                                                     | 48608           | 48634  | 48632  | 48680  | 256     |
++| burn                                                                  | 52036           | 52065  | 52060  | 52108  | 512     |
  | decimals                                                              | 335             | 335    | 335    | 335    | 3330    |
  | decreaseAllowance                                                     | 22128           | 22128  | 22128  | 22128  | 1       |
  | getIncentivesController                                               | 431             | 431    | 431    | 431    | 3330    |
@@ -1394,25 +1408,28 @@ index 0dec812..9ce5779 100644
 -| initialize                                                            | 29524           | 148072 | 179097 | 270713 | 2048    |
 -| mint                                                                  | 86763           | 88040  | 86799  | 91824  | 1024    |
 -| name                                                                  | 1009            | 1332   | 1264   | 1796   | 3330    |
-+| initialize                                                            | 29500           | 146691 | 179067 | 270797 | 2048    |
++| initialize                                                            | 29318           | 147436 | 179085 | 270653 | 2048    |
 +| mint                                                                  | 86763           | 88039  | 86799  | 91824  | 1024    |
-+| name                                                                  | 1009            | 1328   | 1264   | 1796   | 3330    |
++| name                                                                  | 1009            | 1329   | 1264   | 1796   | 3330    |
  | scaledBalanceOf                                                       | 691             | 691    | 691    | 691    | 1024    |
- | symbol                                                                | 1030            | 1351   | 1285   | 1817   | 3330    |
+-| symbol                                                                | 1030            | 1351   | 1285   | 1817   | 3330    |
++| symbol                                                                | 1030            | 1354   | 1285   | 1817   | 3330    |
  | transfer                                                              | 22150           | 22150  | 22150  | 22150  | 1       |
+ | transferFrom                                                          | 22377           | 22377  | 22377  | 22377  | 1       |
+
 @@ -1291,11 +1292,11 @@
  | tests/mocks/AaveV3TestListing.sol:AaveV3TestListing contract |                 |         |         |         |         |
  |--------------------------------------------------------------|-----------------|---------|---------|---------|---------|
  | Deployment Cost                                              | Deployment Size |         |         |         |         |
 -| 3392063                                                      | 13846           |         |         |         |         |
-+| 3391415                                                      | 13843           |         |         |         |         |
++| 3416267                                                      | 13958           |         |         |         |         |
  | Function Name                                                | min             | avg     | median  | max     | # calls |
 -| USDX_ADDRESS                                                 | 294             | 294     | 294     | 294     | 617     |
 -| WBTC_ADDRESS                                                 | 250             | 250     | 250     | 250     | 617     |
 -| execute                                                      | 5227666         | 5230040 | 5230240 | 5230240 | 619     |
-+| USDX_ADDRESS                                                 | 294             | 294     | 294     | 294     | 613     |
-+| WBTC_ADDRESS                                                 | 250             | 250     | 250     | 250     | 613     |
-+| execute                                                      | 5190851         | 5193099 | 5193290 | 5193290 | 615     |
++| USDX_ADDRESS                                                 | 272             | 272     | 272     | 272     | 622     |
++| WBTC_ADDRESS                                                 | 228             | 228     | 228     | 228     | 622     |
++| execute                                                      | 5177782         | 5180033 | 5180221 | 5180221 | 624     |
 
 
  | tests/mocks/AugustusRegistryMock.sol:AugustusRegistryMock contract |                 |     |        |     |         |
@@ -1421,5 +1438,5 @@ index 0dec812..9ce5779 100644
 
 
 -Ran 56 test suites in 75.93s (123.90s CPU time): 694 tests passed, 0 failed, 0 skipped (694 total tests)
-+Ran 57 test suites in 74.55s (146.31s CPU time): 690 tests passed, 0 failed, 0 skipped (690 total tests)
++Ran 57 test suites in 75.90s (200.04s CPU time): 699 tests passed, 0 failed, 0 skipped (699 total tests)
 ```
