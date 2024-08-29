@@ -224,7 +224,6 @@ contract PoolEModeTests is TestnetProcedures {
       false
     );
 
-
     // todo: assertions based on bonus
   }
 

@@ -89,7 +89,6 @@ contract MockReserveConfiguration {
     return configuration.getBorrowCap();
   }
 
-
   function setFlashLoanEnabled(bool enabled) external {
     DataTypes.ReserveConfigurationMap memory config = configuration;
     config.setFlashLoanEnabled(enabled);

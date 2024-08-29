@@ -136,10 +136,11 @@ library LiquidationLogic {
       })
     );
 
-    (
-      vars.collateralAToken,
-      vars.liquidationBonus
-    ) = _getConfigurationData(eModeCategories, collateralReserve, params);
+    (vars.collateralAToken, vars.liquidationBonus) = _getConfigurationData(
+      eModeCategories,
+      collateralReserve,
+      params
+    );
 
     vars.userCollateralBalance = vars.collateralAToken.balanceOf(params.user);
 

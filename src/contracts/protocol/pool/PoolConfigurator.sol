@@ -404,10 +404,7 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
     categoryData.liquidationBonus = liquidationBonus;
     categoryData.label = label;
 
-    _pool.configureEModeCategory(
-      categoryId,
-      categoryData
-    );
+    _pool.configureEModeCategory(categoryId, categoryData);
     emit EModeCategoryAdded(
       categoryId,
       ltv,
