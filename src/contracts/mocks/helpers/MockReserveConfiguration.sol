@@ -89,11 +89,6 @@ contract MockReserveConfiguration {
     return configuration.getBorrowCap();
   }
 
-  // function setEModeCategory(uint256 categoryId) external {
-  //   DataTypes.ReserveConfigurationMap memory config = configuration;
-  //   config.setEModeCategory(categoryId);
-  //   configuration = config;
-  // }
 
   function setFlashLoanEnabled(bool enabled) external {
     DataTypes.ReserveConfigurationMap memory config = configuration;
