@@ -30,7 +30,6 @@ library LiquidationLogic {
   using ReserveLogic for DataTypes.ReserveData;
   using UserConfiguration for DataTypes.UserConfigurationMap;
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
-  using EModeConfiguration for DataTypes.EModeCategory;
   using GPv2SafeERC20 for IERC20;
 
   // See `IPool` for descriptions

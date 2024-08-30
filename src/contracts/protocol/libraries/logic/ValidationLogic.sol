@@ -36,7 +36,6 @@ library ValidationLogic {
   using GPv2SafeERC20 for IERC20;
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
   using UserConfiguration for DataTypes.UserConfigurationMap;
-  using EModeConfiguration for DataTypes.EModeCategory;
   using Address for address;
 
   // Factor to apply to "only-variable-debt" liquidity rate to get threshold for rebalancing, expressed in bps

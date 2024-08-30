@@ -24,7 +24,6 @@ library GenericLogic {
   using PercentageMath for uint256;
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
   using UserConfiguration for DataTypes.UserConfigurationMap;
-  using EModeConfiguration for DataTypes.EModeCategory;
 
   struct CalculateUserAccountDataVars {
     uint256 assetPrice;
