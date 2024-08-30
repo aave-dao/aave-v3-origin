@@ -5,7 +5,6 @@ import {GPv2SafeERC20} from '../../../dependencies/gnosis/contracts/GPv2SafeERC2
 import {IERC20} from '../../../dependencies/openzeppelin/contracts/IERC20.sol';
 import {IPriceOracleGetter} from '../../../interfaces/IPriceOracleGetter.sol';
 import {UserConfiguration} from '../configuration/UserConfiguration.sol';
-import {EModeConfiguration} from '../configuration/EModeConfiguration.sol';
 import {WadRayMath} from '../math/WadRayMath.sol';
 import {PercentageMath} from '../math/PercentageMath.sol';
 import {DataTypes} from '../types/DataTypes.sol';
@@ -22,7 +21,6 @@ library EModeLogic {
   using ReserveLogic for DataTypes.ReserveData;
   using GPv2SafeERC20 for IERC20;
   using UserConfiguration for DataTypes.UserConfigurationMap;
-  using EModeConfiguration for DataTypes.EModeCategory;
   using WadRayMath for uint256;
   using PercentageMath for uint256;
 
