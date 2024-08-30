@@ -84,7 +84,7 @@ library DataTypes {
     //bit 56: reserve is active
     //bit 57: reserve is frozen
     //bit 58: borrowing is enabled
-    //bit 59: DEPRECATED: stable rate borrowing enabled // TODO: wipe it and reuse
+    //bit 59: DEPRECATED: stable rate borrowing enabled
     //bit 60: asset is paused
     //bit 61: borrowing in isolation mode is enabled
     //bit 62: siloed borrowing enabled

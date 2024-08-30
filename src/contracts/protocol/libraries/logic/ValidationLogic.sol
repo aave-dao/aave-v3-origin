@@ -306,7 +306,7 @@ library ValidationLogic {
     require(isActive, Errors.RESERVE_INACTIVE);
     require(!isPaused, Errors.RESERVE_PAUSED);
 
-    require(debt != 0, Errors.NO_DEBT_OF_SELECTED_TYPE); // TODO: maybe not needed, rename error
+    require(debt != 0, Errors.NO_DEBT_OF_SELECTED_TYPE);
   }
 
   /**

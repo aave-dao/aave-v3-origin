@@ -79,7 +79,6 @@ struct MarketReport {
   address l2Encoder;
   address aToken;
   address variableDebtToken;
-  address stableDebtToken;
   address emissionManager;
   address rewardsControllerImplementation;
   address rewardsControllerProxy;

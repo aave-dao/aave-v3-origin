@@ -207,7 +207,6 @@ interface IPoolDataProvider {
    * @return stableDebtTokenAddress DEPRECATED in v3.2.0
    * @return variableDebtTokenAddress The VariableDebtToken address of the reserve
    */
-  // TODO: decide
   function getReserveTokensAddresses(
     address asset
   )
