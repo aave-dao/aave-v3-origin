@@ -6,19 +6,9 @@ interface IWrappedTokenGatewayV3 {
 
   function withdrawETH(address pool, uint256 amount, address onBehalfOf) external;
 
-  function repayETH(
-    address pool,
-    uint256 amount,
-    uint256 rateMode,
-    address onBehalfOf
-  ) external payable;
+  function repayETH(address pool, uint256 amount, address onBehalfOf) external payable;
 
-  function borrowETH(
-    address pool,
-    uint256 amount,
-    uint256 interestRateMode,
-    uint16 referralCode
-  ) external;
+  function borrowETH(address pool, uint256 amount, uint16 referralCode) external;
 
   function withdrawETHWithPermit(
     address pool,
