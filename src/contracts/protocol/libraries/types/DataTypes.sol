@@ -93,7 +93,7 @@ library DataTypes {
     //bit 80-115: borrow cap in whole tokens, borrowCap == 0 => no cap
     //bit 116-151: supply cap in whole tokens, supplyCap == 0 => no cap
     //bit 152-167: liquidation protocol fee
-    //bit 168-175: eMode category
+    //bit 168-175: DEPRECATED: eMode category
     //bit 176-211: unbacked mint cap in whole tokens, unbackedMintCap == 0 => minting disabled
     //bit 212-251: debt ceiling for isolation mode with (ReserveConfiguration::DEBT_CEILING_DECIMALS) decimals
     //bit 252: virtual accounting is enabled for the reserve
