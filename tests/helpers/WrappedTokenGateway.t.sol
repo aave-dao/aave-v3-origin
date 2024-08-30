@@ -300,7 +300,6 @@ contract WrappedTokenGatewayTests is TestnetProcedures {
     wrappedTokenGatewayV3.repayETH{value: partialRepayment}(
       report.poolProxy,
       partialRepayment,
-      2,
       bob
     );
 
@@ -313,12 +312,7 @@ contract WrappedTokenGatewayTests is TestnetProcedures {
     vm.expectEmit(address(contracts.poolProxy));
     emit Repay(tokenList.weth, bob, address(wrappedTokenGatewayV3), partialRepayment, false);
     // Full repayment
-    wrappedTokenGatewayV3.repayETH{value: partialRepayment}(
-      report.poolProxy,
-      type(uint).max,
-      2,
-      bob
-    );
+    wrappedTokenGatewayV3.repayETH{value: partialRepayment}(report.poolProxy, type(uint).max, bob);
 
     assertEq(wEthVariableDebtToken.balanceOf(bob), 0, 'The users debt should be 0');
 
@@ -375,7 +369,6 @@ contract WrappedTokenGatewayTests is TestnetProcedures {
     wrappedTokenGatewayV3.repayETH{value: partialRepayment + 1}(
       report.poolProxy,
       partialRepayment,
-      2,
       bob
     );
 
@@ -388,12 +381,7 @@ contract WrappedTokenGatewayTests is TestnetProcedures {
     vm.expectEmit(address(contracts.poolProxy));
     emit Repay(tokenList.weth, bob, address(wrappedTokenGatewayV3), partialRepayment, false);
     // Full repayment
-    wrappedTokenGatewayV3.repayETH{value: partialRepayment}(
-      report.poolProxy,
-      type(uint).max,
-      2,
-      bob
-    );
+    wrappedTokenGatewayV3.repayETH{value: partialRepayment}(report.poolProxy, type(uint).max, bob);
   }
 
   function test_borrowDelegateApprove_repay() public {
@@ -405,7 +393,7 @@ contract WrappedTokenGatewayTests is TestnetProcedures {
 
     wEthVariableDebtToken.approveDelegation(address(wrappedTokenGatewayV3), borrowSize);
 
-    wrappedTokenGatewayV3.borrowETH(address(contracts.poolProxy), borrowSize, 2, 0);
+    wrappedTokenGatewayV3.borrowETH(address(contracts.poolProxy), borrowSize, 0);
 
     assertEq(
       wEthVariableDebtToken.balanceOf(alice),
@@ -414,7 +402,7 @@ contract WrappedTokenGatewayTests is TestnetProcedures {
     );
 
     // Full repayment
-    wrappedTokenGatewayV3.repayETH{value: borrowSize}(report.poolProxy, type(uint).max, 2, alice);
+    wrappedTokenGatewayV3.repayETH{value: borrowSize}(report.poolProxy, type(uint).max, alice);
     vm.stopPrank();
 
     assertEq(wEthVariableDebtToken.balanceOf(alice), 0, 'The users debt should be 0');

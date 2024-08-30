@@ -72,16 +72,7 @@ contract WrappedTokenGatewayV3 is IWrappedTokenGatewayV3, Ownable {
    * @param amount the amount to repay, or uint256(-1) if the user wants to repay everything
    * @param onBehalfOf the address for which msg.sender is repaying
    */
-  function repayETH(
-    address,
-    uint256 amount,
-    uint256 rateMode,
-    address onBehalfOf
-  ) external payable override {
-    require(
-      rateMode == uint256(DataTypes.InterestRateMode.VARIABLE),
-      'INVALID_INTEREST_RATE_MODE_SELECTED'
-    );
+  function repayETH(address, uint256 amount, address onBehalfOf) external payable override {
     uint256 paybackAmount = IERC20((POOL.getReserveData(address(WETH))).variableDebtTokenAddress)
       .balanceOf(onBehalfOf);
 
@@ -106,16 +97,7 @@ contract WrappedTokenGatewayV3 is IWrappedTokenGatewayV3, Ownable {
    * @param amount the amount of ETH to borrow
    * @param referralCode integrators are assigned a referral code and can potentially receive rewards
    */
-  function borrowETH(
-    address,
-    uint256 amount,
-    uint256 rateMode,
-    uint16 referralCode
-  ) external override {
-    require(
-      rateMode == uint256(DataTypes.InterestRateMode.VARIABLE),
-      'INVALID_INTEREST_RATE_MODE_SELECTED'
-    );
+  function borrowETH(address, uint256 amount, uint16 referralCode) external override {
     POOL.borrow(
       address(WETH),
       amount,
