@@ -62,14 +62,6 @@ interface IPoolConfigurator {
   );
 
   /**
-   * @dev Emitted when stable rate borrowing is enabled or disabled on a reserve
-   * @notice deprecated in v3.2.0
-   * @param asset The address of the underlying asset of the reserve
-   * @param enabled True if stable rate borrowing is enabled, false otherwise
-   */
-  event ReserveStableRateBorrowing(address indexed asset, bool enabled);
-
-  /**
    * @dev Emitted when a reserve is activated or deactivated
    * @param asset The address of the underlying asset of the reserve
    * @param active True if reserve is active, false otherwise
@@ -209,19 +201,6 @@ interface IPoolConfigurator {
    * @param implementation The new aToken implementation
    */
   event ATokenUpgraded(
-    address indexed asset,
-    address indexed proxy,
-    address indexed implementation
-  );
-
-  /**
-   * @dev Emitted when the implementation of a stable debt token is upgraded.
-   * @notice deprecated in v3.2.0
-   * @param asset The address of the underlying asset of the reserve
-   * @param proxy The stable debt token proxy address
-   * @param implementation The new aToken implementation
-   */
-  event StableDebtTokenUpgraded(
     address indexed asset,
     address indexed proxy,
     address indexed implementation
