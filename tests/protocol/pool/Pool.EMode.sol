@@ -26,8 +26,6 @@ contract PoolEModeTests is TestnetProcedures {
 
   IPool internal pool;
 
-  // @notice number of eModes that are created per default
-
   function setUp() public virtual {
     initTestEnvironment(false);
 

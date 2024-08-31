@@ -801,33 +801,6 @@ contract ProtocolV3TestBase is DiffUtils {
     );
   }
 
-  function _validateAssetsOnEmodeCategory(
-    uint256 category,
-    ReserveConfig[] memory assetsConfigs,
-    string[] memory expectedAssets
-  ) internal pure {
-    string[] memory assetsInCategory = new string[](assetsConfigs.length);
-
-    uint256 countCategory;
-    // for (uint256 i = 0; i < assetsConfigs.length; i++) {
-    //   if (assetsConfigs[i].eModeCategory == category) {
-    //     assetsInCategory[countCategory] = assetsConfigs[i].symbol;
-    //     require(
-    //       keccak256(bytes(assetsInCategory[countCategory])) ==
-    //         keccak256(bytes(expectedAssets[countCategory])),
-    //       '_getAssetOnEmodeCategory(): INCONSISTENT_ASSETS'
-    //     );
-    //     countCategory++;
-    //     if (countCategory > expectedAssets.length) {
-    //       revert('_getAssetOnEmodeCategory(): MORE_ASSETS_IN_CATEGORY_THAN_EXPECTED');
-    //     }
-    //   }
-    // }
-    if (countCategory < expectedAssets.length) {
-      revert('_getAssetOnEmodeCategory(): LESS_ASSETS_IN_CATEGORY_THAN_EXPECTED');
-    }
-  }
-
   function _validateEmodeCategory(
     IPoolAddressesProvider addressesProvider,
     uint256 category,
@@ -851,6 +824,14 @@ contract ProtocolV3TestBase is DiffUtils {
     );
     require(
       currentCategoryData.liquidationBonus == expectedCategoryData.liquidationBonus,
+      '_validateEmodeCategory(): INVALID_LB'
+    );
+    require(
+      currentCategoryData.collateralMask == expectedCategoryData.collateralMask,
+      '_validateEmodeCategory(): INVALID_LB'
+    );
+    require(
+      currentCategoryData.borrowableMask == expectedCategoryData.borrowableMask,
       '_validateEmodeCategory(): INVALID_LB'
     );
   }
