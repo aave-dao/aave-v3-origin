@@ -18,13 +18,14 @@ import {AaveV3MockEModeCategoryUpdateNoChange} from './mocks/AaveV3MockEModeCate
 import {AaveV3MockAssetEModeUpdate} from './mocks/AaveV3MockAssetEModeUpdate.sol';
 
 import {ATokenInstance} from '../../../src/contracts/instances/ATokenInstance.sol';
+import {EModeConfiguration} from '../../../src/contracts/protocol/libraries/configuration/EModeConfiguration.sol';
 import {VariableDebtTokenInstance} from '../../../src/contracts/instances/VariableDebtTokenInstance.sol';
 import {TestnetProcedures, AaveV3ConfigEngine} from '../../utils/TestnetProcedures.sol';
 import {TestnetERC20} from '../../../src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
 import {MockAggregator} from '../../../src/contracts/mocks/oracle/CLAggregators/MockAggregator.sol';
 import {IPool, IPoolAddressesProvider} from '../../utils/ProtocolV3TestBase.sol';
 import {DataTypes} from '../../../src/contracts/protocol/libraries/types/DataTypes.sol';
-import {ProtocolV3TestBase, IDefaultInterestRateStrategyV2, ReserveConfig, ReserveTokens, DataTypes as DataTypeOld} from '../../utils/ProtocolV3TestBase.sol';
+import {ProtocolV3TestBase, IDefaultInterestRateStrategyV2, ReserveConfig, ReserveTokens} from '../../utils/ProtocolV3TestBase.sol';
 
 contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
   using stdStorage for StdStorage;
@@ -536,7 +537,7 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
 
     diffReports('preTestEngineEModeCategoryUpdate', 'postTestEngineEModeCategoryUpdate');
 
-    DataTypeOld.EModeCategory memory prevEmodeCategoryData;
+    DataTypes.EModeCategory memory prevEmodeCategoryData;
     prevEmodeCategoryData.ltv = 97_40;
     prevEmodeCategoryData.liquidationThreshold = 97_60;
     prevEmodeCategoryData.liquidationBonus = 101_50; // 100_00 + 1_50
@@ -613,7 +614,7 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
 
     diffReports('preTestEngineEModeCategoryNoChange', 'postTestEngineEModeCategoryNoChange');
 
-    DataTypeOld.EModeCategory memory prevEmodeCategoryData;
+    DataTypes.EModeCategory memory prevEmodeCategoryData;
     prevEmodeCategoryData.ltv = eModeCategoryDataBefore.ltv;
     prevEmodeCategoryData.liquidationThreshold = eModeCategoryDataBefore.liquidationThreshold;
     prevEmodeCategoryData.liquidationBonus = eModeCategoryDataBefore.liquidationBonus;
@@ -655,6 +656,8 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
 
     diffReports('preTestEngineAssetEModeUpdate', 'postTestEngineAssetEModeUpdate');
 
-    // assertEq(contracts.protocolDataProvider.getReserveEModeCategory(asset), 1);
+    DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(asset);
+    DataTypes.EModeCategory memory eMode = contracts.poolProxy.getEModeCategoryData(1);
+    EModeConfiguration.isCollateralAsset(eMode.isCollateralBitmap, reserveData.id);
   }
 }
