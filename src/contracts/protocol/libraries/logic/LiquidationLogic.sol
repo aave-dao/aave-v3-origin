@@ -135,11 +135,18 @@ library LiquidationLogic {
       })
     );
 
-    (vars.collateralAToken, vars.liquidationBonus) = _getConfigurationData(
-      eModeCategories,
-      collateralReserve,
-      params
-    );
+    vars.collateralAToken = IAToken(collateralReserve.aTokenAddress);
+    if (
+      params.userEModeCategory != 0 &&
+      EModeConfiguration.isCollateralAsset(
+        eModeCategories[params.userEModeCategory].collateralMask,
+        collateralReserve.id
+      )
+    ) {
+      vars.liquidationBonus = eModeCategories[params.userEModeCategory].liquidationBonus;
+    } else {
+      vars.liquidationBonus = collateralReserve.configuration.getLiquidationBonus();
+    }
 
     vars.userCollateralBalance = vars.collateralAToken.balanceOf(params.user);
 
@@ -355,35 +362,6 @@ library LiquidationLogic {
       : params.debtToCover;
 
     return (userVariableDebt, actualDebtToLiquidate);
-  }
-
-  /**
-   * @notice Returns the configuration data for the debt and the collateral reserves.
-   * @param eModeCategories The configuration of all the efficiency mode categories
-   * @param collateralReserve The data of the collateral reserve
-   * @param params The additional parameters needed to execute the liquidation function
-   * @return The collateral aToken
-   * @return The liquidation bonus to apply to the collateral
-   */
-  function _getConfigurationData(
-    mapping(uint8 => DataTypes.EModeCategory) storage eModeCategories,
-    DataTypes.ReserveData storage collateralReserve,
-    DataTypes.ExecuteLiquidationCallParams memory params
-  ) internal view returns (IAToken, uint256) {
-    IAToken collateralAToken = IAToken(collateralReserve.aTokenAddress);
-    uint256 liquidationBonus = collateralReserve.configuration.getLiquidationBonus();
-    if (params.userEModeCategory != 0) {
-      if (
-        EModeConfiguration.isCollateralAsset(
-          eModeCategories[params.userEModeCategory].collateralMask,
-          collateralReserve.id
-        )
-      ) {
-        liquidationBonus = eModeCategories[params.userEModeCategory].liquidationBonus;
-      }
-    }
-
-    return (collateralAToken, liquidationBonus);
   }
 
   struct AvailableCollateralToLiquidateLocalVars {
