@@ -210,7 +210,7 @@ library ValidationLogic {
     if (params.userEModeCategory != 0) {
       require(
         EModeConfiguration.isBorrowableAsset(
-          eModeCategories[params.userEModeCategory].borrowableMask,
+          eModeCategories[params.userEModeCategory].isBorrowableBitmap,
           reservesData[params.asset].id
         ),
         Errors.NOT_BORROWABLE_IN_EMODE
@@ -573,7 +573,7 @@ library ValidationLogic {
         for (uint256 i = 0; i < reservesCount; i++) {
           if (userConfig.isBorrowing(i)) {
             require(
-              EModeConfiguration.isBorrowableAsset(eModeCategory.borrowableMask, i),
+              EModeConfiguration.isBorrowableAsset(eModeCategory.isBorrowableBitmap, i),
               Errors.NOT_BORROWABLE_IN_EMODE
             );
           }

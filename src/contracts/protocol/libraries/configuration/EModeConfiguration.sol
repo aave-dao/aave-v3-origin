@@ -26,9 +26,9 @@ library EModeConfiguration {
       require(reserveIndex < ReserveConfiguration.MAX_RESERVES_COUNT, Errors.INVALID_RESERVE_INDEX);
       uint128 bit = uint128(1 << reserveIndex);
       if (collateral) {
-        self.collateralMask |= bit;
+        self.isCollateralBitmap |= bit;
       } else {
-        self.collateralMask &= ~bit;
+        self.isCollateralBitmap &= ~bit;
       }
     }
   }
@@ -61,9 +61,9 @@ library EModeConfiguration {
       require(reserveIndex < ReserveConfiguration.MAX_RESERVES_COUNT, Errors.INVALID_RESERVE_INDEX);
       uint128 bit = uint128(1 << reserveIndex);
       if (borrowable) {
-        self.borrowableMask |= bit;
+        self.isBorrowableBitmap |= bit;
       } else {
-        self.borrowableMask &= ~bit;
+        self.isBorrowableBitmap &= ~bit;
       }
     }
   }

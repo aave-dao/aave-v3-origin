@@ -139,7 +139,7 @@ library LiquidationLogic {
     if (
       params.userEModeCategory != 0 &&
       EModeConfiguration.isCollateralAsset(
-        eModeCategories[params.userEModeCategory].collateralMask,
+        eModeCategories[params.userEModeCategory].isCollateralBitmap,
         collateralReserve.id
       )
     ) {

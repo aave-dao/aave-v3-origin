@@ -120,7 +120,7 @@ library GenericLogic {
         vars.isInEModeCategory =
           params.userEModeCategory != 0 &&
           EModeConfiguration.isCollateralAsset(
-            eModeCategories[params.userEModeCategory].collateralMask,
+            eModeCategories[params.userEModeCategory].isCollateralBitmap,
             vars.i
           );
 

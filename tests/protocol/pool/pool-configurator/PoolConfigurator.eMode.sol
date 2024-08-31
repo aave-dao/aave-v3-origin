@@ -43,8 +43,8 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
     assertEq(emodeConfig.liquidationThreshold, ct.lt);
     assertEq(emodeConfig.liquidationBonus, ct.lb);
     assertEq(emodeConfig.label, ct.label);
-    assertEq(emodeConfig.collateralMask, 0);
-    assertEq(emodeConfig.borrowableMask, 0);
+    assertEq(emodeConfig.isCollateralBitmap, 0);
+    assertEq(emodeConfig.isBorrowableBitmap, 0);
   }
 
   function test_updateEModeCategory() public {
@@ -85,8 +85,8 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
     assertEq(emodeConfig.liquidationThreshold, updatedCategory.lt);
     assertEq(emodeConfig.liquidationBonus, updatedCategory.lb);
     assertEq(emodeConfig.label, updatedCategory.label);
-    assertEq(emodeConfig.collateralMask, ogCategory.collateralMask);
-    assertEq(emodeConfig.borrowableMask, ogCategory.borrowableMask);
+    assertEq(emodeConfig.isCollateralBitmap, ogCategory.isCollateralBitmap);
+    assertEq(emodeConfig.isBorrowableBitmap, ogCategory.isBorrowableBitmap);
   }
 
   function test_reverts_setEmodeCategory_zero_ltv() public {
@@ -153,7 +153,7 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
     DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
       tokenList.usdx
     );
-    assertEq(EModeConfiguration.isCollateralAsset(config.collateralMask, reserveData.id), true);
+    assertEq(EModeConfiguration.isCollateralAsset(config.isCollateralBitmap, reserveData.id), true);
   }
 
   function test_addAnotherAssetCollateralInEMode() public {
@@ -169,8 +169,14 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
     DataTypes.ReserveDataLegacy memory reserveDataWBTC = contracts.poolProxy.getReserveData(
       tokenList.wbtc
     );
-    assertEq(EModeConfiguration.isCollateralAsset(config.collateralMask, reserveDataUSDX.id), true);
-    assertEq(EModeConfiguration.isCollateralAsset(config.collateralMask, reserveDataWBTC.id), true);
+    assertEq(
+      EModeConfiguration.isCollateralAsset(config.isCollateralBitmap, reserveDataUSDX.id),
+      true
+    );
+    assertEq(
+      EModeConfiguration.isCollateralAsset(config.isCollateralBitmap, reserveDataWBTC.id),
+      true
+    );
   }
 
   function test_removeCollateralFromEmode() public {
@@ -186,7 +192,10 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
     DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
       tokenList.usdx
     );
-    assertEq(EModeConfiguration.isCollateralAsset(config.collateralMask, reserveData.id), false);
+    assertEq(
+      EModeConfiguration.isCollateralAsset(config.isCollateralBitmap, reserveData.id),
+      false
+    );
   }
 
   function test_setAssetBorrowableInEMode() public {
@@ -200,7 +209,7 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
     DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
       tokenList.usdx
     );
-    assertEq(EModeConfiguration.isBorrowableAsset(config.borrowableMask, reserveData.id), true);
+    assertEq(EModeConfiguration.isBorrowableAsset(config.isBorrowableBitmap, reserveData.id), true);
   }
 
   function test_addAnotherAssetBorrowableInEMode() public {
@@ -216,8 +225,14 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
     DataTypes.ReserveDataLegacy memory reserveDataWBTC = contracts.poolProxy.getReserveData(
       tokenList.wbtc
     );
-    assertEq(EModeConfiguration.isBorrowableAsset(config.borrowableMask, reserveDataUSDX.id), true);
-    assertEq(EModeConfiguration.isBorrowableAsset(config.borrowableMask, reserveDataWBTC.id), true);
+    assertEq(
+      EModeConfiguration.isBorrowableAsset(config.isBorrowableBitmap, reserveDataUSDX.id),
+      true
+    );
+    assertEq(
+      EModeConfiguration.isBorrowableAsset(config.isBorrowableBitmap, reserveDataWBTC.id),
+      true
+    );
   }
 
   function test_removeBorrowableFromEmode() public {
@@ -231,6 +246,9 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
     DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
       tokenList.usdx
     );
-    assertEq(EModeConfiguration.isBorrowableAsset(config.borrowableMask, reserveData.id), false);
+    assertEq(
+      EModeConfiguration.isBorrowableAsset(config.isBorrowableBitmap, reserveData.id),
+      false
+    );
   }
 }

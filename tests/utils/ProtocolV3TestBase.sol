@@ -827,11 +827,11 @@ contract ProtocolV3TestBase is DiffUtils {
       '_validateEmodeCategory(): INVALID_LB'
     );
     require(
-      currentCategoryData.collateralMask == expectedCategoryData.collateralMask,
+      currentCategoryData.isCollateralBitmap == expectedCategoryData.isCollateralBitmap,
       '_validateEmodeCategory(): INVALID_LB'
     );
     require(
-      currentCategoryData.borrowableMask == expectedCategoryData.borrowableMask,
+      currentCategoryData.isBorrowableBitmap == expectedCategoryData.isBorrowableBitmap,
       '_validateEmodeCategory(): INVALID_LB'
     );
   }
