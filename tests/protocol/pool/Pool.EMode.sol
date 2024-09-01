@@ -190,6 +190,42 @@ contract PoolEModeTests is TestnetProcedures {
     pool.setUserEMode(2);
   }
 
+  function test_liquidations_shouldAllowLiquidatingAssetThatIsBorrowableInEmodeOnly(
+    uint104 amount
+  ) external {
+    amount = uint104(bound(amount, 1 ether, type(uint104).max));
+    vm.startPrank(poolAdmin);
+    contracts.poolConfiguratorProxy.setEModeCategory(1, 9000, 9200, 10050, 'usdx eMode low');
+    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, 1, true);
+    contracts.poolConfiguratorProxy.setReserveBorrowing(tokenList.wbtc, false);
+    contracts.poolConfiguratorProxy.setAssetBorrowableInEMode(tokenList.wbtc, 1, true);
+    vm.stopPrank();
+
+    vm.prank(alice);
+    pool.setUserEMode(1);
+    _mintTestnetToken(tokenList.usdx, alice, amount);
+    _supplyToPool(tokenList.usdx, alice, amount);
+    (uint256 totalCollateralBase, , , , , ) = contracts.poolProxy.getUserAccountData(alice);
+    uint256 collateralPrice = contracts.aaveOracle.getAssetPrice(tokenList.usdx);
+    uint256 debtPrice = contracts.aaveOracle.getAssetPrice(tokenList.wbtc);
+    uint256 borrowAmount = (totalCollateralBase * 1e8) / debtPrice;
+    _borrowArbitraryAmount(tokenList.wbtc, alice, borrowAmount);
+
+    address liquidator = address(0x0f0f0f);
+    _mintTestnetToken(tokenList.wbtc, liquidator, borrowAmount);
+    vm.startPrank(liquidator);
+    IERC20(tokenList.wbtc).approve(address(contracts.poolProxy), borrowAmount);
+    contracts.poolProxy.liquidationCall(
+      tokenList.usdx,
+      tokenList.wbtc,
+      alice,
+      type(uint256).max,
+      false
+    );
+
+    // TODO: assumptions about lb
+  }
+
   function test_liquidations_shouldApplyEModeLBForEmodeAssets(uint104 amount) public {
     amount = uint104(bound(amount, 1 ether, type(uint104).max));
     vm.startPrank(poolAdmin);
