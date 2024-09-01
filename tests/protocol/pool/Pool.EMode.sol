@@ -12,6 +12,7 @@ import {PoolInstance} from '../../../src/contracts/instances/PoolInstance.sol';
 import {Errors} from '../../../src/contracts/protocol/libraries/helpers/Errors.sol';
 import {ReserveConfiguration} from '../../../src/contracts/protocol/pool/PoolConfigurator.sol';
 import {WadRayMath} from '../../../src/contracts/protocol/libraries/math/WadRayMath.sol';
+import {PercentageMath} from '../../../src/contracts/protocol/libraries/math/PercentageMath.sol';
 import {IAaveOracle} from '../../../src/contracts/interfaces/IAaveOracle.sol';
 import {TestnetProcedures} from '../../utils/TestnetProcedures.sol';
 import {TestnetERC20} from '../../../src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
@@ -21,6 +22,7 @@ contract PoolEModeTests is TestnetProcedures {
 
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
   using WadRayMath for uint256;
+  using PercentageMath for uint256;
 
   event UserEModeSet(address indexed user, uint8 categoryId);
 
@@ -191,11 +193,18 @@ contract PoolEModeTests is TestnetProcedures {
   }
 
   function test_liquidations_shouldAllowLiquidatingAssetThatIsBorrowableInEmodeOnly(
-    uint104 amount
-  ) external {
-    amount = uint104(bound(amount, 1 ether, type(uint104).max));
+    uint256 amount
+  ) public {
+    amount = bound(amount, 1 ether, type(uint104).max);
     vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(1, 9000, 9200, 10050, 'usdx eMode low');
+    uint16 liquidationBonus = 10050;
+    contracts.poolConfiguratorProxy.setEModeCategory(
+      1,
+      9000,
+      9200,
+      liquidationBonus,
+      'usdx eMode low'
+    );
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, 1, true);
     contracts.poolConfiguratorProxy.setReserveBorrowing(tokenList.wbtc, false);
     contracts.poolConfiguratorProxy.setAssetBorrowableInEMode(tokenList.wbtc, 1, true);
@@ -223,13 +232,25 @@ contract PoolEModeTests is TestnetProcedures {
       false
     );
 
-    // TODO: assumptions about lb
+    DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
+      tokenList.usdx
+    );
+    uint256 bonus = amount - amount.percentDiv(liquidationBonus);
+    uint256 protocolFee = bonus.percentMul(reserveData.configuration.getLiquidationProtocolFee());
+    assertEq(IERC20(tokenList.usdx).balanceOf(liquidator), amount - protocolFee);
   }
 
-  function test_liquidations_shouldApplyEModeLBForEmodeAssets(uint104 amount) public {
-    amount = uint104(bound(amount, 1 ether, type(uint104).max));
+  function test_liquidations_shouldApplyEModeLBForEmodeAssets(uint256 amount) public {
+    amount = bound(amount, 1 ether, type(uint104).max);
     vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(1, 9000, 9200, 10050, 'usdx eMode low');
+    uint16 liquidationBonus = 10050;
+    contracts.poolConfiguratorProxy.setEModeCategory(
+      1,
+      9000,
+      9200,
+      liquidationBonus,
+      'usdx eMode low'
+    );
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, 1, true);
     contracts.poolConfiguratorProxy.setAssetBorrowableInEMode(tokenList.wbtc, 1, true);
     vm.stopPrank();
@@ -256,7 +277,12 @@ contract PoolEModeTests is TestnetProcedures {
       false
     );
 
-    // todo: assertions based on bonus
+    DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
+      tokenList.usdx
+    );
+    uint256 bonus = amount - amount.percentDiv(liquidationBonus);
+    uint256 protocolFee = bonus.percentMul(reserveData.configuration.getLiquidationProtocolFee());
+    assertEq(IERC20(tokenList.usdx).balanceOf(liquidator), amount - protocolFee);
   }
 
   function _mintTestnetToken(address erc20, address user, uint256 amount) internal {
