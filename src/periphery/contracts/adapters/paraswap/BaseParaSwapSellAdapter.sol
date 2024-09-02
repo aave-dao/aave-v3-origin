@@ -98,6 +98,10 @@ abstract contract BaseParaSwapSellAdapter is BaseParaSwapAdapter {
         revert(0, returndatasize())
       }
     }
+    
+    // Reset allowance
+    assetToSwapFrom.safeApprove(tokenTransferProxy, 0);
+
     require(
       assetToSwapFrom.balanceOf(address(this)) == balanceBeforeAssetFrom - amountToSwap,
       'WRONG_BALANCE_AFTER_SWAP'

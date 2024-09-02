@@ -114,7 +114,7 @@ contract ParaSwapRepayAdapter is BaseParaSwapBuyAdapter, ReentrancyGuard {
     // Pull aTokens from user
     _pullATokenAndWithdraw(address(collateralAsset), msg.sender, collateralAmount, permitSignature);
     //buy debt asset using collateral asset
-    uint256 amountSold = _buyOnParaSwap(
+    (uint256 amountSold, uint256 amountBought) = _buyOnParaSwap(
       buyAllBalanceOffset,
       paraswapData,
       collateralAsset,
@@ -136,6 +136,14 @@ contract ParaSwapRepayAdapter is BaseParaSwapBuyAdapter, ReentrancyGuard {
     IERC20(debtAsset).safeApprove(address(POOL), 0);
     IERC20(debtAsset).safeApprove(address(POOL), debtRepayAmount);
     POOL.repay(address(debtAsset), debtRepayAmount, debtRateMode, msg.sender);
+
+    {
+      //transfer excess of debtAsset back to the user, if any
+      uint256 debtBalanceLeft = amountBought - debtRepayAmount;
+      if (debtBalanceLeft > 0) {
+        IERC20(debtAsset).safeTransfer(msg.sender, debtBalanceLeft);
+      }
+    }
   }
 
   /**
@@ -170,7 +178,7 @@ contract ParaSwapRepayAdapter is BaseParaSwapBuyAdapter, ReentrancyGuard {
       initiator
     );
 
-    uint256 amountSold = _buyOnParaSwap(
+    (uint256 amountSold, uint256 amountBought) = _buyOnParaSwap(
       buyAllBalanceOffset,
       paraswapData,
       collateralAsset,
@@ -193,6 +201,14 @@ contract ParaSwapRepayAdapter is BaseParaSwapBuyAdapter, ReentrancyGuard {
       neededForFlashLoanRepay,
       permitSignature
     );
+
+    {
+      //transfer excess of debtAsset back to the user, if any
+      uint256 debtBalanceLeft = amountBought - debtRepayAmount;
+      if (debtBalanceLeft > 0) {
+        IERC20(debtAsset).safeTransfer(initiator, debtBalanceLeft);
+      }
+    }
 
     // Repay flashloan. Approves for 0 first to comply with tokens that implement the anti frontrunning approval fix.
     IERC20(collateralAsset).safeApprove(address(POOL), 0);
