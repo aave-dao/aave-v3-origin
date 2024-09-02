@@ -152,17 +152,7 @@ library ValidationLogic {
     require(vars.isActive, Errors.RESERVE_INACTIVE);
     require(!vars.isPaused, Errors.RESERVE_PAUSED);
     require(!vars.isFrozen, Errors.RESERVE_FROZEN);
-    if (params.userEModeCategory != 0) {
-      require(
-        EModeConfiguration.isBorrowableAsset(
-          eModeCategories[params.userEModeCategory].isBorrowableBitmap,
-          reservesData[params.asset].id
-        ),
-        Errors.NOT_BORROWABLE_IN_EMODE
-      );
-    } else {
-      require(vars.borrowingEnabled, Errors.BORROWING_NOT_ENABLED);
-    }
+    require(vars.borrowingEnabled, Errors.BORROWING_NOT_ENABLED);
     require(
       !params.reserveCache.reserveConfiguration.getIsVirtualAccActive() ||
         IERC20(params.reserveCache.aTokenAddress).totalSupply() >= params.amount,

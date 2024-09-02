@@ -192,9 +192,7 @@ contract PoolEModeTests is TestnetProcedures {
     pool.setUserEMode(2);
   }
 
-  function test_liquidations_shouldAllowLiquidatingAssetThatIsBorrowableInEmodeOnly(
-    uint256 amount
-  ) public {
+  function test_borrowing_shouldRevert_ifNonBorrowableOutsideEmode(uint256 amount) public {
     amount = bound(amount, 1 ether, type(uint104).max);
     vm.startPrank(poolAdmin);
     uint16 liquidationBonus = 10050;
@@ -214,30 +212,10 @@ contract PoolEModeTests is TestnetProcedures {
     pool.setUserEMode(1);
     _mintTestnetToken(tokenList.usdx, alice, amount);
     _supplyToPool(tokenList.usdx, alice, amount);
-    (uint256 totalCollateralBase, , , , , ) = contracts.poolProxy.getUserAccountData(alice);
-    uint256 collateralPrice = contracts.aaveOracle.getAssetPrice(tokenList.usdx);
-    uint256 debtPrice = contracts.aaveOracle.getAssetPrice(tokenList.wbtc);
-    uint256 borrowAmount = (totalCollateralBase * 1e8) / debtPrice;
-    _borrowArbitraryAmount(tokenList.wbtc, alice, borrowAmount);
 
-    address liquidator = address(0x0f0f0f);
-    _mintTestnetToken(tokenList.wbtc, liquidator, borrowAmount);
-    vm.startPrank(liquidator);
-    IERC20(tokenList.wbtc).approve(address(contracts.poolProxy), borrowAmount);
-    contracts.poolProxy.liquidationCall(
-      tokenList.usdx,
-      tokenList.wbtc,
-      alice,
-      type(uint256).max,
-      false
-    );
-
-    DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
-      tokenList.usdx
-    );
-    uint256 bonus = amount - amount.percentDiv(liquidationBonus);
-    uint256 protocolFee = bonus.percentMul(reserveData.configuration.getLiquidationProtocolFee());
-    assertEq(IERC20(tokenList.usdx).balanceOf(liquidator), amount - protocolFee);
+    vm.prank(alice);
+    vm.expectRevert(bytes(Errors.BORROWING_NOT_ENABLED));
+    contracts.poolProxy.borrow(tokenList.wbtc, 1, 2, 0, alice);
   }
 
   function test_liquidations_shouldApplyEModeLBForEmodeAssets(uint256 amount) public {
@@ -260,7 +238,6 @@ contract PoolEModeTests is TestnetProcedures {
     _mintTestnetToken(tokenList.usdx, alice, amount);
     _supplyToPool(tokenList.usdx, alice, amount);
     (uint256 totalCollateralBase, , , , , ) = contracts.poolProxy.getUserAccountData(alice);
-    uint256 collateralPrice = contracts.aaveOracle.getAssetPrice(tokenList.usdx);
     uint256 debtPrice = contracts.aaveOracle.getAssetPrice(tokenList.wbtc);
     uint256 borrowAmount = (totalCollateralBase * 1e8) / debtPrice;
     _borrowArbitraryAmount(tokenList.wbtc, alice, borrowAmount);
