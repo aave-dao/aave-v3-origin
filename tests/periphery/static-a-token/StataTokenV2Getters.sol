@@ -9,7 +9,7 @@ import {BaseTest} from './TestBase.sol';
 
 contract StataTokenV2GettersTest is BaseTest {
   function test_initializeShouldRevert() public {
-    address impl = factory.STATIC_A_TOKEN_IMPL();
+    address impl = factory.STATA_TOKEN_IMPL();
     vm.expectRevert(Initializable.InvalidInitialization.selector);
     StataTokenV2(impl).initialize(aToken, 'hey', 'ho');
   }

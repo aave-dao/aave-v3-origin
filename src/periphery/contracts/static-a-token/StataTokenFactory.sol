@@ -19,33 +19,33 @@ contract StataTokenFactory is Initializable, IStataTokenFactory {
   IPool public immutable POOL;
   address public immutable PROXY_ADMIN;
   ITransparentProxyFactory public immutable TRANSPARENT_PROXY_FACTORY;
-  address public immutable STATIC_A_TOKEN_IMPL;
+  address public immutable STATA_TOKEN_IMPL;
 
-  mapping(address => address) internal _underlyingToStaticAToken;
-  address[] internal _staticATokens;
+  mapping(address => address) internal _underlyingToStataToken;
+  address[] internal _stataTokens;
 
-  event StaticTokenCreated(address indexed staticAToken, address indexed underlying);
+  event StataTokenCreated(address indexed stataToken, address indexed underlying);
 
   constructor(
     IPool pool,
     address proxyAdmin,
     ITransparentProxyFactory transparentProxyFactory,
-    address staticATokenImpl
+    address stataTokenImpl
   ) {
     POOL = pool;
     PROXY_ADMIN = proxyAdmin;
     TRANSPARENT_PROXY_FACTORY = transparentProxyFactory;
-    STATIC_A_TOKEN_IMPL = staticATokenImpl;
+    STATA_TOKEN_IMPL = stataTokenImpl;
   }
 
   function initialize() external initializer {}
 
   ///@inheritdoc IStataTokenFactory
   function createStataTokens(address[] memory underlyings) external returns (address[] memory) {
-    address[] memory staticATokens = new address[](underlyings.length);
+    address[] memory stataTokens = new address[](underlyings.length);
     for (uint256 i = 0; i < underlyings.length; i++) {
-      address cachedStaticAToken = _underlyingToStaticAToken[underlyings[i]];
-      if (cachedStaticAToken == address(0)) {
+      address cachedStataToken = _underlyingToStataToken[underlyings[i]];
+      if (cachedStataToken == address(0)) {
         DataTypes.ReserveDataLegacy memory reserveData = POOL.getReserveData(underlyings[i]);
         if (reserveData.aTokenAddress == address(0))
           revert NotListedUnderlying(reserveData.aTokenAddress);
@@ -54,8 +54,8 @@ contract StataTokenFactory is Initializable, IStataTokenFactory {
           IERC20Metadata(reserveData.aTokenAddress).symbol(),
           'v2'
         );
-        address staticAToken = TRANSPARENT_PROXY_FACTORY.createDeterministic(
-          STATIC_A_TOKEN_IMPL,
+        address stataToken = TRANSPARENT_PROXY_FACTORY.createDeterministic(
+          STATA_TOKEN_IMPL,
           PROXY_ADMIN,
           abi.encodeWithSelector(
             StataTokenV2.initialize.selector,
@@ -68,24 +68,24 @@ contract StataTokenFactory is Initializable, IStataTokenFactory {
           bytes32(uint256(uint160(underlyings[i])))
         );
 
-        _underlyingToStaticAToken[underlyings[i]] = staticAToken;
-        staticATokens[i] = staticAToken;
-        _staticATokens.push(staticAToken);
-        emit StaticTokenCreated(staticAToken, underlyings[i]);
+        _underlyingToStataToken[underlyings[i]] = stataToken;
+        stataTokens[i] = stataToken;
+        _stataTokens.push(stataToken);
+        emit StataTokenCreated(stataToken, underlyings[i]);
       } else {
-        staticATokens[i] = cachedStaticAToken;
+        stataTokens[i] = cachedStataToken;
       }
     }
-    return staticATokens;
+    return stataTokens;
   }
 
   ///@inheritdoc IStataTokenFactory
   function getStataTokens() external view returns (address[] memory) {
-    return _staticATokens;
+    return _stataTokens;
   }
 
   ///@inheritdoc IStataTokenFactory
   function getStataToken(address underlying) external view returns (address) {
-    return _underlyingToStaticAToken[underlying];
+    return _underlyingToStataToken[underlying];
   }
 }

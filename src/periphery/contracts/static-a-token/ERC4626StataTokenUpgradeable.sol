@@ -74,7 +74,7 @@ abstract contract ERC4626StataTokenUpgradeable is ERC4626Upgradeable, IERC4626St
   }
 
   ///@inheritdoc IERC4626StataToken
-  function depositATokens(uint256 assets, address receiver) public returns (uint256) {
+  function depositATokens(uint256 assets, address receiver) external returns (uint256) {
     uint256 shares = previewDeposit(assets);
     _deposit(_msgSender(), receiver, assets, shares, false);
 
@@ -88,7 +88,7 @@ abstract contract ERC4626StataTokenUpgradeable is ERC4626Upgradeable, IERC4626St
     uint256 deadline,
     SignatureParams memory sig,
     bool depositToAave
-  ) public returns (uint256) {
+  ) external returns (uint256) {
     IERC20Permit assetToDeposit = IERC20Permit(
       depositToAave ? asset() : address(_getERC4626StataTokenStorage()._aToken)
     );
@@ -103,7 +103,11 @@ abstract contract ERC4626StataTokenUpgradeable is ERC4626Upgradeable, IERC4626St
   }
 
   ///@inheritdoc IERC4626StataToken
-  function redeemATokens(uint256 shares, address receiver, address owner) public returns (uint256) {
+  function redeemATokens(
+    uint256 shares,
+    address receiver,
+    address owner
+  ) external returns (uint256) {
     uint256 assets = previewRedeem(shares);
     _withdraw(_msgSender(), receiver, owner, assets, shares, false);
 
@@ -111,7 +115,7 @@ abstract contract ERC4626StataTokenUpgradeable is ERC4626Upgradeable, IERC4626St
   }
 
   ///@inheritdoc IERC4626StataToken
-  function aToken() public view returns (IERC20) {
+  function aToken() external view returns (IERC20) {
     ERC4626StataTokenStorage storage $ = _getERC4626StataTokenStorage();
     return $._aToken;
   }
