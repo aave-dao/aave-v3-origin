@@ -150,23 +150,23 @@ interface IPoolConfigurator {
   );
 
   /**
-   * @dev Emitted when the asset of category of an asset in eMode is changed.
+   * @dev Emitted when an collateral configuration of an asset in an eMode is changed.
    * @param asset The address of the underlying asset of the reserve
-   * @param categoryId The old eMode asset category
-   * @param allowed True if the asset was added to the eMode
+   * @param categoryId The eMode category
+   * @param collateral True if the asset was enabled as collateral in the eMode, false otherwise.
    */
-  event AssetCollateralInEModeChanged(address indexed asset, uint8 categoryId, bool allowed);
+  event AssetCollateralInEModeChanged(address indexed asset, uint8 categoryId, bool collateral);
 
   /**
-   * @dev Emitted when the borrowability of an asset in an eMode changed.
+   * @dev Emitted when the borrowable configuration of an asset in an eMode changed.
    * @param asset The address of the underlying asset of the reserve
-   * @param categoryId The eMode asset category
-   * @param borrowable True if the asset is borrowable
+   * @param categoryId The eMode category
+   * @param borrowable True if the asset was enabled as borrowable in the eMode, false otherwise.
    */
   event AssetBorrowableInEModeChanged(address indexed asset, uint8 categoryId, bool borrowable);
 
   /**
-   * @dev Emitted when a new eMode category is added.
+   * @dev Emitted when a new eMode category is added or an existing category is altered.
    * @param categoryId The new eMode category id
    * @param ltv The ltv for the asset category in eMode
    * @param liquidationThreshold The liquidationThreshold for the asset category in eMode
@@ -458,28 +458,24 @@ interface IPoolConfigurator {
   function setUnbackedMintCap(address asset, uint256 newUnbackedMintCap) external;
 
   /**
-   * @notice Allows an asset to be borrowed in the specified eMode.
-   * - eMode.borrowable always has less priotiry then reserve.eMode
+   * @notice Enables/disables an asset to be borrowable in a selected eMode.
+   * - eMode.borrowable always has less priority then reserve.borrowable
    * @param asset The address of the underlying asset of the reserve
-   * @param categoryId The category id
-   * @param borrowable True if the asset should be borrowable
+   * @param categoryId The eMode categoryId
+   * @param borrowable True if the asset should be borrowable in the given eMode category, false otherwise.
    */
   function setAssetBorrowableInEMode(address asset, uint8 categoryId, bool borrowable) external;
 
   /**
-   * @notice Assign an asset to an efficiency mode (eMode) category.
+   * @notice Enables/disables an asset to be collateral in a selected eMode.
    * @param asset The address of the underlying asset of the reserve
-   * @param categoryId The new category id of the asset
-   * @param allowed If the asset should be allowed
+   * @param categoryId The eMode categoryId
+   * @param collateral True if the asset should be collateral in the given eMode category, false otherwise.
    */
-  function setAssetCollateralInEMode(address asset, uint8 categoryId, bool allowed) external;
+  function setAssetCollateralInEMode(address asset, uint8 categoryId, bool collateral) external;
 
   /**
-   * @notice Adds a new efficiency mode (eMode) category.
-   * @dev If zero is provided as oracle address, the default asset oracles will be used to compute the overall debt and
-   * overcollateralization of the users using this category.
-   * @dev The new ltv and liquidation threshold must be greater than the base
-   * ltvs and liquidation thresholds of all assets within the eMode category
+   * @notice Adds a new efficiency mode (eMode) category or alters a existing one.
    * @param categoryId The id of the category to be configured
    * @param ltv The ltv associated with the category
    * @param liquidationThreshold The liquidation threshold associated with the category
