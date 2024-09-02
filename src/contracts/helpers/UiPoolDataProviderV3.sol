@@ -197,7 +197,7 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
         ++missCounter;
       }
       // assumes there will never be a gap > 2 when setting eModes
-      if (++missCounter > 2) break;
+      if (missCounter > 1) break;
     }
     Emode[] memory categories = new Emode[](eModesFound);
     for (uint8 i = 0; i < eModesFound; i++) {
