@@ -139,9 +139,9 @@ contract ParaSwapRepayAdapter is BaseParaSwapBuyAdapter, ReentrancyGuard {
 
     {
       //transfer excess of debtAsset back to the user, if any
-      uint256 debtBalanceLeft = amountBought - debtRepayAmount;
-      if (debtBalanceLeft > 0) {
-        IERC20(debtAsset).safeTransfer(msg.sender, debtBalanceLeft);
+      uint256 debtAssetExcess = amountBought - debtRepayAmount;
+      if (debtAssetExcess > 0) {
+        IERC20(debtAsset).safeTransfer(msg.sender, debtAssetExcess);
       }
     }
   }
@@ -204,9 +204,9 @@ contract ParaSwapRepayAdapter is BaseParaSwapBuyAdapter, ReentrancyGuard {
 
     {
       //transfer excess of debtAsset back to the user, if any
-      uint256 debtBalanceLeft = amountBought - debtRepayAmount;
-      if (debtBalanceLeft > 0) {
-        IERC20(debtAsset).safeTransfer(initiator, debtBalanceLeft);
+      uint256 debtAssetExcess = amountBought - debtRepayAmount;
+      if (debtAssetExcess > 0) {
+        IERC20(debtAsset).safeTransfer(initiator, debtAssetExcess);
       }
     }
 
