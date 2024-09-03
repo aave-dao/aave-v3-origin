@@ -153,7 +153,7 @@ interface IPoolConfigurator {
    * @dev Emitted when an collateral configuration of an asset in an eMode is changed.
    * @param asset The address of the underlying asset of the reserve
    * @param categoryId The eMode category
-   * @param collateral True if the asset was enabled as collateral in the eMode, false otherwise.
+   * @param collateral True if the asset is enabled as collateral in the eMode, false otherwise.
    */
   event AssetCollateralInEModeChanged(address indexed asset, uint8 categoryId, bool collateral);
 
@@ -161,7 +161,7 @@ interface IPoolConfigurator {
    * @dev Emitted when the borrowable configuration of an asset in an eMode changed.
    * @param asset The address of the underlying asset of the reserve
    * @param categoryId The eMode category
-   * @param borrowable True if the asset was enabled as borrowable in the eMode, false otherwise.
+   * @param borrowable True if the asset is enabled as borrowable in the eMode, false otherwise.
    */
   event AssetBorrowableInEModeChanged(address indexed asset, uint8 categoryId, bool borrowable);
 
