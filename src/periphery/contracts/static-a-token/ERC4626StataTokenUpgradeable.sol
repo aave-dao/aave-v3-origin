@@ -133,6 +133,11 @@ abstract contract ERC4626StataTokenUpgradeable is ERC4626Upgradeable, IERC4626St
   }
 
   ///@inheritdoc IERC4626
+  function totalAssets() public view override returns (uint256) {
+    return _convertToAssets(totalSupply(), Math.Rounding.Floor);
+  }
+
+  ///@inheritdoc IERC4626
   function maxRedeem(address owner) public view override returns (uint256) {
     DataTypes.ReserveData memory reserveData = POOL.getReserveDataExtended(asset());
 
