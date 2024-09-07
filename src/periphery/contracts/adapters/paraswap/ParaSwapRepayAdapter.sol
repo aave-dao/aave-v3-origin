@@ -127,15 +127,15 @@ contract ParaSwapRepayAdapter is BaseParaSwapBuyAdapter, ReentrancyGuard {
 
     //deposit collateral back in the pool, if left after the swap(buy)
     if (collateralBalanceLeft > 0) {
-      IERC20(collateralAsset).safeApprove(address(POOL), 0);
       IERC20(collateralAsset).safeApprove(address(POOL), collateralBalanceLeft);
       POOL.deposit(address(collateralAsset), collateralBalanceLeft, msg.sender, 0);
+      IERC20(collateralAsset).safeApprove(address(POOL), 0);
     }
 
     // Repay debt. Approves 0 first to comply with tokens that implement the anti frontrunning approval fix
-    IERC20(debtAsset).safeApprove(address(POOL), 0);
     IERC20(debtAsset).safeApprove(address(POOL), debtRepayAmount);
     POOL.repay(address(debtAsset), debtRepayAmount, debtRateMode, msg.sender);
+    IERC20(debtAsset).safeApprove(address(POOL), 0);
 
     {
       //transfer excess of debtAsset back to the user, if any
@@ -188,9 +188,9 @@ contract ParaSwapRepayAdapter is BaseParaSwapBuyAdapter, ReentrancyGuard {
     );
 
     // Repay debt. Approves for 0 first to comply with tokens that implement the anti frontrunning approval fix.
-    IERC20(debtAsset).safeApprove(address(POOL), 0);
     IERC20(debtAsset).safeApprove(address(POOL), debtRepayAmount);
     POOL.repay(address(debtAsset), debtRepayAmount, rateMode, initiator);
+    IERC20(debtAsset).safeApprove(address(POOL), 0);
 
     uint256 neededForFlashLoanRepay = amountSold.add(premium);
 
