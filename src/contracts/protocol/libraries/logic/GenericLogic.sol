@@ -40,7 +40,6 @@ library GenericLogic {
     uint256 avgLiquidationThreshold;
     uint256 eModeLtv;
     uint256 eModeLiqThreshold;
-    uint256 eModeAssetCategory;
     address currentReserveAddress;
     bool hasZeroLtvCollateral;
     bool isInEModeCategory;
