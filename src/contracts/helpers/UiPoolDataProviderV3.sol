@@ -188,7 +188,7 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
     uint8 eModesFound = 0;
     uint8 missCounter = 0;
     for (uint8 i = 1; i < 256; i++) {
-      DataTypes.EModeCategory memory category = pool.getEModeCategoryData(uint8(i));
+      DataTypes.EModeCategory memory category = pool.getEModeCategoryData(i);
       if (category.liquidationThreshold != 0) {
         tempCategories[eModesFound] = Emode({eMode: category, id: i});
         ++eModesFound;

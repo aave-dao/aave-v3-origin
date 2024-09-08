@@ -424,7 +424,7 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
     DataTypes.ReserveDataLegacy memory reserveData = _pool.getReserveData(asset);
     categoryData.setCollateral(reserveData.id, allowed);
     _pool.configureEModeCategory(categoryId, categoryData);
-    emit AssetCollateralInEModeChanged(asset, uint8(categoryId), allowed);
+    emit AssetCollateralInEModeChanged(asset, categoryId, allowed);
   }
 
   /// @inheritdoc IPoolConfigurator
