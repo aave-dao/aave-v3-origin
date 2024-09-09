@@ -422,6 +422,7 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
   ) external override onlyRiskOrPoolAdmins {
     DataTypes.EModeCategory memory categoryData = _pool.getEModeCategoryData(categoryId);
     DataTypes.ReserveDataLegacy memory reserveData = _pool.getReserveData(asset);
+    require(reserveData.id != 0 || _pool.getReservesList()[0] == asset, Errors.ASSET_NOT_LISTED);
     categoryData.setCollateral(reserveData.id, allowed);
     _pool.configureEModeCategory(categoryId, categoryData);
     emit AssetCollateralInEModeChanged(asset, categoryId, allowed);
@@ -435,6 +436,7 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
   ) external override onlyRiskOrPoolAdmins {
     DataTypes.EModeCategory memory categoryData = _pool.getEModeCategoryData(categoryId);
     DataTypes.ReserveDataLegacy memory reserveData = _pool.getReserveData(asset);
+    require(reserveData.id != 0 || _pool.getReservesList()[0] == asset, Errors.ASSET_NOT_LISTED);
     categoryData.setBorrowable(reserveData.id, borrowable);
     _pool.configureEModeCategory(categoryId, categoryData);
     emit AssetBorrowableInEModeChanged(asset, categoryId, borrowable);
