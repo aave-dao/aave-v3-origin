@@ -115,7 +115,7 @@ abstract contract ERC4626StataTokenUpgradeable is ERC4626Upgradeable, IERC4626St
   }
 
   ///@inheritdoc IERC4626StataToken
-  function aToken() external view returns (IERC20) {
+  function aToken() public view returns (IERC20) {
     ERC4626StataTokenStorage storage $ = _getERC4626StataTokenStorage();
     return $._aToken;
   }

@@ -3,12 +3,14 @@ pragma solidity ^0.8.0;
 
 import {ERC20Upgradeable, ERC20PermitUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC20PermitUpgradeable.sol';
 import {PausableUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/utils/PausableUpgradeable.sol';
-import {IRescuable, Rescuable} from 'solidity-utils/contracts/utils/Rescuable.sol';
+import {IPermissionlessRescuable, PermissionlessRescuable} from 'solidity-utils/contracts/utils/PermissionlessRescuable.sol';
+import {IRescuableBase, RescuableBase} from 'solidity-utils/contracts/utils/RescuableBase.sol';
 
 import {IACLManager} from '../../../core/contracts/interfaces/IACLManager.sol';
-import {ERC4626Upgradeable, ERC4626StataTokenUpgradeable, IPool} from './ERC4626StataTokenUpgradeable.sol';
+import {ERC4626Upgradeable, ERC4626StataTokenUpgradeable, IPool, Math, IERC20} from './ERC4626StataTokenUpgradeable.sol';
 import {ERC20AaveLMUpgradeable, IRewardsController} from './ERC20AaveLMUpgradeable.sol';
 import {IStataTokenV2} from './interfaces/IStataTokenV2.sol';
+import {IAToken} from './interfaces/IAToken.sol';
 
 /**
  * @title StataTokenV2
@@ -20,9 +22,11 @@ contract StataTokenV2 is
   ERC20AaveLMUpgradeable,
   ERC4626StataTokenUpgradeable,
   PausableUpgradeable,
-  Rescuable,
+  PermissionlessRescuable,
   IStataTokenV2
 {
+  using Math for uint256;
+
   constructor(
     IPool pool,
     IRewardsController rewardsController
@@ -53,9 +57,22 @@ contract StataTokenV2 is
     else _unpause();
   }
 
-  /// @inheritdoc IRescuable
-  function whoCanRescue() public view override returns (address) {
-    return POOL_ADDRESSES_PROVIDER.getACLAdmin();
+  /// @inheritdoc IPermissionlessRescuable
+  function whoShouldReceiveFunds() public view override returns (address) {
+    return IAToken(address(aToken())).RESERVE_TREASURY_ADDRESS();
+  }
+
+  /// @inheritdoc IRescuableBase
+  function maxRescue(
+    address asset
+  ) public view override(IRescuableBase, RescuableBase) returns (uint256) {
+    IERC20 cachedAToken = aToken();
+    if (asset == address(cachedAToken)) {
+      uint256 requiredBacking = _convertToAssets(totalSupply(), Math.Rounding.Ceil);
+      uint256 balance = cachedAToken.balanceOf(address(this));
+      return balance > requiredBacking ? balance - requiredBacking : 0;
+    }
+    return type(uint256).max;
   }
 
   ///@inheritdoc IStataTokenV2

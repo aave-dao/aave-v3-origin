@@ -3,7 +3,7 @@ pragma solidity ^0.8.10;
 
 import {IERC20Metadata, IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import {TransparentUpgradeableProxy} from 'solidity-utils/contracts/transparent-proxy/TransparentUpgradeableProxy.sol';
-import {ITransparentProxyFactory} from 'solidity-utils/contracts/transparent-proxy/TransparentProxyFactory.sol';
+import {ITransparentProxyFactory} from 'solidity-utils/contracts/transparent-proxy/interfaces/ITransparentProxyFactory.sol';
 import {StataTokenFactory} from '../../../src/periphery/contracts/static-a-token/StataTokenFactory.sol';
 import {StataTokenV2} from '../../../src/periphery/contracts/static-a-token/StataTokenV2.sol';
 import {IERC20AaveLM} from '../../../src/periphery/contracts/static-a-token/interfaces/IERC20AaveLM.sol';
