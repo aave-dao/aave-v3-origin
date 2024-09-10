@@ -38,6 +38,6 @@ git-diff :
 	@npx prettier ${before} ${after} --write
 	@printf '%s\n%s\n%s\n' "\`\`\`diff" "$$(git diff --no-index --diff-algorithm=patience --ignore-space-at-eol ${before} ${after})" "\`\`\`" > diffs/${out}.md
 
-diff-arbitrum-zksync :;
-	mkdir -p diffs/ARBITRUM_ZKSYNC
-	ts-node ./diff.ts ARBITRUM ZKSYNC
+diff-gnosis-zksync :;
+	mkdir -p diffs/GNOSIS_ZKSYNC
+	ts-node ./diff.ts GNOSIS ZKSYNC
