@@ -15,12 +15,12 @@ const CONTRACTS: ContractsType = {
     },
     POOL: {
       name: 'Pool',
-      path: 'PoolInstance/src/core/instances/PoolInstance.sol',
+      path: 'PoolInstanceWithCustomInitialize/src/contracts/PoolInstanceWithCustomInitialize.sol',
       address: AaveV3Gnosis.POOL,
     },
     POOL_CONFIGURATOR: {
       name: 'PoolConfigurator',
-      path: 'PoolConfiguratorInstance/src/core/instances/PoolConfiguratorInstance.sol',
+      path: 'PoolConfiguratorInstance/lib/aave-v3-origin/src/core/instances/PoolConfiguratorInstance.sol',
       address: AaveV3Gnosis.POOL_CONFIGURATOR,
     },
     ORACLE: {
@@ -30,7 +30,7 @@ const CONTRACTS: ContractsType = {
     },
     AAVE_PROTOCOL_DATA_PROVIDER: {
       name: 'AaveProtocolDataProvider',
-      path: 'AaveProtocolDataProvider/src/core/contracts/misc/AaveProtocolDataProvider.sol',
+      path: 'AaveProtocolDataProvider/lib/aave-v3-origin/src/core/contracts/misc/AaveProtocolDataProvider.sol',
       address: AaveV3Gnosis.AAVE_PROTOCOL_DATA_PROVIDER,
     },
     ACL_MANAGER: {
@@ -40,7 +40,7 @@ const CONTRACTS: ContractsType = {
     },
     COLLECTOR: {
       name: 'Collector',
-      path: 'Collector/src/periphery/contracts/treasury/Collector.sol',
+      path: 'Collector/lib/aave-collector-unification/src/contracts/Collector.sol',
       address: AaveV3Gnosis.COLLECTOR,
     },
     DEFAULT_INCENTIVES_CONTROLLER: {
@@ -50,17 +50,17 @@ const CONTRACTS: ContractsType = {
     },
     DEFAULT_A_TOKEN_IMPL: {
       name: 'AToken',
-      path: 'ATokenInstance/src/core/instances/ATokenInstance.sol',
+      path: 'AToken/src/core/contracts/protocol/tokenization/AToken.sol',
       address: AaveV3Gnosis.DEFAULT_A_TOKEN_IMPL_REV_1,
     },
     DEFAULT_VARIABLE_DEBT_TOKEN_IMPL: {
       name: 'VariableDebtToken',
-      path: 'VariableDebtTokenInstance/src/core/instances/VariableDebtTokenInstance.sol',
+      path: 'VariableDebtToken/src/core/contracts/protocol/tokenization/VariableDebtToken.sol',
       address: AaveV3Gnosis.DEFAULT_VARIABLE_DEBT_TOKEN_IMPL_REV_1,
     },
     DEFAULT_STABLE_DEBT_TOKEN_IMPL: {
       name: 'StableDebtToken',
-      path: 'StableDebtTokenInstance/src/core/instances/StableDebtTokenInstance.sol',
+      path: 'StableDebtToken/src/core/contracts/protocol/tokenization/StableDebtToken.sol',
       address: AaveV3Gnosis.DEFAULT_STABLE_DEBT_TOKEN_IMPL_REV_1,
     },
     EMISSION_MANAGER: {
@@ -75,7 +75,7 @@ const CONTRACTS: ContractsType = {
     },
     WETH_GATEWAY: {
       name: 'WrappedTokenGatewayV3',
-      path: 'WrappedTokenGatewayV3/src/periphery/contracts/misc/WrappedTokenGatewayV3.sol',
+      path: 'WrappedTokenGatewayV3/src/contracts/WrappedTokenGatewayV3.sol',
       address: AaveV3Gnosis.WETH_GATEWAY,
     },
     WALLET_BALANCE_PROVIDER: {
@@ -100,7 +100,7 @@ const CONTRACTS: ContractsType = {
     },
     STATIC_A_TOKEN_FACTORY: {
       name: "StaticATokenFactory",
-      path: "StaticATokenFactory/src/periphery/contracts/static-a-token/StaticATokenFactory.sol",
+      path: "StaticATokenFactory/src/StaticATokenFactory.sol",
       address: AaveV3Gnosis.STATIC_A_TOKEN_FACTORY,
     },
     BORROW_LOGIC: {

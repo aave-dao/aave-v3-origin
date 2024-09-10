@@ -40,4 +40,4 @@ git-diff :
 
 diff-gnosis-zksync :;
 	mkdir -p diffs/GNOSIS_ZKSYNC
-	ts-node ./diff.ts GNOSIS ZKSYNC
+	tsx ./diff GNOSIS ZKSYNC
