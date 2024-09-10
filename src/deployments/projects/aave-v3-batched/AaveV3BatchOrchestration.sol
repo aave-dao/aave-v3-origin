@@ -170,13 +170,18 @@ library AaveV3BatchOrchestration {
     PeripheryReport memory peripheryReport,
     AaveV3TokensBatch.TokensReport memory tokensReport
   ) internal returns (ConfigEngineReport memory) {
+    address treasury = peripheryReport.treasury;
+    if (peripheryReport.revenueSplitter != address(0)) {
+      treasury = peripheryReport.revenueSplitter;
+    }
+
     AaveV3HelpersBatchOne helpersBatchOne = new AaveV3HelpersBatchOne(
       setupReport.poolProxy,
       setupReport.poolConfiguratorProxy,
       miscReport.defaultInterestRateStrategy,
       peripheryReport.aaveOracle,
       setupReport.rewardsControllerProxy,
-      peripheryReport.treasury,
+      treasury,
       tokensReport.aToken,
       tokensReport.variableDebtToken,
       tokensReport.stableDebtToken
@@ -328,6 +333,7 @@ library AaveV3BatchOrchestration {
     report.staticATokenFactoryProxy = staticATokenReport.staticATokenFactoryProxy;
     report.staticATokenImplementation = staticATokenReport.staticATokenImplementation;
     report.transparentProxyFactory = staticATokenReport.transparentProxyFactory;
+    report.revenueSplitter = peripheryReport.revenueSplitter;
 
     return report;
   }
