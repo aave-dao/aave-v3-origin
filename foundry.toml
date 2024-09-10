@@ -33,11 +33,10 @@ harmony = "${RPC_HARMONY}"
 sepolia = "${RPC_SEPOLIA}"
 mumbai = "${RPC_MUMBAI}"
 amoy = "${RPC_AMOY}"
-bsc_testnet = "${RPC_BNB_TESTNET}"
+bnb_testnet = "${RPC_BNB_TESTNET}"
 bnb = "${RPC_BNB}"
 gnosis = "${RPC_GNOSIS}"
 base = "${RPC_BASE}"
-zksync = "${RPC_ZKSYNC}"
 
 [etherscan]
 mainnet={key="${ETHERSCAN_API_KEY_MAINNET}",chainId=1}
@@ -55,5 +54,4 @@ bnb_testnet={key="${ETHERSCAN_API_KEY_BNB}",chainId=97,url='https://api-testnet.
 bnb={key="${ETHERSCAN_API_KEY_BNB}",chainId=56,url='https://api.bscscan.com/api'}
 base={key="${ETHERSCAN_API_KEY_BASE}",chain=8453}
 gnosis={key="${ETHERSCAN_API_KEY_GNOSIS}",chainId=100}
-zksync={key="${ETHERSCAN_API_KEY_ZKSYNC}",chainId=324}
 # See more config options https://github.com/gakonst/foundry/tree/master/config
