@@ -3,8 +3,10 @@ pragma solidity ^0.8.0;
 
 import {IERC4626StataToken} from './IERC4626StataToken.sol';
 import {IERC20AaveLM} from './IERC20AaveLM.sol';
+import {IERC4626} from '@openzeppelin/contracts/interfaces/IERC4626.sol';
+import {IERC20Permit} from '@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol';
 
-interface IStataTokenV2 is IERC4626StataToken, IERC20AaveLM {
+interface IStataTokenV2 is IERC4626, IERC20Permit, IERC4626StataToken, IERC20AaveLM {
   /**
    * @notice Checks if the passed actor is permissioned emergency admin.
    * @param actor The reward to claim

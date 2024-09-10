@@ -2,9 +2,11 @@
 pragma solidity ^0.8.0;
 
 import {ERC20Upgradeable, ERC20PermitUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC20PermitUpgradeable.sol';
+import {IERC20Metadata} from '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import {PausableUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/utils/PausableUpgradeable.sol';
 import {IPermissionlessRescuable, PermissionlessRescuable} from 'solidity-utils/contracts/utils/PermissionlessRescuable.sol';
 import {IRescuableBase, RescuableBase} from 'solidity-utils/contracts/utils/RescuableBase.sol';
+import {IERC20Permit} from '@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol';
 
 import {IACLManager} from '../../../core/contracts/interfaces/IACLManager.sol';
 import {ERC4626Upgradeable, ERC4626StataTokenUpgradeable, IPool, Math, IERC20} from './ERC4626StataTokenUpgradeable.sol';
@@ -80,7 +82,20 @@ contract StataTokenV2 is
     return IACLManager(POOL_ADDRESSES_PROVIDER.getACLManager()).isEmergencyAdmin(actor);
   }
 
-  function decimals() public view override(ERC20Upgradeable, ERC4626Upgradeable) returns (uint8) {
+  ///@inheritdoc IERC20Permit
+  function nonces(
+    address owner
+  ) public view virtual override(ERC20PermitUpgradeable, IERC20Permit) returns (uint256) {
+    return super.nonces(owner);
+  }
+
+  ///@inheritdoc IERC20Metadata
+  function decimals()
+    public
+    view
+    override(IERC20Metadata, ERC20Upgradeable, ERC4626Upgradeable)
+    returns (uint8)
+  {
     /// @notice The initialization of ERC4626Upgradeable already assures that decimal are
     /// the same as the underlying asset of the StataTokenV2, e.g. decimals of WETH for stataWETH
     return ERC4626Upgradeable.decimals();
