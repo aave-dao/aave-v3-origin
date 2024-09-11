@@ -629,11 +629,16 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
 
   function testAssetEModeUpdates() public {
     address asset = tokenList.usdx;
+    address asset2 = tokenList.wbtc;
 
     AaveV3MockEModeCategoryUpdate payloadToAddEMode = new AaveV3MockEModeCategoryUpdate(
       configEngine
     );
-    AaveV3MockAssetEModeUpdate payload = new AaveV3MockAssetEModeUpdate(asset, configEngine);
+    AaveV3MockAssetEModeUpdate payload = new AaveV3MockAssetEModeUpdate(
+      asset,
+      asset2,
+      configEngine
+    );
 
     vm.startPrank(roleList.marketOwner);
     contracts.aclManager.addPoolAdmin(address(payload));
@@ -658,6 +663,19 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
 
     DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(asset);
     DataTypes.EModeCategory memory eMode = contracts.poolProxy.getEModeCategoryData(1);
-    EModeConfiguration.isCollateralAsset(eMode.isCollateralBitmap, reserveData.id);
+    assertEq(EModeConfiguration.isCollateralAsset(eMode.isCollateralBitmap, reserveData.id), false);
+    assertEq(EModeConfiguration.isCollateralAsset(eMode.isBorrowableBitmap, reserveData.id), true);
+
+    DataTypes.ReserveDataLegacy memory reserveDataAsset2 = contracts.poolProxy.getReserveData(
+      asset2
+    );
+    assertEq(
+      EModeConfiguration.isCollateralAsset(eMode.isCollateralBitmap, reserveDataAsset2.id),
+      true
+    );
+    assertEq(
+      EModeConfiguration.isCollateralAsset(eMode.isBorrowableBitmap, reserveDataAsset2.id),
+      false
+    );
   }
 }

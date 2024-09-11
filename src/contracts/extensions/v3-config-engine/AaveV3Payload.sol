@@ -49,8 +49,7 @@ abstract contract AaveV3Payload {
     IEngine.BorrowUpdate[] memory borrows = borrowsUpdates();
     IEngine.RateStrategyUpdate[] memory rates = rateStrategiesUpdates();
     IEngine.PriceFeedUpdate[] memory priceFeeds = priceFeedsUpdates();
-    IEngine.EModeCollateralUpdate[] memory eModeCollaterals = eModeCollateralUpdates();
-    IEngine.EModeBorrowableUpdate[] memory eModeBorrowables = eModeBorrowableUpdates();
+    IEngine.AssetEModeUpdate[] memory assetEModes = assetEModeUpdates();
     IEngine.CapsUpdate[] memory caps = capsUpdates();
 
     if (eModeCategories.length != 0) {
@@ -99,15 +98,9 @@ abstract contract AaveV3Payload {
       );
     }
 
-    if (eModeCollaterals.length != 0) {
+    if (assetEModes.length != 0) {
       address(CONFIG_ENGINE).functionDelegateCall(
-        abi.encodeWithSelector(CONFIG_ENGINE.updateEModeCollaterals.selector, eModeCollaterals)
-      );
-    }
-
-    if (eModeBorrowables.length != 0) {
-      address(CONFIG_ENGINE).functionDelegateCall(
-        abi.encodeWithSelector(CONFIG_ENGINE.updateEModeBorrowables.selector, eModeBorrowables)
+        abi.encodeWithSelector(CONFIG_ENGINE.updateAssetEMode.selector, assetEModes)
       );
     }
 
@@ -159,20 +152,7 @@ abstract contract AaveV3Payload {
   {}
 
   /// @dev to be defined in the child with a list of assets for which eMode collateral to update
-  function eModeCollateralUpdates()
-    public
-    view
-    virtual
-    returns (IEngine.EModeCollateralUpdate[] memory)
-  {}
-
-  /// @dev to be defined in the child with a list of assets for which eMode borrowable to update
-  function eModeBorrowableUpdates()
-    public
-    view
-    virtual
-    returns (IEngine.EModeBorrowableUpdate[] memory)
-  {}
+  function assetEModeUpdates() public view virtual returns (IEngine.AssetEModeUpdate[] memory) {}
 
   /// @dev to be defined in the child with a list of set of parameters of rate strategies
   function rateStrategiesUpdates()

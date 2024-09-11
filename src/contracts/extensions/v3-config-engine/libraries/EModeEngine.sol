@@ -11,22 +11,13 @@ library EModeEngine {
   using PercentageMath for uint256;
   using SafeCast for uint256;
 
-  function executeEModeCollateralUpdate(
+  function executeAssetEModeUpdate(
     IEngine.EngineConstants calldata engineConstants,
-    IEngine.EModeCollateralUpdate[] memory updates
+    IEngine.AssetEModeUpdate[] memory updates
   ) external {
     require(updates.length != 0, 'AT_LEAST_ONE_UPDATE_REQUIRED');
 
-    _configEModeCollateral(engineConstants.poolConfigurator, updates);
-  }
-
-  function executeEModeBorrowableUpdate(
-    IEngine.EngineConstants calldata engineConstants,
-    IEngine.EModeBorrowableUpdate[] memory updates
-  ) external {
-    require(updates.length != 0, 'AT_LEAST_ONE_UPDATE_REQUIRED');
-
-    _configEModeBorrowable(engineConstants.poolConfigurator, updates);
+    _configAssetEMode(engineConstants.poolConfigurator, updates);
   }
 
   function executeEModeCategoriesUpdate(
@@ -38,29 +29,25 @@ library EModeEngine {
     _configEModeCategories(engineConstants.poolConfigurator, engineConstants.pool, updates);
   }
 
-  function _configEModeCollateral(
+  function _configAssetEMode(
     IPoolConfigurator poolConfigurator,
-    IEngine.EModeCollateralUpdate[] memory updates
+    IEngine.AssetEModeUpdate[] memory updates
   ) internal {
     for (uint256 i = 0; i < updates.length; i++) {
-      poolConfigurator.setAssetCollateralInEMode(
-        updates[i].asset,
-        updates[i].eModeCategory,
-        updates[i].enabled
-      );
-    }
-  }
-
-  function _configEModeBorrowable(
-    IPoolConfigurator poolConfigurator,
-    IEngine.EModeBorrowableUpdate[] memory updates
-  ) internal {
-    for (uint256 i = 0; i < updates.length; i++) {
-      poolConfigurator.setAssetBorrowableInEMode(
-        updates[i].asset,
-        updates[i].eModeCategory,
-        updates[i].enabled
-      );
+      if (updates[i].collateral != EngineFlags.KEEP_CURRENT) {
+        poolConfigurator.setAssetCollateralInEMode(
+          updates[i].asset,
+          updates[i].eModeCategory,
+          EngineFlags.toBool(updates[i].collateral)
+        );
+      }
+      if (updates[i].borrowable != EngineFlags.KEEP_CURRENT) {
+        poolConfigurator.setAssetBorrowableInEMode(
+          updates[i].asset,
+          updates[i].eModeCategory,
+          EngineFlags.toBool(updates[i].borrowable)
+        );
+      }
     }
   }
 

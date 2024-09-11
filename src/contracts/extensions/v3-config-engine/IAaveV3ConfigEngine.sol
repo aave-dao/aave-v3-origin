@@ -190,27 +190,15 @@ interface IAaveV3ConfigEngine {
    * EModeCollateralUpdate({
    *   asset: AaveV3EthereumAssets.rETH_UNDERLYING,
    *   eModeCategory: 1, // ETH correlated
-   *   enabled: true,
+   *   borrowable: EngineFlags.ENABLED,
+   *   collateral: EngineFlags.KEEP_CURRENT,
    * })
    */
-  struct EModeCollateralUpdate {
+  struct AssetEModeUpdate {
     address asset;
     uint8 eModeCategory;
-    bool enabled;
-  }
-
-  /**
-   * @dev Example (mock):
-   * EModeBorrowableUpdate({
-   *   asset: AaveV3EthereumAssets.rETH_UNDERLYING,
-   *   eModeCategory: 1, // ETH correlated
-   *   enabled: true,
-   * })
-   */
-  struct EModeBorrowableUpdate {
-    address asset;
-    uint8 eModeCategory;
-    bool enabled;
+    uint256 borrowable;
+    uint256 collateral;
   }
 
   /**
@@ -315,18 +303,12 @@ interface IAaveV3ConfigEngine {
   function updateEModeCategories(EModeCategoryUpdate[] memory updates) external;
 
   /**
-   * @notice Performs an update of the e-mode category collateral, in the Aave pool configured in this engine instance
+   * @notice Performs an update of the e-mode category.
+   * Sets a specified asset collateral and/or borrowable, in the Aave pool configured in this engine instance
    * @param updates `EModeCollateralUpdate[]` list of declarative updates containing the new parameters
    *   More information on the documentation of the struct.
    */
-  function updateEModeCollaterals(EModeCollateralUpdate[] memory updates) external;
-
-  /**
-   * @notice Performs an update of the e-mode category borrowable, in the Aave pool configured in this engine instance
-   * @param updates `EModeCollateralUpdate[]` list of declarative updates containing the new parameters
-   *   More information on the documentation of the struct.
-   */
-  function updateEModeBorrowables(EModeBorrowableUpdate[] memory updates) external;
+  function updateAssetEMode(AssetEModeUpdate[] memory updates) external;
 
   function DEFAULT_INTEREST_RATE_STRATEGY() external view returns (address);
 

@@ -10,23 +10,31 @@ import '../../../../src/contracts/extensions/v3-config-engine/AaveV3Payload.sol'
  */
 contract AaveV3MockAssetEModeUpdate is AaveV3Payload {
   address public immutable ASSET_ADDRESS;
+  address public immutable ASSET_2_ADDRESS;
 
-  constructor(address assetAddress, address customEngine) AaveV3Payload(IEngine(customEngine)) {
+  constructor(
+    address assetAddress,
+    address asset2Address,
+    address customEngine
+  ) AaveV3Payload(IEngine(customEngine)) {
     ASSET_ADDRESS = assetAddress;
+    ASSET_2_ADDRESS = asset2Address;
   }
 
-  function eModeCollateralUpdates()
-    public
-    view
-    override
-    returns (IEngine.EModeCollateralUpdate[] memory)
-  {
-    IEngine.EModeCollateralUpdate[] memory eModeUpdate = new IEngine.EModeCollateralUpdate[](1);
+  function assetEModeUpdates() public view override returns (IEngine.AssetEModeUpdate[] memory) {
+    IEngine.AssetEModeUpdate[] memory eModeUpdate = new IEngine.AssetEModeUpdate[](2);
 
-    eModeUpdate[0] = IEngine.EModeCollateralUpdate({
+    eModeUpdate[0] = IEngine.AssetEModeUpdate({
       asset: ASSET_ADDRESS,
       eModeCategory: 1,
-      enabled: true
+      collateral: EngineFlags.DISABLED,
+      borrowable: EngineFlags.ENABLED
+    });
+    eModeUpdate[1] = IEngine.AssetEModeUpdate({
+      asset: ASSET_2_ADDRESS,
+      eModeCategory: 1,
+      collateral: EngineFlags.ENABLED,
+      borrowable: EngineFlags.KEEP_CURRENT
     });
 
     return eModeUpdate;
