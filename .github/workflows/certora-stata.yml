@@ -29,7 +29,6 @@ jobs:
 
       - name: Install certora cli
         run: pip install certora-cli==7.14.2
-
       - name: Install solc
         run: |
           wget https://github.com/ethereum/solidity/releases/download/v0.8.20/solc-static-linux
@@ -51,7 +50,7 @@ jobs:
       max-parallel: 16
       matrix:
         rule:
-          - verifyERC4626.conf --rule previewRedeemIndependentOfBalance previewMintAmountCheck previewDepositIndependentOfAllowanceApprove previewWithdrawAmountCheck previewWithdrawIndependentOfBalance2 previewWithdrawIndependentOfBalance1 previewRedeemIndependentOfMaxRedeem1 previewRedeemAmountCheck previewRedeemIndependentOfMaxRedeem2 amountConversionRoundedDown withdrawCheck redeemCheck redeemATokensCheck convertToAssetsCheck convertToSharesCheck toAssetsDoesNotRevert sharesConversionRoundedDown toSharesDoesNotRevert previewDepositAmountCheck maxRedeemCompliance maxWithdrawConversionCompliance
+          - verifyERC4626.conf --rule previewRedeemIndependentOfBalance previewMintAmountCheck previewDepositIndependentOfAllowanceApprove previewWithdrawAmountCheck previewWithdrawIndependentOfBalance2 previewWithdrawIndependentOfBalance1 previewRedeemIndependentOfMaxRedeem1 previewRedeemAmountCheck previewRedeemIndependentOfMaxRedeem2 amountConversionRoundedDown withdrawCheck redeemCheck redeemATokensCheck convertToAssetsCheck convertToSharesCheck toAssetsDoesNotRevert sharesConversionRoundedDown toSharesDoesNotRevert previewDepositAmountCheck maxRedeemCompliance maxWithdrawConversionCompliance previewMintIndependentOfAllowance
           - verifyERC4626.conf --rule maxMintMustntRevert maxDepositMustntRevert maxRedeemMustntRevert maxWithdrawMustntRevert totalAssetsMustntRevert
           # Timeout
           # - verifyERC4626.conf --rule previewWithdrawIndependentOfMaxWithdraw
