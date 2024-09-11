@@ -73,10 +73,10 @@ In v1 deposit was overleaded to allow underlying & aToken deposits.
 While this appraoch was fine it seemed unclean and caused some confusion with integrators.
 Therefore v2 introduces dedicated `depositATokens` and `redeemATokens` methods.
 
-#### Rescuable
+#### PermissionlessRescuable
 
-[Rescuable](https://github.com/bgd-labs/solidity-utils/blob/main/src/contracts/utils/Rescuable.sol) has been applied to
-the `StataTokenV2` which will allow the ACL_ADMIN of the corresponding `POOL` to rescue any tokens on the contract.
+[PermissionlessRescuable](https://github.com/bgd-labs/solidity-utils/blob/main/src/contracts/utils/PermissionlessRescuable.sol) has been applied to
+the `StataTokenV2` which will allow the anyone to rescue surplus tokens on the contract to the treasury.
 
 #### Pausability
 
