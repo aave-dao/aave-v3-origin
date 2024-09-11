@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.10;
 
-import {IRewardsController} from '../../../src/periphery/contracts/rewards/interfaces/IRewardsController.sol';
+import {IERC20Metadata, IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import {TransparentUpgradeableProxy} from 'solidity-utils/contracts/transparent-proxy/TransparentUpgradeableProxy.sol';
-import {ITransparentProxyFactory} from 'solidity-utils/contracts/transparent-proxy/TransparentProxyFactory.sol';
-import {IPool} from '../../../src/core/contracts/interfaces/IPool.sol';
-import {StaticATokenFactory} from '../../../src/periphery/contracts/static-a-token/StaticATokenFactory.sol';
-import {StaticATokenLM, IStaticATokenLM, IERC20, IERC20Metadata, ERC20} from '../../../src/periphery/contracts/static-a-token/StaticATokenLM.sol';
-import {IAToken} from '../../../src/core/contracts/interfaces/IAToken.sol';
+import {ITransparentProxyFactory} from 'solidity-utils/contracts/transparent-proxy/interfaces/ITransparentProxyFactory.sol';
+import {StataTokenFactory} from '../../../src/periphery/contracts/static-a-token/StataTokenFactory.sol';
+import {StataTokenV2} from '../../../src/periphery/contracts/static-a-token/StataTokenV2.sol';
+import {IERC20AaveLM} from '../../../src/periphery/contracts/static-a-token/interfaces/IERC20AaveLM.sol';
 import {TestnetProcedures, TestnetERC20} from '../../utils/TestnetProcedures.sol';
 import {DataTypes} from '../../../src/core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
 
 abstract contract BaseTest is TestnetProcedures {
   address constant OWNER = address(1234);
+  address public constant EMISSION_ADMIN = address(25);
 
   address public user;
   address public user1;
@@ -21,17 +21,16 @@ abstract contract BaseTest is TestnetProcedures {
   uint256 internal userPrivateKey;
   uint256 internal spenderPrivateKey;
 
-  StaticATokenLM public staticATokenLM;
+  StataTokenV2 public stataTokenV2;
   address public proxyAdmin;
   ITransparentProxyFactory public proxyFactory;
-  StaticATokenFactory public factory;
+  StataTokenFactory public factory;
 
   address[] rewardTokens;
 
-  address public UNDERLYING;
-  address public A_TOKEN;
-  address public REWARD_TOKEN;
-  IPool public POOL;
+  address public underlying;
+  address public aToken;
+  address public rewardToken;
 
   function setUp() public virtual {
     userPrivateKey = 0xA11CE;
@@ -40,29 +39,24 @@ abstract contract BaseTest is TestnetProcedures {
     user1 = address(vm.addr(2));
     spender = vm.addr(spenderPrivateKey);
 
-    initTestEnvironment();
+    initTestEnvironment(false);
     DataTypes.ReserveDataLegacy memory reserveDataWETH = contracts.poolProxy.getReserveData(
       tokenList.weth
     );
 
-    UNDERLYING = address(weth);
-    REWARD_TOKEN = address(new TestnetERC20('LM Reward ERC20', 'RWD', 18, OWNER));
-    A_TOKEN = reserveDataWETH.aTokenAddress;
-    POOL = contracts.poolProxy;
+    underlying = address(weth);
+    rewardToken = address(new TestnetERC20('LM Reward ERC20', 'RWD', 18, OWNER));
+    aToken = reserveDataWETH.aTokenAddress;
 
-    rewardTokens.push(REWARD_TOKEN);
+    rewardTokens.push(rewardToken);
 
     proxyFactory = ITransparentProxyFactory(report.transparentProxyFactory);
     proxyAdmin = report.proxyAdmin;
 
-    factory = StaticATokenFactory(report.staticATokenFactoryProxy);
-    factory.createStaticATokens(POOL.getReservesList());
+    factory = StataTokenFactory(report.staticATokenFactoryProxy);
+    factory.createStataTokens(contracts.poolProxy.getReservesList());
 
-    staticATokenLM = StaticATokenLM(factory.getStaticAToken(UNDERLYING));
-  }
-
-  function _fundUser(uint128 amountToDeposit, address targetUser) internal {
-    deal(UNDERLYING, targetUser, amountToDeposit);
+    stataTokenV2 = StataTokenV2(factory.getStataToken(underlying));
   }
 
   function _skipBlocks(uint128 blocks) internal {
@@ -70,22 +64,32 @@ abstract contract BaseTest is TestnetProcedures {
     vm.warp(block.timestamp + blocks * 12); // assuming a block is around 12seconds
   }
 
-  function _underlyingToAToken(uint256 amountToDeposit, address targetUser) internal {
-    IERC20(UNDERLYING).approve(address(POOL), amountToDeposit);
-    POOL.deposit(UNDERLYING, amountToDeposit, targetUser, 0);
-  }
-
-  function _depositAToken(uint256 amountToDeposit, address targetUser) internal returns (uint256) {
-    _underlyingToAToken(amountToDeposit, targetUser);
-    IERC20(A_TOKEN).approve(address(staticATokenLM), amountToDeposit);
-    return staticATokenLM.deposit(amountToDeposit, targetUser, 10, false);
-  }
-
   function testAdmin() public {
     vm.stopPrank();
     vm.startPrank(proxyAdmin);
-    assertEq(TransparentUpgradeableProxy(payable(address(staticATokenLM))).admin(), proxyAdmin);
+    assertEq(TransparentUpgradeableProxy(payable(address(stataTokenV2))).admin(), proxyAdmin);
     assertEq(TransparentUpgradeableProxy(payable(address(factory))).admin(), proxyAdmin);
     vm.stopPrank();
+  }
+
+  function _fundUnderlying(uint256 assets, address receiver) internal {
+    deal(underlying, receiver, assets);
+  }
+
+  function _fundAToken(uint256 assets, address receiver) internal {
+    _fundUnderlying(assets, receiver);
+    vm.startPrank(receiver);
+    IERC20(underlying).approve(address(contracts.poolProxy), assets);
+    contracts.poolProxy.deposit(underlying, assets, receiver, 0);
+    vm.stopPrank();
+  }
+
+  function _fund4626(uint256 assets, address receiver) internal returns (uint256) {
+    _fundAToken(assets, receiver);
+    vm.startPrank(receiver);
+    IERC20(aToken).approve(address(stataTokenV2), assets);
+    uint256 shares = stataTokenV2.depositATokens(assets, receiver);
+    vm.stopPrank();
+    return shares;
   }
 }

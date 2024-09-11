@@ -1,0 +1,48 @@
+diff -ruN .gitignore .gitignore
+--- .gitignore	1970-01-01 02:00:00
++++ .gitignore	2024-09-04 13:59:46
+@@ -0,0 +1,2 @@
++*
++!.gitignore
+\ No newline at end of file
+diff -ruN src/core/instances/ATokenInstance.sol src/core/instances/ATokenInstance.sol
+--- src/core/instances/ATokenInstance.sol	2024-09-05 19:01:54
++++ src/core/instances/ATokenInstance.sol	2024-09-05 11:33:23
+@@ -35,15 +35,15 @@
+ 
+     _domainSeparator = _calculateDomainSeparator();
+ 
+-    emit Initialized(
+-      underlyingAsset,
+-      address(POOL),
+-      treasury,
+-      address(incentivesController),
+-      aTokenDecimals,
+-      aTokenName,
+-      aTokenSymbol,
+-      params
+-    );
++    // emit Initialized(
++    //   underlyingAsset,
++    //   address(POOL),
++    //   treasury,
++    //   address(incentivesController),
++    //   aTokenDecimals,
++    //   aTokenName,
++    //   aTokenSymbol,
++    //   params
++    // );
+   }
+ }
+diff -ruN src/periphery/contracts/static-a-token/ERC20AaveLMUpgradeable.sol src/periphery/contracts/static-a-token/ERC20AaveLMUpgradeable.sol
+--- src/periphery/contracts/static-a-token/ERC20AaveLMUpgradeable.sol	2024-09-05 19:01:54
++++ src/periphery/contracts/static-a-token/ERC20AaveLMUpgradeable.sol	2024-09-05 13:48:31
+@@ -147,7 +147,7 @@
+   }
+ 
+   ///@inheritdoc IERC20AaveLM
+-  function rewardTokens() external view returns (address[] memory) {
++  function rewardTokens() public view returns (address[] memory) {
+     ERC20AaveLMStorage storage $ = _getERC20AaveLMStorage();
+     return $._rewardTokens;
+   }

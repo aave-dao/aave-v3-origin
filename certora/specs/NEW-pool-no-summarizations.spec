@@ -9,7 +9,7 @@ methods {
   function _.symbol() external => DISPATCHER(true);
   function _.isFlashBorrower(address a) external => DISPATCHER(true);
 
-  function _.executeOperation(address[] a, uint256[]b, uint256[]c, address d, bytes e) external => DISPATCHER(true);
+  //  function _.executeOperation(address[] a, uint256[]b, uint256[]c, address d, bytes e) external => DISPATCHER(true);
 
   function _.getAverageStableRate() external => DISPATCHER(true);
   function _.isPoolAdmin(address a) external => DISPATCHER(true);
