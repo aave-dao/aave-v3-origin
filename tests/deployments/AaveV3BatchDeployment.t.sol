@@ -15,6 +15,11 @@ import {IAaveV3ConfigEngine} from '../../src/contracts/extensions/v3-config-engi
 import {IPool} from '../../src/contracts/interfaces/IPool.sol';
 import {AaveV3ConfigEngine} from '../../src/contracts/extensions/v3-config-engine/AaveV3ConfigEngine.sol';
 import {SequencerOracle} from '../../src/contracts/mocks/oracle/SequencerOracle.sol';
+import {IPoolDataProvider} from '../../src/contracts/interfaces/IPoolDataProvider.sol';
+import {IAToken} from '../../src/contracts/interfaces/IAToken.sol';
+import {IncentivizedERC20} from '../../src/contracts/protocol/tokenization/base/IncentivizedERC20.sol';
+import {RewardsController} from '../../src/contracts/rewards/RewardsController.sol';
+import {EmissionManager} from '../../src/contracts/rewards/EmissionManager.sol';
 
 contract AaveV3BatchDeployment is BatchTestProcedures {
   address public marketOwner;
@@ -49,7 +54,11 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
       weth9,
       address(0),
       0.0005e4,
-      0.0004e4
+      0.0004e4,
+      address(0),
+      address(0),
+      address(0),
+      0
     );
   }
 
@@ -61,7 +70,7 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
       flags,
       deployedContracts
     );
-    checkFullReport(flags, fullReport);
+    checkFullReport(config, flags, fullReport);
 
     AaveV3TestListing testnetListingPayload = new AaveV3TestListing(
       IAaveV3ConfigEngine(fullReport.configEngine),
@@ -76,6 +85,11 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
     manager.addPoolAdmin(address(testnetListingPayload));
 
     testnetListingPayload.execute();
+
+    (address aToken, , ) = IPoolDataProvider(fullReport.protocolDataProvider)
+      .getReserveTokensAddresses(weth9);
+
+    assertEq(IAToken(aToken).RESERVE_TREASURY_ADDRESS(), fullReport.treasury);
   }
 
   function testAaveV3L2BatchDeploymentCheck() public {
@@ -91,7 +105,7 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
       deployedContracts
     );
 
-    checkFullReport(flags, fullReport);
+    checkFullReport(config, flags, fullReport);
 
     AaveV3TestListing testnetListingPayload = new AaveV3TestListing(
       IAaveV3ConfigEngine(fullReport.configEngine),
@@ -110,8 +124,56 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
 
   function testAaveV3BatchDeploy() public {
     checkFullReport(
+      config,
       flags,
       deployAaveV3Testnet(marketOwner, roles, config, flags, deployedContracts)
     );
+  }
+
+  function testAaveV3Batch_reuseIncentivesProxy() public {
+    EmissionManager emissionManager = new EmissionManager(poolAdmin);
+    RewardsController controller = new RewardsController(address(emissionManager));
+
+    config.incentivesProxy = address(controller);
+
+    checkFullReport(
+      config,
+      flags,
+      deployAaveV3Testnet(marketOwner, roles, config, flags, deployedContracts)
+    );
+  }
+
+  function testAaveV3TreasuryPartnerBatchDeploymentCheck() public {
+    config.treasuryPartner = makeAddr('TREASURY_PARTNER');
+    config.treasurySplitPercent = 5000;
+
+    MarketReport memory fullReport = deployAaveV3Testnet(
+      marketOwner,
+      roles,
+      config,
+      flags,
+      deployedContracts
+    );
+
+    checkFullReport(config, flags, fullReport);
+
+    AaveV3TestListing testnetListingPayload = new AaveV3TestListing(
+      IAaveV3ConfigEngine(fullReport.configEngine),
+      marketOwner,
+      weth9,
+      fullReport
+    );
+
+    ACLManager manager = ACLManager(fullReport.aclManager);
+
+    vm.prank(poolAdmin);
+    manager.addPoolAdmin(address(testnetListingPayload));
+
+    testnetListingPayload.execute();
+
+    (address aToken, , ) = IPoolDataProvider(fullReport.protocolDataProvider)
+      .getReserveTokensAddresses(weth9);
+
+    assertEq(IAToken(aToken).RESERVE_TREASURY_ADDRESS(), fullReport.revenueSplitter);
   }
 }
