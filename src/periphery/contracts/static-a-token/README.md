@@ -92,3 +92,8 @@ It is important to note that:
 - `underlying_price` is fetched from the AaveOracle, which means it is subject to mechanisms implemented by the DAO on top of the Chainlink price feeds.
 - the `latestAnswer` is a scaled response returning the price in the same denomination as `underlying_price` which means the sprice can be undervalued by up to 1 wei
 - while this should be obvious deviations in the price - even when limited to 1 wei per share - will compound per full share
+
+### Security considerations
+
+- the code was extensively tested with both unit & fuzzing tests
+- [Certora security review and property checking](https://github.com/aave-dao/aave-v3-origin/blob/067d29eb75115179501edc4316d125d9773f7928/audits/11-09-2024_Certora_StataTokenV2.pdf)
