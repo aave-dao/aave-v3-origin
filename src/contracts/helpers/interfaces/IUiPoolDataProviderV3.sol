@@ -85,4 +85,11 @@ interface IUiPoolDataProviderV3 {
     IPoolAddressesProvider provider,
     address user
   ) external view returns (UserReserveData[] memory, uint8);
+
+  /**
+   * @dev Iterates the eModes mapping and returns all eModes found
+   * @notice The method assumes for id gaps <= 2 within the eMode definitions
+   * @return an array of eModes that were found in the eMode mapping
+   */
+  function getEModes(IPoolAddressesProvider provider) external view returns (Emode[] memory);
 }

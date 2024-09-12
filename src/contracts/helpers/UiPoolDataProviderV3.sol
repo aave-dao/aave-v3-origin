@@ -182,6 +182,7 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
     return (reservesData, baseCurrencyInfo);
   }
 
+  /// @inheritdoc IUiPoolDataProviderV3
   function getEModes(IPoolAddressesProvider provider) external view returns (Emode[] memory) {
     IPool pool = IPool(provider.getPool());
     Emode[] memory tempCategories = new Emode[](256);
