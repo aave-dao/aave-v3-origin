@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import {ERC20Upgradeable, ERC20PermitUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC20PermitUpgradeable.sol';
 import {IERC20Metadata} from '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import {PausableUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/utils/PausableUpgradeable.sol';
-import {IPermissionlessRescuable, PermissionlessRescuable} from 'solidity-utils/contracts/utils/PermissionlessRescuable.sol';
+import {IRescuable, Rescuable} from 'solidity-utils/contracts/utils/Rescuable.sol';
 import {IRescuableBase, RescuableBase} from 'solidity-utils/contracts/utils/RescuableBase.sol';
 import {IERC20Permit} from '@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol';
 
@@ -24,7 +24,7 @@ contract StataTokenV2 is
   ERC20AaveLMUpgradeable,
   ERC4626StataTokenUpgradeable,
   PausableUpgradeable,
-  PermissionlessRescuable,
+  Rescuable,
   IStataTokenV2
 {
   using Math for uint256;
@@ -59,9 +59,9 @@ contract StataTokenV2 is
     else _unpause();
   }
 
-  /// @inheritdoc IPermissionlessRescuable
-  function whoShouldReceiveFunds() public view override returns (address) {
-    return IAToken(address(aToken())).RESERVE_TREASURY_ADDRESS();
+  /// @inheritdoc IRescuable
+  function whoCanRescue() public view override returns (address) {
+    return POOL_ADDRESSES_PROVIDER.getACLAdmin();
   }
 
   /// @inheritdoc IRescuableBase
