@@ -5,16 +5,6 @@ import {IPoolAddressesProvider} from '../../interfaces/IPoolAddressesProvider.so
 import {DataTypes} from '../../protocol/libraries/types/DataTypes.sol';
 
 interface IUiPoolDataProviderV3 {
-  struct InterestRates {
-    uint256 variableRateSlope1;
-    uint256 variableRateSlope2;
-    uint256 stableRateSlope1;
-    uint256 stableRateSlope2;
-    uint256 baseStableBorrowRate;
-    uint256 baseVariableBorrowRate;
-    uint256 optimalUsageRatio;
-  }
-
   struct AggregatedReserveData {
     address underlyingAsset;
     string name;
@@ -26,7 +16,6 @@ interface IUiPoolDataProviderV3 {
     uint256 reserveFactor;
     bool usageAsCollateralEnabled;
     bool borrowingEnabled;
-    bool stableBorrowRateEnabled;
     bool isActive;
     bool isFrozen;
     // base data
@@ -34,25 +23,17 @@ interface IUiPoolDataProviderV3 {
     uint128 variableBorrowIndex;
     uint128 liquidityRate;
     uint128 variableBorrowRate;
-    uint128 stableBorrowRate;
     uint40 lastUpdateTimestamp;
     address aTokenAddress;
-    address stableDebtTokenAddress;
     address variableDebtTokenAddress;
     address interestRateStrategyAddress;
     //
     uint256 availableLiquidity;
-    uint256 totalPrincipalStableDebt;
-    uint256 averageStableRate;
-    uint256 stableDebtLastUpdateTimestamp;
     uint256 totalScaledVariableDebt;
     uint256 priceInMarketReferenceCurrency;
     address priceOracle;
     uint256 variableRateSlope1;
     uint256 variableRateSlope2;
-    uint256 stableRateSlope1;
-    uint256 stableRateSlope2;
-    uint256 baseStableBorrowRate;
     uint256 baseVariableBorrowRate;
     uint256 optimalUsageRatio;
     // v3 only
@@ -77,10 +58,7 @@ interface IUiPoolDataProviderV3 {
     address underlyingAsset;
     uint256 scaledATokenBalance;
     bool usageAsCollateralEnabledOnUser;
-    uint256 stableBorrowRate;
     uint256 scaledVariableDebt;
-    uint256 principalStableDebt;
-    uint256 stableBorrowLastUpdateTimestamp;
   }
 
   struct BaseCurrencyInfo {
