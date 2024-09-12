@@ -8,6 +8,8 @@ interface IAToken {
 
   function UNDERLYING_ASSET_ADDRESS() external view returns (address);
 
+  function RESERVE_TREASURY_ADDRESS() external view returns (address);
+
   /**
    * @notice Returns the scaled total supply of the scaled balance token. Represents sum(debt/index)
    * @return The scaled total supply

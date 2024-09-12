@@ -1,4 +1,4 @@
-CMN=""
+#CMN="--compilation_steps_only"
 
 
 

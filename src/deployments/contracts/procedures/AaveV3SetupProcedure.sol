@@ -12,6 +12,18 @@ import {IEmissionManager} from '../../../contracts/rewards/interfaces/IEmissionM
 import {IRewardsController} from '../../../contracts/rewards/interfaces/IRewardsController.sol';
 
 contract AaveV3SetupProcedure {
+  struct AddressProviderInput {
+    InitialReport initialReport;
+    address poolImplementation;
+    address poolConfiguratorImplementation;
+    address protocolDataProvider;
+    address poolAdmin;
+    address aaveOracle;
+    address rewardsControllerProxy;
+    address rewardsControllerImplementation;
+    address priceOracleSentinel;
+  }
+
   function _initialDeployment(
     address providerRegistry,
     address marketOwner,
@@ -44,14 +56,17 @@ contract AaveV3SetupProcedure {
     _validateMarketSetup(roles);
 
     SetupReport memory report = _setupPoolAddressesProvider(
-      initialReport,
-      poolImplementation,
-      poolConfiguratorImplementation,
-      protocolDataProvider,
-      roles.poolAdmin,
-      aaveOracle,
-      rewardsControllerImplementation,
-      priceOracleSentinel
+      AddressProviderInput(
+        initialReport,
+        poolImplementation,
+        poolConfiguratorImplementation,
+        protocolDataProvider,
+        roles.poolAdmin,
+        aaveOracle,
+        config.incentivesProxy,
+        rewardsControllerImplementation,
+        priceOracleSentinel
+      )
     );
 
     report.aclManager = _setupACL(
@@ -90,38 +105,42 @@ contract AaveV3SetupProcedure {
   }
 
   function _setupPoolAddressesProvider(
-    InitialReport memory initialReport,
-    address poolImplementation,
-    address poolConfiguratorImplementation,
-    address protocolDataProvider,
-    address poolAdmin,
-    address aaveOracle,
-    address rewardsControllerImplementation,
-    address priceOracleSentinel
+    AddressProviderInput memory input
   ) internal returns (SetupReport memory) {
     SetupReport memory report;
 
-    IPoolAddressesProvider provider = IPoolAddressesProvider(initialReport.poolAddressesProvider);
-    provider.setPriceOracle(aaveOracle);
-    provider.setPoolImpl(poolImplementation);
-    provider.setPoolConfiguratorImpl(poolConfiguratorImplementation);
-    provider.setPoolDataProvider(protocolDataProvider);
+    IPoolAddressesProvider provider = IPoolAddressesProvider(
+      input.initialReport.poolAddressesProvider
+    );
+    provider.setPriceOracle(input.aaveOracle);
+    provider.setPoolImpl(input.poolImplementation);
+    provider.setPoolConfiguratorImpl(input.poolConfiguratorImplementation);
+    provider.setPoolDataProvider(input.protocolDataProvider);
 
     report.poolProxy = address(provider.getPool());
     report.poolConfiguratorProxy = address(provider.getPoolConfigurator());
 
-    if (priceOracleSentinel != address(0)) {
-      provider.setPriceOracleSentinel(priceOracleSentinel);
+    if (input.priceOracleSentinel != address(0)) {
+      provider.setPriceOracleSentinel(input.priceOracleSentinel);
     }
 
     bytes32 controllerId = keccak256('INCENTIVES_CONTROLLER');
-    provider.setAddressAsProxy(controllerId, rewardsControllerImplementation);
-    report.rewardsControllerProxy = provider.getAddress(controllerId);
-    IEmissionManager emissionManager = IEmissionManager(
-      IRewardsController(report.rewardsControllerProxy).EMISSION_MANAGER()
-    );
-    emissionManager.setRewardsController(report.rewardsControllerProxy);
-    IOwnable(address(emissionManager)).transferOwnership(poolAdmin);
+    if (input.rewardsControllerProxy == address(0)) {
+      require(
+        input.rewardsControllerImplementation != address(0),
+        'rewardsControllerImplementation must be set'
+      );
+      provider.setAddressAsProxy(controllerId, input.rewardsControllerImplementation);
+      report.rewardsControllerProxy = provider.getAddress(controllerId);
+      IEmissionManager emissionManager = IEmissionManager(
+        IRewardsController(report.rewardsControllerProxy).EMISSION_MANAGER()
+      );
+      emissionManager.setRewardsController(report.rewardsControllerProxy);
+      IOwnable(address(emissionManager)).transferOwnership(input.poolAdmin);
+    } else {
+      provider.setAddress(controllerId, input.rewardsControllerProxy);
+      report.rewardsControllerProxy = provider.getAddress(controllerId);
+    }
     return report;
   }
 

@@ -30,19 +30,19 @@ methods {
   function _.transfer(address, uint256) external => DISPATCHER(true);
   function _.transferFrom(address, address, uint256) external => DISPATCHER(true);
   function _.approve(address, uint256) external => DISPATCHER(true);
-  function _.mint(address, uint256) external => DISPATCHER(true);
-  function _.burn(uint256) external => DISPATCHER(true);
+  //function _.mint(address, uint256) external => DISPATCHER(true);
+  //function _.burn(uint256) external => DISPATCHER(true);
   function _.balanceOf(address) external => DISPATCHER(true);
 
   function _.totalSupply() external => DISPATCHER(true);
 
   // ATOKEN
-  function _.mint(address user, uint256 amount, uint256 index) external => DISPATCHER(true);
-  function _.burn(address user, address receiverOfUnderlying, uint256 amount, uint256 index) external => DISPATCHER(true);
+  //function _.mint(address user, uint256 amount, uint256 index) external => DISPATCHER(true);
+  //function _.burn(address user, address receiverOfUnderlying, uint256 amount, uint256 index) external => DISPATCHER(true);
   function _.mintToTreasury(uint256 amount, uint256 index) external => DISPATCHER(true);
   function _.transferOnLiquidation(address from, address to, uint256 value) external => DISPATCHER(true);
   function _.transferUnderlyingTo(address user, uint256 amount) external => DISPATCHER(true);
-  function _.handleRepayment(address user, uint256 amount) external => DISPATCHER(true);
+  //  function _.handleRepayment(address user, uint256 amount) external => DISPATCHER(true);
   function _.permit(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external => DISPATCHER(true);
   function _.ATokenBalanceOf(address user) external => DISPATCHER(true);
 
@@ -62,7 +62,7 @@ methods {
   function _.getReserveNormalizedIncome(address asset) external => DISPATCHER(true);
   function _.getReserveNormalizedVariableDebt(address asset) external => DISPATCHER(true);
   function _.getACLManager() external  => DISPATCHER(true);
-  function _.isBridge(address) external => DISPATCHER(true);
+  //function _.isBridge(address) external => DISPATCHER(true);
 
   // StableDebt
   function _.mint(address user, address onBehalfOf, uint256 amount, uint256 rate) external => DISPATCHER(true);
