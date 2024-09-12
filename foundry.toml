@@ -4,15 +4,18 @@ test = 'tests'
 script = 'scripts'
 optimizer = true
 optimizer_runs = 200
-solc='0.8.19'
+solc = '0.8.20'
 evm_version = 'paris'
 bytecode_hash = 'none'
 ignored_warnings_from = ["src/periphery/contracts/treasury/RevenueSplitter.sol"]
 out = 'out'
 libs = ['lib']
-remappings = [
+remappings = []
+fs_permissions = [
+    { access = "write", path = "./reports" },
+    { access = "read", path = "./out" },
+    { access = "read", path = "./config" },
 ]
-fs_permissions = [{access = "write", path = "./reports"}, {access = "read", path = "./out" }, {access = "read", path = "./config"}]
 ffi = true
 
 [fuzz]
@@ -26,7 +29,7 @@ avalanche = "${RPC_AVALANCHE}"
 polygon = "${RPC_POLYGON}"
 arbitrum = "${RPC_ARBITRUM}"
 fantom = "${RPC_FANTOM}"
-scroll= "${RPC_SCROLL}"
+scroll = "${RPC_SCROLL}"
 celo = "${RPC_CELO}"
 fantom_testnet = "${RPC_FANTOM_TESTNET}"
 harmony = "${RPC_HARMONY}"
@@ -39,19 +42,19 @@ gnosis = "${RPC_GNOSIS}"
 base = "${RPC_BASE}"
 
 [etherscan]
-mainnet={key="${ETHERSCAN_API_KEY_MAINNET}",chainId=1}
-optimism={key="${ETHERSCAN_API_KEY_OPTIMISM}",chainId=10}
-avalanche={key="${ETHERSCAN_API_KEY_AVALANCHE}",chainId=43114}
-polygon={key="${ETHERSCAN_API_KEY_POLYGON}",chainId=137}
-arbitrum={key="${ETHERSCAN_API_KEY_ARBITRUM}",chainId=42161}
-fantom={key="${ETHERSCAN_API_KEY_FANTOM}",chainId=250}
-scroll={key="${ETHERSCAN_API_KEY_SCROLL}",chainId=534352, url='https://api.scrollscan.com/api\?'}
-celo={key="${ETHERSCAN_API_KEY_CELO}",chainId=42220}
-sepolia={key="${ETHERSCAN_API_KEY_MAINNET}",chainId=11155111}
-mumbai={key="${ETHERSCAN_API_KEY_POLYGON}",chainId=80001}
-amoy={key="${ETHERSCAN_API_KEY_POLYGON}",chainId=80002}
-bnb_testnet={key="${ETHERSCAN_API_KEY_BNB}",chainId=97,url='https://api-testnet.bscscan.com/api'}
-bnb={key="${ETHERSCAN_API_KEY_BNB}",chainId=56,url='https://api.bscscan.com/api'}
-base={key="${ETHERSCAN_API_KEY_BASE}",chain=8453}
-gnosis={key="${ETHERSCAN_API_KEY_GNOSIS}",chainId=100}
+mainnet = { key = "${ETHERSCAN_API_KEY_MAINNET}", chainId = 1 }
+optimism = { key = "${ETHERSCAN_API_KEY_OPTIMISM}", chainId = 10 }
+avalanche = { key = "${ETHERSCAN_API_KEY_AVALANCHE}", chainId = 43114 }
+polygon = { key = "${ETHERSCAN_API_KEY_POLYGON}", chainId = 137 }
+arbitrum = { key = "${ETHERSCAN_API_KEY_ARBITRUM}", chainId = 42161 }
+fantom = { key = "${ETHERSCAN_API_KEY_FANTOM}", chainId = 250 }
+scroll = { key = "${ETHERSCAN_API_KEY_SCROLL}", chainId = 534352, url = 'https://api.scrollscan.com/api\?' }
+celo = { key = "${ETHERSCAN_API_KEY_CELO}", chainId = 42220 }
+sepolia = { key = "${ETHERSCAN_API_KEY_MAINNET}", chainId = 11155111 }
+mumbai = { key = "${ETHERSCAN_API_KEY_POLYGON}", chainId = 80001 }
+amoy = { key = "${ETHERSCAN_API_KEY_POLYGON}", chainId = 80002 }
+bnb_testnet = { key = "${ETHERSCAN_API_KEY_BNB}", chainId = 97, url = 'https://api-testnet.bscscan.com/api' }
+bnb = { key = "${ETHERSCAN_API_KEY_BNB}", chainId = 56, url = 'https://api.bscscan.com/api' }
+base = { key = "${ETHERSCAN_API_KEY_BASE}", chain = 8453 }
+gnosis = { key = "${ETHERSCAN_API_KEY_GNOSIS}", chainId = 100 }
 # See more config options https://github.com/gakonst/foundry/tree/master/config

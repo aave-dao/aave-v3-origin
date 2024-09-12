@@ -208,7 +208,7 @@ contract DeploymentsGasLimits is BatchTestProcedures {
     );
   }
 
-  function testCheckInitCodeSizeBatchs() public view {
+  function testCheckInitCodeSizeBatchs() public pure {
     uint16 maxInitCodeSize = 49152;
 
     console.log('AaveV3SetupBatch', type(AaveV3SetupBatch).creationCode.length);
