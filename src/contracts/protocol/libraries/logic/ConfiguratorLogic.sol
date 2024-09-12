@@ -40,7 +40,7 @@ library ConfiguratorLogic {
   );
 
   /**
-   * @notice Initialize a reserve by creating and initializing aToken, stable debt token and variable debt token
+   * @notice Initialize a reserve by creating and initializing aToken and variable debt token
    * @dev Emits the `ReserveInitialized` event
    * @param pool The Pool in which the reserve will be initialized
    * @param input The needed parameters for the initialization
