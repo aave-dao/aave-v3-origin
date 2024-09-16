@@ -171,7 +171,7 @@ interface IPoolConfigurator {
    * @param ltv The ltv for the asset category in eMode
    * @param liquidationThreshold The liquidationThreshold for the asset category in eMode
    * @param liquidationBonus The liquidationBonus for the asset category in eMode
-   * @param oracle The optional address of the price oracle specific for this category
+   * @param oracle DEPRECATED in v3.2.0
    * @param label A human readable identifier for the category
    */
   event EModeCategoryAdded(
