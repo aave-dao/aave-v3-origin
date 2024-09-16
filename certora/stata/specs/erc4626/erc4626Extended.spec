@@ -235,7 +235,7 @@ import "../methods/methods_base.spec";
         f.contract == currentContract &&
         !f.isView &&
         !harnessOnlyMethods(f) &&
-        f.selector != sig:emergencyEtherTransfer(uint256).selector &&
+        f.selector != sig:emergencyEtherTransfer(address,uint256).selector &&
         f.selector != sig:deposit(uint256,address).selector &&
         f.selector != sig:depositWithPermit(uint256,address,uint256,IERC4626StataToken.SignatureParams,bool).selector &&
         f.selector != sig:withdraw(uint256,address,address).selector &&

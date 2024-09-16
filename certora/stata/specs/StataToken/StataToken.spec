@@ -102,8 +102,8 @@ import "../methods/methods_base.spec";
             f.contract == currentContract &&
             !harnessOnlyMethods(f) &&
             f.selector != sig:initialize(address, string, string).selector) &&
-            f.selector != sig:emergencyEtherTransfer(uint256).selector &&
-            f.selector != sig:emergencyTokenTransfer(address,uint256).selector
+            f.selector != sig:emergencyEtherTransfer(address,uint256).selector &&
+            f.selector != sig:emergencyTokenTransfer(address,address,uint256).selector
         } {
         // Assuming single reward
         single_RewardToken_setup();
@@ -137,7 +137,7 @@ import "../methods/methods_base.spec";
         && !harnessMethodsMinusHarnessClaimMethods(f) 
         && !claimFunctions(f)
         && f.selector != sig:claimDoubleRewardOnBehalfSame(address, address, address).selector
-        && f.selector != sig:emergencyEtherTransfer(uint256).selector
+        && f.selector != sig:emergencyEtherTransfer(address,uint256).selector
         }
             {
             preserved redeem(uint256 shares, address receiver, address owner) with (env e1) {
@@ -152,7 +152,7 @@ import "../methods/methods_base.spec";
                 requireInvariant solvency_total_asset_geq_total_supply();
                 require balanceOf(owner) <= totalSupply(); 
             }
-            preserved emergencyTokenTransfer(address asset, uint256 amount) with (env e3) {
+            preserved emergencyTokenTransfer(address asset, address to, uint256 amount) with (env e3) {
                 require rate() >= RAY();
             }
             }
@@ -170,7 +170,7 @@ import "../methods/methods_base.spec";
         f.contract == currentContract 
         && !harnessMethodsMinusHarnessClaimMethods(f)
         && !claimFunctions(f)
-        && f.selector != sig:emergencyEtherTransfer(uint256).selector
+        && f.selector != sig:emergencyEtherTransfer(address,uint256).selector
         && f.selector != sig:claimDoubleRewardOnBehalfSame(address, address, address).selector }
         {
             preserved withdraw(uint256 assets, address receiver, address owner)  with (env e3) {
@@ -198,7 +198,7 @@ import "../methods/methods_base.spec";
             preserved redeemATokens(uint256 shares, address receiver, address owner) with (env e2) {
                 require balanceOf(owner) <= totalSupply(); 
             }
-            preserved emergencyTokenTransfer(address asset, uint256 amount) with (env e1) {
+            preserved emergencyTokenTransfer(address asset, address to, uint256 amount) with (env e1) {
                 require rate() >= RAY();
             }
         }
@@ -216,7 +216,7 @@ import "../methods/methods_base.spec";
     => (_RewardsController.getUserAccruedReward(_asset, reward, user) == _RewardsController.getUserAccruedRewards(reward, user)))
     filtered {f ->
                 f.contract == currentContract &&
-                f.selector != sig:emergencyEtherTransfer(uint256).selector &&
+                f.selector != sig:emergencyEtherTransfer(address,uint256).selector &&
                 !harnessOnlyMethods(f) 
             } 
     {
@@ -256,8 +256,8 @@ import "../methods/methods_base.spec";
                     && !collectAndUpdateFunction(f)
                     && !harnessOnlyMethods(f)
                     && f.selector != sig:initialize(address,string,string).selector 
-                    && f.selector != sig:emergencyEtherTransfer(uint256).selector 
-                    && f.selector != sig:emergencyTokenTransfer(address,uint256).selector
+                    && f.selector != sig:emergencyEtherTransfer(address,uint256).selector 
+                    && f.selector != sig:emergencyTokenTransfer(address,address,uint256).selector
                  }
         {
             env e;
@@ -301,7 +301,7 @@ rule getClaimableRewards_stable(method f)
     && !claimFunctions(f)
     && !collectAndUpdateFunction(f)
     && f.selector != sig:initialize(address,string,string).selector
-    && f.selector != sig:emergencyEtherTransfer(uint256).selector
+    && f.selector != sig:emergencyEtherTransfer(address,uint256).selector
     && !harnessOnlyMethods(f)
     }
     {
