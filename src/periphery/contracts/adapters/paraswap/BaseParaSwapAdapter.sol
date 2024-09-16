@@ -2,7 +2,8 @@
 pragma solidity ^0.8.10;
 
 import {DataTypes} from 'aave-v3-core/contracts/protocol/libraries/types/DataTypes.sol';
-import {FlashLoanSimpleReceiverBase} from 'aave-v3-core/contracts/flashloan/base/FlashLoanSimpleReceiverBase.sol';
+import {FlashLoanSimpleReceiverBase, FlashLoanSimpleReceiverBaseV2} from 'aave-v3-core/contracts/flashloan/base/FlashLoanSimpleReceiverBase.sol';
+import {ILendingPool, DataTypes as DataTypesV2} from './interfaces/ILendingPool.sol';
 import {GPv2SafeERC20} from 'aave-v3-core/contracts/dependencies/gnosis/contracts/GPv2SafeERC20.sol';
 import {IERC20} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
 import {IERC20Detailed} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
@@ -17,7 +18,7 @@ import {Ownable} from 'aave-v3-core/contracts/dependencies/openzeppelin/contract
  * @notice Utility functions for adapters using ParaSwap
  * @author Jason Raymond Bell
  */
-abstract contract BaseParaSwapAdapter is FlashLoanSimpleReceiverBase, Ownable {
+abstract contract BaseParaSwapAdapter is FlashLoanSimpleReceiverBaseV2, Ownable {
   using SafeMath for uint256;
   using GPv2SafeERC20 for IERC20;
   using GPv2SafeERC20 for IERC20Detailed;
@@ -51,7 +52,7 @@ abstract contract BaseParaSwapAdapter is FlashLoanSimpleReceiverBase, Ownable {
 
   constructor(
     IPoolAddressesProvider addressesProvider
-  ) FlashLoanSimpleReceiverBase(addressesProvider) {
+  ) FlashLoanSimpleReceiverBaseV2(addressesProvider) {
     ORACLE = IPriceOracleGetter(addressesProvider.getPriceOracle());
   }
 
@@ -81,8 +82,8 @@ abstract contract BaseParaSwapAdapter is FlashLoanSimpleReceiverBase, Ownable {
    */
   function _getReserveData(
     address asset
-  ) internal view returns (DataTypes.ReserveDataLegacy memory) {
-    return POOL.getReserveData(asset);
+  ) internal view returns (DataTypesV2.ReserveData memory) {
+    return ILendingPool(address(POOL)).getReserveData(asset);
   }
 
   function _pullATokenAndWithdraw(

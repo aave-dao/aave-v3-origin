@@ -19,3 +19,17 @@ abstract contract FlashLoanSimpleReceiverBase is IFlashLoanSimpleReceiver {
     POOL = IPool(provider.getPool());
   }
 }
+
+interface IPoolAddressesProviderV2 {
+  function getLendingPool() external returns (address);
+}
+
+abstract contract FlashLoanSimpleReceiverBaseV2 is IFlashLoanSimpleReceiver {
+  IPoolAddressesProvider public immutable override ADDRESSES_PROVIDER;
+  IPool public immutable override POOL;
+
+  constructor(IPoolAddressesProvider provider) {
+    ADDRESSES_PROVIDER = provider;
+    POOL = IPool(IPoolAddressesProviderV2(address(provider)).getLendingPool());
+  }
+}

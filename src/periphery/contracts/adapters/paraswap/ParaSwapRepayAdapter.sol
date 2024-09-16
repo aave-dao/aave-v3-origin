@@ -11,6 +11,7 @@ import {SafeMath} from 'aave-v3-core/contracts/dependencies/openzeppelin/contrac
 import {BaseParaSwapBuyAdapter} from './BaseParaSwapBuyAdapter.sol';
 import {IParaSwapAugustusRegistry} from './interfaces/IParaSwapAugustusRegistry.sol';
 import {IParaSwapAugustus} from './interfaces/IParaSwapAugustus.sol';
+import {DataTypes as DataTypesV2} from './interfaces/ILendingPool.sol';
 import {ReentrancyGuard} from '../../dependencies/openzeppelin/ReentrancyGuard.sol';
 
 /**
@@ -222,7 +223,7 @@ contract ParaSwapRepayAdapter is BaseParaSwapBuyAdapter, ReentrancyGuard {
     uint256 debtRepayAmount,
     address initiator
   ) private view returns (uint256) {
-    DataTypes.ReserveDataLegacy memory debtReserveData = _getReserveData(address(debtAsset));
+    DataTypesV2.ReserveData memory debtReserveData = _getReserveData(address(debtAsset));
 
     address debtToken = DataTypes.InterestRateMode(rateMode) == DataTypes.InterestRateMode.STABLE
       ? debtReserveData.stableDebtTokenAddress
