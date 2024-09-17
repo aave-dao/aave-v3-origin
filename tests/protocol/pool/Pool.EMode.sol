@@ -55,6 +55,15 @@ contract PoolEModeTests is TestnetProcedures {
     assertEq(pool.getUserEMode(alice), ct1.id);
   }
 
+  function test_reenterSameEmode_shouldSucceed() public {
+    test_getUserEMode_shouldReflectEMode();
+
+    assertEq(pool.getUserEMode(alice), 1);
+    vm.prank(alice);
+    pool.setUserEMode(1);
+    assertEq(pool.getUserEMode(alice), 1);
+  }
+
   function test_getUserAccountData_shouldReflectEmodeParams() public {
     vm.startPrank(poolAdmin);
     EModeCategoryInput memory ct1 = _genCategoryOne();
