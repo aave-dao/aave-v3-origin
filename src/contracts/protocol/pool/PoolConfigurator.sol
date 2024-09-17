@@ -26,7 +26,6 @@ import {IERC20Detailed} from '../../dependencies/openzeppelin/contracts/IERC20De
 abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator {
   using PercentageMath for uint256;
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
-  using EModeConfiguration for DataTypes.EModeCategory;
 
   IPoolAddressesProvider internal _addressesProvider;
   IPool internal _pool;
@@ -397,7 +396,7 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
       Errors.INVALID_EMODE_CATEGORY_PARAMS
     );
 
-    DataTypes.EModeCategory memory categoryData = _pool.getEModeCategoryData(categoryId);
+    DataTypes.EModeCategoryBaseConfiguration memory categoryData;
     categoryData.ltv = ltv;
     categoryData.liquidationThreshold = liquidationThreshold;
     categoryData.liquidationBonus = liquidationBonus;
@@ -420,11 +419,15 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
     uint8 categoryId,
     bool allowed
   ) external override onlyRiskOrPoolAdmins {
-    DataTypes.EModeCategory memory categoryData = _pool.getEModeCategoryData(categoryId);
+    uint128 collateralBitmap = _pool.getEModeCategoryCollateralBitmap(categoryId);
     DataTypes.ReserveDataLegacy memory reserveData = _pool.getReserveData(asset);
     require(reserveData.id != 0 || _pool.getReservesList()[0] == asset, Errors.ASSET_NOT_LISTED);
-    categoryData.setCollateral(reserveData.id, allowed);
-    _pool.configureEModeCategory(categoryId, categoryData);
+    collateralBitmap = EModeConfiguration.setReserveBitmapBit(
+      collateralBitmap,
+      reserveData.id,
+      allowed
+    );
+    _pool.configureEModeCategoryCollateralBitmap(categoryId, collateralBitmap);
     emit AssetCollateralInEModeChanged(asset, categoryId, allowed);
   }
 
@@ -434,11 +437,15 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
     uint8 categoryId,
     bool borrowable
   ) external override onlyRiskOrPoolAdmins {
-    DataTypes.EModeCategory memory categoryData = _pool.getEModeCategoryData(categoryId);
+    uint128 borrowableBitmap = _pool.getEModeCategoryBorrowableBitmap(categoryId);
     DataTypes.ReserveDataLegacy memory reserveData = _pool.getReserveData(asset);
     require(reserveData.id != 0 || _pool.getReservesList()[0] == asset, Errors.ASSET_NOT_LISTED);
-    categoryData.setBorrowable(reserveData.id, borrowable);
-    _pool.configureEModeCategory(categoryId, categoryData);
+    borrowableBitmap = EModeConfiguration.setReserveBitmapBit(
+      borrowableBitmap,
+      reserveData.id,
+      borrowable
+    );
+    _pool.configureEModeCategoryBorrowableBitmap(categoryId, borrowableBitmap);
     emit AssetBorrowableInEModeChanged(asset, categoryId, borrowable);
   }
 

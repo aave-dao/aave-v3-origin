@@ -686,18 +686,76 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
   /// @inheritdoc IPool
   function configureEModeCategory(
     uint8 id,
-    DataTypes.EModeCategory memory category
+    DataTypes.EModeCategoryBaseConfiguration memory category
   ) external virtual override onlyPoolConfigurator {
     // category 0 is reserved for volatile heterogeneous assets and it's always disabled
     require(id != 0, Errors.EMODE_CATEGORY_RESERVED);
-    _eModeCategories[id] = category;
+    _eModeCategories[id].ltv = category.ltv;
+    _eModeCategories[id].liquidationThreshold = category.liquidationThreshold;
+    _eModeCategories[id].liquidationBonus = category.liquidationBonus;
+    _eModeCategories[id].label = category.label;
+  }
+
+  /// @inheritdoc IPool
+  function configureEModeCategoryCollateralBitmap(
+    uint8 id,
+    uint128 collateralBitmap
+  ) external virtual override onlyPoolConfigurator {
+    // category 0 is reserved for volatile heterogeneous assets and it's always disabled
+    require(id != 0, Errors.EMODE_CATEGORY_RESERVED);
+    _eModeCategories[id].collateralBitmap = collateralBitmap;
+  }
+
+  /// @inheritdoc IPool
+  function configureEModeCategoryBorrowableBitmap(
+    uint8 id,
+    uint128 borrowableBitmap
+  ) external virtual override onlyPoolConfigurator {
+    // category 0 is reserved for volatile heterogeneous assets and it's always disabled
+    require(id != 0, Errors.EMODE_CATEGORY_RESERVED);
+    _eModeCategories[id].borrowableBitmap = borrowableBitmap;
   }
 
   /// @inheritdoc IPool
   function getEModeCategoryData(
     uint8 id
-  ) external view virtual override returns (DataTypes.EModeCategory memory) {
-    return _eModeCategories[id];
+  ) external view virtual override returns (DataTypes.EModeCategoryLegacy memory) {
+    DataTypes.EModeCategory memory category = _eModeCategories[id];
+    return
+      DataTypes.EModeCategoryLegacy({
+        ltv: category.ltv,
+        liquidationThreshold: category.liquidationThreshold,
+        liquidationBonus: category.liquidationBonus,
+        priceSource: address(0),
+        label: category.label
+      });
+  }
+
+  /// @inheritdoc IPool
+  function getEModeCategoryCollateralConfig(
+    uint8 id
+  ) external view returns (DataTypes.CollateralConfig memory) {
+    return
+      DataTypes.CollateralConfig({
+        ltv: _eModeCategories[id].ltv,
+        liquidationThreshold: _eModeCategories[id].liquidationThreshold,
+        liquidationBonus: _eModeCategories[id].liquidationBonus
+      });
+  }
+
+  /// @inheritdoc IPool
+  function getEModeCategoryLabel(uint8 id) external view returns (string memory) {
+    return _eModeCategories[id].label;
+  }
+
+  /// @inheritdoc IPool
+  function getEModeCategoryCollateralBitmap(uint8 id) external view returns (uint128) {
+    return _eModeCategories[id].collateralBitmap;
+  }
+
+  /// @inheritdoc IPool
+  function getEModeCategoryBorrowableBitmap(uint8 id) external view returns (uint128) {
+    return _eModeCategories[id].borrowableBitmap;
   }
 
   /// @inheritdoc IPool

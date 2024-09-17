@@ -138,8 +138,8 @@ library LiquidationLogic {
     vars.collateralAToken = IAToken(collateralReserve.aTokenAddress);
     if (
       params.userEModeCategory != 0 &&
-      EModeConfiguration.isCollateralAsset(
-        eModeCategories[params.userEModeCategory].isCollateralBitmap,
+      EModeConfiguration.isReserveEnabledOnBitmap(
+        eModeCategories[params.userEModeCategory].collateralBitmap,
         collateralReserve.id
       )
     ) {

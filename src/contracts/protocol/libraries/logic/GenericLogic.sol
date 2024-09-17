@@ -118,8 +118,8 @@ library GenericLogic {
 
         vars.isInEModeCategory =
           params.userEModeCategory != 0 &&
-          EModeConfiguration.isCollateralAsset(
-            eModeCategories[params.userEModeCategory].isCollateralBitmap,
+          EModeConfiguration.isReserveEnabledOnBitmap(
+            eModeCategories[params.userEModeCategory].collateralBitmap,
             vars.i
           );
 

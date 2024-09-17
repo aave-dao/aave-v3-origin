@@ -70,28 +70,28 @@ library EModeEngine {
         keccak256(abi.encode(EngineFlags.KEEP_CURRENT_STRING));
 
       if (notAllKeepCurrent && atLeastOneKeepCurrent) {
-        DataTypes.EModeCategory memory configuration = pool.getEModeCategoryData(
+        DataTypes.CollateralConfig memory cfg = pool.getEModeCategoryCollateralConfig(
           updates[i].eModeCategory
         );
 
         if (updates[i].ltv == EngineFlags.KEEP_CURRENT) {
-          updates[i].ltv = configuration.ltv;
+          updates[i].ltv = cfg.ltv;
         }
 
         if (updates[i].liqThreshold == EngineFlags.KEEP_CURRENT) {
-          updates[i].liqThreshold = configuration.liquidationThreshold;
+          updates[i].liqThreshold = cfg.liquidationThreshold;
         }
 
         if (updates[i].liqBonus == EngineFlags.KEEP_CURRENT) {
           // Subtracting 100_00 to be consistent with the engine as 100_00 gets added while setting the liqBonus
-          updates[i].liqBonus = configuration.liquidationBonus - 100_00;
+          updates[i].liqBonus = cfg.liquidationBonus - 100_00;
         }
 
         if (
           keccak256(abi.encode(updates[i].label)) ==
           keccak256(abi.encode(EngineFlags.KEEP_CURRENT_STRING))
         ) {
-          updates[i].label = configuration.label;
+          updates[i].label = pool.getEModeCategoryLabel(updates[i].eModeCategory);
         }
       }
 

@@ -1009,8 +1009,10 @@ contract PoolLiquidationTests is TestnetProcedures {
   ) internal view returns (uint256, address, address) {
     uint256 id = contracts.poolProxy.getUserEMode(user);
     if (id != 0) {
-      DataTypes.EModeCategory memory cat = contracts.poolProxy.getEModeCategoryData(uint8(id));
-      return (cat.liquidationBonus, collateralAsset, debtAsset);
+      DataTypes.CollateralConfig memory cfg = contracts.poolProxy.getEModeCategoryCollateralConfig(
+        uint8(id)
+      );
+      return (cfg.liquidationBonus, collateralAsset, debtAsset);
     } else {
       DataTypes.ReserveConfigurationMap memory conf = contracts.poolProxy.getConfiguration(
         debtAsset

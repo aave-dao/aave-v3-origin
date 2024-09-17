@@ -158,16 +158,18 @@ contract ProtocolV3TestBase is DiffUtils {
     string memory content = '{}';
     uint8 emptyCounter = 0;
     for (uint8 i = 0; i < 256; i++) {
-      DataTypes.EModeCategory memory category = pool.getEModeCategoryData(i);
-      if (category.liquidationThreshold == 0) {
+      DataTypes.CollateralConfig memory cfg = pool.getEModeCategoryCollateralConfig(i);
+      if (cfg.liquidationThreshold == 0) {
         if (++emptyCounter > 2) break;
       } else {
         string memory key = vm.toString(i);
         vm.serializeUint(key, 'eModeCategory', i);
-        vm.serializeString(key, 'label', category.label);
-        vm.serializeUint(key, 'ltv', category.ltv);
-        vm.serializeUint(key, 'liquidationThreshold', category.liquidationThreshold);
-        string memory object = vm.serializeUint(key, 'liquidationBonus', category.liquidationBonus);
+        vm.serializeString(key, 'label', pool.getEModeCategoryLabel(i));
+        vm.serializeUint(key, 'ltv', cfg.ltv);
+        vm.serializeUint(key, 'collateralBitmap', pool.getEModeCategoryCollateralBitmap(i));
+        vm.serializeUint(key, 'borrowableBitmap', pool.getEModeCategoryBorrowableBitmap(i));
+        vm.serializeUint(key, 'liquidationThreshold', cfg.liquidationThreshold);
+        string memory object = vm.serializeUint(key, 'liquidationBonus', cfg.liquidationBonus);
         content = vm.serializeString(eModesKey, key, object);
         emptyCounter = 0;
       }
@@ -807,31 +809,31 @@ contract ProtocolV3TestBase is DiffUtils {
     DataTypes.EModeCategory memory expectedCategoryData
   ) internal view {
     address poolAddress = addressesProvider.getPool();
-    DataTypes.EModeCategory memory currentCategoryData = IPool(poolAddress).getEModeCategoryData(
+    DataTypes.CollateralConfig memory cfg = IPool(poolAddress).getEModeCategoryCollateralConfig(
       uint8(category)
     );
     require(
-      keccak256(bytes(currentCategoryData.label)) == keccak256(bytes(expectedCategoryData.label)),
+      keccak256(bytes(IPool(poolAddress).getEModeCategoryLabel(uint8(category)))) ==
+        keccak256(bytes(expectedCategoryData.label)),
       '_validateEmodeCategory(): INVALID_LABEL'
     );
+    require(cfg.ltv == expectedCategoryData.ltv, '_validateEmodeCategory(): INVALID_LTV');
     require(
-      currentCategoryData.ltv == expectedCategoryData.ltv,
-      '_validateEmodeCategory(): INVALID_LTV'
-    );
-    require(
-      currentCategoryData.liquidationThreshold == expectedCategoryData.liquidationThreshold,
+      cfg.liquidationThreshold == expectedCategoryData.liquidationThreshold,
       '_validateEmodeCategory(): INVALID_LT'
     );
     require(
-      currentCategoryData.liquidationBonus == expectedCategoryData.liquidationBonus,
+      cfg.liquidationBonus == expectedCategoryData.liquidationBonus,
       '_validateEmodeCategory(): INVALID_LB'
     );
     require(
-      currentCategoryData.isCollateralBitmap == expectedCategoryData.isCollateralBitmap,
+      IPool(poolAddress).getEModeCategoryCollateralBitmap(uint8(category)) ==
+        expectedCategoryData.collateralBitmap,
       '_validateEmodeCategory(): INVALID_LB'
     );
     require(
-      currentCategoryData.isBorrowableBitmap == expectedCategoryData.isBorrowableBitmap,
+      IPool(poolAddress).getEModeCategoryBorrowableBitmap(uint8(category)) ==
+        expectedCategoryData.borrowableBitmap,
       '_validateEmodeCategory(): INVALID_LB'
     );
   }

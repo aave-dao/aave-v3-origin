@@ -111,14 +111,38 @@ library DataTypes {
     uint256 data;
   }
 
+  // DEPRECATED: kept for backwards compatibility, might be removed in a future version
+  struct EModeCategoryLegacy {
+    // each eMode category has a custom ltv and liquidation threshold
+    uint16 ltv;
+    uint16 liquidationThreshold;
+    uint16 liquidationBonus;
+    // DEPRECATED
+    address priceSource;
+    string label;
+  }
+
+  struct CollateralConfig {
+    uint16 ltv;
+    uint16 liquidationThreshold;
+    uint16 liquidationBonus;
+  }
+
+  struct EModeCategoryBaseConfiguration {
+    uint16 ltv;
+    uint16 liquidationThreshold;
+    uint16 liquidationBonus;
+    string label;
+  }
+
   struct EModeCategory {
     // each eMode category has a custom ltv and liquidation threshold
     uint16 ltv;
     uint16 liquidationThreshold;
     uint16 liquidationBonus;
-    uint128 isCollateralBitmap;
+    uint128 collateralBitmap;
     string label;
-    uint128 isBorrowableBitmap;
+    uint128 borrowableBitmap;
   }
 
   enum InterestRateMode {

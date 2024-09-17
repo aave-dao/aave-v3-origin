@@ -12,69 +12,39 @@ import {ReserveConfiguration} from './ReserveConfiguration.sol';
  */
 library EModeConfiguration {
   /**
-   * @notice Sets if the asset is collateral in the given eMode
-   * @param self The configuration object
+   * @notice Sets a bit in a given bitmap that represents the reserve index range
+   * @dev The supplied bitmap is supposed to be a uint128 in which each bit represents a reserve
+   * @param bitmap The bitmap
    * @param reserveIndex The index of the reserve in the bitmap
-   * @param collateral True if the asset should be collateral, false otherwise
+   * @param enabled True if the reserveIndex should be enabled on the bitmap, false otherwise
+   * @return The altered bitmap
    */
-  function setCollateral(
-    DataTypes.EModeCategory memory self,
+  function setReserveBitmapBit(
+    uint128 bitmap,
     uint256 reserveIndex,
-    bool collateral
-  ) internal pure {
+    bool enabled
+  ) internal pure returns (uint128) {
     unchecked {
       require(reserveIndex < ReserveConfiguration.MAX_RESERVES_COUNT, Errors.INVALID_RESERVE_INDEX);
       uint128 bit = uint128(1 << reserveIndex);
-      if (collateral) {
-        self.isCollateralBitmap |= bit;
+      if (enabled) {
+        return bitmap | bit;
       } else {
-        self.isCollateralBitmap &= ~bit;
+        return bitmap & ~bit;
       }
     }
   }
 
   /**
-   * @notice Validates if a reserve can be used as collaterl in a selected eMode
-   * @param bitmap The collateral bitmap
+   * @notice Validates if a reserveIndex is flagged as enabled on a given bitmap
+   * @param bitmap The bitmap
    * @param reserveIndex The index of the reserve in the bitmap
-   * @return True if the reserve is collateral
+   * @return True if the reserveindex is flagged true
    */
-  function isCollateralAsset(uint128 bitmap, uint256 reserveIndex) internal pure returns (bool) {
-    unchecked {
-      require(reserveIndex < ReserveConfiguration.MAX_RESERVES_COUNT, Errors.INVALID_RESERVE_INDEX);
-      return (bitmap >> reserveIndex) & 1 != 0;
-    }
-  }
-
-  /**
-   * @notice Sets if the asset is borrowable in the given eMode
-   * @param self The configuration object
-   * @param reserveIndex The index of the reserve in the bitmap
-   * @param borrowable True if the asset should be borrowable, false otherwise
-   */
-  function setBorrowable(
-    DataTypes.EModeCategory memory self,
-    uint256 reserveIndex,
-    bool borrowable
-  ) internal pure {
-    unchecked {
-      require(reserveIndex < ReserveConfiguration.MAX_RESERVES_COUNT, Errors.INVALID_RESERVE_INDEX);
-      uint128 bit = uint128(1 << reserveIndex);
-      if (borrowable) {
-        self.isBorrowableBitmap |= bit;
-      } else {
-        self.isBorrowableBitmap &= ~bit;
-      }
-    }
-  }
-
-  /**
-   * @notice Validates if a reserve can be borrowed in a selected eMode
-   * @param bitmap The borrowable bitmap
-   * @param reserveIndex The index of the reserve in the bitmap
-   * @return True if the reserve is borrowable
-   */
-  function isBorrowableAsset(uint128 bitmap, uint256 reserveIndex) internal pure returns (bool) {
+  function isReserveEnabledOnBitmap(
+    uint128 bitmap,
+    uint256 reserveIndex
+  ) internal pure returns (bool) {
     unchecked {
       require(reserveIndex < ReserveConfiguration.MAX_RESERVES_COUNT, Errors.INVALID_RESERVE_INDEX);
       return (bitmap >> reserveIndex) & 1 != 0;

@@ -189,9 +189,19 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
     uint8 eModesFound = 0;
     uint8 missCounter = 0;
     for (uint8 i = 1; i < 256; i++) {
-      DataTypes.EModeCategory memory category = pool.getEModeCategoryData(i);
-      if (category.liquidationThreshold != 0) {
-        tempCategories[eModesFound] = Emode({eMode: category, id: i});
+      DataTypes.CollateralConfig memory cfg = pool.getEModeCategoryCollateralConfig(i);
+      if (cfg.liquidationThreshold != 0) {
+        tempCategories[eModesFound] = Emode({
+          eMode: DataTypes.EModeCategory({
+            ltv: cfg.ltv,
+            liquidationThreshold: cfg.liquidationThreshold,
+            liquidationBonus: cfg.liquidationBonus,
+            label: pool.getEModeCategoryLabel(i),
+            collateralBitmap: pool.getEModeCategoryCollateralBitmap(i),
+            borrowableBitmap: pool.getEModeCategoryBorrowableBitmap(i)
+          }),
+          id: i
+        });
         ++eModesFound;
         missCounter = 0;
       } else {

@@ -12,7 +12,6 @@ import {TestnetProcedures} from '../../../utils/TestnetProcedures.sol';
 contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
   using PercentageMath for uint256;
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
-  using EModeConfiguration for DataTypes.EModeCategory;
 
   event EModeCategoryAdded(
     uint8 indexed categoryId,
@@ -38,13 +37,13 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setEModeCategory(ct.id, ct.ltv, ct.lt, ct.lb, ct.label);
 
-    DataTypes.EModeCategory memory emodeConfig = contracts.poolProxy.getEModeCategoryData(ct.id);
+    DataTypes.EModeCategory memory emodeConfig = _getFullEMode(ct.id);
     assertEq(emodeConfig.ltv, ct.ltv);
     assertEq(emodeConfig.liquidationThreshold, ct.lt);
     assertEq(emodeConfig.liquidationBonus, ct.lb);
     assertEq(emodeConfig.label, ct.label);
-    assertEq(emodeConfig.isCollateralBitmap, 0);
-    assertEq(emodeConfig.isBorrowableBitmap, 0);
+    assertEq(emodeConfig.collateralBitmap, 0);
+    assertEq(emodeConfig.borrowableBitmap, 0);
   }
 
   function test_updateEModeCategory() public {
@@ -52,7 +51,7 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
     EModeCategoryInput memory ct = _genCategoryOne();
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.wbtc, 1, true);
-    DataTypes.EModeCategory memory ogCategory = contracts.poolProxy.getEModeCategoryData(ct.id);
+    DataTypes.EModeCategory memory ogCategory = _getFullEMode(ct.id);
     EModeCategoryInput memory updatedCategory = EModeCategoryInput(
       ct.id,
       90_00,
@@ -80,13 +79,13 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
       updatedCategory.label
     );
 
-    DataTypes.EModeCategory memory emodeConfig = contracts.poolProxy.getEModeCategoryData(ct.id);
+    DataTypes.EModeCategory memory emodeConfig = _getFullEMode(ct.id);
     assertEq(emodeConfig.ltv, updatedCategory.ltv);
     assertEq(emodeConfig.liquidationThreshold, updatedCategory.lt);
     assertEq(emodeConfig.liquidationBonus, updatedCategory.lb);
     assertEq(emodeConfig.label, updatedCategory.label);
-    assertEq(emodeConfig.isCollateralBitmap, ogCategory.isCollateralBitmap);
-    assertEq(emodeConfig.isBorrowableBitmap, ogCategory.isBorrowableBitmap);
+    assertEq(emodeConfig.collateralBitmap, ogCategory.collateralBitmap);
+    assertEq(emodeConfig.borrowableBitmap, ogCategory.borrowableBitmap);
   }
 
   function test_reverts_setEmodeCategory_zero_ltv() public {
@@ -149,11 +148,14 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
     emit AssetCollateralInEModeChanged(tokenList.usdx, input.id, true);
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, input.id, true);
-    DataTypes.EModeCategory memory config = contracts.poolProxy.getEModeCategoryData(input.id);
+    DataTypes.EModeCategory memory config = _getFullEMode(input.id);
     DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
       tokenList.usdx
     );
-    assertEq(EModeConfiguration.isCollateralAsset(config.isCollateralBitmap, reserveData.id), true);
+    assertEq(
+      EModeConfiguration.isReserveEnabledOnBitmap(config.collateralBitmap, reserveData.id),
+      true
+    );
   }
 
   function test_addAnotherAssetCollateralInEMode() public {
@@ -162,7 +164,7 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
 
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.wbtc, input.id, true);
-    DataTypes.EModeCategory memory config = contracts.poolProxy.getEModeCategoryData(input.id);
+    DataTypes.EModeCategory memory config = _getFullEMode(input.id);
     DataTypes.ReserveDataLegacy memory reserveDataUSDX = contracts.poolProxy.getReserveData(
       tokenList.usdx
     );
@@ -170,11 +172,11 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
       tokenList.wbtc
     );
     assertEq(
-      EModeConfiguration.isCollateralAsset(config.isCollateralBitmap, reserveDataUSDX.id),
+      EModeConfiguration.isReserveEnabledOnBitmap(config.collateralBitmap, reserveDataUSDX.id),
       true
     );
     assertEq(
-      EModeConfiguration.isCollateralAsset(config.isCollateralBitmap, reserveDataWBTC.id),
+      EModeConfiguration.isReserveEnabledOnBitmap(config.collateralBitmap, reserveDataWBTC.id),
       true
     );
   }
@@ -188,12 +190,12 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, prevCt.id, false);
 
-    DataTypes.EModeCategory memory config = contracts.poolProxy.getEModeCategoryData(prevCt.id);
+    DataTypes.EModeCategory memory config = _getFullEMode(prevCt.id);
     DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
       tokenList.usdx
     );
     assertEq(
-      EModeConfiguration.isCollateralAsset(config.isCollateralBitmap, reserveData.id),
+      EModeConfiguration.isReserveEnabledOnBitmap(config.collateralBitmap, reserveData.id),
       false
     );
   }
@@ -205,11 +207,14 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
     emit AssetBorrowableInEModeChanged(tokenList.usdx, input.id, true);
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setAssetBorrowableInEMode(tokenList.usdx, input.id, true);
-    DataTypes.EModeCategory memory config = contracts.poolProxy.getEModeCategoryData(input.id);
+    DataTypes.EModeCategory memory config = _getFullEMode(input.id);
     DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
       tokenList.usdx
     );
-    assertEq(EModeConfiguration.isBorrowableAsset(config.isBorrowableBitmap, reserveData.id), true);
+    assertEq(
+      EModeConfiguration.isReserveEnabledOnBitmap(config.borrowableBitmap, reserveData.id),
+      true
+    );
   }
 
   function test_addAnotherAssetBorrowableInEMode() public {
@@ -218,7 +223,7 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
 
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setAssetBorrowableInEMode(tokenList.wbtc, input.id, true);
-    DataTypes.EModeCategory memory config = contracts.poolProxy.getEModeCategoryData(input.id);
+    DataTypes.EModeCategory memory config = _getFullEMode(input.id);
     DataTypes.ReserveDataLegacy memory reserveDataUSDX = contracts.poolProxy.getReserveData(
       tokenList.usdx
     );
@@ -226,11 +231,11 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
       tokenList.wbtc
     );
     assertEq(
-      EModeConfiguration.isBorrowableAsset(config.isBorrowableBitmap, reserveDataUSDX.id),
+      EModeConfiguration.isReserveEnabledOnBitmap(config.borrowableBitmap, reserveDataUSDX.id),
       true
     );
     assertEq(
-      EModeConfiguration.isBorrowableAsset(config.isBorrowableBitmap, reserveDataWBTC.id),
+      EModeConfiguration.isReserveEnabledOnBitmap(config.borrowableBitmap, reserveDataWBTC.id),
       true
     );
   }
@@ -242,13 +247,27 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
     emit AssetBorrowableInEModeChanged(tokenList.usdx, input.id, false);
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setAssetBorrowableInEMode(tokenList.usdx, input.id, false);
-    DataTypes.EModeCategory memory config = contracts.poolProxy.getEModeCategoryData(input.id);
+    DataTypes.EModeCategory memory config = _getFullEMode(input.id);
     DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
       tokenList.usdx
     );
     assertEq(
-      EModeConfiguration.isBorrowableAsset(config.isBorrowableBitmap, reserveData.id),
+      EModeConfiguration.isReserveEnabledOnBitmap(config.borrowableBitmap, reserveData.id),
       false
     );
+  }
+
+  function _getFullEMode(uint8 eMode) internal view returns (DataTypes.EModeCategory memory) {
+    DataTypes.EModeCategory memory eModeCategory;
+    DataTypes.CollateralConfig memory cfg = contracts.poolProxy.getEModeCategoryCollateralConfig(
+      eMode
+    );
+    eModeCategory.ltv = cfg.ltv;
+    eModeCategory.liquidationThreshold = cfg.liquidationThreshold;
+    eModeCategory.liquidationBonus = cfg.liquidationBonus;
+    (eModeCategory.label) = contracts.poolProxy.getEModeCategoryLabel(eMode);
+    (eModeCategory.collateralBitmap) = contracts.poolProxy.getEModeCategoryCollateralBitmap(eMode);
+    (eModeCategory.borrowableBitmap) = contracts.poolProxy.getEModeCategoryBorrowableBitmap(eMode);
+    return eModeCategory;
   }
 }

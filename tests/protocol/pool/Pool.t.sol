@@ -239,7 +239,7 @@ contract PoolTests is TestnetProcedures {
 
     DataTypes.ReserveConfigurationMap memory configuration;
 
-    DataTypes.EModeCategory memory category;
+    DataTypes.EModeCategoryBaseConfiguration memory category;
 
     vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_CONFIGURATOR));
     pool.initReserve(address(0), address(0), address(0), address(0));

@@ -568,7 +568,7 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
       configEngine
     );
 
-    DataTypes.EModeCategory memory eModeCategoryDataBefore = contracts
+    DataTypes.EModeCategoryLegacy memory eModeCategoryDataBefore = contracts
       .poolProxy
       .getEModeCategoryData(1);
 
@@ -593,7 +593,7 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
       configEngine
     );
 
-    DataTypes.EModeCategory memory eModeCategoryDataBefore = contracts
+    DataTypes.EModeCategoryLegacy memory eModeCategoryDataBefore = contracts
       .poolProxy
       .getEModeCategoryData(1);
 
@@ -662,19 +662,20 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
     diffReports('preTestEngineAssetEModeUpdate', 'postTestEngineAssetEModeUpdate');
 
     DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(asset);
-    DataTypes.EModeCategory memory eMode = contracts.poolProxy.getEModeCategoryData(1);
-    assertEq(EModeConfiguration.isCollateralAsset(eMode.isCollateralBitmap, reserveData.id), false);
-    assertEq(EModeConfiguration.isCollateralAsset(eMode.isBorrowableBitmap, reserveData.id), true);
+    uint128 collateralBitmap = contracts.poolProxy.getEModeCategoryCollateralBitmap(1);
+    uint128 borrowableBitmap = contracts.poolProxy.getEModeCategoryBorrowableBitmap(1);
+    assertEq(EModeConfiguration.isReserveEnabledOnBitmap(collateralBitmap, reserveData.id), false);
+    assertEq(EModeConfiguration.isReserveEnabledOnBitmap(borrowableBitmap, reserveData.id), true);
 
     DataTypes.ReserveDataLegacy memory reserveDataAsset2 = contracts.poolProxy.getReserveData(
       asset2
     );
     assertEq(
-      EModeConfiguration.isCollateralAsset(eMode.isCollateralBitmap, reserveDataAsset2.id),
+      EModeConfiguration.isReserveEnabledOnBitmap(collateralBitmap, reserveDataAsset2.id),
       true
     );
     assertEq(
-      EModeConfiguration.isCollateralAsset(eMode.isBorrowableBitmap, reserveDataAsset2.id),
+      EModeConfiguration.isReserveEnabledOnBitmap(borrowableBitmap, reserveDataAsset2.id),
       false
     );
   }
