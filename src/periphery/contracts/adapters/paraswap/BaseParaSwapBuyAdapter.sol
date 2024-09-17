@@ -39,6 +39,7 @@ abstract contract BaseParaSwapBuyAdapter is BaseParaSwapAdapter {
    * @param maxAmountToSwap Max amount to be swapped
    * @param amountToReceive Amount to be received from the swap
    * @return amountSold The amount sold during the swap
+   * @return amountBought The amount bought during the swap
    */
   function _buyOnParaSwap(
     uint256 toAmountOffset,
@@ -47,7 +48,7 @@ abstract contract BaseParaSwapBuyAdapter is BaseParaSwapAdapter {
     IERC20Detailed assetToSwapTo,
     uint256 maxAmountToSwap,
     uint256 amountToReceive
-  ) internal returns (uint256 amountSold) {
+  ) internal returns (uint256 amountSold, uint256 amountBought) {
     (bytes memory buyCalldata, IParaSwapAugustus augustus) = abi.decode(
       paraswapData,
       (bytes, IParaSwapAugustus)
@@ -75,7 +76,6 @@ abstract contract BaseParaSwapBuyAdapter is BaseParaSwapAdapter {
     uint256 balanceBeforeAssetTo = assetToSwapTo.balanceOf(address(this));
 
     address tokenTransferProxy = augustus.getTokenTransferProxy();
-    assetToSwapFrom.safeApprove(tokenTransferProxy, 0);
     assetToSwapFrom.safeApprove(tokenTransferProxy, maxAmountToSwap);
 
     if (toAmountOffset != 0) {
@@ -101,12 +101,15 @@ abstract contract BaseParaSwapBuyAdapter is BaseParaSwapAdapter {
       }
     }
 
+    // Reset allowance
+    assetToSwapFrom.safeApprove(tokenTransferProxy, 0);
+
     uint256 balanceAfterAssetFrom = assetToSwapFrom.balanceOf(address(this));
     amountSold = balanceBeforeAssetFrom - balanceAfterAssetFrom;
     require(amountSold <= maxAmountToSwap, 'WRONG_BALANCE_AFTER_SWAP');
-    uint256 amountReceived = assetToSwapTo.balanceOf(address(this)).sub(balanceBeforeAssetTo);
-    require(amountReceived >= amountToReceive, 'INSUFFICIENT_AMOUNT_RECEIVED');
+    amountBought = assetToSwapTo.balanceOf(address(this)).sub(balanceBeforeAssetTo);
+    require(amountBought >= amountToReceive, 'INSUFFICIENT_AMOUNT_RECEIVED');
 
-    emit Bought(address(assetToSwapFrom), address(assetToSwapTo), amountSold, amountReceived);
+    emit Bought(address(assetToSwapFrom), address(assetToSwapTo), amountSold, amountBought);
   }
 }
