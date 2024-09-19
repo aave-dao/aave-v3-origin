@@ -706,9 +706,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
   }
 
   function test_setLiquidationGracePeriodReserve(uint40 gracePeriod) public {
-    vm.assume(
-      gracePeriod <= contracts.poolConfiguratorProxy.MAX_GRACE_PERIOD() && gracePeriod != 0
-    );
+    gracePeriod = uint40(bound(gracePeriod, 1, contracts.poolConfiguratorProxy.MAX_GRACE_PERIOD()));
 
     address asset = tokenList.usdx;
 
@@ -723,19 +721,19 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     assertEq(contracts.poolProxy.getLiquidationGracePeriod(asset), until);
 
     // reserve unpause -> pause, liquidationGracePeriod would not be set
-    contracts.poolConfiguratorProxy.setReservePause(asset, true, gracePeriod + 1);
+    contracts.poolConfiguratorProxy.setReservePause(asset, true, gracePeriod);
     assertEq(contracts.poolProxy.getLiquidationGracePeriod(asset), until);
     assertTrue(contracts.protocolDataProvider.getPaused(asset));
 
     // reserve pause -> pause, liquidationGracePeriod would not be set
-    contracts.poolConfiguratorProxy.setReservePause(asset, true, gracePeriod + 1);
+    contracts.poolConfiguratorProxy.setReservePause(asset, true, gracePeriod);
     assertEq(contracts.poolProxy.getLiquidationGracePeriod(asset), until);
 
     // reserve pause -> unpause, liquidationGracePeriod would be set
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit LiquidationGracePeriodChanged(asset, until + 1);
-    contracts.poolConfiguratorProxy.setReservePause(asset, false, gracePeriod + 1);
-    assertEq(contracts.poolProxy.getLiquidationGracePeriod(asset), until + 1);
+    emit LiquidationGracePeriodChanged(asset, until);
+    contracts.poolConfiguratorProxy.setReservePause(asset, false, gracePeriod);
+    assertEq(contracts.poolProxy.getLiquidationGracePeriod(asset), until);
 
     vm.stopPrank();
   }

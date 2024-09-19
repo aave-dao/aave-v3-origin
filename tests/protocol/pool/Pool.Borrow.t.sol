@@ -318,15 +318,8 @@ contract PoolBorrowTests is TestnetProcedures {
     EModeCategoryInput memory ct = _genCategoryOne();
 
     vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(
-      ct.id,
-      ct.ltv,
-      ct.lt,
-      ct.lb,
-      ct.oracle,
-      ct.label
-    );
-    contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.wbtc, ct.id);
+    contracts.poolConfiguratorProxy.setEModeCategory(ct.id, ct.ltv, ct.lt, ct.lb, ct.label);
+    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.wbtc, ct.id, true);
     vm.stopPrank();
 
     vm.startPrank(alice);
@@ -335,7 +328,7 @@ contract PoolBorrowTests is TestnetProcedures {
 
     contracts.poolProxy.supply(tokenList.wbtc, 0.5e8, alice, 0);
 
-    vm.expectRevert(bytes(Errors.INCONSISTENT_EMODE_CATEGORY));
+    vm.expectRevert(bytes(Errors.NOT_BORROWABLE_IN_EMODE));
     contracts.poolProxy.borrow(tokenList.usdx, 10001e6, 2, 0, alice);
     vm.stopPrank();
   }

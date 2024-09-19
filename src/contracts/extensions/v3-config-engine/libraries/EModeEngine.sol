@@ -11,13 +11,13 @@ library EModeEngine {
   using PercentageMath for uint256;
   using SafeCast for uint256;
 
-  function executeAssetsEModeUpdate(
+  function executeAssetEModeUpdate(
     IEngine.EngineConstants calldata engineConstants,
     IEngine.AssetEModeUpdate[] memory updates
   ) external {
     require(updates.length != 0, 'AT_LEAST_ONE_UPDATE_REQUIRED');
 
-    _configAssetsEMode(engineConstants.poolConfigurator, updates);
+    _configAssetEMode(engineConstants.poolConfigurator, updates);
   }
 
   function executeEModeCategoriesUpdate(
@@ -29,13 +29,24 @@ library EModeEngine {
     _configEModeCategories(engineConstants.poolConfigurator, engineConstants.pool, updates);
   }
 
-  function _configAssetsEMode(
+  function _configAssetEMode(
     IPoolConfigurator poolConfigurator,
     IEngine.AssetEModeUpdate[] memory updates
   ) internal {
     for (uint256 i = 0; i < updates.length; i++) {
-      if (updates[i].eModeCategory != EngineFlags.KEEP_CURRENT) {
-        poolConfigurator.setAssetEModeCategory(updates[i].asset, updates[i].eModeCategory);
+      if (updates[i].collateral != EngineFlags.KEEP_CURRENT) {
+        poolConfigurator.setAssetCollateralInEMode(
+          updates[i].asset,
+          updates[i].eModeCategory,
+          EngineFlags.toBool(updates[i].collateral)
+        );
+      }
+      if (updates[i].borrowable != EngineFlags.KEEP_CURRENT) {
+        poolConfigurator.setAssetBorrowableInEMode(
+          updates[i].asset,
+          updates[i].eModeCategory,
+          EngineFlags.toBool(updates[i].borrowable)
+        );
       }
     }
   }
@@ -49,44 +60,38 @@ library EModeEngine {
       bool atLeastOneKeepCurrent = updates[i].ltv == EngineFlags.KEEP_CURRENT ||
         updates[i].liqThreshold == EngineFlags.KEEP_CURRENT ||
         updates[i].liqBonus == EngineFlags.KEEP_CURRENT ||
-        updates[i].priceSource == EngineFlags.KEEP_CURRENT_ADDRESS ||
         keccak256(abi.encode(updates[i].label)) ==
         keccak256(abi.encode(EngineFlags.KEEP_CURRENT_STRING));
 
       bool notAllKeepCurrent = updates[i].ltv != EngineFlags.KEEP_CURRENT ||
         updates[i].liqThreshold != EngineFlags.KEEP_CURRENT ||
         updates[i].liqBonus != EngineFlags.KEEP_CURRENT ||
-        updates[i].priceSource != EngineFlags.KEEP_CURRENT_ADDRESS ||
         keccak256(abi.encode(updates[i].label)) !=
         keccak256(abi.encode(EngineFlags.KEEP_CURRENT_STRING));
 
       if (notAllKeepCurrent && atLeastOneKeepCurrent) {
-        DataTypes.EModeCategory memory configuration = pool.getEModeCategoryData(
+        DataTypes.CollateralConfig memory cfg = pool.getEModeCategoryCollateralConfig(
           updates[i].eModeCategory
         );
 
         if (updates[i].ltv == EngineFlags.KEEP_CURRENT) {
-          updates[i].ltv = configuration.ltv;
+          updates[i].ltv = cfg.ltv;
         }
 
         if (updates[i].liqThreshold == EngineFlags.KEEP_CURRENT) {
-          updates[i].liqThreshold = configuration.liquidationThreshold;
+          updates[i].liqThreshold = cfg.liquidationThreshold;
         }
 
         if (updates[i].liqBonus == EngineFlags.KEEP_CURRENT) {
           // Subtracting 100_00 to be consistent with the engine as 100_00 gets added while setting the liqBonus
-          updates[i].liqBonus = configuration.liquidationBonus - 100_00;
-        }
-
-        if (updates[i].priceSource == EngineFlags.KEEP_CURRENT_ADDRESS) {
-          updates[i].priceSource = configuration.priceSource;
+          updates[i].liqBonus = cfg.liquidationBonus - 100_00;
         }
 
         if (
           keccak256(abi.encode(updates[i].label)) ==
           keccak256(abi.encode(EngineFlags.KEEP_CURRENT_STRING))
         ) {
-          updates[i].label = configuration.label;
+          updates[i].label = pool.getEModeCategoryLabel(updates[i].eModeCategory);
         }
       }
 
@@ -104,7 +109,6 @@ library EModeEngine {
           // For reference, this is to simplify the interaction with the Aave protocol,
           // as there the definition is as e.g. 105% (5% bonus for liquidators)
           (100_00 + updates[i].liqBonus).toUint16(),
-          updates[i].priceSource,
           updates[i].label
         );
       }

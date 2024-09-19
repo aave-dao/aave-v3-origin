@@ -99,7 +99,6 @@ struct ReserveConfig {
   uint256 supplyCap;
   uint256 borrowCap;
   uint256 debtCeiling;
-  uint256 eModeCategory;
   bool virtualAccActive;
   uint256 virtualBalance;
   uint256 aTokenUnderlyingBalance;
@@ -147,36 +146,32 @@ contract ProtocolV3TestBase is DiffUtils {
     ReserveConfig[] memory configs = _getReservesConfigs(pool);
     if (reserveConfigs) _writeReserveConfigs(path, configs, pool);
     if (strategyConfigs) _writeStrategyConfigs(path, configs);
-    if (eModeConigs) _writeEModeConfigs(path, configs, pool);
+    if (eModeConigs) _writeEModeConfigs(path, pool);
     if (poolConfigs) _writePoolConfiguration(path, pool);
 
     return configs;
   }
 
-  function _writeEModeConfigs(
-    string memory path,
-    ReserveConfig[] memory configs,
-    IPool pool
-  ) internal virtual {
+  function _writeEModeConfigs(string memory path, IPool pool) internal virtual {
     // keys for json stringification
     string memory eModesKey = 'emodes';
     string memory content = '{}';
-
-    uint256[] memory usedCategories = new uint256[](configs.length);
-    for (uint256 i = 0; i < configs.length; i++) {
-      if (!_isInUint256Array(usedCategories, configs[i].eModeCategory)) {
-        usedCategories[i] = configs[i].eModeCategory;
-        DataTypes.EModeCategory memory category = pool.getEModeCategoryData(
-          uint8(configs[i].eModeCategory)
-        );
-        string memory key = vm.toString(configs[i].eModeCategory);
-        vm.serializeUint(key, 'eModeCategory', configs[i].eModeCategory);
-        vm.serializeString(key, 'label', category.label);
-        vm.serializeUint(key, 'ltv', category.ltv);
-        vm.serializeUint(key, 'liquidationThreshold', category.liquidationThreshold);
-        vm.serializeUint(key, 'liquidationBonus', category.liquidationBonus);
-        string memory object = vm.serializeAddress(key, 'priceSource', category.priceSource);
+    uint8 emptyCounter = 0;
+    for (uint8 i = 0; i < 256; i++) {
+      DataTypes.CollateralConfig memory cfg = pool.getEModeCategoryCollateralConfig(i);
+      if (cfg.liquidationThreshold == 0) {
+        if (++emptyCounter > 2) break;
+      } else {
+        string memory key = vm.toString(i);
+        vm.serializeUint(key, 'eModeCategory', i);
+        vm.serializeString(key, 'label', pool.getEModeCategoryLabel(i));
+        vm.serializeUint(key, 'ltv', cfg.ltv);
+        vm.serializeUint(key, 'collateralBitmap', pool.getEModeCategoryCollateralBitmap(i));
+        vm.serializeUint(key, 'borrowableBitmap', pool.getEModeCategoryBorrowableBitmap(i));
+        vm.serializeUint(key, 'liquidationThreshold', cfg.liquidationThreshold);
+        string memory object = vm.serializeUint(key, 'liquidationBonus', cfg.liquidationBonus);
         content = vm.serializeString(eModesKey, key, object);
+        emptyCounter = 0;
       }
     }
     string memory output = vm.serializeString('root', 'eModes', content);
@@ -262,7 +257,6 @@ contract ProtocolV3TestBase is DiffUtils {
       vm.serializeUint(key, 'borrowCap', config.borrowCap);
       vm.serializeUint(key, 'supplyCap', config.supplyCap);
       vm.serializeUint(key, 'debtCeiling', config.debtCeiling);
-      vm.serializeUint(key, 'eModeCategory', config.eModeCategory);
       vm.serializeBool(key, 'usageAsCollateralEnabled', config.usageAsCollateralEnabled);
       vm.serializeBool(key, 'borrowingEnabled', config.borrowingEnabled);
       vm.serializeBool(key, 'isPaused', config.isPaused);
@@ -427,8 +421,7 @@ contract ProtocolV3TestBase is DiffUtils {
       localConfig.liquidationThreshold,
       localConfig.liquidationBonus,
       localConfig.decimals,
-      localConfig.reserveFactor,
-      localConfig.eModeCategory
+      localConfig.reserveFactor
     ) = configuration.getParams();
     (
       localConfig.isActive,
@@ -487,7 +480,6 @@ contract ProtocolV3TestBase is DiffUtils {
         supplyCap: config.supplyCap,
         borrowCap: config.borrowCap,
         debtCeiling: config.debtCeiling,
-        eModeCategory: config.eModeCategory,
         virtualAccActive: config.virtualAccActive,
         virtualBalance: config.virtualBalance,
         aTokenUnderlyingBalance: config.aTokenUnderlyingBalance
@@ -593,10 +585,6 @@ contract ProtocolV3TestBase is DiffUtils {
     require(
       config.debtCeiling == expectedConfig.debtCeiling,
       '_validateReserveConfig: INVALID_DEBT_CEILING'
-    );
-    require(
-      config.eModeCategory == expectedConfig.eModeCategory,
-      '_validateReserveConfig: INVALID_EMODE_CATEGORY'
     );
     require(
       config.interestRateStrategy == expectedConfig.interestRateStrategy,
@@ -770,10 +758,6 @@ contract ProtocolV3TestBase is DiffUtils {
       config1.debtCeiling == config2.debtCeiling,
       '_noReservesConfigsChangesApartNewListings() : UNEXPECTED_DEBT_CEILING_CHANGED'
     );
-    require(
-      config1.eModeCategory == config2.eModeCategory,
-      '_noReservesConfigsChangesApartNewListings() : UNEXPECTED_E_MODE_CATEGORY_CHANGED'
-    );
   }
 
   function _validateCountOfListings(
@@ -819,61 +803,38 @@ contract ProtocolV3TestBase is DiffUtils {
     );
   }
 
-  function _validateAssetsOnEmodeCategory(
-    uint256 category,
-    ReserveConfig[] memory assetsConfigs,
-    string[] memory expectedAssets
-  ) internal pure {
-    string[] memory assetsInCategory = new string[](assetsConfigs.length);
-
-    uint256 countCategory;
-    for (uint256 i = 0; i < assetsConfigs.length; i++) {
-      if (assetsConfigs[i].eModeCategory == category) {
-        assetsInCategory[countCategory] = assetsConfigs[i].symbol;
-        require(
-          keccak256(bytes(assetsInCategory[countCategory])) ==
-            keccak256(bytes(expectedAssets[countCategory])),
-          '_getAssetOnEmodeCategory(): INCONSISTENT_ASSETS'
-        );
-        countCategory++;
-        if (countCategory > expectedAssets.length) {
-          revert('_getAssetOnEmodeCategory(): MORE_ASSETS_IN_CATEGORY_THAN_EXPECTED');
-        }
-      }
-    }
-    if (countCategory < expectedAssets.length) {
-      revert('_getAssetOnEmodeCategory(): LESS_ASSETS_IN_CATEGORY_THAN_EXPECTED');
-    }
-  }
-
   function _validateEmodeCategory(
     IPoolAddressesProvider addressesProvider,
     uint256 category,
     DataTypes.EModeCategory memory expectedCategoryData
   ) internal view {
     address poolAddress = addressesProvider.getPool();
-    DataTypes.EModeCategory memory currentCategoryData = IPool(poolAddress).getEModeCategoryData(
+    DataTypes.CollateralConfig memory cfg = IPool(poolAddress).getEModeCategoryCollateralConfig(
       uint8(category)
     );
     require(
-      keccak256(bytes(currentCategoryData.label)) == keccak256(bytes(expectedCategoryData.label)),
+      keccak256(bytes(IPool(poolAddress).getEModeCategoryLabel(uint8(category)))) ==
+        keccak256(bytes(expectedCategoryData.label)),
       '_validateEmodeCategory(): INVALID_LABEL'
     );
+    require(cfg.ltv == expectedCategoryData.ltv, '_validateEmodeCategory(): INVALID_LTV');
     require(
-      currentCategoryData.ltv == expectedCategoryData.ltv,
-      '_validateEmodeCategory(): INVALID_LTV'
-    );
-    require(
-      currentCategoryData.liquidationThreshold == expectedCategoryData.liquidationThreshold,
+      cfg.liquidationThreshold == expectedCategoryData.liquidationThreshold,
       '_validateEmodeCategory(): INVALID_LT'
     );
     require(
-      currentCategoryData.liquidationBonus == expectedCategoryData.liquidationBonus,
+      cfg.liquidationBonus == expectedCategoryData.liquidationBonus,
       '_validateEmodeCategory(): INVALID_LB'
     );
     require(
-      currentCategoryData.priceSource == expectedCategoryData.priceSource,
-      '_validateEmodeCategory(): INVALID_PRICE_SOURCE'
+      IPool(poolAddress).getEModeCategoryCollateralBitmap(uint8(category)) ==
+        expectedCategoryData.collateralBitmap,
+      '_validateEmodeCategory(): INVALID_LB'
+    );
+    require(
+      IPool(poolAddress).getEModeCategoryBorrowableBitmap(uint8(category)) ==
+        expectedCategoryData.borrowableBitmap,
+      '_validateEmodeCategory(): INVALID_LB'
     );
   }
 

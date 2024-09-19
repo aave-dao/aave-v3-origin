@@ -24,7 +24,6 @@ contract AaveV3MockEModeCategoryUpdateNoChange is AaveV3Payload {
       ltv: EngineFlags.KEEP_CURRENT,
       liqThreshold: EngineFlags.KEEP_CURRENT,
       liqBonus: EngineFlags.KEEP_CURRENT,
-      priceSource: EngineFlags.KEEP_CURRENT_ADDRESS,
       label: EngineFlags.KEEP_CURRENT_STRING
     });
 

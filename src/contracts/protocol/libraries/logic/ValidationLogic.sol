@@ -13,6 +13,7 @@ import {IPoolAddressesProvider} from '../../../interfaces/IPoolAddressesProvider
 import {IAccessControl} from '../../../dependencies/openzeppelin/contracts/IAccessControl.sol';
 import {ReserveConfiguration} from '../configuration/ReserveConfiguration.sol';
 import {UserConfiguration} from '../configuration/UserConfiguration.sol';
+import {EModeConfiguration} from '../configuration/EModeConfiguration.sol';
 import {Errors} from '../helpers/Errors.sol';
 import {WadRayMath} from '../math/WadRayMath.sol';
 import {PercentageMath} from '../math/PercentageMath.sol';
@@ -118,7 +119,6 @@ library ValidationLogic {
     uint256 borrowCap;
     uint256 amountInBaseCurrency;
     uint256 assetUnit;
-    address eModePriceSource;
     address siloedBorrowingAddress;
     bool isActive;
     bool isFrozen;
@@ -209,10 +209,12 @@ library ValidationLogic {
 
     if (params.userEModeCategory != 0) {
       require(
-        params.reserveCache.reserveConfiguration.getEModeCategory() == params.userEModeCategory,
-        Errors.INCONSISTENT_EMODE_CATEGORY
+        EModeConfiguration.isReserveEnabledOnBitmap(
+          eModeCategories[params.userEModeCategory].borrowableBitmap,
+          reservesData[params.asset].id
+        ),
+        Errors.NOT_BORROWABLE_IN_EMODE
       );
-      vars.eModePriceSource = eModeCategories[params.userEModeCategory].priceSource;
     }
 
     (
@@ -244,9 +246,7 @@ library ValidationLogic {
     );
 
     vars.amountInBaseCurrency =
-      IPriceOracleGetter(params.oracle).getAssetPrice(
-        vars.eModePriceSource != address(0) ? vars.eModePriceSource : params.asset
-      ) *
+      IPriceOracleGetter(params.oracle).getAssetPrice(params.asset) *
       params.amount;
     unchecked {
       vars.amountInBaseCurrency /= vars.assetUnit;
@@ -543,24 +543,21 @@ library ValidationLogic {
 
   /**
    * @notice Validates the action of setting efficiency mode.
-   * @param reservesData The state of all the reserves
-   * @param reservesList The addresses of all the active reserves
    * @param eModeCategories a mapping storing configurations for all efficiency mode categories
    * @param userConfig the user configuration
    * @param reservesCount The total number of valid reserves
    * @param categoryId The id of the category
    */
   function validateSetUserEMode(
-    mapping(address => DataTypes.ReserveData) storage reservesData,
-    mapping(uint256 => address) storage reservesList,
     mapping(uint8 => DataTypes.EModeCategory) storage eModeCategories,
     DataTypes.UserConfigurationMap memory userConfig,
     uint256 reservesCount,
     uint8 categoryId
   ) internal view {
+    DataTypes.EModeCategory storage eModeCategory = eModeCategories[categoryId];
     // category is invalid if the liq threshold is not set
     require(
-      categoryId == 0 || eModeCategories[categoryId].liquidationThreshold != 0,
+      categoryId == 0 || eModeCategory.liquidationThreshold != 0,
       Errors.INCONSISTENT_EMODE_CATEGORY
     );
 
@@ -575,11 +572,9 @@ library ValidationLogic {
       unchecked {
         for (uint256 i = 0; i < reservesCount; i++) {
           if (userConfig.isBorrowing(i)) {
-            DataTypes.ReserveConfigurationMap memory configuration = reservesData[reservesList[i]]
-              .configuration;
             require(
-              configuration.getEModeCategory() == categoryId,
-              Errors.INCONSISTENT_EMODE_CATEGORY
+              EModeConfiguration.isReserveEnabledOnBitmap(eModeCategory.borrowableBitmap, i),
+              Errors.NOT_BORROWABLE_IN_EMODE
             );
           }
         }

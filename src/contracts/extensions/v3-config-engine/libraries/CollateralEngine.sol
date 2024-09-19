@@ -44,7 +44,6 @@ library CollateralEngine {
             uint256 currentLiqThreshold,
             uint256 currentLiqBonus,
             ,
-            ,
 
           ) = configuration.getParams();
 

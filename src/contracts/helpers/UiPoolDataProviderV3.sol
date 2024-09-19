@@ -98,14 +98,12 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
 
       //stores the reserve configuration
       DataTypes.ReserveConfigurationMap memory reserveConfigurationMap = baseData.configuration;
-      uint256 eModeCategoryId;
       (
         reserveData.baseLTVasCollateral,
         reserveData.reserveLiquidationThreshold,
         reserveData.reserveLiquidationBonus,
         reserveData.decimals,
-        reserveData.reserveFactor,
-        eModeCategoryId
+        reserveData.reserveFactor
       ) = reserveConfigurationMap.getParams();
       reserveData.usageAsCollateralEnabled = reserveData.baseLTVasCollateral != 0;
 
@@ -129,7 +127,6 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
       } catch {}
 
       // v3 only
-      reserveData.eModeCategoryId = uint8(eModeCategoryId);
       reserveData.debtCeiling = reserveConfigurationMap.getDebtCeiling();
       reserveData.debtCeilingDecimals = poolDataProvider.getDebtCeilingDecimals();
       (reserveData.borrowCap, reserveData.supplyCap) = reserveConfigurationMap.getCaps();
@@ -146,16 +143,6 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
       reserveData.unbacked = baseData.unbacked;
       reserveData.isolationModeTotalDebt = baseData.isolationModeTotalDebt;
       reserveData.accruedToTreasury = baseData.accruedToTreasury;
-
-      DataTypes.EModeCategory memory categoryData = pool.getEModeCategoryData(
-        reserveData.eModeCategoryId
-      );
-      reserveData.eModeLtv = categoryData.ltv;
-      reserveData.eModeLiquidationThreshold = categoryData.liquidationThreshold;
-      reserveData.eModeLiquidationBonus = categoryData.liquidationBonus;
-      // each eMode category may or may not have a custom oracle to override the individual assets price oracles
-      reserveData.eModePriceSource = categoryData.priceSource;
-      reserveData.eModeLabel = categoryData.label;
 
       reserveData.borrowableInIsolation = reserveConfigurationMap.getBorrowableInIsolation();
 
@@ -193,6 +180,41 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
     }
 
     return (reservesData, baseCurrencyInfo);
+  }
+
+  /// @inheritdoc IUiPoolDataProviderV3
+  function getEModes(IPoolAddressesProvider provider) external view returns (Emode[] memory) {
+    IPool pool = IPool(provider.getPool());
+    Emode[] memory tempCategories = new Emode[](256);
+    uint8 eModesFound = 0;
+    uint8 missCounter = 0;
+    for (uint8 i = 1; i < 256; i++) {
+      DataTypes.CollateralConfig memory cfg = pool.getEModeCategoryCollateralConfig(i);
+      if (cfg.liquidationThreshold != 0) {
+        tempCategories[eModesFound] = Emode({
+          eMode: DataTypes.EModeCategory({
+            ltv: cfg.ltv,
+            liquidationThreshold: cfg.liquidationThreshold,
+            liquidationBonus: cfg.liquidationBonus,
+            label: pool.getEModeCategoryLabel(i),
+            collateralBitmap: pool.getEModeCategoryCollateralBitmap(i),
+            borrowableBitmap: pool.getEModeCategoryBorrowableBitmap(i)
+          }),
+          id: i
+        });
+        ++eModesFound;
+        missCounter = 0;
+      } else {
+        ++missCounter;
+      }
+      // assumes there will never be a gap > 2 when setting eModes
+      if (missCounter > 2) break;
+    }
+    Emode[] memory categories = new Emode[](eModesFound);
+    for (uint8 i = 0; i < eModesFound; i++) {
+      categories[i] = tempCategories[i];
+    }
+    return categories;
   }
 
   function getUserReservesData(

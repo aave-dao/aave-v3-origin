@@ -67,16 +67,6 @@ library ListingEngine {
         repacked.collateralsUpdates
       )
     );
-
-    // For an asset listing we only update the e-mode category id for the asset and do not make changes
-    // to the e-mode category configuration
-    engineLibraries.eModeEngine.functionDelegateCall(
-      abi.encodeWithSelector(
-        EModeEngine.executeAssetsEModeUpdate.selector,
-        engineConstants,
-        repacked.assetsEModeUpdates
-      )
-    );
   }
 
   function _repackListing(
@@ -88,9 +78,6 @@ library ListingEngine {
       listings.length
     );
     IEngine.PriceFeedUpdate[] memory priceFeedsUpdates = new IEngine.PriceFeedUpdate[](
-      listings.length
-    );
-    IEngine.AssetEModeUpdate[] memory assetsEModeUpdates = new IEngine.AssetEModeUpdate[](
       listings.length
     );
     IEngine.CapsUpdate[] memory capsUpdates = new IEngine.CapsUpdate[](listings.length);
@@ -141,10 +128,6 @@ library ListingEngine {
         variableRateSlope1: listings[i].base.rateStrategyParams.variableRateSlope1.toUint32(),
         variableRateSlope2: listings[i].base.rateStrategyParams.variableRateSlope2.toUint32()
       });
-      assetsEModeUpdates[i] = IEngine.AssetEModeUpdate({
-        asset: listings[i].base.asset,
-        eModeCategory: listings[i].base.eModeCategory
-      });
     }
 
     return
@@ -154,7 +137,6 @@ library ListingEngine {
         borrowsUpdates,
         collateralsUpdates,
         priceFeedsUpdates,
-        assetsEModeUpdates,
         capsUpdates,
         rates
       );

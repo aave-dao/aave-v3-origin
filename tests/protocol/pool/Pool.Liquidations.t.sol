@@ -615,16 +615,10 @@ contract PoolLiquidationTests is TestnetProcedures {
     EModeCategoryInput memory ct = _genCategoryOne();
 
     vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(
-      ct.id,
-      ct.ltv,
-      ct.lt,
-      ct.lb,
-      ct.oracle,
-      ct.label
-    );
-    contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.wbtc, ct.id);
-    contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.weth, ct.id);
+    contracts.poolConfiguratorProxy.setEModeCategory(ct.id, ct.ltv, ct.lt, ct.lb, ct.label);
+    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.wbtc, ct.id, true);
+    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.weth, ct.id, true);
+    contracts.poolConfiguratorProxy.setAssetBorrowableInEMode(tokenList.weth, ct.id, true);
     vm.stopPrank();
 
     uint256 amount = 1e8;
@@ -646,80 +640,6 @@ contract PoolLiquidationTests is TestnetProcedures {
       25_00
     );
 
-    (, , address varDebtToken) = contracts.protocolDataProvider.getReserveTokensAddresses(
-      params.debtAsset
-    );
-    uint256 userDebtBefore = IERC20(varDebtToken).balanceOf(params.user);
-    uint256 liquidatorBalanceBefore;
-    if (params.receiveAToken) {
-      (address atoken, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(
-        params.collateralAsset
-      );
-      liquidatorBalanceBefore = IERC20(atoken).balanceOf(bob);
-    } else {
-      liquidatorBalanceBefore = IERC20(params.collateralAsset).balanceOf(bob);
-    }
-
-    vm.expectEmit(address(contracts.poolProxy));
-    emit LiquidationLogic.LiquidationCall(
-      params.collateralAsset,
-      params.debtAsset,
-      params.user,
-      params.actualDebtToLiquidate,
-      params.actualCollateralToLiquidate,
-      bob,
-      params.receiveAToken
-    );
-
-    // Liquidate
-    vm.prank(bob);
-    contracts.poolProxy.liquidationCall(
-      params.collateralAsset,
-      params.debtAsset,
-      params.user,
-      params.liquidationAmountInput,
-      params.receiveAToken
-    );
-
-    _afterLiquidationChecksVariable(params, bob, liquidatorBalanceBefore, userDebtBefore);
-  }
-
-  function test_liquidate_emode_position_with_emode_oracle() public {
-    EModeCategoryInput memory ct = _genCategoryOne();
-
-    vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(
-      ct.id,
-      ct.ltv,
-      ct.lt,
-      ct.lb,
-      tokenList.wbtc,
-      ct.label
-    );
-    contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.wbtc, ct.id);
-    contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.weth, ct.id);
-    vm.stopPrank();
-
-    uint256 amount = 1e8;
-    uint256 borrowAmount = 0.94e18;
-
-    vm.startPrank(alice);
-    contracts.poolProxy.setUserEMode(ct.id);
-
-    contracts.poolProxy.supply(tokenList.wbtc, amount, alice, 0);
-    contracts.poolProxy.borrow(tokenList.weth, borrowAmount, 2, 0, alice);
-    vm.stopPrank();
-
-    vm.warp(block.timestamp + 20000 days);
-
-    LiquidationInput memory params = _loadLiquidationInput(
-      alice,
-      tokenList.wbtc,
-      tokenList.weth,
-      UINT256_MAX,
-      tokenList.wbtc,
-      0
-    );
     (, , address varDebtToken) = contracts.protocolDataProvider.getReserveTokensAddresses(
       params.debtAsset
     );
@@ -1089,12 +1009,10 @@ contract PoolLiquidationTests is TestnetProcedures {
   ) internal view returns (uint256, address, address) {
     uint256 id = contracts.poolProxy.getUserEMode(user);
     if (id != 0) {
-      DataTypes.EModeCategory memory cat = contracts.poolProxy.getEModeCategoryData(uint8(id));
-      if (cat.priceSource != address(0)) {
-        return (cat.liquidationBonus, cat.priceSource, cat.priceSource);
-      } else {
-        return (cat.liquidationBonus, collateralAsset, debtAsset);
-      }
+      DataTypes.CollateralConfig memory cfg = contracts.poolProxy.getEModeCategoryCollateralConfig(
+        uint8(id)
+      );
+      return (cfg.liquidationBonus, collateralAsset, debtAsset);
     } else {
       DataTypes.ReserveConfigurationMap memory conf = contracts.poolProxy.getConfiguration(
         debtAsset

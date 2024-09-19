@@ -46,8 +46,7 @@ contract AaveV3MockListing is AaveV3Payload {
       supplyCap: 85_000,
       borrowCap: 60_000,
       debtCeiling: 0,
-      liqProtocolFee: 10_00,
-      eModeCategory: 0
+      liqProtocolFee: 10_00
     });
 
     return listings;

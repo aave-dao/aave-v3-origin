@@ -93,7 +93,7 @@ library DataTypes {
     //bit 80-115: borrow cap in whole tokens, borrowCap == 0 => no cap
     //bit 116-151: supply cap in whole tokens, supplyCap == 0 => no cap
     //bit 152-167: liquidation protocol fee
-    //bit 168-175: eMode category
+    //bit 168-175: DEPRECATED: eMode category
     //bit 176-211: unbacked mint cap in whole tokens, unbackedMintCap == 0 => minting disabled
     //bit 212-251: debt ceiling for isolation mode with (ReserveConfiguration::DEBT_CEILING_DECIMALS) decimals
     //bit 252: virtual accounting is enabled for the reserve
@@ -111,14 +111,38 @@ library DataTypes {
     uint256 data;
   }
 
+  // DEPRECATED: kept for backwards compatibility, might be removed in a future version
+  struct EModeCategoryLegacy {
+    // each eMode category has a custom ltv and liquidation threshold
+    uint16 ltv;
+    uint16 liquidationThreshold;
+    uint16 liquidationBonus;
+    // DEPRECATED
+    address priceSource;
+    string label;
+  }
+
+  struct CollateralConfig {
+    uint16 ltv;
+    uint16 liquidationThreshold;
+    uint16 liquidationBonus;
+  }
+
+  struct EModeCategoryBaseConfiguration {
+    uint16 ltv;
+    uint16 liquidationThreshold;
+    uint16 liquidationBonus;
+    string label;
+  }
+
   struct EModeCategory {
     // each eMode category has a custom ltv and liquidation threshold
     uint16 ltv;
     uint16 liquidationThreshold;
     uint16 liquidationBonus;
-    // each eMode category may or may not have a custom oracle to override the individual assets price oracles
-    address priceSource;
+    uint128 collateralBitmap;
     string label;
+    uint128 borrowableBitmap;
   }
 
   enum InterestRateMode {

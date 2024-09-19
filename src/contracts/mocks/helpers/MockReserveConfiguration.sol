@@ -89,16 +89,6 @@ contract MockReserveConfiguration {
     return configuration.getBorrowCap();
   }
 
-  function getEModeCategory() external view returns (uint256) {
-    return configuration.getEModeCategory();
-  }
-
-  function setEModeCategory(uint256 categoryId) external {
-    DataTypes.ReserveConfigurationMap memory config = configuration;
-    config.setEModeCategory(categoryId);
-    configuration = config;
-  }
-
   function setFlashLoanEnabled(bool enabled) external {
     DataTypes.ReserveConfigurationMap memory config = configuration;
     config.setFlashLoanEnabled(enabled);
@@ -143,11 +133,7 @@ contract MockReserveConfiguration {
     return configuration.getFlags();
   }
 
-  function getParams()
-    external
-    view
-    returns (uint256, uint256, uint256, uint256, uint256, uint256)
-  {
+  function getParams() external view returns (uint256, uint256, uint256, uint256, uint256) {
     return configuration.getParams();
   }
 

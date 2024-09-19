@@ -13,6 +13,7 @@ import {IsolationModeLogic} from './IsolationModeLogic.sol';
 import {EModeLogic} from './EModeLogic.sol';
 import {UserConfiguration} from '../../libraries/configuration/UserConfiguration.sol';
 import {ReserveConfiguration} from '../../libraries/configuration/ReserveConfiguration.sol';
+import {EModeConfiguration} from '../../libraries/configuration/EModeConfiguration.sol';
 import {IAToken} from '../../../interfaces/IAToken.sol';
 import {IVariableDebtToken} from '../../../interfaces/IVariableDebtToken.sol';
 import {IPriceOracleGetter} from '../../../interfaces/IPriceOracleGetter.sol';
@@ -73,8 +74,6 @@ library LiquidationLogic {
     uint256 liquidationBonus;
     uint256 healthFactor;
     uint256 liquidationProtocolFeeAmount;
-    address collateralPriceSource;
-    address debtPriceSource;
     IAToken collateralAToken;
     DataTypes.ReserveCache debtReserveCache;
   }
@@ -136,12 +135,18 @@ library LiquidationLogic {
       })
     );
 
-    (
-      vars.collateralAToken,
-      vars.collateralPriceSource,
-      vars.debtPriceSource,
-      vars.liquidationBonus
-    ) = _getConfigurationData(eModeCategories, collateralReserve, params);
+    vars.collateralAToken = IAToken(collateralReserve.aTokenAddress);
+    if (
+      params.userEModeCategory != 0 &&
+      EModeConfiguration.isReserveEnabledOnBitmap(
+        eModeCategories[params.userEModeCategory].collateralBitmap,
+        collateralReserve.id
+      )
+    ) {
+      vars.liquidationBonus = eModeCategories[params.userEModeCategory].liquidationBonus;
+    } else {
+      vars.liquidationBonus = collateralReserve.configuration.getLiquidationBonus();
+    }
 
     vars.userCollateralBalance = vars.collateralAToken.balanceOf(params.user);
 
@@ -152,8 +157,8 @@ library LiquidationLogic {
     ) = _calculateAvailableCollateralToLiquidate(
       collateralReserve,
       vars.debtReserveCache,
-      vars.collateralPriceSource,
-      vars.debtPriceSource,
+      params.collateralAsset,
+      params.debtAsset,
       vars.actualDebtToLiquidate,
       vars.userCollateralBalance,
       vars.liquidationBonus,
@@ -357,52 +362,6 @@ library LiquidationLogic {
       : params.debtToCover;
 
     return (userVariableDebt, actualDebtToLiquidate);
-  }
-
-  /**
-   * @notice Returns the configuration data for the debt and the collateral reserves.
-   * @param eModeCategories The configuration of all the efficiency mode categories
-   * @param collateralReserve The data of the collateral reserve
-   * @param params The additional parameters needed to execute the liquidation function
-   * @return The collateral aToken
-   * @return The address to use as price source for the collateral
-   * @return The address to use as price source for the debt
-   * @return The liquidation bonus to apply to the collateral
-   */
-  function _getConfigurationData(
-    mapping(uint8 => DataTypes.EModeCategory) storage eModeCategories,
-    DataTypes.ReserveData storage collateralReserve,
-    DataTypes.ExecuteLiquidationCallParams memory params
-  ) internal view returns (IAToken, address, address, uint256) {
-    IAToken collateralAToken = IAToken(collateralReserve.aTokenAddress);
-    uint256 liquidationBonus = collateralReserve.configuration.getLiquidationBonus();
-
-    address collateralPriceSource = params.collateralAsset;
-    address debtPriceSource = params.debtAsset;
-
-    if (params.userEModeCategory != 0) {
-      address eModePriceSource = eModeCategories[params.userEModeCategory].priceSource;
-
-      if (
-        EModeLogic.isInEModeCategory(
-          params.userEModeCategory,
-          collateralReserve.configuration.getEModeCategory()
-        )
-      ) {
-        liquidationBonus = eModeCategories[params.userEModeCategory].liquidationBonus;
-
-        if (eModePriceSource != address(0)) {
-          collateralPriceSource = eModePriceSource;
-        }
-      }
-
-      // when in eMode, debt will always be in the same eMode category, can skip matching category check
-      if (eModePriceSource != address(0)) {
-        debtPriceSource = eModePriceSource;
-      }
-    }
-
-    return (collateralAToken, collateralPriceSource, debtPriceSource, liquidationBonus);
   }
 
   struct AvailableCollateralToLiquidateLocalVars {
