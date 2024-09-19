@@ -187,10 +187,10 @@ contract AaveV3ConfigEngine is IAaveV3ConfigEngine {
   }
 
   /// @inheritdoc IAaveV3ConfigEngine
-  function updateAssetEMode(AssetEModeUpdate[] calldata updates) external {
+  function updateAssetsEMode(AssetEModeUpdate[] calldata updates) external {
     EMODE_ENGINE.functionDelegateCall(
       abi.encodeWithSelector(
-        EModeEngine.executeAssetEModeUpdate.selector,
+        EModeEngine.executeAssetsEModeUpdate.selector,
         _getEngineConstants(),
         updates
       )

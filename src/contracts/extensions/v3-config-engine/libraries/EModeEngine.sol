@@ -11,13 +11,13 @@ library EModeEngine {
   using PercentageMath for uint256;
   using SafeCast for uint256;
 
-  function executeAssetEModeUpdate(
+  function executeAssetsEModeUpdate(
     IEngine.EngineConstants calldata engineConstants,
     IEngine.AssetEModeUpdate[] memory updates
   ) external {
     require(updates.length != 0, 'AT_LEAST_ONE_UPDATE_REQUIRED');
 
-    _configAssetEMode(engineConstants.poolConfigurator, updates);
+    _configAssetsEMode(engineConstants.poolConfigurator, updates);
   }
 
   function executeEModeCategoriesUpdate(
@@ -29,7 +29,7 @@ library EModeEngine {
     _configEModeCategories(engineConstants.poolConfigurator, engineConstants.pool, updates);
   }
 
-  function _configAssetEMode(
+  function _configAssetsEMode(
     IPoolConfigurator poolConfigurator,
     IEngine.AssetEModeUpdate[] memory updates
   ) internal {

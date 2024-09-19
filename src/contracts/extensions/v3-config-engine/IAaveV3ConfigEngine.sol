@@ -308,7 +308,7 @@ interface IAaveV3ConfigEngine {
    * @param updates `EModeCollateralUpdate[]` list of declarative updates containing the new parameters
    *   More information on the documentation of the struct.
    */
-  function updateAssetEMode(AssetEModeUpdate[] memory updates) external;
+  function updateAssetsEMode(AssetEModeUpdate[] calldata updates) external;
 
   function DEFAULT_INTEREST_RATE_STRATEGY() external view returns (address);
 

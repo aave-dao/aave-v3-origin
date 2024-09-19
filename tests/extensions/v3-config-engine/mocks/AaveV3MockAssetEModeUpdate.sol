@@ -21,7 +21,7 @@ contract AaveV3MockAssetEModeUpdate is AaveV3Payload {
     ASSET_2_ADDRESS = asset2Address;
   }
 
-  function assetEModeUpdates() public view override returns (IEngine.AssetEModeUpdate[] memory) {
+  function assetsEModeUpdates() public view override returns (IEngine.AssetEModeUpdate[] memory) {
     IEngine.AssetEModeUpdate[] memory eModeUpdate = new IEngine.AssetEModeUpdate[](2);
 
     eModeUpdate[0] = IEngine.AssetEModeUpdate({
