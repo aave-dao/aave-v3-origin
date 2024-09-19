@@ -54,9 +54,9 @@ interface IERC4626StataToken {
 
   /**
    * @notice The aToken used inside the 4626 vault.
-   * @return IERC20 The aToken IERC20.
+   * @return address The aToken address.
    */
-  function aToken() external view returns (IERC20);
+  function aToken() external view returns (address);
 
   /**
    * @notice Returns the current asset price of the stataToken.
