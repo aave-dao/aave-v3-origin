@@ -187,7 +187,7 @@ interface IAaveV3ConfigEngine {
 
   /**
    * @dev Example (mock):
-   * EModeCollateralUpdate({
+   * AssetEModeUpdate({
    *   asset: AaveV3EthereumAssets.rETH_UNDERLYING,
    *   eModeCategory: 1, // ETH correlated
    *   borrowable: EngineFlags.ENABLED,
