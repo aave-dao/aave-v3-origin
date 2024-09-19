@@ -35,4 +35,6 @@ coverage :; forge coverage --report lcov && \
 download :; cast etherscan-source --chain ${chain} -d src/etherscan/${chain}_${address} ${address}
 git-diff :
 	@mkdir -p diffs
-	@printf '%s\n%s\n%s\n' "\`\`\`diff" "$$(git diff --no-index --diff-algorithm=patience --ignore-space-at-eol ${before} ${after})" "\`\`\`" > diffs/${out}.md
+	@npx prettier --parser markdown ${before} ${after} --write
+	@printf '%s\n%s\n%s\n' "\`\`\`diff" "$$(git diff --no-index --ignore-space-at-eol ${before} ${after})" "\`\`\`" > diffs/${out}.md
+git-word-diff :; git diff --no-index --word-diff -- ${before} ${after} | tail +6  | sed 's/\[-/\~~/g;s/-]/\~~ /g;' | sed 's/{+/\**/g;s/+}/\**/g;' > diffs/${out}.md
