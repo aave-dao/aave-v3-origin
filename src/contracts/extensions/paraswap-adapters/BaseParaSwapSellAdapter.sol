@@ -98,6 +98,7 @@ abstract contract BaseParaSwapSellAdapter is BaseParaSwapAdapter {
         revert(0, returndatasize())
       }
     }
+
     require(
       assetToSwapFrom.balanceOf(address(this)) == balanceBeforeAssetFrom - amountToSwap,
       'WRONG_BALANCE_AFTER_SWAP'
