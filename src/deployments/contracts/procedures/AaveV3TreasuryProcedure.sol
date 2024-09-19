@@ -10,7 +10,6 @@ import '../../interfaces/IMarketReportTypes.sol';
 contract AaveV3TreasuryProcedure {
   struct TreasuryReport {
     address treasuryImplementation;
-    address proxyAdmin;
     address treasury;
   }
 
@@ -26,20 +25,12 @@ contract AaveV3TreasuryProcedure {
     if (salt != '') {
       Collector treasuryImplementation = new Collector{salt: salt}();
       treasuryImplementation.initialize(address(0), 0);
-
       treasuryReport.treasuryImplementation = address(treasuryImplementation);
-
-      if (deployedProxyAdmin == address(0)) {
-        treasuryReport.proxyAdmin = address(new ProxyAdmin{salt: salt}());
-        IOwnable(treasuryReport.proxyAdmin).transferOwnership(treasuryOwner);
-      } else {
-        treasuryReport.proxyAdmin = deployedProxyAdmin;
-      }
 
       treasuryReport.treasury = address(
         new TransparentUpgradeableProxy{salt: salt}(
           treasuryReport.treasuryImplementation,
-          treasuryReport.proxyAdmin,
+          deployedProxyAdmin,
           abi.encodeWithSelector(
             treasuryImplementation.initialize.selector,
             address(treasuryOwner),
@@ -52,17 +43,10 @@ contract AaveV3TreasuryProcedure {
       treasuryImplementation.initialize(address(0), 0);
       treasuryReport.treasuryImplementation = address(treasuryImplementation);
 
-      if (deployedProxyAdmin == address(0)) {
-        treasuryReport.proxyAdmin = address(new ProxyAdmin());
-        IOwnable(treasuryReport.proxyAdmin).transferOwnership(treasuryOwner);
-      } else {
-        treasuryReport.proxyAdmin = deployedProxyAdmin;
-      }
-
       treasuryReport.treasury = address(
         new TransparentUpgradeableProxy(
           treasuryReport.treasuryImplementation,
-          treasuryReport.proxyAdmin,
+          deployedProxyAdmin,
           abi.encodeWithSelector(
             treasuryImplementation.initialize.selector,
             address(treasuryOwner),
