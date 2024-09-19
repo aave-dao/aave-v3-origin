@@ -30,17 +30,8 @@ library BorrowEngine {
           EngineFlags.toBool(updates[i].enabledToBorrow)
         );
       } else {
-        (, , bool borrowingEnabled, , ) = pool.getConfiguration(updates[i].asset).getFlags();
+        (, , bool borrowingEnabled, ) = pool.getConfiguration(updates[i].asset).getFlags();
         updates[i].enabledToBorrow = EngineFlags.fromBool(borrowingEnabled);
-      }
-
-      if (updates[i].enabledToBorrow == EngineFlags.ENABLED) {
-        if (updates[i].stableRateModeEnabled != EngineFlags.KEEP_CURRENT) {
-          poolConfigurator.setReserveStableRateBorrowing(
-            updates[i].asset,
-            EngineFlags.toBool(updates[i].stableRateModeEnabled)
-          );
-        }
       }
 
       if (updates[i].borrowableInIsolation != EngineFlags.KEEP_CURRENT) {

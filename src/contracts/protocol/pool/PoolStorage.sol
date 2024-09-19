@@ -43,8 +43,8 @@ contract PoolStorage {
   // FlashLoan premium paid to protocol treasury, expressed in bps
   uint128 internal _flashLoanPremiumToProtocol;
 
-  // Available liquidity that can be borrowed at once at stable rate, expressed in bps
-  uint64 internal _maxStableRateBorrowSizePercent;
+  // DEPRECATED on v3.2.0
+  uint64 internal __DEPRECATED_maxStableRateBorrowSizePercent;
 
   // Maximum number of active reserves there have been in the protocol. It is the upper bound of the reserves list
   uint16 internal _reservesCount;

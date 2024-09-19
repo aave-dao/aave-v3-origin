@@ -23,7 +23,6 @@ contract AaveV3MockBorrowUpdate is AaveV3Payload {
       asset: ASSET_ADDRESS,
       enabledToBorrow: EngineFlags.ENABLED,
       flashloanable: EngineFlags.DISABLED,
-      stableRateModeEnabled: EngineFlags.KEEP_CURRENT,
       borrowableInIsolation: EngineFlags.KEEP_CURRENT,
       withSiloedBorrowing: EngineFlags.KEEP_CURRENT,
       reserveFactor: 15_00

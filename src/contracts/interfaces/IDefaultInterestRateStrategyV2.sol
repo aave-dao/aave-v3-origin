@@ -10,16 +10,6 @@ import {IPoolAddressesProvider} from './IPoolAddressesProvider.sol';
  * @notice Interface of the default interest rate strategy used by the Aave protocol
  */
 interface IDefaultInterestRateStrategyV2 is IReserveInterestRateStrategy {
-  struct CalcInterestRatesLocalVars {
-    uint256 availableLiquidity;
-    uint256 totalDebt;
-    uint256 currentVariableBorrowRate;
-    uint256 currentLiquidityRate;
-    uint256 borrowUsageRatio;
-    uint256 supplyUsageRatio;
-    uint256 availableLiquidityPlusDebt;
-  }
-
   /**
    * @notice Holds the interest rate data for a given reserve
    *

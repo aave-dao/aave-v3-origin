@@ -235,7 +235,7 @@ contract ACLManagerTest is TestnetProcedures {
    */
   function toAsciiString(address x) internal pure returns (string memory) {
     bytes memory s = new bytes(40);
-    for (uint i = 0; i < 20; i++) {
+    for (uint256 i = 0; i < 20; i++) {
       bytes1 b = bytes1(uint8(uint(uint160(x)) / (2 ** (8 * (19 - i)))));
       bytes1 hi = bytes1(uint8(b) / 16);
       bytes1 lo = bytes1(uint8(b) - 16 * uint8(hi));

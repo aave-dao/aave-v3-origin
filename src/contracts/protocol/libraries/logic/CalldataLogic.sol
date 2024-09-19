@@ -86,7 +86,7 @@ library CalldataLogic {
    * @param args The packed borrow params
    * @return The address of the underlying reserve
    * @return The amount to borrow
-   * @return The interestRateMode, 1 for stable or 2 for variable debt
+   * @return The interestRateMode, 2 for variable debt, 1 is deprecated (changed on v3.2.0)
    * @return The referralCode
    */
   function decodeBorrowParams(
@@ -114,7 +114,7 @@ library CalldataLogic {
    * @param args The packed repay params
    * @return The address of the underlying reserve
    * @return The amount to repay
-   * @return The interestRateMode, 1 for stable or 2 for variable debt
+   * @return The interestRateMode, 2 for variable debt, 1 is deprecated (changed on v3.2.0)
    */
   function decodeRepayParams(
     mapping(uint256 => address) storage reservesList,
@@ -143,7 +143,7 @@ library CalldataLogic {
    * @param args The packed repay with permit params
    * @return The address of the underlying reserve
    * @return The amount to repay
-   * @return The interestRateMode, 1 for stable or 2 for variable debt
+   * @return The interestRateMode, 2 for variable debt, 1 is deprecated (changed on v3.2.0)
    * @return The deadline of the permit
    * @return The V value of the permit signature
    */
@@ -165,48 +165,6 @@ library CalldataLogic {
     }
 
     return (asset, amount, interestRateMode, deadline, permitV);
-  }
-
-  /**
-   * @notice Decodes compressed swap borrow rate mode params to standard params
-   * @param reservesList The addresses of all the active reserves
-   * @param args The packed swap borrow rate mode params
-   * @return The address of the underlying reserve
-   * @return The interest rate mode, 1 for stable 2 for variable debt
-   */
-  function decodeSwapBorrowRateModeParams(
-    mapping(uint256 => address) storage reservesList,
-    bytes32 args
-  ) internal view returns (address, uint256) {
-    uint16 assetId;
-    uint256 interestRateMode;
-
-    assembly {
-      assetId := and(args, 0xFFFF)
-      interestRateMode := and(shr(16, args), 0xFF)
-    }
-
-    return (reservesList[assetId], interestRateMode);
-  }
-
-  /**
-   * @notice Decodes compressed rebalance stable borrow rate params to standard params
-   * @param reservesList The addresses of all the active reserves
-   * @param args The packed rabalance stable borrow rate params
-   * @return The address of the underlying reserve
-   * @return The address of the user to rebalance
-   */
-  function decodeRebalanceStableBorrowRateParams(
-    mapping(uint256 => address) storage reservesList,
-    bytes32 args
-  ) internal view returns (address, address) {
-    uint16 assetId;
-    address user;
-    assembly {
-      assetId := and(args, 0xFFFF)
-      user := and(shr(16, args), 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
-    }
-    return (reservesList[assetId], user);
   }
 
   /**

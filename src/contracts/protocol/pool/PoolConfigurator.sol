@@ -3,6 +3,7 @@ pragma solidity ^0.8.10;
 
 import {VersionedInitializable} from '../../misc/aave-upgradeability/VersionedInitializable.sol';
 import {ReserveConfiguration} from '../libraries/configuration/ReserveConfiguration.sol';
+import {EModeConfiguration} from '../libraries/configuration/EModeConfiguration.sol';
 import {IPoolAddressesProvider} from '../../interfaces/IPoolAddressesProvider.sol';
 import {IDefaultInterestRateStrategyV2} from '../../interfaces/IDefaultInterestRateStrategyV2.sol';
 import {Errors} from '../libraries/helpers/Errors.sol';
@@ -105,13 +106,6 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
   }
 
   /// @inheritdoc IPoolConfigurator
-  function updateStableDebtToken(
-    ConfiguratorInputTypes.UpdateDebtTokenInput calldata input
-  ) external override onlyPoolAdmin {
-    ConfiguratorLogic.executeUpdateStableDebtToken(_pool, input);
-  }
-
-  /// @inheritdoc IPoolConfigurator
   function updateVariableDebtToken(
     ConfiguratorInputTypes.UpdateDebtTokenInput calldata input
   ) external override onlyPoolAdmin {
@@ -121,9 +115,6 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
   /// @inheritdoc IPoolConfigurator
   function setReserveBorrowing(address asset, bool enabled) external override onlyRiskOrPoolAdmins {
     DataTypes.ReserveConfigurationMap memory currentConfig = _pool.getConfiguration(asset);
-    if (!enabled) {
-      require(!currentConfig.getStableRateBorrowingEnabled(), Errors.STABLE_BORROWING_ENABLED);
-    }
     currentConfig.setBorrowingEnabled(enabled);
     _pool.setConfiguration(asset, currentConfig);
     emit ReserveBorrowing(asset, enabled);
@@ -179,20 +170,6 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
     _pool.setConfiguration(asset, currentConfig);
 
     emit CollateralConfigurationChanged(asset, newLtv, liquidationThreshold, liquidationBonus);
-  }
-
-  /// @inheritdoc IPoolConfigurator
-  function setReserveStableRateBorrowing(
-    address asset,
-    bool enabled
-  ) external override onlyRiskOrPoolAdmins {
-    DataTypes.ReserveConfigurationMap memory currentConfig = _pool.getConfiguration(asset);
-    if (enabled) {
-      require(currentConfig.getBorrowingEnabled(), Errors.BORROWING_NOT_ENABLED);
-    }
-    currentConfig.setStableRateBorrowingEnabled(enabled);
-    _pool.setConfiguration(asset, currentConfig);
-    emit ReserveStableRateBorrowing(asset, enabled);
   }
 
   /// @inheritdoc IPoolConfigurator
@@ -397,7 +374,6 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
     uint16 ltv,
     uint16 liquidationThreshold,
     uint16 liquidationBonus,
-    address oracle,
     string calldata label
   ) external override onlyRiskOrPoolAdmins {
     require(ltv != 0, Errors.INVALID_EMODE_CATEGORY_PARAMS);
@@ -420,53 +396,57 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
       Errors.INVALID_EMODE_CATEGORY_PARAMS
     );
 
-    address[] memory reserves = _pool.getReservesList();
-    for (uint256 i = 0; i < reserves.length; i++) {
-      DataTypes.ReserveConfigurationMap memory currentConfig = _pool.getConfiguration(reserves[i]);
-      if (categoryId == currentConfig.getEModeCategory()) {
-        uint256 currentLtv = currentConfig.getFrozen()
-          ? _pendingLtv[reserves[i]]
-          : currentConfig.getLtv();
-        require(ltv > currentLtv, Errors.INVALID_EMODE_CATEGORY_PARAMS);
+    DataTypes.EModeCategoryBaseConfiguration memory categoryData;
+    categoryData.ltv = ltv;
+    categoryData.liquidationThreshold = liquidationThreshold;
+    categoryData.liquidationBonus = liquidationBonus;
+    categoryData.label = label;
 
-        require(
-          liquidationThreshold > currentConfig.getLiquidationThreshold(),
-          Errors.INVALID_EMODE_CATEGORY_PARAMS
-        );
-      }
-    }
-
-    _pool.configureEModeCategory(
+    _pool.configureEModeCategory(categoryId, categoryData);
+    emit EModeCategoryAdded(
       categoryId,
-      DataTypes.EModeCategory({
-        ltv: ltv,
-        liquidationThreshold: liquidationThreshold,
-        liquidationBonus: liquidationBonus,
-        priceSource: oracle,
-        label: label
-      })
+      ltv,
+      liquidationThreshold,
+      liquidationBonus,
+      address(0),
+      label
     );
-    emit EModeCategoryAdded(categoryId, ltv, liquidationThreshold, liquidationBonus, oracle, label);
   }
 
   /// @inheritdoc IPoolConfigurator
-  function setAssetEModeCategory(
+  function setAssetCollateralInEMode(
     address asset,
-    uint8 newCategoryId
+    uint8 categoryId,
+    bool allowed
   ) external override onlyRiskOrPoolAdmins {
-    DataTypes.ReserveConfigurationMap memory currentConfig = _pool.getConfiguration(asset);
+    uint128 collateralBitmap = _pool.getEModeCategoryCollateralBitmap(categoryId);
+    DataTypes.ReserveDataLegacy memory reserveData = _pool.getReserveData(asset);
+    require(reserveData.id != 0 || _pool.getReservesList()[0] == asset, Errors.ASSET_NOT_LISTED);
+    collateralBitmap = EModeConfiguration.setReserveBitmapBit(
+      collateralBitmap,
+      reserveData.id,
+      allowed
+    );
+    _pool.configureEModeCategoryCollateralBitmap(categoryId, collateralBitmap);
+    emit AssetCollateralInEModeChanged(asset, categoryId, allowed);
+  }
 
-    if (newCategoryId != 0) {
-      DataTypes.EModeCategory memory categoryData = _pool.getEModeCategoryData(newCategoryId);
-      require(
-        categoryData.liquidationThreshold > currentConfig.getLiquidationThreshold(),
-        Errors.INVALID_EMODE_CATEGORY_ASSIGNMENT
-      );
-    }
-    uint256 oldCategoryId = currentConfig.getEModeCategory();
-    currentConfig.setEModeCategory(newCategoryId);
-    _pool.setConfiguration(asset, currentConfig);
-    emit EModeAssetCategoryChanged(asset, uint8(oldCategoryId), newCategoryId);
+  /// @inheritdoc IPoolConfigurator
+  function setAssetBorrowableInEMode(
+    address asset,
+    uint8 categoryId,
+    bool borrowable
+  ) external override onlyRiskOrPoolAdmins {
+    uint128 borrowableBitmap = _pool.getEModeCategoryBorrowableBitmap(categoryId);
+    DataTypes.ReserveDataLegacy memory reserveData = _pool.getReserveData(asset);
+    require(reserveData.id != 0 || _pool.getReservesList()[0] == asset, Errors.ASSET_NOT_LISTED);
+    borrowableBitmap = EModeConfiguration.setReserveBitmapBit(
+      borrowableBitmap,
+      reserveData.id,
+      borrowable
+    );
+    _pool.configureEModeCategoryBorrowableBitmap(categoryId, borrowableBitmap);
+    emit AssetBorrowableInEModeChanged(asset, categoryId, borrowable);
   }
 
   /// @inheritdoc IPoolConfigurator

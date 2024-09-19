@@ -11,7 +11,6 @@ import {ReserveConfiguration} from '../protocol/libraries/configuration/ReserveC
 import {UserConfiguration} from '../protocol/libraries/configuration/UserConfiguration.sol';
 import {DataTypes} from '../protocol/libraries/types/DataTypes.sol';
 import {IWrappedTokenGatewayV3} from './interfaces/IWrappedTokenGatewayV3.sol';
-import {DataTypesHelper} from '../misc/libraries/DataTypesHelper.sol';
 
 /**
  * @dev This contract is an upgrade of the WrappedTokenGatewayV3 contract, with immutable pool address.
@@ -71,31 +70,23 @@ contract WrappedTokenGatewayV3 is IWrappedTokenGatewayV3, Ownable {
   /**
    * @dev repays a borrow on the WETH reserve, for the specified amount (or for the whole amount, if uint256(-1) is specified).
    * @param amount the amount to repay, or uint256(-1) if the user wants to repay everything
-   * @param rateMode the rate mode to repay
    * @param onBehalfOf the address for which msg.sender is repaying
    */
-  function repayETH(
-    address,
-    uint256 amount,
-    uint256 rateMode,
-    address onBehalfOf
-  ) external payable override {
-    (uint256 stableDebt, uint256 variableDebt) = DataTypesHelper.getUserCurrentDebt(
-      onBehalfOf,
-      POOL.getReserveData(address(WETH))
-    );
-
-    uint256 paybackAmount = DataTypes.InterestRateMode(rateMode) ==
-      DataTypes.InterestRateMode.STABLE
-      ? stableDebt
-      : variableDebt;
+  function repayETH(address, uint256 amount, address onBehalfOf) external payable override {
+    uint256 paybackAmount = IERC20((POOL.getReserveData(address(WETH))).variableDebtTokenAddress)
+      .balanceOf(onBehalfOf);
 
     if (amount < paybackAmount) {
       paybackAmount = amount;
     }
     require(msg.value >= paybackAmount, 'msg.value is less than repayment amount');
     WETH.deposit{value: paybackAmount}();
-    POOL.repay(address(WETH), paybackAmount, rateMode, onBehalfOf);
+    POOL.repay(
+      address(WETH),
+      paybackAmount,
+      uint256(DataTypes.InterestRateMode.VARIABLE),
+      onBehalfOf
+    );
 
     // refund remaining dust eth
     if (msg.value > paybackAmount) _safeTransferETH(msg.sender, msg.value - paybackAmount);
@@ -104,16 +95,16 @@ contract WrappedTokenGatewayV3 is IWrappedTokenGatewayV3, Ownable {
   /**
    * @dev borrow WETH, unwraps to ETH and send both the ETH and DebtTokens to msg.sender, via `approveDelegation` and onBehalf argument in `Pool.borrow`.
    * @param amount the amount of ETH to borrow
-   * @param interestRateMode the interest rate mode
    * @param referralCode integrators are assigned a referral code and can potentially receive rewards
    */
-  function borrowETH(
-    address,
-    uint256 amount,
-    uint256 interestRateMode,
-    uint16 referralCode
-  ) external override {
-    POOL.borrow(address(WETH), amount, interestRateMode, referralCode, msg.sender);
+  function borrowETH(address, uint256 amount, uint16 referralCode) external override {
+    POOL.borrow(
+      address(WETH),
+      amount,
+      uint256(DataTypes.InterestRateMode.VARIABLE),
+      referralCode,
+      msg.sender
+    );
     WETH.withdraw(amount);
     _safeTransferETH(msg.sender, amount);
   }

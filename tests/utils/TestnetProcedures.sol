@@ -27,8 +27,6 @@ struct TestVars {
   string aTokenSymbol;
   string variableDebtName;
   string variableDebtSymbol;
-  string stableDebtName;
-  string stableDebtSymbol;
   address rateStrategy;
   address incentivesController;
   address treasury;
@@ -43,7 +41,6 @@ struct TestReserveConfig {
   uint256 reserveFactor;
   bool usageAsCollateralEnabled;
   bool borrowingEnabled;
-  bool stableBorrowRateEnabled;
   bool isActive;
   bool isFrozen;
   bool isPaused;
@@ -86,7 +83,6 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     uint16 ltv;
     uint16 lt;
     uint16 lb;
-    address oracle;
     string label;
   }
 
@@ -256,7 +252,7 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
       uint256 reserveFactor,
       bool usageAsCollateralEnabled,
       bool borrowingEnabled,
-      bool stableBorrowRateEnabled,
+      ,
       bool isActive,
       bool isFrozen
     ) = IPoolDataProvider(dataProvider).getReserveConfigurationData(reserve);
@@ -267,7 +263,6 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     c.reserveFactor = reserveFactor;
     c.usageAsCollateralEnabled = usageAsCollateralEnabled;
     c.borrowingEnabled = borrowingEnabled;
-    c.stableBorrowRateEnabled = stableBorrowRateEnabled;
     c.isActive = isActive;
     c.isFrozen = isFrozen;
     c.isPaused = IPoolDataProvider(dataProvider).getPaused(reserve);
@@ -322,7 +317,6 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     input.underlyingAsset = address(
       new TestnetERC20('Misc Token', 'MISC', t.underlyingDecimals, poolAdminUser)
     );
-    input.stableDebtTokenImpl = r.stableDebtToken;
     input.variableDebtTokenImpl = r.variableDebtToken;
     input.useVirtualBalance = t.useVirtualBalance;
     input.interestRateStrategyAddress = r.defaultInterestRateStrategy;
@@ -332,8 +326,6 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     input.aTokenSymbol = t.aTokenSymbol;
     input.variableDebtTokenName = t.variableDebtName;
     input.variableDebtTokenSymbol = t.variableDebtSymbol;
-    input.stableDebtTokenName = t.stableDebtName;
-    input.stableDebtTokenSymbol = t.stableDebtSymbol;
     input.params = bytes('');
     input.interestRateData = abi.encode(
       IDefaultInterestRateStrategyV2.InterestRateData({
@@ -352,11 +344,11 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
   }
 
   function _genCategoryOne() internal pure returns (EModeCategoryInput memory) {
-    return EModeCategoryInput(1, 95_00, 96_00, 101_00, address(0x0), 'GROUP_A');
+    return EModeCategoryInput(1, 95_00, 96_00, 101_00, 'GROUP_A');
   }
 
   function _genCategoryTwo() internal pure returns (EModeCategoryInput memory) {
-    return EModeCategoryInput(2, 96_00, 97_00, 101_50, address(0x0), 'GROUP_B');
+    return EModeCategoryInput(2, 96_00, 97_00, 101_50, 'GROUP_B');
   }
 
   function _calcPrice(uint256 price, uint256 percent) public pure returns (uint256) {
@@ -367,7 +359,6 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
 
   function _calculateInterestRates(
     uint256 borrowAmount,
-    uint256 borrowMode,
     address token
   ) internal view returns (uint256) {
     DataTypes.ReserveDataLegacy memory reserveData = IPool(report.poolProxy).getReserveData(token);
@@ -380,22 +371,15 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
       unbacked: 0,
       liquidityAdded: 0,
       liquidityTaken: borrowAmount,
-      totalStableDebt: borrowMode == 1 ? borrowAmount : 0,
-      totalVariableDebt: borrowMode == 2 ? borrowAmount : 0,
-      averageStableBorrowRate: 0,
+      totalDebt: borrowAmount,
       reserveFactor: reserveConfig.reserveFactor,
       reserve: token,
       usingVirtualBalance: IPool(report.poolProxy).getConfiguration(token).getIsVirtualAccActive(),
       virtualUnderlyingBalance: IPool(report.poolProxy).getVirtualUnderlyingBalance(token)
     });
 
-    if (borrowMode == 2) {
-      (, , uint256 expectedVariableBorrowRate) = rateStrategy.calculateInterestRates(input);
-      return expectedVariableBorrowRate;
-    } else {
-      (, uint256 stableRate, ) = rateStrategy.calculateInterestRates(input);
-      return stableRate;
-    }
+    (, uint256 expectedVariableBorrowRate) = rateStrategy.calculateInterestRates(input);
+    return expectedVariableBorrowRate;
   }
 
   function _deployInterestRateStrategy() internal returns (address) {

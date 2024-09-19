@@ -24,7 +24,6 @@ contract PoolLogicInitReservesTests is TestnetProcedures {
     DataTypes.InitReserveParams memory params = DataTypes.InitReserveParams(
       address(new Mock()),
       report.aToken,
-      report.stableDebtToken,
       report.variableDebtToken,
       address(2),
       0,
@@ -41,7 +40,6 @@ contract PoolLogicInitReservesTests is TestnetProcedures {
     DataTypes.InitReserveParams memory params1 = DataTypes.InitReserveParams(
       address(new Mock()),
       report.aToken,
-      report.stableDebtToken,
       report.variableDebtToken,
       address(2),
       0,
@@ -51,7 +49,6 @@ contract PoolLogicInitReservesTests is TestnetProcedures {
     DataTypes.InitReserveParams memory params2 = DataTypes.InitReserveParams(
       address(new Mock()),
       report.aToken,
-      report.stableDebtToken,
       report.variableDebtToken,
       address(2),
       1,
@@ -61,7 +58,6 @@ contract PoolLogicInitReservesTests is TestnetProcedures {
     DataTypes.InitReserveParams memory params3 = DataTypes.InitReserveParams(
       address(new Mock()),
       report.aToken,
-      report.stableDebtToken,
       report.variableDebtToken,
       address(2),
       2,
@@ -82,7 +78,6 @@ contract PoolLogicInitReservesTests is TestnetProcedures {
     DataTypes.InitReserveParams memory params1 = DataTypes.InitReserveParams(
       address(new Mock()),
       report.aToken,
-      report.stableDebtToken,
       report.variableDebtToken,
       address(2),
       0,

@@ -28,8 +28,7 @@ import {PoolStorage} from './PoolStorage.sol';
  *   # Withdraw
  *   # Borrow
  *   # Repay
- *   # Swap their loans between variable and stable rate
- *   # Enable/disable their supplied assets as collateral rebalance stable rate borrow positions
+ *   # Enable/disable their supplied assets as collateral
  *   # Liquidate positions
  *   # Execute Flash Loans
  * @dev To be covered by a proxy contract, owned by the PoolAddressesProvider of the specific market
@@ -230,7 +229,6 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
         interestRateMode: DataTypes.InterestRateMode(interestRateMode),
         referralCode: referralCode,
         releaseUnderlying: true,
-        maxStableRateBorrowSizePercent: _maxStableRateBorrowSizePercent,
         reservesCount: _reservesCount,
         oracle: ADDRESSES_PROVIDER.getPriceOracle(),
         userEModeCategory: _usersEModeCategory[onBehalfOf],
@@ -318,33 +316,6 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
   }
 
   /// @inheritdoc IPool
-  function swapBorrowRateMode(address asset, uint256 interestRateMode) public virtual override {
-    BorrowLogic.executeSwapBorrowRateMode(
-      _reserves[asset],
-      _usersConfig[msg.sender],
-      asset,
-      msg.sender,
-      DataTypes.InterestRateMode(interestRateMode)
-    );
-  }
-
-  /// @inheritdoc IPool
-  function swapToVariable(address asset, address user) public virtual override {
-    BorrowLogic.executeSwapBorrowRateMode(
-      _reserves[asset],
-      _usersConfig[user],
-      asset,
-      user,
-      DataTypes.InterestRateMode.STABLE
-    );
-  }
-
-  /// @inheritdoc IPool
-  function rebalanceStableBorrowRate(address asset, address user) public virtual override {
-    BorrowLogic.executeRebalanceStableBorrowRate(_reserves[asset], asset, user);
-  }
-
-  /// @inheritdoc IPool
   function setUserUseReserveAsCollateral(
     address asset,
     bool useAsCollateral
@@ -409,7 +380,6 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
       referralCode: referralCode,
       flashLoanPremiumToProtocol: _flashLoanPremiumToProtocol,
       flashLoanPremiumTotal: _flashLoanPremiumTotal,
-      maxStableRateBorrowSizePercent: _maxStableRateBorrowSizePercent,
       reservesCount: _reservesCount,
       addressesProvider: address(ADDRESSES_PROVIDER),
       pool: address(this),
@@ -472,11 +442,9 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
     res.currentLiquidityRate = reserve.currentLiquidityRate;
     res.variableBorrowIndex = reserve.variableBorrowIndex;
     res.currentVariableBorrowRate = reserve.currentVariableBorrowRate;
-    res.currentStableBorrowRate = reserve.currentStableBorrowRate;
     res.lastUpdateTimestamp = reserve.lastUpdateTimestamp;
     res.id = reserve.id;
     res.aTokenAddress = reserve.aTokenAddress;
-    res.stableDebtTokenAddress = reserve.stableDebtTokenAddress;
     res.variableDebtTokenAddress = reserve.variableDebtTokenAddress;
     res.interestRateStrategyAddress = reserve.interestRateStrategyAddress;
     res.accruedToTreasury = reserve.accruedToTreasury;
@@ -584,11 +552,6 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
   }
 
   /// @inheritdoc IPool
-  function MAX_STABLE_RATE_BORROW_SIZE_PERCENT() public view virtual override returns (uint256) {
-    return _maxStableRateBorrowSizePercent;
-  }
-
-  /// @inheritdoc IPool
   function BRIDGE_PROTOCOL_FEE() public view virtual override returns (uint256) {
     return _bridgeProtocolFee;
   }
@@ -641,7 +604,6 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
   function initReserve(
     address asset,
     address aTokenAddress,
-    address stableDebtAddress,
     address variableDebtAddress,
     address interestRateStrategyAddress
   ) external virtual override onlyPoolConfigurator {
@@ -652,7 +614,6 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
         DataTypes.InitReserveParams({
           asset: asset,
           aTokenAddress: aTokenAddress,
-          stableDebtAddress: stableDebtAddress,
           variableDebtAddress: variableDebtAddress,
           interestRateStrategyAddress: interestRateStrategyAddress,
           reservesCount: _reservesCount,
@@ -725,18 +686,76 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
   /// @inheritdoc IPool
   function configureEModeCategory(
     uint8 id,
-    DataTypes.EModeCategory memory category
+    DataTypes.EModeCategoryBaseConfiguration memory category
   ) external virtual override onlyPoolConfigurator {
     // category 0 is reserved for volatile heterogeneous assets and it's always disabled
     require(id != 0, Errors.EMODE_CATEGORY_RESERVED);
-    _eModeCategories[id] = category;
+    _eModeCategories[id].ltv = category.ltv;
+    _eModeCategories[id].liquidationThreshold = category.liquidationThreshold;
+    _eModeCategories[id].liquidationBonus = category.liquidationBonus;
+    _eModeCategories[id].label = category.label;
+  }
+
+  /// @inheritdoc IPool
+  function configureEModeCategoryCollateralBitmap(
+    uint8 id,
+    uint128 collateralBitmap
+  ) external virtual override onlyPoolConfigurator {
+    // category 0 is reserved for volatile heterogeneous assets and it's always disabled
+    require(id != 0, Errors.EMODE_CATEGORY_RESERVED);
+    _eModeCategories[id].collateralBitmap = collateralBitmap;
+  }
+
+  /// @inheritdoc IPool
+  function configureEModeCategoryBorrowableBitmap(
+    uint8 id,
+    uint128 borrowableBitmap
+  ) external virtual override onlyPoolConfigurator {
+    // category 0 is reserved for volatile heterogeneous assets and it's always disabled
+    require(id != 0, Errors.EMODE_CATEGORY_RESERVED);
+    _eModeCategories[id].borrowableBitmap = borrowableBitmap;
   }
 
   /// @inheritdoc IPool
   function getEModeCategoryData(
     uint8 id
-  ) external view virtual override returns (DataTypes.EModeCategory memory) {
-    return _eModeCategories[id];
+  ) external view virtual override returns (DataTypes.EModeCategoryLegacy memory) {
+    DataTypes.EModeCategory memory category = _eModeCategories[id];
+    return
+      DataTypes.EModeCategoryLegacy({
+        ltv: category.ltv,
+        liquidationThreshold: category.liquidationThreshold,
+        liquidationBonus: category.liquidationBonus,
+        priceSource: address(0),
+        label: category.label
+      });
+  }
+
+  /// @inheritdoc IPool
+  function getEModeCategoryCollateralConfig(
+    uint8 id
+  ) external view returns (DataTypes.CollateralConfig memory) {
+    return
+      DataTypes.CollateralConfig({
+        ltv: _eModeCategories[id].ltv,
+        liquidationThreshold: _eModeCategories[id].liquidationThreshold,
+        liquidationBonus: _eModeCategories[id].liquidationBonus
+      });
+  }
+
+  /// @inheritdoc IPool
+  function getEModeCategoryLabel(uint8 id) external view returns (string memory) {
+    return _eModeCategories[id].label;
+  }
+
+  /// @inheritdoc IPool
+  function getEModeCategoryCollateralBitmap(uint8 id) external view returns (uint128) {
+    return _eModeCategories[id].collateralBitmap;
+  }
+
+  /// @inheritdoc IPool
+  function getEModeCategoryBorrowableBitmap(uint8 id) external view returns (uint128) {
+    return _eModeCategories[id].borrowableBitmap;
   }
 
   /// @inheritdoc IPool

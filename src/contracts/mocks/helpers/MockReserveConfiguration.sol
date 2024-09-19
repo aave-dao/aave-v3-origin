@@ -69,16 +69,6 @@ contract MockReserveConfiguration {
     return configuration.getBorrowingEnabled();
   }
 
-  function setStableRateBorrowingEnabled(bool enabled) external {
-    DataTypes.ReserveConfigurationMap memory config = configuration;
-    config.setStableRateBorrowingEnabled(enabled);
-    configuration = config;
-  }
-
-  function getStableRateBorrowingEnabled() external view returns (bool) {
-    return configuration.getStableRateBorrowingEnabled();
-  }
-
   function setReserveFactor(uint256 reserveFactor) external {
     DataTypes.ReserveConfigurationMap memory config = configuration;
     config.setReserveFactor(reserveFactor);
@@ -97,16 +87,6 @@ contract MockReserveConfiguration {
 
   function getBorrowCap() external view returns (uint256) {
     return configuration.getBorrowCap();
-  }
-
-  function getEModeCategory() external view returns (uint256) {
-    return configuration.getEModeCategory();
-  }
-
-  function setEModeCategory(uint256 categoryId) external {
-    DataTypes.ReserveConfigurationMap memory config = configuration;
-    config.setEModeCategory(categoryId);
-    configuration = config;
   }
 
   function setFlashLoanEnabled(bool enabled) external {
@@ -149,15 +129,11 @@ contract MockReserveConfiguration {
     return configuration.getUnbackedMintCap();
   }
 
-  function getFlags() external view returns (bool, bool, bool, bool, bool) {
+  function getFlags() external view returns (bool, bool, bool, bool) {
     return configuration.getFlags();
   }
 
-  function getParams()
-    external
-    view
-    returns (uint256, uint256, uint256, uint256, uint256, uint256)
-  {
+  function getParams() external view returns (uint256, uint256, uint256, uint256, uint256) {
     return configuration.getParams();
   }
 

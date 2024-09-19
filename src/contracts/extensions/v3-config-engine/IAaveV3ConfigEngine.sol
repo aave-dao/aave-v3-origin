@@ -67,7 +67,6 @@ interface IAaveV3ConfigEngine {
    *   }),
    *   enabledToBorrow: EngineFlags.ENABLED,
    *   flashloanable: EngineFlags.ENABLED,
-   *   stableRateModeEnabled: EngineFlags.DISABLED,
    *   borrowableInIsolation: EngineFlags.ENABLED,
    *   withSiloedBorrowing:, EngineFlags.DISABLED,
    *   ltv: 70_50, // 70.5%
@@ -87,7 +86,6 @@ interface IAaveV3ConfigEngine {
     address priceFeed;
     InterestRateInputData rateStrategyParams; // Mandatory, no matter if enabled for borrowing or not
     uint256 enabledToBorrow;
-    uint256 stableRateModeEnabled; // Only considered is enabledToBorrow == EngineFlags.ENABLED (true)
     uint256 borrowableInIsolation; // Only considered is enabledToBorrow == EngineFlags.ENABLED (true)
     uint256 withSiloedBorrowing; // Only considered if enabledToBorrow == EngineFlags.ENABLED (true)
     uint256 flashloanable; // Independent from enabled to borrow: an asset can be flashloanble and not enabled to borrow
@@ -99,7 +97,6 @@ interface IAaveV3ConfigEngine {
     uint256 borrowCap; // If passing any value distinct to EngineFlags.KEEP_CURRENT, always configured
     uint256 debtCeiling; // Only considered if liqThreshold > 0
     uint256 liqProtocolFee; // Only considered if liqThreshold > 0
-    uint8 eModeCategory; // If `O`, no eMode category will be set
   }
 
   struct RepackedListings {
@@ -108,7 +105,6 @@ interface IAaveV3ConfigEngine {
     BorrowUpdate[] borrowsUpdates;
     CollateralUpdate[] collateralsUpdates;
     PriceFeedUpdate[] priceFeedsUpdates;
-    AssetEModeUpdate[] assetsEModeUpdates;
     CapsUpdate[] capsUpdates;
     IDefaultInterestRateStrategyV2.InterestRateData[] rates;
   }
@@ -116,7 +112,6 @@ interface IAaveV3ConfigEngine {
   struct TokenImplementations {
     address aToken;
     address vToken;
-    address sToken;
   }
 
   struct ListingWithCustomImpl {
@@ -176,7 +171,6 @@ interface IAaveV3ConfigEngine {
    *   asset: AaveV3EthereumAssets.AAVE_UNDERLYING,
    *   enabledToBorrow: EngineFlags.ENABLED,
    *   flashloanable: EngineFlags.KEEP_CURRENT,
-   *   stableRateModeEnabled: EngineFlags.KEEP_CURRENT,
    *   borrowableInIsolation: EngineFlags.KEEP_CURRENT,
    *   withSiloedBorrowing: EngineFlags.KEEP_CURRENT,
    *   reserveFactor: 15_00, // 15%
@@ -186,7 +180,6 @@ interface IAaveV3ConfigEngine {
     address asset;
     uint256 enabledToBorrow;
     uint256 flashloanable;
-    uint256 stableRateModeEnabled;
     uint256 borrowableInIsolation;
     uint256 withSiloedBorrowing;
     uint256 reserveFactor;
@@ -197,11 +190,15 @@ interface IAaveV3ConfigEngine {
    * AssetEModeUpdate({
    *   asset: AaveV3EthereumAssets.rETH_UNDERLYING,
    *   eModeCategory: 1, // ETH correlated
+   *   borrowable: EngineFlags.ENABLED,
+   *   collateral: EngineFlags.KEEP_CURRENT,
    * })
    */
   struct AssetEModeUpdate {
     address asset;
     uint8 eModeCategory;
+    uint256 borrowable;
+    uint256 collateral;
   }
 
   /**
@@ -211,7 +208,6 @@ interface IAaveV3ConfigEngine {
    *   ltv: 60_00,
    *   liqThreshold: 70_00,
    *   liqBonus: EngineFlags.KEEP_CURRENT,
-   *   priceSource: EngineFlags.KEEP_CURRENT_ADDRESS,
    *   label: EngineFlags.KEEP_CURRENT_STRING
    * })
    */
@@ -220,7 +216,6 @@ interface IAaveV3ConfigEngine {
     uint256 ltv;
     uint256 liqThreshold;
     uint256 liqBonus;
-    address priceSource;
     string label;
   }
 
@@ -308,11 +303,12 @@ interface IAaveV3ConfigEngine {
   function updateEModeCategories(EModeCategoryUpdate[] memory updates) external;
 
   /**
-   * @notice Performs an update of the e-mode category of the assets, in the Aave pool configured in this engine instance
-   * @param updates `AssetEModeUpdate[]` list of declarative updates containing the new parameters
+   * @notice Performs an update of the e-mode category.
+   * Sets a specified asset collateral and/or borrowable, in the Aave pool configured in this engine instance
+   * @param updates `EModeCollateralUpdate[]` list of declarative updates containing the new parameters
    *   More information on the documentation of the struct.
    */
-  function updateAssetsEMode(AssetEModeUpdate[] calldata updates) external;
+  function updateAssetEMode(AssetEModeUpdate[] memory updates) external;
 
   function DEFAULT_INTEREST_RATE_STRATEGY() external view returns (address);
 
@@ -325,8 +321,6 @@ interface IAaveV3ConfigEngine {
   function ATOKEN_IMPL() external view returns (address);
 
   function VTOKEN_IMPL() external view returns (address);
-
-  function STOKEN_IMPL() external view returns (address);
 
   function REWARDS_CONTROLLER() external view returns (address);
 

@@ -60,12 +60,6 @@ contract PoolTests is TestnetProcedures {
     bool useATokens
   );
 
-  event SwapBorrowRateMode(
-    address indexed reserve,
-    address indexed user,
-    DataTypes.InterestRateMode interestRateMode
-  );
-
   event IsolationModeTotalDebtUpdated(address indexed asset, uint256 totalDebt);
 
   event UserEModeSet(address indexed user, uint8 categoryId);
@@ -73,8 +67,6 @@ contract PoolTests is TestnetProcedures {
   event ReserveUsedAsCollateralEnabled(address indexed reserve, address indexed user);
 
   event ReserveUsedAsCollateralDisabled(address indexed reserve, address indexed user);
-
-  event RebalanceStableBorrowRate(address indexed reserve, address indexed user);
 
   event FlashLoan(
     address indexed target,
@@ -116,7 +108,6 @@ contract PoolTests is TestnetProcedures {
     p.initialize(IPoolAddressesProvider(report.poolAddressesProvider));
 
     // Default values after deployment and initialized
-    assertEq(p.MAX_STABLE_RATE_BORROW_SIZE_PERCENT(), 2500);
     assertEq(p.MAX_NUMBER_RESERVES(), 128);
     assertEq(address(p.ADDRESSES_PROVIDER()), report.poolAddressesProvider);
     assertEq(p.FLASHLOAN_PREMIUM_TOTAL(), 0);
@@ -129,7 +120,7 @@ contract PoolTests is TestnetProcedures {
 
     vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_CONFIGURATOR));
     vm.prank(caller);
-    pool.initReserve(address(0), address(0), address(0), address(0), address(0));
+    pool.initReserve(address(0), address(0), address(0), address(0));
   }
 
   function test_setUserUseReserveAsCollateral_false() public {
@@ -248,10 +239,10 @@ contract PoolTests is TestnetProcedures {
 
     DataTypes.ReserveConfigurationMap memory configuration;
 
-    DataTypes.EModeCategory memory category;
+    DataTypes.EModeCategoryBaseConfiguration memory category;
 
     vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_CONFIGURATOR));
-    pool.initReserve(address(0), address(0), address(0), address(0), address(0));
+    pool.initReserve(address(0), address(0), address(0), address(0));
 
     vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_CONFIGURATOR));
     pool.dropReserve(address(0));
@@ -283,7 +274,7 @@ contract PoolTests is TestnetProcedures {
       tokenList.usdx
     );
     assertTrue(pA != address(0));
-    assertTrue(pS != address(0));
+    assertTrue(pS == address(0));
     assertTrue(pV != address(0));
 
     vm.prank(report.poolConfiguratorProxy);
@@ -301,7 +292,7 @@ contract PoolTests is TestnetProcedures {
       uint256 reserveFactor,
       bool usageAsCollateralEnabled,
       bool borrowingEnabled,
-      bool stableBorrowRateEnabled,
+      ,
       bool isActive,
       bool isFrozen
     ) = contracts.protocolDataProvider.getReserveConfigurationData(tokenList.usdx);
@@ -316,7 +307,6 @@ contract PoolTests is TestnetProcedures {
     assertEq(reserveFactor, 0);
     assertEq(usageAsCollateralEnabled, false);
     assertEq(borrowingEnabled, false);
-    assertEq(stableBorrowRateEnabled, false);
     assertEq(isActive, false);
     assertEq(isFrozen, false);
   }
@@ -375,7 +365,7 @@ contract PoolTests is TestnetProcedures {
     address strategy
   ) public {
     address[] memory listedAssets = contracts.poolProxy.getReservesList();
-    for (uint i = 0; i < listedAssets.length; i++) {
+    for (uint256 i = 0; i < listedAssets.length; i++) {
       vm.assume(asset != listedAssets[i]);
     }
 
@@ -505,16 +495,9 @@ contract PoolTests is TestnetProcedures {
   function test_setUserEmode() public {
     EModeCategoryInput memory ct = _genCategoryOne();
     vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(
-      ct.id,
-      ct.ltv,
-      ct.lt,
-      ct.lb,
-      ct.oracle,
-      ct.label
-    );
-    contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.wbtc, ct.id);
-    contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.weth, ct.id);
+    contracts.poolConfiguratorProxy.setEModeCategory(ct.id, ct.ltv, ct.lt, ct.lb, ct.label);
+    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.wbtc, ct.id, true);
+    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.weth, ct.id, true);
     vm.stopPrank();
     vm.expectEmit(address(contracts.poolProxy));
     emit UserEModeSet(alice, ct.id);
@@ -527,27 +510,13 @@ contract PoolTests is TestnetProcedures {
     EModeCategoryInput memory ct1 = _genCategoryOne();
     EModeCategoryInput memory ct2 = _genCategoryTwo();
     vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(
-      ct1.id,
-      ct1.ltv,
-      ct1.lt,
-      ct1.lb,
-      ct1.oracle,
-      ct1.label
-    );
-    contracts.poolConfiguratorProxy.setEModeCategory(
-      ct2.id,
-      ct2.ltv,
-      ct2.lt,
-      ct2.lb,
-      ct2.oracle,
-      ct2.label
-    );
+    contracts.poolConfiguratorProxy.setEModeCategory(ct1.id, ct1.ltv, ct1.lt, ct1.lb, ct1.label);
+    contracts.poolConfiguratorProxy.setEModeCategory(ct2.id, ct2.ltv, ct2.lt, ct2.lb, ct2.label);
 
-    contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.wbtc, ct1.id);
-    contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.weth, ct1.id);
-    contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.wbtc, ct2.id);
-    contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.usdx, ct2.id);
+    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.wbtc, ct1.id, true);
+    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.weth, ct1.id, true);
+    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.wbtc, ct2.id, true);
+    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, ct2.id, true);
     vm.stopPrank();
 
     vm.expectEmit(address(contracts.poolProxy));
@@ -572,27 +541,14 @@ contract PoolTests is TestnetProcedures {
     EModeCategoryInput memory ct1 = _genCategoryOne();
     EModeCategoryInput memory ct2 = _genCategoryTwo();
     vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(
-      ct1.id,
-      ct1.ltv,
-      ct1.lt,
-      ct1.lb,
-      ct1.oracle,
-      ct1.label
-    );
-    contracts.poolConfiguratorProxy.setEModeCategory(
-      ct2.id,
-      ct2.ltv,
-      ct2.lt,
-      ct2.lb,
-      ct2.oracle,
-      ct2.label
-    );
+    contracts.poolConfiguratorProxy.setEModeCategory(ct1.id, ct1.ltv, ct1.lt, ct1.lb, ct1.label);
+    contracts.poolConfiguratorProxy.setEModeCategory(ct2.id, ct2.ltv, ct2.lt, ct2.lb, ct2.label);
 
-    contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.wbtc, ct1.id);
-    contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.weth, ct1.id);
-    contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.wbtc, ct2.id);
-    contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.usdx, ct2.id);
+    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.wbtc, ct1.id, true);
+    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.weth, ct1.id, true);
+    contracts.poolConfiguratorProxy.setAssetBorrowableInEMode(tokenList.weth, ct1.id, true);
+    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.wbtc, ct2.id, true);
+    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, ct2.id, true);
     vm.stopPrank();
 
     vm.expectEmit(address(contracts.poolProxy));
@@ -607,7 +563,7 @@ contract PoolTests is TestnetProcedures {
     pool.supply(tokenList.wbtc, amount, alice, 0);
     pool.borrow(tokenList.weth, borrowAmount, 2, 0, alice);
 
-    vm.expectRevert(bytes(Errors.INCONSISTENT_EMODE_CATEGORY));
+    vm.expectRevert(bytes(Errors.NOT_BORROWABLE_IN_EMODE));
 
     pool.setUserEMode(ct2.id);
     vm.stopPrank();
@@ -621,17 +577,11 @@ contract PoolTests is TestnetProcedures {
 
     EModeCategoryInput memory ct1 = _genCategoryOne();
     vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(
-      ct1.id,
-      ct1.ltv,
-      ct1.lt,
-      ct1.lb,
-      address(0),
-      ct1.label
-    );
+    contracts.poolConfiguratorProxy.setEModeCategory(ct1.id, ct1.ltv, ct1.lt, ct1.lb, ct1.label);
 
-    contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.wbtc, ct1.id);
-    contracts.poolConfiguratorProxy.setAssetEModeCategory(tokenList.weth, ct1.id);
+    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.wbtc, ct1.id, true);
+    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.weth, ct1.id, true);
+    contracts.poolConfiguratorProxy.setAssetBorrowableInEMode(tokenList.weth, ct1.id, true);
     vm.stopPrank();
 
     vm.prank(alice);

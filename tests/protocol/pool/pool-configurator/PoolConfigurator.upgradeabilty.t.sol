@@ -5,11 +5,10 @@ import 'forge-std/Test.sol';
 
 import {AToken} from '../../../../src/contracts/protocol/tokenization/AToken.sol';
 import {VariableDebtToken} from '../../../../src/contracts/protocol/tokenization/VariableDebtToken.sol';
-import {StableDebtToken} from '../../../../src/contracts/protocol/tokenization/StableDebtToken.sol';
 import {Errors} from '../../../../src/contracts/protocol/libraries/helpers/Errors.sol';
 import {ConfiguratorInputTypes, IPool, IPoolAddressesProvider} from '../../../../src/contracts/protocol/pool/PoolConfigurator.sol';
 import {MockATokenRepayment} from '../../../../src/contracts/mocks/tokens/MockATokenRepayment.sol';
-import {MockVariableDebtToken, MockStableDebtToken} from '../../../../src/contracts/mocks/tokens/MockDebtTokens.sol';
+import {MockVariableDebtToken} from '../../../../src/contracts/mocks/tokens/MockDebtTokens.sol';
 import {DataTypes} from '../../../../src/contracts/protocol/libraries/types/DataTypes.sol';
 import {ReserveLogic} from '../../../../src/contracts/protocol/libraries/logic/ReserveLogic.sol';
 
@@ -34,12 +33,6 @@ contract PoolConfiguratorUpgradeabilityTests is TestnetProcedures {
   event ReserveInterestRateDataChanged(address indexed asset, address indexed strategy, bytes data);
 
   event ATokenUpgraded(
-    address indexed asset,
-    address indexed proxy,
-    address indexed implementation
-  );
-
-  event StableDebtTokenUpgraded(
     address indexed asset,
     address indexed proxy,
     address indexed implementation
@@ -159,6 +152,7 @@ contract PoolConfiguratorUpgradeabilityTests is TestnetProcedures {
     assertEq(updatedCache.currVariableBorrowRate, 107585394738663515131637198);
   }
 
+  // TODO: deduplicate, reuse in vTokenUpdate too
   function test_updateAToken() public {
     ConfiguratorInputTypes.UpdateATokenInput memory input = ConfiguratorInputTypes
       .UpdateATokenInput({
@@ -240,49 +234,6 @@ contract PoolConfiguratorUpgradeabilityTests is TestnetProcedures {
     assertEq(VariableDebtToken(variableDebtProxy).symbol(), input.symbol);
     assertEq(
       address(VariableDebtToken(variableDebtProxy).getIncentivesController()),
-      input.incentivesController
-    );
-  }
-
-  function test_updateStableDebtToken() public {
-    (, address stableDebtToken, ) = contracts.protocolDataProvider.getReserveTokensAddresses(
-      tokenList.usdx
-    );
-    ConfiguratorInputTypes.UpdateDebtTokenInput memory input = ConfiguratorInputTypes
-      .UpdateDebtTokenInput({
-        asset: tokenList.usdx,
-        incentivesController: report.rewardsControllerProxy,
-        name: 'New Stable Debt Test USDX',
-        symbol: 'newTestStaDebtUSDX',
-        implementation: address(new MockStableDebtToken(IPool(report.poolProxy))),
-        params: bytes('')
-      });
-
-    address previousImplementation = SlotParser.loadAddressFromSlot(
-      stableDebtToken,
-      bytes32(uint256(keccak256('eip1967.proxy.implementation')) - 1)
-    );
-
-    vm.startPrank(poolAdmin);
-
-    vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit StableDebtTokenUpgraded(tokenList.usdx, stableDebtToken, input.implementation);
-
-    // Perform upgrade
-    contracts.poolConfiguratorProxy.updateStableDebtToken(input);
-    vm.stopPrank();
-
-    address upgradedImplementation = SlotParser.loadAddressFromSlot(
-      stableDebtToken,
-      bytes32(uint256(keccak256('eip1967.proxy.implementation')) - 1)
-    );
-
-    assertTrue(upgradedImplementation != previousImplementation);
-    assertEq(upgradedImplementation, input.implementation);
-    assertEq(StableDebtToken(stableDebtToken).name(), input.name);
-    assertEq(StableDebtToken(stableDebtToken).symbol(), input.symbol);
-    assertEq(
-      address(StableDebtToken(stableDebtToken).getIncentivesController()),
       input.incentivesController
     );
   }

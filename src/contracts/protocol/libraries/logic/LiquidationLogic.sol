@@ -5,7 +5,6 @@ import {IERC20} from '../../../dependencies/openzeppelin/contracts//IERC20.sol';
 import {GPv2SafeERC20} from '../../../dependencies/gnosis/contracts/GPv2SafeERC20.sol';
 import {PercentageMath} from '../../libraries/math/PercentageMath.sol';
 import {WadRayMath} from '../../libraries/math/WadRayMath.sol';
-import {Helpers} from '../../libraries/helpers/Helpers.sol';
 import {DataTypes} from '../../libraries/types/DataTypes.sol';
 import {ReserveLogic} from './ReserveLogic.sol';
 import {ValidationLogic} from './ValidationLogic.sol';
@@ -14,8 +13,8 @@ import {IsolationModeLogic} from './IsolationModeLogic.sol';
 import {EModeLogic} from './EModeLogic.sol';
 import {UserConfiguration} from '../../libraries/configuration/UserConfiguration.sol';
 import {ReserveConfiguration} from '../../libraries/configuration/ReserveConfiguration.sol';
+import {EModeConfiguration} from '../../libraries/configuration/EModeConfiguration.sol';
 import {IAToken} from '../../../interfaces/IAToken.sol';
-import {IStableDebtToken} from '../../../interfaces/IStableDebtToken.sol';
 import {IVariableDebtToken} from '../../../interfaces/IVariableDebtToken.sol';
 import {IPriceOracleGetter} from '../../../interfaces/IPriceOracleGetter.sol';
 
@@ -69,15 +68,12 @@ library LiquidationLogic {
 
   struct LiquidationCallLocalVars {
     uint256 userCollateralBalance;
-    uint256 userVariableDebt;
     uint256 userTotalDebt;
     uint256 actualDebtToLiquidate;
     uint256 actualCollateralToLiquidate;
     uint256 liquidationBonus;
     uint256 healthFactor;
     uint256 liquidationProtocolFeeAmount;
-    address collateralPriceSource;
-    address debtPriceSource;
     IAToken collateralAToken;
     DataTypes.ReserveCache debtReserveCache;
   }
@@ -121,7 +117,7 @@ library LiquidationLogic {
       })
     );
 
-    (vars.userVariableDebt, vars.userTotalDebt, vars.actualDebtToLiquidate) = _calculateDebt(
+    (vars.userTotalDebt, vars.actualDebtToLiquidate) = _calculateDebt(
       vars.debtReserveCache,
       params,
       vars.healthFactor
@@ -139,12 +135,18 @@ library LiquidationLogic {
       })
     );
 
-    (
-      vars.collateralAToken,
-      vars.collateralPriceSource,
-      vars.debtPriceSource,
-      vars.liquidationBonus
-    ) = _getConfigurationData(eModeCategories, collateralReserve, params);
+    vars.collateralAToken = IAToken(collateralReserve.aTokenAddress);
+    if (
+      params.userEModeCategory != 0 &&
+      EModeConfiguration.isReserveEnabledOnBitmap(
+        eModeCategories[params.userEModeCategory].collateralBitmap,
+        collateralReserve.id
+      )
+    ) {
+      vars.liquidationBonus = eModeCategories[params.userEModeCategory].liquidationBonus;
+    } else {
+      vars.liquidationBonus = collateralReserve.configuration.getLiquidationBonus();
+    }
 
     vars.userCollateralBalance = vars.collateralAToken.balanceOf(params.user);
 
@@ -155,8 +157,8 @@ library LiquidationLogic {
     ) = _calculateAvailableCollateralToLiquidate(
       collateralReserve,
       vars.debtReserveCache,
-      vars.collateralPriceSource,
-      vars.debtPriceSource,
+      params.collateralAsset,
+      params.debtAsset,
       vars.actualDebtToLiquidate,
       vars.userCollateralBalance,
       vars.liquidationBonus,
@@ -325,29 +327,9 @@ library LiquidationLogic {
     DataTypes.ExecuteLiquidationCallParams memory params,
     LiquidationCallLocalVars memory vars
   ) internal {
-    if (vars.userVariableDebt >= vars.actualDebtToLiquidate) {
-      vars.debtReserveCache.nextScaledVariableDebt = IVariableDebtToken(
-        vars.debtReserveCache.variableDebtTokenAddress
-      ).burn(
-          params.user,
-          vars.actualDebtToLiquidate,
-          vars.debtReserveCache.nextVariableBorrowIndex
-        );
-    } else {
-      // If the user doesn't have variable debt, no need to try to burn variable debt tokens
-      if (vars.userVariableDebt != 0) {
-        vars.debtReserveCache.nextScaledVariableDebt = IVariableDebtToken(
-          vars.debtReserveCache.variableDebtTokenAddress
-        ).burn(params.user, vars.userVariableDebt, vars.debtReserveCache.nextVariableBorrowIndex);
-      }
-      (
-        vars.debtReserveCache.nextTotalStableDebt,
-        vars.debtReserveCache.nextAvgStableBorrowRate
-      ) = IStableDebtToken(vars.debtReserveCache.stableDebtTokenAddress).burn(
-        params.user,
-        vars.actualDebtToLiquidate - vars.userVariableDebt
-      );
-    }
+    vars.debtReserveCache.nextScaledVariableDebt = IVariableDebtToken(
+      vars.debtReserveCache.variableDebtTokenAddress
+    ).burn(params.user, vars.actualDebtToLiquidate, vars.debtReserveCache.nextVariableBorrowIndex);
   }
 
   /**
@@ -357,7 +339,6 @@ library LiquidationLogic {
    * @param debtReserveCache The reserve cache data object of the debt reserve
    * @param params The additional parameters needed to execute the liquidation function
    * @param healthFactor The health factor of the position
-   * @return The variable debt of the user
    * @return The total debt of the user
    * @return The actual debt to liquidate as a function of the closeFactor
    */
@@ -365,71 +346,22 @@ library LiquidationLogic {
     DataTypes.ReserveCache memory debtReserveCache,
     DataTypes.ExecuteLiquidationCallParams memory params,
     uint256 healthFactor
-  ) internal view returns (uint256, uint256, uint256) {
-    (uint256 userStableDebt, uint256 userVariableDebt) = Helpers.getUserCurrentDebt(
-      params.user,
-      debtReserveCache
+  ) internal view returns (uint256, uint256) {
+    uint256 userVariableDebt = IERC20(debtReserveCache.variableDebtTokenAddress).balanceOf(
+      params.user
     );
-
-    uint256 userTotalDebt = userStableDebt + userVariableDebt;
 
     uint256 closeFactor = healthFactor > CLOSE_FACTOR_HF_THRESHOLD
       ? DEFAULT_LIQUIDATION_CLOSE_FACTOR
       : MAX_LIQUIDATION_CLOSE_FACTOR;
 
-    uint256 maxLiquidatableDebt = userTotalDebt.percentMul(closeFactor);
+    uint256 maxLiquidatableDebt = userVariableDebt.percentMul(closeFactor);
 
     uint256 actualDebtToLiquidate = params.debtToCover > maxLiquidatableDebt
       ? maxLiquidatableDebt
       : params.debtToCover;
 
-    return (userVariableDebt, userTotalDebt, actualDebtToLiquidate);
-  }
-
-  /**
-   * @notice Returns the configuration data for the debt and the collateral reserves.
-   * @param eModeCategories The configuration of all the efficiency mode categories
-   * @param collateralReserve The data of the collateral reserve
-   * @param params The additional parameters needed to execute the liquidation function
-   * @return The collateral aToken
-   * @return The address to use as price source for the collateral
-   * @return The address to use as price source for the debt
-   * @return The liquidation bonus to apply to the collateral
-   */
-  function _getConfigurationData(
-    mapping(uint8 => DataTypes.EModeCategory) storage eModeCategories,
-    DataTypes.ReserveData storage collateralReserve,
-    DataTypes.ExecuteLiquidationCallParams memory params
-  ) internal view returns (IAToken, address, address, uint256) {
-    IAToken collateralAToken = IAToken(collateralReserve.aTokenAddress);
-    uint256 liquidationBonus = collateralReserve.configuration.getLiquidationBonus();
-
-    address collateralPriceSource = params.collateralAsset;
-    address debtPriceSource = params.debtAsset;
-
-    if (params.userEModeCategory != 0) {
-      address eModePriceSource = eModeCategories[params.userEModeCategory].priceSource;
-
-      if (
-        EModeLogic.isInEModeCategory(
-          params.userEModeCategory,
-          collateralReserve.configuration.getEModeCategory()
-        )
-      ) {
-        liquidationBonus = eModeCategories[params.userEModeCategory].liquidationBonus;
-
-        if (eModePriceSource != address(0)) {
-          collateralPriceSource = eModePriceSource;
-        }
-      }
-
-      // when in eMode, debt will always be in the same eMode category, can skip matching category check
-      if (eModePriceSource != address(0)) {
-        debtPriceSource = eModePriceSource;
-      }
-    }
-
-    return (collateralAToken, collateralPriceSource, debtPriceSource, liquidationBonus);
+    return (userVariableDebt, actualDebtToLiquidate);
   }
 
   struct AvailableCollateralToLiquidateLocalVars {

@@ -36,4 +36,5 @@ download :; cast etherscan-source --chain ${chain} -d src/etherscan/${chain}_${a
 git-diff :
 	@mkdir -p diffs
 	@npx prettier ${before} ${after} --write
-	@printf '%s\n%s\n%s\n' "\`\`\`diff" "$$(git diff --no-index --diff-algorithm=patience --ignore-space-at-eol ${before} ${after})" "\`\`\`" > diffs/${out}.md
+	@printf '%s\n%s\n%s\n' "\`\`\`diff" "$$(git diff --no-index --ignore-space-at-eol ${before} ${after})" "\`\`\`" > diffs/${out}.md
+

@@ -22,7 +22,6 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     uint256 liquidationThreshold,
     uint256 liquidationBonus
   );
-  event ReserveStableRateBorrowing(address indexed asset, bool enabled);
   event ReserveFrozen(address indexed asset, bool frozen);
   event ReservePaused(address indexed asset, bool paused);
   event ReserveDropped(address indexed asset);
@@ -58,7 +57,6 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
 
     vm.startPrank(poolAdmin);
     wbtc.mint(bob, 100e8);
-    contracts.poolConfiguratorProxy.setReserveStableRateBorrowing(tokenList.wbtc, true);
     vm.stopPrank();
 
     vm.prank(bob);
@@ -236,70 +234,6 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
 
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.configureReserveAsCollateral(tokenList.usdx, 0, 0, 0);
-  }
-
-  function test_enableStableBorrowing(TestVars memory t) public {
-    ConfiguratorInputTypes.InitReserveInput[] memory input = _generateInitConfig(
-      t,
-      report,
-      poolAdmin,
-      true
-    );
-
-    // Perform action
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.initReserves(input);
-
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setReserveBorrowing(input[0].underlyingAsset, true);
-
-    (, , , , , , , bool borrowingEnabledDefault, , ) = contracts
-      .protocolDataProvider
-      .getReserveConfigurationData(input[0].underlyingAsset);
-    assertEq(borrowingEnabledDefault, false);
-
-    vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit ReserveStableRateBorrowing(input[0].underlyingAsset, true);
-
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setReserveStableRateBorrowing(input[0].underlyingAsset, true);
-
-    (, , , , , , , bool borrowingEnabledAfter, , ) = contracts
-      .protocolDataProvider
-      .getReserveConfigurationData(input[0].underlyingAsset);
-    assertEq(borrowingEnabledAfter, true);
-
-    vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit ReserveStableRateBorrowing(input[0].underlyingAsset, false);
-
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setReserveStableRateBorrowing(input[0].underlyingAsset, false);
-
-    (, , , , , , , bool borrowingConfigAfter, , ) = contracts
-      .protocolDataProvider
-      .getReserveConfigurationData(input[0].underlyingAsset);
-    assertEq(borrowingConfigAfter, false);
-  }
-
-  function test_reverts_enableStableBorrowing_borrowNotEnabled(TestVars memory t) public {
-    ConfiguratorInputTypes.InitReserveInput[] memory input = _generateInitConfig(
-      t,
-      report,
-      poolAdmin,
-      true
-    );
-
-    // Perform action
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.initReserves(input);
-
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setReserveBorrowing(input[0].underlyingAsset, false);
-
-    vm.expectRevert(bytes(Errors.BORROWING_NOT_ENABLED));
-
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setReserveStableRateBorrowing(input[0].underlyingAsset, true);
   }
 
   function test_reverts_setReserveActive_false_if_suppliers() public {
@@ -614,7 +548,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
       emit ReservePaused(reserves[x], true);
     }
     vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setPoolPause(true, 0);
+    contracts.poolConfiguratorProxy.setPoolPause(true);
 
     for (uint16 x; x < reserves.length; ++x) {
       bool isPaused = contracts.protocolDataProvider.getPaused(reserves[x]);
@@ -630,7 +564,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
       emit ReservePaused(reserves[x], false);
     }
     vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setPoolPause(false, 0);
+    contracts.poolConfiguratorProxy.setPoolPause(false);
 
     for (uint16 x; x < reserves.length; ++x) {
       bool isPaused = contracts.protocolDataProvider.getPaused(reserves[x]);
@@ -697,7 +631,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
       tokenList.usdx
     );
     assertTrue(pA != address(0));
-    assertTrue(pS != address(0));
+    assertTrue(pS == address(0));
     assertTrue(pV != address(0));
 
     vm.prank(poolAdmin);
@@ -715,7 +649,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
         uint256 reserveFactor,
         bool usageAsCollateralEnabled,
         bool borrowingEnabled,
-        bool stableBorrowRateEnabled,
+        ,
         bool isActive,
         bool isFrozen
       ) = contracts.protocolDataProvider.getReserveConfigurationData(tokenList.usdx);
@@ -730,7 +664,6 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
       assertEq(reserveFactor, 0);
       assertEq(usageAsCollateralEnabled, false);
       assertEq(borrowingEnabled, false);
-      assertEq(stableBorrowRateEnabled, false);
       assertEq(isActive, false);
       assertEq(isFrozen, false);
     }
@@ -773,22 +706,36 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
   }
 
   function test_setLiquidationGracePeriodReserve(uint40 gracePeriod) public {
-    vm.assume(
-      gracePeriod <= contracts.poolConfiguratorProxy.MAX_GRACE_PERIOD() && gracePeriod != 0
-    );
+    gracePeriod = uint40(bound(gracePeriod, 1, contracts.poolConfiguratorProxy.MAX_GRACE_PERIOD()));
 
     address asset = tokenList.usdx;
 
     uint40 until = uint40(block.timestamp) + gracePeriod;
 
-    vm.prank(poolAdmin);
+    vm.startPrank(poolAdmin);
 
-    if (gracePeriod != 0) {
-      vm.expectEmit(address(contracts.poolConfiguratorProxy));
-      emit LiquidationGracePeriodChanged(asset, until);
-      contracts.poolConfiguratorProxy.setReservePause(asset, false, gracePeriod);
-      assertEq(contracts.poolProxy.getLiquidationGracePeriod(asset), until);
-    }
+    // reserve unpause -> unpause, liquidationGracePeriod would be set
+    vm.expectEmit(address(contracts.poolConfiguratorProxy));
+    emit LiquidationGracePeriodChanged(asset, until);
+    contracts.poolConfiguratorProxy.setReservePause(asset, false, gracePeriod);
+    assertEq(contracts.poolProxy.getLiquidationGracePeriod(asset), until);
+
+    // reserve unpause -> pause, liquidationGracePeriod would not be set
+    contracts.poolConfiguratorProxy.setReservePause(asset, true, gracePeriod);
+    assertEq(contracts.poolProxy.getLiquidationGracePeriod(asset), until);
+    assertTrue(contracts.protocolDataProvider.getPaused(asset));
+
+    // reserve pause -> pause, liquidationGracePeriod would not be set
+    contracts.poolConfiguratorProxy.setReservePause(asset, true, gracePeriod);
+    assertEq(contracts.poolProxy.getLiquidationGracePeriod(asset), until);
+
+    // reserve pause -> unpause, liquidationGracePeriod would be set
+    vm.expectEmit(address(contracts.poolConfiguratorProxy));
+    emit LiquidationGracePeriodChanged(asset, until);
+    contracts.poolConfiguratorProxy.setReservePause(asset, false, gracePeriod);
+    assertEq(contracts.poolProxy.getLiquidationGracePeriod(asset), until);
+
+    vm.stopPrank();
   }
 
   function test_disableLiquidationGracePeriod() public {

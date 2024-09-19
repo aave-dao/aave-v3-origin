@@ -17,8 +17,7 @@ contract AaveV3HelpersProcedureOne {
     address rewardsController,
     address collector,
     address aTokenImpl,
-    address vTokenImpl,
-    address sTokenImpl
+    address vTokenImpl
   ) internal returns (ConfigEngineReport memory configEngineReport) {
     IAaveV3ConfigEngine.EngineLibraries memory engineLibraries = IAaveV3ConfigEngine
       .EngineLibraries({
@@ -50,7 +49,7 @@ contract AaveV3HelpersProcedureOne {
     configEngineReport.capsEngine = engineLibraries.capsEngine;
 
     configEngineReport.configEngine = address(
-      new AaveV3ConfigEngine(aTokenImpl, vTokenImpl, sTokenImpl, engineConstants, engineLibraries)
+      new AaveV3ConfigEngine(aTokenImpl, vTokenImpl, engineConstants, engineLibraries)
     );
     return configEngineReport;
   }

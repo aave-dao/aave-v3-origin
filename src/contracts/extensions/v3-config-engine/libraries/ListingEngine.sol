@@ -67,16 +67,6 @@ library ListingEngine {
         repacked.collateralsUpdates
       )
     );
-
-    // For an asset listing we only update the e-mode category id for the asset and do not make changes
-    // to the e-mode category configuration
-    engineLibraries.eModeEngine.functionDelegateCall(
-      abi.encodeWithSelector(
-        EModeEngine.executeAssetsEModeUpdate.selector,
-        engineConstants,
-        repacked.assetsEModeUpdates
-      )
-    );
   }
 
   function _repackListing(
@@ -88,9 +78,6 @@ library ListingEngine {
       listings.length
     );
     IEngine.PriceFeedUpdate[] memory priceFeedsUpdates = new IEngine.PriceFeedUpdate[](
-      listings.length
-    );
-    IEngine.AssetEModeUpdate[] memory assetsEModeUpdates = new IEngine.AssetEModeUpdate[](
       listings.length
     );
     IEngine.CapsUpdate[] memory capsUpdates = new IEngine.CapsUpdate[](listings.length);
@@ -114,7 +101,6 @@ library ListingEngine {
         asset: listings[i].base.asset,
         enabledToBorrow: listings[i].base.enabledToBorrow,
         flashloanable: listings[i].base.flashloanable,
-        stableRateModeEnabled: listings[i].base.stableRateModeEnabled,
         borrowableInIsolation: listings[i].base.borrowableInIsolation,
         withSiloedBorrowing: listings[i].base.withSiloedBorrowing,
         reserveFactor: listings[i].base.reserveFactor
@@ -142,10 +128,6 @@ library ListingEngine {
         variableRateSlope1: listings[i].base.rateStrategyParams.variableRateSlope1.toUint32(),
         variableRateSlope2: listings[i].base.rateStrategyParams.variableRateSlope2.toUint32()
       });
-      assetsEModeUpdates[i] = IEngine.AssetEModeUpdate({
-        asset: listings[i].base.asset,
-        eModeCategory: listings[i].base.eModeCategory
-      });
     }
 
     return
@@ -155,7 +137,6 @@ library ListingEngine {
         borrowsUpdates,
         collateralsUpdates,
         priceFeedsUpdates,
-        assetsEModeUpdates,
         capsUpdates,
         rates
       );
@@ -178,7 +159,6 @@ library ListingEngine {
     for (uint256 i = 0; i < ids.length; i++) {
       initReserveInputs[i] = ConfiguratorInputTypes.InitReserveInput({
         aTokenImpl: basics[i].implementations.aToken,
-        stableDebtTokenImpl: basics[i].implementations.sToken,
         variableDebtTokenImpl: basics[i].implementations.vToken,
         interestRateStrategyAddress: rateStrategy,
         interestRateData: abi.encode(rates[i]),
@@ -196,17 +176,6 @@ library ListingEngine {
         ),
         variableDebtTokenSymbol: string.concat(
           'variableDebt',
-          context.networkAbbreviation,
-          basics[i].assetSymbol
-        ),
-        stableDebtTokenName: string.concat(
-          'Aave ',
-          context.networkName,
-          ' Stable Debt ',
-          basics[i].assetSymbol
-        ),
-        stableDebtTokenSymbol: string.concat(
-          'stableDebt',
           context.networkAbbreviation,
           basics[i].assetSymbol
         ),

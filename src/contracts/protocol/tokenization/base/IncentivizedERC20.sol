@@ -41,8 +41,7 @@ abstract contract IncentivizedERC20 is Context, IERC20Detailed {
   /**
    * @dev UserState - additionalData is a flexible field.
    * ATokens and VariableDebtTokens use this field store the index of the
-   * user's last supply/withdrawal/borrow/repayment. StableDebtTokens use
-   * this field to store the user's stable rate.
+   * user's last supply/withdrawal/borrow/repayment.
    */
   struct UserState {
     uint128 balance;

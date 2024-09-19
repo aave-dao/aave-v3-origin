@@ -46,66 +46,27 @@ library EModeLogic {
     DataTypes.UserConfigurationMap storage userConfig,
     DataTypes.ExecuteSetUserEModeParams memory params
   ) external {
+    if (usersEModeCategory[msg.sender] == params.categoryId) return;
+
     ValidationLogic.validateSetUserEMode(
-      reservesData,
-      reservesList,
       eModeCategories,
       userConfig,
       params.reservesCount,
       params.categoryId
     );
 
-    uint8 prevCategoryId = usersEModeCategory[msg.sender];
     usersEModeCategory[msg.sender] = params.categoryId;
 
-    if (prevCategoryId != 0) {
-      ValidationLogic.validateHealthFactor(
-        reservesData,
-        reservesList,
-        eModeCategories,
-        userConfig,
-        msg.sender,
-        params.categoryId,
-        params.reservesCount,
-        params.oracle
-      );
-    }
+    ValidationLogic.validateHealthFactor(
+      reservesData,
+      reservesList,
+      eModeCategories,
+      userConfig,
+      msg.sender,
+      params.categoryId,
+      params.reservesCount,
+      params.oracle
+    );
     emit UserEModeSet(msg.sender, params.categoryId);
-  }
-
-  /**
-   * @notice Gets the eMode configuration and calculates the eMode asset price if a custom oracle is configured
-   * @dev The eMode asset price returned is 0 if no oracle is specified
-   * @param category The user eMode category
-   * @param oracle The price oracle
-   * @return The eMode ltv
-   * @return The eMode liquidation threshold
-   * @return The eMode asset price
-   */
-  function getEModeConfiguration(
-    DataTypes.EModeCategory storage category,
-    IPriceOracleGetter oracle
-  ) internal view returns (uint256, uint256, uint256) {
-    uint256 eModeAssetPrice = 0;
-    address eModePriceSource = category.priceSource;
-
-    if (eModePriceSource != address(0)) {
-      eModeAssetPrice = oracle.getAssetPrice(eModePriceSource);
-    }
-
-    return (category.ltv, category.liquidationThreshold, eModeAssetPrice);
-  }
-
-  /**
-   * @notice Checks if eMode is active for a user and if yes, if the asset belongs to the eMode category chosen
-   * @param eModeUserCategory The user eMode category
-   * @param eModeAssetCategory The asset eMode category
-   * @return True if eMode is active and the asset belongs to the eMode category chosen by the user, false otherwise
-   */
-  function isInEModeCategory(
-    uint256 eModeUserCategory,
-    uint256 eModeAssetCategory
-  ) internal pure returns (bool) {
-    return (eModeUserCategory != 0 && eModeAssetCategory == eModeUserCategory);
   }
 }

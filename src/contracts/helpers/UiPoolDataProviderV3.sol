@@ -7,7 +7,6 @@ import {IPool} from '../interfaces/IPool.sol';
 import {IAaveOracle} from '../interfaces/IAaveOracle.sol';
 import {IAToken} from '../interfaces/IAToken.sol';
 import {IVariableDebtToken} from '../interfaces/IVariableDebtToken.sol';
-import {IStableDebtToken} from '../interfaces/IStableDebtToken.sol';
 import {IDefaultInterestRateStrategyV2} from '../interfaces/IDefaultInterestRateStrategyV2.sol';
 import {AaveProtocolDataProvider} from './AaveProtocolDataProvider.sol';
 import {WadRayMath} from '../protocol/libraries/math/WadRayMath.sol';
@@ -71,11 +70,8 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
       reserveData.liquidityRate = baseData.currentLiquidityRate;
       //the current variable borrow rate. Expressed in ray
       reserveData.variableBorrowRate = baseData.currentVariableBorrowRate;
-      //the current stable borrow rate. Expressed in ray
-      reserveData.stableBorrowRate = baseData.currentStableBorrowRate;
       reserveData.lastUpdateTimestamp = baseData.lastUpdateTimestamp;
       reserveData.aTokenAddress = baseData.aTokenAddress;
-      reserveData.stableDebtTokenAddress = baseData.stableDebtTokenAddress;
       reserveData.variableDebtTokenAddress = baseData.variableDebtTokenAddress;
       //address of the interest rate strategy
       reserveData.interestRateStrategyAddress = baseData.interestRateStrategyAddress;
@@ -86,12 +82,6 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
       reserveData.availableLiquidity = IERC20Detailed(reserveData.underlyingAsset).balanceOf(
         reserveData.aTokenAddress
       );
-      (
-        reserveData.totalPrincipalStableDebt,
-        ,
-        reserveData.averageStableRate,
-        reserveData.stableDebtLastUpdateTimestamp
-      ) = IStableDebtToken(reserveData.stableDebtTokenAddress).getSupplyData();
       reserveData.totalScaledVariableDebt = IVariableDebtToken(reserveData.variableDebtTokenAddress)
         .scaledTotalSupply();
 
@@ -108,14 +98,12 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
 
       //stores the reserve configuration
       DataTypes.ReserveConfigurationMap memory reserveConfigurationMap = baseData.configuration;
-      uint256 eModeCategoryId;
       (
         reserveData.baseLTVasCollateral,
         reserveData.reserveLiquidationThreshold,
         reserveData.reserveLiquidationBonus,
         reserveData.decimals,
-        reserveData.reserveFactor,
-        eModeCategoryId
+        reserveData.reserveFactor
       ) = reserveConfigurationMap.getParams();
       reserveData.usageAsCollateralEnabled = reserveData.baseLTVasCollateral != 0;
 
@@ -123,7 +111,6 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
         reserveData.isActive,
         reserveData.isFrozen,
         reserveData.borrowingEnabled,
-        reserveData.stableBorrowRateEnabled,
         reserveData.isPaused
       ) = reserveConfigurationMap.getFlags();
 
@@ -138,12 +125,8 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
         reserveData.variableRateSlope2 = res.variableRateSlope2;
         reserveData.optimalUsageRatio = res.optimalUsageRatio;
       } catch {}
-      reserveData.stableRateSlope1 = 0;
-      reserveData.stableRateSlope2 = 0;
-      reserveData.baseStableBorrowRate = 0;
 
       // v3 only
-      reserveData.eModeCategoryId = uint8(eModeCategoryId);
       reserveData.debtCeiling = reserveConfigurationMap.getDebtCeiling();
       reserveData.debtCeilingDecimals = poolDataProvider.getDebtCeilingDecimals();
       (reserveData.borrowCap, reserveData.supplyCap) = reserveConfigurationMap.getCaps();
@@ -160,16 +143,6 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
       reserveData.unbacked = baseData.unbacked;
       reserveData.isolationModeTotalDebt = baseData.isolationModeTotalDebt;
       reserveData.accruedToTreasury = baseData.accruedToTreasury;
-
-      DataTypes.EModeCategory memory categoryData = pool.getEModeCategoryData(
-        reserveData.eModeCategoryId
-      );
-      reserveData.eModeLtv = categoryData.ltv;
-      reserveData.eModeLiquidationThreshold = categoryData.liquidationThreshold;
-      reserveData.eModeLiquidationBonus = categoryData.liquidationBonus;
-      // each eMode category may or may not have a custom oracle to override the individual assets price oracles
-      reserveData.eModePriceSource = categoryData.priceSource;
-      reserveData.eModeLabel = categoryData.label;
 
       reserveData.borrowableInIsolation = reserveConfigurationMap.getBorrowableInIsolation();
 
@@ -209,6 +182,41 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
     return (reservesData, baseCurrencyInfo);
   }
 
+  /// @inheritdoc IUiPoolDataProviderV3
+  function getEModes(IPoolAddressesProvider provider) external view returns (Emode[] memory) {
+    IPool pool = IPool(provider.getPool());
+    Emode[] memory tempCategories = new Emode[](256);
+    uint8 eModesFound = 0;
+    uint8 missCounter = 0;
+    for (uint8 i = 1; i < 256; i++) {
+      DataTypes.CollateralConfig memory cfg = pool.getEModeCategoryCollateralConfig(i);
+      if (cfg.liquidationThreshold != 0) {
+        tempCategories[eModesFound] = Emode({
+          eMode: DataTypes.EModeCategory({
+            ltv: cfg.ltv,
+            liquidationThreshold: cfg.liquidationThreshold,
+            liquidationBonus: cfg.liquidationBonus,
+            label: pool.getEModeCategoryLabel(i),
+            collateralBitmap: pool.getEModeCategoryCollateralBitmap(i),
+            borrowableBitmap: pool.getEModeCategoryBorrowableBitmap(i)
+          }),
+          id: i
+        });
+        ++eModesFound;
+        missCounter = 0;
+      } else {
+        ++missCounter;
+      }
+      // assumes there will never be a gap > 2 when setting eModes
+      if (missCounter > 2) break;
+    }
+    Emode[] memory categories = new Emode[](eModesFound);
+    for (uint8 i = 0; i < eModesFound; i++) {
+      categories[i] = tempCategories[i];
+    }
+    return categories;
+  }
+
   function getUserReservesData(
     IPoolAddressesProvider provider,
     address user
@@ -237,15 +245,6 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
         userReservesData[i].scaledVariableDebt = IVariableDebtToken(
           baseData.variableDebtTokenAddress
         ).scaledBalanceOf(user);
-        userReservesData[i].principalStableDebt = IStableDebtToken(baseData.stableDebtTokenAddress)
-          .principalBalanceOf(user);
-        if (userReservesData[i].principalStableDebt != 0) {
-          userReservesData[i].stableBorrowRate = IStableDebtToken(baseData.stableDebtTokenAddress)
-            .getUserStableRate(user);
-          userReservesData[i].stableBorrowLastUpdateTimestamp = IStableDebtToken(
-            baseData.stableDebtTokenAddress
-          ).getUserLastUpdated(user);
-        }
       }
     }
 

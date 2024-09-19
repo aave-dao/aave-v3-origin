@@ -32,7 +32,7 @@ contract PoolConfiguratorInitReservesTest is TestnetProcedures {
 
     ConfiguratorInputTypes.InitReserveInput[]
       memory input = new ConfiguratorInputTypes.InitReserveInput[](length);
-    for (uint i = 0; i < length; i++) {
+    for (uint256 i = 0; i < length; i++) {
       input[i] = _generateInitReserveInput(t[i], report, poolAdmin, true);
 
       vm.expectEmit(true, false, false, false, address(contracts.poolConfiguratorProxy));
@@ -48,11 +48,11 @@ contract PoolConfiguratorInitReservesTest is TestnetProcedures {
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.initReserves(input);
 
-    for (uint i = 0; i < length; i++) {
+    for (uint256 i = 0; i < length; i++) {
       ConfiguratorInputTypes.InitReserveInput memory initConfig = input[i];
       // Perform assertions
       {
-        (address aTokenProxy, address stableDebtProxy, address variableDebtProxy) = contracts
+        (address aTokenProxy, , address variableDebtProxy) = contracts
           .protocolDataProvider
           .getReserveTokensAddresses(initConfig.underlyingAsset);
 
@@ -66,18 +66,6 @@ contract PoolConfiguratorInitReservesTest is TestnetProcedures {
         assertEq(AToken(aTokenProxy).UNDERLYING_ASSET_ADDRESS(), initConfig.underlyingAsset);
         assertEq(
           address(AToken(aTokenProxy).getIncentivesController()),
-          initConfig.incentivesController
-        );
-
-        assertEq(AToken(stableDebtProxy).name(), initConfig.stableDebtTokenName);
-        assertEq(AToken(stableDebtProxy).symbol(), initConfig.stableDebtTokenSymbol);
-        assertEq(
-          AToken(stableDebtProxy).decimals(),
-          TestnetERC20(initConfig.underlyingAsset).decimals()
-        );
-        assertEq(AToken(stableDebtProxy).UNDERLYING_ASSET_ADDRESS(), initConfig.underlyingAsset);
-        assertEq(
-          address(AToken(stableDebtProxy).getIncentivesController()),
           initConfig.incentivesController
         );
 
@@ -110,7 +98,6 @@ contract PoolConfiguratorInitReservesTest is TestnetProcedures {
       assertEq(c.reserveFactor, 0);
       assertEq(c.usageAsCollateralEnabled, false);
       assertEq(c.borrowingEnabled, false);
-      assertEq(c.stableBorrowRateEnabled, false);
       assertEq(c.isVirtualAccActive, initConfig.useVirtualBalance);
     }
     assertEq(contracts.poolProxy.getReservesList().length, previousListedAssets + length);

@@ -18,14 +18,14 @@ import {AaveV3MockEModeCategoryUpdateNoChange} from './mocks/AaveV3MockEModeCate
 import {AaveV3MockAssetEModeUpdate} from './mocks/AaveV3MockAssetEModeUpdate.sol';
 
 import {ATokenInstance} from '../../../src/contracts/instances/ATokenInstance.sol';
-import {StableDebtTokenInstance} from '../../../src/contracts/instances/StableDebtTokenInstance.sol';
+import {EModeConfiguration} from '../../../src/contracts/protocol/libraries/configuration/EModeConfiguration.sol';
 import {VariableDebtTokenInstance} from '../../../src/contracts/instances/VariableDebtTokenInstance.sol';
 import {TestnetProcedures, AaveV3ConfigEngine} from '../../utils/TestnetProcedures.sol';
 import {TestnetERC20} from '../../../src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
 import {MockAggregator} from '../../../src/contracts/mocks/oracle/CLAggregators/MockAggregator.sol';
 import {IPool, IPoolAddressesProvider} from '../../utils/ProtocolV3TestBase.sol';
 import {DataTypes} from '../../../src/contracts/protocol/libraries/types/DataTypes.sol';
-import {ProtocolV3TestBase, IDefaultInterestRateStrategyV2, ReserveConfig, ReserveTokens, DataTypes as DataTypeOld} from '../../utils/ProtocolV3TestBase.sol';
+import {ProtocolV3TestBase, IDefaultInterestRateStrategyV2, ReserveConfig, ReserveTokens} from '../../utils/ProtocolV3TestBase.sol';
 
 contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
   using stdStorage for StdStorage;
@@ -80,7 +80,6 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
       underlying: asset,
       aToken: address(0), // Mock, as they don't get validated, because of the "dynamic" deployment on proposal execution
       variableDebtToken: address(0), // Mock, as they don't get validated, because of the "dynamic" deployment on proposal execution
-      stableDebtToken: address(0), // Mock, as they don't get validated, because of the "dynamic" deployment on proposal execution
       decimals: 18,
       ltv: 82_50,
       liquidationThreshold: 86_00,
@@ -90,7 +89,6 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
       usageAsCollateralEnabled: true,
       borrowingEnabled: true,
       interestRateStrategy: AaveV3ConfigEngine(configEngine).DEFAULT_INTEREST_RATE_STRATEGY(),
-      stableBorrowRateEnabled: false,
       isPaused: false,
       isActive: true,
       isFrozen: false,
@@ -100,7 +98,6 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
       supplyCap: 85_000,
       borrowCap: 60_000,
       debtCeiling: 0,
-      eModeCategory: 0,
       virtualAccActive: true,
       virtualBalance: 0,
       aTokenUnderlyingBalance: 0
@@ -114,7 +111,6 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
       _findReserveConfigBySymbol(allConfigsAfter, '1INCH'),
       ReserveTokens({
         aToken: address(contracts.aToken),
-        stableDebtToken: address(contracts.stableDebtToken),
         variableDebtToken: address(contracts.variableDebtToken)
       })
     );
@@ -150,15 +146,13 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
     address feed = address(new MockAggregator(int256(15e8)));
     address aTokenImpl = address(new ATokenInstance(contracts.poolProxy));
     address vTokenImpl = address(new VariableDebtTokenInstance(contracts.poolProxy));
-    address sTokenImpl = address(new StableDebtTokenInstance(contracts.poolProxy));
 
     AaveV3MockListingCustom payload = new AaveV3MockListingCustom(
       asset,
       feed,
       configEngine,
       aTokenImpl,
-      vTokenImpl,
-      sTokenImpl
+      vTokenImpl
     );
 
     vm.prank(roleList.marketOwner);
@@ -183,7 +177,6 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
       underlying: asset,
       aToken: address(0), // Mock, as they don't get validated, because of the "dynamic" deployment on proposal execution
       variableDebtToken: address(0), // Mock, as they don't get validated, because of the "dynamic" deployment on proposal execution
-      stableDebtToken: address(0), // Mock, as they don't get validated, because of the "dynamic" deployment on proposal execution
       decimals: 18,
       ltv: 82_50,
       liquidationThreshold: 86_00,
@@ -193,7 +186,6 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
       usageAsCollateralEnabled: true,
       borrowingEnabled: true,
       interestRateStrategy: AaveV3ConfigEngine(configEngine).DEFAULT_INTEREST_RATE_STRATEGY(),
-      stableBorrowRateEnabled: false,
       isPaused: false,
       isActive: true,
       isFrozen: false,
@@ -203,7 +195,6 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
       supplyCap: 85_000,
       borrowCap: 60_000,
       debtCeiling: 0,
-      eModeCategory: 0,
       virtualAccActive: true,
       virtualBalance: 0,
       aTokenUnderlyingBalance: 0
@@ -215,11 +206,7 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
 
     _validateReserveTokensImpls(
       _findReserveConfigBySymbol(allConfigsAfter, 'PSP'),
-      ReserveTokens({
-        aToken: aTokenImpl,
-        stableDebtToken: sTokenImpl,
-        variableDebtToken: vTokenImpl
-      })
+      ReserveTokens({aToken: aTokenImpl, variableDebtToken: vTokenImpl})
     );
 
     _validateAssetSourceOnOracle(
@@ -550,11 +537,10 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
 
     diffReports('preTestEngineEModeCategoryUpdate', 'postTestEngineEModeCategoryUpdate');
 
-    DataTypeOld.EModeCategory memory prevEmodeCategoryData;
+    DataTypes.EModeCategory memory prevEmodeCategoryData;
     prevEmodeCategoryData.ltv = 97_40;
     prevEmodeCategoryData.liquidationThreshold = 97_60;
     prevEmodeCategoryData.liquidationBonus = 101_50; // 100_00 + 1_50
-    prevEmodeCategoryData.priceSource = address(0);
     prevEmodeCategoryData.label = 'ETH Correlated';
 
     _validateEmodeCategory(
@@ -582,7 +568,7 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
       configEngine
     );
 
-    DataTypes.EModeCategory memory eModeCategoryDataBefore = contracts
+    DataTypes.EModeCategoryLegacy memory eModeCategoryDataBefore = contracts
       .poolProxy
       .getEModeCategoryData(1);
 
@@ -595,7 +581,7 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
       eModeCategoryDataBefore.ltv,
       eModeCategoryDataBefore.liquidationThreshold,
       eModeCategoryDataBefore.liquidationBonus,
-      eModeCategoryDataBefore.priceSource,
+      address(0),
       eModeCategoryDataBefore.label
     );
     payload.execute();
@@ -607,7 +593,7 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
       configEngine
     );
 
-    DataTypes.EModeCategory memory eModeCategoryDataBefore = contracts
+    DataTypes.EModeCategoryLegacy memory eModeCategoryDataBefore = contracts
       .poolProxy
       .getEModeCategoryData(1);
 
@@ -628,11 +614,10 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
 
     diffReports('preTestEngineEModeCategoryNoChange', 'postTestEngineEModeCategoryNoChange');
 
-    DataTypeOld.EModeCategory memory prevEmodeCategoryData;
+    DataTypes.EModeCategory memory prevEmodeCategoryData;
     prevEmodeCategoryData.ltv = eModeCategoryDataBefore.ltv;
     prevEmodeCategoryData.liquidationThreshold = eModeCategoryDataBefore.liquidationThreshold;
     prevEmodeCategoryData.liquidationBonus = eModeCategoryDataBefore.liquidationBonus;
-    prevEmodeCategoryData.priceSource = eModeCategoryDataBefore.priceSource;
     prevEmodeCategoryData.label = eModeCategoryDataBefore.label;
 
     _validateEmodeCategory(
@@ -644,11 +629,16 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
 
   function testAssetEModeUpdates() public {
     address asset = tokenList.usdx;
+    address asset2 = tokenList.wbtc;
 
     AaveV3MockEModeCategoryUpdate payloadToAddEMode = new AaveV3MockEModeCategoryUpdate(
       configEngine
     );
-    AaveV3MockAssetEModeUpdate payload = new AaveV3MockAssetEModeUpdate(asset, configEngine);
+    AaveV3MockAssetEModeUpdate payload = new AaveV3MockAssetEModeUpdate(
+      asset,
+      asset2,
+      configEngine
+    );
 
     vm.startPrank(roleList.marketOwner);
     contracts.aclManager.addPoolAdmin(address(payload));
@@ -671,6 +661,22 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
 
     diffReports('preTestEngineAssetEModeUpdate', 'postTestEngineAssetEModeUpdate');
 
-    assertEq(contracts.protocolDataProvider.getReserveEModeCategory(asset), 1);
+    DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(asset);
+    uint128 collateralBitmap = contracts.poolProxy.getEModeCategoryCollateralBitmap(1);
+    uint128 borrowableBitmap = contracts.poolProxy.getEModeCategoryBorrowableBitmap(1);
+    assertEq(EModeConfiguration.isReserveEnabledOnBitmap(collateralBitmap, reserveData.id), false);
+    assertEq(EModeConfiguration.isReserveEnabledOnBitmap(borrowableBitmap, reserveData.id), true);
+
+    DataTypes.ReserveDataLegacy memory reserveDataAsset2 = contracts.poolProxy.getReserveData(
+      asset2
+    );
+    assertEq(
+      EModeConfiguration.isReserveEnabledOnBitmap(collateralBitmap, reserveDataAsset2.id),
+      true
+    );
+    assertEq(
+      EModeConfiguration.isReserveEnabledOnBitmap(borrowableBitmap, reserveDataAsset2.id),
+      false
+    );
   }
 }

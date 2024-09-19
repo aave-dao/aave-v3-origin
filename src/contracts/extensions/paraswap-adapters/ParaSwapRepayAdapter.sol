@@ -206,13 +206,13 @@ contract ParaSwapRepayAdapter is BaseParaSwapBuyAdapter, ReentrancyGuard {
     uint256 debtRepayAmount,
     address initiator
   ) private view returns (uint256) {
+    require(
+      DataTypes.InterestRateMode(rateMode) == DataTypes.InterestRateMode.VARIABLE,
+      'INVALID_RATE_MODE'
+    );
     DataTypes.ReserveDataLegacy memory debtReserveData = _getReserveData(address(debtAsset));
 
-    address debtToken = DataTypes.InterestRateMode(rateMode) == DataTypes.InterestRateMode.STABLE
-      ? debtReserveData.stableDebtTokenAddress
-      : debtReserveData.variableDebtTokenAddress;
-
-    uint256 currentDebt = IERC20(debtToken).balanceOf(initiator);
+    uint256 currentDebt = IERC20(debtReserveData.variableDebtTokenAddress).balanceOf(initiator);
 
     if (buyAllBalanceOffset != 0) {
       require(currentDebt <= debtRepayAmount, 'INSUFFICIENT_AMOUNT_TO_REPAY');

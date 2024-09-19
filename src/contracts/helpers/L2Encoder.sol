@@ -118,7 +118,7 @@ contract L2Encoder {
    * @dev Without an onBehalfOf parameter as the compact calls to L2Pool will use msg.sender as onBehalfOf
    * @param asset The address of the underlying asset to borrow
    * @param amount The amount to be borrowed
-   * @param interestRateMode The interest rate mode at which the user wants to borrow: 1 for Stable, 2 for Variable
+   * @param interestRateMode The interest rate mode at which the user wants to borrow: 2 for Variable, 1 is deprecated (changed on v3.2.0)
    * @param referralCode The code used to register the integrator originating the operation, for potential rewards.
    *   0 if the action is executed directly by the user, without any middle-man
    * @return compact representation of withdraw parameters
@@ -153,7 +153,7 @@ contract L2Encoder {
    * @param asset The address of the borrowed underlying asset previously borrowed
    * @param amount The amount to repay
    * - Send the value type(uint256).max in order to repay the whole debt for `asset` on the specific `interestRateMode`
-   * @param interestRateMode The interest rate mode at of the debt the user wants to repay: 1 for Stable, 2 for Variable
+   * @param interestRateMode The interest rate mode at of the debt the user wants to repay: 2 for Variable, 1 is deprecated (changed on v3.2.0)
    * @return compact representation of repay parameters
    */
   function encodeRepayParams(
@@ -180,7 +180,7 @@ contract L2Encoder {
    * @param asset The address of the borrowed underlying asset previously borrowed
    * @param amount The amount to repay
    * - Send the value type(uint256).max in order to repay the whole debt for `asset` on the specific `debtMode`
-   * @param interestRateMode The interest rate mode at of the debt the user wants to repay: 1 for Stable, 2 for Variable
+   * @param interestRateMode The interest rate mode at of the debt the user wants to repay: 2 for Variable, 1 is deprecated (changed on v3.2.0)
    * @param deadline The deadline timestamp that the permit is valid
    * @param permitV The V parameter of ERC712 permit sig
    * @param permitR The R parameter of ERC712 permit sig
@@ -226,7 +226,7 @@ contract L2Encoder {
    * @param asset The address of the borrowed underlying asset previously borrowed
    * @param amount The amount to repay
    * - Send the value type(uint256).max in order to repay the whole debt for `asset` on the specific `debtMode`
-   * @param interestRateMode The interest rate mode at of the debt the user wants to repay: 1 for Stable, 2 for Variable
+   * @param interestRateMode The interest rate mode at of the debt the user wants to repay: 2 for Variable, 1 is deprecated  (changed on v3.2.0)
    * @return compact representation of repay with aToken parameters
    */
   function encodeRepayWithATokensParams(
@@ -235,46 +235,6 @@ contract L2Encoder {
     uint256 interestRateMode
   ) external view returns (bytes32) {
     return encodeRepayParams(asset, amount, interestRateMode);
-  }
-
-  /**
-   * @notice Encodes swap borrow rate mode parameters from standard input to compact representation of 1 bytes32
-   * @param asset The address of the underlying asset borrowed
-   * @param interestRateMode The current interest rate mode of the position being swapped: 1 for Stable, 2 for Variable
-   * @return compact representation of swap borrow rate mode parameters
-   */
-  function encodeSwapBorrowRateMode(
-    address asset,
-    uint256 interestRateMode
-  ) external view returns (bytes32) {
-    DataTypes.ReserveDataLegacy memory data = POOL.getReserveData(asset);
-    uint16 assetId = data.id;
-    uint8 shortenedInterestRateMode = interestRateMode.toUint8();
-    bytes32 res;
-    assembly {
-      res := add(assetId, shl(16, shortenedInterestRateMode))
-    }
-    return res;
-  }
-
-  /**
-   * @notice Encodes rebalance stable borrow rate parameters from standard input to compact representation of 1 bytes32
-   * @param asset The address of the underlying asset borrowed
-   * @param user The address of the user to be rebalanced
-   * @return compact representation of rebalance stable borrow rate parameters
-   */
-  function encodeRebalanceStableBorrowRate(
-    address asset,
-    address user
-  ) external view returns (bytes32) {
-    DataTypes.ReserveDataLegacy memory data = POOL.getReserveData(asset);
-    uint16 assetId = data.id;
-
-    bytes32 res;
-    assembly {
-      res := add(assetId, shl(16, user))
-    }
-    return res;
   }
 
   /**

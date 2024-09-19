@@ -28,9 +28,6 @@ contract L2PoolTests is PoolTests {
     pool = IPool(report.poolProxy);
     l2Pool = IL2Pool(report.poolProxy);
     l2Encoder = L2Encoder(report.l2Encoder);
-
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setReserveStableRateBorrowing(tokenList.usdx, true);
   }
 
   function test_l2_supply() public {
@@ -111,7 +108,7 @@ contract L2PoolTests is PoolTests {
       alice,
       0.2e6,
       DataTypes.InterestRateMode(2),
-      _calculateInterestRates(0.2e6, 2, tokenList.usdx),
+      _calculateInterestRates(0.2e6, tokenList.usdx),
       0
     );
 
@@ -180,36 +177,6 @@ contract L2PoolTests is PoolTests {
 
     vm.prank(alice);
     l2Pool.repayWithATokens(encodedInput);
-  }
-
-  function test_l2_swap_borrow_rate() public {
-    _seedUsdxLiquidity();
-
-    vm.startPrank(alice);
-
-    pool.supply(tokenList.wbtc, 1e8, alice, 0);
-    pool.borrow(tokenList.usdx, 10e6, 2, 0, alice);
-
-    bytes32 encodedInput = l2Encoder.encodeSwapBorrowRateMode(tokenList.usdx, 2);
-
-    vm.expectRevert(bytes(Errors.OPERATION_NOT_SUPPORTED));
-    l2Pool.swapBorrowRateMode(encodedInput);
-    vm.stopPrank();
-  }
-
-  function test_l2_rebalance_borrow() public {
-    DataTypes.ReserveDataLegacy memory usdxReserveData = pool.getReserveData(tokenList.usdx);
-
-    vm.mockCall(
-      address(usdxReserveData.interestRateStrategyAddress),
-      abi.encodeWithSelector(IReserveInterestRateStrategy.calculateInterestRates.selector),
-      abi.encode(0, 0, 0)
-    );
-
-    bytes32 encodedInput = l2Encoder.encodeRebalanceStableBorrowRate(tokenList.usdx, alice);
-    vm.expectRevert(bytes(Errors.OPERATION_NOT_SUPPORTED));
-    l2Pool.rebalanceStableBorrowRate(encodedInput);
-    vm.clearMockedCalls();
   }
 
   function test_l2_set_user_collateral() public {

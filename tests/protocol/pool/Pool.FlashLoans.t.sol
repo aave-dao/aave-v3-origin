@@ -419,6 +419,27 @@ contract PoolFlashLoansTests is TestnetProcedures {
     );
   }
 
+  function test_revert_flashloan_borrow_stable() public {
+    (
+      address[] memory assets,
+      uint256[] memory amounts,
+      uint256[] memory modes,
+      bytes memory emptyParams
+    ) = _defaultInput(false, 1);
+
+    vm.prank(alice);
+    vm.expectRevert(bytes(Errors.INVALID_INTEREST_RATE_MODE_SELECTED));
+    contracts.poolProxy.flashLoan(
+      address(mockFlashReceiver),
+      assets,
+      amounts,
+      modes,
+      alice,
+      emptyParams,
+      0
+    );
+  }
+
   function _defaultInput()
     internal
     returns (address[] memory, uint256[] memory, uint256[] memory, bytes memory)
@@ -438,13 +459,12 @@ contract PoolFlashLoansTests is TestnetProcedures {
     assets[0] = tokenList.usdx;
     amounts[0] = 12e6;
     modes[0] = mode;
+    for (uint8 x; x < assets.length; x++) {
+      vm.prank(poolAdmin);
+      TestnetERC20(assets[x]).transferOwnership(address(mockFlashReceiver));
+    }
 
     if (checkEvents) {
-      for (uint8 x; x < assets.length; x++) {
-        vm.prank(poolAdmin);
-        TestnetERC20(assets[x]).transferOwnership(address(mockFlashReceiver));
-      }
-
       _checkFlashLoanEvents(assets, amounts, modes);
     }
     return (assets, amounts, modes, emptyParams);
@@ -493,7 +513,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
           alice,
           amounts[x],
           DataTypes.InterestRateMode(modes[x]),
-          _calculateInterestRates(amounts[x], modes[x], assets[x]),
+          _calculateInterestRates(amounts[x], assets[x]),
           0
         );
       }

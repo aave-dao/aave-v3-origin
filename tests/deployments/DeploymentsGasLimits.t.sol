@@ -184,8 +184,7 @@ contract DeploymentsGasLimits is BatchTestProcedures {
       setupReportTwo.rewardsControllerProxy,
       peripheryReportOne.treasury,
       tokensReport.aToken,
-      tokensReport.variableDebtToken,
-      tokensReport.stableDebtToken
+      tokensReport.variableDebtToken
     );
   }
 

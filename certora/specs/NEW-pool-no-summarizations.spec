@@ -11,7 +11,6 @@ methods {
 
   //  function _.executeOperation(address[] a, uint256[]b, uint256[]c, address d, bytes e) external => DISPATCHER(true);
 
-  function _.getAverageStableRate() external => DISPATCHER(true);
   function _.isPoolAdmin(address a) external => DISPATCHER(true);
   function _.getConfiguration(address a) external => DISPATCHER(true);
 
@@ -37,11 +36,10 @@ function ghostUpdate() returns bool {
 }
 
 
-function calculateInterestRatesMock(DataTypes.CalculateInterestRatesParams params) returns (uint256, uint256, uint256) {
+function calculateInterestRatesMock(DataTypes.CalculateInterestRatesParams params) returns (uint256, uint256) {
   uint256 liquidityRate = 1;
-  uint256 stableBorrowRate = 1;
   uint256 variableBorrowRate = 1;
-  return (liquidityRate, stableBorrowRate, variableBorrowRate);
+  return (liquidityRate, variableBorrowRate);
 }
 
 

@@ -15,7 +15,6 @@ import {DiffUtils} from './DiffUtils.sol';
 
 struct ReserveTokens {
   address aToken;
-  address stableDebtToken;
   address variableDebtToken;
 }
 
@@ -81,7 +80,6 @@ struct ReserveConfig {
   string symbol;
   address underlying;
   address aToken;
-  address stableDebtToken;
   address variableDebtToken;
   uint256 decimals;
   uint256 ltv;
@@ -92,7 +90,6 @@ struct ReserveConfig {
   bool usageAsCollateralEnabled;
   bool borrowingEnabled;
   address interestRateStrategy;
-  bool stableBorrowRateEnabled;
   bool isPaused;
   bool isActive;
   bool isFrozen;
@@ -102,7 +99,6 @@ struct ReserveConfig {
   uint256 supplyCap;
   uint256 borrowCap;
   uint256 debtCeiling;
-  uint256 eModeCategory;
   bool virtualAccActive;
   uint256 virtualBalance;
   uint256 aTokenUnderlyingBalance;
@@ -150,36 +146,32 @@ contract ProtocolV3TestBase is DiffUtils {
     ReserveConfig[] memory configs = _getReservesConfigs(pool);
     if (reserveConfigs) _writeReserveConfigs(path, configs, pool);
     if (strategyConfigs) _writeStrategyConfigs(path, configs);
-    if (eModeConigs) _writeEModeConfigs(path, configs, pool);
+    if (eModeConigs) _writeEModeConfigs(path, pool);
     if (poolConfigs) _writePoolConfiguration(path, pool);
 
     return configs;
   }
 
-  function _writeEModeConfigs(
-    string memory path,
-    ReserveConfig[] memory configs,
-    IPool pool
-  ) internal virtual {
+  function _writeEModeConfigs(string memory path, IPool pool) internal virtual {
     // keys for json stringification
     string memory eModesKey = 'emodes';
     string memory content = '{}';
-
-    uint256[] memory usedCategories = new uint256[](configs.length);
-    for (uint256 i = 0; i < configs.length; i++) {
-      if (!_isInUint256Array(usedCategories, configs[i].eModeCategory)) {
-        usedCategories[i] = configs[i].eModeCategory;
-        DataTypes.EModeCategory memory category = pool.getEModeCategoryData(
-          uint8(configs[i].eModeCategory)
-        );
-        string memory key = vm.toString(configs[i].eModeCategory);
-        vm.serializeUint(key, 'eModeCategory', configs[i].eModeCategory);
-        vm.serializeString(key, 'label', category.label);
-        vm.serializeUint(key, 'ltv', category.ltv);
-        vm.serializeUint(key, 'liquidationThreshold', category.liquidationThreshold);
-        vm.serializeUint(key, 'liquidationBonus', category.liquidationBonus);
-        string memory object = vm.serializeAddress(key, 'priceSource', category.priceSource);
+    uint8 emptyCounter = 0;
+    for (uint8 i = 0; i < 256; i++) {
+      DataTypes.CollateralConfig memory cfg = pool.getEModeCategoryCollateralConfig(i);
+      if (cfg.liquidationThreshold == 0) {
+        if (++emptyCounter > 2) break;
+      } else {
+        string memory key = vm.toString(i);
+        vm.serializeUint(key, 'eModeCategory', i);
+        vm.serializeString(key, 'label', pool.getEModeCategoryLabel(i));
+        vm.serializeUint(key, 'ltv', cfg.ltv);
+        vm.serializeUint(key, 'collateralBitmap', pool.getEModeCategoryCollateralBitmap(i));
+        vm.serializeUint(key, 'borrowableBitmap', pool.getEModeCategoryBorrowableBitmap(i));
+        vm.serializeUint(key, 'liquidationThreshold', cfg.liquidationThreshold);
+        string memory object = vm.serializeUint(key, 'liquidationBonus', cfg.liquidationBonus);
         content = vm.serializeString(eModesKey, key, object);
+        emptyCounter = 0;
       }
     }
     string memory output = vm.serializeString('root', 'eModes', content);
@@ -265,10 +257,8 @@ contract ProtocolV3TestBase is DiffUtils {
       vm.serializeUint(key, 'borrowCap', config.borrowCap);
       vm.serializeUint(key, 'supplyCap', config.supplyCap);
       vm.serializeUint(key, 'debtCeiling', config.debtCeiling);
-      vm.serializeUint(key, 'eModeCategory', config.eModeCategory);
       vm.serializeBool(key, 'usageAsCollateralEnabled', config.usageAsCollateralEnabled);
       vm.serializeBool(key, 'borrowingEnabled', config.borrowingEnabled);
-      vm.serializeBool(key, 'stableBorrowRateEnabled', config.stableBorrowRateEnabled);
       vm.serializeBool(key, 'isPaused', config.isPaused);
       vm.serializeBool(key, 'isActive', config.isActive);
       vm.serializeBool(key, 'isFrozen', config.isFrozen);
@@ -278,7 +268,6 @@ contract ProtocolV3TestBase is DiffUtils {
       vm.serializeAddress(key, 'interestRateStrategy', config.interestRateStrategy);
       vm.serializeAddress(key, 'underlying', config.underlying);
       vm.serializeAddress(key, 'aToken', config.aToken);
-      vm.serializeAddress(key, 'stableDebtToken', config.stableDebtToken);
       vm.serializeAddress(key, 'variableDebtToken', config.variableDebtToken);
       vm.serializeAddress(
         key,
@@ -287,20 +276,6 @@ contract ProtocolV3TestBase is DiffUtils {
       );
       vm.serializeString(key, 'aTokenSymbol', IERC20Detailed(config.aToken).symbol());
       vm.serializeString(key, 'aTokenName', IERC20Detailed(config.aToken).name());
-      vm.serializeAddress(
-        key,
-        'stableDebtTokenImpl',
-        ProxyHelpers.getInitializableAdminUpgradeabilityProxyImplementation(
-          vm,
-          config.stableDebtToken
-        )
-      );
-      vm.serializeString(
-        key,
-        'stableDebtTokenSymbol',
-        IERC20Detailed(config.stableDebtToken).symbol()
-      );
-      vm.serializeString(key, 'stableDebtTokenName', IERC20Detailed(config.stableDebtToken).name());
       vm.serializeAddress(
         key,
         'variableDebtTokenImpl',
@@ -414,8 +389,9 @@ contract ProtocolV3TestBase is DiffUtils {
     address underlyingAddress
   ) internal view virtual returns (ReserveTokens memory) {
     ReserveTokens memory reserveTokens;
-    (reserveTokens.aToken, reserveTokens.stableDebtToken, reserveTokens.variableDebtToken) = pdp
-      .getReserveTokensAddresses(underlyingAddress);
+    (reserveTokens.aToken, , reserveTokens.variableDebtToken) = pdp.getReserveTokensAddresses(
+      underlyingAddress
+    );
 
     return reserveTokens;
   }
@@ -437,7 +413,6 @@ contract ProtocolV3TestBase is DiffUtils {
     );
     localConfig.aToken = reserveTokens.aToken;
     localConfig.variableDebtToken = reserveTokens.variableDebtToken;
-    localConfig.stableDebtToken = reserveTokens.stableDebtToken;
     localConfig.interestRateStrategy = pool
       .getReserveData(reserve.tokenAddress)
       .interestRateStrategyAddress;
@@ -446,14 +421,12 @@ contract ProtocolV3TestBase is DiffUtils {
       localConfig.liquidationThreshold,
       localConfig.liquidationBonus,
       localConfig.decimals,
-      localConfig.reserveFactor,
-      localConfig.eModeCategory
+      localConfig.reserveFactor
     ) = configuration.getParams();
     (
       localConfig.isActive,
       localConfig.isFrozen,
       localConfig.borrowingEnabled,
-      localConfig.stableBorrowRateEnabled,
       localConfig.isPaused
     ) = configuration.getFlags();
     localConfig.symbol = reserve.symbol;
@@ -488,7 +461,6 @@ contract ProtocolV3TestBase is DiffUtils {
         symbol: config.symbol,
         underlying: config.underlying,
         aToken: config.aToken,
-        stableDebtToken: config.stableDebtToken,
         variableDebtToken: config.variableDebtToken,
         decimals: config.decimals,
         ltv: config.ltv,
@@ -499,7 +471,6 @@ contract ProtocolV3TestBase is DiffUtils {
         usageAsCollateralEnabled: config.usageAsCollateralEnabled,
         borrowingEnabled: config.borrowingEnabled,
         interestRateStrategy: config.interestRateStrategy,
-        stableBorrowRateEnabled: config.stableBorrowRateEnabled,
         isPaused: config.isPaused,
         isActive: config.isActive,
         isFrozen: config.isFrozen,
@@ -509,7 +480,6 @@ contract ProtocolV3TestBase is DiffUtils {
         supplyCap: config.supplyCap,
         borrowCap: config.borrowCap,
         debtCeiling: config.debtCeiling,
-        eModeCategory: config.eModeCategory,
         virtualAccActive: config.virtualAccActive,
         virtualBalance: config.virtualBalance,
         aTokenUnderlyingBalance: config.aTokenUnderlyingBalance
@@ -585,10 +555,6 @@ contract ProtocolV3TestBase is DiffUtils {
       '_validateReserveConfig: INVALID_BORROWING_ENABLED'
     );
     require(
-      config.stableBorrowRateEnabled == expectedConfig.stableBorrowRateEnabled,
-      '_validateReserveConfig: INVALID_STABLE_BORROW_ENABLED'
-    );
-    require(
       config.isActive == expectedConfig.isActive,
       '_validateReserveConfig: INVALID_IS_ACTIVE'
     );
@@ -619,10 +585,6 @@ contract ProtocolV3TestBase is DiffUtils {
     require(
       config.debtCeiling == expectedConfig.debtCeiling,
       '_validateReserveConfig: INVALID_DEBT_CEILING'
-    );
-    require(
-      config.eModeCategory == expectedConfig.eModeCategory,
-      '_validateReserveConfig: INVALID_EMODE_CATEGORY'
     );
     require(
       config.interestRateStrategy == expectedConfig.interestRateStrategy,
@@ -725,10 +687,6 @@ contract ProtocolV3TestBase is DiffUtils {
       '_noReservesConfigsChangesApartNewListings() : UNEXPECTED_A_TOKEN_CHANGED'
     );
     require(
-      config1.stableDebtToken == config2.stableDebtToken,
-      '_noReservesConfigsChangesApartNewListings() : UNEXPECTED_STABLE_DEBT_TOKEN_CHANGED'
-    );
-    require(
       config1.variableDebtToken == config2.variableDebtToken,
       '_noReservesConfigsChangesApartNewListings() : UNEXPECTED_VARIABLE_DEBT_TOKEN_CHANGED'
     );
@@ -769,10 +727,6 @@ contract ProtocolV3TestBase is DiffUtils {
       '_noReservesConfigsChangesApartNewListings() : UNEXPECTED_INTEREST_RATE_STRATEGY_CHANGED'
     );
     require(
-      config1.stableBorrowRateEnabled == config2.stableBorrowRateEnabled,
-      '_noReservesConfigsChangesApartNewListings() : UNEXPECTED_STABLE_BORROWING_CHANGED'
-    );
-    require(
       config1.isActive == config2.isActive,
       '_noReservesConfigsChangesApartNewListings() : UNEXPECTED_IS_ACTIVE_CHANGED'
     );
@@ -804,10 +758,6 @@ contract ProtocolV3TestBase is DiffUtils {
       config1.debtCeiling == config2.debtCeiling,
       '_noReservesConfigsChangesApartNewListings() : UNEXPECTED_DEBT_CEILING_CHANGED'
     );
-    require(
-      config1.eModeCategory == config2.eModeCategory,
-      '_noReservesConfigsChangesApartNewListings() : UNEXPECTED_E_MODE_CATEGORY_CHANGED'
-    );
   }
 
   function _validateCountOfListings(
@@ -837,13 +787,6 @@ contract ProtocolV3TestBase is DiffUtils {
       ) == expectedImpls.variableDebtToken,
       '_validateReserveTokensImpls() : INVALID_ATOKEN_IMPL'
     );
-    require(
-      ProxyHelpers.getInitializableAdminUpgradeabilityProxyImplementation(
-        vm,
-        config.stableDebtToken
-      ) == expectedImpls.stableDebtToken,
-      '_validateReserveTokensImpls() : INVALID_STABLE_DEBT_IMPL'
-    );
     vm.stopPrank();
   }
 
@@ -860,61 +803,38 @@ contract ProtocolV3TestBase is DiffUtils {
     );
   }
 
-  function _validateAssetsOnEmodeCategory(
-    uint256 category,
-    ReserveConfig[] memory assetsConfigs,
-    string[] memory expectedAssets
-  ) internal pure {
-    string[] memory assetsInCategory = new string[](assetsConfigs.length);
-
-    uint256 countCategory;
-    for (uint256 i = 0; i < assetsConfigs.length; i++) {
-      if (assetsConfigs[i].eModeCategory == category) {
-        assetsInCategory[countCategory] = assetsConfigs[i].symbol;
-        require(
-          keccak256(bytes(assetsInCategory[countCategory])) ==
-            keccak256(bytes(expectedAssets[countCategory])),
-          '_getAssetOnEmodeCategory(): INCONSISTENT_ASSETS'
-        );
-        countCategory++;
-        if (countCategory > expectedAssets.length) {
-          revert('_getAssetOnEmodeCategory(): MORE_ASSETS_IN_CATEGORY_THAN_EXPECTED');
-        }
-      }
-    }
-    if (countCategory < expectedAssets.length) {
-      revert('_getAssetOnEmodeCategory(): LESS_ASSETS_IN_CATEGORY_THAN_EXPECTED');
-    }
-  }
-
   function _validateEmodeCategory(
     IPoolAddressesProvider addressesProvider,
     uint256 category,
     DataTypes.EModeCategory memory expectedCategoryData
   ) internal view {
     address poolAddress = addressesProvider.getPool();
-    DataTypes.EModeCategory memory currentCategoryData = IPool(poolAddress).getEModeCategoryData(
+    DataTypes.CollateralConfig memory cfg = IPool(poolAddress).getEModeCategoryCollateralConfig(
       uint8(category)
     );
     require(
-      keccak256(bytes(currentCategoryData.label)) == keccak256(bytes(expectedCategoryData.label)),
+      keccak256(bytes(IPool(poolAddress).getEModeCategoryLabel(uint8(category)))) ==
+        keccak256(bytes(expectedCategoryData.label)),
       '_validateEmodeCategory(): INVALID_LABEL'
     );
+    require(cfg.ltv == expectedCategoryData.ltv, '_validateEmodeCategory(): INVALID_LTV');
     require(
-      currentCategoryData.ltv == expectedCategoryData.ltv,
-      '_validateEmodeCategory(): INVALID_LTV'
-    );
-    require(
-      currentCategoryData.liquidationThreshold == expectedCategoryData.liquidationThreshold,
+      cfg.liquidationThreshold == expectedCategoryData.liquidationThreshold,
       '_validateEmodeCategory(): INVALID_LT'
     );
     require(
-      currentCategoryData.liquidationBonus == expectedCategoryData.liquidationBonus,
+      cfg.liquidationBonus == expectedCategoryData.liquidationBonus,
       '_validateEmodeCategory(): INVALID_LB'
     );
     require(
-      currentCategoryData.priceSource == expectedCategoryData.priceSource,
-      '_validateEmodeCategory(): INVALID_PRICE_SOURCE'
+      IPool(poolAddress).getEModeCategoryCollateralBitmap(uint8(category)) ==
+        expectedCategoryData.collateralBitmap,
+      '_validateEmodeCategory(): INVALID_LB'
+    );
+    require(
+      IPool(poolAddress).getEModeCategoryBorrowableBitmap(uint8(category)) ==
+        expectedCategoryData.borrowableBitmap,
+      '_validateEmodeCategory(): INVALID_LB'
     );
   }
 

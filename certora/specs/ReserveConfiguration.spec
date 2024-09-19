@@ -19,8 +19,6 @@ methods {
   function getSiloedBorrowing() external returns (bool) envfree;
   function setBorrowingEnabled(bool) external envfree;
   function getBorrowingEnabled() external returns (bool) envfree;
-  function setStableRateBorrowingEnabled(bool) external envfree;
-  function getStableRateBorrowingEnabled() external returns (bool) envfree;
   function setReserveFactor(uint256) external envfree;
   function getReserveFactor() external returns (uint256) envfree;
   function setBorrowCap(uint256) external envfree;
@@ -102,12 +100,6 @@ rule setSiloedBorrowingIntegrity(bool siloed) {
 rule setBorrowingEnabledIntegrity(bool enabled) {
   setBorrowingEnabled(enabled);
   assert getBorrowingEnabled() == enabled;
-}
-
-// checks the integrity of set StableRateBorrowingEnabled function and correct retrieval of the corresponding getter.
-rule setStableRateBorrowingEnabledIntegrity(bool enabled) {
-  setStableRateBorrowingEnabled(enabled);
-  assert getStableRateBorrowingEnabled() == enabled;
 }
 
 // checks the integrity of set ReserveFactor function and correct retrieval of the corresponding getter.

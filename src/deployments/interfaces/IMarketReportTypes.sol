@@ -8,7 +8,6 @@ import '../../contracts/interfaces/IPoolConfigurator.sol';
 import '../../contracts/interfaces/IAaveOracle.sol';
 import '../../contracts/interfaces/IAToken.sol';
 import '../../contracts/interfaces/IVariableDebtToken.sol';
-import '../../contracts/interfaces/IStableDebtToken.sol';
 import '../../contracts/interfaces/IACLManager.sol';
 import '../../contracts/interfaces/IDefaultInterestRateStrategyV2.sol';
 import '../../contracts/helpers/AaveProtocolDataProvider.sol';
@@ -49,7 +48,6 @@ struct ContractsReport {
   L2Encoder l2Encoder;
   IAToken aToken;
   IVariableDebtToken variableDebtToken;
-  IStableDebtToken stableDebtToken;
   IEmissionManager emissionManager;
   IRewardsController rewardsControllerImplementation;
   IRewardsController rewardsControllerProxy;
@@ -81,7 +79,6 @@ struct MarketReport {
   address l2Encoder;
   address aToken;
   address variableDebtToken;
-  address stableDebtToken;
   address emissionManager;
   address rewardsControllerImplementation;
   address rewardsControllerProxy;

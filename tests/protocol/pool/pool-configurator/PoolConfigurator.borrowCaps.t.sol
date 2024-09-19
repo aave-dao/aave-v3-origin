@@ -92,11 +92,10 @@ contract PoolConfiguratorBorrowCapTests is TestnetProcedures {
       tokenList.usdx
     );
 
-    uint256 stableDebt = IERC20(reserveData.stableDebtTokenAddress).totalSupply();
     uint256 variableDebt = IERC20(reserveData.variableDebtTokenAddress).totalSupply();
 
     assertEq(
-      stableDebt + variableDebt,
+      variableDebt,
       borrowCapUsdx * 10 ** 6,
       'Borrow Cap should match same amount than total debt'
     );
@@ -119,16 +118,11 @@ contract PoolConfiguratorBorrowCapTests is TestnetProcedures {
       tokenList.usdx
     );
 
-    uint256 stableDebt = IERC20(reserveData.stableDebtTokenAddress).totalSupply();
     uint256 variableDebt = IERC20(reserveData.variableDebtTokenAddress).totalSupply();
 
     (uint256 borrowCapUsdx, ) = contracts.protocolDataProvider.getReserveCaps(tokenList.usdx);
 
-    assertGt(
-      stableDebt + variableDebt,
-      borrowCapUsdx * 10 ** 6,
-      'Total debt should be greater than cap'
-    );
+    assertGt(variableDebt, borrowCapUsdx * 10 ** 6, 'Total debt should be greater than cap');
   }
 
   function test_setBorrowCap_them_setBorrowCap_zero() public {

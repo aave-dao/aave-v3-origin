@@ -131,18 +131,6 @@ contract ReserveConfigurationHarness {
     return ReserveConfiguration.getBorrowingEnabled(reservesConfig);
   }
 
-  // Enables or disables stable rate borrowing on the reserve
-  function setStableRateBorrowingEnabled(bool enabled) public {
-    DataTypes.ReserveConfigurationMap memory configNew = reservesConfig;
-    ReserveConfiguration.setStableRateBorrowingEnabled(configNew, enabled);
-    reservesConfig.data = configNew.data;
-  }
-
-  // Gets the stable rate borrowing state of the reserve
-  function getStableRateBorrowingEnabled() public view returns (bool) {
-    return ReserveConfiguration.getStableRateBorrowingEnabled(reservesConfig);
-  }
-
   // Sets the reserve factor of the reserve
   function setReserveFactor(uint256 reserveFactor) public {
     DataTypes.ReserveConfigurationMap memory configNew = reservesConfig;
@@ -302,7 +290,7 @@ contract ReserveConfigurationHarness {
 
   // Executes a setter of a bool parameter according to the given id
   function executeBoolSetterById(uint256 id, bool val) public {
-    require(id >= 0 && id <= 5);
+    require(id >= 0 && id <= 4);
     if (id == 0) {
       setActive(val);
     } else if (id == 1) {
@@ -310,8 +298,6 @@ contract ReserveConfigurationHarness {
     } else if (id == 2) {
       setBorrowingEnabled(val);
     } else if (id == 3) {
-      setStableRateBorrowingEnabled(val);
-    } else if (id == 4) {
       setPaused(val);
     } else {
       setBorrowableInIsolation(val);
@@ -320,7 +306,7 @@ contract ReserveConfigurationHarness {
 
   // Executes a getter of a bool parameter according to the given id
   function executeBoolGetterById(uint256 id) public view returns (bool) {
-    require(id >= 0 && id <= 5);
+    require(id >= 0 && id <= 4);
     if (id == 0) {
       return getActive();
     } else if (id == 1) {
@@ -328,8 +314,6 @@ contract ReserveConfigurationHarness {
     } else if (id == 2) {
       return getBorrowingEnabled();
     } else if (id == 3) {
-      return getStableRateBorrowingEnabled();
-    } else if (id == 4) {
       return getPaused();
     } else {
       return getBorrowableInIsolation();

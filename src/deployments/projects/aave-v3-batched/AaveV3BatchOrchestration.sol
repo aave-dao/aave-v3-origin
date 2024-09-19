@@ -183,8 +183,7 @@ library AaveV3BatchOrchestration {
       setupReport.rewardsControllerProxy,
       treasury,
       tokensReport.aToken,
-      tokensReport.variableDebtToken,
-      tokensReport.stableDebtToken
+      tokensReport.variableDebtToken
     );
 
     return helpersBatchOne.getConfigEngineReport();
@@ -325,7 +324,6 @@ library AaveV3BatchOrchestration {
     report.aclManager = setupReport.aclManager;
     report.aToken = tokensReport.aToken;
     report.variableDebtToken = tokensReport.variableDebtToken;
-    report.stableDebtToken = tokensReport.stableDebtToken;
     report.priceOracleSentinel = miscReport.priceOracleSentinel;
     report.defaultInterestRateStrategy = miscReport.defaultInterestRateStrategy;
     report.configEngine = configEngineReport.configEngine;

@@ -4,12 +4,10 @@ pragma solidity ^0.8.10;
 import {GPv2SafeERC20} from '../../../dependencies/gnosis/contracts/GPv2SafeERC20.sol';
 import {SafeCast} from '../../../dependencies/openzeppelin/contracts/SafeCast.sol';
 import {IERC20} from '../../../dependencies/openzeppelin/contracts/IERC20.sol';
-import {IStableDebtToken} from '../../../interfaces/IStableDebtToken.sol';
 import {IVariableDebtToken} from '../../../interfaces/IVariableDebtToken.sol';
 import {IAToken} from '../../../interfaces/IAToken.sol';
 import {UserConfiguration} from '../configuration/UserConfiguration.sol';
 import {ReserveConfiguration} from '../configuration/ReserveConfiguration.sol';
-import {Helpers} from '../helpers/Helpers.sol';
 import {DataTypes} from '../types/DataTypes.sol';
 import {ValidationLogic} from './ValidationLogic.sol';
 import {ReserveLogic} from './ReserveLogic.sol';
@@ -44,12 +42,6 @@ library BorrowLogic {
     address indexed repayer,
     uint256 amount,
     bool useATokens
-  );
-  event RebalanceStableBorrowRate(address indexed reserve, address indexed user);
-  event SwapBorrowRateMode(
-    address indexed reserve,
-    address indexed user,
-    DataTypes.InterestRateMode interestRateMode
   );
   event IsolationModeTotalDebtUpdated(address indexed asset, uint256 totalDebt);
   event ReserveUsedAsCollateralDisabled(address indexed reserve, address indexed user);
@@ -94,7 +86,6 @@ library BorrowLogic {
         userAddress: params.onBehalfOf,
         amount: params.amount,
         interestRateMode: params.interestRateMode,
-        maxStableLoanPercent: params.maxStableRateBorrowSizePercent,
         reservesCount: params.reservesCount,
         oracle: params.oracle,
         userEModeCategory: params.userEModeCategory,
@@ -105,27 +96,11 @@ library BorrowLogic {
       })
     );
 
-    uint256 currentStableRate = 0;
     bool isFirstBorrowing = false;
 
-    if (params.interestRateMode == DataTypes.InterestRateMode.STABLE) {
-      currentStableRate = reserve.currentStableBorrowRate;
-
-      (
-        isFirstBorrowing,
-        reserveCache.nextTotalStableDebt,
-        reserveCache.nextAvgStableBorrowRate
-      ) = IStableDebtToken(reserveCache.stableDebtTokenAddress).mint(
-        params.user,
-        params.onBehalfOf,
-        params.amount,
-        currentStableRate
-      );
-    } else {
-      (isFirstBorrowing, reserveCache.nextScaledVariableDebt) = IVariableDebtToken(
-        reserveCache.variableDebtTokenAddress
-      ).mint(params.user, params.onBehalfOf, params.amount, reserveCache.nextVariableBorrowIndex);
-    }
+    (isFirstBorrowing, reserveCache.nextScaledVariableDebt) = IVariableDebtToken(
+      reserveCache.variableDebtTokenAddress
+    ).mint(params.user, params.onBehalfOf, params.amount, reserveCache.nextVariableBorrowIndex);
 
     if (isFirstBorrowing) {
       userConfig.setBorrowing(reserve.id, true);
@@ -159,10 +134,8 @@ library BorrowLogic {
       params.user,
       params.onBehalfOf,
       params.amount,
-      params.interestRateMode,
-      params.interestRateMode == DataTypes.InterestRateMode.STABLE
-        ? currentStableRate
-        : reserve.currentVariableBorrowRate,
+      DataTypes.InterestRateMode.VARIABLE,
+      reserve.currentVariableBorrowRate,
       params.referralCode
     );
   }
@@ -188,9 +161,8 @@ library BorrowLogic {
     DataTypes.ReserveCache memory reserveCache = reserve.cache();
     reserve.updateState(reserveCache);
 
-    (uint256 stableDebt, uint256 variableDebt) = Helpers.getUserCurrentDebt(
-      params.onBehalfOf,
-      reserveCache
+    uint256 variableDebt = IERC20(reserveCache.variableDebtTokenAddress).balanceOf(
+      params.onBehalfOf
     );
 
     ValidationLogic.validateRepay(
@@ -198,13 +170,10 @@ library BorrowLogic {
       params.amount,
       params.interestRateMode,
       params.onBehalfOf,
-      stableDebt,
       variableDebt
     );
 
-    uint256 paybackAmount = params.interestRateMode == DataTypes.InterestRateMode.STABLE
-      ? stableDebt
-      : variableDebt;
+    uint256 paybackAmount = variableDebt;
 
     // Allows a user to repay with aTokens without leaving dust from interest.
     if (params.useATokens && params.amount == type(uint256).max) {
@@ -215,15 +184,8 @@ library BorrowLogic {
       paybackAmount = params.amount;
     }
 
-    if (params.interestRateMode == DataTypes.InterestRateMode.STABLE) {
-      (reserveCache.nextTotalStableDebt, reserveCache.nextAvgStableBorrowRate) = IStableDebtToken(
-        reserveCache.stableDebtTokenAddress
-      ).burn(params.onBehalfOf, paybackAmount);
-    } else {
-      reserveCache.nextScaledVariableDebt = IVariableDebtToken(
-        reserveCache.variableDebtTokenAddress
-      ).burn(params.onBehalfOf, paybackAmount, reserveCache.nextVariableBorrowIndex);
-    }
+    reserveCache.nextScaledVariableDebt = IVariableDebtToken(reserveCache.variableDebtTokenAddress)
+      .burn(params.onBehalfOf, paybackAmount, reserveCache.nextVariableBorrowIndex);
 
     reserve.updateInterestRatesAndVirtualBalance(
       reserveCache,
@@ -232,7 +194,7 @@ library BorrowLogic {
       0
     );
 
-    if (stableDebt + variableDebt - paybackAmount == 0) {
+    if (variableDebt - paybackAmount == 0) {
       userConfig.setBorrowing(reserve.id, false);
     }
 
@@ -268,91 +230,5 @@ library BorrowLogic {
     emit Repay(params.asset, params.onBehalfOf, msg.sender, paybackAmount, params.useATokens);
 
     return paybackAmount;
-  }
-
-  /**
-   * @notice Implements the rebalance stable borrow rate feature. In case of liquidity crunches on the protocol, stable
-   * rate borrows might need to be rebalanced to bring back equilibrium between the borrow and supply APYs.
-   * @dev The rules that define if a position can be rebalanced are implemented in `ValidationLogic.validateRebalanceStableBorrowRate()`
-   * @dev Emits the `RebalanceStableBorrowRate()` event
-   * @param reserve The state of the reserve of the asset being repaid
-   * @param asset The asset of the position being rebalanced
-   * @param user The user being rebalanced
-   */
-  function executeRebalanceStableBorrowRate(
-    DataTypes.ReserveData storage reserve,
-    address asset,
-    address user
-  ) external {
-    DataTypes.ReserveCache memory reserveCache = reserve.cache();
-    reserve.updateState(reserveCache);
-
-    ValidationLogic.validateRebalanceStableBorrowRate(reserve, reserveCache, asset);
-
-    IStableDebtToken stableDebtToken = IStableDebtToken(reserveCache.stableDebtTokenAddress);
-    uint256 stableDebt = IERC20(address(stableDebtToken)).balanceOf(user);
-
-    stableDebtToken.burn(user, stableDebt);
-
-    (, reserveCache.nextTotalStableDebt, reserveCache.nextAvgStableBorrowRate) = stableDebtToken
-      .mint(user, user, stableDebt, reserve.currentStableBorrowRate);
-
-    reserve.updateInterestRatesAndVirtualBalance(reserveCache, asset, 0, 0);
-
-    emit RebalanceStableBorrowRate(asset, user);
-  }
-
-  /**
-   * @notice Implements the swap borrow rate feature. Borrowers can swap from variable to stable positions at any time.
-   * @dev Emits the `Swap()` event
-   * @param reserve The of the reserve of the asset being repaid
-   * @param userConfig The user configuration mapping that tracks the supplied/borrowed assets
-   * @param asset The asset of the position being swapped
-   * @param user The user whose debt position is being swapped
-   * @param interestRateMode The current interest rate mode of the position being swapped
-   */
-  function executeSwapBorrowRateMode(
-    DataTypes.ReserveData storage reserve,
-    DataTypes.UserConfigurationMap storage userConfig,
-    address asset,
-    address user,
-    DataTypes.InterestRateMode interestRateMode
-  ) external {
-    DataTypes.ReserveCache memory reserveCache = reserve.cache();
-
-    reserve.updateState(reserveCache);
-
-    (uint256 stableDebt, uint256 variableDebt) = Helpers.getUserCurrentDebt(user, reserveCache);
-
-    ValidationLogic.validateSwapRateMode(
-      reserve,
-      reserveCache,
-      userConfig,
-      stableDebt,
-      variableDebt,
-      interestRateMode
-    );
-
-    if (interestRateMode == DataTypes.InterestRateMode.STABLE) {
-      (reserveCache.nextTotalStableDebt, reserveCache.nextAvgStableBorrowRate) = IStableDebtToken(
-        reserveCache.stableDebtTokenAddress
-      ).burn(user, stableDebt);
-
-      (, reserveCache.nextScaledVariableDebt) = IVariableDebtToken(
-        reserveCache.variableDebtTokenAddress
-      ).mint(user, user, stableDebt, reserveCache.nextVariableBorrowIndex);
-    } else {
-      reserveCache.nextScaledVariableDebt = IVariableDebtToken(
-        reserveCache.variableDebtTokenAddress
-      ).burn(user, variableDebt, reserveCache.nextVariableBorrowIndex);
-
-      (, reserveCache.nextTotalStableDebt, reserveCache.nextAvgStableBorrowRate) = IStableDebtToken(
-        reserveCache.stableDebtTokenAddress
-      ).mint(user, user, variableDebt, reserve.currentStableBorrowRate);
-    }
-
-    reserve.updateInterestRatesAndVirtualBalance(reserveCache, asset, 0, 0);
-
-    emit SwapBorrowRateMode(asset, user, interestRateMode);
   }
 }

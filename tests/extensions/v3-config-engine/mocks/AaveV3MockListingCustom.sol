@@ -14,21 +14,18 @@ contract AaveV3MockListingCustom is AaveV3Payload {
 
   address public immutable A_TOKEN_IMPL;
   address public immutable V_TOKEN_IMPL;
-  address public immutable S_TOKEN_IMPL;
 
   constructor(
     address assetAddress,
     address assetFeed,
     address customEngine,
     address aTokenImpl,
-    address vTokenImpl,
-    address sTokenImpl
+    address vTokenImpl
   ) AaveV3Payload(IEngine(customEngine)) {
     ASSET_ADDRESS = assetAddress;
     ASSET_FEED = assetFeed;
     A_TOKEN_IMPL = aTokenImpl;
     V_TOKEN_IMPL = vTokenImpl;
-    S_TOKEN_IMPL = sTokenImpl;
   }
 
   function newListingsCustom()
@@ -51,7 +48,6 @@ contract AaveV3MockListingCustom is AaveV3Payload {
           variableRateSlope2: 75_00
         }),
         enabledToBorrow: EngineFlags.ENABLED,
-        stableRateModeEnabled: EngineFlags.DISABLED,
         borrowableInIsolation: EngineFlags.DISABLED,
         withSiloedBorrowing: EngineFlags.DISABLED,
         flashloanable: EngineFlags.DISABLED,
@@ -62,14 +58,9 @@ contract AaveV3MockListingCustom is AaveV3Payload {
         supplyCap: 85_000,
         borrowCap: 60_000,
         debtCeiling: 0,
-        liqProtocolFee: 10_00,
-        eModeCategory: 0
+        liqProtocolFee: 10_00
       }),
-      IEngine.TokenImplementations({
-        aToken: A_TOKEN_IMPL,
-        vToken: V_TOKEN_IMPL,
-        sToken: S_TOKEN_IMPL
-      })
+      IEngine.TokenImplementations({aToken: A_TOKEN_IMPL, vToken: V_TOKEN_IMPL})
     );
 
     return listingsCustom;

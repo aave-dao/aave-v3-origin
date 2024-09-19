@@ -7,7 +7,6 @@ import {UserConfiguration} from '../protocol/libraries/configuration/UserConfigu
 import {DataTypes} from '../protocol/libraries/types/DataTypes.sol';
 import {WadRayMath} from '../protocol/libraries/math/WadRayMath.sol';
 import {IPoolAddressesProvider} from '../interfaces/IPoolAddressesProvider.sol';
-import {IStableDebtToken} from '../interfaces/IStableDebtToken.sol';
 import {IVariableDebtToken} from '../interfaces/IVariableDebtToken.sol';
 import {IPool} from '../interfaces/IPool.sol';
 import {IPoolDataProvider} from '../interfaces/IPoolDataProvider.sol';
@@ -96,19 +95,15 @@ contract AaveProtocolDataProvider is IPoolDataProvider {
     DataTypes.ReserveConfigurationMap memory configuration = IPool(ADDRESSES_PROVIDER.getPool())
       .getConfiguration(asset);
 
-    (ltv, liquidationThreshold, liquidationBonus, decimals, reserveFactor, ) = configuration
+    (ltv, liquidationThreshold, liquidationBonus, decimals, reserveFactor) = configuration
       .getParams();
 
-    (isActive, isFrozen, borrowingEnabled, stableBorrowRateEnabled, ) = configuration.getFlags();
+    (isActive, isFrozen, borrowingEnabled, ) = configuration.getFlags();
+
+    // @notice all stable debt related parameters deprecated in v3.2.0
+    stableBorrowRateEnabled = false;
 
     usageAsCollateralEnabled = liquidationThreshold != 0;
-  }
-
-  /// @inheritdoc IPoolDataProvider
-  function getReserveEModeCategory(address asset) external view override returns (uint256) {
-    DataTypes.ReserveConfigurationMap memory configuration = IPool(ADDRESSES_PROVIDER.getPool())
-      .getConfiguration(asset);
-    return configuration.getEModeCategory();
   }
 
   /// @inheritdoc IPoolDataProvider
@@ -120,7 +115,7 @@ contract AaveProtocolDataProvider is IPoolDataProvider {
 
   /// @inheritdoc IPoolDataProvider
   function getPaused(address asset) external view override returns (bool isPaused) {
-    (, , , , isPaused) = IPool(ADDRESSES_PROVIDER.getPool()).getConfiguration(asset).getFlags();
+    (, , , isPaused) = IPool(ADDRESSES_PROVIDER.getPool()).getConfiguration(asset).getFlags();
   }
 
   /// @inheritdoc IPoolDataProvider
@@ -174,16 +169,17 @@ contract AaveProtocolDataProvider is IPoolDataProvider {
       asset
     );
 
+    // @notice all stable debt related parameters deprecated in v3.2.0
     return (
       reserve.unbacked,
       reserve.accruedToTreasury,
       IERC20Detailed(reserve.aTokenAddress).totalSupply(),
-      IERC20Detailed(reserve.stableDebtTokenAddress).totalSupply(),
+      0,
       IERC20Detailed(reserve.variableDebtTokenAddress).totalSupply(),
       reserve.currentLiquidityRate,
       reserve.currentVariableBorrowRate,
-      reserve.currentStableBorrowRate,
-      IStableDebtToken(reserve.stableDebtTokenAddress).getAverageStableRate(),
+      0,
+      0,
       reserve.liquidityIndex,
       reserve.variableBorrowIndex,
       reserve.lastUpdateTimestamp
@@ -203,9 +199,7 @@ contract AaveProtocolDataProvider is IPoolDataProvider {
     DataTypes.ReserveDataLegacy memory reserve = IPool(ADDRESSES_PROVIDER.getPool()).getReserveData(
       asset
     );
-    return
-      IERC20Detailed(reserve.stableDebtTokenAddress).totalSupply() +
-      IERC20Detailed(reserve.variableDebtTokenAddress).totalSupply();
+    return IERC20Detailed(reserve.variableDebtTokenAddress).totalSupply();
   }
 
   /// @inheritdoc IPoolDataProvider
@@ -237,14 +231,12 @@ contract AaveProtocolDataProvider is IPoolDataProvider {
 
     currentATokenBalance = IERC20Detailed(reserve.aTokenAddress).balanceOf(user);
     currentVariableDebt = IERC20Detailed(reserve.variableDebtTokenAddress).balanceOf(user);
-    currentStableDebt = IERC20Detailed(reserve.stableDebtTokenAddress).balanceOf(user);
-    principalStableDebt = IStableDebtToken(reserve.stableDebtTokenAddress).principalBalanceOf(user);
+
+    // @notice all stable debt related parameters deprecated in v3.2.0
+    currentStableDebt = principalStableDebt = stableBorrowRate = stableRateLastUpdated = 0;
+
     scaledVariableDebt = IVariableDebtToken(reserve.variableDebtTokenAddress).scaledBalanceOf(user);
     liquidityRate = reserve.currentLiquidityRate;
-    stableBorrowRate = IStableDebtToken(reserve.stableDebtTokenAddress).getUserStableRate(user);
-    stableRateLastUpdated = IStableDebtToken(reserve.stableDebtTokenAddress).getUserLastUpdated(
-      user
-    );
     usageAsCollateralEnabled = userConfig.isUsingAsCollateral(reserve.id);
   }
 
@@ -265,11 +257,8 @@ contract AaveProtocolDataProvider is IPoolDataProvider {
       asset
     );
 
-    return (
-      reserve.aTokenAddress,
-      reserve.stableDebtTokenAddress,
-      reserve.variableDebtTokenAddress
-    );
+    // @notice all stable debt related parameters deprecated in v3.2.0
+    return (reserve.aTokenAddress, address(0), reserve.variableDebtTokenAddress);
   }
 
   /// @inheritdoc IPoolDataProvider
