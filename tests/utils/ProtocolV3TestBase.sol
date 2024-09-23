@@ -166,8 +166,16 @@ contract ProtocolV3TestBase is DiffUtils {
         vm.serializeUint(key, 'eModeCategory', i);
         vm.serializeString(key, 'label', pool.getEModeCategoryLabel(i));
         vm.serializeUint(key, 'ltv', cfg.ltv);
-        vm.serializeUint(key, 'collateralBitmap', pool.getEModeCategoryCollateralBitmap(i));
-        vm.serializeUint(key, 'borrowableBitmap', pool.getEModeCategoryBorrowableBitmap(i));
+        vm.serializeString(
+          key,
+          'collateralBitmap',
+          vm.toString(pool.getEModeCategoryCollateralBitmap(i))
+        );
+        vm.serializeString(
+          key,
+          'borrowableBitmap',
+          vm.toString(pool.getEModeCategoryBorrowableBitmap(i))
+        );
         vm.serializeUint(key, 'liquidationThreshold', cfg.liquidationThreshold);
         string memory object = vm.serializeUint(key, 'liquidationBonus', cfg.liquidationBonus);
         content = vm.serializeString(eModesKey, key, object);
@@ -248,6 +256,7 @@ contract ProtocolV3TestBase is DiffUtils {
       string memory key = vm.toString(config.underlying);
       vm.serializeJson(key, '{}');
       vm.serializeString(key, 'symbol', config.symbol);
+      vm.serializeUint(key, 'id', i);
       vm.serializeUint(key, 'ltv', config.ltv);
       vm.serializeUint(key, 'liquidationThreshold', config.liquidationThreshold);
       vm.serializeUint(key, 'liquidationBonus', config.liquidationBonus);
@@ -313,13 +322,17 @@ contract ProtocolV3TestBase is DiffUtils {
       }
 
       vm.serializeBool(key, 'virtualAccountingActive', config.virtualAccActive);
-      vm.serializeUint(key, 'virtualBalance', config.virtualBalance);
-      vm.serializeUint(key, 'aTokenUnderlyingBalance', config.aTokenUnderlyingBalance);
+      vm.serializeString(key, 'virtualBalance', vm.toString(config.virtualBalance));
+      vm.serializeString(
+        key,
+        'aTokenUnderlyingBalance',
+        vm.toString(config.aTokenUnderlyingBalance)
+      );
 
-      string memory out = vm.serializeUint(
+      string memory out = vm.serializeString(
         key,
         'oracleLatestAnswer',
-        uint256(oracle.getAssetPrice(config.underlying))
+        vm.toString(uint256(oracle.getAssetPrice(config.underlying)))
       );
       content = vm.serializeString(reservesKey, key, out);
     }
