@@ -156,6 +156,7 @@ contract ProtocolV3TestBase is DiffUtils {
     // keys for json stringification
     string memory eModesKey = 'emodes';
     string memory content = '{}';
+    vm.serializeJson(eModesKey, '{}');
     uint8 emptyCounter = 0;
     for (uint8 i = 0; i < 256; i++) {
       DataTypes.CollateralConfig memory cfg = pool.getEModeCategoryCollateralConfig(i);
@@ -163,6 +164,7 @@ contract ProtocolV3TestBase is DiffUtils {
         if (++emptyCounter > 2) break;
       } else {
         string memory key = vm.toString(i);
+        vm.serializeJson(key, '{}');
         vm.serializeUint(key, 'eModeCategory', i);
         vm.serializeString(key, 'label', pool.getEModeCategoryLabel(i));
         vm.serializeUint(key, 'ltv', cfg.ltv);
