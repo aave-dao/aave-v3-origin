@@ -1,0 +1,622 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - lcov.info.p - rewards/RewardsDistributor.sol</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="title">LCOV - code coverage report</td></tr>
+            <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+            <tr>
+              <td width="100%">
+                <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="10%" class="headerValue"><a href="../index.html" title="Click to go to top-level">top level</a> - <a href="index.html" title="Click to go to directory rewards">rewards</a> - RewardsDistributor.sol<span style="font-size: 80%;"> (source / <a href="RewardsDistributor.sol.func-c.html" title="Click to go to function table">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="5%"></td>
+            <td width="5%" class="headerCovTableHead">Coverage</td>
+            <td width="5%" class="headerCovTableHead" title="Covered + Uncovered code">Total</td>
+            <td width="5%" class="headerCovTableHead" title="Exercised code only">Hit</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">lcov.info.p</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntryHi">98.3&nbsp;%</td>
+            <td class="headerCovTableEntry">121</td>
+            <td class="headerCovTableEntry">119</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test Date:</td>
+            <td class="headerValue">2024-09-24 09:34:24</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntryHi">95.8&nbsp;%</td>
+            <td class="headerCovTableEntry">24</td>
+            <td class="headerCovTableEntry">23</td>
+          </tr>
+          <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td class="headerItem">Branches:</td>
+            <td class="headerCovTableEntryHi">-</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">0</td>
+          </tr>
+                  <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+          </table>
+
+          <table cellpadding=0 cellspacing=0 border=0>
+            <tr>
+              <td><br></td>
+            </tr>
+            <tr>
+              <td>
+<pre class="sourceHeading">             Branch data     Line data    Source code</pre>
+<pre class="source">
+<span id="L1"><span class="lineNum">       1</span>                 :             : // SPDX-License-Identifier: BUSL-1.1</span>
+<span id="L2"><span class="lineNum">       2</span>                 :             : pragma solidity ^0.8.10;</span>
+<span id="L3"><span class="lineNum">       3</span>                 :             : </span>
+<span id="L4"><span class="lineNum">       4</span>                 :             : import {IScaledBalanceToken} from '../interfaces/IScaledBalanceToken.sol';</span>
+<span id="L5"><span class="lineNum">       5</span>                 :             : import {IERC20Detailed} from '../dependencies/openzeppelin/contracts/IERC20Detailed.sol';</span>
+<span id="L6"><span class="lineNum">       6</span>                 :             : import {SafeCast} from '../dependencies/openzeppelin/contracts/SafeCast.sol';</span>
+<span id="L7"><span class="lineNum">       7</span>                 :             : import {IRewardsDistributor} from './interfaces/IRewardsDistributor.sol';</span>
+<span id="L8"><span class="lineNum">       8</span>                 :             : import {RewardsDataTypes} from './libraries/RewardsDataTypes.sol';</span>
+<span id="L9"><span class="lineNum">       9</span>                 :             : </span>
+<span id="L10"><span class="lineNum">      10</span>                 :             : /**</span>
+<span id="L11"><span class="lineNum">      11</span>                 :             :  * @title RewardsDistributor</span>
+<span id="L12"><span class="lineNum">      12</span>                 :             :  * @notice Accounting contract to manage multiple staking distributions with multiple rewards</span>
+<span id="L13"><span class="lineNum">      13</span>                 :             :  * @author Aave</span>
+<span id="L14"><span class="lineNum">      14</span>                 :             :  **/</span>
+<span id="L15"><span class="lineNum">      15</span>                 :             : abstract contract RewardsDistributor is IRewardsDistributor {</span>
+<span id="L16"><span class="lineNum">      16</span>                 :             :   using SafeCast for uint256;</span>
+<span id="L17"><span class="lineNum">      17</span>                 :             : </span>
+<span id="L18"><span class="lineNum">      18</span>                 :             :   // Manager of incentives</span>
+<span id="L19"><span class="lineNum">      19</span>                 :             :   address public immutable EMISSION_MANAGER;</span>
+<span id="L20"><span class="lineNum">      20</span>                 :             :   // Deprecated: This storage slot is kept for backwards compatibility purposes.</span>
+<span id="L21"><span class="lineNum">      21</span>                 :             :   address internal _emissionManager;</span>
+<span id="L22"><span class="lineNum">      22</span>                 :             : </span>
+<span id="L23"><span class="lineNum">      23</span>                 :             :   // Map of rewarded asset addresses and their data (assetAddress =&gt; assetData)</span>
+<span id="L24"><span class="lineNum">      24</span>                 :             :   mapping(address =&gt; RewardsDataTypes.AssetData) internal _assets;</span>
+<span id="L25"><span class="lineNum">      25</span>                 :             : </span>
+<span id="L26"><span class="lineNum">      26</span>                 :             :   // Map of reward assets (rewardAddress =&gt; enabled)</span>
+<span id="L27"><span class="lineNum">      27</span>                 :             :   mapping(address =&gt; bool) internal _isRewardEnabled;</span>
+<span id="L28"><span class="lineNum">      28</span>                 :             : </span>
+<span id="L29"><span class="lineNum">      29</span>                 :             :   // Rewards list</span>
+<span id="L30"><span class="lineNum">      30</span>                 :             :   address[] internal _rewardsList;</span>
+<span id="L31"><span class="lineNum">      31</span>                 :             : </span>
+<span id="L32"><span class="lineNum">      32</span>                 :             :   // Assets list</span>
+<span id="L33"><span class="lineNum">      33</span>                 :             :   address[] internal _assetsList;</span>
+<span id="L34"><span class="lineNum">      34</span>                 :             : </span>
+<span id="L35"><span class="lineNum">      35</span>                 :             :   modifier onlyEmissionManager() {</span>
+<span id="L36"><span class="lineNum">      36</span>                 :<span class="tlaGNC tlaBgGNC">           2 :     require(msg.sender == EMISSION_MANAGER, 'ONLY_EMISSION_MANAGER');</span></span>
+<span id="L37"><span class="lineNum">      37</span>                 :             :     _;</span>
+<span id="L38"><span class="lineNum">      38</span>                 :             :   }</span>
+<span id="L39"><span class="lineNum">      39</span>                 :             : </span>
+<span id="L40"><span class="lineNum">      40</span>                 :             :   constructor(address emissionManager) {</span>
+<span id="L41"><span class="lineNum">      41</span>                 :<span class="tlaUNC tlaBgUNC">           0 :     EMISSION_MANAGER = emissionManager;</span></span>
+<span id="L42"><span class="lineNum">      42</span>                 :             :   }</span>
+<span id="L43"><span class="lineNum">      43</span>                 :             : </span>
+<span id="L44"><span class="lineNum">      44</span>                 :             :   /// @inheritdoc IRewardsDistributor</span>
+<span id="L45"><span class="lineNum">      45</span>                 :             :   function getRewardsData(</span>
+<span id="L46"><span class="lineNum">      46</span>                 :             :     address asset,</span>
+<span id="L47"><span class="lineNum">      47</span>                 :             :     address reward</span>
+<span id="L48"><span class="lineNum">      48</span>                 :             :   ) external view override returns (uint256, uint256, uint256, uint256) {</span>
+<span id="L49"><span class="lineNum">      49</span>                 :<span class="tlaGNC tlaBgGNC">           3 :     return (</span></span>
+<span id="L50"><span class="lineNum">      50</span>                 :             :       _assets[asset].rewards[reward].index,</span>
+<span id="L51"><span class="lineNum">      51</span>                 :             :       _assets[asset].rewards[reward].emissionPerSecond,</span>
+<span id="L52"><span class="lineNum">      52</span>                 :             :       _assets[asset].rewards[reward].lastUpdateTimestamp,</span>
+<span id="L53"><span class="lineNum">      53</span>                 :             :       _assets[asset].rewards[reward].distributionEnd</span>
+<span id="L54"><span class="lineNum">      54</span>                 :             :     );</span>
+<span id="L55"><span class="lineNum">      55</span>                 :             :   }</span>
+<span id="L56"><span class="lineNum">      56</span>                 :             : </span>
+<span id="L57"><span class="lineNum">      57</span>                 :             :   /// @inheritdoc IRewardsDistributor</span>
+<span id="L58"><span class="lineNum">      58</span>                 :             :   function getAssetIndex(</span>
+<span id="L59"><span class="lineNum">      59</span>                 :             :     address asset,</span>
+<span id="L60"><span class="lineNum">      60</span>                 :             :     address reward</span>
+<span id="L61"><span class="lineNum">      61</span>                 :             :   ) external view override returns (uint256, uint256) {</span>
+<span id="L62"><span class="lineNum">      62</span>                 :<span class="tlaGNC">       37954 :     RewardsDataTypes.RewardData storage rewardData = _assets[asset].rewards[reward];</span></span>
+<span id="L63"><span class="lineNum">      63</span>                 :<span class="tlaGNC">       37954 :     return</span></span>
+<span id="L64"><span class="lineNum">      64</span>                 :<span class="tlaGNC">       37954 :       _getAssetIndex(</span></span>
+<span id="L65"><span class="lineNum">      65</span>                 :             :         rewardData,</span>
+<span id="L66"><span class="lineNum">      66</span>                 :             :         IScaledBalanceToken(asset).scaledTotalSupply(),</span>
+<span id="L67"><span class="lineNum">      67</span>                 :             :         10 ** _assets[asset].decimals</span>
+<span id="L68"><span class="lineNum">      68</span>                 :             :       );</span>
+<span id="L69"><span class="lineNum">      69</span>                 :             :   }</span>
+<span id="L70"><span class="lineNum">      70</span>                 :             : </span>
+<span id="L71"><span class="lineNum">      71</span>                 :             :   /// @inheritdoc IRewardsDistributor</span>
+<span id="L72"><span class="lineNum">      72</span>                 :             :   function getDistributionEnd(</span>
+<span id="L73"><span class="lineNum">      73</span>                 :             :     address asset,</span>
+<span id="L74"><span class="lineNum">      74</span>                 :             :     address reward</span>
+<span id="L75"><span class="lineNum">      75</span>                 :             :   ) external view override returns (uint256) {</span>
+<span id="L76"><span class="lineNum">      76</span>                 :<span class="tlaGNC">           1 :     return _assets[asset].rewards[reward].distributionEnd;</span></span>
+<span id="L77"><span class="lineNum">      77</span>                 :             :   }</span>
+<span id="L78"><span class="lineNum">      78</span>                 :             : </span>
+<span id="L79"><span class="lineNum">      79</span>                 :             :   /// @inheritdoc IRewardsDistributor</span>
+<span id="L80"><span class="lineNum">      80</span>                 :             :   function getRewardsByAsset(address asset) external view override returns (address[] memory) {</span>
+<span id="L81"><span class="lineNum">      81</span>                 :<span class="tlaGNC">        9118 :     uint128 rewardsCount = _assets[asset].availableRewardsCount;</span></span>
+<span id="L82"><span class="lineNum">      82</span>                 :<span class="tlaGNC">        9118 :     address[] memory availableRewards = new address[](rewardsCount);</span></span>
+<span id="L83"><span class="lineNum">      83</span>                 :             : </span>
+<span id="L84"><span class="lineNum">      84</span>                 :<span class="tlaGNC">        9118 :     for (uint128 i = 0; i &lt; rewardsCount; i++) {</span></span>
+<span id="L85"><span class="lineNum">      85</span>                 :<span class="tlaGNC">        9033 :       availableRewards[i] = _assets[asset].availableRewards[i];</span></span>
+<span id="L86"><span class="lineNum">      86</span>                 :             :     }</span>
+<span id="L87"><span class="lineNum">      87</span>                 :<span class="tlaGNC">        9118 :     return availableRewards;</span></span>
+<span id="L88"><span class="lineNum">      88</span>                 :             :   }</span>
+<span id="L89"><span class="lineNum">      89</span>                 :             : </span>
+<span id="L90"><span class="lineNum">      90</span>                 :             :   /// @inheritdoc IRewardsDistributor</span>
+<span id="L91"><span class="lineNum">      91</span>                 :             :   function getRewardsList() external view override returns (address[] memory) {</span>
+<span id="L92"><span class="lineNum">      92</span>                 :<span class="tlaGNC">          30 :     return _rewardsList;</span></span>
+<span id="L93"><span class="lineNum">      93</span>                 :             :   }</span>
+<span id="L94"><span class="lineNum">      94</span>                 :             : </span>
+<span id="L95"><span class="lineNum">      95</span>                 :             :   /// @inheritdoc IRewardsDistributor</span>
+<span id="L96"><span class="lineNum">      96</span>                 :             :   function getUserAssetIndex(</span>
+<span id="L97"><span class="lineNum">      97</span>                 :             :     address user,</span>
+<span id="L98"><span class="lineNum">      98</span>                 :             :     address asset,</span>
+<span id="L99"><span class="lineNum">      99</span>                 :             :     address reward</span>
+<span id="L100"><span class="lineNum">     100</span>                 :             :   ) external view override returns (uint256) {</span>
+<span id="L101"><span class="lineNum">     101</span>                 :<span class="tlaGNC">           1 :     return _assets[asset].rewards[reward].usersData[user].index;</span></span>
+<span id="L102"><span class="lineNum">     102</span>                 :             :   }</span>
+<span id="L103"><span class="lineNum">     103</span>                 :             : </span>
+<span id="L104"><span class="lineNum">     104</span>                 :             :   /// @inheritdoc IRewardsDistributor</span>
+<span id="L105"><span class="lineNum">     105</span>                 :             :   function getUserAccruedRewards(</span>
+<span id="L106"><span class="lineNum">     106</span>                 :             :     address user,</span>
+<span id="L107"><span class="lineNum">     107</span>                 :             :     address reward</span>
+<span id="L108"><span class="lineNum">     108</span>                 :             :   ) external view override returns (uint256) {</span>
+<span id="L109"><span class="lineNum">     109</span>                 :<span class="tlaGNC">           1 :     uint256 totalAccrued;</span></span>
+<span id="L110"><span class="lineNum">     110</span>                 :<span class="tlaGNC">           1 :     for (uint256 i = 0; i &lt; _assetsList.length; i++) {</span></span>
+<span id="L111"><span class="lineNum">     111</span>                 :<span class="tlaGNC">           1 :       totalAccrued += _assets[_assetsList[i]].rewards[reward].usersData[user].accrued;</span></span>
+<span id="L112"><span class="lineNum">     112</span>                 :             :     }</span>
+<span id="L113"><span class="lineNum">     113</span>                 :             : </span>
+<span id="L114"><span class="lineNum">     114</span>                 :<span class="tlaGNC">           1 :     return totalAccrued;</span></span>
+<span id="L115"><span class="lineNum">     115</span>                 :             :   }</span>
+<span id="L116"><span class="lineNum">     116</span>                 :             : </span>
+<span id="L117"><span class="lineNum">     117</span>                 :             :   /// @inheritdoc IRewardsDistributor</span>
+<span id="L118"><span class="lineNum">     118</span>                 :             :   function getUserRewards(</span>
+<span id="L119"><span class="lineNum">     119</span>                 :             :     address[] calldata assets,</span>
+<span id="L120"><span class="lineNum">     120</span>                 :             :     address user,</span>
+<span id="L121"><span class="lineNum">     121</span>                 :             :     address reward</span>
+<span id="L122"><span class="lineNum">     122</span>                 :             :   ) external view override returns (uint256) {</span>
+<span id="L123"><span class="lineNum">     123</span>                 :<span class="tlaGNC">        1011 :     return _getUserReward(user, reward, _getUserAssetBalances(assets, user));</span></span>
+<span id="L124"><span class="lineNum">     124</span>                 :             :   }</span>
+<span id="L125"><span class="lineNum">     125</span>                 :             : </span>
+<span id="L126"><span class="lineNum">     126</span>                 :             :   /// @inheritdoc IRewardsDistributor</span>
+<span id="L127"><span class="lineNum">     127</span>                 :             :   function getAllUserRewards(</span>
+<span id="L128"><span class="lineNum">     128</span>                 :             :     address[] calldata assets,</span>
+<span id="L129"><span class="lineNum">     129</span>                 :             :     address user</span>
+<span id="L130"><span class="lineNum">     130</span>                 :             :   )</span>
+<span id="L131"><span class="lineNum">     131</span>                 :             :     external</span>
+<span id="L132"><span class="lineNum">     132</span>                 :             :     view</span>
+<span id="L133"><span class="lineNum">     133</span>                 :             :     override</span>
+<span id="L134"><span class="lineNum">     134</span>                 :             :     returns (address[] memory rewardsList, uint256[] memory unclaimedAmounts)</span>
+<span id="L135"><span class="lineNum">     135</span>                 :             :   {</span>
+<span id="L136"><span class="lineNum">     136</span>                 :<span class="tlaGNC">           1 :     RewardsDataTypes.UserAssetBalance[] memory userAssetBalances = _getUserAssetBalances(</span></span>
+<span id="L137"><span class="lineNum">     137</span>                 :             :       assets,</span>
+<span id="L138"><span class="lineNum">     138</span>                 :             :       user</span>
+<span id="L139"><span class="lineNum">     139</span>                 :             :     );</span>
+<span id="L140"><span class="lineNum">     140</span>                 :<span class="tlaGNC">           1 :     rewardsList = new address[](_rewardsList.length);</span></span>
+<span id="L141"><span class="lineNum">     141</span>                 :<span class="tlaGNC">           1 :     unclaimedAmounts = new uint256[](rewardsList.length);</span></span>
+<span id="L142"><span class="lineNum">     142</span>                 :             : </span>
+<span id="L143"><span class="lineNum">     143</span>                 :             :     // Add unrealized rewards from user to unclaimedRewards</span>
+<span id="L144"><span class="lineNum">     144</span>                 :<span class="tlaGNC">           1 :     for (uint256 i = 0; i &lt; userAssetBalances.length; i++) {</span></span>
+<span id="L145"><span class="lineNum">     145</span>                 :<span class="tlaGNC">           1 :       for (uint256 r = 0; r &lt; rewardsList.length; r++) {</span></span>
+<span id="L146"><span class="lineNum">     146</span>                 :<span class="tlaGNC">           1 :         rewardsList[r] = _rewardsList[r];</span></span>
+<span id="L147"><span class="lineNum">     147</span>                 :<span class="tlaGNC">           1 :         unclaimedAmounts[r] += _assets[userAssetBalances[i].asset]</span></span>
+<span id="L148"><span class="lineNum">     148</span>                 :             :           .rewards[rewardsList[r]]</span>
+<span id="L149"><span class="lineNum">     149</span>                 :             :           .usersData[user]</span>
+<span id="L150"><span class="lineNum">     150</span>                 :             :           .accrued;</span>
+<span id="L151"><span class="lineNum">     151</span>                 :             : </span>
+<span id="L152"><span class="lineNum">     152</span>                 :<span class="tlaGNC">           1 :         if (userAssetBalances[i].userBalance == 0) {</span></span>
+<span id="L153"><span class="lineNum">     153</span>                 :<span class="tlaGNC">           1 :           continue;</span></span>
+<span id="L154"><span class="lineNum">     154</span>                 :             :         }</span>
+<span id="L155"><span class="lineNum">     155</span>                 :<span class="tlaGNC">           1 :         unclaimedAmounts[r] += _getPendingRewards(user, rewardsList[r], userAssetBalances[i]);</span></span>
+<span id="L156"><span class="lineNum">     156</span>                 :             :       }</span>
+<span id="L157"><span class="lineNum">     157</span>                 :             :     }</span>
+<span id="L158"><span class="lineNum">     158</span>                 :<span class="tlaGNC">           1 :     return (rewardsList, unclaimedAmounts);</span></span>
+<span id="L159"><span class="lineNum">     159</span>                 :             :   }</span>
+<span id="L160"><span class="lineNum">     160</span>                 :             : </span>
+<span id="L161"><span class="lineNum">     161</span>                 :             :   /// @inheritdoc IRewardsDistributor</span>
+<span id="L162"><span class="lineNum">     162</span>                 :             :   function setDistributionEnd(</span>
+<span id="L163"><span class="lineNum">     163</span>                 :             :     address asset,</span>
+<span id="L164"><span class="lineNum">     164</span>                 :             :     address reward,</span>
+<span id="L165"><span class="lineNum">     165</span>                 :             :     uint32 newDistributionEnd</span>
+<span id="L166"><span class="lineNum">     166</span>                 :             :   ) external override onlyEmissionManager {</span>
+<span id="L167"><span class="lineNum">     167</span>                 :<span class="tlaGNC">           2 :     uint256 oldDistributionEnd = _assets[asset].rewards[reward].distributionEnd;</span></span>
+<span id="L168"><span class="lineNum">     168</span>                 :<span class="tlaGNC">           2 :     _assets[asset].rewards[reward].distributionEnd = newDistributionEnd;</span></span>
+<span id="L169"><span class="lineNum">     169</span>                 :             : </span>
+<span id="L170"><span class="lineNum">     170</span>                 :<span class="tlaGNC">           2 :     emit AssetConfigUpdated(</span></span>
+<span id="L171"><span class="lineNum">     171</span>                 :             :       asset,</span>
+<span id="L172"><span class="lineNum">     172</span>                 :             :       reward,</span>
+<span id="L173"><span class="lineNum">     173</span>                 :             :       _assets[asset].rewards[reward].emissionPerSecond,</span>
+<span id="L174"><span class="lineNum">     174</span>                 :             :       _assets[asset].rewards[reward].emissionPerSecond,</span>
+<span id="L175"><span class="lineNum">     175</span>                 :             :       oldDistributionEnd,</span>
+<span id="L176"><span class="lineNum">     176</span>                 :             :       newDistributionEnd,</span>
+<span id="L177"><span class="lineNum">     177</span>                 :             :       _assets[asset].rewards[reward].index</span>
+<span id="L178"><span class="lineNum">     178</span>                 :             :     );</span>
+<span id="L179"><span class="lineNum">     179</span>                 :             :   }</span>
+<span id="L180"><span class="lineNum">     180</span>                 :             : </span>
+<span id="L181"><span class="lineNum">     181</span>                 :             :   /// @inheritdoc IRewardsDistributor</span>
+<span id="L182"><span class="lineNum">     182</span>                 :             :   function setEmissionPerSecond(</span>
+<span id="L183"><span class="lineNum">     183</span>                 :             :     address asset,</span>
+<span id="L184"><span class="lineNum">     184</span>                 :             :     address[] calldata rewards,</span>
+<span id="L185"><span class="lineNum">     185</span>                 :             :     uint88[] calldata newEmissionsPerSecond</span>
+<span id="L186"><span class="lineNum">     186</span>                 :             :   ) external override onlyEmissionManager {</span>
+<span id="L187"><span class="lineNum">     187</span>                 :<span class="tlaGNC">           2 :     require(rewards.length == newEmissionsPerSecond.length, 'INVALID_INPUT');</span></span>
+<span id="L188"><span class="lineNum">     188</span>                 :<span class="tlaGNC">           2 :     for (uint256 i = 0; i &lt; rewards.length; i++) {</span></span>
+<span id="L189"><span class="lineNum">     189</span>                 :<span class="tlaGNC">           2 :       RewardsDataTypes.AssetData storage assetConfig = _assets[asset];</span></span>
+<span id="L190"><span class="lineNum">     190</span>                 :<span class="tlaGNC">           2 :       RewardsDataTypes.RewardData storage rewardConfig = _assets[asset].rewards[rewards[i]];</span></span>
+<span id="L191"><span class="lineNum">     191</span>                 :<span class="tlaGNC">           2 :       uint256 decimals = assetConfig.decimals;</span></span>
+<span id="L192"><span class="lineNum">     192</span>                 :<span class="tlaGNC">           2 :       require(</span></span>
+<span id="L193"><span class="lineNum">     193</span>                 :             :         decimals != 0 &amp;&amp; rewardConfig.lastUpdateTimestamp != 0,</span>
+<span id="L194"><span class="lineNum">     194</span>                 :             :         'DISTRIBUTION_DOES_NOT_EXIST'</span>
+<span id="L195"><span class="lineNum">     195</span>                 :             :       );</span>
+<span id="L196"><span class="lineNum">     196</span>                 :             : </span>
+<span id="L197"><span class="lineNum">     197</span>                 :<span class="tlaGNC">           2 :       (uint256 newIndex, ) = _updateRewardData(</span></span>
+<span id="L198"><span class="lineNum">     198</span>                 :             :         rewardConfig,</span>
+<span id="L199"><span class="lineNum">     199</span>                 :             :         IScaledBalanceToken(asset).scaledTotalSupply(),</span>
+<span id="L200"><span class="lineNum">     200</span>                 :             :         10 ** decimals</span>
+<span id="L201"><span class="lineNum">     201</span>                 :             :       );</span>
+<span id="L202"><span class="lineNum">     202</span>                 :             : </span>
+<span id="L203"><span class="lineNum">     203</span>                 :<span class="tlaGNC">           2 :       uint256 oldEmissionPerSecond = rewardConfig.emissionPerSecond;</span></span>
+<span id="L204"><span class="lineNum">     204</span>                 :<span class="tlaGNC">           2 :       rewardConfig.emissionPerSecond = newEmissionsPerSecond[i];</span></span>
+<span id="L205"><span class="lineNum">     205</span>                 :             : </span>
+<span id="L206"><span class="lineNum">     206</span>                 :<span class="tlaGNC">           2 :       emit AssetConfigUpdated(</span></span>
+<span id="L207"><span class="lineNum">     207</span>                 :             :         asset,</span>
+<span id="L208"><span class="lineNum">     208</span>                 :             :         rewards[i],</span>
+<span id="L209"><span class="lineNum">     209</span>                 :             :         oldEmissionPerSecond,</span>
+<span id="L210"><span class="lineNum">     210</span>                 :             :         newEmissionsPerSecond[i],</span>
+<span id="L211"><span class="lineNum">     211</span>                 :             :         rewardConfig.distributionEnd,</span>
+<span id="L212"><span class="lineNum">     212</span>                 :             :         rewardConfig.distributionEnd,</span>
+<span id="L213"><span class="lineNum">     213</span>                 :             :         newIndex</span>
+<span id="L214"><span class="lineNum">     214</span>                 :             :       );</span>
+<span id="L215"><span class="lineNum">     215</span>                 :             :     }</span>
+<span id="L216"><span class="lineNum">     216</span>                 :             :   }</span>
+<span id="L217"><span class="lineNum">     217</span>                 :             : </span>
+<span id="L218"><span class="lineNum">     218</span>                 :             :   /**</span>
+<span id="L219"><span class="lineNum">     219</span>                 :             :    * @dev Configure the _assets for a specific emission</span>
+<span id="L220"><span class="lineNum">     220</span>                 :             :    * @param rewardsInput The array of each asset configuration</span>
+<span id="L221"><span class="lineNum">     221</span>                 :             :    **/</span>
+<span id="L222"><span class="lineNum">     222</span>                 :             :   function _configureAssets(RewardsDataTypes.RewardsConfigInput[] memory rewardsInput) internal {</span>
+<span id="L223"><span class="lineNum">     223</span>                 :<span class="tlaGNC">        9023 :     for (uint256 i = 0; i &lt; rewardsInput.length; i++) {</span></span>
+<span id="L224"><span class="lineNum">     224</span>                 :<span class="tlaGNC">        9023 :       if (_assets[rewardsInput[i].asset].decimals == 0) {</span></span>
+<span id="L225"><span class="lineNum">     225</span>                 :             :         //never initialized before, adding to the list of assets</span>
+<span id="L226"><span class="lineNum">     226</span>                 :<span class="tlaGNC">        9023 :         _assetsList.push(rewardsInput[i].asset);</span></span>
+<span id="L227"><span class="lineNum">     227</span>                 :             :       }</span>
+<span id="L228"><span class="lineNum">     228</span>                 :             : </span>
+<span id="L229"><span class="lineNum">     229</span>                 :<span class="tlaGNC">        9023 :       uint256 decimals = _assets[rewardsInput[i].asset].decimals = IERC20Detailed(</span></span>
+<span id="L230"><span class="lineNum">     230</span>                 :             :         rewardsInput[i].asset</span>
+<span id="L231"><span class="lineNum">     231</span>                 :             :       ).decimals();</span>
+<span id="L232"><span class="lineNum">     232</span>                 :             : </span>
+<span id="L233"><span class="lineNum">     233</span>                 :<span class="tlaGNC">        9023 :       RewardsDataTypes.RewardData storage rewardConfig = _assets[rewardsInput[i].asset].rewards[</span></span>
+<span id="L234"><span class="lineNum">     234</span>                 :             :         rewardsInput[i].reward</span>
+<span id="L235"><span class="lineNum">     235</span>                 :             :       ];</span>
+<span id="L236"><span class="lineNum">     236</span>                 :             : </span>
+<span id="L237"><span class="lineNum">     237</span>                 :             :       // Add reward address to asset available rewards if latestUpdateTimestamp is zero</span>
+<span id="L238"><span class="lineNum">     238</span>                 :<span class="tlaGNC">        9023 :       if (rewardConfig.lastUpdateTimestamp == 0) {</span></span>
+<span id="L239"><span class="lineNum">     239</span>                 :<span class="tlaGNC">        9023 :         _assets[rewardsInput[i].asset].availableRewards[</span></span>
+<span id="L240"><span class="lineNum">     240</span>                 :             :           _assets[rewardsInput[i].asset].availableRewardsCount</span>
+<span id="L241"><span class="lineNum">     241</span>                 :             :         ] = rewardsInput[i].reward;</span>
+<span id="L242"><span class="lineNum">     242</span>                 :<span class="tlaGNC">        9023 :         _assets[rewardsInput[i].asset].availableRewardsCount++;</span></span>
+<span id="L243"><span class="lineNum">     243</span>                 :             :       }</span>
+<span id="L244"><span class="lineNum">     244</span>                 :             : </span>
+<span id="L245"><span class="lineNum">     245</span>                 :             :       // Add reward address to global rewards list if still not enabled</span>
+<span id="L246"><span class="lineNum">     246</span>                 :<span class="tlaGNC">        9023 :       if (_isRewardEnabled[rewardsInput[i].reward] == false) {</span></span>
+<span id="L247"><span class="lineNum">     247</span>                 :<span class="tlaGNC">        9023 :         _isRewardEnabled[rewardsInput[i].reward] = true;</span></span>
+<span id="L248"><span class="lineNum">     248</span>                 :<span class="tlaGNC">        9023 :         _rewardsList.push(rewardsInput[i].reward);</span></span>
+<span id="L249"><span class="lineNum">     249</span>                 :             :       }</span>
+<span id="L250"><span class="lineNum">     250</span>                 :             : </span>
+<span id="L251"><span class="lineNum">     251</span>                 :             :       // Due emissions is still zero, updates only latestUpdateTimestamp</span>
+<span id="L252"><span class="lineNum">     252</span>                 :<span class="tlaGNC">        9023 :       (uint256 newIndex, ) = _updateRewardData(</span></span>
+<span id="L253"><span class="lineNum">     253</span>                 :             :         rewardConfig,</span>
+<span id="L254"><span class="lineNum">     254</span>                 :             :         rewardsInput[i].totalSupply,</span>
+<span id="L255"><span class="lineNum">     255</span>                 :             :         10 ** decimals</span>
+<span id="L256"><span class="lineNum">     256</span>                 :             :       );</span>
+<span id="L257"><span class="lineNum">     257</span>                 :             : </span>
+<span id="L258"><span class="lineNum">     258</span>                 :             :       // Configure emission and distribution end of the reward per asset</span>
+<span id="L259"><span class="lineNum">     259</span>                 :<span class="tlaGNC">        9023 :       uint88 oldEmissionsPerSecond = rewardConfig.emissionPerSecond;</span></span>
+<span id="L260"><span class="lineNum">     260</span>                 :<span class="tlaGNC">        9023 :       uint32 oldDistributionEnd = rewardConfig.distributionEnd;</span></span>
+<span id="L261"><span class="lineNum">     261</span>                 :<span class="tlaGNC">        9023 :       rewardConfig.emissionPerSecond = rewardsInput[i].emissionPerSecond;</span></span>
+<span id="L262"><span class="lineNum">     262</span>                 :<span class="tlaGNC">        9023 :       rewardConfig.distributionEnd = rewardsInput[i].distributionEnd;</span></span>
+<span id="L263"><span class="lineNum">     263</span>                 :             : </span>
+<span id="L264"><span class="lineNum">     264</span>                 :<span class="tlaGNC">        9023 :       emit AssetConfigUpdated(</span></span>
+<span id="L265"><span class="lineNum">     265</span>                 :             :         rewardsInput[i].asset,</span>
+<span id="L266"><span class="lineNum">     266</span>                 :             :         rewardsInput[i].reward,</span>
+<span id="L267"><span class="lineNum">     267</span>                 :             :         oldEmissionsPerSecond,</span>
+<span id="L268"><span class="lineNum">     268</span>                 :             :         rewardsInput[i].emissionPerSecond,</span>
+<span id="L269"><span class="lineNum">     269</span>                 :             :         oldDistributionEnd,</span>
+<span id="L270"><span class="lineNum">     270</span>                 :             :         rewardsInput[i].distributionEnd,</span>
+<span id="L271"><span class="lineNum">     271</span>                 :             :         newIndex</span>
+<span id="L272"><span class="lineNum">     272</span>                 :             :       );</span>
+<span id="L273"><span class="lineNum">     273</span>                 :             :     }</span>
+<span id="L274"><span class="lineNum">     274</span>                 :             :   }</span>
+<span id="L275"><span class="lineNum">     275</span>                 :             : </span>
+<span id="L276"><span class="lineNum">     276</span>                 :             :   /**</span>
+<span id="L277"><span class="lineNum">     277</span>                 :             :    * @dev Updates the state of the distribution for the specified reward</span>
+<span id="L278"><span class="lineNum">     278</span>                 :             :    * @param rewardData Storage pointer to the distribution reward config</span>
+<span id="L279"><span class="lineNum">     279</span>                 :             :    * @param totalSupply Current total of underlying assets for this distribution</span>
+<span id="L280"><span class="lineNum">     280</span>                 :             :    * @param assetUnit One unit of asset (10**decimals)</span>
+<span id="L281"><span class="lineNum">     281</span>                 :             :    * @return The new distribution index</span>
+<span id="L282"><span class="lineNum">     282</span>                 :             :    * @return True if the index was updated, false otherwise</span>
+<span id="L283"><span class="lineNum">     283</span>                 :             :    **/</span>
+<span id="L284"><span class="lineNum">     284</span>                 :             :   function _updateRewardData(</span>
+<span id="L285"><span class="lineNum">     285</span>                 :             :     RewardsDataTypes.RewardData storage rewardData,</span>
+<span id="L286"><span class="lineNum">     286</span>                 :             :     uint256 totalSupply,</span>
+<span id="L287"><span class="lineNum">     287</span>                 :             :     uint256 assetUnit</span>
+<span id="L288"><span class="lineNum">     288</span>                 :             :   ) internal returns (uint256, bool) {</span>
+<span id="L289"><span class="lineNum">     289</span>                 :<span class="tlaGNC">       11558 :     (uint256 oldIndex, uint256 newIndex) = _getAssetIndex(rewardData, totalSupply, assetUnit);</span></span>
+<span id="L290"><span class="lineNum">     290</span>                 :<span class="tlaGNC">       11558 :     bool indexUpdated;</span></span>
+<span id="L291"><span class="lineNum">     291</span>                 :<span class="tlaGNC">       11558 :     if (newIndex != oldIndex) {</span></span>
+<span id="L292"><span class="lineNum">     292</span>                 :<span class="tlaGNC">        1903 :       require(newIndex &lt;= type(uint104).max, 'INDEX_OVERFLOW');</span></span>
+<span id="L293"><span class="lineNum">     293</span>                 :<span class="tlaGNC">        1903 :       indexUpdated = true;</span></span>
+<span id="L294"><span class="lineNum">     294</span>                 :             : </span>
+<span id="L295"><span class="lineNum">     295</span>                 :             :       //optimization: storing one after another saves one SSTORE</span>
+<span id="L296"><span class="lineNum">     296</span>                 :<span class="tlaGNC">        1903 :       rewardData.index = uint104(newIndex);</span></span>
+<span id="L297"><span class="lineNum">     297</span>                 :<span class="tlaGNC">        1903 :       rewardData.lastUpdateTimestamp = block.timestamp.toUint32();</span></span>
+<span id="L298"><span class="lineNum">     298</span>                 :             :     } else {</span>
+<span id="L299"><span class="lineNum">     299</span>                 :<span class="tlaGNC">        9655 :       rewardData.lastUpdateTimestamp = block.timestamp.toUint32();</span></span>
+<span id="L300"><span class="lineNum">     300</span>                 :             :     }</span>
+<span id="L301"><span class="lineNum">     301</span>                 :             : </span>
+<span id="L302"><span class="lineNum">     302</span>                 :<span class="tlaGNC">       11558 :     return (newIndex, indexUpdated);</span></span>
+<span id="L303"><span class="lineNum">     303</span>                 :             :   }</span>
+<span id="L304"><span class="lineNum">     304</span>                 :             : </span>
+<span id="L305"><span class="lineNum">     305</span>                 :             :   /**</span>
+<span id="L306"><span class="lineNum">     306</span>                 :             :    * @dev Updates the state of the distribution for the specific user</span>
+<span id="L307"><span class="lineNum">     307</span>                 :             :    * @param rewardData Storage pointer to the distribution reward config</span>
+<span id="L308"><span class="lineNum">     308</span>                 :             :    * @param user The address of the user</span>
+<span id="L309"><span class="lineNum">     309</span>                 :             :    * @param userBalance The user balance of the asset</span>
+<span id="L310"><span class="lineNum">     310</span>                 :             :    * @param newAssetIndex The new index of the asset distribution</span>
+<span id="L311"><span class="lineNum">     311</span>                 :             :    * @param assetUnit One unit of asset (10**decimals)</span>
+<span id="L312"><span class="lineNum">     312</span>                 :             :    * @return The rewards accrued since the last update</span>
+<span id="L313"><span class="lineNum">     313</span>                 :             :    **/</span>
+<span id="L314"><span class="lineNum">     314</span>                 :             :   function _updateUserData(</span>
+<span id="L315"><span class="lineNum">     315</span>                 :             :     RewardsDataTypes.RewardData storage rewardData,</span>
+<span id="L316"><span class="lineNum">     316</span>                 :             :     address user,</span>
+<span id="L317"><span class="lineNum">     317</span>                 :             :     uint256 userBalance,</span>
+<span id="L318"><span class="lineNum">     318</span>                 :             :     uint256 newAssetIndex,</span>
+<span id="L319"><span class="lineNum">     319</span>                 :             :     uint256 assetUnit</span>
+<span id="L320"><span class="lineNum">     320</span>                 :             :   ) internal returns (uint256, bool) {</span>
+<span id="L321"><span class="lineNum">     321</span>                 :<span class="tlaGNC">        2533 :     uint256 userIndex = rewardData.usersData[user].index;</span></span>
+<span id="L322"><span class="lineNum">     322</span>                 :<span class="tlaGNC">        2533 :     uint256 rewardsAccrued;</span></span>
+<span id="L323"><span class="lineNum">     323</span>                 :<span class="tlaGNC">        2533 :     bool dataUpdated;</span></span>
+<span id="L324"><span class="lineNum">     324</span>                 :<span class="tlaGNC">        2533 :     if ((dataUpdated = userIndex != newAssetIndex)) {</span></span>
+<span id="L325"><span class="lineNum">     325</span>                 :             :       // already checked for overflow in _updateRewardData</span>
+<span id="L326"><span class="lineNum">     326</span>                 :<span class="tlaGNC">        1903 :       rewardData.usersData[user].index = uint104(newAssetIndex);</span></span>
+<span id="L327"><span class="lineNum">     327</span>                 :<span class="tlaGNC">        1903 :       if (userBalance != 0) {</span></span>
+<span id="L328"><span class="lineNum">     328</span>                 :<span class="tlaGNC">        1903 :         rewardsAccrued = _getRewards(userBalance, newAssetIndex, userIndex, assetUnit);</span></span>
+<span id="L329"><span class="lineNum">     329</span>                 :             : </span>
+<span id="L330"><span class="lineNum">     330</span>                 :<span class="tlaGNC">        1903 :         rewardData.usersData[user].accrued += rewardsAccrued.toUint128();</span></span>
+<span id="L331"><span class="lineNum">     331</span>                 :             :       }</span>
+<span id="L332"><span class="lineNum">     332</span>                 :             :     }</span>
+<span id="L333"><span class="lineNum">     333</span>                 :<span class="tlaGNC">        2533 :     return (rewardsAccrued, dataUpdated);</span></span>
+<span id="L334"><span class="lineNum">     334</span>                 :             :   }</span>
+<span id="L335"><span class="lineNum">     335</span>                 :             : </span>
+<span id="L336"><span class="lineNum">     336</span>                 :             :   /**</span>
+<span id="L337"><span class="lineNum">     337</span>                 :             :    * @dev Iterates and accrues all the rewards for asset of the specific user</span>
+<span id="L338"><span class="lineNum">     338</span>                 :             :    * @param asset The address of the reference asset of the distribution</span>
+<span id="L339"><span class="lineNum">     339</span>                 :             :    * @param user The user address</span>
+<span id="L340"><span class="lineNum">     340</span>                 :             :    * @param userBalance The current user asset balance</span>
+<span id="L341"><span class="lineNum">     341</span>                 :             :    * @param totalSupply Total supply of the asset</span>
+<span id="L342"><span class="lineNum">     342</span>                 :             :    **/</span>
+<span id="L343"><span class="lineNum">     343</span>                 :             :   function _updateData(</span>
+<span id="L344"><span class="lineNum">     344</span>                 :             :     address asset,</span>
+<span id="L345"><span class="lineNum">     345</span>                 :             :     address user,</span>
+<span id="L346"><span class="lineNum">     346</span>                 :             :     uint256 userBalance,</span>
+<span id="L347"><span class="lineNum">     347</span>                 :             :     uint256 totalSupply</span>
+<span id="L348"><span class="lineNum">     348</span>                 :             :   ) internal {</span>
+<span id="L349"><span class="lineNum">     349</span>                 :<span class="tlaGNC">      141340 :     uint256 assetUnit;</span></span>
+<span id="L350"><span class="lineNum">     350</span>                 :<span class="tlaGNC">      141340 :     uint256 numAvailableRewards = _assets[asset].availableRewardsCount;</span></span>
+<span id="L351"><span class="lineNum">     351</span>                 :             :     unchecked {</span>
+<span id="L352"><span class="lineNum">     352</span>                 :<span class="tlaGNC">      141340 :       assetUnit = 10 ** _assets[asset].decimals;</span></span>
+<span id="L353"><span class="lineNum">     353</span>                 :             :     }</span>
+<span id="L354"><span class="lineNum">     354</span>                 :             : </span>
+<span id="L355"><span class="lineNum">     355</span>                 :<span class="tlaGNC">      141340 :     if (numAvailableRewards == 0) {</span></span>
+<span id="L356"><span class="lineNum">     356</span>                 :<span class="tlaGNC">      138807 :       return;</span></span>
+<span id="L357"><span class="lineNum">     357</span>                 :             :     }</span>
+<span id="L358"><span class="lineNum">     358</span>                 :             :     unchecked {</span>
+<span id="L359"><span class="lineNum">     359</span>                 :<span class="tlaGNC">        2533 :       for (uint128 r = 0; r &lt; numAvailableRewards; r++) {</span></span>
+<span id="L360"><span class="lineNum">     360</span>                 :<span class="tlaGNC">        2533 :         address reward = _assets[asset].availableRewards[r];</span></span>
+<span id="L361"><span class="lineNum">     361</span>                 :<span class="tlaGNC">        2533 :         RewardsDataTypes.RewardData storage rewardData = _assets[asset].rewards[reward];</span></span>
+<span id="L362"><span class="lineNum">     362</span>                 :             : </span>
+<span id="L363"><span class="lineNum">     363</span>                 :<span class="tlaGNC">        2533 :         (uint256 newAssetIndex, bool rewardDataUpdated) = _updateRewardData(</span></span>
+<span id="L364"><span class="lineNum">     364</span>                 :             :           rewardData,</span>
+<span id="L365"><span class="lineNum">     365</span>                 :             :           totalSupply,</span>
+<span id="L366"><span class="lineNum">     366</span>                 :             :           assetUnit</span>
+<span id="L367"><span class="lineNum">     367</span>                 :             :         );</span>
+<span id="L368"><span class="lineNum">     368</span>                 :             : </span>
+<span id="L369"><span class="lineNum">     369</span>                 :<span class="tlaGNC">        2533 :         (uint256 rewardsAccrued, bool userDataUpdated) = _updateUserData(</span></span>
+<span id="L370"><span class="lineNum">     370</span>                 :             :           rewardData,</span>
+<span id="L371"><span class="lineNum">     371</span>                 :             :           user,</span>
+<span id="L372"><span class="lineNum">     372</span>                 :             :           userBalance,</span>
+<span id="L373"><span class="lineNum">     373</span>                 :             :           newAssetIndex,</span>
+<span id="L374"><span class="lineNum">     374</span>                 :             :           assetUnit</span>
+<span id="L375"><span class="lineNum">     375</span>                 :             :         );</span>
+<span id="L376"><span class="lineNum">     376</span>                 :             : </span>
+<span id="L377"><span class="lineNum">     377</span>                 :<span class="tlaGNC">        2533 :         if (rewardDataUpdated || userDataUpdated) {</span></span>
+<span id="L378"><span class="lineNum">     378</span>                 :<span class="tlaGNC">        1903 :           emit Accrued(asset, reward, user, newAssetIndex, newAssetIndex, rewardsAccrued);</span></span>
+<span id="L379"><span class="lineNum">     379</span>                 :             :         }</span>
+<span id="L380"><span class="lineNum">     380</span>                 :             :       }</span>
+<span id="L381"><span class="lineNum">     381</span>                 :             :     }</span>
+<span id="L382"><span class="lineNum">     382</span>                 :             :   }</span>
+<span id="L383"><span class="lineNum">     383</span>                 :             : </span>
+<span id="L384"><span class="lineNum">     384</span>                 :             :   /**</span>
+<span id="L385"><span class="lineNum">     385</span>                 :             :    * @dev Accrues all the rewards of the assets specified in the userAssetBalances list</span>
+<span id="L386"><span class="lineNum">     386</span>                 :             :    * @param user The address of the user</span>
+<span id="L387"><span class="lineNum">     387</span>                 :             :    * @param userAssetBalances List of structs with the user balance and total supply of a set of assets</span>
+<span id="L388"><span class="lineNum">     388</span>                 :             :    **/</span>
+<span id="L389"><span class="lineNum">     389</span>                 :             :   function _updateDataMultiple(</span>
+<span id="L390"><span class="lineNum">     390</span>                 :             :     address user,</span>
+<span id="L391"><span class="lineNum">     391</span>                 :             :     RewardsDataTypes.UserAssetBalance[] memory userAssetBalances</span>
+<span id="L392"><span class="lineNum">     392</span>                 :             :   ) internal {</span>
+<span id="L393"><span class="lineNum">     393</span>                 :<span class="tlaGNC">        2525 :     for (uint256 i = 0; i &lt; userAssetBalances.length; i++) {</span></span>
+<span id="L394"><span class="lineNum">     394</span>                 :<span class="tlaGNC">        2525 :       _updateData(</span></span>
+<span id="L395"><span class="lineNum">     395</span>                 :             :         userAssetBalances[i].asset,</span>
+<span id="L396"><span class="lineNum">     396</span>                 :             :         user,</span>
+<span id="L397"><span class="lineNum">     397</span>                 :             :         userAssetBalances[i].userBalance,</span>
+<span id="L398"><span class="lineNum">     398</span>                 :             :         userAssetBalances[i].totalSupply</span>
+<span id="L399"><span class="lineNum">     399</span>                 :             :       );</span>
+<span id="L400"><span class="lineNum">     400</span>                 :             :     }</span>
+<span id="L401"><span class="lineNum">     401</span>                 :             :   }</span>
+<span id="L402"><span class="lineNum">     402</span>                 :             : </span>
+<span id="L403"><span class="lineNum">     403</span>                 :             :   /**</span>
+<span id="L404"><span class="lineNum">     404</span>                 :             :    * @dev Return the accrued unclaimed amount of a reward from a user over a list of distribution</span>
+<span id="L405"><span class="lineNum">     405</span>                 :             :    * @param user The address of the user</span>
+<span id="L406"><span class="lineNum">     406</span>                 :             :    * @param reward The address of the reward token</span>
+<span id="L407"><span class="lineNum">     407</span>                 :             :    * @param userAssetBalances List of structs with the user balance and total supply of a set of assets</span>
+<span id="L408"><span class="lineNum">     408</span>                 :             :    * @return unclaimedRewards The accrued rewards for the user until the moment</span>
+<span id="L409"><span class="lineNum">     409</span>                 :             :    **/</span>
+<span id="L410"><span class="lineNum">     410</span>                 :             :   function _getUserReward(</span>
+<span id="L411"><span class="lineNum">     411</span>                 :             :     address user,</span>
+<span id="L412"><span class="lineNum">     412</span>                 :             :     address reward,</span>
+<span id="L413"><span class="lineNum">     413</span>                 :             :     RewardsDataTypes.UserAssetBalance[] memory userAssetBalances</span>
+<span id="L414"><span class="lineNum">     414</span>                 :             :   ) internal view returns (uint256 unclaimedRewards) {</span>
+<span id="L415"><span class="lineNum">     415</span>                 :             :     // Add unrealized rewards</span>
+<span id="L416"><span class="lineNum">     416</span>                 :<span class="tlaGNC">        1011 :     for (uint256 i = 0; i &lt; userAssetBalances.length; i++) {</span></span>
+<span id="L417"><span class="lineNum">     417</span>                 :<span class="tlaGNC">        1011 :       if (userAssetBalances[i].userBalance == 0) {</span></span>
+<span id="L418"><span class="lineNum">     418</span>                 :<span class="tlaGNC">           3 :         unclaimedRewards += _assets[userAssetBalances[i].asset]</span></span>
+<span id="L419"><span class="lineNum">     419</span>                 :             :           .rewards[reward]</span>
+<span id="L420"><span class="lineNum">     420</span>                 :             :           .usersData[user]</span>
+<span id="L421"><span class="lineNum">     421</span>                 :             :           .accrued;</span>
+<span id="L422"><span class="lineNum">     422</span>                 :             :       } else {</span>
+<span id="L423"><span class="lineNum">     423</span>                 :<span class="tlaGNC">        1008 :         unclaimedRewards +=</span></span>
+<span id="L424"><span class="lineNum">     424</span>                 :             :           _getPendingRewards(user, reward, userAssetBalances[i]) +</span>
+<span id="L425"><span class="lineNum">     425</span>                 :             :           _assets[userAssetBalances[i].asset].rewards[reward].usersData[user].accrued;</span>
+<span id="L426"><span class="lineNum">     426</span>                 :             :       }</span>
+<span id="L427"><span class="lineNum">     427</span>                 :             :     }</span>
+<span id="L428"><span class="lineNum">     428</span>                 :             : </span>
+<span id="L429"><span class="lineNum">     429</span>                 :<span class="tlaUNC tlaBgUNC">           0 :     return unclaimedRewards;</span></span>
+<span id="L430"><span class="lineNum">     430</span>                 :             :   }</span>
+<span id="L431"><span class="lineNum">     431</span>                 :             : </span>
+<span id="L432"><span class="lineNum">     432</span>                 :             :   /**</span>
+<span id="L433"><span class="lineNum">     433</span>                 :             :    * @dev Calculates the pending (not yet accrued) rewards since the last user action</span>
+<span id="L434"><span class="lineNum">     434</span>                 :             :    * @param user The address of the user</span>
+<span id="L435"><span class="lineNum">     435</span>                 :             :    * @param reward The address of the reward token</span>
+<span id="L436"><span class="lineNum">     436</span>                 :             :    * @param userAssetBalance struct with the user balance and total supply of the incentivized asset</span>
+<span id="L437"><span class="lineNum">     437</span>                 :             :    * @return The pending rewards for the user since the last user action</span>
+<span id="L438"><span class="lineNum">     438</span>                 :             :    **/</span>
+<span id="L439"><span class="lineNum">     439</span>                 :             :   function _getPendingRewards(</span>
+<span id="L440"><span class="lineNum">     440</span>                 :             :     address user,</span>
+<span id="L441"><span class="lineNum">     441</span>                 :             :     address reward,</span>
+<span id="L442"><span class="lineNum">     442</span>                 :             :     RewardsDataTypes.UserAssetBalance memory userAssetBalance</span>
+<span id="L443"><span class="lineNum">     443</span>                 :             :   ) internal view returns (uint256) {</span>
+<span id="L444"><span class="lineNum">     444</span>                 :<span class="tlaGNC tlaBgGNC">        1009 :     RewardsDataTypes.RewardData storage rewardData = _assets[userAssetBalance.asset].rewards[</span></span>
+<span id="L445"><span class="lineNum">     445</span>                 :             :       reward</span>
+<span id="L446"><span class="lineNum">     446</span>                 :             :     ];</span>
+<span id="L447"><span class="lineNum">     447</span>                 :<span class="tlaGNC">        1009 :     uint256 assetUnit = 10 ** _assets[userAssetBalance.asset].decimals;</span></span>
+<span id="L448"><span class="lineNum">     448</span>                 :<span class="tlaGNC">        1009 :     (, uint256 nextIndex) = _getAssetIndex(rewardData, userAssetBalance.totalSupply, assetUnit);</span></span>
+<span id="L449"><span class="lineNum">     449</span>                 :             : </span>
+<span id="L450"><span class="lineNum">     450</span>                 :<span class="tlaGNC">        1009 :     return</span></span>
+<span id="L451"><span class="lineNum">     451</span>                 :<span class="tlaGNC">        1009 :       _getRewards(</span></span>
+<span id="L452"><span class="lineNum">     452</span>                 :             :         userAssetBalance.userBalance,</span>
+<span id="L453"><span class="lineNum">     453</span>                 :             :         nextIndex,</span>
+<span id="L454"><span class="lineNum">     454</span>                 :             :         rewardData.usersData[user].index,</span>
+<span id="L455"><span class="lineNum">     455</span>                 :             :         assetUnit</span>
+<span id="L456"><span class="lineNum">     456</span>                 :             :       );</span>
+<span id="L457"><span class="lineNum">     457</span>                 :             :   }</span>
+<span id="L458"><span class="lineNum">     458</span>                 :             : </span>
+<span id="L459"><span class="lineNum">     459</span>                 :             :   /**</span>
+<span id="L460"><span class="lineNum">     460</span>                 :             :    * @dev Internal function for the calculation of user's rewards on a distribution</span>
+<span id="L461"><span class="lineNum">     461</span>                 :             :    * @param userBalance Balance of the user asset on a distribution</span>
+<span id="L462"><span class="lineNum">     462</span>                 :             :    * @param reserveIndex Current index of the distribution</span>
+<span id="L463"><span class="lineNum">     463</span>                 :             :    * @param userIndex Index stored for the user, representation his staking moment</span>
+<span id="L464"><span class="lineNum">     464</span>                 :             :    * @param assetUnit One unit of asset (10**decimals)</span>
+<span id="L465"><span class="lineNum">     465</span>                 :             :    * @return The rewards</span>
+<span id="L466"><span class="lineNum">     466</span>                 :             :    **/</span>
+<span id="L467"><span class="lineNum">     467</span>                 :             :   function _getRewards(</span>
+<span id="L468"><span class="lineNum">     468</span>                 :             :     uint256 userBalance,</span>
+<span id="L469"><span class="lineNum">     469</span>                 :             :     uint256 reserveIndex,</span>
+<span id="L470"><span class="lineNum">     470</span>                 :             :     uint256 userIndex,</span>
+<span id="L471"><span class="lineNum">     471</span>                 :             :     uint256 assetUnit</span>
+<span id="L472"><span class="lineNum">     472</span>                 :             :   ) internal pure returns (uint256) {</span>
+<span id="L473"><span class="lineNum">     473</span>                 :<span class="tlaGNC">        2912 :     uint256 result = userBalance * (reserveIndex - userIndex);</span></span>
+<span id="L474"><span class="lineNum">     474</span>                 :             :     assembly {</span>
+<span id="L475"><span class="lineNum">     475</span>                 :<span class="tlaGNC">        2912 :       result := div(result, assetUnit)</span></span>
+<span id="L476"><span class="lineNum">     476</span>                 :             :     }</span>
+<span id="L477"><span class="lineNum">     477</span>                 :<span class="tlaGNC">        2912 :     return result;</span></span>
+<span id="L478"><span class="lineNum">     478</span>                 :             :   }</span>
+<span id="L479"><span class="lineNum">     479</span>                 :             : </span>
+<span id="L480"><span class="lineNum">     480</span>                 :             :   /**</span>
+<span id="L481"><span class="lineNum">     481</span>                 :             :    * @dev Calculates the next value of an specific distribution index, with validations</span>
+<span id="L482"><span class="lineNum">     482</span>                 :             :    * @param rewardData Storage pointer to the distribution reward config</span>
+<span id="L483"><span class="lineNum">     483</span>                 :             :    * @param totalSupply of the asset being rewarded</span>
+<span id="L484"><span class="lineNum">     484</span>                 :             :    * @param assetUnit One unit of asset (10**decimals)</span>
+<span id="L485"><span class="lineNum">     485</span>                 :             :    * @return The new index.</span>
+<span id="L486"><span class="lineNum">     486</span>                 :             :    **/</span>
+<span id="L487"><span class="lineNum">     487</span>                 :             :   function _getAssetIndex(</span>
+<span id="L488"><span class="lineNum">     488</span>                 :             :     RewardsDataTypes.RewardData storage rewardData,</span>
+<span id="L489"><span class="lineNum">     489</span>                 :             :     uint256 totalSupply,</span>
+<span id="L490"><span class="lineNum">     490</span>                 :             :     uint256 assetUnit</span>
+<span id="L491"><span class="lineNum">     491</span>                 :             :   ) internal view returns (uint256, uint256) {</span>
+<span id="L492"><span class="lineNum">     492</span>                 :<span class="tlaGNC">       50521 :     uint256 oldIndex = rewardData.index;</span></span>
+<span id="L493"><span class="lineNum">     493</span>                 :<span class="tlaGNC">       50521 :     uint256 distributionEnd = rewardData.distributionEnd;</span></span>
+<span id="L494"><span class="lineNum">     494</span>                 :<span class="tlaGNC">       50521 :     uint256 emissionPerSecond = rewardData.emissionPerSecond;</span></span>
+<span id="L495"><span class="lineNum">     495</span>                 :<span class="tlaGNC">       50521 :     uint256 lastUpdateTimestamp = rewardData.lastUpdateTimestamp;</span></span>
+<span id="L496"><span class="lineNum">     496</span>                 :             : </span>
+<span id="L497"><span class="lineNum">     497</span>                 :             :     if (</span>
+<span id="L498"><span class="lineNum">     498</span>                 :<span class="tlaGNC">       50521 :       emissionPerSecond == 0 ||</span></span>
+<span id="L499"><span class="lineNum">     499</span>                 :<span class="tlaGNC">       40167 :       totalSupply == 0 ||</span></span>
+<span id="L500"><span class="lineNum">     500</span>                 :<span class="tlaGNC">       31462 :       lastUpdateTimestamp == block.timestamp ||</span></span>
+<span id="L501"><span class="lineNum">     501</span>                 :<span class="tlaGNC">       20033 :       lastUpdateTimestamp &gt;= distributionEnd</span></span>
+<span id="L502"><span class="lineNum">     502</span>                 :             :     ) {</span>
+<span id="L503"><span class="lineNum">     503</span>                 :<span class="tlaGNC">       31961 :       return (oldIndex, oldIndex);</span></span>
+<span id="L504"><span class="lineNum">     504</span>                 :             :     }</span>
+<span id="L505"><span class="lineNum">     505</span>                 :             : </span>
+<span id="L506"><span class="lineNum">     506</span>                 :<span class="tlaGNC">       18560 :     uint256 currentTimestamp = block.timestamp &gt; distributionEnd</span></span>
+<span id="L507"><span class="lineNum">     507</span>                 :             :       ? distributionEnd</span>
+<span id="L508"><span class="lineNum">     508</span>                 :             :       : block.timestamp;</span>
+<span id="L509"><span class="lineNum">     509</span>                 :<span class="tlaGNC">       18560 :     uint256 timeDelta = currentTimestamp - lastUpdateTimestamp;</span></span>
+<span id="L510"><span class="lineNum">     510</span>                 :<span class="tlaGNC">       18560 :     uint256 firstTerm = emissionPerSecond * timeDelta * assetUnit;</span></span>
+<span id="L511"><span class="lineNum">     511</span>                 :             :     assembly {</span>
+<span id="L512"><span class="lineNum">     512</span>                 :<span class="tlaGNC">       18560 :       firstTerm := div(firstTerm, totalSupply)</span></span>
+<span id="L513"><span class="lineNum">     513</span>                 :             :     }</span>
+<span id="L514"><span class="lineNum">     514</span>                 :<span class="tlaGNC">       18560 :     return (oldIndex, (firstTerm + oldIndex));</span></span>
+<span id="L515"><span class="lineNum">     515</span>                 :             :   }</span>
+<span id="L516"><span class="lineNum">     516</span>                 :             : </span>
+<span id="L517"><span class="lineNum">     517</span>                 :             :   /**</span>
+<span id="L518"><span class="lineNum">     518</span>                 :             :    * @dev Get user balances and total supply of all the assets specified by the assets parameter</span>
+<span id="L519"><span class="lineNum">     519</span>                 :             :    * @param assets List of assets to retrieve user balance and total supply</span>
+<span id="L520"><span class="lineNum">     520</span>                 :             :    * @param user Address of the user</span>
+<span id="L521"><span class="lineNum">     521</span>                 :             :    * @return userAssetBalances contains a list of structs with user balance and total supply of the given assets</span>
+<span id="L522"><span class="lineNum">     522</span>                 :             :    */</span>
+<span id="L523"><span class="lineNum">     523</span>                 :             :   function _getUserAssetBalances(</span>
+<span id="L524"><span class="lineNum">     524</span>                 :             :     address[] calldata assets,</span>
+<span id="L525"><span class="lineNum">     525</span>                 :             :     address user</span>
+<span id="L526"><span class="lineNum">     526</span>                 :             :   ) internal view virtual returns (RewardsDataTypes.UserAssetBalance[] memory userAssetBalances);</span>
+<span id="L527"><span class="lineNum">     527</span>                 :             : </span>
+<span id="L528"><span class="lineNum">     528</span>                 :             :   /// @inheritdoc IRewardsDistributor</span>
+<span id="L529"><span class="lineNum">     529</span>                 :             :   function getAssetDecimals(address asset) external view returns (uint8) {</span>
+<span id="L530"><span class="lineNum">     530</span>                 :<span class="tlaGNC">           2 :     return _assets[asset].decimals;</span></span>
+<span id="L531"><span class="lineNum">     531</span>                 :             :   }</span>
+<span id="L532"><span class="lineNum">     532</span>                 :             : </span>
+<span id="L533"><span class="lineNum">     533</span>                 :             :   /// @inheritdoc IRewardsDistributor</span>
+<span id="L534"><span class="lineNum">     534</span>                 :             :   function getEmissionManager() external view returns (address) {</span>
+<span id="L535"><span class="lineNum">     535</span>                 :<span class="tlaGNC">           5 :     return EMISSION_MANAGER;</span></span>
+<span id="L536"><span class="lineNum">     536</span>                 :             :   }</span>
+<span id="L537"><span class="lineNum">     537</span>                 :             : }</span>
+        </pre>
+              </td>
+            </tr>
+          </table>
+          <br>
+
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+            <tr><td class="versionInfo">Generated by: <a href="https://github.com//linux-test-project/lcov" target="_parent">LCOV version 2.1-1</a></td></tr>
+          </table>
+          <br>
+
+</body>
+</html>

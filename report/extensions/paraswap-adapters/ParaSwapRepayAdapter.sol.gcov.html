@@ -1,0 +1,327 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - lcov.info.p - extensions/paraswap-adapters/ParaSwapRepayAdapter.sol</title>
+  <link rel="stylesheet" type="text/css" href="../../gcov.css">
+</head>
+
+<body>
+
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="title">LCOV - code coverage report</td></tr>
+            <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+
+            <tr>
+              <td width="100%">
+                <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="10%" class="headerValue"><a href="../../index.html" title="Click to go to top-level">top level</a> - <a href="index.html" title="Click to go to directory extensions/paraswap-adapters">extensions/paraswap-adapters</a> - ParaSwapRepayAdapter.sol<span style="font-size: 80%;"> (source / <a href="ParaSwapRepayAdapter.sol.func-c.html" title="Click to go to function table">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="5%"></td>
+            <td width="5%" class="headerCovTableHead">Coverage</td>
+            <td width="5%" class="headerCovTableHead" title="Covered + Uncovered code">Total</td>
+            <td width="5%" class="headerCovTableHead" title="Exercised code only">Hit</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">lcov.info.p</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntryHi">93.0&nbsp;%</td>
+            <td class="headerCovTableEntry">43</td>
+            <td class="headerCovTableEntry">40</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test Date:</td>
+            <td class="headerValue">2024-09-24 09:34:24</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntryMed">80.0&nbsp;%</td>
+            <td class="headerCovTableEntry">5</td>
+            <td class="headerCovTableEntry">4</td>
+          </tr>
+          <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td class="headerItem">Branches:</td>
+            <td class="headerCovTableEntryHi">-</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">0</td>
+          </tr>
+                  <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+          </table>
+
+          <table cellpadding=0 cellspacing=0 border=0>
+            <tr>
+              <td><br></td>
+            </tr>
+            <tr>
+              <td>
+<pre class="sourceHeading">             Branch data     Line data    Source code</pre>
+<pre class="source">
+<span id="L1"><span class="lineNum">       1</span>                 :             : // SPDX-License-Identifier: BUSL-1.1</span>
+<span id="L2"><span class="lineNum">       2</span>                 :             : pragma solidity ^0.8.10;</span>
+<span id="L3"><span class="lineNum">       3</span>                 :             : </span>
+<span id="L4"><span class="lineNum">       4</span>                 :             : import {DataTypes} from '../../protocol/libraries/types/DataTypes.sol';</span>
+<span id="L5"><span class="lineNum">       5</span>                 :             : import {IERC20Detailed} from '../../dependencies/openzeppelin/contracts/IERC20Detailed.sol';</span>
+<span id="L6"><span class="lineNum">       6</span>                 :             : import {IERC20} from '../../dependencies/openzeppelin/contracts/IERC20.sol';</span>
+<span id="L7"><span class="lineNum">       7</span>                 :             : import {IERC20WithPermit} from '../../interfaces/IERC20WithPermit.sol';</span>
+<span id="L8"><span class="lineNum">       8</span>                 :             : import {IPoolAddressesProvider} from '../../interfaces/IPoolAddressesProvider.sol';</span>
+<span id="L9"><span class="lineNum">       9</span>                 :             : import {SafeERC20} from '../../dependencies/openzeppelin/contracts/SafeERC20.sol';</span>
+<span id="L10"><span class="lineNum">      10</span>                 :             : import {SafeMath} from '../../dependencies/openzeppelin/contracts/SafeMath.sol';</span>
+<span id="L11"><span class="lineNum">      11</span>                 :             : import {BaseParaSwapBuyAdapter} from './BaseParaSwapBuyAdapter.sol';</span>
+<span id="L12"><span class="lineNum">      12</span>                 :             : import {IParaSwapAugustusRegistry} from './interfaces/IParaSwapAugustusRegistry.sol';</span>
+<span id="L13"><span class="lineNum">      13</span>                 :             : import {IParaSwapAugustus} from './interfaces/IParaSwapAugustus.sol';</span>
+<span id="L14"><span class="lineNum">      14</span>                 :             : import {ReentrancyGuard} from '../../dependencies/openzeppelin/ReentrancyGuard.sol';</span>
+<span id="L15"><span class="lineNum">      15</span>                 :             : </span>
+<span id="L16"><span class="lineNum">      16</span>                 :             : /**</span>
+<span id="L17"><span class="lineNum">      17</span>                 :             :  * @title ParaSwapRepayAdapter</span>
+<span id="L18"><span class="lineNum">      18</span>                 :             :  * @notice ParaSwap Adapter to perform a repay of a debt with collateral.</span>
+<span id="L19"><span class="lineNum">      19</span>                 :             :  * @author Aave</span>
+<span id="L20"><span class="lineNum">      20</span>                 :             :  **/</span>
+<span id="L21"><span class="lineNum">      21</span>                 :             : contract ParaSwapRepayAdapter is BaseParaSwapBuyAdapter, ReentrancyGuard {</span>
+<span id="L22"><span class="lineNum">      22</span>                 :             :   using SafeMath for uint256;</span>
+<span id="L23"><span class="lineNum">      23</span>                 :             :   using SafeERC20 for IERC20;</span>
+<span id="L24"><span class="lineNum">      24</span>                 :             : </span>
+<span id="L25"><span class="lineNum">      25</span>                 :             :   struct RepayParams {</span>
+<span id="L26"><span class="lineNum">      26</span>                 :             :     address collateralAsset;</span>
+<span id="L27"><span class="lineNum">      27</span>                 :             :     uint256 collateralAmount;</span>
+<span id="L28"><span class="lineNum">      28</span>                 :             :     uint256 rateMode;</span>
+<span id="L29"><span class="lineNum">      29</span>                 :             :     PermitSignature permitSignature;</span>
+<span id="L30"><span class="lineNum">      30</span>                 :             :     bool useEthPath;</span>
+<span id="L31"><span class="lineNum">      31</span>                 :             :   }</span>
+<span id="L32"><span class="lineNum">      32</span>                 :             : </span>
+<span id="L33"><span class="lineNum">      33</span>                 :             :   constructor(</span>
+<span id="L34"><span class="lineNum">      34</span>                 :             :     IPoolAddressesProvider addressesProvider,</span>
+<span id="L35"><span class="lineNum">      35</span>                 :             :     IParaSwapAugustusRegistry augustusRegistry,</span>
+<span id="L36"><span class="lineNum">      36</span>                 :             :     address owner</span>
+<span id="L37"><span class="lineNum">      37</span>                 :             :   ) BaseParaSwapBuyAdapter(addressesProvider, augustusRegistry) {</span>
+<span id="L38"><span class="lineNum">      38</span>                 :<span class="tlaUNC tlaBgUNC">           0 :     transferOwnership(owner);</span></span>
+<span id="L39"><span class="lineNum">      39</span>                 :             :   }</span>
+<span id="L40"><span class="lineNum">      40</span>                 :             : </span>
+<span id="L41"><span class="lineNum">      41</span>                 :             :   /**</span>
+<span id="L42"><span class="lineNum">      42</span>                 :             :    * @dev Uses the received funds from the flash loan to repay a debt on the protocol on behalf of the user. Then pulls</span>
+<span id="L43"><span class="lineNum">      43</span>                 :             :    * the collateral from the user and swaps it to the debt asset to repay the flash loan.</span>
+<span id="L44"><span class="lineNum">      44</span>                 :             :    * The user should give this contract allowance to pull the ATokens in order to withdraw the underlying asset, swap it</span>
+<span id="L45"><span class="lineNum">      45</span>                 :             :    * and repay the flash loan.</span>
+<span id="L46"><span class="lineNum">      46</span>                 :             :    * Supports only one asset on the flash loan.</span>
+<span id="L47"><span class="lineNum">      47</span>                 :             :    * @param asset The address of the flash-borrowed asset</span>
+<span id="L48"><span class="lineNum">      48</span>                 :             :    * @param amount The amount of the flash-borrowed asset</span>
+<span id="L49"><span class="lineNum">      49</span>                 :             :    * @param premium The fee of the flash-borrowed asset</span>
+<span id="L50"><span class="lineNum">      50</span>                 :             :    * @param initiator The address of the flashloan initiator</span>
+<span id="L51"><span class="lineNum">      51</span>                 :             :    * @param params The byte-encoded params passed when initiating the flashloan</span>
+<span id="L52"><span class="lineNum">      52</span>                 :             :    * @return True if the execution of the operation succeeds, false otherwise</span>
+<span id="L53"><span class="lineNum">      53</span>                 :             :    *   IERC20Detailed debtAsset Address of the debt asset</span>
+<span id="L54"><span class="lineNum">      54</span>                 :             :    *   uint256 debtAmount Amount of debt to be repaid</span>
+<span id="L55"><span class="lineNum">      55</span>                 :             :    *   uint256 rateMode Rate modes of the debt to be repaid</span>
+<span id="L56"><span class="lineNum">      56</span>                 :             :    *   uint256 deadline Deadline for the permit signature</span>
+<span id="L57"><span class="lineNum">      57</span>                 :             :    *   uint256 debtRateMode Rate mode of the debt to be repaid</span>
+<span id="L58"><span class="lineNum">      58</span>                 :             :    *   bytes paraswapData Paraswap Data</span>
+<span id="L59"><span class="lineNum">      59</span>                 :             :    *                    * bytes buyCallData Call data for augustus</span>
+<span id="L60"><span class="lineNum">      60</span>                 :             :    *                    * IParaSwapAugustus augustus Address of Augustus Swapper</span>
+<span id="L61"><span class="lineNum">      61</span>                 :             :    *   PermitSignature permitParams Struct containing the permit signatures, set to all zeroes if not used</span>
+<span id="L62"><span class="lineNum">      62</span>                 :             :    */</span>
+<span id="L63"><span class="lineNum">      63</span>                 :             :   function executeOperation(</span>
+<span id="L64"><span class="lineNum">      64</span>                 :             :     address asset,</span>
+<span id="L65"><span class="lineNum">      65</span>                 :             :     uint256 amount,</span>
+<span id="L66"><span class="lineNum">      66</span>                 :             :     uint256 premium,</span>
+<span id="L67"><span class="lineNum">      67</span>                 :             :     address initiator,</span>
+<span id="L68"><span class="lineNum">      68</span>                 :             :     bytes calldata params</span>
+<span id="L69"><span class="lineNum">      69</span>                 :             :   ) external override nonReentrant returns (bool) {</span>
+<span id="L70"><span class="lineNum">      70</span>                 :<span class="tlaGNC tlaBgGNC">           2 :     require(msg.sender == address(POOL), 'CALLER_MUST_BE_POOL');</span></span>
+<span id="L71"><span class="lineNum">      71</span>                 :             : </span>
+<span id="L72"><span class="lineNum">      72</span>                 :<span class="tlaGNC">           2 :     uint256 collateralAmount = amount;</span></span>
+<span id="L73"><span class="lineNum">      73</span>                 :<span class="tlaGNC">           2 :     address initiatorLocal = initiator;</span></span>
+<span id="L74"><span class="lineNum">      74</span>                 :             : </span>
+<span id="L75"><span class="lineNum">      75</span>                 :<span class="tlaGNC">           2 :     IERC20Detailed collateralAsset = IERC20Detailed(asset);</span></span>
+<span id="L76"><span class="lineNum">      76</span>                 :             : </span>
+<span id="L77"><span class="lineNum">      77</span>                 :<span class="tlaGNC">           2 :     _swapAndRepay(params, premium, initiatorLocal, collateralAsset, collateralAmount);</span></span>
+<span id="L78"><span class="lineNum">      78</span>                 :             : </span>
+<span id="L79"><span class="lineNum">      79</span>                 :<span class="tlaGNC">           2 :     return true;</span></span>
+<span id="L80"><span class="lineNum">      80</span>                 :             :   }</span>
+<span id="L81"><span class="lineNum">      81</span>                 :             : </span>
+<span id="L82"><span class="lineNum">      82</span>                 :             :   /**</span>
+<span id="L83"><span class="lineNum">      83</span>                 :             :    * @dev Swaps the user collateral for the debt asset and then repay the debt on the protocol on behalf of the user</span>
+<span id="L84"><span class="lineNum">      84</span>                 :             :    * without using flash loans. This method can be used when the temporary transfer of the collateral asset to this</span>
+<span id="L85"><span class="lineNum">      85</span>                 :             :    * contract does not affect the user position.</span>
+<span id="L86"><span class="lineNum">      86</span>                 :             :    * The user should give this contract allowance to pull the ATokens in order to withdraw the underlying asset</span>
+<span id="L87"><span class="lineNum">      87</span>                 :             :    * @param collateralAsset Address of asset to be swapped</span>
+<span id="L88"><span class="lineNum">      88</span>                 :             :    * @param debtAsset Address of debt asset</span>
+<span id="L89"><span class="lineNum">      89</span>                 :             :    * @param collateralAmount max Amount of the collateral to be swapped</span>
+<span id="L90"><span class="lineNum">      90</span>                 :             :    * @param debtRepayAmount Amount of the debt to be repaid, or maximum amount when repaying entire debt</span>
+<span id="L91"><span class="lineNum">      91</span>                 :             :    * @param debtRateMode Rate mode of the debt to be repaid</span>
+<span id="L92"><span class="lineNum">      92</span>                 :             :    * @param buyAllBalanceOffset Set to offset of toAmount in Augustus calldata if wanting to pay entire debt, otherwise 0</span>
+<span id="L93"><span class="lineNum">      93</span>                 :             :    * @param paraswapData Data for Paraswap Adapter</span>
+<span id="L94"><span class="lineNum">      94</span>                 :             :    * @param permitSignature struct containing the permit signature</span>
+<span id="L95"><span class="lineNum">      95</span>                 :             :    */</span>
+<span id="L96"><span class="lineNum">      96</span>                 :             :   function swapAndRepay(</span>
+<span id="L97"><span class="lineNum">      97</span>                 :             :     IERC20Detailed collateralAsset,</span>
+<span id="L98"><span class="lineNum">      98</span>                 :             :     IERC20Detailed debtAsset,</span>
+<span id="L99"><span class="lineNum">      99</span>                 :             :     uint256 collateralAmount,</span>
+<span id="L100"><span class="lineNum">     100</span>                 :             :     uint256 debtRepayAmount,</span>
+<span id="L101"><span class="lineNum">     101</span>                 :             :     uint256 debtRateMode,</span>
+<span id="L102"><span class="lineNum">     102</span>                 :             :     uint256 buyAllBalanceOffset,</span>
+<span id="L103"><span class="lineNum">     103</span>                 :             :     bytes calldata paraswapData,</span>
+<span id="L104"><span class="lineNum">     104</span>                 :             :     PermitSignature calldata permitSignature</span>
+<span id="L105"><span class="lineNum">     105</span>                 :             :   ) external nonReentrant {</span>
+<span id="L106"><span class="lineNum">     106</span>                 :<span class="tlaGNC">           4 :     debtRepayAmount = getDebtRepayAmount(</span></span>
+<span id="L107"><span class="lineNum">     107</span>                 :             :       debtAsset,</span>
+<span id="L108"><span class="lineNum">     108</span>                 :             :       debtRateMode,</span>
+<span id="L109"><span class="lineNum">     109</span>                 :             :       buyAllBalanceOffset,</span>
+<span id="L110"><span class="lineNum">     110</span>                 :             :       debtRepayAmount,</span>
+<span id="L111"><span class="lineNum">     111</span>                 :             :       msg.sender</span>
+<span id="L112"><span class="lineNum">     112</span>                 :             :     );</span>
+<span id="L113"><span class="lineNum">     113</span>                 :             : </span>
+<span id="L114"><span class="lineNum">     114</span>                 :             :     // Pull aTokens from user</span>
+<span id="L115"><span class="lineNum">     115</span>                 :<span class="tlaGNC">           4 :     _pullATokenAndWithdraw(address(collateralAsset), msg.sender, collateralAmount, permitSignature);</span></span>
+<span id="L116"><span class="lineNum">     116</span>                 :             :     //buy debt asset using collateral asset</span>
+<span id="L117"><span class="lineNum">     117</span>                 :<span class="tlaGNC">           4 :     (uint256 amountSold, uint256 amountBought) = _buyOnParaSwap(</span></span>
+<span id="L118"><span class="lineNum">     118</span>                 :             :       buyAllBalanceOffset,</span>
+<span id="L119"><span class="lineNum">     119</span>                 :             :       paraswapData,</span>
+<span id="L120"><span class="lineNum">     120</span>                 :             :       collateralAsset,</span>
+<span id="L121"><span class="lineNum">     121</span>                 :             :       debtAsset,</span>
+<span id="L122"><span class="lineNum">     122</span>                 :             :       collateralAmount,</span>
+<span id="L123"><span class="lineNum">     123</span>                 :             :       debtRepayAmount</span>
+<span id="L124"><span class="lineNum">     124</span>                 :             :     );</span>
+<span id="L125"><span class="lineNum">     125</span>                 :             : </span>
+<span id="L126"><span class="lineNum">     126</span>                 :<span class="tlaGNC">           3 :     uint256 collateralBalanceLeft = collateralAmount - amountSold;</span></span>
+<span id="L127"><span class="lineNum">     127</span>                 :             : </span>
+<span id="L128"><span class="lineNum">     128</span>                 :             :     //deposit collateral back in the pool, if left after the swap(buy)</span>
+<span id="L129"><span class="lineNum">     129</span>                 :<span class="tlaGNC">           3 :     if (collateralBalanceLeft &gt; 0) {</span></span>
+<span id="L130"><span class="lineNum">     130</span>                 :<span class="tlaGNC">           1 :       IERC20(collateralAsset).safeApprove(address(POOL), collateralBalanceLeft);</span></span>
+<span id="L131"><span class="lineNum">     131</span>                 :<span class="tlaGNC">           1 :       POOL.deposit(address(collateralAsset), collateralBalanceLeft, msg.sender, 0);</span></span>
+<span id="L132"><span class="lineNum">     132</span>                 :<span class="tlaGNC">           1 :       IERC20(collateralAsset).safeApprove(address(POOL), 0);</span></span>
+<span id="L133"><span class="lineNum">     133</span>                 :             :     }</span>
+<span id="L134"><span class="lineNum">     134</span>                 :             : </span>
+<span id="L135"><span class="lineNum">     135</span>                 :             :     // Repay debt. Approves 0 first to comply with tokens that implement the anti frontrunning approval fix</span>
+<span id="L136"><span class="lineNum">     136</span>                 :<span class="tlaGNC">           3 :     IERC20(debtAsset).safeApprove(address(POOL), debtRepayAmount);</span></span>
+<span id="L137"><span class="lineNum">     137</span>                 :<span class="tlaGNC">           3 :     POOL.repay(address(debtAsset), debtRepayAmount, debtRateMode, msg.sender);</span></span>
+<span id="L138"><span class="lineNum">     138</span>                 :<span class="tlaGNC">           3 :     IERC20(debtAsset).safeApprove(address(POOL), 0);</span></span>
+<span id="L139"><span class="lineNum">     139</span>                 :             : </span>
+<span id="L140"><span class="lineNum">     140</span>                 :             :     {</span>
+<span id="L141"><span class="lineNum">     141</span>                 :             :       //transfer excess of debtAsset back to the user, if any</span>
+<span id="L142"><span class="lineNum">     142</span>                 :<span class="tlaGNC">           3 :       uint256 debtAssetExcess = amountBought - debtRepayAmount;</span></span>
+<span id="L143"><span class="lineNum">     143</span>                 :<span class="tlaGNC">           3 :       if (debtAssetExcess &gt; 0) {</span></span>
+<span id="L144"><span class="lineNum">     144</span>                 :<span class="tlaUNC tlaBgUNC">           0 :         IERC20(debtAsset).safeTransfer(msg.sender, debtAssetExcess);</span></span>
+<span id="L145"><span class="lineNum">     145</span>                 :             :       }</span>
+<span id="L146"><span class="lineNum">     146</span>                 :             :     }</span>
+<span id="L147"><span class="lineNum">     147</span>                 :             :   }</span>
+<span id="L148"><span class="lineNum">     148</span>                 :             : </span>
+<span id="L149"><span class="lineNum">     149</span>                 :             :   /**</span>
+<span id="L150"><span class="lineNum">     150</span>                 :             :    * @dev Perform the repay of the debt, pulls the initiator collateral and swaps to repay the flash loan</span>
+<span id="L151"><span class="lineNum">     151</span>                 :             :    * @param premium Fee of the flash loan</span>
+<span id="L152"><span class="lineNum">     152</span>                 :             :    * @param initiator Address of the user</span>
+<span id="L153"><span class="lineNum">     153</span>                 :             :    * @param collateralAsset Address of token to be swapped</span>
+<span id="L154"><span class="lineNum">     154</span>                 :             :    * @param collateralAmount Amount of the reserve to be swapped(flash loan amount)</span>
+<span id="L155"><span class="lineNum">     155</span>                 :             :    */</span>
+<span id="L156"><span class="lineNum">     156</span>                 :             : </span>
+<span id="L157"><span class="lineNum">     157</span>                 :             :   function _swapAndRepay(</span>
+<span id="L158"><span class="lineNum">     158</span>                 :             :     bytes calldata params,</span>
+<span id="L159"><span class="lineNum">     159</span>                 :             :     uint256 premium,</span>
+<span id="L160"><span class="lineNum">     160</span>                 :             :     address initiator,</span>
+<span id="L161"><span class="lineNum">     161</span>                 :             :     IERC20Detailed collateralAsset,</span>
+<span id="L162"><span class="lineNum">     162</span>                 :             :     uint256 collateralAmount</span>
+<span id="L163"><span class="lineNum">     163</span>                 :             :   ) private {</span>
+<span id="L164"><span class="lineNum">     164</span>                 :<span class="tlaGNC tlaBgGNC">           2 :     (</span></span>
+<span id="L165"><span class="lineNum">     165</span>                 :             :       IERC20Detailed debtAsset,</span>
+<span id="L166"><span class="lineNum">     166</span>                 :             :       uint256 debtRepayAmount,</span>
+<span id="L167"><span class="lineNum">     167</span>                 :             :       uint256 buyAllBalanceOffset,</span>
+<span id="L168"><span class="lineNum">     168</span>                 :             :       uint256 rateMode,</span>
+<span id="L169"><span class="lineNum">     169</span>                 :             :       bytes memory paraswapData,</span>
+<span id="L170"><span class="lineNum">     170</span>                 :             :       PermitSignature memory permitSignature</span>
+<span id="L171"><span class="lineNum">     171</span>                 :<span class="tlaGNC">           2 :     ) = abi.decode(params, (IERC20Detailed, uint256, uint256, uint256, bytes, PermitSignature));</span></span>
+<span id="L172"><span class="lineNum">     172</span>                 :             : </span>
+<span id="L173"><span class="lineNum">     173</span>                 :<span class="tlaGNC">           2 :     debtRepayAmount = getDebtRepayAmount(</span></span>
+<span id="L174"><span class="lineNum">     174</span>                 :             :       debtAsset,</span>
+<span id="L175"><span class="lineNum">     175</span>                 :             :       rateMode,</span>
+<span id="L176"><span class="lineNum">     176</span>                 :             :       buyAllBalanceOffset,</span>
+<span id="L177"><span class="lineNum">     177</span>                 :             :       debtRepayAmount,</span>
+<span id="L178"><span class="lineNum">     178</span>                 :             :       initiator</span>
+<span id="L179"><span class="lineNum">     179</span>                 :             :     );</span>
+<span id="L180"><span class="lineNum">     180</span>                 :             : </span>
+<span id="L181"><span class="lineNum">     181</span>                 :<span class="tlaGNC">           2 :     (uint256 amountSold, uint256 amountBought) = _buyOnParaSwap(</span></span>
+<span id="L182"><span class="lineNum">     182</span>                 :             :       buyAllBalanceOffset,</span>
+<span id="L183"><span class="lineNum">     183</span>                 :             :       paraswapData,</span>
+<span id="L184"><span class="lineNum">     184</span>                 :             :       collateralAsset,</span>
+<span id="L185"><span class="lineNum">     185</span>                 :             :       debtAsset,</span>
+<span id="L186"><span class="lineNum">     186</span>                 :             :       collateralAmount,</span>
+<span id="L187"><span class="lineNum">     187</span>                 :             :       debtRepayAmount</span>
+<span id="L188"><span class="lineNum">     188</span>                 :             :     );</span>
+<span id="L189"><span class="lineNum">     189</span>                 :             : </span>
+<span id="L190"><span class="lineNum">     190</span>                 :             :     // Repay debt. Approves for 0 first to comply with tokens that implement the anti frontrunning approval fix.</span>
+<span id="L191"><span class="lineNum">     191</span>                 :<span class="tlaGNC">           2 :     IERC20(debtAsset).safeApprove(address(POOL), debtRepayAmount);</span></span>
+<span id="L192"><span class="lineNum">     192</span>                 :<span class="tlaGNC">           2 :     POOL.repay(address(debtAsset), debtRepayAmount, rateMode, initiator);</span></span>
+<span id="L193"><span class="lineNum">     193</span>                 :<span class="tlaGNC">           2 :     IERC20(debtAsset).safeApprove(address(POOL), 0);</span></span>
+<span id="L194"><span class="lineNum">     194</span>                 :             : </span>
+<span id="L195"><span class="lineNum">     195</span>                 :<span class="tlaGNC">           2 :     uint256 neededForFlashLoanRepay = amountSold.add(premium);</span></span>
+<span id="L196"><span class="lineNum">     196</span>                 :             : </span>
+<span id="L197"><span class="lineNum">     197</span>                 :             :     // Pull aTokens from user</span>
+<span id="L198"><span class="lineNum">     198</span>                 :<span class="tlaGNC">           2 :     _pullATokenAndWithdraw(</span></span>
+<span id="L199"><span class="lineNum">     199</span>                 :             :       address(collateralAsset),</span>
+<span id="L200"><span class="lineNum">     200</span>                 :             :       initiator,</span>
+<span id="L201"><span class="lineNum">     201</span>                 :             :       neededForFlashLoanRepay,</span>
+<span id="L202"><span class="lineNum">     202</span>                 :             :       permitSignature</span>
+<span id="L203"><span class="lineNum">     203</span>                 :             :     );</span>
+<span id="L204"><span class="lineNum">     204</span>                 :             : </span>
+<span id="L205"><span class="lineNum">     205</span>                 :             :     {</span>
+<span id="L206"><span class="lineNum">     206</span>                 :             :       //transfer excess of debtAsset back to the user, if any</span>
+<span id="L207"><span class="lineNum">     207</span>                 :<span class="tlaGNC">           2 :       uint256 debtAssetExcess = amountBought - debtRepayAmount;</span></span>
+<span id="L208"><span class="lineNum">     208</span>                 :<span class="tlaGNC">           2 :       if (debtAssetExcess &gt; 0) {</span></span>
+<span id="L209"><span class="lineNum">     209</span>                 :<span class="tlaUNC tlaBgUNC">           0 :         IERC20(debtAsset).safeTransfer(initiator, debtAssetExcess);</span></span>
+<span id="L210"><span class="lineNum">     210</span>                 :             :       }</span>
+<span id="L211"><span class="lineNum">     211</span>                 :             :     }</span>
+<span id="L212"><span class="lineNum">     212</span>                 :             : </span>
+<span id="L213"><span class="lineNum">     213</span>                 :             :     // Repay flashloan. Approves for 0 first to comply with tokens that implement the anti frontrunning approval fix.</span>
+<span id="L214"><span class="lineNum">     214</span>                 :<span class="tlaGNC tlaBgGNC">           2 :     IERC20(collateralAsset).safeApprove(address(POOL), 0);</span></span>
+<span id="L215"><span class="lineNum">     215</span>                 :<span class="tlaGNC">           2 :     IERC20(collateralAsset).safeApprove(address(POOL), collateralAmount.add(premium));</span></span>
+<span id="L216"><span class="lineNum">     216</span>                 :             :   }</span>
+<span id="L217"><span class="lineNum">     217</span>                 :             : </span>
+<span id="L218"><span class="lineNum">     218</span>                 :             :   function getDebtRepayAmount(</span>
+<span id="L219"><span class="lineNum">     219</span>                 :             :     IERC20Detailed debtAsset,</span>
+<span id="L220"><span class="lineNum">     220</span>                 :             :     uint256 rateMode,</span>
+<span id="L221"><span class="lineNum">     221</span>                 :             :     uint256 buyAllBalanceOffset,</span>
+<span id="L222"><span class="lineNum">     222</span>                 :             :     uint256 debtRepayAmount,</span>
+<span id="L223"><span class="lineNum">     223</span>                 :             :     address initiator</span>
+<span id="L224"><span class="lineNum">     224</span>                 :             :   ) private view returns (uint256) {</span>
+<span id="L225"><span class="lineNum">     225</span>                 :<span class="tlaGNC">           6 :     require(</span></span>
+<span id="L226"><span class="lineNum">     226</span>                 :             :       DataTypes.InterestRateMode(rateMode) == DataTypes.InterestRateMode.VARIABLE,</span>
+<span id="L227"><span class="lineNum">     227</span>                 :             :       'INVALID_RATE_MODE'</span>
+<span id="L228"><span class="lineNum">     228</span>                 :             :     );</span>
+<span id="L229"><span class="lineNum">     229</span>                 :<span class="tlaGNC">           6 :     DataTypes.ReserveDataLegacy memory debtReserveData = _getReserveData(address(debtAsset));</span></span>
+<span id="L230"><span class="lineNum">     230</span>                 :             : </span>
+<span id="L231"><span class="lineNum">     231</span>                 :<span class="tlaGNC">           6 :     uint256 currentDebt = IERC20(debtReserveData.variableDebtTokenAddress).balanceOf(initiator);</span></span>
+<span id="L232"><span class="lineNum">     232</span>                 :             : </span>
+<span id="L233"><span class="lineNum">     233</span>                 :<span class="tlaGNC">           6 :     if (buyAllBalanceOffset != 0) {</span></span>
+<span id="L234"><span class="lineNum">     234</span>                 :<span class="tlaGNC">           1 :       require(currentDebt &lt;= debtRepayAmount, 'INSUFFICIENT_AMOUNT_TO_REPAY');</span></span>
+<span id="L235"><span class="lineNum">     235</span>                 :<span class="tlaGNC">           1 :       debtRepayAmount = currentDebt;</span></span>
+<span id="L236"><span class="lineNum">     236</span>                 :             :     } else {</span>
+<span id="L237"><span class="lineNum">     237</span>                 :<span class="tlaGNC">           5 :       require(debtRepayAmount &lt;= currentDebt, 'INVALID_DEBT_REPAY_AMOUNT');</span></span>
+<span id="L238"><span class="lineNum">     238</span>                 :             :     }</span>
+<span id="L239"><span class="lineNum">     239</span>                 :             : </span>
+<span id="L240"><span class="lineNum">     240</span>                 :<span class="tlaGNC">           6 :     return debtRepayAmount;</span></span>
+<span id="L241"><span class="lineNum">     241</span>                 :             :   }</span>
+<span id="L242"><span class="lineNum">     242</span>                 :             : }</span>
+        </pre>
+              </td>
+            </tr>
+          </table>
+          <br>
+
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+            <tr><td class="versionInfo">Generated by: <a href="https://github.com//linux-test-project/lcov" target="_parent">LCOV version 2.1-1</a></td></tr>
+          </table>
+          <br>
+
+</body>
+</html>

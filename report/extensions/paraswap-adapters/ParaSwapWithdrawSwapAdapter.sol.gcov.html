@@ -1,0 +1,171 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - lcov.info.p - extensions/paraswap-adapters/ParaSwapWithdrawSwapAdapter.sol</title>
+  <link rel="stylesheet" type="text/css" href="../../gcov.css">
+</head>
+
+<body>
+
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="title">LCOV - code coverage report</td></tr>
+            <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+
+            <tr>
+              <td width="100%">
+                <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="10%" class="headerValue"><a href="../../index.html" title="Click to go to top-level">top level</a> - <a href="index.html" title="Click to go to directory extensions/paraswap-adapters">extensions/paraswap-adapters</a> - ParaSwapWithdrawSwapAdapter.sol<span style="font-size: 80%;"> (source / <a href="ParaSwapWithdrawSwapAdapter.sol.func-c.html" title="Click to go to function table">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="5%"></td>
+            <td width="5%" class="headerCovTableHead">Coverage</td>
+            <td width="5%" class="headerCovTableHead" title="Covered + Uncovered code">Total</td>
+            <td width="5%" class="headerCovTableHead" title="Exercised code only">Hit</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">lcov.info.p</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntryHi">90.0&nbsp;%</td>
+            <td class="headerCovTableEntry">10</td>
+            <td class="headerCovTableEntry">9</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test Date:</td>
+            <td class="headerValue">2024-09-24 09:34:24</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntryLo">66.7&nbsp;%</td>
+            <td class="headerCovTableEntry">3</td>
+            <td class="headerCovTableEntry">2</td>
+          </tr>
+          <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td class="headerItem">Branches:</td>
+            <td class="headerCovTableEntryHi">-</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">0</td>
+          </tr>
+                  <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+          </table>
+
+          <table cellpadding=0 cellspacing=0 border=0>
+            <tr>
+              <td><br></td>
+            </tr>
+            <tr>
+              <td>
+<pre class="sourceHeading">             Branch data     Line data    Source code</pre>
+<pre class="source">
+<span id="L1"><span class="lineNum">       1</span>                 :             : // SPDX-License-Identifier: AGPL-3.0</span>
+<span id="L2"><span class="lineNum">       2</span>                 :             : pragma solidity ^0.8.10;</span>
+<span id="L3"><span class="lineNum">       3</span>                 :             : </span>
+<span id="L4"><span class="lineNum">       4</span>                 :             : import {IERC20Detailed} from '../../dependencies/openzeppelin/contracts/IERC20Detailed.sol';</span>
+<span id="L5"><span class="lineNum">       5</span>                 :             : import {IERC20WithPermit} from '../../interfaces/IERC20WithPermit.sol';</span>
+<span id="L6"><span class="lineNum">       6</span>                 :             : import {IPoolAddressesProvider} from '../../interfaces/IPoolAddressesProvider.sol';</span>
+<span id="L7"><span class="lineNum">       7</span>                 :             : import {BaseParaSwapSellAdapter} from './BaseParaSwapSellAdapter.sol';</span>
+<span id="L8"><span class="lineNum">       8</span>                 :             : import {IParaSwapAugustusRegistry} from './interfaces/IParaSwapAugustusRegistry.sol';</span>
+<span id="L9"><span class="lineNum">       9</span>                 :             : import {SafeERC20} from '../../dependencies/openzeppelin/contracts/SafeERC20.sol';</span>
+<span id="L10"><span class="lineNum">      10</span>                 :             : import {IParaSwapAugustus} from './interfaces/IParaSwapAugustus.sol';</span>
+<span id="L11"><span class="lineNum">      11</span>                 :             : import {ReentrancyGuard} from '../../dependencies/openzeppelin/ReentrancyGuard.sol';</span>
+<span id="L12"><span class="lineNum">      12</span>                 :             : </span>
+<span id="L13"><span class="lineNum">      13</span>                 :             : contract ParaSwapWithdrawSwapAdapter is BaseParaSwapSellAdapter, ReentrancyGuard {</span>
+<span id="L14"><span class="lineNum">      14</span>                 :             :   using SafeERC20 for IERC20Detailed;</span>
+<span id="L15"><span class="lineNum">      15</span>                 :             : </span>
+<span id="L16"><span class="lineNum">      16</span>                 :             :   constructor(</span>
+<span id="L17"><span class="lineNum">      17</span>                 :             :     IPoolAddressesProvider addressesProvider,</span>
+<span id="L18"><span class="lineNum">      18</span>                 :             :     IParaSwapAugustusRegistry augustusRegistry,</span>
+<span id="L19"><span class="lineNum">      19</span>                 :             :     address owner</span>
+<span id="L20"><span class="lineNum">      20</span>                 :             :   ) BaseParaSwapSellAdapter(addressesProvider, augustusRegistry) {</span>
+<span id="L21"><span class="lineNum">      21</span>                 :<span class="tlaUNC tlaBgUNC">           0 :     transferOwnership(owner);</span></span>
+<span id="L22"><span class="lineNum">      22</span>                 :             :   }</span>
+<span id="L23"><span class="lineNum">      23</span>                 :             : </span>
+<span id="L24"><span class="lineNum">      24</span>                 :             :   function executeOperation(</span>
+<span id="L25"><span class="lineNum">      25</span>                 :             :     address,</span>
+<span id="L26"><span class="lineNum">      26</span>                 :             :     uint256,</span>
+<span id="L27"><span class="lineNum">      27</span>                 :             :     uint256,</span>
+<span id="L28"><span class="lineNum">      28</span>                 :             :     address,</span>
+<span id="L29"><span class="lineNum">      29</span>                 :             :     bytes calldata</span>
+<span id="L30"><span class="lineNum">      30</span>                 :             :   ) external override nonReentrant returns (bool) {</span>
+<span id="L31"><span class="lineNum">      31</span>                 :<span class="tlaGNC tlaBgGNC">           1 :     revert('NOT_SUPPORTED');</span></span>
+<span id="L32"><span class="lineNum">      32</span>                 :             :   }</span>
+<span id="L33"><span class="lineNum">      33</span>                 :             : </span>
+<span id="L34"><span class="lineNum">      34</span>                 :             :   /**</span>
+<span id="L35"><span class="lineNum">      35</span>                 :             :    * @dev Swaps an amount of an asset to another after a withdraw and transfers the new asset to the user.</span>
+<span id="L36"><span class="lineNum">      36</span>                 :             :    * The user should give this contract allowance to pull the ATokens in order to withdraw the underlying asset and perform the swap.</span>
+<span id="L37"><span class="lineNum">      37</span>                 :             :    * @param assetToSwapFrom Address of the underlying asset to be swapped from</span>
+<span id="L38"><span class="lineNum">      38</span>                 :             :    * @param assetToSwapTo Address of the underlying asset to be swapped to</span>
+<span id="L39"><span class="lineNum">      39</span>                 :             :    * @param amountToSwap Amount to be swapped, or maximum amount when swapping all balance</span>
+<span id="L40"><span class="lineNum">      40</span>                 :             :    * @param minAmountToReceive Minimum amount to be received from the swap</span>
+<span id="L41"><span class="lineNum">      41</span>                 :             :    * @param swapAllBalanceOffset Set to offset of fromAmount in Augustus calldata if wanting to swap all balance, otherwise 0</span>
+<span id="L42"><span class="lineNum">      42</span>                 :             :    * @param swapCalldata Calldata for ParaSwap's AugustusSwapper contract</span>
+<span id="L43"><span class="lineNum">      43</span>                 :             :    * @param augustus Address of ParaSwap's AugustusSwapper contract</span>
+<span id="L44"><span class="lineNum">      44</span>                 :             :    * @param permitParams Struct containing the permit signatures, set to all zeroes if not used</span>
+<span id="L45"><span class="lineNum">      45</span>                 :             :    */</span>
+<span id="L46"><span class="lineNum">      46</span>                 :             :   function withdrawAndSwap(</span>
+<span id="L47"><span class="lineNum">      47</span>                 :             :     IERC20Detailed assetToSwapFrom,</span>
+<span id="L48"><span class="lineNum">      48</span>                 :             :     IERC20Detailed assetToSwapTo,</span>
+<span id="L49"><span class="lineNum">      49</span>                 :             :     uint256 amountToSwap,</span>
+<span id="L50"><span class="lineNum">      50</span>                 :             :     uint256 minAmountToReceive,</span>
+<span id="L51"><span class="lineNum">      51</span>                 :             :     uint256 swapAllBalanceOffset,</span>
+<span id="L52"><span class="lineNum">      52</span>                 :             :     bytes calldata swapCalldata,</span>
+<span id="L53"><span class="lineNum">      53</span>                 :             :     IParaSwapAugustus augustus,</span>
+<span id="L54"><span class="lineNum">      54</span>                 :             :     PermitSignature calldata permitParams</span>
+<span id="L55"><span class="lineNum">      55</span>                 :             :   ) external nonReentrant {</span>
+<span id="L56"><span class="lineNum">      56</span>                 :<span class="tlaGNC">           3 :     IERC20WithPermit aToken = IERC20WithPermit(</span></span>
+<span id="L57"><span class="lineNum">      57</span>                 :             :       _getReserveData(address(assetToSwapFrom)).aTokenAddress</span>
+<span id="L58"><span class="lineNum">      58</span>                 :             :     );</span>
+<span id="L59"><span class="lineNum">      59</span>                 :             : </span>
+<span id="L60"><span class="lineNum">      60</span>                 :<span class="tlaGNC">           3 :     if (swapAllBalanceOffset != 0) {</span></span>
+<span id="L61"><span class="lineNum">      61</span>                 :<span class="tlaGNC">           1 :       uint256 balance = aToken.balanceOf(msg.sender);</span></span>
+<span id="L62"><span class="lineNum">      62</span>                 :<span class="tlaGNC">           1 :       require(balance &lt;= amountToSwap, 'INSUFFICIENT_AMOUNT_TO_SWAP');</span></span>
+<span id="L63"><span class="lineNum">      63</span>                 :<span class="tlaGNC">           1 :       amountToSwap = balance;</span></span>
+<span id="L64"><span class="lineNum">      64</span>                 :             :     }</span>
+<span id="L65"><span class="lineNum">      65</span>                 :             : </span>
+<span id="L66"><span class="lineNum">      66</span>                 :<span class="tlaGNC">           3 :     _pullATokenAndWithdraw(</span></span>
+<span id="L67"><span class="lineNum">      67</span>                 :             :       address(assetToSwapFrom),</span>
+<span id="L68"><span class="lineNum">      68</span>                 :             :       aToken,</span>
+<span id="L69"><span class="lineNum">      69</span>                 :             :       msg.sender,</span>
+<span id="L70"><span class="lineNum">      70</span>                 :             :       amountToSwap,</span>
+<span id="L71"><span class="lineNum">      71</span>                 :             :       permitParams</span>
+<span id="L72"><span class="lineNum">      72</span>                 :             :     );</span>
+<span id="L73"><span class="lineNum">      73</span>                 :             : </span>
+<span id="L74"><span class="lineNum">      74</span>                 :<span class="tlaGNC">           3 :     uint256 amountReceived = _sellOnParaSwap(</span></span>
+<span id="L75"><span class="lineNum">      75</span>                 :             :       swapAllBalanceOffset,</span>
+<span id="L76"><span class="lineNum">      76</span>                 :             :       swapCalldata,</span>
+<span id="L77"><span class="lineNum">      77</span>                 :             :       augustus,</span>
+<span id="L78"><span class="lineNum">      78</span>                 :             :       assetToSwapFrom,</span>
+<span id="L79"><span class="lineNum">      79</span>                 :             :       assetToSwapTo,</span>
+<span id="L80"><span class="lineNum">      80</span>                 :             :       amountToSwap,</span>
+<span id="L81"><span class="lineNum">      81</span>                 :             :       minAmountToReceive</span>
+<span id="L82"><span class="lineNum">      82</span>                 :             :     );</span>
+<span id="L83"><span class="lineNum">      83</span>                 :             : </span>
+<span id="L84"><span class="lineNum">      84</span>                 :<span class="tlaGNC">           2 :     assetToSwapTo.safeTransfer(msg.sender, amountReceived);</span></span>
+<span id="L85"><span class="lineNum">      85</span>                 :             :   }</span>
+<span id="L86"><span class="lineNum">      86</span>                 :             : }</span>
+        </pre>
+              </td>
+            </tr>
+          </table>
+          <br>
+
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+            <tr><td class="versionInfo">Generated by: <a href="https://github.com//linux-test-project/lcov" target="_parent">LCOV version 2.1-1</a></td></tr>
+          </table>
+          <br>
+
+</body>
+</html>

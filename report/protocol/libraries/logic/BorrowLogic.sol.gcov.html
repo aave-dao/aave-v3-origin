@@ -1,0 +1,319 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - lcov.info.p - protocol/libraries/logic/BorrowLogic.sol</title>
+  <link rel="stylesheet" type="text/css" href="../../../gcov.css">
+</head>
+
+<body>
+
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="title">LCOV - code coverage report</td></tr>
+            <tr><td class="ruler"><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
+
+            <tr>
+              <td width="100%">
+                <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="10%" class="headerValue"><a href="../../../index.html" title="Click to go to top-level">top level</a> - <a href="index.html" title="Click to go to directory protocol/libraries/logic">protocol/libraries/logic</a> - BorrowLogic.sol<span style="font-size: 80%;"> (source / <a href="BorrowLogic.sol.func-c.html" title="Click to go to function table">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="5%"></td>
+            <td width="5%" class="headerCovTableHead">Coverage</td>
+            <td width="5%" class="headerCovTableHead" title="Covered + Uncovered code">Total</td>
+            <td width="5%" class="headerCovTableHead" title="Exercised code only">Hit</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">lcov.info.p</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
+            <td class="headerCovTableEntry">41</td>
+            <td class="headerCovTableEntry">41</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test Date:</td>
+            <td class="headerValue">2024-09-24 09:34:24</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
+            <td class="headerCovTableEntry">2</td>
+            <td class="headerCovTableEntry">2</td>
+          </tr>
+          <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td class="headerItem">Branches:</td>
+            <td class="headerCovTableEntryHi">-</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">0</td>
+          </tr>
+                  <tr><td><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr><td class="ruler"><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
+          </table>
+
+          <table cellpadding=0 cellspacing=0 border=0>
+            <tr>
+              <td><br></td>
+            </tr>
+            <tr>
+              <td>
+<pre class="sourceHeading">             Branch data     Line data    Source code</pre>
+<pre class="source">
+<span id="L1"><span class="lineNum">       1</span>                 :             : // SPDX-License-Identifier: BUSL-1.1</span>
+<span id="L2"><span class="lineNum">       2</span>                 :             : pragma solidity ^0.8.10;</span>
+<span id="L3"><span class="lineNum">       3</span>                 :             : </span>
+<span id="L4"><span class="lineNum">       4</span>                 :             : import {GPv2SafeERC20} from '../../../dependencies/gnosis/contracts/GPv2SafeERC20.sol';</span>
+<span id="L5"><span class="lineNum">       5</span>                 :             : import {SafeCast} from '../../../dependencies/openzeppelin/contracts/SafeCast.sol';</span>
+<span id="L6"><span class="lineNum">       6</span>                 :             : import {IERC20} from '../../../dependencies/openzeppelin/contracts/IERC20.sol';</span>
+<span id="L7"><span class="lineNum">       7</span>                 :             : import {IVariableDebtToken} from '../../../interfaces/IVariableDebtToken.sol';</span>
+<span id="L8"><span class="lineNum">       8</span>                 :             : import {IAToken} from '../../../interfaces/IAToken.sol';</span>
+<span id="L9"><span class="lineNum">       9</span>                 :             : import {UserConfiguration} from '../configuration/UserConfiguration.sol';</span>
+<span id="L10"><span class="lineNum">      10</span>                 :             : import {ReserveConfiguration} from '../configuration/ReserveConfiguration.sol';</span>
+<span id="L11"><span class="lineNum">      11</span>                 :             : import {DataTypes} from '../types/DataTypes.sol';</span>
+<span id="L12"><span class="lineNum">      12</span>                 :             : import {ValidationLogic} from './ValidationLogic.sol';</span>
+<span id="L13"><span class="lineNum">      13</span>                 :             : import {ReserveLogic} from './ReserveLogic.sol';</span>
+<span id="L14"><span class="lineNum">      14</span>                 :             : import {IsolationModeLogic} from './IsolationModeLogic.sol';</span>
+<span id="L15"><span class="lineNum">      15</span>                 :             : </span>
+<span id="L16"><span class="lineNum">      16</span>                 :             : /**</span>
+<span id="L17"><span class="lineNum">      17</span>                 :             :  * @title BorrowLogic library</span>
+<span id="L18"><span class="lineNum">      18</span>                 :             :  * @author Aave</span>
+<span id="L19"><span class="lineNum">      19</span>                 :             :  * @notice Implements the base logic for all the actions related to borrowing</span>
+<span id="L20"><span class="lineNum">      20</span>                 :             :  */</span>
+<span id="L21"><span class="lineNum">      21</span>                 :             : library BorrowLogic {</span>
+<span id="L22"><span class="lineNum">      22</span>                 :             :   using ReserveLogic for DataTypes.ReserveCache;</span>
+<span id="L23"><span class="lineNum">      23</span>                 :             :   using ReserveLogic for DataTypes.ReserveData;</span>
+<span id="L24"><span class="lineNum">      24</span>                 :             :   using GPv2SafeERC20 for IERC20;</span>
+<span id="L25"><span class="lineNum">      25</span>                 :             :   using UserConfiguration for DataTypes.UserConfigurationMap;</span>
+<span id="L26"><span class="lineNum">      26</span>                 :             :   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;</span>
+<span id="L27"><span class="lineNum">      27</span>                 :             :   using SafeCast for uint256;</span>
+<span id="L28"><span class="lineNum">      28</span>                 :             : </span>
+<span id="L29"><span class="lineNum">      29</span>                 :             :   // See `IPool` for descriptions</span>
+<span id="L30"><span class="lineNum">      30</span>                 :             :   event Borrow(</span>
+<span id="L31"><span class="lineNum">      31</span>                 :             :     address indexed reserve,</span>
+<span id="L32"><span class="lineNum">      32</span>                 :             :     address user,</span>
+<span id="L33"><span class="lineNum">      33</span>                 :             :     address indexed onBehalfOf,</span>
+<span id="L34"><span class="lineNum">      34</span>                 :             :     uint256 amount,</span>
+<span id="L35"><span class="lineNum">      35</span>                 :             :     DataTypes.InterestRateMode interestRateMode,</span>
+<span id="L36"><span class="lineNum">      36</span>                 :             :     uint256 borrowRate,</span>
+<span id="L37"><span class="lineNum">      37</span>                 :             :     uint16 indexed referralCode</span>
+<span id="L38"><span class="lineNum">      38</span>                 :             :   );</span>
+<span id="L39"><span class="lineNum">      39</span>                 :             :   event Repay(</span>
+<span id="L40"><span class="lineNum">      40</span>                 :             :     address indexed reserve,</span>
+<span id="L41"><span class="lineNum">      41</span>                 :             :     address indexed user,</span>
+<span id="L42"><span class="lineNum">      42</span>                 :             :     address indexed repayer,</span>
+<span id="L43"><span class="lineNum">      43</span>                 :             :     uint256 amount,</span>
+<span id="L44"><span class="lineNum">      44</span>                 :             :     bool useATokens</span>
+<span id="L45"><span class="lineNum">      45</span>                 :             :   );</span>
+<span id="L46"><span class="lineNum">      46</span>                 :             :   event IsolationModeTotalDebtUpdated(address indexed asset, uint256 totalDebt);</span>
+<span id="L47"><span class="lineNum">      47</span>                 :             :   event ReserveUsedAsCollateralDisabled(address indexed reserve, address indexed user);</span>
+<span id="L48"><span class="lineNum">      48</span>                 :             : </span>
+<span id="L49"><span class="lineNum">      49</span>                 :             :   /**</span>
+<span id="L50"><span class="lineNum">      50</span>                 :             :    * @notice Implements the borrow feature. Borrowing allows users that provided collateral to draw liquidity from the</span>
+<span id="L51"><span class="lineNum">      51</span>                 :             :    * Aave protocol proportionally to their collateralization power. For isolated positions, it also increases the</span>
+<span id="L52"><span class="lineNum">      52</span>                 :             :    * isolated debt.</span>
+<span id="L53"><span class="lineNum">      53</span>                 :             :    * @dev  Emits the `Borrow()` event</span>
+<span id="L54"><span class="lineNum">      54</span>                 :             :    * @param reservesData The state of all the reserves</span>
+<span id="L55"><span class="lineNum">      55</span>                 :             :    * @param reservesList The addresses of all the active reserves</span>
+<span id="L56"><span class="lineNum">      56</span>                 :             :    * @param eModeCategories The configuration of all the efficiency mode categories</span>
+<span id="L57"><span class="lineNum">      57</span>                 :             :    * @param userConfig The user configuration mapping that tracks the supplied/borrowed assets</span>
+<span id="L58"><span class="lineNum">      58</span>                 :             :    * @param params The additional parameters needed to execute the borrow function</span>
+<span id="L59"><span class="lineNum">      59</span>                 :             :    */</span>
+<span id="L60"><span class="lineNum">      60</span>                 :             :   function executeBorrow(</span>
+<span id="L61"><span class="lineNum">      61</span>                 :             :     mapping(address =&gt; DataTypes.ReserveData) storage reservesData,</span>
+<span id="L62"><span class="lineNum">      62</span>                 :             :     mapping(uint256 =&gt; address) storage reservesList,</span>
+<span id="L63"><span class="lineNum">      63</span>                 :             :     mapping(uint8 =&gt; DataTypes.EModeCategory) storage eModeCategories,</span>
+<span id="L64"><span class="lineNum">      64</span>                 :             :     DataTypes.UserConfigurationMap storage userConfig,</span>
+<span id="L65"><span class="lineNum">      65</span>                 :             :     DataTypes.ExecuteBorrowParams memory params</span>
+<span id="L66"><span class="lineNum">      66</span>                 :             :   ) external {</span>
+<span id="L67"><span class="lineNum">      67</span>                 :<span class="tlaGNC tlaBgGNC">       16110 :     DataTypes.ReserveData storage reserve = reservesData[params.asset];</span></span>
+<span id="L68"><span class="lineNum">      68</span>                 :<span class="tlaGNC">       16110 :     DataTypes.ReserveCache memory reserveCache = reserve.cache();</span></span>
+<span id="L69"><span class="lineNum">      69</span>                 :             : </span>
+<span id="L70"><span class="lineNum">      70</span>                 :<span class="tlaGNC">       16110 :     reserve.updateState(reserveCache);</span></span>
+<span id="L71"><span class="lineNum">      71</span>                 :             : </span>
+<span id="L72"><span class="lineNum">      72</span>                 :<span class="tlaGNC">       16110 :     (</span></span>
+<span id="L73"><span class="lineNum">      73</span>                 :             :       bool isolationModeActive,</span>
+<span id="L74"><span class="lineNum">      74</span>                 :             :       address isolationModeCollateralAddress,</span>
+<span id="L75"><span class="lineNum">      75</span>                 :             :       uint256 isolationModeDebtCeiling</span>
+<span id="L76"><span class="lineNum">      76</span>                 :<span class="tlaGNC">       16110 :     ) = userConfig.getIsolationModeState(reservesData, reservesList);</span></span>
+<span id="L77"><span class="lineNum">      77</span>                 :             : </span>
+<span id="L78"><span class="lineNum">      78</span>                 :<span class="tlaGNC">       16110 :     ValidationLogic.validateBorrow(</span></span>
+<span id="L79"><span class="lineNum">      79</span>                 :             :       reservesData,</span>
+<span id="L80"><span class="lineNum">      80</span>                 :             :       reservesList,</span>
+<span id="L81"><span class="lineNum">      81</span>                 :             :       eModeCategories,</span>
+<span id="L82"><span class="lineNum">      82</span>                 :             :       DataTypes.ValidateBorrowParams({</span>
+<span id="L83"><span class="lineNum">      83</span>                 :             :         reserveCache: reserveCache,</span>
+<span id="L84"><span class="lineNum">      84</span>                 :             :         userConfig: userConfig,</span>
+<span id="L85"><span class="lineNum">      85</span>                 :             :         asset: params.asset,</span>
+<span id="L86"><span class="lineNum">      86</span>                 :             :         userAddress: params.onBehalfOf,</span>
+<span id="L87"><span class="lineNum">      87</span>                 :             :         amount: params.amount,</span>
+<span id="L88"><span class="lineNum">      88</span>                 :             :         interestRateMode: params.interestRateMode,</span>
+<span id="L89"><span class="lineNum">      89</span>                 :             :         reservesCount: params.reservesCount,</span>
+<span id="L90"><span class="lineNum">      90</span>                 :             :         oracle: params.oracle,</span>
+<span id="L91"><span class="lineNum">      91</span>                 :             :         userEModeCategory: params.userEModeCategory,</span>
+<span id="L92"><span class="lineNum">      92</span>                 :             :         priceOracleSentinel: params.priceOracleSentinel,</span>
+<span id="L93"><span class="lineNum">      93</span>                 :             :         isolationModeActive: isolationModeActive,</span>
+<span id="L94"><span class="lineNum">      94</span>                 :             :         isolationModeCollateralAddress: isolationModeCollateralAddress,</span>
+<span id="L95"><span class="lineNum">      95</span>                 :             :         isolationModeDebtCeiling: isolationModeDebtCeiling</span>
+<span id="L96"><span class="lineNum">      96</span>                 :             :       })</span>
+<span id="L97"><span class="lineNum">      97</span>                 :             :     );</span>
+<span id="L98"><span class="lineNum">      98</span>                 :             : </span>
+<span id="L99"><span class="lineNum">      99</span>                 :<span class="tlaGNC">       15091 :     bool isFirstBorrowing = false;</span></span>
+<span id="L100"><span class="lineNum">     100</span>                 :             : </span>
+<span id="L101"><span class="lineNum">     101</span>                 :<span class="tlaGNC">       15091 :     (isFirstBorrowing, reserveCache.nextScaledVariableDebt) = IVariableDebtToken(</span></span>
+<span id="L102"><span class="lineNum">     102</span>                 :             :       reserveCache.variableDebtTokenAddress</span>
+<span id="L103"><span class="lineNum">     103</span>                 :             :     ).mint(params.user, params.onBehalfOf, params.amount, reserveCache.nextVariableBorrowIndex);</span>
+<span id="L104"><span class="lineNum">     104</span>                 :             : </span>
+<span id="L105"><span class="lineNum">     105</span>                 :<span class="tlaGNC">       15091 :     if (isFirstBorrowing) {</span></span>
+<span id="L106"><span class="lineNum">     106</span>                 :<span class="tlaGNC">       15090 :       userConfig.setBorrowing(reserve.id, true);</span></span>
+<span id="L107"><span class="lineNum">     107</span>                 :             :     }</span>
+<span id="L108"><span class="lineNum">     108</span>                 :             : </span>
+<span id="L109"><span class="lineNum">     109</span>                 :<span class="tlaGNC">       15091 :     if (isolationModeActive) {</span></span>
+<span id="L110"><span class="lineNum">     110</span>                 :<span class="tlaGNC">           8 :       uint256 nextIsolationModeTotalDebt = reservesData[isolationModeCollateralAddress]</span></span>
+<span id="L111"><span class="lineNum">     111</span>                 :             :         .isolationModeTotalDebt += (params.amount /</span>
+<span id="L112"><span class="lineNum">     112</span>                 :             :         10 **</span>
+<span id="L113"><span class="lineNum">     113</span>                 :             :           (reserveCache.reserveConfiguration.getDecimals() -</span>
+<span id="L114"><span class="lineNum">     114</span>                 :             :             ReserveConfiguration.DEBT_CEILING_DECIMALS)).toUint128();</span>
+<span id="L115"><span class="lineNum">     115</span>                 :<span class="tlaGNC">           8 :       emit IsolationModeTotalDebtUpdated(</span></span>
+<span id="L116"><span class="lineNum">     116</span>                 :             :         isolationModeCollateralAddress,</span>
+<span id="L117"><span class="lineNum">     117</span>                 :             :         nextIsolationModeTotalDebt</span>
+<span id="L118"><span class="lineNum">     118</span>                 :             :       );</span>
+<span id="L119"><span class="lineNum">     119</span>                 :             :     }</span>
+<span id="L120"><span class="lineNum">     120</span>                 :             : </span>
+<span id="L121"><span class="lineNum">     121</span>                 :<span class="tlaGNC">       15091 :     reserve.updateInterestRatesAndVirtualBalance(</span></span>
+<span id="L122"><span class="lineNum">     122</span>                 :             :       reserveCache,</span>
+<span id="L123"><span class="lineNum">     123</span>                 :             :       params.asset,</span>
+<span id="L124"><span class="lineNum">     124</span>                 :             :       0,</span>
+<span id="L125"><span class="lineNum">     125</span>                 :             :       params.releaseUnderlying ? params.amount : 0</span>
+<span id="L126"><span class="lineNum">     126</span>                 :             :     );</span>
+<span id="L127"><span class="lineNum">     127</span>                 :             : </span>
+<span id="L128"><span class="lineNum">     128</span>                 :<span class="tlaGNC">       15090 :     if (params.releaseUnderlying) {</span></span>
+<span id="L129"><span class="lineNum">     129</span>                 :<span class="tlaGNC">       15089 :       IAToken(reserveCache.aTokenAddress).transferUnderlyingTo(params.user, params.amount);</span></span>
+<span id="L130"><span class="lineNum">     130</span>                 :             :     }</span>
+<span id="L131"><span class="lineNum">     131</span>                 :             : </span>
+<span id="L132"><span class="lineNum">     132</span>                 :<span class="tlaGNC">       15090 :     emit Borrow(</span></span>
+<span id="L133"><span class="lineNum">     133</span>                 :             :       params.asset,</span>
+<span id="L134"><span class="lineNum">     134</span>                 :             :       params.user,</span>
+<span id="L135"><span class="lineNum">     135</span>                 :             :       params.onBehalfOf,</span>
+<span id="L136"><span class="lineNum">     136</span>                 :             :       params.amount,</span>
+<span id="L137"><span class="lineNum">     137</span>                 :             :       DataTypes.InterestRateMode.VARIABLE,</span>
+<span id="L138"><span class="lineNum">     138</span>                 :             :       reserve.currentVariableBorrowRate,</span>
+<span id="L139"><span class="lineNum">     139</span>                 :             :       params.referralCode</span>
+<span id="L140"><span class="lineNum">     140</span>                 :             :     );</span>
+<span id="L141"><span class="lineNum">     141</span>                 :             :   }</span>
+<span id="L142"><span class="lineNum">     142</span>                 :             : </span>
+<span id="L143"><span class="lineNum">     143</span>                 :             :   /**</span>
+<span id="L144"><span class="lineNum">     144</span>                 :             :    * @notice Implements the repay feature. Repaying transfers the underlying back to the aToken and clears the</span>
+<span id="L145"><span class="lineNum">     145</span>                 :             :    * equivalent amount of debt for the user by burning the corresponding debt token. For isolated positions, it also</span>
+<span id="L146"><span class="lineNum">     146</span>                 :             :    * reduces the isolated debt.</span>
+<span id="L147"><span class="lineNum">     147</span>                 :             :    * @dev  Emits the `Repay()` event</span>
+<span id="L148"><span class="lineNum">     148</span>                 :             :    * @param reservesData The state of all the reserves</span>
+<span id="L149"><span class="lineNum">     149</span>                 :             :    * @param reservesList The addresses of all the active reserves</span>
+<span id="L150"><span class="lineNum">     150</span>                 :             :    * @param userConfig The user configuration mapping that tracks the supplied/borrowed assets</span>
+<span id="L151"><span class="lineNum">     151</span>                 :             :    * @param params The additional parameters needed to execute the repay function</span>
+<span id="L152"><span class="lineNum">     152</span>                 :             :    * @return The actual amount being repaid</span>
+<span id="L153"><span class="lineNum">     153</span>                 :             :    */</span>
+<span id="L154"><span class="lineNum">     154</span>                 :             :   function executeRepay(</span>
+<span id="L155"><span class="lineNum">     155</span>                 :             :     mapping(address =&gt; DataTypes.ReserveData) storage reservesData,</span>
+<span id="L156"><span class="lineNum">     156</span>                 :             :     mapping(uint256 =&gt; address) storage reservesList,</span>
+<span id="L157"><span class="lineNum">     157</span>                 :             :     DataTypes.UserConfigurationMap storage userConfig,</span>
+<span id="L158"><span class="lineNum">     158</span>                 :             :     DataTypes.ExecuteRepayParams memory params</span>
+<span id="L159"><span class="lineNum">     159</span>                 :             :   ) external returns (uint256) {</span>
+<span id="L160"><span class="lineNum">     160</span>                 :<span class="tlaGNC">        5030 :     DataTypes.ReserveData storage reserve = reservesData[params.asset];</span></span>
+<span id="L161"><span class="lineNum">     161</span>                 :<span class="tlaGNC">        5030 :     DataTypes.ReserveCache memory reserveCache = reserve.cache();</span></span>
+<span id="L162"><span class="lineNum">     162</span>                 :<span class="tlaGNC">        5030 :     reserve.updateState(reserveCache);</span></span>
+<span id="L163"><span class="lineNum">     163</span>                 :             : </span>
+<span id="L164"><span class="lineNum">     164</span>                 :<span class="tlaGNC">        5030 :     uint256 variableDebt = IERC20(reserveCache.variableDebtTokenAddress).balanceOf(</span></span>
+<span id="L165"><span class="lineNum">     165</span>                 :             :       params.onBehalfOf</span>
+<span id="L166"><span class="lineNum">     166</span>                 :             :     );</span>
+<span id="L167"><span class="lineNum">     167</span>                 :             : </span>
+<span id="L168"><span class="lineNum">     168</span>                 :<span class="tlaGNC">        5030 :     ValidationLogic.validateRepay(</span></span>
+<span id="L169"><span class="lineNum">     169</span>                 :             :       reserveCache,</span>
+<span id="L170"><span class="lineNum">     170</span>                 :             :       params.amount,</span>
+<span id="L171"><span class="lineNum">     171</span>                 :             :       params.interestRateMode,</span>
+<span id="L172"><span class="lineNum">     172</span>                 :             :       params.onBehalfOf,</span>
+<span id="L173"><span class="lineNum">     173</span>                 :             :       variableDebt</span>
+<span id="L174"><span class="lineNum">     174</span>                 :             :     );</span>
+<span id="L175"><span class="lineNum">     175</span>                 :             : </span>
+<span id="L176"><span class="lineNum">     176</span>                 :<span class="tlaGNC">        5024 :     uint256 paybackAmount = variableDebt;</span></span>
+<span id="L177"><span class="lineNum">     177</span>                 :             : </span>
+<span id="L178"><span class="lineNum">     178</span>                 :             :     // Allows a user to repay with aTokens without leaving dust from interest.</span>
+<span id="L179"><span class="lineNum">     179</span>                 :<span class="tlaGNC">        5024 :     if (params.useATokens &amp;&amp; params.amount == type(uint256).max) {</span></span>
+<span id="L180"><span class="lineNum">     180</span>                 :<span class="tlaGNC">           4 :       params.amount = IAToken(reserveCache.aTokenAddress).balanceOf(msg.sender);</span></span>
+<span id="L181"><span class="lineNum">     181</span>                 :             :     }</span>
+<span id="L182"><span class="lineNum">     182</span>                 :             : </span>
+<span id="L183"><span class="lineNum">     183</span>                 :<span class="tlaGNC">        5024 :     if (params.amount &lt; paybackAmount) {</span></span>
+<span id="L184"><span class="lineNum">     184</span>                 :<span class="tlaGNC">        4971 :       paybackAmount = params.amount;</span></span>
+<span id="L185"><span class="lineNum">     185</span>                 :             :     }</span>
+<span id="L186"><span class="lineNum">     186</span>                 :             : </span>
+<span id="L187"><span class="lineNum">     187</span>                 :<span class="tlaGNC">        5024 :     reserveCache.nextScaledVariableDebt = IVariableDebtToken(reserveCache.variableDebtTokenAddress)</span></span>
+<span id="L188"><span class="lineNum">     188</span>                 :             :       .burn(params.onBehalfOf, paybackAmount, reserveCache.nextVariableBorrowIndex);</span>
+<span id="L189"><span class="lineNum">     189</span>                 :             : </span>
+<span id="L190"><span class="lineNum">     190</span>                 :<span class="tlaGNC">        5024 :     reserve.updateInterestRatesAndVirtualBalance(</span></span>
+<span id="L191"><span class="lineNum">     191</span>                 :             :       reserveCache,</span>
+<span id="L192"><span class="lineNum">     192</span>                 :             :       params.asset,</span>
+<span id="L193"><span class="lineNum">     193</span>                 :             :       params.useATokens ? 0 : paybackAmount,</span>
+<span id="L194"><span class="lineNum">     194</span>                 :             :       0</span>
+<span id="L195"><span class="lineNum">     195</span>                 :             :     );</span>
+<span id="L196"><span class="lineNum">     196</span>                 :             : </span>
+<span id="L197"><span class="lineNum">     197</span>                 :<span class="tlaGNC">        5024 :     if (variableDebt - paybackAmount == 0) {</span></span>
+<span id="L198"><span class="lineNum">     198</span>                 :<span class="tlaGNC">          53 :       userConfig.setBorrowing(reserve.id, false);</span></span>
+<span id="L199"><span class="lineNum">     199</span>                 :             :     }</span>
+<span id="L200"><span class="lineNum">     200</span>                 :             : </span>
+<span id="L201"><span class="lineNum">     201</span>                 :<span class="tlaGNC">        5024 :     IsolationModeLogic.updateIsolatedDebtIfIsolated(</span></span>
+<span id="L202"><span class="lineNum">     202</span>                 :             :       reservesData,</span>
+<span id="L203"><span class="lineNum">     203</span>                 :             :       reservesList,</span>
+<span id="L204"><span class="lineNum">     204</span>                 :             :       userConfig,</span>
+<span id="L205"><span class="lineNum">     205</span>                 :             :       reserveCache,</span>
+<span id="L206"><span class="lineNum">     206</span>                 :             :       paybackAmount</span>
+<span id="L207"><span class="lineNum">     207</span>                 :             :     );</span>
+<span id="L208"><span class="lineNum">     208</span>                 :             : </span>
+<span id="L209"><span class="lineNum">     209</span>                 :<span class="tlaGNC">        5024 :     if (params.useATokens) {</span></span>
+<span id="L210"><span class="lineNum">     210</span>                 :<span class="tlaGNC">        1006 :       IAToken(reserveCache.aTokenAddress).burn(</span></span>
+<span id="L211"><span class="lineNum">     211</span>                 :             :         msg.sender,</span>
+<span id="L212"><span class="lineNum">     212</span>                 :             :         reserveCache.aTokenAddress,</span>
+<span id="L213"><span class="lineNum">     213</span>                 :             :         paybackAmount,</span>
+<span id="L214"><span class="lineNum">     214</span>                 :             :         reserveCache.nextLiquidityIndex</span>
+<span id="L215"><span class="lineNum">     215</span>                 :             :       );</span>
+<span id="L216"><span class="lineNum">     216</span>                 :             :       // in case of aToken repayment the msg.sender must always repay on behalf of itself</span>
+<span id="L217"><span class="lineNum">     217</span>                 :<span class="tlaGNC">        1005 :       if (IAToken(reserveCache.aTokenAddress).scaledBalanceOf(msg.sender) == 0) {</span></span>
+<span id="L218"><span class="lineNum">     218</span>                 :<span class="tlaGNC">           2 :         userConfig.setUsingAsCollateral(reserve.id, false);</span></span>
+<span id="L219"><span class="lineNum">     219</span>                 :<span class="tlaGNC">           2 :         emit ReserveUsedAsCollateralDisabled(params.asset, msg.sender);</span></span>
+<span id="L220"><span class="lineNum">     220</span>                 :             :       }</span>
+<span id="L221"><span class="lineNum">     221</span>                 :             :     } else {</span>
+<span id="L222"><span class="lineNum">     222</span>                 :<span class="tlaGNC">        4018 :       IERC20(params.asset).safeTransferFrom(msg.sender, reserveCache.aTokenAddress, paybackAmount);</span></span>
+<span id="L223"><span class="lineNum">     223</span>                 :<span class="tlaGNC">        3018 :       IAToken(reserveCache.aTokenAddress).handleRepayment(</span></span>
+<span id="L224"><span class="lineNum">     224</span>                 :             :         msg.sender,</span>
+<span id="L225"><span class="lineNum">     225</span>                 :             :         params.onBehalfOf,</span>
+<span id="L226"><span class="lineNum">     226</span>                 :             :         paybackAmount</span>
+<span id="L227"><span class="lineNum">     227</span>                 :             :       );</span>
+<span id="L228"><span class="lineNum">     228</span>                 :             :     }</span>
+<span id="L229"><span class="lineNum">     229</span>                 :             : </span>
+<span id="L230"><span class="lineNum">     230</span>                 :<span class="tlaGNC">        4023 :     emit Repay(params.asset, params.onBehalfOf, msg.sender, paybackAmount, params.useATokens);</span></span>
+<span id="L231"><span class="lineNum">     231</span>                 :             : </span>
+<span id="L232"><span class="lineNum">     232</span>                 :<span class="tlaGNC">        4023 :     return paybackAmount;</span></span>
+<span id="L233"><span class="lineNum">     233</span>                 :             :   }</span>
+<span id="L234"><span class="lineNum">     234</span>                 :             : }</span>
+        </pre>
+              </td>
+            </tr>
+          </table>
+          <br>
+
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="ruler"><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
+            <tr><td class="versionInfo">Generated by: <a href="https://github.com//linux-test-project/lcov" target="_parent">LCOV version 2.1-1</a></td></tr>
+          </table>
+          <br>
+
+</body>
+</html>

@@ -9,32 +9,32 @@ update:; forge update
 test   :; forge test -vvv --no-match-contract DeploymentsGasLimits
 test-contract :; forge test --match-contract ${filter} -vvv
 test-watch   :; forge test --watch -vvv --no-match-contract DeploymentsGasLimits
-coverage :; forge coverage --report lcov && \
-	lcov --remove ./lcov.info -o ./lcov.info.p \
-	'scripts/*' \
-	'tests/*' \
-	'src/deployments/*' \
-	'src/periphery/contracts/v3-config-engine/*' \
-	'src/periphery/contracts/treasury/*' \
-	'src/periphery/contracts/dependencies/openzeppelin/ReentrancyGuard.sol' \
-	'src/periphery/contracts/misc/UiIncentiveDataProviderV3.sol' \
-	'src/periphery/contracts/misc/UiPoolDataProviderV3.sol' \
-	'src/periphery/contracts/misc/WalletBalanceProvider.sol' \
-	'src/periphery/contracts/mocks/*' \
-	'src/core/contracts/mocks/*' \
-	'src/core/contracts/dependencies/*' \
-	'src/core/contracts/misc/AaveProtocolDataProvider.sol' \
-	'src/core/contracts/protocol/libraries/configuration/*' \
-	'src/core/contracts/protocol/libraries/logic/GenericLogic.sol' \
-	'src/core/contracts/protocol/libraries/logic/ReserveLogic.sol' \
-	&& genhtml ./lcov.info.p -o report --branch-coverage \
-	&& coverage=$$(awk -F '[<>]' '/headerCovTableEntryHi/{print $3}' ./report/index.html | sed 's/[^0-9.]//g' | head -n 1); \
-	wget -O ./report/coverage.svg "https://img.shields.io/badge/coverage-$${coverage}%25-brightgreen"
 
+# Coverage
+coverage-base :; forge coverage --report lcov --no-match-coverage "(scripts|tests|deployments|mocks)"
+coverage-clean :; lcov --rc derive_function_end_line=0 --remove ./lcov.info -o ./lcov.info.p \
+	'src/contracts/extensions/v3-config-engine/*' \
+	'src/contracts/treasury/*' \
+	'src/contracts/dependencies/openzeppelin/ReentrancyGuard.sol' \
+	'src/contracts/helpers/UiIncentiveDataProviderV3.sol' \
+	'src/contracts/helpers/UiPoolDataProviderV3.sol' \
+	'src/contracts/helpers/WalletBalanceProvider.sol' \
+	'src/contracts/dependencies/*' \
+	'src/contracts/helpers/AaveProtocolDataProvider.sol' \
+	'src/contracts/protocol/libraries/configuration/*' \
+	'src/contracts/protocol/libraries/logic/GenericLogic.sol' \
+	'src/contracts/protocol/libraries/logic/ReserveLogic.sol'
+coverage-report :; genhtml ./lcov.info.p -o report --branch-coverage --rc derive_function_end_line=0 --parallel
+coverage-badge :; coverage=$$(awk -F '[<>]' '/headerCovTableEntryHi/{print $3}' ./report/index.html | sed 's/[^0-9.]//g' | head -n 1); \
+	wget -O ./report/coverage.svg "https://img.shields.io/badge/coverage-$${coverage}%25-brightgreen"
+coverage :
+	make coverage-base
+	make coverage-clean
+	make coverage-report
+	make coverage-badge
 # Utilities
 download :; cast etherscan-source --chain ${chain} -d src/etherscan/${chain}_${address} ${address}
 git-diff :
 	@mkdir -p diffs
 	@npx prettier ${before} ${after} --write
 	@printf '%s\n%s\n%s\n' "\`\`\`diff" "$$(git diff --no-index --ignore-space-at-eol ${before} ${after})" "\`\`\`" > diffs/${out}.md
-
