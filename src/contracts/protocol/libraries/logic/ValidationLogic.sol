@@ -639,4 +639,28 @@ library ValidationLogic {
     }
     return validateUseAsCollateral(reservesData, reservesList, userConfig, reserveConfig);
   }
+
+  /**
+   * @notice Validates that the user is in a bad debt situation.
+   * @dev This function ensures the presence of bad debt, defined as zero collateral value
+   * with non-zero debt value or active borrowing. Reverts if the user is not in this state.
+   * @param reservesData The state of all the reserves
+   * @param reservesList The addresses of all the active reserves
+   * @param eModeCategories The configuration of all the efficiency mode categories
+   * @param params Additional parameters needed for the calculation
+   */
+  function validateUserBadDebt(
+    mapping(address => DataTypes.ReserveData) storage reservesData,
+    mapping(uint256 => address) storage reservesList,
+    mapping(uint8 => DataTypes.EModeCategory) storage eModeCategories,
+    DataTypes.CalculateUserAccountDataParams memory params
+  ) internal view {
+    (uint256 totalCollateralInBaseCurrency, uint256 totalDebtInBaseCurrency, , , , ) = GenericLogic
+      .calculateUserAccountData(reservesData, reservesList, eModeCategories, params);
+    require(
+      totalCollateralInBaseCurrency == 0 &&
+        (totalDebtInBaseCurrency != 0 || params.userConfig.isBorrowingAny()),
+      Errors.USER_NOT_IN_BAD_DEBT
+    );
+  }
 }

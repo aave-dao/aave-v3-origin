@@ -17,6 +17,7 @@ import {IERC20WithPermit} from '../../interfaces/IERC20WithPermit.sol';
 import {IPoolAddressesProvider} from '../../interfaces/IPoolAddressesProvider.sol';
 import {IPool} from '../../interfaces/IPool.sol';
 import {IACLManager} from '../../interfaces/IACLManager.sol';
+import {IAccessControl} from '../../dependencies/openzeppelin/contracts/IAccessControl.sol';
 import {PoolStorage} from './PoolStorage.sol';
 
 /**
@@ -64,6 +65,14 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
     _;
   }
 
+  /**
+   * @dev Only aToken Burner can call functions marked by this modifier.
+   */
+  modifier onlyCoverageAdmin() {
+    _onlyCoverageAdmin();
+    _;
+  }
+
   function _onlyPoolConfigurator() internal view virtual {
     require(
       ADDRESSES_PROVIDER.getPoolConfigurator() == msg.sender,
@@ -82,6 +91,13 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
     require(
       IACLManager(ADDRESSES_PROVIDER.getACLManager()).isBridge(msg.sender),
       Errors.CALLER_NOT_BRIDGE
+    );
+  }
+
+  function _onlyCoverageAdmin() internal view virtual {
+    require(
+      IAccessControl(ADDRESSES_PROVIDER.getACLManager()).hasRole('COVERAGE_ADMIN', msg.sender),
+      Errors.CALLER_NOT_COVERAGE_ADMIN
     );
   }
 
@@ -828,6 +844,49 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
         referralCode: referralCode
       })
     );
+  }
+
+  /// @inheritdoc IPool
+  function burnBadDebt(address[] calldata users) external virtual override {
+    for (uint256 i; i < users.length; i++) {
+      address user = users[i];
+      LiquidationLogic.executeBadDebtCleanup(
+        _reserves,
+        _reservesList,
+        _eModeCategories,
+        _usersConfig[user],
+        user,
+        _usersEModeCategory[user],
+        _reservesCount,
+        ADDRESSES_PROVIDER.getPriceOracle()
+      );
+    }
+  }
+
+  /// @inheritdoc IPool
+  function eliminateReserveDeficit(
+    address asset,
+    uint256 amount
+  ) external override onlyCoverageAdmin {
+    ReserveLogic.eliminateDeficit(
+      _reserves,
+      _reservesList,
+      _eModeCategories,
+      _usersConfig[msg.sender],
+      DataTypes.ExecuteWithdrawParams({
+        asset: asset,
+        amount: amount,
+        to: address(0), // not used
+        reservesCount: _reservesCount,
+        oracle: ADDRESSES_PROVIDER.getPriceOracle(),
+        userEModeCategory: _usersEModeCategory[msg.sender]
+      })
+    );
+  }
+
+  /// @inheritdoc IPool
+  function getReserveDeficit(address asset) external view virtual returns (uint256) {
+    return _reserves[asset].deficit;
   }
 
   /// @inheritdoc IPool

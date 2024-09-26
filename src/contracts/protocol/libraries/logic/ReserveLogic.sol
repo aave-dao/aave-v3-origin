@@ -12,6 +12,9 @@ import {PercentageMath} from '../math/PercentageMath.sol';
 import {Errors} from '../helpers/Errors.sol';
 import {DataTypes} from '../types/DataTypes.sol';
 import {SafeCast} from '../../../dependencies/openzeppelin/contracts/SafeCast.sol';
+import {IAToken} from '../../../interfaces/IAToken.sol';
+import {UserConfiguration} from '../configuration/UserConfiguration.sol';
+import {ValidationLogic} from './ValidationLogic.sol';
 
 /**
  * @title ReserveLogic library
@@ -25,6 +28,7 @@ library ReserveLogic {
   using GPv2SafeERC20 for IERC20;
   using ReserveLogic for DataTypes.ReserveData;
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
+  using UserConfiguration for DataTypes.UserConfigurationMap;
 
   // See `IPool` for descriptions
   event ReserveDataUpdated(
@@ -35,6 +39,9 @@ library ReserveLogic {
     uint256 liquidityIndex,
     uint256 variableBorrowIndex
   );
+
+  event ReserveUsedAsCollateralDisabled(address indexed reserve, address indexed user);
+  event BadDebtCovered(address indexed reserve, uint256 amountDecreased, uint256 currentDeficit);
 
   /**
    * @notice Returns the ongoing normalized income for the reserve.
@@ -309,5 +316,75 @@ library ReserveLogic {
     ).scaledTotalSupply();
 
     return reserveCache;
+  }
+
+  /**
+   * @notice Reduces a portion or all of the deficit of a specified reserve by burning the equivalent aToken `amount`.
+   * @dev Emits the `BadDebtCovered() event`.
+   * @dev If the coverage admin covers its entire balance, `ReserveUsedAsCollateralDisabled()` is emitted.
+   * @param reservesData The state of all the reserves
+   * @param reservesList The addresses of all the active reserves
+   * @param eModeCategories The configuration of all the efficiency mode categories
+   * @param userConfig The user configuration mapping that tracks the supplied/borrowed assets
+   * @param params The additional parameters needed to execute the eliminateDeficit function
+   */
+  function eliminateDeficit(
+    mapping(address => DataTypes.ReserveData) storage reservesData,
+    mapping(uint256 => address) storage reservesList,
+    mapping(uint8 => DataTypes.EModeCategory) storage eModeCategories,
+    DataTypes.UserConfigurationMap storage userConfig,
+    DataTypes.ExecuteWithdrawParams memory params
+  ) external {
+    require(params.amount != 0, Errors.INVALID_AMOUNT);
+
+    DataTypes.ReserveData storage reserve = reservesData[params.asset];
+    uint256 currentDeficit = reserve.deficit;
+
+    require(currentDeficit != 0, Errors.RESERVE_NOT_IN_DEFICIT);
+
+    DataTypes.ReserveCache memory reserveCache = reserve.cache();
+    reserve.updateState(reserveCache);
+
+    uint256 userBalance = IAToken(reserveCache.aTokenAddress).scaledBalanceOf(msg.sender).rayMul(
+      reserveCache.nextLiquidityIndex
+    );
+
+    uint256 deficitToDecrease = params.amount;
+
+    if (params.amount > currentDeficit) {
+      deficitToDecrease = currentDeficit;
+    }
+
+    bool isCollateral = userConfig.isUsingAsCollateral(reserve.id);
+
+    if (isCollateral && deficitToDecrease == userBalance) {
+      userConfig.setUsingAsCollateral(reserve.id, false);
+      emit ReserveUsedAsCollateralDisabled(params.asset, msg.sender);
+    }
+
+    IAToken(reserveCache.aTokenAddress).burn(
+      msg.sender,
+      reserveCache.aTokenAddress,
+      deficitToDecrease,
+      reserveCache.nextLiquidityIndex
+    );
+
+    if (isCollateral && userConfig.isBorrowingAny()) {
+      ValidationLogic.validateHFAndLtv(
+        reservesData,
+        reservesList,
+        eModeCategories,
+        userConfig,
+        params.asset,
+        msg.sender,
+        params.reservesCount,
+        params.oracle,
+        params.userEModeCategory
+      );
+    }
+
+    reserve.deficit -= deficitToDecrease.toUint128();
+
+    emit BadDebtCovered(params.asset, deficitToDecrease, reserve.deficit);
   }
 }

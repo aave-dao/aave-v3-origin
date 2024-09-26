@@ -186,11 +186,27 @@ interface IPool {
   );
 
   /**
+   * @dev Emitted when the deficit of a reserve is covered.
+   * @param reserve The address of the underlying asset of the reserve
+   * @param amountCovered The amount of deficit covered
+   * @param currentDeficit The current deficit of the reserve.
+   */
+  event BadDebtCovered(address indexed reserve, uint256 amountCovered, uint256 currentDeficit);
+
+  /**
    * @dev Emitted when the protocol treasury receives minted aTokens from the accrued interest.
    * @param reserve The address of the reserve
    * @param amountMinted The amount minted to the treasury
    */
   event MintedToTreasury(address indexed reserve, uint256 amountMinted);
+
+  /**
+   *
+   * @param user The user address where the bad debt will be burned
+   * @param debtAsset The address of the underlying borrowed asset to be burned
+   * @param amount The amount to burn
+   */
+  event BadDebtBurned(address indexed user, address indexed debtAsset, uint256 amount);
 
   /**
    * @notice Mints an `amount` of aTokens to the `onBehalfOf`
@@ -796,6 +812,30 @@ interface IPool {
    *   0 if the action is executed directly by the user, without any middle-man
    */
   function deposit(address asset, uint256 amount, address onBehalfOf, uint16 referralCode) external;
+
+  /**
+   * @notice Validate and burn all bad debt of users.
+   * @dev A user is considered to be in bad debt if, after liquidation, they have all collateral liquidated
+   * while leaving some debt unpaid. This condition indicates that the user's debt is unlikely to be repaid,
+   * necessitating a debt write-off to prevent further interest accrual.
+   * @param users The array of addresses in bad debt.
+   */
+  function burnBadDebt(address[] calldata users) external;
+
+  /**
+   * @notice It Covers the deficit of a specified reserve by burning the equivalent aToken `amount`.
+   * @dev The deficit of a reserve can occur due to situations where borrowed assets are not repaid, leading to bad debt.
+   * @param asset The address of the underlying asset to cover the dificit.
+   * @param amount The amount to be covered.
+   */
+  function eliminateReserveDeficit(address asset, uint256 amount) external;
+
+  /**
+   * @notice Returns the current deficit of a reserve.
+   * @param asset The address of the underlying asset of the reserve
+   * @return The the current deficit
+   */
+  function getReserveDeficit(address asset) external view returns (uint256);
 
   /**
    * @notice Gets the address of the external FlashLoanLogic

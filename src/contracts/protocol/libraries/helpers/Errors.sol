@@ -100,4 +100,7 @@ library Errors {
   string public constant INVALID_GRACE_PERIOD = '98'; // Grace period above a valid range
   string public constant INVALID_FREEZE_STATE = '99'; // Reserve is already in the passed freeze state
   string public constant NOT_BORROWABLE_IN_EMODE = '100'; // Asset not borrowable in eMode
+  string public constant USER_NOT_IN_BAD_DEBT = '101'; // The user is not in bad debt
+  string public constant CALLER_NOT_COVERAGE_ADMIN = '102'; // The caller of the function is not the coverage admin
+  string public constant RESERVE_NOT_IN_DEFICIT = '103'; //  The reserve is not in deficit
 }
