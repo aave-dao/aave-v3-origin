@@ -5,6 +5,7 @@ import {Initializable} from 'openzeppelin-contracts-upgradeable/contracts/proxy/
 import {IERC20Metadata, IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import {AToken} from '../../../src/contracts/protocol/tokenization/AToken.sol';
 import {StataTokenV2} from '../../../src/contracts/extensions/static-a-token/StataTokenV2.sol'; // TODO: change import to isolate to 4626
+import {DataTypes} from '../../../src/contracts/protocol/libraries/types/DataTypes.sol';
 import {BaseTest} from './TestBase.sol';
 
 contract StataTokenV2GettersTest is BaseTest {
@@ -23,6 +24,9 @@ contract StataTokenV2GettersTest is BaseTest {
 
     address underlyingAddress = address(stataTokenV2.asset());
     assertEq(underlyingAddress, underlying);
+
+    DataTypes.ReserveDataLegacy memory data = contracts.poolProxy.getReserveData(underlyingAddress);
+    assertEq(stataTokenV2.aToken(), data.aTokenAddress);
 
     IERC20Metadata underlying = IERC20Metadata(underlyingAddress);
     assertEq(stataTokenV2.decimals(), underlying.decimals());

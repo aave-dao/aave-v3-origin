@@ -68,10 +68,10 @@ contract StataTokenV2 is
   function maxRescue(
     address asset
   ) public view override(IRescuableBase, RescuableBase) returns (uint256) {
-    IERC20 cachedAToken = aToken();
-    if (asset == address(cachedAToken)) {
+    address cachedAToken = aToken();
+    if (asset == cachedAToken) {
       uint256 requiredBacking = _convertToAssets(totalSupply(), Math.Rounding.Ceil);
-      uint256 balance = cachedAToken.balanceOf(address(this));
+      uint256 balance = IERC20(cachedAToken).balanceOf(address(this));
       return balance > requiredBacking ? balance - requiredBacking : 0;
     }
     return type(uint256).max;

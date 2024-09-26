@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import {IERC20} from 'openzeppelin-contracts/contracts/interfaces/IERC20.sol';
-
 interface IERC4626StataToken {
   struct SignatureParams {
     uint8 v;
@@ -54,9 +52,9 @@ interface IERC4626StataToken {
 
   /**
    * @notice The aToken used inside the 4626 vault.
-   * @return IERC20 The aToken IERC20.
+   * @return address The aToken address.
    */
-  function aToken() external view returns (IERC20);
+  function aToken() external view returns (address);
 
   /**
    * @notice Returns the current asset price of the stataToken.
