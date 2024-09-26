@@ -193,7 +193,7 @@ import "../methods/methods_base.spec";
         !f.isView &&
         f.selector != sig:redeem(uint256,address,address).selector &&
         f.selector != sig:redeemATokens(uint256,address,address).selector &&
-        f.selector != sig:emergencyEtherTransfer(uint256).selector &&
+        f.selector != sig:emergencyEtherTransfer(address,uint256).selector &&
         !harnessOnlyMethods(f)}
         {
             preserved with (env e){
