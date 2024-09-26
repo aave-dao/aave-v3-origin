@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.10;
 
-import {WalletBalanceProvider} from 'aave-v3-periphery/contracts/misc/WalletBalanceProvider.sol';
-import {UiPoolDataProviderV3} from 'aave-v3-periphery/contracts/misc/UiPoolDataProviderV3.sol';
-import {UiIncentiveDataProviderV3} from 'aave-v3-periphery/contracts/misc/UiIncentiveDataProviderV3.sol';
-import {IEACAggregatorProxy} from 'aave-v3-periphery/contracts/misc/interfaces/IEACAggregatorProxy.sol';
-import {AaveProtocolDataProvider} from 'aave-v3-core/contracts/misc/AaveProtocolDataProvider.sol';
-import {IPoolAddressesProvider} from 'aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol';
+import {WalletBalanceProvider} from '../../../contracts/helpers/WalletBalanceProvider.sol';
+import {UiPoolDataProviderV3} from '../../../contracts/helpers/UiPoolDataProviderV3.sol';
+import {UiIncentiveDataProviderV3} from '../../../contracts/helpers/UiIncentiveDataProviderV3.sol';
+import {IEACAggregatorProxy} from '../../../contracts/helpers/interfaces/IEACAggregatorProxy.sol';
+import {AaveProtocolDataProvider} from '../../../contracts/helpers/AaveProtocolDataProvider.sol';
+import {IPoolAddressesProvider} from '../../../contracts/interfaces/IPoolAddressesProvider.sol';
 
 contract AaveV3GettersProcedureOne {
   struct GettersReportBatchOne {

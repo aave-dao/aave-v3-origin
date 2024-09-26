@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.10;
 
-import {IERC20AaveLM} from '../../src/periphery/contracts/static-a-token/interfaces/IERC20AaveLM.sol';
+import {IERC20AaveLM} from '../../src/contracts/extensions/static-a-token/interfaces/IERC20AaveLM.sol';
 
 library SigUtils {
   bytes32 internal constant PERMIT_TYPEHASH =

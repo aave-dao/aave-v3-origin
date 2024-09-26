@@ -2,8 +2,8 @@
 pragma solidity ^0.8.0;
 
 import '../../interfaces/IMarketReportTypes.sol';
-import {PriceOracleSentinel, ISequencerOracle} from 'aave-v3-core/contracts/protocol/configuration/PriceOracleSentinel.sol';
-import {DefaultReserveInterestRateStrategyV2} from 'aave-v3-core/contracts/protocol/pool/DefaultReserveInterestRateStrategyV2.sol';
+import {PriceOracleSentinel, ISequencerOracle} from '../../../contracts/misc/PriceOracleSentinel.sol';
+import {DefaultReserveInterestRateStrategyV2} from '../../../contracts/misc/DefaultReserveInterestRateStrategyV2.sol';
 import {IErrors} from '../../interfaces/IErrors.sol';
 
 contract AaveV3MiscProcedure is IErrors {

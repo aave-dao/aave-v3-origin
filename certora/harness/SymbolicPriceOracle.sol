@@ -1,6 +1,7 @@
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.19;
 
-import {IPriceOracleGetter} from '../munged/interfaces/IPriceOracleGetter.sol';
+import {IPriceOracleGetter} from '../munged/contracts/interfaces/IPriceOracleGetter.sol';
 
 contract SymbolicPriceOracle is IPriceOracleGetter {
   address public base;

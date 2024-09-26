@@ -64,11 +64,6 @@ methods {
   function _.getACLManager() external  => DISPATCHER(true);
   //function _.isBridge(address) external => DISPATCHER(true);
 
-  // StableDebt
-  function _.mint(address user, address onBehalfOf, uint256 amount, uint256 rate) external => DISPATCHER(true);
-  function _.burn(address user, uint256 amount) external => DISPATCHER(true);
-  function _.getSupplyData() external => DISPATCHER(true);
-
   // variableDebt
   function _.burn(address user, uint256 amount, uint256 index) external => DISPATCHER(true);
 

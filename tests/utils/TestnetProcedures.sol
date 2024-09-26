@@ -8,31 +8,31 @@ import {DeployUtils} from '../../src/deployments/contracts/utilities/DeployUtils
 import {FfiUtils} from '../../src/deployments/contracts/utilities/FfiUtils.sol';
 import {DefaultMarketInput} from '../../src/deployments/inputs/DefaultMarketInput.sol';
 import {AaveV3BatchOrchestration} from '../../src/deployments/projects/aave-v3-batched/AaveV3BatchOrchestration.sol';
-import {IPoolAddressesProvider} from 'aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol';
+import {IPoolAddressesProvider} from '../../src/contracts/interfaces/IPoolAddressesProvider.sol';
 import {AaveV3TestListing} from '../mocks/AaveV3TestListing.sol';
-import {ACLManager, Errors} from 'aave-v3-core/contracts/protocol/configuration/ACLManager.sol';
-import {WETH9} from 'aave-v3-core/contracts/dependencies/weth/WETH9.sol';
-import {TestnetERC20} from 'aave-v3-periphery/contracts/mocks/testnet-helpers/TestnetERC20.sol';
-import {PoolConfigurator} from 'aave-v3-core/contracts/protocol/pool/PoolConfigurator.sol';
-import {DefaultReserveInterestRateStrategyV2} from 'aave-v3-core/contracts/protocol/pool/DefaultReserveInterestRateStrategyV2.sol';
-import {ReserveConfiguration} from 'aave-v3-core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
-import {PercentageMath} from 'aave-v3-core/contracts/protocol/libraries/math/PercentageMath.sol';
-import {AaveProtocolDataProvider} from 'aave-v3-core/contracts/misc/AaveProtocolDataProvider.sol';
+import {ACLManager, Errors} from '../../src/contracts/protocol/configuration/ACLManager.sol';
+import {WETH9} from '../../src/contracts/dependencies/weth/WETH9.sol';
+import {TestnetERC20} from '../../src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
+import {PoolConfigurator} from '../../src/contracts/protocol/pool/PoolConfigurator.sol';
+import {DefaultReserveInterestRateStrategyV2} from '../../src/contracts/misc/DefaultReserveInterestRateStrategyV2.sol';
+import {ReserveConfiguration} from '../../src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
+import {PercentageMath} from '../../src/contracts/protocol/libraries/math/PercentageMath.sol';
+import {AaveProtocolDataProvider} from '../../src/contracts/helpers/AaveProtocolDataProvider.sol';
 import {MarketReportUtils} from '../../src/deployments/contracts/utilities/MarketReportUtils.sol';
-import {AaveV3ConfigEngine, IAaveV3ConfigEngine} from 'aave-v3-periphery/contracts/v3-config-engine/AaveV3ConfigEngine.sol';
+import {AaveV3ConfigEngine, IAaveV3ConfigEngine} from '../../src/contracts/extensions/v3-config-engine/AaveV3ConfigEngine.sol';
 
 struct TestVars {
+  uint8 underlyingDecimals;
   string aTokenName;
   string aTokenSymbol;
   string variableDebtName;
   string variableDebtSymbol;
-  string stableDebtName;
-  string stableDebtSymbol;
   address rateStrategy;
-  bytes interestRateData;
-  bytes emptyParams;
-  uint256 previousReservesLength;
+  address incentivesController;
+  address treasury;
+  bool useVirtualBalance;
 }
+
 struct TestReserveConfig {
   uint256 decimals;
   uint256 ltv;
@@ -41,7 +41,6 @@ struct TestReserveConfig {
   uint256 reserveFactor;
   bool usageAsCollateralEnabled;
   bool borrowingEnabled;
-  bool stableBorrowRateEnabled;
   bool isActive;
   bool isFrozen;
   bool isPaused;
@@ -84,7 +83,6 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     uint16 ltv;
     uint16 lt;
     uint16 lb;
-    address oracle;
     string label;
   }
 
@@ -254,7 +252,7 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
       uint256 reserveFactor,
       bool usageAsCollateralEnabled,
       bool borrowingEnabled,
-      bool stableBorrowRateEnabled,
+      ,
       bool isActive,
       bool isFrozen
     ) = IPoolDataProvider(dataProvider).getReserveConfigurationData(reserve);
@@ -265,7 +263,6 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     c.reserveFactor = reserveFactor;
     c.usageAsCollateralEnabled = usageAsCollateralEnabled;
     c.borrowingEnabled = borrowingEnabled;
-    c.stableBorrowRateEnabled = stableBorrowRateEnabled;
     c.isActive = isActive;
     c.isFrozen = isFrozen;
     c.isPaused = IPoolDataProvider(dataProvider).getPaused(reserve);
@@ -278,57 +275,66 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     return string(abi.encodePacked(a, vm.toString(b)));
   }
 
-  function _generateListingInput(
-    uint256 listings,
+  function _generateInitConfig(
+    TestVars memory t,
     MarketReport memory r,
-    address poolAdminUser
+    address poolAdminUser,
+    bool isValidDecimals
+  ) internal returns (ConfiguratorInputTypes.InitReserveInput[] memory) {
+    TestVars[] memory tArray = new TestVars[](1);
+    tArray[0] = t;
+    return _generateInitConfig(tArray, r, poolAdminUser, isValidDecimals);
+  }
+
+  function _generateInitConfig(
+    TestVars[] memory t,
+    MarketReport memory r,
+    address poolAdminUser,
+    bool isValidDecimals
   ) internal returns (ConfiguratorInputTypes.InitReserveInput[] memory) {
     ConfiguratorInputTypes.InitReserveInput[]
-      memory input = new ConfiguratorInputTypes.InitReserveInput[](listings);
-
-    for (uint256 x; x < listings; ++x) {
-      TestnetERC20 listingToken = new TestnetERC20(
-        _concatStr('Token', x),
-        _concatStr('T', x),
-        uint8(10 + x),
-        poolAdminUser
-      );
-      TestVars memory t;
-      t.aTokenName = _concatStr('AToken ', x);
-      t.aTokenName = _concatStr('a ', x);
-      t.variableDebtName = _concatStr('Variable Debt Misc', x);
-      t.variableDebtSymbol = _concatStr('varDebtMISC ', x);
-      t.stableDebtName = _concatStr('Stable Debt Misc ', x);
-      t.stableDebtSymbol = _concatStr('stableDebtMISC ', x);
-      t.rateStrategy = r.defaultInterestRateStrategy;
-      t.interestRateData = abi.encode(
-        IDefaultInterestRateStrategyV2.InterestRateData({
-          optimalUsageRatio: 80_00,
-          baseVariableBorrowRate: 1_00,
-          variableRateSlope1: 4_00,
-          variableRateSlope2: 60_00
-        })
-      );
-
-      input[x] = ConfiguratorInputTypes.InitReserveInput(
-        r.aToken,
-        r.stableDebtToken,
-        r.variableDebtToken,
-        true,
-        t.rateStrategy,
-        address(listingToken),
-        r.treasury,
-        r.rewardsControllerProxy,
-        t.aTokenName,
-        t.aTokenSymbol,
-        t.variableDebtName,
-        t.variableDebtSymbol,
-        t.stableDebtName,
-        t.stableDebtSymbol,
-        t.emptyParams,
-        t.interestRateData
-      );
+      memory configurations = new ConfiguratorInputTypes.InitReserveInput[](t.length);
+    for (uint256 i = 0; i < t.length; i++) {
+      configurations[i] = _generateInitReserveInput(t[i], r, poolAdminUser, isValidDecimals);
     }
+    return configurations;
+  }
+
+  function _generateInitReserveInput(
+    TestVars memory t,
+    MarketReport memory r,
+    address poolAdminUser,
+    bool isValidDecimals
+  ) internal returns (ConfiguratorInputTypes.InitReserveInput memory) {
+    if (isValidDecimals) {
+      t.underlyingDecimals = uint8(bound(t.underlyingDecimals, 6, 25));
+    } else {
+      t.underlyingDecimals = uint8(bound(t.underlyingDecimals, 0, 5));
+    }
+
+    ConfiguratorInputTypes.InitReserveInput memory input;
+    input.aTokenImpl = r.aToken;
+    input.underlyingAsset = address(
+      new TestnetERC20('Misc Token', 'MISC', t.underlyingDecimals, poolAdminUser)
+    );
+    input.variableDebtTokenImpl = r.variableDebtToken;
+    input.useVirtualBalance = t.useVirtualBalance;
+    input.interestRateStrategyAddress = r.defaultInterestRateStrategy;
+    input.treasury = t.treasury;
+    input.incentivesController = r.rewardsControllerProxy;
+    input.aTokenName = t.aTokenName;
+    input.aTokenSymbol = t.aTokenSymbol;
+    input.variableDebtTokenName = t.variableDebtName;
+    input.variableDebtTokenSymbol = t.variableDebtSymbol;
+    input.params = bytes('');
+    input.interestRateData = abi.encode(
+      IDefaultInterestRateStrategyV2.InterestRateData({
+        optimalUsageRatio: 80_00,
+        baseVariableBorrowRate: 1_00,
+        variableRateSlope1: 4_00,
+        variableRateSlope2: 60_00
+      })
+    );
 
     return input;
   }
@@ -338,11 +344,11 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
   }
 
   function _genCategoryOne() internal pure returns (EModeCategoryInput memory) {
-    return EModeCategoryInput(1, 95_00, 96_00, 101_00, address(0x0), 'GROUP_A');
+    return EModeCategoryInput(1, 95_00, 96_00, 101_00, 'GROUP_A');
   }
 
   function _genCategoryTwo() internal pure returns (EModeCategoryInput memory) {
-    return EModeCategoryInput(2, 96_00, 97_00, 101_50, address(0x0), 'GROUP_B');
+    return EModeCategoryInput(2, 96_00, 97_00, 101_50, 'GROUP_B');
   }
 
   function _calcPrice(uint256 price, uint256 percent) public pure returns (uint256) {
@@ -353,7 +359,6 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
 
   function _calculateInterestRates(
     uint256 borrowAmount,
-    uint256 borrowMode,
     address token
   ) internal view returns (uint256) {
     DataTypes.ReserveDataLegacy memory reserveData = IPool(report.poolProxy).getReserveData(token);
@@ -366,22 +371,15 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
       unbacked: 0,
       liquidityAdded: 0,
       liquidityTaken: borrowAmount,
-      totalStableDebt: borrowMode == 1 ? borrowAmount : 0,
-      totalVariableDebt: borrowMode == 2 ? borrowAmount : 0,
-      averageStableBorrowRate: 0,
+      totalDebt: borrowAmount,
       reserveFactor: reserveConfig.reserveFactor,
       reserve: token,
       usingVirtualBalance: IPool(report.poolProxy).getConfiguration(token).getIsVirtualAccActive(),
       virtualUnderlyingBalance: IPool(report.poolProxy).getVirtualUnderlyingBalance(token)
     });
 
-    if (borrowMode == 2) {
-      (, , uint256 expectedVariableBorrowRate) = rateStrategy.calculateInterestRates(input);
-      return expectedVariableBorrowRate;
-    } else {
-      (, uint256 stableRate, ) = rateStrategy.calculateInterestRates(input);
-      return stableRate;
-    }
+    (, uint256 expectedVariableBorrowRate) = rateStrategy.calculateInterestRates(input);
+    return expectedVariableBorrowRate;
   }
 
   function _deployInterestRateStrategy() internal returns (address) {

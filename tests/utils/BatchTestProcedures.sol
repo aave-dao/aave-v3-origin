@@ -11,14 +11,14 @@ import {AaveV3SetupBatch} from '../../src/deployments/projects/aave-v3-batched/b
 import {FfiUtils} from '../../src/deployments/contracts/utilities/FfiUtils.sol';
 import {DefaultMarketInput} from '../../src/deployments/inputs/DefaultMarketInput.sol';
 import {AaveV3BatchOrchestration} from '../../src/deployments/projects/aave-v3-batched/AaveV3BatchOrchestration.sol';
-import {IPoolAddressesProvider} from 'aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol';
-import {IRewardsController} from 'aave-v3-periphery/contracts/rewards/interfaces/IRewardsController.sol';
-import {ACLManager} from 'aave-v3-core/contracts/protocol/configuration/ACLManager.sol';
-import {WETH9} from 'aave-v3-core/contracts/dependencies/weth/WETH9.sol';
-import 'aave-v3-periphery/contracts/mocks/testnet-helpers/TestnetERC20.sol';
-import 'aave-v3-core/contracts/protocol/pool/PoolConfigurator.sol';
-import 'aave-v3-core/contracts/protocol/libraries/math/PercentageMath.sol';
-import 'aave-v3-core/contracts/misc/AaveProtocolDataProvider.sol';
+import {IPoolAddressesProvider} from '../../src/contracts/interfaces/IPoolAddressesProvider.sol';
+import {ACLManager} from '../../src/contracts/protocol/configuration/ACLManager.sol';
+import {WETH9} from '../../src/contracts/dependencies/weth/WETH9.sol';
+import {IRewardsController} from '../../src/contracts/rewards/interfaces/IRewardsController.sol';
+import '../../src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
+import '../../src/contracts/protocol/pool/PoolConfigurator.sol';
+import '../../src/contracts/protocol/libraries/math/PercentageMath.sol';
+import '../../src/contracts/helpers/AaveProtocolDataProvider.sol';
 import {MarketReportUtils} from '../../src/deployments/contracts/utilities/MarketReportUtils.sol';
 
 struct TestVars {
@@ -213,8 +213,6 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
 
     assertTrue(r.aToken != address(0), 'report.aToken');
     assertTrue(r.variableDebtToken != address(0), 'report.variableDebtToken');
-    assertTrue(r.stableDebtToken != address(0), 'report.stableDebtToken');
-
     assertTrue(r.emissionManager != address(0), 'report.emissionManager');
     assertTrue(r.rewardsControllerProxy != address(0), 'report.rewardsControllerProxy');
 
@@ -317,8 +315,6 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
       t.aTokenName = _concatStr('a ', x);
       t.variableDebtName = _concatStr('Variable Debt Misc', x);
       t.variableDebtSymbol = _concatStr('varDebtMISC ', x);
-      t.stableDebtName = _concatStr('Stable Debt Misc ', x);
-      t.stableDebtSymbol = _concatStr('stableDebtMISC ', x);
       t.rateStrategy = r.defaultInterestRateStrategy;
       t.interestRateData = abi.encode(
         IDefaultInterestRateStrategyV2.InterestRateData({
@@ -331,7 +327,6 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
 
       input[x] = ConfiguratorInputTypes.InitReserveInput(
         r.aToken,
-        r.stableDebtToken,
         r.variableDebtToken,
         true,
         t.rateStrategy,
@@ -342,8 +337,6 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
         t.aTokenSymbol,
         t.variableDebtName,
         t.variableDebtSymbol,
-        t.stableDebtName,
-        t.stableDebtSymbol,
         t.emptyParams,
         t.interestRateData
       );

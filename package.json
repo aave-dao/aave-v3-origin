@@ -22,7 +22,7 @@
     "prettier-plugin-solidity": "^1.1.1"
   },
   "dependencies": {
-    "@bgd-labs/aave-cli": "^0.16.4",
+    "@bgd-labs/aave-cli": "^1.0.0",
     "catapulta-verify": "^1.1.1"
   }
 }

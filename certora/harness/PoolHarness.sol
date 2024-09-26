@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.19;
 
-import {PoolInstance} from '../munged/core/instances/PoolInstance.sol';
-import {DataTypes} from '../munged/core/contracts/protocol/libraries/types/DataTypes.sol';
-import {ReserveLogic} from '../munged/core/contracts/protocol/libraries/logic/ReserveLogic.sol';
-import {IPoolAddressesProvider} from '../munged/core/contracts/interfaces/IPoolAddressesProvider.sol';
+import {PoolInstance} from '../munged/contracts/instances/PoolInstance.sol';
+import {DataTypes} from '../munged/contracts/protocol/libraries/types/DataTypes.sol';
+import {ReserveLogic} from '../munged/contracts/protocol/libraries/logic/ReserveLogic.sol';
+import {IPoolAddressesProvider} from '../munged/contracts/interfaces/IPoolAddressesProvider.sol';
 
-import {IERC20} from '../../src/core/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
-import {ReserveConfiguration} from '../munged/core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
+import {IERC20} from '../../src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {ReserveConfiguration} from '../munged/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
 
 contract PoolHarness is PoolInstance {
   using ReserveLogic for DataTypes.ReserveData;
@@ -23,8 +23,7 @@ contract PoolHarness is PoolInstance {
 
   function getTotalDebt(address asset) public view returns (uint256) {
     uint256 totalVariable = IERC20(_reserves[asset].variableDebtTokenAddress).totalSupply();
-    uint256 totalStable = IERC20(_reserves[asset].stableDebtTokenAddress).totalSupply();
-    return totalVariable + totalStable;
+    return totalVariable;
   }
 
   function getTotalATokenSupply(address asset) public view returns (uint256) {
@@ -33,10 +32,6 @@ contract PoolHarness is PoolInstance {
 
   function getReserveLiquidityIndex(address asset) public view returns (uint256) {
     return _reserves[asset].liquidityIndex;
-  }
-
-  function getReserveStableBorrowRate(address asset) public view returns (uint256) {
-    return _reserves[asset].currentStableBorrowRate;
   }
 
   function getReserveVariableBorrowIndex(address asset) public view returns (uint256) {

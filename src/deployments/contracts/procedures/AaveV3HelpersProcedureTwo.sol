@@ -4,8 +4,8 @@ pragma solidity ^0.8.0;
 import '../../interfaces/IMarketReportTypes.sol';
 import {ITransparentProxyFactory} from 'solidity-utils/contracts/transparent-proxy/interfaces/ITransparentProxyFactory.sol';
 import {TransparentProxyFactory} from 'solidity-utils/contracts/transparent-proxy/TransparentProxyFactory.sol';
-import {StataTokenV2} from 'aave-v3-periphery/contracts/static-a-token/StataTokenV2.sol';
-import {StataTokenFactory} from 'aave-v3-periphery/contracts/static-a-token/StataTokenFactory.sol';
+import {StataTokenV2} from '../../../contracts/extensions/static-a-token/StataTokenV2.sol';
+import {StataTokenFactory} from '../../../contracts/extensions/static-a-token/StataTokenFactory.sol';
 import {IErrors} from '../../interfaces/IErrors.sol';
 
 contract AaveV3HelpersProcedureTwo is IErrors {

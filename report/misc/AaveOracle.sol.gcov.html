@@ -1,0 +1,231 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - lcov.info.p - misc/AaveOracle.sol</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="title">LCOV - code coverage report</td></tr>
+            <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+            <tr>
+              <td width="100%">
+                <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="10%" class="headerValue"><a href="../index.html" title="Click to go to top-level">top level</a> - <a href="index.html" title="Click to go to directory misc">misc</a> - AaveOracle.sol<span style="font-size: 80%;"> (source / <a href="AaveOracle.sol.func-c.html" title="Click to go to function table">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="5%"></td>
+            <td width="5%" class="headerCovTableHead">Coverage</td>
+            <td width="5%" class="headerCovTableHead" title="Covered + Uncovered code">Total</td>
+            <td width="5%" class="headerCovTableHead" title="Exercised code only">Hit</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">lcov.info.p</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntryMed">81.2&nbsp;%</td>
+            <td class="headerCovTableEntry">32</td>
+            <td class="headerCovTableEntry">26</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test Date:</td>
+            <td class="headerValue">2024-09-24 09:34:24</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntryHi">90.9&nbsp;%</td>
+            <td class="headerCovTableEntry">11</td>
+            <td class="headerCovTableEntry">10</td>
+          </tr>
+          <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td class="headerItem">Branches:</td>
+            <td class="headerCovTableEntryHi">-</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">0</td>
+          </tr>
+                  <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+          </table>
+
+          <table cellpadding=0 cellspacing=0 border=0>
+            <tr>
+              <td><br></td>
+            </tr>
+            <tr>
+              <td>
+<pre class="sourceHeading">             Branch data     Line data    Source code</pre>
+<pre class="source">
+<span id="L1"><span class="lineNum">       1</span>                 :             : // SPDX-License-Identifier: MIT</span>
+<span id="L2"><span class="lineNum">       2</span>                 :             : pragma solidity ^0.8.10;</span>
+<span id="L3"><span class="lineNum">       3</span>                 :             : </span>
+<span id="L4"><span class="lineNum">       4</span>                 :             : import {AggregatorInterface} from '../dependencies/chainlink/AggregatorInterface.sol';</span>
+<span id="L5"><span class="lineNum">       5</span>                 :             : import {Errors} from '../protocol/libraries/helpers/Errors.sol';</span>
+<span id="L6"><span class="lineNum">       6</span>                 :             : import {IACLManager} from '../interfaces/IACLManager.sol';</span>
+<span id="L7"><span class="lineNum">       7</span>                 :             : import {IPoolAddressesProvider} from '../interfaces/IPoolAddressesProvider.sol';</span>
+<span id="L8"><span class="lineNum">       8</span>                 :             : import {IPriceOracleGetter} from '../interfaces/IPriceOracleGetter.sol';</span>
+<span id="L9"><span class="lineNum">       9</span>                 :             : import {IAaveOracle} from '../interfaces/IAaveOracle.sol';</span>
+<span id="L10"><span class="lineNum">      10</span>                 :             : </span>
+<span id="L11"><span class="lineNum">      11</span>                 :             : /**</span>
+<span id="L12"><span class="lineNum">      12</span>                 :             :  * @title AaveOracle</span>
+<span id="L13"><span class="lineNum">      13</span>                 :             :  * @author Aave</span>
+<span id="L14"><span class="lineNum">      14</span>                 :             :  * @notice Contract to get asset prices, manage price sources and update the fallback oracle</span>
+<span id="L15"><span class="lineNum">      15</span>                 :             :  * - Use of Chainlink Aggregators as first source of price</span>
+<span id="L16"><span class="lineNum">      16</span>                 :             :  * - If the returned price by a Chainlink aggregator is &lt;= 0, the call is forwarded to a fallback oracle</span>
+<span id="L17"><span class="lineNum">      17</span>                 :             :  * - Owned by the Aave governance</span>
+<span id="L18"><span class="lineNum">      18</span>                 :             :  */</span>
+<span id="L19"><span class="lineNum">      19</span>                 :             : contract AaveOracle is IAaveOracle {</span>
+<span id="L20"><span class="lineNum">      20</span>                 :             :   IPoolAddressesProvider public immutable ADDRESSES_PROVIDER;</span>
+<span id="L21"><span class="lineNum">      21</span>                 :             : </span>
+<span id="L22"><span class="lineNum">      22</span>                 :             :   // Map of asset price sources (asset =&gt; priceSource)</span>
+<span id="L23"><span class="lineNum">      23</span>                 :             :   mapping(address =&gt; AggregatorInterface) private assetsSources;</span>
+<span id="L24"><span class="lineNum">      24</span>                 :             : </span>
+<span id="L25"><span class="lineNum">      25</span>                 :             :   IPriceOracleGetter private _fallbackOracle;</span>
+<span id="L26"><span class="lineNum">      26</span>                 :             :   address public immutable override BASE_CURRENCY;</span>
+<span id="L27"><span class="lineNum">      27</span>                 :             :   uint256 public immutable override BASE_CURRENCY_UNIT;</span>
+<span id="L28"><span class="lineNum">      28</span>                 :             : </span>
+<span id="L29"><span class="lineNum">      29</span>                 :             :   /**</span>
+<span id="L30"><span class="lineNum">      30</span>                 :             :    * @dev Only asset listing or pool admin can call functions marked by this modifier.</span>
+<span id="L31"><span class="lineNum">      31</span>                 :             :    */</span>
+<span id="L32"><span class="lineNum">      32</span>                 :             :   modifier onlyAssetListingOrPoolAdmins() {</span>
+<span id="L33"><span class="lineNum">      33</span>                 :<span class="tlaGNC tlaBgGNC">           4 :     _onlyAssetListingOrPoolAdmins();</span></span>
+<span id="L34"><span class="lineNum">      34</span>                 :             :     _;</span>
+<span id="L35"><span class="lineNum">      35</span>                 :             :   }</span>
+<span id="L36"><span class="lineNum">      36</span>                 :             : </span>
+<span id="L37"><span class="lineNum">      37</span>                 :             :   /**</span>
+<span id="L38"><span class="lineNum">      38</span>                 :             :    * @notice Constructor</span>
+<span id="L39"><span class="lineNum">      39</span>                 :             :    * @param provider The address of the new PoolAddressesProvider</span>
+<span id="L40"><span class="lineNum">      40</span>                 :             :    * @param assets The addresses of the assets</span>
+<span id="L41"><span class="lineNum">      41</span>                 :             :    * @param sources The address of the source of each asset</span>
+<span id="L42"><span class="lineNum">      42</span>                 :             :    * @param fallbackOracle The address of the fallback oracle to use if the data of an</span>
+<span id="L43"><span class="lineNum">      43</span>                 :             :    *        aggregator is not consistent</span>
+<span id="L44"><span class="lineNum">      44</span>                 :             :    * @param baseCurrency The base currency used for the price quotes. If USD is used, base currency is 0x0</span>
+<span id="L45"><span class="lineNum">      45</span>                 :             :    * @param baseCurrencyUnit The unit of the base currency</span>
+<span id="L46"><span class="lineNum">      46</span>                 :             :    */</span>
+<span id="L47"><span class="lineNum">      47</span>                 :             :   constructor(</span>
+<span id="L48"><span class="lineNum">      48</span>                 :             :     IPoolAddressesProvider provider,</span>
+<span id="L49"><span class="lineNum">      49</span>                 :             :     address[] memory assets,</span>
+<span id="L50"><span class="lineNum">      50</span>                 :             :     address[] memory sources,</span>
+<span id="L51"><span class="lineNum">      51</span>                 :             :     address fallbackOracle,</span>
+<span id="L52"><span class="lineNum">      52</span>                 :             :     address baseCurrency,</span>
+<span id="L53"><span class="lineNum">      53</span>                 :             :     uint256 baseCurrencyUnit</span>
+<span id="L54"><span class="lineNum">      54</span>                 :             :   ) {</span>
+<span id="L55"><span class="lineNum">      55</span>                 :<span class="tlaUNC tlaBgUNC">           0 :     ADDRESSES_PROVIDER = provider;</span></span>
+<span id="L56"><span class="lineNum">      56</span>                 :<span class="tlaUNC">           0 :     _setFallbackOracle(fallbackOracle);</span></span>
+<span id="L57"><span class="lineNum">      57</span>                 :<span class="tlaUNC">           0 :     _setAssetsSources(assets, sources);</span></span>
+<span id="L58"><span class="lineNum">      58</span>                 :<span class="tlaUNC">           0 :     BASE_CURRENCY = baseCurrency;</span></span>
+<span id="L59"><span class="lineNum">      59</span>                 :<span class="tlaUNC">           0 :     BASE_CURRENCY_UNIT = baseCurrencyUnit;</span></span>
+<span id="L60"><span class="lineNum">      60</span>                 :<span class="tlaUNC">           0 :     emit BaseCurrencySet(baseCurrency, baseCurrencyUnit);</span></span>
+<span id="L61"><span class="lineNum">      61</span>                 :             :   }</span>
+<span id="L62"><span class="lineNum">      62</span>                 :             : </span>
+<span id="L63"><span class="lineNum">      63</span>                 :             :   /// @inheritdoc IAaveOracle</span>
+<span id="L64"><span class="lineNum">      64</span>                 :             :   function setAssetSources(</span>
+<span id="L65"><span class="lineNum">      65</span>                 :             :     address[] calldata assets,</span>
+<span id="L66"><span class="lineNum">      66</span>                 :             :     address[] calldata sources</span>
+<span id="L67"><span class="lineNum">      67</span>                 :             :   ) external override onlyAssetListingOrPoolAdmins {</span>
+<span id="L68"><span class="lineNum">      68</span>                 :<span class="tlaGNC tlaBgGNC">         659 :     _setAssetsSources(assets, sources);</span></span>
+<span id="L69"><span class="lineNum">      69</span>                 :             :   }</span>
+<span id="L70"><span class="lineNum">      70</span>                 :             : </span>
+<span id="L71"><span class="lineNum">      71</span>                 :             :   /// @inheritdoc IAaveOracle</span>
+<span id="L72"><span class="lineNum">      72</span>                 :             :   function setFallbackOracle(</span>
+<span id="L73"><span class="lineNum">      73</span>                 :             :     address fallbackOracle</span>
+<span id="L74"><span class="lineNum">      74</span>                 :             :   ) external override onlyAssetListingOrPoolAdmins {</span>
+<span id="L75"><span class="lineNum">      75</span>                 :<span class="tlaGNC">           4 :     _setFallbackOracle(fallbackOracle);</span></span>
+<span id="L76"><span class="lineNum">      76</span>                 :             :   }</span>
+<span id="L77"><span class="lineNum">      77</span>                 :             : </span>
+<span id="L78"><span class="lineNum">      78</span>                 :             :   /**</span>
+<span id="L79"><span class="lineNum">      79</span>                 :             :    * @notice Internal function to set the sources for each asset</span>
+<span id="L80"><span class="lineNum">      80</span>                 :             :    * @param assets The addresses of the assets</span>
+<span id="L81"><span class="lineNum">      81</span>                 :             :    * @param sources The address of the source of each asset</span>
+<span id="L82"><span class="lineNum">      82</span>                 :             :    */</span>
+<span id="L83"><span class="lineNum">      83</span>                 :             :   function _setAssetsSources(address[] memory assets, address[] memory sources) internal {</span>
+<span id="L84"><span class="lineNum">      84</span>                 :<span class="tlaGNC">         659 :     require(assets.length == sources.length, Errors.INCONSISTENT_PARAMS_LENGTH);</span></span>
+<span id="L85"><span class="lineNum">      85</span>                 :<span class="tlaGNC">         658 :     for (uint256 i = 0; i &lt; assets.length; i++) {</span></span>
+<span id="L86"><span class="lineNum">      86</span>                 :<span class="tlaGNC">        1954 :       assetsSources[assets[i]] = AggregatorInterface(sources[i]);</span></span>
+<span id="L87"><span class="lineNum">      87</span>                 :<span class="tlaGNC">        1954 :       emit AssetSourceUpdated(assets[i], sources[i]);</span></span>
+<span id="L88"><span class="lineNum">      88</span>                 :             :     }</span>
+<span id="L89"><span class="lineNum">      89</span>                 :             :   }</span>
+<span id="L90"><span class="lineNum">      90</span>                 :             : </span>
+<span id="L91"><span class="lineNum">      91</span>                 :             :   /**</span>
+<span id="L92"><span class="lineNum">      92</span>                 :             :    * @notice Internal function to set the fallback oracle</span>
+<span id="L93"><span class="lineNum">      93</span>                 :             :    * @param fallbackOracle The address of the fallback oracle</span>
+<span id="L94"><span class="lineNum">      94</span>                 :             :    */</span>
+<span id="L95"><span class="lineNum">      95</span>                 :             :   function _setFallbackOracle(address fallbackOracle) internal {</span>
+<span id="L96"><span class="lineNum">      96</span>                 :<span class="tlaGNC">           4 :     _fallbackOracle = IPriceOracleGetter(fallbackOracle);</span></span>
+<span id="L97"><span class="lineNum">      97</span>                 :<span class="tlaGNC">           4 :     emit FallbackOracleUpdated(fallbackOracle);</span></span>
+<span id="L98"><span class="lineNum">      98</span>                 :             :   }</span>
+<span id="L99"><span class="lineNum">      99</span>                 :             : </span>
+<span id="L100"><span class="lineNum">     100</span>                 :             :   /// @inheritdoc IPriceOracleGetter</span>
+<span id="L101"><span class="lineNum">     101</span>                 :             :   function getAssetPrice(address asset) public view override returns (uint256) {</span>
+<span id="L102"><span class="lineNum">     102</span>                 :<span class="tlaGNC">      111432 :     AggregatorInterface source = assetsSources[asset];</span></span>
+<span id="L103"><span class="lineNum">     103</span>                 :             : </span>
+<span id="L104"><span class="lineNum">     104</span>                 :<span class="tlaGNC">      111432 :     if (asset == BASE_CURRENCY) {</span></span>
+<span id="L105"><span class="lineNum">     105</span>                 :<span class="tlaGNC">           2 :       return BASE_CURRENCY_UNIT;</span></span>
+<span id="L106"><span class="lineNum">     106</span>                 :<span class="tlaGNC">      111430 :     } else if (address(source) == address(0)) {</span></span>
+<span id="L107"><span class="lineNum">     107</span>                 :<span class="tlaGNC">           3 :       return _fallbackOracle.getAssetPrice(asset);</span></span>
+<span id="L108"><span class="lineNum">     108</span>                 :             :     } else {</span>
+<span id="L109"><span class="lineNum">     109</span>                 :<span class="tlaGNC">      111427 :       int256 price = source.latestAnswer();</span></span>
+<span id="L110"><span class="lineNum">     110</span>                 :<span class="tlaGNC">      111427 :       if (price &gt; 0) {</span></span>
+<span id="L111"><span class="lineNum">     111</span>                 :<span class="tlaGNC">      111424 :         return uint256(price);</span></span>
+<span id="L112"><span class="lineNum">     112</span>                 :             :       } else {</span>
+<span id="L113"><span class="lineNum">     113</span>                 :<span class="tlaGNC">           3 :         return _fallbackOracle.getAssetPrice(asset);</span></span>
+<span id="L114"><span class="lineNum">     114</span>                 :             :       }</span>
+<span id="L115"><span class="lineNum">     115</span>                 :             :     }</span>
+<span id="L116"><span class="lineNum">     116</span>                 :             :   }</span>
+<span id="L117"><span class="lineNum">     117</span>                 :             : </span>
+<span id="L118"><span class="lineNum">     118</span>                 :             :   /// @inheritdoc IAaveOracle</span>
+<span id="L119"><span class="lineNum">     119</span>                 :             :   function getAssetsPrices(</span>
+<span id="L120"><span class="lineNum">     120</span>                 :             :     address[] calldata assets</span>
+<span id="L121"><span class="lineNum">     121</span>                 :             :   ) external view override returns (uint256[] memory) {</span>
+<span id="L122"><span class="lineNum">     122</span>                 :<span class="tlaGNC">           3 :     uint256[] memory prices = new uint256[](assets.length);</span></span>
+<span id="L123"><span class="lineNum">     123</span>                 :<span class="tlaGNC">           3 :     for (uint256 i = 0; i &lt; assets.length; i++) {</span></span>
+<span id="L124"><span class="lineNum">     124</span>                 :<span class="tlaGNC">           3 :       prices[i] = getAssetPrice(assets[i]);</span></span>
+<span id="L125"><span class="lineNum">     125</span>                 :             :     }</span>
+<span id="L126"><span class="lineNum">     126</span>                 :<span class="tlaGNC">           2 :     return prices;</span></span>
+<span id="L127"><span class="lineNum">     127</span>                 :             :   }</span>
+<span id="L128"><span class="lineNum">     128</span>                 :             : </span>
+<span id="L129"><span class="lineNum">     129</span>                 :             :   /// @inheritdoc IAaveOracle</span>
+<span id="L130"><span class="lineNum">     130</span>                 :             :   function getSourceOfAsset(address asset) external view override returns (address) {</span>
+<span id="L131"><span class="lineNum">     131</span>                 :<span class="tlaGNC">        4115 :     return address(assetsSources[asset]);</span></span>
+<span id="L132"><span class="lineNum">     132</span>                 :             :   }</span>
+<span id="L133"><span class="lineNum">     133</span>                 :             : </span>
+<span id="L134"><span class="lineNum">     134</span>                 :             :   /// @inheritdoc IAaveOracle</span>
+<span id="L135"><span class="lineNum">     135</span>                 :             :   function getFallbackOracle() external view returns (address) {</span>
+<span id="L136"><span class="lineNum">     136</span>                 :<span class="tlaGNC">           3 :     return address(_fallbackOracle);</span></span>
+<span id="L137"><span class="lineNum">     137</span>                 :             :   }</span>
+<span id="L138"><span class="lineNum">     138</span>                 :             : </span>
+<span id="L139"><span class="lineNum">     139</span>                 :             :   function _onlyAssetListingOrPoolAdmins() internal view {</span>
+<span id="L140"><span class="lineNum">     140</span>                 :<span class="tlaGNC">         664 :     IACLManager aclManager = IACLManager(ADDRESSES_PROVIDER.getACLManager());</span></span>
+<span id="L141"><span class="lineNum">     141</span>                 :<span class="tlaGNC">         664 :     require(</span></span>
+<span id="L142"><span class="lineNum">     142</span>                 :             :       aclManager.isAssetListingAdmin(msg.sender) || aclManager.isPoolAdmin(msg.sender),</span>
+<span id="L143"><span class="lineNum">     143</span>                 :             :       Errors.CALLER_NOT_ASSET_LISTING_OR_POOL_ADMIN</span>
+<span id="L144"><span class="lineNum">     144</span>                 :             :     );</span>
+<span id="L145"><span class="lineNum">     145</span>                 :             :   }</span>
+<span id="L146"><span class="lineNum">     146</span>                 :             : }</span>
+        </pre>
+              </td>
+            </tr>
+          </table>
+          <br>
+
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+            <tr><td class="versionInfo">Generated by: <a href="https://github.com//linux-test-project/lcov" target="_parent">LCOV version 2.1-1</a></td></tr>
+          </table>
+          <br>
+
+</body>
+</html>

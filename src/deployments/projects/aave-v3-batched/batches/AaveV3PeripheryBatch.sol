@@ -7,9 +7,9 @@ import {AaveV3IncentiveProcedure} from '../../../contracts/procedures/AaveV3Ince
 import {AaveV3DefaultRateStrategyProcedure} from '../../../contracts/procedures/AaveV3DefaultRateStrategyProcedure.sol';
 import {IOwnable} from 'solidity-utils/contracts/transparent-proxy/interfaces/IOwnable.sol';
 import '../../../interfaces/IMarketReportTypes.sol';
-import {IRewardsController} from '../../../../periphery/contracts/rewards/interfaces/IRewardsController.sol';
+import {IRewardsController} from '../../../../contracts/rewards/interfaces/IRewardsController.sol';
 import {IOwnable} from 'solidity-utils/contracts/transparent-proxy/interfaces/IOwnable.sol';
-import {RevenueSplitter} from '../../../../periphery/contracts/treasury/RevenueSplitter.sol';
+import {RevenueSplitter} from '../../../../contracts/treasury/RevenueSplitter.sol';
 
 contract AaveV3PeripheryBatch is
   AaveV3TreasuryProcedure,

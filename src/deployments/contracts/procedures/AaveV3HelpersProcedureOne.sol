@@ -3,10 +3,10 @@ pragma solidity ^0.8.0;
 
 import {Create2Utils} from '../utilities/Create2Utils.sol';
 import {ConfigEngineReport} from '../../interfaces/IMarketReportTypes.sol';
-import {AaveV3ConfigEngine, IAaveV3ConfigEngine, CapsEngine, BorrowEngine, CollateralEngine, RateEngine, PriceFeedEngine, EModeEngine, ListingEngine} from 'aave-v3-periphery/contracts/v3-config-engine/AaveV3ConfigEngine.sol';
-import {IPool} from 'aave-v3-core/contracts/interfaces/IPool.sol';
-import {IPoolConfigurator} from 'aave-v3-core/contracts/interfaces/IPoolConfigurator.sol';
-import {IAaveOracle} from 'aave-v3-core/contracts/interfaces/IAaveOracle.sol';
+import {AaveV3ConfigEngine, IAaveV3ConfigEngine, CapsEngine, BorrowEngine, CollateralEngine, RateEngine, PriceFeedEngine, EModeEngine, ListingEngine} from '../../../contracts/extensions/v3-config-engine/AaveV3ConfigEngine.sol';
+import {IPool} from '../../../contracts/interfaces/IPool.sol';
+import {IPoolConfigurator} from '../../../contracts/interfaces/IPoolConfigurator.sol';
+import {IAaveOracle} from '../../../contracts/interfaces/IAaveOracle.sol';
 
 contract AaveV3HelpersProcedureOne {
   function _deployConfigEngine(
@@ -17,8 +17,7 @@ contract AaveV3HelpersProcedureOne {
     address rewardsController,
     address collector,
     address aTokenImpl,
-    address vTokenImpl,
-    address sTokenImpl
+    address vTokenImpl
   ) internal returns (ConfigEngineReport memory configEngineReport) {
     IAaveV3ConfigEngine.EngineLibraries memory engineLibraries = IAaveV3ConfigEngine
       .EngineLibraries({
@@ -50,7 +49,7 @@ contract AaveV3HelpersProcedureOne {
     configEngineReport.capsEngine = engineLibraries.capsEngine;
 
     configEngineReport.configEngine = address(
-      new AaveV3ConfigEngine(aTokenImpl, vTokenImpl, sTokenImpl, engineConstants, engineLibraries)
+      new AaveV3ConfigEngine(aTokenImpl, vTokenImpl, engineConstants, engineLibraries)
     );
     return configEngineReport;
   }

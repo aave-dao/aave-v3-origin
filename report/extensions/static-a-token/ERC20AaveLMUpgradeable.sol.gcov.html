@@ -1,0 +1,391 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - lcov.info.p - extensions/static-a-token/ERC20AaveLMUpgradeable.sol</title>
+  <link rel="stylesheet" type="text/css" href="../../gcov.css">
+</head>
+
+<body>
+
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="title">LCOV - code coverage report</td></tr>
+            <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+
+            <tr>
+              <td width="100%">
+                <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="10%" class="headerValue"><a href="../../index.html" title="Click to go to top-level">top level</a> - <a href="index.html" title="Click to go to directory extensions/static-a-token">extensions/static-a-token</a> - ERC20AaveLMUpgradeable.sol<span style="font-size: 80%;"> (source / <a href="ERC20AaveLMUpgradeable.sol.func-c.html" title="Click to go to function table">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="5%"></td>
+            <td width="5%" class="headerCovTableHead">Coverage</td>
+            <td width="5%" class="headerCovTableHead" title="Covered + Uncovered code">Total</td>
+            <td width="5%" class="headerCovTableHead" title="Exercised code only">Hit</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">lcov.info.p</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntryHi">92.5&nbsp;%</td>
+            <td class="headerCovTableEntry">93</td>
+            <td class="headerCovTableEntry">86</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test Date:</td>
+            <td class="headerValue">2024-09-24 09:34:24</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntryHi">90.9&nbsp;%</td>
+            <td class="headerCovTableEntry">22</td>
+            <td class="headerCovTableEntry">20</td>
+          </tr>
+          <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td class="headerItem">Branches:</td>
+            <td class="headerCovTableEntryHi">-</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">0</td>
+          </tr>
+                  <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+          </table>
+
+          <table cellpadding=0 cellspacing=0 border=0>
+            <tr>
+              <td><br></td>
+            </tr>
+            <tr>
+              <td>
+<pre class="sourceHeading">             Branch data     Line data    Source code</pre>
+<pre class="source">
+<span id="L1"><span class="lineNum">       1</span>                 :             : // SPDX-License-Identifier: BUSL-1.1</span>
+<span id="L2"><span class="lineNum">       2</span>                 :             : pragma solidity ^0.8.17;</span>
+<span id="L3"><span class="lineNum">       3</span>                 :             : </span>
+<span id="L4"><span class="lineNum">       4</span>                 :             : import {ERC20Upgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol';</span>
+<span id="L5"><span class="lineNum">       5</span>                 :             : import {IERC20} from 'openzeppelin-contracts/contracts/interfaces/IERC20.sol';</span>
+<span id="L6"><span class="lineNum">       6</span>                 :             : import {SafeERC20} from 'openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol';</span>
+<span id="L7"><span class="lineNum">       7</span>                 :             : import {SafeCast} from 'solidity-utils/contracts/oz-common/SafeCast.sol';</span>
+<span id="L8"><span class="lineNum">       8</span>                 :             : </span>
+<span id="L9"><span class="lineNum">       9</span>                 :             : import {IRewardsController} from '../../rewards/interfaces/IRewardsController.sol';</span>
+<span id="L10"><span class="lineNum">      10</span>                 :             : import {IERC20AaveLM} from './interfaces/IERC20AaveLM.sol';</span>
+<span id="L11"><span class="lineNum">      11</span>                 :             : </span>
+<span id="L12"><span class="lineNum">      12</span>                 :             : /**</span>
+<span id="L13"><span class="lineNum">      13</span>                 :             :  * @title ERC20AaveLMUpgradeable.sol</span>
+<span id="L14"><span class="lineNum">      14</span>                 :             :  * @notice Wrapper smart contract that supports tracking and claiming liquidity mining rewards from the Aave system</span>
+<span id="L15"><span class="lineNum">      15</span>                 :             :  * @dev ERC20 extension, so ERC20 initialization should be done by the children contract/s</span>
+<span id="L16"><span class="lineNum">      16</span>                 :             :  * @author BGD labs</span>
+<span id="L17"><span class="lineNum">      17</span>                 :             :  */</span>
+<span id="L18"><span class="lineNum">      18</span>                 :             : abstract contract ERC20AaveLMUpgradeable is ERC20Upgradeable, IERC20AaveLM {</span>
+<span id="L19"><span class="lineNum">      19</span>                 :             :   using SafeCast for uint256;</span>
+<span id="L20"><span class="lineNum">      20</span>                 :             : </span>
+<span id="L21"><span class="lineNum">      21</span>                 :             :   /// @custom:storage-location erc7201:aave-dao.storage.ERC20AaveLM</span>
+<span id="L22"><span class="lineNum">      22</span>                 :             :   struct ERC20AaveLMStorage {</span>
+<span id="L23"><span class="lineNum">      23</span>                 :             :     address _referenceAsset; // a/v token to track rewards on INCENTIVES_CONTROLLER</span>
+<span id="L24"><span class="lineNum">      24</span>                 :             :     address[] _rewardTokens;</span>
+<span id="L25"><span class="lineNum">      25</span>                 :             :     mapping(address user =&gt; RewardIndexCache cache) _startIndex;</span>
+<span id="L26"><span class="lineNum">      26</span>                 :             :     mapping(address user =&gt; mapping(address reward =&gt; UserRewardsData cache)) _userRewardsData;</span>
+<span id="L27"><span class="lineNum">      27</span>                 :             :   }</span>
+<span id="L28"><span class="lineNum">      28</span>                 :             : </span>
+<span id="L29"><span class="lineNum">      29</span>                 :             :   // keccak256(abi.encode(uint256(keccak256(&quot;aave-dao.storage.ERC20AaveLM&quot;)) - 1)) &amp; ~bytes32(uint256(0xff))</span>
+<span id="L30"><span class="lineNum">      30</span>                 :             :   bytes32 private constant ERC20AaveLMStorageLocation =</span>
+<span id="L31"><span class="lineNum">      31</span>                 :             :     0x4fad66563f105be0bff96185c9058c4934b504d3ba15ca31e86294f0b01fd200;</span>
+<span id="L32"><span class="lineNum">      32</span>                 :             : </span>
+<span id="L33"><span class="lineNum">      33</span>                 :             :   function _getERC20AaveLMStorage() private pure returns (ERC20AaveLMStorage storage $) {</span>
+<span id="L34"><span class="lineNum">      34</span>                 :             :     assembly {</span>
+<span id="L35"><span class="lineNum">      35</span>                 :<span class="tlaGNC tlaBgGNC">      119662 :       $.slot := ERC20AaveLMStorageLocation</span></span>
+<span id="L36"><span class="lineNum">      36</span>                 :             :     }</span>
+<span id="L37"><span class="lineNum">      37</span>                 :             :   }</span>
+<span id="L38"><span class="lineNum">      38</span>                 :             : </span>
+<span id="L39"><span class="lineNum">      39</span>                 :             :   IRewardsController public immutable INCENTIVES_CONTROLLER;</span>
+<span id="L40"><span class="lineNum">      40</span>                 :             : </span>
+<span id="L41"><span class="lineNum">      41</span>                 :             :   constructor(IRewardsController rewardsController) {</span>
+<span id="L42"><span class="lineNum">      42</span>                 :<span class="tlaUNC tlaBgUNC">           0 :     INCENTIVES_CONTROLLER = rewardsController;</span></span>
+<span id="L43"><span class="lineNum">      43</span>                 :             :   }</span>
+<span id="L44"><span class="lineNum">      44</span>                 :             : </span>
+<span id="L45"><span class="lineNum">      45</span>                 :             :   function __ERC20AaveLM_init(address referenceAsset_) internal onlyInitializing {</span>
+<span id="L46"><span class="lineNum">      46</span>                 :<span class="tlaGNC tlaBgGNC">          85 :     __ERC20AaveLM_init_unchained(referenceAsset_);</span></span>
+<span id="L47"><span class="lineNum">      47</span>                 :             :   }</span>
+<span id="L48"><span class="lineNum">      48</span>                 :             : </span>
+<span id="L49"><span class="lineNum">      49</span>                 :             :   function __ERC20AaveLM_init_unchained(address referenceAsset_) internal onlyInitializing {</span>
+<span id="L50"><span class="lineNum">      50</span>                 :<span class="tlaGNC">          85 :     ERC20AaveLMStorage storage $ = _getERC20AaveLMStorage();</span></span>
+<span id="L51"><span class="lineNum">      51</span>                 :<span class="tlaGNC">          85 :     $._referenceAsset = referenceAsset_;</span></span>
+<span id="L52"><span class="lineNum">      52</span>                 :             : </span>
+<span id="L53"><span class="lineNum">      53</span>                 :<span class="tlaGNC">          85 :     if (INCENTIVES_CONTROLLER != IRewardsController(address(0))) {</span></span>
+<span id="L54"><span class="lineNum">      54</span>                 :<span class="tlaGNC">          85 :       refreshRewardTokens();</span></span>
+<span id="L55"><span class="lineNum">      55</span>                 :             :     }</span>
+<span id="L56"><span class="lineNum">      56</span>                 :             :   }</span>
+<span id="L57"><span class="lineNum">      57</span>                 :             : </span>
+<span id="L58"><span class="lineNum">      58</span>                 :             :   ///@inheritdoc IERC20AaveLM</span>
+<span id="L59"><span class="lineNum">      59</span>                 :             :   function claimRewardsOnBehalf(</span>
+<span id="L60"><span class="lineNum">      60</span>                 :             :     address onBehalfOf,</span>
+<span id="L61"><span class="lineNum">      61</span>                 :             :     address receiver,</span>
+<span id="L62"><span class="lineNum">      62</span>                 :             :     address[] memory rewards</span>
+<span id="L63"><span class="lineNum">      63</span>                 :             :   ) external {</span>
+<span id="L64"><span class="lineNum">      64</span>                 :<span class="tlaGNC">        3000 :     address msgSender = _msgSender();</span></span>
+<span id="L65"><span class="lineNum">      65</span>                 :<span class="tlaGNC">        3000 :     if (msgSender != onBehalfOf &amp;&amp; msgSender != INCENTIVES_CONTROLLER.getClaimer(onBehalfOf)) {</span></span>
+<span id="L66"><span class="lineNum">      66</span>                 :<span class="tlaGNC">        1000 :       revert InvalidClaimer(msgSender);</span></span>
+<span id="L67"><span class="lineNum">      67</span>                 :             :     }</span>
+<span id="L68"><span class="lineNum">      68</span>                 :             : </span>
+<span id="L69"><span class="lineNum">      69</span>                 :<span class="tlaGNC">        2000 :     _claimRewardsOnBehalf(onBehalfOf, receiver, rewards);</span></span>
+<span id="L70"><span class="lineNum">      70</span>                 :             :   }</span>
+<span id="L71"><span class="lineNum">      71</span>                 :             : </span>
+<span id="L72"><span class="lineNum">      72</span>                 :             :   ///@inheritdoc IERC20AaveLM</span>
+<span id="L73"><span class="lineNum">      73</span>                 :             :   function claimRewards(address receiver, address[] memory rewards) external {</span>
+<span id="L74"><span class="lineNum">      74</span>                 :<span class="tlaGNC">        1000 :     _claimRewardsOnBehalf(_msgSender(), receiver, rewards);</span></span>
+<span id="L75"><span class="lineNum">      75</span>                 :             :   }</span>
+<span id="L76"><span class="lineNum">      76</span>                 :             : </span>
+<span id="L77"><span class="lineNum">      77</span>                 :             :   ///@inheritdoc IERC20AaveLM</span>
+<span id="L78"><span class="lineNum">      78</span>                 :             :   function claimRewardsToSelf(address[] memory rewards) external {</span>
+<span id="L79"><span class="lineNum">      79</span>                 :<span class="tlaGNC">        1001 :     _claimRewardsOnBehalf(_msgSender(), _msgSender(), rewards);</span></span>
+<span id="L80"><span class="lineNum">      80</span>                 :             :   }</span>
+<span id="L81"><span class="lineNum">      81</span>                 :             : </span>
+<span id="L82"><span class="lineNum">      82</span>                 :             :   ///@inheritdoc IERC20AaveLM</span>
+<span id="L83"><span class="lineNum">      83</span>                 :             :   function refreshRewardTokens() public override {</span>
+<span id="L84"><span class="lineNum">      84</span>                 :<span class="tlaGNC">        9088 :     ERC20AaveLMStorage storage $ = _getERC20AaveLMStorage();</span></span>
+<span id="L85"><span class="lineNum">      85</span>                 :<span class="tlaGNC">        9088 :     address[] memory rewards = INCENTIVES_CONTROLLER.getRewardsByAsset($._referenceAsset);</span></span>
+<span id="L86"><span class="lineNum">      86</span>                 :<span class="tlaGNC">        9088 :     for (uint256 i = 0; i &lt; rewards.length; i++) {</span></span>
+<span id="L87"><span class="lineNum">      87</span>                 :<span class="tlaGNC">        9003 :       _registerRewardToken(rewards[i]);</span></span>
+<span id="L88"><span class="lineNum">      88</span>                 :             :     }</span>
+<span id="L89"><span class="lineNum">      89</span>                 :             :   }</span>
+<span id="L90"><span class="lineNum">      90</span>                 :             : </span>
+<span id="L91"><span class="lineNum">      91</span>                 :             :   ///@inheritdoc IERC20AaveLM</span>
+<span id="L92"><span class="lineNum">      92</span>                 :             :   function collectAndUpdateRewards(address reward) public returns (uint256) {</span>
+<span id="L93"><span class="lineNum">      93</span>                 :<span class="tlaGNC">        2517 :     if (reward == address(0)) {</span></span>
+<span id="L94"><span class="lineNum">      94</span>                 :<span class="tlaUNC tlaBgUNC">           0 :       return 0;</span></span>
+<span id="L95"><span class="lineNum">      95</span>                 :             :     }</span>
+<span id="L96"><span class="lineNum">      96</span>                 :             : </span>
+<span id="L97"><span class="lineNum">      97</span>                 :<span class="tlaGNC tlaBgGNC">        2517 :     ERC20AaveLMStorage storage $ = _getERC20AaveLMStorage();</span></span>
+<span id="L98"><span class="lineNum">      98</span>                 :<span class="tlaGNC">        2517 :     address[] memory assets = new address[](1);</span></span>
+<span id="L99"><span class="lineNum">      99</span>                 :<span class="tlaGNC">        2517 :     assets[0] = address($._referenceAsset);</span></span>
+<span id="L100"><span class="lineNum">     100</span>                 :             : </span>
+<span id="L101"><span class="lineNum">     101</span>                 :<span class="tlaGNC">        2517 :     return INCENTIVES_CONTROLLER.claimRewards(assets, type(uint256).max, address(this), reward);</span></span>
+<span id="L102"><span class="lineNum">     102</span>                 :             :   }</span>
+<span id="L103"><span class="lineNum">     103</span>                 :             : </span>
+<span id="L104"><span class="lineNum">     104</span>                 :             :   ///@inheritdoc IERC20AaveLM</span>
+<span id="L105"><span class="lineNum">     105</span>                 :             :   function isRegisteredRewardToken(address reward) public view override returns (bool) {</span>
+<span id="L106"><span class="lineNum">     106</span>                 :<span class="tlaGNC">        9006 :     ERC20AaveLMStorage storage $ = _getERC20AaveLMStorage();</span></span>
+<span id="L107"><span class="lineNum">     107</span>                 :<span class="tlaGNC">        9006 :     return $._startIndex[reward].isRegistered;</span></span>
+<span id="L108"><span class="lineNum">     108</span>                 :             :   }</span>
+<span id="L109"><span class="lineNum">     109</span>                 :             : </span>
+<span id="L110"><span class="lineNum">     110</span>                 :             :   ///@inheritdoc IERC20AaveLM</span>
+<span id="L111"><span class="lineNum">     111</span>                 :             :   function getCurrentRewardsIndex(address reward) public view returns (uint256) {</span>
+<span id="L112"><span class="lineNum">     112</span>                 :<span class="tlaGNC">       37953 :     if (address(reward) == address(0)) {</span></span>
+<span id="L113"><span class="lineNum">     113</span>                 :<span class="tlaUNC tlaBgUNC">           0 :       return 0;</span></span>
+<span id="L114"><span class="lineNum">     114</span>                 :             :     }</span>
+<span id="L115"><span class="lineNum">     115</span>                 :<span class="tlaGNC tlaBgGNC">       37953 :     ERC20AaveLMStorage storage $ = _getERC20AaveLMStorage();</span></span>
+<span id="L116"><span class="lineNum">     116</span>                 :<span class="tlaGNC">       37953 :     (, uint256 nextIndex) = INCENTIVES_CONTROLLER.getAssetIndex($._referenceAsset, reward);</span></span>
+<span id="L117"><span class="lineNum">     117</span>                 :<span class="tlaGNC">       37953 :     return nextIndex;</span></span>
+<span id="L118"><span class="lineNum">     118</span>                 :             :   }</span>
+<span id="L119"><span class="lineNum">     119</span>                 :             : </span>
+<span id="L120"><span class="lineNum">     120</span>                 :             :   ///@inheritdoc IERC20AaveLM</span>
+<span id="L121"><span class="lineNum">     121</span>                 :             :   function getTotalClaimableRewards(address reward) external view returns (uint256) {</span>
+<span id="L122"><span class="lineNum">     122</span>                 :<span class="tlaGNC">        1001 :     if (reward == address(0)) {</span></span>
+<span id="L123"><span class="lineNum">     123</span>                 :<span class="tlaUNC tlaBgUNC">           0 :       return 0;</span></span>
+<span id="L124"><span class="lineNum">     124</span>                 :             :     }</span>
+<span id="L125"><span class="lineNum">     125</span>                 :             : </span>
+<span id="L126"><span class="lineNum">     126</span>                 :<span class="tlaGNC tlaBgGNC">        1001 :     ERC20AaveLMStorage storage $ = _getERC20AaveLMStorage();</span></span>
+<span id="L127"><span class="lineNum">     127</span>                 :<span class="tlaGNC">        1001 :     address[] memory assets = new address[](1);</span></span>
+<span id="L128"><span class="lineNum">     128</span>                 :<span class="tlaGNC">        1001 :     assets[0] = $._referenceAsset;</span></span>
+<span id="L129"><span class="lineNum">     129</span>                 :<span class="tlaGNC">        1001 :     uint256 freshRewards = INCENTIVES_CONTROLLER.getUserRewards(assets, address(this), reward);</span></span>
+<span id="L130"><span class="lineNum">     130</span>                 :<span class="tlaGNC">        1001 :     return IERC20(reward).balanceOf(address(this)) + freshRewards;</span></span>
+<span id="L131"><span class="lineNum">     131</span>                 :             :   }</span>
+<span id="L132"><span class="lineNum">     132</span>                 :             : </span>
+<span id="L133"><span class="lineNum">     133</span>                 :             :   ///@inheritdoc IERC20AaveLM</span>
+<span id="L134"><span class="lineNum">     134</span>                 :             :   function getClaimableRewards(address user, address reward) external view returns (uint256) {</span>
+<span id="L135"><span class="lineNum">     135</span>                 :<span class="tlaGNC">       13361 :     return _getClaimableRewards(user, reward, balanceOf(user), getCurrentRewardsIndex(reward));</span></span>
+<span id="L136"><span class="lineNum">     136</span>                 :             :   }</span>
+<span id="L137"><span class="lineNum">     137</span>                 :             : </span>
+<span id="L138"><span class="lineNum">     138</span>                 :             :   ///@inheritdoc IERC20AaveLM</span>
+<span id="L139"><span class="lineNum">     139</span>                 :             :   function getUnclaimedRewards(address user, address reward) external view returns (uint256) {</span>
+<span id="L140"><span class="lineNum">     140</span>                 :<span class="tlaGNC">        4356 :     ERC20AaveLMStorage storage $ = _getERC20AaveLMStorage();</span></span>
+<span id="L141"><span class="lineNum">     141</span>                 :<span class="tlaGNC">        4356 :     return $._userRewardsData[user][reward].unclaimedRewards;</span></span>
+<span id="L142"><span class="lineNum">     142</span>                 :             :   }</span>
+<span id="L143"><span class="lineNum">     143</span>                 :             : </span>
+<span id="L144"><span class="lineNum">     144</span>                 :             :   ///@inheritdoc IERC20AaveLM</span>
+<span id="L145"><span class="lineNum">     145</span>                 :             :   function getReferenceAsset() external view returns (address) {</span>
+<span id="L146"><span class="lineNum">     146</span>                 :<span class="tlaGNC">           2 :     ERC20AaveLMStorage storage $ = _getERC20AaveLMStorage();</span></span>
+<span id="L147"><span class="lineNum">     147</span>                 :<span class="tlaGNC">           2 :     return $._referenceAsset;</span></span>
+<span id="L148"><span class="lineNum">     148</span>                 :             :   }</span>
+<span id="L149"><span class="lineNum">     149</span>                 :             : </span>
+<span id="L150"><span class="lineNum">     150</span>                 :             :   ///@inheritdoc IERC20AaveLM</span>
+<span id="L151"><span class="lineNum">     151</span>                 :             :   function rewardTokens() external view returns (address[] memory) {</span>
+<span id="L152"><span class="lineNum">     152</span>                 :<span class="tlaGNC">           1 :     ERC20AaveLMStorage storage $ = _getERC20AaveLMStorage();</span></span>
+<span id="L153"><span class="lineNum">     153</span>                 :<span class="tlaGNC">           1 :     return $._rewardTokens;</span></span>
+<span id="L154"><span class="lineNum">     154</span>                 :             :   }</span>
+<span id="L155"><span class="lineNum">     155</span>                 :             : </span>
+<span id="L156"><span class="lineNum">     156</span>                 :             :   /**</span>
+<span id="L157"><span class="lineNum">     157</span>                 :             :    * @notice Updates rewards for senders and receiver in a transfer (not updating rewards for address(0))</span>
+<span id="L158"><span class="lineNum">     158</span>                 :             :    * @param from The address of the sender of tokens</span>
+<span id="L159"><span class="lineNum">     159</span>                 :             :    * @param to The address of the receiver of tokens</span>
+<span id="L160"><span class="lineNum">     160</span>                 :             :    */</span>
+<span id="L161"><span class="lineNum">     161</span>                 :             :   function _update(address from, address to, uint256 amount) internal virtual override {</span>
+<span id="L162"><span class="lineNum">     162</span>                 :<span class="tlaGNC">       12595 :     ERC20AaveLMStorage storage $ = _getERC20AaveLMStorage();</span></span>
+<span id="L163"><span class="lineNum">     163</span>                 :<span class="tlaGNC">       12595 :     for (uint256 i = 0; i &lt; $._rewardTokens.length; i++) {</span></span>
+<span id="L164"><span class="lineNum">     164</span>                 :<span class="tlaGNC">       11589 :       address rewardToken = address($._rewardTokens[i]);</span></span>
+<span id="L165"><span class="lineNum">     165</span>                 :<span class="tlaGNC">       11589 :       uint256 rewardsIndex = getCurrentRewardsIndex(rewardToken);</span></span>
+<span id="L166"><span class="lineNum">     166</span>                 :<span class="tlaGNC">       11589 :       if (from != address(0)) {</span></span>
+<span id="L167"><span class="lineNum">     167</span>                 :<span class="tlaGNC">        2000 :         _updateUser(from, rewardsIndex, rewardToken);</span></span>
+<span id="L168"><span class="lineNum">     168</span>                 :             :       }</span>
+<span id="L169"><span class="lineNum">     169</span>                 :<span class="tlaGNC">       11589 :       if (to != address(0) &amp;&amp; from != to) {</span></span>
+<span id="L170"><span class="lineNum">     170</span>                 :<span class="tlaGNC">       10589 :         _updateUser(to, rewardsIndex, rewardToken);</span></span>
+<span id="L171"><span class="lineNum">     171</span>                 :             :       }</span>
+<span id="L172"><span class="lineNum">     172</span>                 :             :     }</span>
+<span id="L173"><span class="lineNum">     173</span>                 :<span class="tlaGNC">       12595 :     super._update(from, to, amount);</span></span>
+<span id="L174"><span class="lineNum">     174</span>                 :             :   }</span>
+<span id="L175"><span class="lineNum">     175</span>                 :             : </span>
+<span id="L176"><span class="lineNum">     176</span>                 :             :   /**</span>
+<span id="L177"><span class="lineNum">     177</span>                 :             :    * @notice Adding the pending rewards to the unclaimed for specific user and updating user index</span>
+<span id="L178"><span class="lineNum">     178</span>                 :             :    * @param user The address of the user to update</span>
+<span id="L179"><span class="lineNum">     179</span>                 :             :    * @param currentRewardsIndex The current rewardIndex</span>
+<span id="L180"><span class="lineNum">     180</span>                 :             :    * @param rewardToken The address of the reward token</span>
+<span id="L181"><span class="lineNum">     181</span>                 :             :    */</span>
+<span id="L182"><span class="lineNum">     182</span>                 :             :   function _updateUser(address user, uint256 currentRewardsIndex, address rewardToken) internal {</span>
+<span id="L183"><span class="lineNum">     183</span>                 :<span class="tlaGNC">       12589 :     ERC20AaveLMStorage storage $ = _getERC20AaveLMStorage();</span></span>
+<span id="L184"><span class="lineNum">     184</span>                 :<span class="tlaGNC">       12589 :     uint256 balance = balanceOf(user);</span></span>
+<span id="L185"><span class="lineNum">     185</span>                 :<span class="tlaGNC">       12589 :     if (balance &gt; 0) {</span></span>
+<span id="L186"><span class="lineNum">     186</span>                 :<span class="tlaGNC">        2589 :       $._userRewardsData[user][rewardToken].unclaimedRewards = _getClaimableRewards(</span></span>
+<span id="L187"><span class="lineNum">     187</span>                 :             :         user,</span>
+<span id="L188"><span class="lineNum">     188</span>                 :             :         rewardToken,</span>
+<span id="L189"><span class="lineNum">     189</span>                 :             :         balance,</span>
+<span id="L190"><span class="lineNum">     190</span>                 :             :         currentRewardsIndex</span>
+<span id="L191"><span class="lineNum">     191</span>                 :             :       ).toUint128();</span>
+<span id="L192"><span class="lineNum">     192</span>                 :             :     }</span>
+<span id="L193"><span class="lineNum">     193</span>                 :<span class="tlaGNC">       12589 :     $._userRewardsData[user][rewardToken].rewardsIndexOnLastInteraction = currentRewardsIndex</span></span>
+<span id="L194"><span class="lineNum">     194</span>                 :             :       .toUint128();</span>
+<span id="L195"><span class="lineNum">     195</span>                 :             :   }</span>
+<span id="L196"><span class="lineNum">     196</span>                 :             : </span>
+<span id="L197"><span class="lineNum">     197</span>                 :             :   /**</span>
+<span id="L198"><span class="lineNum">     198</span>                 :             :    * @notice Compute the pending in WAD. Pending is the amount to add (not yet unclaimed) rewards in WAD.</span>
+<span id="L199"><span class="lineNum">     199</span>                 :             :    * @param balance The balance of the user</span>
+<span id="L200"><span class="lineNum">     200</span>                 :             :    * @param rewardsIndexOnLastInteraction The index which was on the last interaction of the user</span>
+<span id="L201"><span class="lineNum">     201</span>                 :             :    * @param currentRewardsIndex The current rewards index in the system</span>
+<span id="L202"><span class="lineNum">     202</span>                 :             :    * @return The amount of pending rewards in WAD</span>
+<span id="L203"><span class="lineNum">     203</span>                 :             :    */</span>
+<span id="L204"><span class="lineNum">     204</span>                 :             :   function _getPendingRewards(</span>
+<span id="L205"><span class="lineNum">     205</span>                 :             :     uint256 balance,</span>
+<span id="L206"><span class="lineNum">     206</span>                 :             :     uint256 rewardsIndexOnLastInteraction,</span>
+<span id="L207"><span class="lineNum">     207</span>                 :             :     uint256 currentRewardsIndex</span>
+<span id="L208"><span class="lineNum">     208</span>                 :             :   ) internal view returns (uint256) {</span>
+<span id="L209"><span class="lineNum">     209</span>                 :<span class="tlaGNC">       19949 :     if (balance == 0) {</span></span>
+<span id="L210"><span class="lineNum">     210</span>                 :<span class="tlaUNC tlaBgUNC">           0 :       return 0;</span></span>
+<span id="L211"><span class="lineNum">     211</span>                 :             :     }</span>
+<span id="L212"><span class="lineNum">     212</span>                 :<span class="tlaGNC tlaBgGNC">       19949 :     return (balance * (currentRewardsIndex - rewardsIndexOnLastInteraction)) / 10 ** decimals();</span></span>
+<span id="L213"><span class="lineNum">     213</span>                 :             :   }</span>
+<span id="L214"><span class="lineNum">     214</span>                 :             : </span>
+<span id="L215"><span class="lineNum">     215</span>                 :             :   /**</span>
+<span id="L216"><span class="lineNum">     216</span>                 :             :    * @notice Compute the claimable rewards for a user</span>
+<span id="L217"><span class="lineNum">     217</span>                 :             :    * @param user The address of the user</span>
+<span id="L218"><span class="lineNum">     218</span>                 :             :    * @param reward The address of the reward</span>
+<span id="L219"><span class="lineNum">     219</span>                 :             :    * @param balance The balance of the user in WAD</span>
+<span id="L220"><span class="lineNum">     220</span>                 :             :    * @param currentRewardsIndex The current rewards index</span>
+<span id="L221"><span class="lineNum">     221</span>                 :             :    * @return The total rewards that can be claimed by the user (if `fresh` flag true, after updating rewards)</span>
+<span id="L222"><span class="lineNum">     222</span>                 :             :    */</span>
+<span id="L223"><span class="lineNum">     223</span>                 :             :   function _getClaimableRewards(</span>
+<span id="L224"><span class="lineNum">     224</span>                 :             :     address user,</span>
+<span id="L225"><span class="lineNum">     225</span>                 :             :     address reward,</span>
+<span id="L226"><span class="lineNum">     226</span>                 :             :     uint256 balance,</span>
+<span id="L227"><span class="lineNum">     227</span>                 :             :     uint256 currentRewardsIndex</span>
+<span id="L228"><span class="lineNum">     228</span>                 :             :   ) internal view returns (uint256) {</span>
+<span id="L229"><span class="lineNum">     229</span>                 :<span class="tlaGNC">       19950 :     ERC20AaveLMStorage storage $ = _getERC20AaveLMStorage();</span></span>
+<span id="L230"><span class="lineNum">     230</span>                 :<span class="tlaGNC">       19950 :     RewardIndexCache memory rewardsIndexCache = $._startIndex[reward];</span></span>
+<span id="L231"><span class="lineNum">     231</span>                 :<span class="tlaGNC">       19950 :     if (!rewardsIndexCache.isRegistered) {</span></span>
+<span id="L232"><span class="lineNum">     232</span>                 :<span class="tlaGNC">           1 :       revert RewardNotInitialized(reward);</span></span>
+<span id="L233"><span class="lineNum">     233</span>                 :             :     }</span>
+<span id="L234"><span class="lineNum">     234</span>                 :             : </span>
+<span id="L235"><span class="lineNum">     235</span>                 :<span class="tlaGNC">       19949 :     UserRewardsData memory currentUserRewardsData = $._userRewardsData[user][reward];</span></span>
+<span id="L236"><span class="lineNum">     236</span>                 :<span class="tlaGNC">       19949 :     return</span></span>
+<span id="L237"><span class="lineNum">     237</span>                 :<span class="tlaGNC">       19949 :       currentUserRewardsData.unclaimedRewards +</span></span>
+<span id="L238"><span class="lineNum">     238</span>                 :<span class="tlaGNC">       19949 :       _getPendingRewards(</span></span>
+<span id="L239"><span class="lineNum">     239</span>                 :             :         balance,</span>
+<span id="L240"><span class="lineNum">     240</span>                 :             :         currentUserRewardsData.rewardsIndexOnLastInteraction == 0</span>
+<span id="L241"><span class="lineNum">     241</span>                 :             :           ? rewardsIndexCache.lastUpdatedIndex</span>
+<span id="L242"><span class="lineNum">     242</span>                 :             :           : currentUserRewardsData.rewardsIndexOnLastInteraction,</span>
+<span id="L243"><span class="lineNum">     243</span>                 :             :         currentRewardsIndex</span>
+<span id="L244"><span class="lineNum">     244</span>                 :             :       );</span>
+<span id="L245"><span class="lineNum">     245</span>                 :             :   }</span>
+<span id="L246"><span class="lineNum">     246</span>                 :             : </span>
+<span id="L247"><span class="lineNum">     247</span>                 :             :   /**</span>
+<span id="L248"><span class="lineNum">     248</span>                 :             :    * @notice Claim rewards on behalf of a user and send them to a receiver</span>
+<span id="L249"><span class="lineNum">     249</span>                 :             :    * @param onBehalfOf The address to claim on behalf of</span>
+<span id="L250"><span class="lineNum">     250</span>                 :             :    * @param rewards The addresses of the rewards</span>
+<span id="L251"><span class="lineNum">     251</span>                 :             :    * @param receiver The address to receive the rewards</span>
+<span id="L252"><span class="lineNum">     252</span>                 :             :    */</span>
+<span id="L253"><span class="lineNum">     253</span>                 :             :   function _claimRewardsOnBehalf(</span>
+<span id="L254"><span class="lineNum">     254</span>                 :             :     address onBehalfOf,</span>
+<span id="L255"><span class="lineNum">     255</span>                 :             :     address receiver,</span>
+<span id="L256"><span class="lineNum">     256</span>                 :             :     address[] memory rewards</span>
+<span id="L257"><span class="lineNum">     257</span>                 :             :   ) internal virtual {</span>
+<span id="L258"><span class="lineNum">     258</span>                 :<span class="tlaGNC">        4000 :     for (uint256 i = 0; i &lt; rewards.length; i++) {</span></span>
+<span id="L259"><span class="lineNum">     259</span>                 :<span class="tlaGNC">        4000 :       if (address(rewards[i]) == address(0)) {</span></span>
+<span id="L260"><span class="lineNum">     260</span>                 :<span class="tlaGNC">        4000 :         continue;</span></span>
+<span id="L261"><span class="lineNum">     261</span>                 :             :       }</span>
+<span id="L262"><span class="lineNum">     262</span>                 :<span class="tlaGNC">        4000 :       uint256 currentRewardsIndex = getCurrentRewardsIndex(rewards[i]);</span></span>
+<span id="L263"><span class="lineNum">     263</span>                 :<span class="tlaGNC">        4000 :       uint256 balance = balanceOf(onBehalfOf);</span></span>
+<span id="L264"><span class="lineNum">     264</span>                 :<span class="tlaGNC">        4000 :       uint256 userReward = _getClaimableRewards(</span></span>
+<span id="L265"><span class="lineNum">     265</span>                 :             :         onBehalfOf,</span>
+<span id="L266"><span class="lineNum">     266</span>                 :             :         rewards[i],</span>
+<span id="L267"><span class="lineNum">     267</span>                 :             :         balance,</span>
+<span id="L268"><span class="lineNum">     268</span>                 :             :         currentRewardsIndex</span>
+<span id="L269"><span class="lineNum">     269</span>                 :             :       );</span>
+<span id="L270"><span class="lineNum">     270</span>                 :<span class="tlaGNC">        4000 :       uint256 totalRewardTokenBalance = IERC20(rewards[i]).balanceOf(address(this));</span></span>
+<span id="L271"><span class="lineNum">     271</span>                 :<span class="tlaGNC">        4000 :       uint256 unclaimedReward = 0;</span></span>
+<span id="L272"><span class="lineNum">     272</span>                 :             : </span>
+<span id="L273"><span class="lineNum">     273</span>                 :<span class="tlaGNC">        4000 :       if (userReward &gt; totalRewardTokenBalance) {</span></span>
+<span id="L274"><span class="lineNum">     274</span>                 :<span class="tlaGNC">        1516 :         totalRewardTokenBalance += collectAndUpdateRewards(address(rewards[i]));</span></span>
+<span id="L275"><span class="lineNum">     275</span>                 :             :       }</span>
+<span id="L276"><span class="lineNum">     276</span>                 :             : </span>
+<span id="L277"><span class="lineNum">     277</span>                 :<span class="tlaGNC">        4000 :       if (userReward &gt; totalRewardTokenBalance) {</span></span>
+<span id="L278"><span class="lineNum">     278</span>                 :<span class="tlaUNC tlaBgUNC">           0 :         unclaimedReward = userReward - totalRewardTokenBalance;</span></span>
+<span id="L279"><span class="lineNum">     279</span>                 :<span class="tlaUNC">           0 :         userReward = totalRewardTokenBalance;</span></span>
+<span id="L280"><span class="lineNum">     280</span>                 :             :       }</span>
+<span id="L281"><span class="lineNum">     281</span>                 :<span class="tlaGNC tlaBgGNC">        4000 :       if (userReward &gt; 0) {</span></span>
+<span id="L282"><span class="lineNum">     282</span>                 :<span class="tlaGNC">        1516 :         ERC20AaveLMStorage storage $ = _getERC20AaveLMStorage();</span></span>
+<span id="L283"><span class="lineNum">     283</span>                 :<span class="tlaGNC">        1516 :         $._userRewardsData[onBehalfOf][rewards[i]].unclaimedRewards = unclaimedReward.toUint128();</span></span>
+<span id="L284"><span class="lineNum">     284</span>                 :<span class="tlaGNC">        1516 :         $</span></span>
+<span id="L285"><span class="lineNum">     285</span>                 :             :         ._userRewardsData[onBehalfOf][rewards[i]]</span>
+<span id="L286"><span class="lineNum">     286</span>                 :             :           .rewardsIndexOnLastInteraction = currentRewardsIndex.toUint128();</span>
+<span id="L287"><span class="lineNum">     287</span>                 :<span class="tlaGNC">        1516 :         SafeERC20.safeTransfer(IERC20(rewards[i]), receiver, userReward);</span></span>
+<span id="L288"><span class="lineNum">     288</span>                 :             :       }</span>
+<span id="L289"><span class="lineNum">     289</span>                 :             :     }</span>
+<span id="L290"><span class="lineNum">     290</span>                 :             :   }</span>
+<span id="L291"><span class="lineNum">     291</span>                 :             : </span>
+<span id="L292"><span class="lineNum">     292</span>                 :             :   /**</span>
+<span id="L293"><span class="lineNum">     293</span>                 :             :    * @notice Initializes a new rewardToken</span>
+<span id="L294"><span class="lineNum">     294</span>                 :             :    * @param reward The reward token to be registered</span>
+<span id="L295"><span class="lineNum">     295</span>                 :             :    */</span>
+<span id="L296"><span class="lineNum">     296</span>                 :             :   function _registerRewardToken(address reward) internal {</span>
+<span id="L297"><span class="lineNum">     297</span>                 :<span class="tlaGNC">        9003 :     if (isRegisteredRewardToken(reward)) return;</span></span>
+<span id="L298"><span class="lineNum">     298</span>                 :<span class="tlaGNC">        9003 :     uint256 startIndex = getCurrentRewardsIndex(reward);</span></span>
+<span id="L299"><span class="lineNum">     299</span>                 :             : </span>
+<span id="L300"><span class="lineNum">     300</span>                 :<span class="tlaGNC">        9003 :     ERC20AaveLMStorage storage $ = _getERC20AaveLMStorage();</span></span>
+<span id="L301"><span class="lineNum">     301</span>                 :<span class="tlaGNC">        9003 :     $._rewardTokens.push(reward);</span></span>
+<span id="L302"><span class="lineNum">     302</span>                 :<span class="tlaGNC">        9003 :     $._startIndex[reward] = RewardIndexCache(true, startIndex.toUint240());</span></span>
+<span id="L303"><span class="lineNum">     303</span>                 :             : </span>
+<span id="L304"><span class="lineNum">     304</span>                 :<span class="tlaGNC">        9003 :     emit RewardTokenRegistered(reward, startIndex);</span></span>
+<span id="L305"><span class="lineNum">     305</span>                 :             :   }</span>
+<span id="L306"><span class="lineNum">     306</span>                 :             : }</span>
+        </pre>
+              </td>
+            </tr>
+          </table>
+          <br>
+
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+            <tr><td class="versionInfo">Generated by: <a href="https://github.com//linux-test-project/lcov" target="_parent">LCOV version 2.1-1</a></td></tr>
+          </table>
+          <br>
+
+</body>
+</html>
