@@ -8,7 +8,7 @@ import {ERC20AaveLMUpgradeable, IERC20AaveLM} from '../../../src/contracts/exten
 import {IRewardsController} from '../../../src/contracts/rewards/interfaces/IRewardsController.sol';
 import {PullRewardsTransferStrategy, ITransferStrategyBase} from '../../../src/contracts/rewards/transfer-strategies/PullRewardsTransferStrategy.sol';
 import {RewardsDataTypes} from '../../../src/contracts/rewards/libraries/RewardsDataTypes.sol';
-import {IEACAggregatorProxy} from '../../../src/contracts/helpers/interfaces/IEACAggregatorProxy.sol';
+import {AggregatorInterface} from '../../../src/contracts/dependencies/chainlink/AggregatorInterface.sol';
 import {DataTypes} from '../../../src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
 
 // Minimal mock as contract is abstract
@@ -377,7 +377,7 @@ contract ERC20AaveLMUpgradableTest is TestnetProcedures {
       address(underlying),
       rewardToken,
       ITransferStrategyBase(strategy),
-      IEACAggregatorProxy(address(2))
+      AggregatorInterface(address(2))
     );
 
     // configure asset

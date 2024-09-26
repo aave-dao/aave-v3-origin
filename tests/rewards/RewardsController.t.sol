@@ -7,7 +7,7 @@ import {EmissionManager} from '../../src/contracts/rewards/EmissionManager.sol';
 import {DataTypes} from '../../src/contracts/protocol/libraries/types/DataTypes.sol';
 import {IAToken, IERC20} from '../../src/contracts/protocol/tokenization/AToken.sol';
 import {ITransferStrategyBase} from '../../src/contracts/rewards/interfaces/ITransferStrategyBase.sol';
-import {IEACAggregatorProxy} from '../../src/contracts/helpers/interfaces/IEACAggregatorProxy.sol';
+import {AggregatorInterface} from '../../src/contracts/dependencies/chainlink/AggregatorInterface.sol';
 import {RewardsDataTypes} from '../../src/contracts/rewards/libraries/RewardsDataTypes.sol';
 import {PullRewardsTransferStrategy} from '../../src/contracts/rewards/transfer-strategies/PullRewardsTransferStrategy.sol';
 import {TestnetProcedures} from '../utils/TestnetProcedures.sol';
@@ -108,7 +108,7 @@ contract RewardsControllerTest is TestnetProcedures {
     emit RewardOracleUpdated(tokenList.usdx, address(mock));
 
     vm.prank(alice);
-    manager.setRewardOracle(tokenList.usdx, IEACAggregatorProxy(address(mock)));
+    manager.setRewardOracle(tokenList.usdx, AggregatorInterface(address(mock)));
 
     assertEq(rewardsController.getRewardOracle(tokenList.usdx), address(mock));
   }
@@ -182,7 +182,7 @@ contract RewardsControllerTest is TestnetProcedures {
       usdxAToken,
       tokenList.usdx,
       ITransferStrategyBase(strat),
-      IEACAggregatorProxy(address(2))
+      AggregatorInterface(address(2))
     );
 
     vm.expectEmit(address(rewardsController));

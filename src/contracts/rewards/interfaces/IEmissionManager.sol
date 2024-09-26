@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import {IEACAggregatorProxy} from '../../helpers/interfaces/IEACAggregatorProxy.sol';
+import {AggregatorInterface} from '../../dependencies/chainlink/AggregatorInterface.sol';
 import {RewardsDataTypes} from '../libraries/RewardsDataTypes.sol';
 import {ITransferStrategyBase} from './ITransferStrategyBase.sol';
 import {IRewardsController} from './IRewardsController.sol';
@@ -34,8 +34,8 @@ interface IEmissionManager {
    *   address asset: The asset address to incentivize
    *   address reward: The reward token address
    *   ITransferStrategy transferStrategy: The TransferStrategy address with the install hook and claim logic.
-   *   IEACAggregatorProxy rewardOracle: The Price Oracle of a reward to visualize the incentives at the UI Frontend.
-   *                                     Must follow Chainlink Aggregator IEACAggregatorProxy interface to be compatible.
+   *   AggregatorInterface rewardOracle: The Price Oracle of a reward to visualize the incentives at the UI Frontend.
+   *                                     Must follow Chainlink Aggregator AggregatorInterface interface to be compatible.
    */
   function configureAssets(RewardsDataTypes.RewardsConfigInput[] memory config) external;
 
@@ -51,13 +51,13 @@ interface IEmissionManager {
    * @dev Sets an Aave Oracle contract to enforce rewards with a source of value.
    * @dev Only callable by the emission admin of the given reward
    * @notice At the moment of reward configuration, the Incentives Controller performs
-   * a check to see if the reward asset oracle is compatible with IEACAggregator proxy.
+   * a check to see if the reward asset oracle is compatible with AggregatorInterface proxy.
    * This check is enforced for integrators to be able to show incentives at
    * the current Aave UI without the need to setup an external price registry
    * @param reward The address of the reward to set the price aggregator
-   * @param rewardOracle The address of price aggregator that follows IEACAggregatorProxy interface
+   * @param rewardOracle The address of price aggregator that follows AggregatorInterface interface
    */
-  function setRewardOracle(address reward, IEACAggregatorProxy rewardOracle) external;
+  function setRewardOracle(address reward, AggregatorInterface rewardOracle) external;
 
   /**
    * @dev Sets the end date for the distribution
