@@ -434,7 +434,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
   function getReserveData(
     address asset
   ) external view virtual override returns (DataTypes.ReserveDataLegacy memory) {
-    DataTypes.ReserveData memory reserve = _reserves[asset];
+    DataTypes.ReserveData storage reserve = _reserves[asset];
     DataTypes.ReserveDataLegacy memory res;
 
     res.configuration = reserve.configuration;
@@ -686,7 +686,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
   /// @inheritdoc IPool
   function configureEModeCategory(
     uint8 id,
-    DataTypes.EModeCategoryBaseConfiguration memory category
+    DataTypes.EModeCategoryBaseConfiguration calldata category
   ) external virtual override onlyPoolConfigurator {
     // category 0 is reserved for volatile heterogeneous assets and it's always disabled
     require(id != 0, Errors.EMODE_CATEGORY_RESERVED);
@@ -720,7 +720,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
   function getEModeCategoryData(
     uint8 id
   ) external view virtual override returns (DataTypes.EModeCategoryLegacy memory) {
-    DataTypes.EModeCategory memory category = _eModeCategories[id];
+    DataTypes.EModeCategory storage category = _eModeCategories[id];
     return
       DataTypes.EModeCategoryLegacy({
         ltv: category.ltv,
