@@ -115,8 +115,7 @@ contract PoolDeficitTests is TestnetProcedures {
   }
 
   function test_reverts_eliminateReserveDeficit_reserve_not_in_deficit(
-    address coverageAdmin,
-    uint120 supplyAmount
+    address coverageAdmin
   ) public {
     _filterAddresses(coverageAdmin);
 
@@ -167,7 +166,7 @@ contract PoolDeficitTests is TestnetProcedures {
     return (tokenList.usdx, currentDeficit);
   }
 
-  function _filterAddresses(address user) internal {
+  function _filterAddresses(address user) internal view {
     vm.assume(user != address(0));
     vm.assume(user != report.proxyAdmin);
     vm.assume(user != report.poolAddressesProvider);

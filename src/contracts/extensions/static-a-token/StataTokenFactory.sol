@@ -46,12 +46,11 @@ contract StataTokenFactory is Initializable, IStataTokenFactory {
     for (uint256 i = 0; i < underlyings.length; i++) {
       address cachedStataToken = _underlyingToStataToken[underlyings[i]];
       if (cachedStataToken == address(0)) {
-        DataTypes.ReserveDataLegacy memory reserveData = POOL.getReserveData(underlyings[i]);
-        if (reserveData.aTokenAddress == address(0))
-          revert NotListedUnderlying(reserveData.aTokenAddress);
+        address aTokenAddress = POOL.getReserveAToken(underlyings[i]);
+        if (aTokenAddress == address(0)) revert NotListedUnderlying(aTokenAddress);
         bytes memory symbol = abi.encodePacked(
           'stat',
-          IERC20Metadata(reserveData.aTokenAddress).symbol(),
+          IERC20Metadata(aTokenAddress).symbol(),
           'v2'
         );
         address stataToken = TRANSPARENT_PROXY_FACTORY.createDeterministic(
@@ -59,10 +58,8 @@ contract StataTokenFactory is Initializable, IStataTokenFactory {
           PROXY_ADMIN,
           abi.encodeWithSelector(
             StataTokenV2.initialize.selector,
-            reserveData.aTokenAddress,
-            string(
-              abi.encodePacked('Static ', IERC20Metadata(reserveData.aTokenAddress).name(), ' v2')
-            ),
+            aTokenAddress,
+            string(abi.encodePacked('Static ', IERC20Metadata(aTokenAddress).name(), ' v2')),
             string(symbol)
           ),
           bytes32(uint256(uint160(underlyings[i])))

@@ -890,6 +890,11 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
   }
 
   /// @inheritdoc IPool
+  function getReserveAToken(address asset) external view virtual returns (address) {
+    return _reserves[asset].aTokenAddress;
+  }
+
+  /// @inheritdoc IPool
   function getFlashLoanLogic() external pure returns (address) {
     return address(FlashLoanLogic);
   }

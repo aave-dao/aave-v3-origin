@@ -53,7 +53,7 @@ contract WrappedTokenGatewayV3 is IWrappedTokenGatewayV3, Ownable {
    * @param to address of the user who will receive native ETH
    */
   function withdrawETH(address, uint256 amount, address to) external override {
-    IAToken aWETH = IAToken(POOL.getReserveData(address(WETH)).aTokenAddress);
+    IAToken aWETH = IAToken(POOL.getReserveAToken(address(WETH)));
     uint256 userBalance = aWETH.balanceOf(msg.sender);
     uint256 amountToWithdraw = amount;
 
@@ -127,7 +127,7 @@ contract WrappedTokenGatewayV3 is IWrappedTokenGatewayV3, Ownable {
     bytes32 permitR,
     bytes32 permitS
   ) external override {
-    IAToken aWETH = IAToken(POOL.getReserveData(address(WETH)).aTokenAddress);
+    IAToken aWETH = IAToken(POOL.getReserveAToken(address(WETH)));
     uint256 userBalance = aWETH.balanceOf(msg.sender);
     uint256 amountToWithdraw = amount;
 

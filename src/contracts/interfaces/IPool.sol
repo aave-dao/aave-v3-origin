@@ -838,6 +838,13 @@ interface IPool {
   function getReserveDeficit(address asset) external view returns (uint256);
 
   /**
+   * @notice Returns the aToken address of a reserve.
+   * @param asset The address of the underlying asset of the reserve
+   * @return The address of the aToken
+   */
+  function getReserveAToken(address asset) external view returns (address);
+
+  /**
    * @notice Gets the address of the external FlashLoanLogic
    */
   function getFlashLoanLogic() external view returns (address);
