@@ -180,7 +180,7 @@ abstract contract ERC4626StataTokenUpgradeable is ERC4626Upgradeable, IERC4626St
     // return remaining supply cap margin
     uint256 currentSupply = (IAToken(reserveData.aTokenAddress).scaledTotalSupply() +
       reserveData.accruedToTreasury).mulDiv(_rate(), RAY, Math.Rounding.Ceil);
-    return currentSupply > supplyCap ? 0 : supplyCap - currentSupply;
+    return currentSupply >= supplyCap ? 0 : supplyCap - currentSupply;
   }
 
   ///@inheritdoc IERC4626StataToken
