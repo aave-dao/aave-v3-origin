@@ -1,0 +1,47 @@
+diff -ruN contracts/protocol/tokenization/base/ScaledBalanceTokenBase.sol contracts/protocol/tokenization/base/ScaledBalanceTokenBase.sol
+--- contracts/protocol/tokenization/base/ScaledBalanceTokenBase.sol	2024-03-27 12:57:15.497294747 +0200
++++ contracts/protocol/tokenization/base/ScaledBalanceTokenBase.sol	2024-03-27 13:08:22.155984803 +0200
+@@ -34,7 +34,7 @@
+   }
+
+   /// @inheritdoc IScaledBalanceToken
+-  function scaledBalanceOf(address user) external view override returns (uint256) {
++  function scaledBalanceOf(address user) public view override returns (uint256) {
+     return super.balanceOf(user);
+   }
+
+diff -ruN contracts/instances/ATokenInstance.sol contracts/instances/ATokenInstance.sol
+--- contracts/instances/ATokenInstance.sol	2024-03-27 12:57:15.497294747 +0200
++++ contracts/instances/ATokenInstance.sol	2024-03-27 13:14:17.971198372 +0200
+@@ -35,15 +35,15 @@
+
+     _domainSeparator = _calculateDomainSeparator();
+
+-    emit Initialized(
+-      underlyingAsset,
+-      address(POOL),
+-      treasury,
+-      address(incentivesController),
+-      aTokenDecimals,
+-      aTokenName,
+-      aTokenSymbol,
+-      params
+-    );
++    //    emit Initialized(
++    //  underlyingAsset,
++    //  address(POOL),
++    //  treasury,
++    //  address(incentivesController),
++    //  aTokenDecimals,
++    //  aTokenName,
++    //  aTokenSymbol,
++    //  params
++    //);
+   }
+ }
+diff -ruN .gitignore .gitignore
+--- .gitignore	1970-01-01 02:00:00.000000000 +0200
++++ .gitignore	2024-03-27 13:08:22.155984803 +0200
+@@ -0,0 +1,2 @@
++*
++!.gitignore

@@ -2,11 +2,10 @@
 
 echo "******** Running: 1  ***************"
 certoraRun $CMN certora/stata/conf/verifyERC4626.conf --rule previewRedeemIndependentOfBalance  previewMintAmountCheck previewDepositIndependentOfAllowanceApprove previewWithdrawAmountCheck previewWithdrawIndependentOfBalance2 previewWithdrawIndependentOfBalance1 previewRedeemIndependentOfMaxRedeem1 previewRedeemAmountCheck previewRedeemIndependentOfMaxRedeem2 amountConversionRoundedDown withdrawCheck redeemCheck redeemATokensCheck convertToAssetsCheck convertToSharesCheck toAssetsDoesNotRevert sharesConversionRoundedDown toSharesDoesNotRevert previewDepositAmountCheck maxRedeemCompliance maxWithdrawConversionCompliance previewMintIndependentOfAllowance \
-            maxMintMustntRevert maxDepositMustntRevert maxRedeemMustntRevert maxWithdrawMustntRevert totalAssetsMustntRevert \
 --msg "1: verifyERC4626.conf"
 
 echo "******** Running: 1.5  ***************"
-certoraRun $CMN certora/stata/conf/verifyERC4626.conf --rule previewWithdrawIndependentOfMaxWithdraw \
+certoraRun $CMN certora/stata/conf/verifyERC4626.conf --rule maxMintMustntRevert maxDepositMustntRevert maxRedeemMustntRevert maxWithdrawMustntRevert totalAssetsMustntRevert \
 --msg "1.5: verifyERC4626.conf"
 
 echo "******** Running: 2  ***************"
@@ -18,8 +17,7 @@ certoraRun $CMN certora/stata/conf/verifyERC4626DepositSummarization.conf --rule
 --msg "3: "
 
 echo "******** Running: 4  ***************"
-certoraRun $CMN certora/stata/conf/verifyERC4626Extended.conf --rule previewWithdrawRoundingRange previewRedeemRoundingRange amountConversionPreserved sharesConversionPreserved accountsJoiningSplittingIsLimited convertSumOfAssetsPreserved previewDepositSameAsDeposit previewMintSameAsMint \
-            maxDepositConstant \
+certoraRun $CMN certora/stata/conf/verifyERC4626Extended.conf --rule previewWithdrawRoundingRange previewRedeemRoundingRange amountConversionPreserved sharesConversionPreserved accountsJoiningSplittingIsLimited convertSumOfAssetsPreserved previewDepositSameAsDeposit previewMintSameAsMint maxDepositConstant \
 --msg "4: "
 
 echo "******** Running: 5  ***************"

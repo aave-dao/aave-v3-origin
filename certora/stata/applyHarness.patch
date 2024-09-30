@@ -6,8 +6,8 @@ diff -ruN .gitignore .gitignore
 +!.gitignore
 \ No newline at end of file
 diff -ruN src/core/instances/ATokenInstance.sol src/core/instances/ATokenInstance.sol
---- src/core/instances/ATokenInstance.sol	2024-09-05 19:01:54
-+++ src/core/instances/ATokenInstance.sol	2024-09-05 11:33:23
+--- src/contracts/instances/ATokenInstance.sol	2024-09-05 19:01:54
++++ src/contracts/instances/ATokenInstance.sol	2024-09-05 11:33:23
 @@ -35,15 +35,15 @@
  
      _domainSeparator = _calculateDomainSeparator();
@@ -35,8 +35,8 @@ diff -ruN src/core/instances/ATokenInstance.sol src/core/instances/ATokenInstanc
    }
  }
 diff -ruN src/periphery/contracts/static-a-token/ERC20AaveLMUpgradeable.sol src/periphery/contracts/static-a-token/ERC20AaveLMUpgradeable.sol
---- src/periphery/contracts/static-a-token/ERC20AaveLMUpgradeable.sol	2024-09-05 19:01:54
-+++ src/periphery/contracts/static-a-token/ERC20AaveLMUpgradeable.sol	2024-09-05 13:48:31
+--- src/contracts/extensions/static-a-token/ERC20AaveLMUpgradeable.sol	2024-09-05 19:01:54
++++ src/contracts/extensions/static-a-token/ERC20AaveLMUpgradeable.sol	2024-09-05 13:48:31
 @@ -147,7 +147,7 @@
    }
  

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.10;
 
 import {IERC20} from 'openzeppelin-contracts/contracts/interfaces/IERC20.sol';
-import {StataTokenV2, IPool, IRewardsController} from 'aave-v3-periphery/contracts/static-a-token/StataTokenV2.sol';
+import {StataTokenV2, IPool, IRewardsController} from '../munged/src/contracts/extensions/static-a-token/StataTokenV2.sol';
 import {SymbolicLendingPool} from './pool/SymbolicLendingPool.sol';
 
 contract StataTokenV2Harness is StataTokenV2 {

@@ -39,7 +39,7 @@ jobs:
         with: { java-version: "11", java-package: jre }
 
       - name: Install certora cli
-        run: pip install certora-cli==7.0.7
+        run: pip install certora-cli==7.14.2
 
       - name: Install solc
         run: |
@@ -49,12 +49,12 @@ jobs:
 
       - name: Verify rule ${{ matrix.rule }}
         run: |
-          cd certora
+          cd certora/basic
           touch applyHarness.patch
           make munged
-          cd ..
+          cd ../..
           echo "key length" ${#CERTORAKEY}
-          certoraRun certora/conf/${{ matrix.rule }} --wait_for_results
+          certoraRun certora/basic/conf/${{ matrix.rule }} --wait_for_results
         env:
           CERTORAKEY: ${{ secrets.CERTORAKEY }}
 
@@ -68,6 +68,8 @@ jobs:
           - UserConfiguration.conf
           - VariableDebtToken.conf
           - NEW-pool-no-summarizations.conf
+          - stableRemoved.conf
+          - EModeConfiguration.conf
           - NEW-pool-simple-properties.conf --rule cannotDepositInInactiveReserve --msg "cannotDepositInInactiveReserve"
           - NEW-pool-simple-properties.conf --rule cannotDepositInFrozenReserve --msg "cannotDepositInFrozenReserve"
           - NEW-pool-simple-properties.conf --rule cannotDepositZeroAmount --msg "cannotDepositZeroAmount"

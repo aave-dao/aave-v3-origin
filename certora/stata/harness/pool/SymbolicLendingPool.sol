@@ -1,9 +1,9 @@
 pragma solidity ^0.8.10;
 pragma experimental ABIEncoderV2;
 
-import {IERC20} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
-import {IAToken} from 'aave-v3-core/contracts/interfaces/IAToken.sol';
-import {DataTypes} from 'aave-v3-core/contracts/protocol/libraries/types/DataTypes.sol';
+import {IERC20} from '../../munged/src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {IAToken} from '../../munged/src/contracts/interfaces/IAToken.sol';
+import {DataTypes} from '../../munged/src/contracts/protocol/libraries/types/DataTypes.sol';
 
 contract SymbolicLendingPool {
   // an underlying asset in the pool
@@ -63,24 +63,24 @@ contract SymbolicLendingPool {
   ) external view returns (DataTypes.ReserveDataLegacy memory) {
     DataTypes.ReserveDataLegacy memory res;
 
-    res.configuration = reserve.configuration;
-    res.liquidityIndex = reserve.liquidityIndex;
-    res.currentLiquidityRate = reserve.currentLiquidityRate;
-    res.variableBorrowIndex = reserve.variableBorrowIndex;
-    res.currentVariableBorrowRate = reserve.currentVariableBorrowRate;
-    res.currentStableBorrowRate = reserve.currentStableBorrowRate;
-    res.lastUpdateTimestamp = reserve.lastUpdateTimestamp;
-    res.id = reserve.id;
-    res.aTokenAddress = reserve.aTokenAddress;
-    res.stableDebtTokenAddress = reserve.stableDebtTokenAddress;
-    res.variableDebtTokenAddress = reserve.variableDebtTokenAddress;
-    res.interestRateStrategyAddress = reserve.interestRateStrategyAddress;
-    res.accruedToTreasury = reserve.accruedToTreasury;
-    res.unbacked = reserve.unbacked;
-    res.isolationModeTotalDebt = reserve.isolationModeTotalDebt;
+    res.configuration = reserveLegacy.configuration;
+    res.liquidityIndex = reserveLegacy.liquidityIndex;
+    res.currentLiquidityRate = reserveLegacy.currentLiquidityRate;
+    res.variableBorrowIndex = reserveLegacy.variableBorrowIndex;
+    res.currentVariableBorrowRate = reserveLegacy.currentVariableBorrowRate;
+    res.currentStableBorrowRate = reserveLegacy.currentStableBorrowRate;
+    res.lastUpdateTimestamp = reserveLegacy.lastUpdateTimestamp;
+    res.id = reserveLegacy.id;
+    res.aTokenAddress = reserveLegacy.aTokenAddress;
+    res.stableDebtTokenAddress = reserveLegacy.stableDebtTokenAddress;
+    res.variableDebtTokenAddress = reserveLegacy.variableDebtTokenAddress;
+    res.interestRateStrategyAddress = reserveLegacy.interestRateStrategyAddress;
+    res.accruedToTreasury = reserveLegacy.accruedToTreasury;
+    res.unbacked = reserveLegacy.unbacked;
+    res.isolationModeTotalDebt = reserveLegacy.isolationModeTotalDebt;
     return res;
   }
-
+  
   function getReserveDataExtended(
     address asset
   ) external view returns (DataTypes.ReserveData memory) {

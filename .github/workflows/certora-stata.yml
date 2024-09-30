@@ -56,8 +56,7 @@ jobs:
           # - verifyERC4626.conf --rule previewWithdrawIndependentOfMaxWithdraw
           - verifyERC4626MintDepositSummarization.conf --rule depositCheckIndexGRayAssert2 depositATokensCheckIndexGRayAssert2 depositWithPermitCheckIndexGRayAssert2 depositCheckIndexERayAssert2 depositATokensCheckIndexERayAssert2 depositWithPermitCheckIndexERayAssert2 mintCheckIndexGRayUpperBound mintCheckIndexGRayLowerBound mintCheckIndexEqualsRay
           - verifyERC4626DepositSummarization.conf --rule depositCheckIndexGRayAssert1 depositATokensCheckIndexGRayAssert1 depositWithPermitCheckIndexGRayAssert1 depositCheckIndexERayAssert1 depositATokensCheckIndexERayAssert1 depositWithPermitCheckIndexERayAssert1
-          - verifyERC4626Extended.conf --rule previewWithdrawRoundingRange previewRedeemRoundingRange amountConversionPreserved sharesConversionPreserved accountsJoiningSplittingIsLimited convertSumOfAssetsPreserved previewDepositSameAsDeposit previewMintSameAsMint
-          - verifyERC4626Extended.conf --rule maxDepositConstant
+          - verifyERC4626Extended.conf --rule previewWithdrawRoundingRange previewRedeemRoundingRange amountConversionPreserved sharesConversionPreserved accountsJoiningSplittingIsLimited convertSumOfAssetsPreserved previewDepositSameAsDeposit previewMintSameAsMint maxDepositConstant
           - verifyERC4626Extended.conf --rule redeemSum
           - verifyERC4626Extended.conf --rule redeemATokensSum
           - verifyAToken.conf --rule aTokenBalanceIsFixed_for_collectAndUpdateRewards aTokenBalanceIsFixed_for_claimRewards aTokenBalanceIsFixed_for_claimRewardsOnBehalf

@@ -1,7 +1,7 @@
 pragma solidity ^0.8.10;
 
-import {IERC20} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
-import {TransferStrategyBase} from 'aave-v3-periphery/contracts/rewards/transfer-strategies/TransferStrategyBase.sol';
+import {IERC20} from '../../munged/src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {TransferStrategyBase} from 'src/contracts/rewards/transfer-strategies/TransferStrategyBase.sol';
 
 contract TransferStrategyHarness is TransferStrategyBase {
   constructor(

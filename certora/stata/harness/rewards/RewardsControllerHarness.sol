@@ -1,6 +1,6 @@
 pragma solidity ^0.8.10;
 
-import {RewardsController, RewardsDataTypes} from 'aave-v3-periphery/contracts/rewards/RewardsController.sol';
+import {RewardsController, RewardsDataTypes} from '../../munged/src/contracts/rewards/RewardsController.sol';
 
 contract RewardsControllerHarness is RewardsController {
   constructor(address emissionManager) RewardsController(emissionManager) {}
