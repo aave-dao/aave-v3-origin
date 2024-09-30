@@ -22,7 +22,7 @@ abstract contract ERC20AaveLMUpgradeable is ERC20Upgradeable, IERC20AaveLM {
   struct ERC20AaveLMStorage {
     address _referenceAsset; // a/v token to track rewards on INCENTIVES_CONTROLLER
     address[] _rewardTokens;
-    mapping(address user => RewardIndexCache cache) _startIndex;
+    mapping(address reward => RewardIndexCache cache) _startIndex;
     mapping(address user => mapping(address reward => UserRewardsData cache)) _userRewardsData;
   }
 
@@ -195,11 +195,11 @@ abstract contract ERC20AaveLMUpgradeable is ERC20Upgradeable, IERC20AaveLM {
   }
 
   /**
-   * @notice Compute the pending in WAD. Pending is the amount to add (not yet unclaimed) rewards in WAD.
+   * @notice Compute the pending in asset decimals. Pending is the amount to add (not yet unclaimed) rewards in asset decimals.
    * @param balance The balance of the user
    * @param rewardsIndexOnLastInteraction The index which was on the last interaction of the user
    * @param currentRewardsIndex The current rewards index in the system
-   * @return The amount of pending rewards in WAD
+   * @return The amount of pending rewards in asset decimals
    */
   function _getPendingRewards(
     uint256 balance,
@@ -216,7 +216,7 @@ abstract contract ERC20AaveLMUpgradeable is ERC20Upgradeable, IERC20AaveLM {
    * @notice Compute the claimable rewards for a user
    * @param user The address of the user
    * @param reward The address of the reward
-   * @param balance The balance of the user in WAD
+   * @param balance The balance of the user in asset decimals
    * @param currentRewardsIndex The current rewards index
    * @return The total rewards that can be claimed by the user (if `fresh` flag true, after updating rewards)
    */
