@@ -299,7 +299,7 @@ abstract contract ERC20AaveLMUpgradeable is ERC20Upgradeable, IERC20AaveLM {
 
     ERC20AaveLMStorage storage $ = _getERC20AaveLMStorage();
     $._rewardTokens.push(reward);
-    $._startIndex[reward] = RewardIndexCache(true, startIndex.toUint240());
+    $._startIndex[reward] = RewardIndexCache(true, startIndex.toUint248());
 
     emit RewardTokenRegistered(reward, startIndex);
   }
