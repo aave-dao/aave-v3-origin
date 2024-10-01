@@ -80,7 +80,7 @@ contract SymbolicLendingPool {
     res.isolationModeTotalDebt = reserveLegacy.isolationModeTotalDebt;
     return res;
   }
-  
+
   function getReserveDataExtended(
     address asset
   ) external view returns (DataTypes.ReserveData memory) {

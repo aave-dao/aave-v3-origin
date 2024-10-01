@@ -1,8 +1,8 @@
-# Aave V3.1 Origin
+# Aave V3.2 Origin
 
 ![Aave v3.1 Origin_banner](./resources/v3-1-banner.jpeg)
 
-Aave v3.1 complete codebase, Foundry-based.
+Aave v3.2 complete codebase, Foundry-based.
 
 [![Coverage badge](./report/coverage.svg)](https://aave-dao.github.io/aave-v3-origin)
 <br>
@@ -42,6 +42,8 @@ bun install
 - [Aave v3 technical Paper](./docs/Aave_V3_Technical_Paper.pdf)
 - [v3 to v3.0.2 production upgrade](https://github.com/bgd-labs/proposal-3.0.2-upgrade/blob/main/README.md)
 - [Aave v3.1 features](./docs/Aave-v3.1-features.md)
+- [Aave v3.2 features](./docs/3.2/Aave-v3.2-features.md)
+- [v3.1 to v3.2.0 production upgrade](https://github.com/bgd-labs/protocol-3.2.0-upgrade/blob/main/README.md)
 - [Set Ltv to 0 on Freeze Feature State diagram](./docs/freeze-ltv0-states.png)
 
 <br>
@@ -85,7 +87,22 @@ The following are the security procedures historically applied to Aave v3.X vers
 - [MixBytes](./audits/02-05-2024_MixBytes_AaveV3.1.pdf)
 - An internal review by [SterMi](https://twitter.com/stermi) on the virtual accounting feature was conducted on an initial phase of the codebase.
 - [Cantina competition report](./audits/02-06-2024-Cantina-contest-AaveV3.1.pdf)
-- Additionally, Certora properties have been improved over time since the Aave v3 release. More details [HERE](./certora/README.md).
+- Additionally, Certora properties have been improved over time since the Aave v3 release. More details [HERE](./certora/basic/README.md).
+
+<br>
+
+**-> Aave v3.2 - September 2024**
+
+#### Stable Rate and Liquid eModes
+
+- [Certora](./audits/2024-09-10_Certora_Aave-v3.2_Stable_Rate_Removal.pdf)
+- [Enigma Dark](./audits/2024-09-30_Enigma_Aave-v3.2.pdf)
+
+#### Liquid eModes
+
+- [Certora](./audits/2024-09-19_Certora_Aave-v3.2_Liquid_eModes.pdf)
+- [Oxorio](./audits/2024-09-12_Oxorio_Aav3-v3.2.pdf)
+- [Pashov](./audits/2024-09-15_Pashov_Aave-v3.2.pdf)
 
 <br>
 

@@ -10,21 +10,29 @@ contract EModeConfigurationHarness {
 
   function setCollateral(uint256 reserveIndex, bool enabled) public {
     DataTypes.EModeCategory memory emode_new = eModeCategory;
-    eModeCategory.collateralBitmap = EModeConfiguration.setReserveBitmapBit(emode_new.collateralBitmap, reserveIndex, enabled);
+    eModeCategory.collateralBitmap = EModeConfiguration.setReserveBitmapBit(
+      emode_new.collateralBitmap,
+      reserveIndex,
+      enabled
+    );
   }
 
   function isCollateralAsset(uint256 reserveIndex) public returns (bool) {
-    return EModeConfiguration.isReserveEnabledOnBitmap(eModeCategory.collateralBitmap, reserveIndex);
+    return
+      EModeConfiguration.isReserveEnabledOnBitmap(eModeCategory.collateralBitmap, reserveIndex);
   }
 
-
-
-  function setBorrowable(uint256 reserveIndex,bool enabled) public {
+  function setBorrowable(uint256 reserveIndex, bool enabled) public {
     DataTypes.EModeCategory memory emode_new = eModeCategory;
-    eModeCategory.borrowableBitmap = EModeConfiguration.setReserveBitmapBit(emode_new.borrowableBitmap, reserveIndex, enabled);
+    eModeCategory.borrowableBitmap = EModeConfiguration.setReserveBitmapBit(
+      emode_new.borrowableBitmap,
+      reserveIndex,
+      enabled
+    );
   }
-  
+
   function isBorrowableAsset(uint256 reserveIndex) public returns (bool) {
-    return EModeConfiguration.isReserveEnabledOnBitmap(eModeCategory.borrowableBitmap, reserveIndex);
+    return
+      EModeConfiguration.isReserveEnabledOnBitmap(eModeCategory.borrowableBitmap, reserveIndex);
   }
 }
