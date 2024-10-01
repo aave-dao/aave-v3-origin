@@ -11,19 +11,25 @@ Aave v3.3 is an upgrade on top of Aave 3.2
 
 ### 1. Bad Debt Management
 
-On Aave v3, certain liquidation scenarios of an account can result in a permanently bad debt situation. This occurs when the total collateral liquidated is insufficient to cover the repayment of the debt, leaving the account with zero collateral and some remaining debt. We understand that such debt is unlikely to be repaid and adversely affects the protocol by continuing to accrue interest.
+On Aave v3, some liquidation scenarios can result in a permanent bad debt on the protocol.
+This occurs when the total collateral liquidated is insufficient to cover the repayment of the debt, leaving the account with zero collateral and some remaining debt.
+We understand that such debt is unlikely to be repaid and adversely affects the protocol by continuing to accrue interest.
 
-To mitigate the creation of new bad debt accounts post-liquidation and to halt further interest accrual on such liabilities, the bad debt feature introduces a new verification step during liquidation. This step checks the total collateral and total debt values of the account post-liquidation and repayment. If an account ends up with zero collateral and non-zero debt, a flag is triggered, and any remaining debt in the account is burned and the new deficit created is accounted to the reserve.
+To mitigate the creation of new bad debt accounts post-liquidation and to halt further interest accrual on such liabilities, the bad debt feature introduces a new verification step during liquidation.
+This step checks the total collateral and total debt values of the account post-liquidation and repayment:
+If an account ends up with zero collateral and non-zero debt, any remaining debt in the account is burned and the new deficit created is accounted to the reserve.
 
-For accounts already in a bad debt situation, this feature enables the permissionless burning of debt tokens. It employs the same verification criteria, checking if the account's collateral equals zero while its debt remains non-zero.
+In terms of implementation, the feature checks whether the liquidation will result in a bad debt situation by comparing whether the total borrower’s collateral equals the collateral liquidated in the base currency.
+If the total borrower’s debt exceeds the debt repaid in base currency, the variable debt tokens of the borrower are burned, and it is accounted to the respective reserve as a deficit.
 
-In terms of implementation, the feature introduces an `isBadDebt` flag during a liquidation call. This flag checks whether the liquidation will result in a bad debt situation by comparing whether the total borrower’s collateral equals the collateral liquidated in the base currency and whether the total borrower’s debt exceeds the debt repaid in base currency. When this flag is activated, the variable debt tokens of the borrower are burned, and it is accounted to the equivalent reserve as a deficit.
-
-For accounts already in bad debt, introduces a `burnBadDebt` function to the Pool contract. This function accepts a list of accounts in bad debt to be processed. It validates through `validateUserBadDebt` that the account has zero collateral in base currency and non-zero debt before burning all variable debt tokens of the account and accounting the deficit to the equivalent reserve.
+For accounts already in a bad debt situation, an nem `eliminateReserveDeficit`method is introduced allowing permissionless burning of debt tokens.
+It employs the same verification criteria, checking if the account's collateral equals zero while its debt remains non-zero.
+This function accepts a list of accounts in bad debt to be processed. It validates that the account has zero collateral in base currency and non-zero debt before burning all variable debt tokens of the account and accounting the deficit to the equivalent reserve.
 
 The new `deficit` data is introduced to the `ReserveData` struct by re-utilizing the deprecated stableBorrowRate (`__deprecatedStableBorrowRate`) storage, and can be fetched via the new `getReserveDeficit` function in the Pool contract.
 
-The deficit reduction of a reserve is introduced via the `eliminateReserveDeficit` function in the Pool contract, where a permissioned entity (the `CoverageAdmin`) can burn his aTokens to decrease the deficit of the equivalent reserve. This function checks if the reserve has any deficit and validates the coverage admin's health factor and LTV before reducing the deficit.
+The deficit reduction of a reserve is introduced via the `eliminateReserveDeficit` function in the Pool contract, where a permissioned entity (the registered `Umbrella` on the PoolAddressesProvider) can burn aTokens to decrease the deficit of the respective reserve.
+This function only allows burning up to the currently existing deficit and validates the callers health factor and LTV before reducing the deficit.
 
 **Misc considerations & acknowledged limitations**
 
@@ -80,3 +86,32 @@ For accounts already in bad debt, the gas cost for executing the external functi
 ---
 
 <br>
+
+### 2. Bitmap access optimization
+
+The current bitmasks on `ReserveConfiguration` have been optimized for `writes`.
+This is unintuitive, as the most common protocol interactions `read` from the configuration.
+By flipping the masks:
+
+```diff
+- uint256 internal constant LTV_MASK =                       0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000; // prettier-ignore
++ uint256 internal constant LTV_MASK =                       0x000000000000000000000000000000000000000000000000000000000000FFFF; // prettier-ignore
+```
+
+The access can be simplified:
+```
+function getLtv(DataTypes.ReserveConfigurationMap memory self) internal pure returns (uint256) {
+-    return self.data & ~LTV_MASK;
++    return self.data & LTV_MASK;
+}
+```
+
+Which slightly reduces gas & code-size. The effect is getting more meaningful for accounts holding multiple collateral & borrow positions.
+
+
+### 3. Additional getters
+
+When analyzing ecosystem contracts we noticed that a lot of contracts have to pay excess gas due to the lack of fine grained getters on the protocol.
+If an external integration e.g. wants to query the aToken balance of an address, it currently has to fetch `Pool.getReserveData().aTokenAddress` or `Pool.getReserveDataExtended().aTokenAddress` which will read 7 or 8 storage slots respectively.
+This is suboptimal, as the consumer is only interested in a single slot - the one containing the `aTokenAddress`.
+Therefore we added a `getReserveAToken()` getter reducing gas cost by up to ~12k gas. We plan on adding more dedicated getters in the future when we see fit.
