@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 import {PoolConfigurator, IPoolAddressesProvider, IPool, VersionedInitializable} from '../protocol/pool/PoolConfigurator.sol';
