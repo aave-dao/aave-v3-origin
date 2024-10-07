@@ -66,10 +66,13 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
   }
 
   /**
-   * @dev Only aToken Burner can call functions marked by this modifier.
+   * @dev Only the umbrella contract can call functions marked by this modifier.
    */
-  modifier onlyCoverageAdmin() {
-    _onlyCoverageAdmin();
+  modifier onlyUmbrella() {
+    require(
+      ADDRESSES_PROVIDER.getAddress(bytes32('UMBRELLA')) == msg.sender,
+      Errors.CALLER_NOT_UMBRELLA
+    );
     _;
   }
 
@@ -91,13 +94,6 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
     require(
       IACLManager(ADDRESSES_PROVIDER.getACLManager()).isBridge(msg.sender),
       Errors.CALLER_NOT_BRIDGE
-    );
-  }
-
-  function _onlyCoverageAdmin() internal view virtual {
-    require(
-      IAccessControl(ADDRESSES_PROVIDER.getACLManager()).hasRole('COVERAGE_ADMIN', msg.sender),
-      Errors.CALLER_NOT_COVERAGE_ADMIN
     );
   }
 
@@ -864,10 +860,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
   }
 
   /// @inheritdoc IPool
-  function eliminateReserveDeficit(
-    address asset,
-    uint256 amount
-  ) external override onlyCoverageAdmin {
+  function eliminateReserveDeficit(address asset, uint256 amount) external override onlyUmbrella {
     ReserveLogic.eliminateDeficit(
       _reserves,
       _reservesList,

@@ -25,7 +25,7 @@ contract PoolDeficitTests is TestnetProcedures {
     (address reserveToken, uint256 currentDeficit) = _createReserveDeficit(supplyAmount);
 
     vm.prank(poolAdmin);
-    IAccessControl(report.aclManager).grantRole('COVERAGE_ADMIN', coverageAdmin);
+    contracts.poolAddressesProvider.setAddress(bytes32('UMBRELLA'), coverageAdmin);
 
     deal(reserveToken, coverageAdmin, currentDeficit);
 
@@ -49,7 +49,7 @@ contract PoolDeficitTests is TestnetProcedures {
     vm.assume(amountToCover != 0 && amountToCover < currentDeficit);
 
     vm.prank(poolAdmin);
-    IAccessControl(report.aclManager).grantRole('COVERAGE_ADMIN', coverageAdmin);
+    contracts.poolAddressesProvider.setAddress(bytes32('UMBRELLA'), coverageAdmin);
 
     deal(reserveToken, coverageAdmin, currentDeficit);
 
@@ -73,7 +73,7 @@ contract PoolDeficitTests is TestnetProcedures {
     vm.assume(cAdminBorrowAmount != 0 && uint256(cAdminBorrowAmount) * 2 <= currentDeficit);
 
     vm.prank(poolAdmin);
-    IAccessControl(report.aclManager).grantRole('COVERAGE_ADMIN', coverageAdmin);
+    contracts.poolAddressesProvider.setAddress(bytes32('UMBRELLA'), coverageAdmin);
 
     deal(reserveToken, coverageAdmin, currentDeficit);
 
@@ -93,7 +93,7 @@ contract PoolDeficitTests is TestnetProcedures {
     _filterAddresses(caller);
     (address reserveToken, uint256 currentDeficit) = _createReserveDeficit(supplyAmount);
 
-    vm.expectRevert(bytes(Errors.CALLER_NOT_COVERAGE_ADMIN));
+    vm.expectRevert(bytes(Errors.CALLER_NOT_UMBRELLA));
     vm.prank(caller);
     contracts.poolProxy.eliminateReserveDeficit(reserveToken, currentDeficit);
   }
@@ -107,7 +107,7 @@ contract PoolDeficitTests is TestnetProcedures {
     (address reserveToken, ) = _createReserveDeficit(supplyAmount);
 
     vm.prank(poolAdmin);
-    IAccessControl(report.aclManager).grantRole('COVERAGE_ADMIN', coverageAdmin);
+    contracts.poolAddressesProvider.setAddress(bytes32('UMBRELLA'), coverageAdmin);
 
     vm.startPrank(coverageAdmin);
     vm.expectRevert(bytes(Errors.INVALID_AMOUNT));
@@ -120,7 +120,7 @@ contract PoolDeficitTests is TestnetProcedures {
     _filterAddresses(coverageAdmin);
 
     vm.prank(poolAdmin);
-    IAccessControl(report.aclManager).grantRole('COVERAGE_ADMIN', coverageAdmin);
+    contracts.poolAddressesProvider.setAddress(bytes32('UMBRELLA'), coverageAdmin);
 
     vm.startPrank(coverageAdmin);
 
