@@ -99,6 +99,7 @@ By flipping the masks:
 ```
 
 The access can be simplified:
+
 ```
 function getLtv(DataTypes.ReserveConfigurationMap memory self) internal pure returns (uint256) {
 -    return self.data & ~LTV_MASK;
@@ -107,7 +108,6 @@ function getLtv(DataTypes.ReserveConfigurationMap memory self) internal pure ret
 ```
 
 Which slightly reduces gas & code-size. The effect is getting more meaningful for accounts holding multiple collateral & borrow positions.
-
 
 ### 3. Additional getters
 

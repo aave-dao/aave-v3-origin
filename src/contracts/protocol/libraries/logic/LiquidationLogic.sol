@@ -612,6 +612,9 @@ library LiquidationLogic {
       IVariableDebtToken vToken = IVariableDebtToken(currentReserve.variableDebtTokenAddress);
       // Fetch the scaled balance first as it is more gas-efficient
       uint256 userDebt = vToken.scaledBalanceOf(user);
+      // Prior v3.1, there were cases where, after liquidation, the `isBorrowing` flag was left on
+      // even after the user debt was fully repaid, so to avoid this function reverting in the `_burnScaled`
+      // (see ScaledBalanceTokenBase contract), we check for any debt remaining.
       if (userDebt != 0) {
         // Scale up the debt balance
         userDebt = userDebt.rayMul(reserveCache.nextVariableBorrowIndex);
