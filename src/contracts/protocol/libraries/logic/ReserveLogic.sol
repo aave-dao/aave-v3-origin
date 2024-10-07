@@ -186,7 +186,7 @@ library ReserveLogic {
           totalDebt: totalVariableDebt,
           reserveFactor: reserveCache.reserveFactor,
           reserve: reserveAddress,
-          usingVirtualBalance: reserve.configuration.getIsVirtualAccActive(),
+          usingVirtualBalance: reserveCache.reserveConfiguration.getIsVirtualAccActive(),
           virtualUnderlyingBalance: reserve.virtualUnderlyingBalance
         })
       );
@@ -195,7 +195,7 @@ library ReserveLogic {
     reserve.currentVariableBorrowRate = nextVariableRate.toUint128();
 
     // Only affect virtual balance if the reserve uses it
-    if (reserve.configuration.getIsVirtualAccActive()) {
+    if (reserveCache.reserveConfiguration.getIsVirtualAccActive()) {
       if (liquidityAdded > 0) {
         reserve.virtualUnderlyingBalance += liquidityAdded.toUint128();
       }
