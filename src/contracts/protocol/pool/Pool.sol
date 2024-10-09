@@ -450,6 +450,10 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
     res.accruedToTreasury = reserve.accruedToTreasury;
     res.unbacked = reserve.unbacked;
     res.isolationModeTotalDebt = reserve.isolationModeTotalDebt;
+    // This is a temporary workaround for integrations that are broken by Aave 3.2
+    // While the new pool data provider is backward compatible, some integrations hard-code an old implementation
+    // To allow them to unlock the funds, the pool address provider is setting a stable debt token, so balanceOf() and totalSupply() will return zero instead of reverting
+    res.stableDebtTokenAddress = ADDRESSES_PROVIDER.getAddress(bytes32('MOCK_STABLE_DEBT'));
     return res;
   }
 

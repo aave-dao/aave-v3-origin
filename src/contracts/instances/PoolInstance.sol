@@ -6,7 +6,7 @@ import {IPoolAddressesProvider} from '../interfaces/IPoolAddressesProvider.sol';
 import {Errors} from '../protocol/libraries/helpers/Errors.sol';
 
 contract PoolInstance is Pool {
-  uint256 public constant POOL_REVISION = 5;
+  uint256 public constant POOL_REVISION = 6;
 
   constructor(IPoolAddressesProvider provider) Pool(provider) {}
 
