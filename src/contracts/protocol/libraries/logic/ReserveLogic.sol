@@ -102,7 +102,7 @@ library ReserveLogic {
   ) internal {
     // If time didn't pass since last stored timestamp, skip state update
     //solium-disable-next-line
-    if (reserve.lastUpdateTimestamp == uint40(block.timestamp)) {
+    if (reserveCache.reserveLastUpdateTimestamp == uint40(block.timestamp)) {
       return;
     }
 
