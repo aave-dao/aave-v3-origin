@@ -14,7 +14,7 @@ import {IAccessControl} from '../../../src/contracts/dependencies/openzeppelin/c
 contract PoolDeficitTests is TestnetProcedures {
   using stdStorage for StdStorage;
 
-  event BadDebtCovered(address indexed reserve, uint256 amountDecreased, uint256 currentDeficit);
+  event DeficitCovered(address indexed reserve, uint256 amountDecreased);
 
   function setUp() public virtual {
     initTestEnvironment();
@@ -35,7 +35,7 @@ contract PoolDeficitTests is TestnetProcedures {
 
     // eliminate deficit
     vm.expectEmit(address(contracts.poolProxy));
-    emit BadDebtCovered(reserveToken, currentDeficit, 0);
+    emit DeficitCovered(reserveToken, currentDeficit);
     contracts.poolProxy.eliminateReserveDeficit(reserveToken, currentDeficit);
   }
 
@@ -46,7 +46,7 @@ contract PoolDeficitTests is TestnetProcedures {
   ) public {
     _filterAddresses(coverageAdmin);
     (address reserveToken, uint256 currentDeficit) = _createReserveDeficit(supplyAmount);
-    vm.assume(amountToCover != 0 && amountToCover < currentDeficit);
+    amountToCover = uint120(bound(amountToCover, 1, currentDeficit));
 
     vm.prank(poolAdmin);
     contracts.poolAddressesProvider.setAddress(bytes32('UMBRELLA'), coverageAdmin);
@@ -59,7 +59,7 @@ contract PoolDeficitTests is TestnetProcedures {
 
     // eliminate deficit
     vm.expectEmit(address(contracts.poolProxy));
-    emit BadDebtCovered(reserveToken, amountToCover, currentDeficit - amountToCover);
+    emit DeficitCovered(reserveToken, amountToCover);
     contracts.poolProxy.eliminateReserveDeficit(reserveToken, amountToCover);
   }
 
@@ -70,7 +70,7 @@ contract PoolDeficitTests is TestnetProcedures {
   ) public {
     _filterAddresses(coverageAdmin);
     (address reserveToken, uint256 currentDeficit) = _createReserveDeficit(supplyAmount);
-    vm.assume(cAdminBorrowAmount != 0 && uint256(cAdminBorrowAmount) * 2 <= currentDeficit);
+    cAdminBorrowAmount = uint120(bound(cAdminBorrowAmount, 1, currentDeficit / 2));
 
     vm.prank(poolAdmin);
     contracts.poolAddressesProvider.setAddress(bytes32('UMBRELLA'), coverageAdmin);

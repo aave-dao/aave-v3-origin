@@ -843,23 +843,6 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
   }
 
   /// @inheritdoc IPool
-  function burnBadDebt(address[] calldata users) external virtual override {
-    for (uint256 i; i < users.length; i++) {
-      address user = users[i];
-      LiquidationLogic.executeBadDebtCleanup(
-        _reserves,
-        _reservesList,
-        _eModeCategories,
-        _usersConfig[user],
-        user,
-        _usersEModeCategory[user],
-        _reservesCount,
-        ADDRESSES_PROVIDER.getPriceOracle()
-      );
-    }
-  }
-
-  /// @inheritdoc IPool
   function eliminateReserveDeficit(address asset, uint256 amount) external override onlyUmbrella {
     ReserveLogic.eliminateDeficit(
       _reserves,
@@ -885,6 +868,11 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
   /// @inheritdoc IPool
   function getReserveAToken(address asset) external view virtual returns (address) {
     return _reserves[asset].aTokenAddress;
+  }
+
+  /// @inheritdoc IPool
+  function getReserveVariableDebtToken(address asset) external view virtual returns (address) {
+    return _reserves[asset].variableDebtTokenAddress;
   }
 
   /// @inheritdoc IPool

@@ -189,9 +189,8 @@ interface IPool {
    * @dev Emitted when the deficit of a reserve is covered.
    * @param reserve The address of the underlying asset of the reserve
    * @param amountCovered The amount of deficit covered
-   * @param currentDeficit The current deficit of the reserve.
    */
-  event BadDebtCovered(address indexed reserve, uint256 amountCovered, uint256 currentDeficit);
+  event DeficitCovered(address indexed reserve, uint256 amountCovered);
 
   /**
    * @dev Emitted when the protocol treasury receives minted aTokens from the accrued interest.
@@ -206,7 +205,7 @@ interface IPool {
    * @param debtAsset The address of the underlying borrowed asset to be burned
    * @param amount The amount to burn
    */
-  event BadDebtBurned(address indexed user, address indexed debtAsset, uint256 amount);
+  event DeficitCreated(address indexed user, address indexed debtAsset, uint256 amount);
 
   /**
    * @notice Mints an `amount` of aTokens to the `onBehalfOf`
@@ -814,15 +813,6 @@ interface IPool {
   function deposit(address asset, uint256 amount, address onBehalfOf, uint16 referralCode) external;
 
   /**
-   * @notice Validate and burn all bad debt of users.
-   * @dev A user is considered to be in bad debt if, after liquidation, they have all collateral liquidated
-   * while leaving some debt unpaid. This condition indicates that the user's debt is unlikely to be repaid,
-   * necessitating a debt write-off to prevent further interest accrual.
-   * @param users The array of addresses in bad debt.
-   */
-  function burnBadDebt(address[] calldata users) external;
-
-  /**
    * @notice It Covers the deficit of a specified reserve by burning the equivalent aToken `amount`.
    * @dev The deficit of a reserve can occur due to situations where borrowed assets are not repaid, leading to bad debt.
    * @param asset The address of the underlying asset to cover the dificit.
@@ -843,6 +833,13 @@ interface IPool {
    * @return The address of the aToken
    */
   function getReserveAToken(address asset) external view returns (address);
+
+  /**
+   * @notice Returns the variableDebtToken address of a reserve.
+   * @param asset The address of the underlying asset of the reserve
+   * @return The address of the variableDebtToken
+   */
+  function getReserveVariableDebtToken(address asset) external view returns (address);
 
   /**
    * @notice Gets the address of the external FlashLoanLogic

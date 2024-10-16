@@ -102,5 +102,6 @@ library Errors {
   string public constant NOT_BORROWABLE_IN_EMODE = '100'; // Asset not borrowable in eMode
   string public constant USER_NOT_IN_BAD_DEBT = '101'; // The user is not in bad debt
   string public constant CALLER_NOT_UMBRELLA = '102'; // The caller of the function is not the umbrella contract
-  string public constant RESERVE_NOT_IN_DEFICIT = '103'; //  The reserve is not in deficit
+  string public constant RESERVE_NOT_IN_DEFICIT = '103'; // The reserve is not in deficit
+  string public constant MUST_NOT_LEAVE_DUST = '104'; // Below a certain threshold liquidators need to take the full position
 }

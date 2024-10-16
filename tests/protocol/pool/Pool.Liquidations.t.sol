@@ -5,6 +5,7 @@ import 'forge-std/Test.sol';
 
 import {IVariableDebtToken} from '../../../src/contracts/interfaces/IVariableDebtToken.sol';
 import {IAaveOracle} from '../../../src/contracts/interfaces/IAaveOracle.sol';
+import {IPriceOracleGetter} from '../../../src/contracts/interfaces/IPriceOracleGetter.sol';
 import {IPoolAddressesProvider} from '../../../src/contracts/interfaces/IPoolAddressesProvider.sol';
 import {IAToken} from '../../../src/contracts/interfaces/IAToken.sol';
 import {Errors} from '../../../src/contracts/protocol/libraries/helpers/Errors.sol';
@@ -19,6 +20,7 @@ import {DataTypes} from '../../../src/contracts/protocol/libraries/types/DataTyp
 import {PercentageMath} from '../../../src/contracts/protocol/libraries/math/PercentageMath.sol';
 import {WadRayMath} from '../../../src/contracts/protocol/libraries/math/WadRayMath.sol';
 import {TestnetProcedures} from '../../utils/TestnetProcedures.sol';
+import {LiquidationHelper} from '../../helpers/LiquidationHelper.sol';
 
 contract PoolLiquidationTests is TestnetProcedures {
   using stdStorage for StdStorage;
@@ -81,7 +83,6 @@ contract PoolLiquidationTests is TestnetProcedures {
     address debtPriceSource;
     uint256 liquidationBonus;
     uint256 userCollateralBalance;
-    DataTypes.ReserveCache debtCache;
     uint256 priceImpactPercent;
     uint256 liquidationProtocolFeeAmount;
     uint256 collateralToLiquidateInBaseCurrency;
@@ -143,7 +144,7 @@ contract PoolLiquidationTests is TestnetProcedures {
     );
   }
 
-  function test_liquidate_variable_borrow() public {
+  function test_liquidate_variable_borrow_repro() public {
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setLiquidationProtocolFee(tokenList.usdx, 23_33);
     uint256 amount = 1.00999999e8;
@@ -757,7 +758,7 @@ contract PoolLiquidationTests is TestnetProcedures {
     }
 
     vm.expectEmit(address(contracts.poolProxy));
-    emit LiquidationLogic.BadDebtBurned(
+    emit LiquidationLogic.DeficitCreated(
       params.user,
       tokenList.usdx,
       userDebtBefore - params.actualDebtToLiquidate
@@ -818,7 +819,7 @@ contract PoolLiquidationTests is TestnetProcedures {
     }
 
     vm.expectEmit(address(contracts.poolProxy));
-    emit LiquidationLogic.BadDebtBurned(
+    emit LiquidationLogic.DeficitCreated(
       params.user,
       tokenList.usdx,
       userDebtBefore - params.actualDebtToLiquidate
@@ -841,67 +842,6 @@ contract PoolLiquidationTests is TestnetProcedures {
     // check second borrow
     (, , varDebtToken) = contracts.protocolDataProvider.getReserveTokensAddresses(tokenList.wbtc);
     assertEq(IERC20(varDebtToken).balanceOf(params.user), 0, 'user balance doesnt match');
-  }
-
-  function test_burnBadDebt() public {
-    uint256 supplyAmount = 0.5e8;
-    uint256 borrowAmount = 11110e6;
-    uint256 len = badDebtAccounts.length;
-
-    for (uint256 i; i < len; ++i) {
-      address user = badDebtAccounts[i];
-      deal(tokenList.wbtc, user, supplyAmount);
-      vm.startPrank(user);
-      IERC20(tokenList.wbtc).approve(address(contracts.poolProxy), type(uint256).max);
-      contracts.poolProxy.supply(tokenList.wbtc, supplyAmount, user, 0);
-      contracts.poolProxy.borrow(tokenList.usdx, borrowAmount, 2, 0, user);
-      vm.stopPrank();
-    }
-
-    vm.warp(block.timestamp + 30 days);
-    stdstore
-      .target(IAaveOracle(report.aaveOracle).getSourceOfAsset(tokenList.wbtc))
-      .sig('_latestAnswer()')
-      .checked_write(1);
-
-    (, , address varDebtToken) = contracts.protocolDataProvider.getReserveTokensAddresses(
-      tokenList.usdx
-    );
-
-    uint256[] memory usersDebtBefore = new uint256[](len);
-    for (uint256 i; i < len; ++i) {
-      usersDebtBefore[i] = IERC20(varDebtToken).balanceOf(badDebtAccounts[i]);
-    }
-
-    vm.expectEmit(address(contracts.poolProxy));
-    emit LiquidationLogic.BadDebtBurned(badDebtAccounts[0], tokenList.usdx, usersDebtBefore[0]);
-
-    vm.prank(bob);
-    contracts.poolProxy.burnBadDebt(badDebtAccounts);
-
-    for (uint256 i; i < len; ++i) {
-      assertEq(IERC20(varDebtToken).balanceOf(badDebtAccounts[i]), 0);
-    }
-  }
-
-  function test_revert_burnBadDebt_not_in_bad_debt() public {
-    uint256 supplyAmount = 0.5e8;
-    uint256 borrowAmount = 11110e6;
-    uint256 len = badDebtAccounts.length;
-
-    for (uint256 i; i < len; ++i) {
-      address user = badDebtAccounts[i];
-      deal(tokenList.wbtc, user, supplyAmount);
-      vm.startPrank(user);
-      IERC20(tokenList.wbtc).approve(address(contracts.poolProxy), type(uint256).max);
-      contracts.poolProxy.supply(tokenList.wbtc, supplyAmount, user, 0);
-      contracts.poolProxy.borrow(tokenList.usdx, borrowAmount, 2, 0, user);
-      vm.stopPrank();
-    }
-
-    vm.expectRevert(bytes(Errors.USER_NOT_IN_BAD_DEBT));
-    vm.prank(bob);
-    contracts.poolProxy.burnBadDebt(badDebtAccounts);
   }
 
   function test_deficit_increased_after_liquidate_bad_debt() public {
@@ -937,7 +877,7 @@ contract PoolLiquidationTests is TestnetProcedures {
     }
 
     vm.expectEmit(address(contracts.poolProxy));
-    emit LiquidationLogic.BadDebtBurned(
+    emit LiquidationLogic.DeficitCreated(
       params.user,
       tokenList.usdx,
       userDebtBefore - params.actualDebtToLiquidate
@@ -1001,16 +941,10 @@ contract PoolLiquidationTests is TestnetProcedures {
       params.healthFactor
     ) = contracts.poolProxy.getUserAccountData(params.user);
 
-    (, , address variableDebtToken) = contracts.protocolDataProvider.getReserveTokensAddresses(
+    uint256 maxLiquidatableDebt = LiquidationHelper._getMaxLiquidatableDebt(
+      contracts.poolProxy,
+      user,
       params.debtAsset
-    );
-
-    uint256 closeFactor = params.healthFactor > LiquidationLogic.CLOSE_FACTOR_HF_THRESHOLD
-      ? LiquidationLogic.DEFAULT_LIQUIDATION_CLOSE_FACTOR
-      : LiquidationLogic.MAX_LIQUIDATION_CLOSE_FACTOR;
-
-    uint256 maxLiquidatableDebt = (IERC20(variableDebtToken).balanceOf(params.user)).percentMul(
-      closeFactor
     );
 
     params.actualDebtToLiquidate = params.liquidationAmountInput > maxLiquidatableDebt
@@ -1020,23 +954,18 @@ contract PoolLiquidationTests is TestnetProcedures {
     collateralReserveData = _getReserveData(params.collateralAsset);
     debtReserveData = _getReserveData(params.debtAsset);
 
-    params.debtCache = debtReserveData.cache();
-
     (
       params.actualCollateralToLiquidate,
       params.actualDebtToLiquidate,
       params.liquidationProtocolFeeAmount,
       params.collateralToLiquidateInBaseCurrency,
       params.debtToLiquidateInBaseCurrency
-    ) = LiquidationLogic._calculateAvailableCollateralToLiquidate(
-      collateralReserveData,
-      params.debtCache,
-      params.collateralPriceSource,
-      params.debtPriceSource,
-      params.actualDebtToLiquidate,
-      params.userCollateralBalance,
-      params.liquidationBonus,
-      IAaveOracle(report.aaveOracle)
+    ) = LiquidationHelper._getLiquidationParams(
+      contracts.poolProxy,
+      params.user,
+      params.collateralAsset,
+      params.debtAsset,
+      params.actualDebtToLiquidate
     );
     params.isBadDebt =
       params.totalCollateralInBaseCurrency == params.collateralToLiquidateInBaseCurrency &&
@@ -1137,9 +1066,8 @@ contract PoolLiquidationTests is TestnetProcedures {
   }
 
   function test_liquidation_when_grace_period_disabled(uint40 liquidationGracePeriod) public {
-    vm.assume(
-      liquidationGracePeriod <= contracts.poolConfiguratorProxy.MAX_GRACE_PERIOD() &&
-        liquidationGracePeriod != 0
+    liquidationGracePeriod = uint40(
+      bound(liquidationGracePeriod, 1, contracts.poolConfiguratorProxy.MAX_GRACE_PERIOD())
     );
     address[] memory assetsInGrace = new address[](1);
     assetsInGrace[0] = tokenList.usdx;
@@ -1191,7 +1119,9 @@ contract PoolLiquidationTests is TestnetProcedures {
   function test_liquidation_with_liquidation_grace_period_collateral_active(
     uint40 liquidationGracePeriod
   ) public {
-    vm.assume(liquidationGracePeriod <= contracts.poolConfiguratorProxy.MAX_GRACE_PERIOD());
+    liquidationGracePeriod = uint40(
+      bound(liquidationGracePeriod, 0, contracts.poolConfiguratorProxy.MAX_GRACE_PERIOD())
+    );
     address[] memory assetsInGrace = new address[](1);
     assetsInGrace[0] = tokenList.wbtc;
     _testLiquidationGracePeriod(assetsInGrace, liquidationGracePeriod);
@@ -1200,7 +1130,9 @@ contract PoolLiquidationTests is TestnetProcedures {
   function test_liquidation_with_liquidation_grace_period_debt_active(
     uint40 liquidationGracePeriod
   ) public {
-    vm.assume(liquidationGracePeriod <= contracts.poolConfiguratorProxy.MAX_GRACE_PERIOD());
+    liquidationGracePeriod = uint40(
+      bound(liquidationGracePeriod, 0, contracts.poolConfiguratorProxy.MAX_GRACE_PERIOD())
+    );
     address[] memory assetsInGrace = new address[](1);
     assetsInGrace[0] = tokenList.usdx;
     _testLiquidationGracePeriod(assetsInGrace, liquidationGracePeriod);
@@ -1209,7 +1141,9 @@ contract PoolLiquidationTests is TestnetProcedures {
   function test_liquidation_with_liquidation_grace_period_debt_collateral_active(
     uint40 liquidationGracePeriod
   ) public {
-    vm.assume(liquidationGracePeriod <= contracts.poolConfiguratorProxy.MAX_GRACE_PERIOD());
+    liquidationGracePeriod = uint40(
+      bound(liquidationGracePeriod, 0, contracts.poolConfiguratorProxy.MAX_GRACE_PERIOD())
+    );
     address[] memory assetsInGrace = new address[](2);
     assetsInGrace[0] = tokenList.wbtc;
     assetsInGrace[1] = tokenList.usdx;

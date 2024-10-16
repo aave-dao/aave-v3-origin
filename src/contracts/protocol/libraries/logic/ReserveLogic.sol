@@ -41,7 +41,7 @@ library ReserveLogic {
   );
 
   event ReserveUsedAsCollateralDisabled(address indexed reserve, address indexed user);
-  event BadDebtCovered(address indexed reserve, uint256 amountDecreased, uint256 currentDeficit);
+  event DeficitCovered(address indexed reserve, uint256 amountDecreased);
 
   /**
    * @notice Returns the ongoing normalized income for the reserve.
@@ -320,7 +320,7 @@ library ReserveLogic {
 
   /**
    * @notice Reduces a portion or all of the deficit of a specified reserve by burning the equivalent aToken `amount`.
-   * @dev Emits the `BadDebtCovered() event`.
+   * @dev Emits the `DeficitCovered() event`.
    * @dev If the coverage admin covers its entire balance, `ReserveUsedAsCollateralDisabled()` is emitted.
    * @param reservesData The state of all the reserves
    * @param reservesList The addresses of all the active reserves
@@ -349,15 +349,15 @@ library ReserveLogic {
       reserveCache.nextLiquidityIndex
     );
 
-    uint256 deficitToDecrease = params.amount;
+    uint256 balanceWriteOff = params.amount;
 
     if (params.amount > currentDeficit) {
-      deficitToDecrease = currentDeficit;
+      balanceWriteOff = currentDeficit;
     }
 
     bool isCollateral = userConfig.isUsingAsCollateral(reserve.id);
 
-    if (isCollateral && deficitToDecrease == userBalance) {
+    if (isCollateral && balanceWriteOff == userBalance) {
       userConfig.setUsingAsCollateral(reserve.id, false);
       emit ReserveUsedAsCollateralDisabled(params.asset, msg.sender);
     }
@@ -365,7 +365,7 @@ library ReserveLogic {
     IAToken(reserveCache.aTokenAddress).burn(
       msg.sender,
       reserveCache.aTokenAddress,
-      deficitToDecrease,
+      balanceWriteOff,
       reserveCache.nextLiquidityIndex
     );
 
@@ -383,8 +383,8 @@ library ReserveLogic {
       );
     }
 
-    reserve.deficit -= deficitToDecrease.toUint128();
+    reserve.deficit -= balanceWriteOff.toUint128();
 
-    emit BadDebtCovered(params.asset, deficitToDecrease, reserve.deficit);
+    emit DeficitCovered(params.asset, balanceWriteOff);
   }
 }
