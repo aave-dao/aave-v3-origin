@@ -75,8 +75,7 @@ abstract contract BaseParaSwapBuyAdapter is BaseParaSwapAdapter {
     require(balanceBeforeAssetFrom >= maxAmountToSwap, 'INSUFFICIENT_BALANCE_BEFORE_SWAP');
     uint256 balanceBeforeAssetTo = assetToSwapTo.balanceOf(address(this));
 
-    address tokenTransferProxy = augustus.getTokenTransferProxy();
-    assetToSwapFrom.safeApprove(tokenTransferProxy, maxAmountToSwap);
+    assetToSwapFrom.safeApprove(address(augustus), maxAmountToSwap);
 
     if (toAmountOffset != 0) {
       // Ensure 256 bit (32 bytes) toAmountOffset value is within bounds of the
@@ -102,7 +101,7 @@ abstract contract BaseParaSwapBuyAdapter is BaseParaSwapAdapter {
     }
 
     // Reset allowance
-    assetToSwapFrom.safeApprove(tokenTransferProxy, 0);
+    assetToSwapFrom.safeApprove(address(augustus), 0);
 
     uint256 balanceAfterAssetFrom = assetToSwapFrom.balanceOf(address(this));
     amountSold = balanceBeforeAssetFrom - balanceAfterAssetFrom;
