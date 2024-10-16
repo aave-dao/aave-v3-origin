@@ -785,7 +785,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     contracts.poolConfiguratorProxy.setReservePause(asset, false, gracePeriod);
   }
 
-  function _getFullReserveData(address asset) internal returns (DataTypes.ReserveData memory) {
+  function _getFullReserveData(address asset) internal view returns (DataTypes.ReserveData memory) {
     DataTypes.ReserveDataLegacy memory reserveDataLegacy = contracts.poolProxy.getReserveData(
       asset
     );

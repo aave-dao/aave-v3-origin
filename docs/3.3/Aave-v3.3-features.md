@@ -109,3 +109,8 @@ If an external integration e.g. wants to query the aToken balance of an address,
 This is suboptimal, as the consumer is only interested in a single slot - the one containing the `aTokenAddress`.
 Therefore we added a `getReserveAToken()` and `getReserveVariableDebtToken()` getters reducing gas cost by up to ~16k gas dependent on the usecase.
 We plan on adding more dedicated getters in the future as we see fit.
+
+## Breaking changes
+
+The previously deprecated `pool.getReserveDataExtended()` was removed.
+You can fetch the data via `pool.getReserveData()`, `pool.getVirtualUnderlyingBalance()` & `pool.getVirtualUnderlyingBalance()`.

@@ -238,7 +238,7 @@ contract PoolConfiguratorUpgradeabilityTests is TestnetProcedures {
     );
   }
 
-  function _getFullReserveData(address asset) internal returns (DataTypes.ReserveData memory) {
+  function _getFullReserveData(address asset) internal view returns (DataTypes.ReserveData memory) {
     DataTypes.ReserveDataLegacy memory reserveDataLegacy = contracts.poolProxy.getReserveData(
       asset
     );
