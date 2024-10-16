@@ -54,11 +54,7 @@ contract RewardsControllerTest is TestnetProcedures {
     vm.prank(poolAdmin);
     manager.setEmissionAdmin(tokenList.usdx, alice);
 
-    DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
-      tokenList.usdx
-    );
-
-    usdxAToken = reserveData.aTokenAddress;
+    usdxAToken = contracts.poolProxy.getReserveAToken(tokenList.usdx);
   }
 
   function test_new_RewardsController() public returns (RewardsController) {

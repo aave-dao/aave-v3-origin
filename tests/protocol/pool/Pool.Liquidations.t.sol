@@ -40,8 +40,6 @@ contract PoolLiquidationTests is TestnetProcedures {
   SequencerOracle internal sequencerOracleMock;
 
   event IsolationModeTotalDebtUpdated(address indexed asset, uint256 totalDebt);
-  DataTypes.ReserveData internal collateralReserveData;
-  DataTypes.ReserveData internal debtReserveData;
 
   function setUp() public {
     initTestEnvironment();
@@ -951,9 +949,6 @@ contract PoolLiquidationTests is TestnetProcedures {
       ? maxLiquidatableDebt
       : params.liquidationAmountInput;
 
-    collateralReserveData = _getReserveData(params.collateralAsset);
-    debtReserveData = _getReserveData(params.debtAsset);
-
     (
       params.actualCollateralToLiquidate,
       params.actualDebtToLiquidate,
@@ -1279,30 +1274,6 @@ contract PoolLiquidationTests is TestnetProcedures {
       1,
       'user balance doesnt match'
     );
-  }
-
-  function _getReserveData(address asset) internal view returns (DataTypes.ReserveData memory) {
-    DataTypes.ReserveDataLegacy memory reserveDataLegacy = contracts.poolProxy.getReserveData(
-      asset
-    );
-    DataTypes.ReserveData memory tempReserveData;
-    tempReserveData.configuration = reserveDataLegacy.configuration;
-    tempReserveData.liquidityIndex = reserveDataLegacy.liquidityIndex;
-    tempReserveData.currentLiquidityRate = reserveDataLegacy.currentLiquidityRate;
-    tempReserveData.variableBorrowIndex = reserveDataLegacy.variableBorrowIndex;
-    tempReserveData.currentVariableBorrowRate = reserveDataLegacy.currentVariableBorrowRate;
-    tempReserveData.lastUpdateTimestamp = reserveDataLegacy.lastUpdateTimestamp;
-    tempReserveData.id = reserveDataLegacy.id;
-    tempReserveData.aTokenAddress = reserveDataLegacy.aTokenAddress;
-    tempReserveData.variableDebtTokenAddress = reserveDataLegacy.variableDebtTokenAddress;
-    tempReserveData.interestRateStrategyAddress = reserveDataLegacy.interestRateStrategyAddress;
-    tempReserveData.accruedToTreasury = reserveDataLegacy.accruedToTreasury;
-    tempReserveData.unbacked = reserveDataLegacy.unbacked;
-    tempReserveData.isolationModeTotalDebt = reserveDataLegacy.isolationModeTotalDebt;
-    tempReserveData.virtualUnderlyingBalance = uint128(
-      contracts.poolProxy.getVirtualUnderlyingBalance(asset)
-    );
-    return tempReserveData;
   }
 
   function _setLiquidationGracePeriod(address[] memory assets, uint40 gracePeriod) internal {

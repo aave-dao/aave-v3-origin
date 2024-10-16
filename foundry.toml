@@ -20,7 +20,7 @@ ffi = true
 
 [fuzz]
 runs = 1000
-max_test_rejects = 40000
+max_test_rejects = 20000
 
 [rpc_endpoints]
 mainnet = "${RPC_MAINNET}"

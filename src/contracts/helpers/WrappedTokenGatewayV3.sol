@@ -73,8 +73,9 @@ contract WrappedTokenGatewayV3 is IWrappedTokenGatewayV3, Ownable {
    * @param onBehalfOf the address for which msg.sender is repaying
    */
   function repayETH(address, uint256 amount, address onBehalfOf) external payable override {
-    uint256 paybackAmount = IERC20((POOL.getReserveData(address(WETH))).variableDebtTokenAddress)
-      .balanceOf(onBehalfOf);
+    uint256 paybackAmount = IERC20(POOL.getReserveVariableDebtToken(address(WETH))).balanceOf(
+      onBehalfOf
+    );
 
     if (amount < paybackAmount) {
       paybackAmount = amount;

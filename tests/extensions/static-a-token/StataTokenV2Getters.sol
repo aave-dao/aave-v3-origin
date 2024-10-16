@@ -25,8 +25,7 @@ contract StataTokenV2GettersTest is BaseTest {
     address underlyingAddress = address(stataTokenV2.asset());
     assertEq(underlyingAddress, underlying);
 
-    DataTypes.ReserveDataLegacy memory data = contracts.poolProxy.getReserveData(underlyingAddress);
-    assertEq(stataTokenV2.aToken(), data.aTokenAddress);
+    assertEq(stataTokenV2.aToken(), contracts.poolProxy.getReserveAToken(underlyingAddress));
 
     IERC20Metadata underlying = IERC20Metadata(underlyingAddress);
     assertEq(stataTokenV2.decimals(), underlying.decimals());

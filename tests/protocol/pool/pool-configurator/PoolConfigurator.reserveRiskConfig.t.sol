@@ -423,7 +423,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
 
     vm.stopPrank();
 
-    reserveData = contracts.poolProxy.getReserveDataExtended(tokenList.usdx);
+    reserveData = _getFullReserveData(tokenList.usdx);
     DataTypes.ReserveCache memory cache = reserveData.cache();
     uint40 initialTimestamp = uint40(block.timestamp);
 
@@ -434,7 +434,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     vm.warp(block.timestamp + 365 days);
 
     // check that index is not changed after 1 year
-    updatedReserveData = contracts.poolProxy.getReserveDataExtended(tokenList.usdx);
+    updatedReserveData = _getFullReserveData(tokenList.usdx);
     DataTypes.ReserveCache memory cacheAfterYear = updatedReserveData.cache();
 
     assertEq(cacheAfterYear.reserveLastUpdateTimestamp, initialTimestamp);
@@ -451,7 +451,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     assertEq(reserveFactor, 5_00);
 
     // index and rate have changed after Reserve Factor update
-    updatedReserveData = contracts.poolProxy.getReserveDataExtended(tokenList.usdx);
+    updatedReserveData = _getFullReserveData(tokenList.usdx);
     DataTypes.ReserveCache memory updatedCache = updatedReserveData.cache();
 
     assertNotEq(updatedCache.currVariableBorrowIndex, cacheAfterYear.currVariableBorrowIndex);
@@ -783,5 +783,30 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
 
     vm.expectRevert(bytes(Errors.INVALID_GRACE_PERIOD));
     contracts.poolConfiguratorProxy.setReservePause(asset, false, gracePeriod);
+  }
+
+  function _getFullReserveData(address asset) internal returns (DataTypes.ReserveData memory) {
+    DataTypes.ReserveDataLegacy memory reserveDataLegacy = contracts.poolProxy.getReserveData(
+      asset
+    );
+    DataTypes.ReserveData memory tempReserveData;
+    tempReserveData.configuration = reserveDataLegacy.configuration;
+    tempReserveData.liquidityIndex = reserveDataLegacy.liquidityIndex;
+    tempReserveData.currentLiquidityRate = reserveDataLegacy.currentLiquidityRate;
+    tempReserveData.variableBorrowIndex = reserveDataLegacy.variableBorrowIndex;
+    tempReserveData.currentVariableBorrowRate = reserveDataLegacy.currentVariableBorrowRate;
+    tempReserveData.lastUpdateTimestamp = reserveDataLegacy.lastUpdateTimestamp;
+    tempReserveData.id = reserveDataLegacy.id;
+    tempReserveData.aTokenAddress = reserveDataLegacy.aTokenAddress;
+    tempReserveData.variableDebtTokenAddress = reserveDataLegacy.variableDebtTokenAddress;
+    tempReserveData.interestRateStrategyAddress = reserveDataLegacy.interestRateStrategyAddress;
+    tempReserveData.accruedToTreasury = reserveDataLegacy.accruedToTreasury;
+    tempReserveData.unbacked = reserveDataLegacy.unbacked;
+    tempReserveData.isolationModeTotalDebt = reserveDataLegacy.isolationModeTotalDebt;
+    tempReserveData.virtualUnderlyingBalance = uint128(
+      contracts.poolProxy.getVirtualUnderlyingBalance(asset)
+    );
+    tempReserveData.deficit = uint128(contracts.poolProxy.getReserveDeficit(asset));
+    return tempReserveData;
   }
 }

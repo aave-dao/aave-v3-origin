@@ -74,14 +74,8 @@ contract ParaswapAdaptersTest is TestnetProcedures {
       mockParaSwapFeeClaimer
     );
 
-    DataTypes.ReserveDataLegacy memory wethData = contracts.poolProxy.getReserveData(
-      tokenList.weth
-    );
-    DataTypes.ReserveDataLegacy memory usdxData = contracts.poolProxy.getReserveData(
-      tokenList.usdx
-    );
-    aWETH = IERC20Detailed(wethData.aTokenAddress);
-    aUSDX = IERC20Detailed(usdxData.aTokenAddress);
+    aWETH = IERC20Detailed(contracts.poolProxy.getReserveAToken(tokenList.weth));
+    aUSDX = IERC20Detailed(contracts.poolProxy.getReserveAToken(tokenList.usdx));
 
     vm.prank(poolAdmin);
     TestnetERC20(tokenList.usdx).transferOwnership(address(mockParaSwapAugustus));

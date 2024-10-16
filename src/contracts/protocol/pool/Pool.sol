@@ -436,13 +436,6 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
   }
 
   /// @inheritdoc IPool
-  function getReserveDataExtended(
-    address asset
-  ) external view returns (DataTypes.ReserveData memory) {
-    return _reserves[asset];
-  }
-
-  /// @inheritdoc IPool
   function getReserveData(
     address asset
   ) external view virtual override returns (DataTypes.ReserveDataLegacy memory) {

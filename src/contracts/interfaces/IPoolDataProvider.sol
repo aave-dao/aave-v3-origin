@@ -247,4 +247,11 @@ interface IPoolDataProvider {
    * @return The reserve virtual underlying balance
    */
   function getVirtualUnderlyingBalance(address asset) external view returns (uint256);
+
+  /**
+   * @notice Returns the deficit of the reserve
+   * @param asset The address of the underlying asset of the reserve
+   * @return The reserve deficit
+   */
+  function getReserveDeficit(address asset) external view returns (uint256);
 }

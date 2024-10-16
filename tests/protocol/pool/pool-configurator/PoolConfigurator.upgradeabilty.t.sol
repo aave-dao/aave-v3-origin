@@ -121,7 +121,7 @@ contract PoolConfiguratorUpgradeabilityTests is TestnetProcedures {
 
     vm.stopPrank();
 
-    reserveData = contracts.poolProxy.getReserveDataExtended(tokenList.usdx);
+    reserveData = _getFullReserveData(tokenList.usdx);
     DataTypes.ReserveCache memory cache = reserveData.cache();
 
     assertEq(cache.currVariableBorrowIndex, 1e27);
@@ -130,7 +130,7 @@ contract PoolConfiguratorUpgradeabilityTests is TestnetProcedures {
     vm.warp(block.timestamp + 365 days);
 
     // check that index is not changed after 1 year
-    updatedReserveData = contracts.poolProxy.getReserveDataExtended(tokenList.usdx);
+    updatedReserveData = _getFullReserveData(tokenList.usdx);
     DataTypes.ReserveCache memory cacheAfterYear = updatedReserveData.cache();
 
     assertEq(cacheAfterYear.currVariableBorrowIndex, 1e27);
@@ -145,7 +145,7 @@ contract PoolConfiguratorUpgradeabilityTests is TestnetProcedures {
     );
 
     // index and borrow rate have changed after IRS update
-    updatedReserveData = contracts.poolProxy.getReserveDataExtended(tokenList.usdx);
+    updatedReserveData = _getFullReserveData(tokenList.usdx);
     DataTypes.ReserveCache memory updatedCache = updatedReserveData.cache();
 
     assertGt(updatedCache.currVariableBorrowIndex, 1e27);
@@ -236,5 +236,30 @@ contract PoolConfiguratorUpgradeabilityTests is TestnetProcedures {
       address(VariableDebtToken(variableDebtProxy).getIncentivesController()),
       input.incentivesController
     );
+  }
+
+  function _getFullReserveData(address asset) internal returns (DataTypes.ReserveData memory) {
+    DataTypes.ReserveDataLegacy memory reserveDataLegacy = contracts.poolProxy.getReserveData(
+      asset
+    );
+    DataTypes.ReserveData memory tempReserveData;
+    tempReserveData.configuration = reserveDataLegacy.configuration;
+    tempReserveData.liquidityIndex = reserveDataLegacy.liquidityIndex;
+    tempReserveData.currentLiquidityRate = reserveDataLegacy.currentLiquidityRate;
+    tempReserveData.variableBorrowIndex = reserveDataLegacy.variableBorrowIndex;
+    tempReserveData.currentVariableBorrowRate = reserveDataLegacy.currentVariableBorrowRate;
+    tempReserveData.lastUpdateTimestamp = reserveDataLegacy.lastUpdateTimestamp;
+    tempReserveData.id = reserveDataLegacy.id;
+    tempReserveData.aTokenAddress = reserveDataLegacy.aTokenAddress;
+    tempReserveData.variableDebtTokenAddress = reserveDataLegacy.variableDebtTokenAddress;
+    tempReserveData.interestRateStrategyAddress = reserveDataLegacy.interestRateStrategyAddress;
+    tempReserveData.accruedToTreasury = reserveDataLegacy.accruedToTreasury;
+    tempReserveData.unbacked = reserveDataLegacy.unbacked;
+    tempReserveData.isolationModeTotalDebt = reserveDataLegacy.isolationModeTotalDebt;
+    tempReserveData.virtualUnderlyingBalance = uint128(
+      contracts.poolProxy.getVirtualUnderlyingBalance(asset)
+    );
+    tempReserveData.deficit = uint128(contracts.poolProxy.getReserveDeficit(asset));
+    return tempReserveData;
   }
 }

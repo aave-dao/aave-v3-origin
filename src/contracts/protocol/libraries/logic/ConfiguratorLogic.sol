@@ -155,7 +155,7 @@ library ConfiguratorLogic {
     IPool cachedPool,
     ConfiguratorInputTypes.UpdateDebtTokenInput calldata input
   ) external {
-    DataTypes.ReserveDataLegacy memory reserveData = cachedPool.getReserveData(input.asset);
+    address variableDebtTokenAddress = cachedPool.getReserveVariableDebtToken(input.asset);
 
     uint256 decimals = cachedPool.getConfiguration(input.asset).getDecimals();
 
@@ -170,17 +170,9 @@ library ConfiguratorLogic {
       input.params
     );
 
-    _upgradeTokenImplementation(
-      reserveData.variableDebtTokenAddress,
-      input.implementation,
-      encodedCall
-    );
+    _upgradeTokenImplementation(variableDebtTokenAddress, input.implementation, encodedCall);
 
-    emit VariableDebtTokenUpgraded(
-      input.asset,
-      reserveData.variableDebtTokenAddress,
-      input.implementation
-    );
+    emit VariableDebtTokenUpgraded(input.asset, variableDebtTokenAddress, input.implementation);
   }
 
   /**

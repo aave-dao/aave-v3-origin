@@ -23,11 +23,7 @@ contract EmissionManagerTest is TestnetProcedures {
     manager = EmissionManager(report.emissionManager);
     rewardsController = RewardsController(report.rewardsControllerProxy);
 
-    DataTypes.ReserveDataLegacy memory reserveData = IPool(report.poolProxy).getReserveData(
-      tokenList.usdx
-    );
-
-    usdxAToken = reserveData.aTokenAddress;
+    usdxAToken = contracts.poolProxy.getReserveAToken(tokenList.usdx);
   }
 
   function test_new_EmissionManager() public {

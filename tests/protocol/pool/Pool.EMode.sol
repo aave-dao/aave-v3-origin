@@ -264,11 +264,11 @@ contract PoolEModeTests is TestnetProcedures {
       false
     );
 
-    DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
+    DataTypes.ReserveConfigurationMap memory reserveConfig = contracts.poolProxy.getConfiguration(
       tokenList.usdx
     );
     uint256 bonus = amount - amount.percentDiv(liquidationBonus);
-    uint256 protocolFee = bonus.percentMul(reserveData.configuration.getLiquidationProtocolFee());
+    uint256 protocolFee = bonus.percentMul(reserveConfig.getLiquidationProtocolFee());
     assertEq(IERC20(tokenList.usdx).balanceOf(liquidator), amount - protocolFee);
   }
 

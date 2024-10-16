@@ -53,9 +53,7 @@ contract ParaSwapWithdrawSwapAdapter is BaseParaSwapSellAdapter, ReentrancyGuard
     IParaSwapAugustus augustus,
     PermitSignature calldata permitParams
   ) external nonReentrant {
-    IERC20WithPermit aToken = IERC20WithPermit(
-      _getReserveData(address(assetToSwapFrom)).aTokenAddress
-    );
+    IERC20WithPermit aToken = IERC20WithPermit(POOL.getReserveAToken(address(assetToSwapFrom)));
 
     if (swapAllBalanceOffset != 0) {
       uint256 balance = aToken.balanceOf(msg.sender);
