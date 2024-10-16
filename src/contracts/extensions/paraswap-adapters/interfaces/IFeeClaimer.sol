@@ -19,7 +19,7 @@ interface IFeeClaimer {
    *      the call will fail if withdrawer have zero balance in the contract
    * @param _token address of the ERC20 token
    * @param _recipient address
-   * @return true if the withdraw was successfull
+   * @return true if the withdraw was successful
    */
   function withdrawAllERC20(IERC20 _token, address _recipient) external returns (bool);
 
@@ -29,7 +29,7 @@ interface IFeeClaimer {
    *      the call will fail if withdrawer have zero balance in the contract
    * @param _tokens list of addresses of the ERC20 token
    * @param _recipient address of recipient
-   * @return true if the withdraw was successfull
+   * @return true if the withdraw was successful
    */
   function batchWithdrawAllERC20(
     address[] calldata _tokens,
@@ -42,7 +42,7 @@ interface IFeeClaimer {
    *      the call will fail if withdrawer have zero balance in the contract
    * @param _token address of the ERC20 token
    * @param _recipient address
-   * @return true if the withdraw was successfull
+   * @return true if the withdraw was successful
    */
   function withdrawSomeERC20(
     IERC20 _token,
@@ -57,7 +57,7 @@ interface IFeeClaimer {
    * @param _tokens address of the ERC20 tokens
    * @param _tokenAmounts array of amounts
    * @param _recipient destination account addresses
-   * @return true if the withdraw was successfull
+   * @return true if the withdraw was successful
    */
   function batchWithdrawSomeERC20(
     IERC20[] calldata _tokens,
