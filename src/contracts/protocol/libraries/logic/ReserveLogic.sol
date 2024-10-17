@@ -41,7 +41,7 @@ library ReserveLogic {
   );
 
   event ReserveUsedAsCollateralDisabled(address indexed reserve, address indexed user);
-  event DeficitCovered(address indexed reserve, uint256 amountDecreased);
+  event DeficitCovered(address indexed reserve, address caller, uint256 amountDecreased);
 
   /**
    * @notice Returns the ongoing normalized income for the reserve.
@@ -369,6 +369,8 @@ library ReserveLogic {
       reserveCache.nextLiquidityIndex
     );
 
+    // using the cached "outdated" isCollateral flag,
+    // as for the validation the state before the burning is important
     if (isCollateral && userConfig.isBorrowingAny()) {
       ValidationLogic.validateHFAndLtv(
         reservesData,
@@ -385,6 +387,6 @@ library ReserveLogic {
 
     reserve.deficit -= balanceWriteOff.toUint128();
 
-    emit DeficitCovered(params.asset, balanceWriteOff);
+    emit DeficitCovered(params.asset, msg.sender, balanceWriteOff);
   }
 }

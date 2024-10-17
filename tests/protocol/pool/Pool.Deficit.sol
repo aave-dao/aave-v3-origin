@@ -14,7 +14,7 @@ import {IAccessControl} from '../../../src/contracts/dependencies/openzeppelin/c
 contract PoolDeficitTests is TestnetProcedures {
   using stdStorage for StdStorage;
 
-  event DeficitCovered(address indexed reserve, uint256 amountDecreased);
+  event DeficitCovered(address indexed reserve, address caller, uint256 amountDecreased);
 
   function setUp() public virtual {
     initTestEnvironment();
@@ -35,7 +35,7 @@ contract PoolDeficitTests is TestnetProcedures {
 
     // eliminate deficit
     vm.expectEmit(address(contracts.poolProxy));
-    emit DeficitCovered(reserveToken, currentDeficit);
+    emit DeficitCovered(reserveToken, coverageAdmin, currentDeficit);
     contracts.poolProxy.eliminateReserveDeficit(reserveToken, currentDeficit);
   }
 
@@ -59,7 +59,7 @@ contract PoolDeficitTests is TestnetProcedures {
 
     // eliminate deficit
     vm.expectEmit(address(contracts.poolProxy));
-    emit DeficitCovered(reserveToken, amountToCover);
+    emit DeficitCovered(reserveToken, coverageAdmin, amountToCover);
     contracts.poolProxy.eliminateReserveDeficit(reserveToken, amountToCover);
   }
 

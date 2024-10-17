@@ -188,9 +188,10 @@ interface IPool {
   /**
    * @dev Emitted when the deficit of a reserve is covered.
    * @param reserve The address of the underlying asset of the reserve
+   * @param caller The caller that triggered the DeficitCovered event
    * @param amountCovered The amount of deficit covered
    */
-  event DeficitCovered(address indexed reserve, uint256 amountCovered);
+  event DeficitCovered(address indexed reserve, address caller, uint256 amountCovered);
 
   /**
    * @dev Emitted when the protocol treasury receives minted aTokens from the accrued interest.
