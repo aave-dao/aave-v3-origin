@@ -16,10 +16,10 @@ interface ICollector {
     bool isEntity;
   }
 
-  /** @notice Emitted when the funds admin changes
-   * @param fundsAdmin The new funds admin.
+  /** @notice Emitted during the switch of the ACL Manager contract address
+   * @param manager The new ACL Manager contract address.
    **/
-  event NewFundsAdmin(address indexed fundsAdmin);
+  event NewACLManager(address indexed manager);
 
   /** @notice Emitted when the new stream is created
    * @param streamId The identifier of the stream.
@@ -70,16 +70,22 @@ interface ICollector {
   function ETH_MOCK_ADDRESS() external pure returns (address);
 
   /** @notice Initializes the contracts
-   * @param fundsAdmin Funds admin address
+   * @param aclManager The address of the ACL Manager
    * @param nextStreamId StreamId to set, applied if greater than 0
    **/
-  function initialize(address fundsAdmin, uint256 nextStreamId) external;
+  function initialize(address aclManager, uint256 nextStreamId) external;
 
   /**
    * @notice Return the funds admin, only entity to be able to interact with this contract (controller of reserve)
    * @return address The address of the funds admin
    **/
   function getFundsAdmin() external view returns (address);
+
+    /**
+   * @notice Checks if address is funds admin
+   * @return bool If the address has the funds admin role
+   **/
+  function isFundsAdmin(address admin) external view returns (bool);
 
   /**
    * @notice Returns the available funds for the given stream id and address.
@@ -106,11 +112,11 @@ interface ICollector {
   function transfer(IERC20 token, address recipient, uint256 amount) external;
 
   /**
-   * @dev Transfer the ownership of the funds administrator role.
+   * @dev Switch ACL Manager contract address.
           This function should only be callable by the current funds administrator.
-   * @param admin The address of the new funds administrator
+   * @param manager The address of the new ACL Manager contract address
    */
-  function setFundsAdmin(address admin) external;
+  function setACLManager(address manager) external;
 
   /**
    * @notice Creates a new stream funded by this contracts itself and paid towards `recipient`.
