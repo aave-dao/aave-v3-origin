@@ -21,8 +21,8 @@ contract WrappedTokenGatewayV3 is IWrappedTokenGatewayV3, Ownable {
   using UserConfiguration for DataTypes.UserConfigurationMap;
   using GPv2SafeERC20 for IERC20;
 
-  IWETH internal immutable WETH;
-  IPool internal immutable POOL;
+  IWETH public immutable WETH;
+  IPool public immutable POOL;
 
   /**
    * @dev Sets the WETH address and the PoolAddressesProvider address. Infinite approves pool.
