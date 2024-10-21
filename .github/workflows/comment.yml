@@ -17,7 +17,7 @@ jobs:
   comment:
     name: Comment Bot
     runs-on: ubuntu-latest
-    # workflow run triggeres on all types of "completed" including "cancelled" and similar
+    # workflow run triggers on all types of "completed" including "cancelled" and similar
     # we want this action to only run on a success & failure though
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.conclusion == 'failure' }}
     steps:
