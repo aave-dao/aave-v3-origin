@@ -2,18 +2,11 @@
 pragma solidity ^0.8.10;
 
 import {IFeeClaimer} from '../../extensions/paraswap-adapters/interfaces/IFeeClaimer.sol';
-import {MockParaSwapTokenTransferProxy} from './MockParaSwapTokenTransferProxy.sol';
 import {IERC20} from '../../dependencies/openzeppelin/contracts/IERC20.sol';
 import {MintableERC20} from '../tokens/MintableERC20.sol';
 
 contract MockParaSwapFeeClaimer is IFeeClaimer {
-  MockParaSwapTokenTransferProxy immutable TOKEN_TRANSFER_PROXY;
-
   mapping(address => mapping(address => uint256)) internal _fees;
-
-  constructor() {
-    TOKEN_TRANSFER_PROXY = new MockParaSwapTokenTransferProxy();
-  }
 
   function registerFee(address _account, IERC20 _token, uint256 _fee) external {
     _fees[_account][address(_token)] += _fee;
