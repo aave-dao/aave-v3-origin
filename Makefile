@@ -11,7 +11,7 @@ test-contract :; forge test --match-contract ${filter} -vvv
 test-watch   :; forge test --watch -vvv --no-match-contract DeploymentsGasLimits
 
 # Coverage
-coverage-base :; forge coverage --report lcov --no-match-coverage "(scripts|tests|deployments|mocks)"
+coverage-base :; forge coverage --fuzz-runs 50 --report lcov --no-match-coverage "(scripts|tests|deployments|mocks)"
 coverage-clean :; lcov --rc derive_function_end_line=0 --remove ./lcov.info -o ./lcov.info.p \
 	'src/contracts/extensions/v3-config-engine/*' \
 	'src/contracts/treasury/*' \
@@ -37,7 +37,7 @@ coverage :
 download :; cast etherscan-source --chain ${chain} -d src/etherscan/${chain}_${address} ${address}
 git-diff :
 	@mkdir -p diffs
-	@npx prettier ${before} ${after} --write
+	# @npx prettier ${before} ${after} --write
 	@printf '%s\n%s\n%s\n' "\`\`\`diff" "$$(git diff --no-index --ignore-space-at-eol ${before} ${after})" "\`\`\`" > diffs/${out}.md
 
 # Deploy
@@ -51,3 +51,5 @@ deploy-libs :
 	npx catapulta-verify -b broadcast/LibraryPreCompileOne.sol/${chainId}/run-latest.json
 	make deploy-libs-two chain=${chain}
 	npx catapulta-verify -b broadcast/LibraryPreCompileTwo.sol/${chainId}/run-latest.json
+
+gas-report :; forge test --fuzz-runs 50 --gas-report

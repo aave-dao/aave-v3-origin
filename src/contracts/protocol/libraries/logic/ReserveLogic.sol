@@ -320,20 +320,17 @@ library ReserveLogic {
 
   /**
    * @notice Reduces a portion or all of the deficit of a specified reserve by burning the equivalent aToken `amount`.
+   * The caller of this method MUST always be the Umbrella contract and the Umbrella contract is assumed to never have debt.
    * @dev Emits the `DeficitCovered() event`.
    * @dev If the coverage admin covers its entire balance, `ReserveUsedAsCollateralDisabled()` is emitted.
    * @param reservesData The state of all the reserves
-   * @param reservesList The addresses of all the active reserves
-   * @param eModeCategories The configuration of all the efficiency mode categories
    * @param userConfig The user configuration mapping that tracks the supplied/borrowed assets
    * @param params The additional parameters needed to execute the eliminateDeficit function
    */
-  function eliminateDeficit(
+  function executeEliminateDeficit(
     mapping(address => DataTypes.ReserveData) storage reservesData,
-    mapping(uint256 => address) storage reservesList,
-    mapping(uint8 => DataTypes.EModeCategory) storage eModeCategories,
     DataTypes.UserConfigurationMap storage userConfig,
-    DataTypes.ExecuteWithdrawParams memory params
+    DataTypes.ExecuteEliminateDeficitParams memory params
   ) external {
     require(params.amount != 0, Errors.INVALID_AMOUNT);
 
@@ -341,13 +338,12 @@ library ReserveLogic {
     uint256 currentDeficit = reserve.deficit;
 
     require(currentDeficit != 0, Errors.RESERVE_NOT_IN_DEFICIT);
+    require(!userConfig.isBorrowingAny(), Errors.USER_CANNOT_HAVE_DEBT);
 
     DataTypes.ReserveCache memory reserveCache = reserve.cache();
     reserve.updateState(reserveCache);
-
-    uint256 userBalance = IAToken(reserveCache.aTokenAddress).scaledBalanceOf(msg.sender).rayMul(
-      reserveCache.nextLiquidityIndex
-    );
+    bool isActive = reserveCache.reserveConfiguration.getActive();
+    require(isActive, Errors.RESERVE_INACTIVE);
 
     uint256 balanceWriteOff = params.amount;
 
@@ -355,34 +351,33 @@ library ReserveLogic {
       balanceWriteOff = currentDeficit;
     }
 
-    bool isCollateral = userConfig.isUsingAsCollateral(reserve.id);
-
-    if (isCollateral && balanceWriteOff == userBalance) {
-      userConfig.setUsingAsCollateral(reserve.id, false);
-      emit ReserveUsedAsCollateralDisabled(params.asset, msg.sender);
-    }
-
-    IAToken(reserveCache.aTokenAddress).burn(
-      msg.sender,
-      reserveCache.aTokenAddress,
-      balanceWriteOff,
-      reserveCache.nextLiquidityIndex
-    );
-
-    // using the cached "outdated" isCollateral flag,
-    // as for the validation the state before the burning is important
-    if (isCollateral && userConfig.isBorrowingAny()) {
-      ValidationLogic.validateHFAndLtv(
-        reservesData,
-        reservesList,
-        eModeCategories,
-        userConfig,
-        params.asset,
+    if (reserveCache.reserveConfiguration.getIsVirtualAccActive()) {
+      IAToken(reserveCache.aTokenAddress).burn(
         msg.sender,
-        params.reservesCount,
-        params.oracle,
-        params.userEModeCategory
+        reserveCache.aTokenAddress,
+        balanceWriteOff,
+        reserveCache.nextLiquidityIndex
       );
+      // update ir due to updateState
+      reserve.updateInterestRatesAndVirtualBalance(reserveCache, params.asset, 0, 0);
+    } else {
+      // This is a special case to allow mintable assets (ex. GHO), which by definition cannot be supplied
+      // and thus do not use virtual underlying balances.
+      // In that case, the procedure is 1) sending the underlying asset to the aToken and
+      // 2) trigger the handleRepayment() for the aToken to dispose of those assets
+      IERC20(params.asset).safeTransferFrom(
+        msg.sender,
+        reserveCache.aTokenAddress,
+        balanceWriteOff
+      );
+      IAToken(reserveCache.aTokenAddress).handleRepayment(
+        msg.sender,
+        // In the context of GHO it's only relevant that the address has no debt.
+        // Passing the pool is fitting as it's handeling the repayment on behalf of the protocol.
+        address(this),
+        balanceWriteOff
+      );
+      // updating the IR is not needed in this case, as the IR is constant for assets without virtual accounting.
     }
 
     reserve.deficit -= balanceWriteOff.toUint128();

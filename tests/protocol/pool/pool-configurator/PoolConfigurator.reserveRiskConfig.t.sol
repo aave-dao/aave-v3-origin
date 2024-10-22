@@ -634,6 +634,8 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     assertTrue(pS == address(0));
     assertTrue(pV != address(0));
 
+    uint256 lengthBefore = contracts.poolProxy.getReservesList().length;
+
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.dropReserve(tokenList.usdx);
 
@@ -668,7 +670,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
       assertEq(isFrozen, false);
     }
     {
-      assertEq(contracts.poolProxy.getReservesList().length, 2);
+      assertEq(contracts.poolProxy.getReservesList().length, lengthBefore - 1);
       assertEq(contracts.poolProxy.getReserveAddressById(reserveDataUsdx.id), address(0));
     }
   }

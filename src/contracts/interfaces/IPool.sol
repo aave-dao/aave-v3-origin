@@ -807,7 +807,7 @@ interface IPool {
    * @notice It Covers the deficit of a specified reserve by burning the equivalent aToken `amount`.
    * @dev The deficit of a reserve can occur due to situations where borrowed assets are not repaid, leading to bad debt.
    * @param asset The address of the underlying asset to cover the dificit.
-   * @param amount The amount to be covered.
+   * @param amount The amount to be covered, in aToken or underlying on non-virtual accounted assets
    */
   function eliminateReserveDeficit(address asset, uint256 amount) external;
 

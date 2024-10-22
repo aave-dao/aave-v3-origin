@@ -104,4 +104,5 @@ library Errors {
   string public constant CALLER_NOT_UMBRELLA = '102'; // The caller of the function is not the umbrella contract
   string public constant RESERVE_NOT_IN_DEFICIT = '103'; // The reserve is not in deficit
   string public constant MUST_NOT_LEAVE_DUST = '104'; // Below a certain threshold liquidators need to take the full position
+  string public constant USER_CANNOT_HAVE_DEBT = '105'; // Thrown when a user tries to interact with a method that requires a position without debt
 }

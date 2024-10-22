@@ -213,8 +213,9 @@ library BorrowLogic {
         paybackAmount,
         reserveCache.nextLiquidityIndex
       );
+      bool isCollateral = userConfig.isUsingAsCollateral(reserve.id);
       // in case of aToken repayment the msg.sender must always repay on behalf of itself
-      if (IAToken(reserveCache.aTokenAddress).scaledBalanceOf(msg.sender) == 0) {
+      if (isCollateral && IAToken(reserveCache.aTokenAddress).scaledBalanceOf(msg.sender) == 0) {
         userConfig.setUsingAsCollateral(reserve.id, false);
         emit ReserveUsedAsCollateralDisabled(params.asset, msg.sender);
       }

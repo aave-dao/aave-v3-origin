@@ -837,19 +837,10 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
 
   /// @inheritdoc IPool
   function eliminateReserveDeficit(address asset, uint256 amount) external override onlyUmbrella {
-    ReserveLogic.eliminateDeficit(
+    ReserveLogic.executeEliminateDeficit(
       _reserves,
-      _reservesList,
-      _eModeCategories,
       _usersConfig[msg.sender],
-      DataTypes.ExecuteWithdrawParams({
-        asset: asset,
-        amount: amount,
-        to: address(0), // not used
-        reservesCount: _reservesCount,
-        oracle: ADDRESSES_PROVIDER.getPriceOracle(),
-        userEModeCategory: _usersEModeCategory[msg.sender]
-      })
+      DataTypes.ExecuteEliminateDeficitParams({asset: asset, amount: amount})
     );
   }
 

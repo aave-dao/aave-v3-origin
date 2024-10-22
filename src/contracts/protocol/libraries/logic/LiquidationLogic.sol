@@ -310,6 +310,8 @@ library LiquidationLogic {
     }
 
     // burn bad debt if necessary
+    // Each additional debt asset already adds around ~75k gas to the liquidation.
+    // To keep the liquidation gas under control, 0 usd collateral positions are not touched, as there is no immediate benefit in burning or transfering to treasury.
     if (hasNoCollateralLeft && userConfig.isBorrowingAny()) {
       _burnBadDebt(reservesData, reservesList, userConfig, params.reservesCount, params.user);
     }
@@ -585,6 +587,7 @@ library LiquidationLogic {
 
       DataTypes.ReserveData storage currentReserve = reservesData[reserveAddress];
       DataTypes.ReserveCache memory reserveCache = currentReserve.cache();
+      if (!reserveCache.reserveConfiguration.getActive()) continue;
 
       currentReserve.updateState(reserveCache);
 

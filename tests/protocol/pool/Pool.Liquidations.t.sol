@@ -53,6 +53,9 @@ contract PoolLiquidationTests is TestnetProcedures {
     vm.startPrank(carol);
     contracts.poolProxy.supply(tokenList.usdx, 100_000e6, carol, 0);
     contracts.poolProxy.supply(tokenList.weth, 100e18, carol, 0);
+    deal(tokenList.gho, carol, 100_000e18);
+    IERC20(tokenList.gho).approve(address(contracts.poolProxy), type(uint256).max);
+    contracts.poolProxy.supply(tokenList.gho, 100_000e18, carol, 0);
     vm.stopPrank();
 
     sequencerOracleMock = new SequencerOracle(poolAdmin);
@@ -787,6 +790,7 @@ contract PoolLiquidationTests is TestnetProcedures {
     contracts.poolProxy.supply(tokenList.wbtc, amount, alice, 0);
     contracts.poolProxy.borrow(tokenList.usdx, borrowAmount, 2, 0, alice);
     vm.warp(block.timestamp + 30 days);
+    contracts.poolProxy.borrow(tokenList.weth, secondBorrowAmount, 2, 0, alice);
     contracts.poolProxy.borrow(tokenList.wbtc, secondBorrowAmount, 2, 0, alice);
     vm.stopPrank();
 
@@ -890,6 +894,61 @@ contract PoolLiquidationTests is TestnetProcedures {
     );
     assertEq(
       contracts.poolProxy.getReserveDeficit(tokenList.usdx),
+      userDebtBefore - params.actualDebtToLiquidate
+    );
+  }
+
+  function test_deficit_increased_after_liquidate_bad_debt_virtualAccounting_disabled() public {
+    uint256 supplyAmount = 0.5e8;
+    uint256 borrowAmount = 11000e18;
+    deal(tokenList.gho, bob, 100_000e18);
+    vm.prank(bob);
+    IERC20(tokenList.gho).approve(address(contracts.poolProxy), type(uint256).max);
+    vm.startPrank(alice);
+    contracts.poolProxy.supply(tokenList.wbtc, supplyAmount, alice, 0);
+    contracts.poolProxy.borrow(tokenList.gho, borrowAmount, 2, 0, alice);
+    vm.stopPrank();
+
+    vm.warp(block.timestamp + 30 days);
+    LiquidationInput memory params = _loadLiquidationInput(
+      alice,
+      tokenList.wbtc,
+      tokenList.gho,
+      UINT256_MAX,
+      tokenList.wbtc,
+      20_00
+    );
+
+    (, , address varDebtToken) = contracts.protocolDataProvider.getReserveTokensAddresses(
+      params.debtAsset
+    );
+    uint256 userDebtBefore = IERC20(varDebtToken).balanceOf(params.user);
+    uint256 liquidatorBalanceBefore;
+    if (params.receiveAToken) {
+      (address atoken, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(
+        params.collateralAsset
+      );
+      liquidatorBalanceBefore = IERC20(atoken).balanceOf(bob);
+    } else {
+      liquidatorBalanceBefore = IERC20(params.collateralAsset).balanceOf(bob);
+    }
+
+    vm.expectEmit(address(contracts.poolProxy));
+    emit LiquidationLogic.DeficitCreated(
+      params.user,
+      tokenList.gho,
+      userDebtBefore - params.actualDebtToLiquidate
+    );
+    vm.prank(bob);
+    contracts.poolProxy.liquidationCall(
+      params.collateralAsset,
+      params.debtAsset,
+      params.user,
+      params.liquidationAmountInput,
+      params.receiveAToken
+    );
+    assertEq(
+      contracts.poolProxy.getReserveDeficit(tokenList.gho),
       userDebtBefore - params.actualDebtToLiquidate
     );
   }
