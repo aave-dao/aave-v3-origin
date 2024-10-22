@@ -20,7 +20,7 @@ If the total borrower’s debt exceeds the debt repaid in base currency, the var
 The new `deficit` data is introduced to the `ReserveData` struct by re-utilizing the deprecated stableBorrowRate (`__deprecatedStableBorrowRate`) storage, and can be fetched via the new `getReserveDeficit` function in the Pool contract.
 
 The deficit reduction of a reserve is introduced via the `eliminateReserveDeficit` function in the Pool contract, where a permissioned entity (the registered `Umbrella` on the PoolAddressesProvider) can burn aTokens to decrease the deficit of the respective reserve.
-This function only allows burning aTokens(and in the case of GHO underlying) up to the currently existing deficit and validates the caller's health factor and LTV before reducing the deficit.
+This function only allows burning aTokens(and in the case of GHO underlying) up to the currently existing deficit and validates that the caller has no open borrow positions.
 
 **Misc considerations**
 
