@@ -89,6 +89,7 @@ library LiquidationLogic {
     uint256 totalDebtInBaseCurrency;
     uint256 collateralToLiquidateInBaseCurrency;
     uint256 userReserveDebtInBaseCurrency;
+    uint256 userReserveCollateralInBaseCurrency;
     uint256 debtToRepayInBaseCurrency;
     uint256 collateralAssetPrice;
     uint256 debtAssetPrice;
@@ -184,11 +185,16 @@ library LiquidationLogic {
       (vars.userReserveDebt * vars.debtAssetPrice) /
       vars.debtAssetUnit;
 
+    vars.userReserveCollateralInBaseCurrency =
+      (vars.userCollateralBalance * vars.collateralAssetPrice) /
+      vars.collateralAssetUnit;
+
     // by default whole debt in the reserve could be liquidated
     uint256 maxLiquidatableDebt = vars.userReserveDebt;
-    // but if debt is above or equal MIN_BASE_MAX_CLOSE_FACTOR_THRESHOLD and health factor CLOSE_FACTOR_HF_THRESHOLD
-    // this amount may be adjusted
+    // but if debt and collateral is above or equal MIN_BASE_MAX_CLOSE_FACTOR_THRESHOLD
+    // and health factor is above CLOSE_FACTOR_HF_THRESHOLD this amount may be adjusted
     if (
+      vars.userReserveCollateralInBaseCurrency >= MIN_BASE_MAX_CLOSE_FACTOR_THRESHOLD &&
       vars.userReserveDebtInBaseCurrency >= MIN_BASE_MAX_CLOSE_FACTOR_THRESHOLD &&
       vars.healthFactor > CLOSE_FACTOR_HF_THRESHOLD
     ) {
