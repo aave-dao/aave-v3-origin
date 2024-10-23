@@ -1001,6 +1001,7 @@ contract PoolLiquidationTests is TestnetProcedures {
     uint256 maxLiquidatableDebt = LiquidationHelper._getMaxLiquidatableDebt(
       contracts.poolProxy,
       user,
+      params.collateralAsset,
       params.debtAsset
     );
 

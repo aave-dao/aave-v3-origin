@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import {console} from 'forge-std/console.sol';
 import {IPool} from '../../src/contracts/interfaces/IPool.sol';
 import {IAaveOracle} from '../../src/contracts/interfaces/IAaveOracle.sol';
 import {LiquidationLogic} from '../../src/contracts/protocol/libraries/logic/LiquidationLogic.sol';
@@ -48,7 +47,7 @@ library LiquidationHelper {
     address debtAsset,
     uint256 liquidationAmount
   ) internal view returns (uint256, uint256, uint256, uint256, uint256) {
-    uint256 maxLiquidatableDebt = _getMaxLiquidatableDebt(pool, user, debtAsset);
+    uint256 maxLiquidatableDebt = _getMaxLiquidatableDebt(pool, user, collateralAsset, debtAsset);
     return
       _getLiquidationParams(
         pool,
@@ -105,17 +104,30 @@ library LiquidationHelper {
   function _getMaxLiquidatableDebt(
     IPool pool,
     address user,
+    address collateralAsset,
     address debtAsset
   ) internal view returns (uint256) {
     (, uint256 totalDebtInBaseCurrency, , , , uint256 healthFactor) = pool.getUserAccountData(user);
     address oracle = pool.ADDRESSES_PROVIDER().getPriceOracle();
+    uint256 reserveCollateralInBaseCurrency;
+    {
+      address aToken = pool.getReserveAToken(collateralAsset);
+      uint256 maxLiquidatableCollateral = IERC20Detailed(aToken).balanceOf(user);
+      uint256 collateralAssetUnits = 10 ** IERC20Detailed(aToken).decimals();
+      uint256 collateralAssetPrice = IAaveOracle(oracle).getAssetPrice(collateralAsset);
+      reserveCollateralInBaseCurrency =
+        (collateralAssetPrice * maxLiquidatableCollateral) /
+        collateralAssetUnits;
+    }
     address vToken = pool.getReserveVariableDebtToken(debtAsset);
     uint256 maxLiquidatableDebt = IERC20Detailed(vToken).balanceOf(user);
     uint256 debtAssetUnits = 10 ** IERC20Detailed(vToken).decimals();
     uint256 debtAssetPrice = IAaveOracle(oracle).getAssetPrice(debtAsset);
     uint256 reserveDebtInBaseCurrency = (debtAssetPrice * maxLiquidatableDebt) / debtAssetUnits;
+
     if (
       reserveDebtInBaseCurrency >= LiquidationLogic.MIN_BASE_MAX_CLOSE_FACTOR_THRESHOLD &&
+      reserveCollateralInBaseCurrency >= LiquidationLogic.MIN_BASE_MAX_CLOSE_FACTOR_THRESHOLD &&
       healthFactor > LiquidationLogic.CLOSE_FACTOR_HF_THRESHOLD
     ) {
       uint256 totalDefaultLiquidatableDebtInBaseCurrency = totalDebtInBaseCurrency.percentMul(
@@ -126,7 +138,6 @@ library LiquidationHelper {
         maxLiquidatableDebt =
           (totalDefaultLiquidatableDebtInBaseCurrency * debtAssetUnits) /
           debtAssetPrice;
-        console.log(maxLiquidatableDebt);
       }
     }
     return maxLiquidatableDebt;

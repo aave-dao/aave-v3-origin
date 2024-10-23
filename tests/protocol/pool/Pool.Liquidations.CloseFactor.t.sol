@@ -127,6 +127,27 @@ contract PoolLiquidationCloseFactorTests is TestnetProcedures {
     test_fuzz_hf_gt_095_supply_gt_threshold_closeFactorShouldBe50(0.97 ether, 100 ether);
   }
 
+  function test_hf_gt_095_borrow_gt_threshold_collateral_lt_threshold_closeFactorShouldBe100()
+    external
+  {
+    // supply slightly less then threshold as usdx and weth collateral
+    _supplyToPool(
+      tokenList.usdx,
+      bob,
+      (LiquidationLogic.MIN_BASE_MAX_CLOSE_FACTOR_THRESHOLD - 1e8) / 1e2
+    );
+    uint256 oraclePrice = contracts.aaveOracle.getAssetPrice(tokenList.weth);
+    uint256 supplyLtThreshold = ((LiquidationLogic.MIN_BASE_MAX_CLOSE_FACTOR_THRESHOLD - 1e8) *
+      10 ** IERC20Detailed(tokenList.weth).decimals()) / oraclePrice;
+    _supplyToPool(tokenList.weth, bob, supplyLtThreshold);
+    // borrow above threshold
+    _borrowToBeBelowHf(bob, tokenList.usdx, 0.97 ether);
+    (, uint256 debtInBaseCurrency, , , , uint256 hf) = contracts.poolProxy.getUserAccountData(bob);
+    assertGt(debtInBaseCurrency, LiquidationLogic.MIN_BASE_MAX_CLOSE_FACTOR_THRESHOLD);
+    assertGt(hf, 0.95 ether);
+    _liquidateAndValidateCloseFactor(tokenList.weth, tokenList.usdx, type(uint256).max, 1e4);
+  }
+
   function _liquidateAndValidateCloseFactor(
     address collateralAsset,
     address debtAsset,
