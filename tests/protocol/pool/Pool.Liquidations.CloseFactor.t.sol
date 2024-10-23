@@ -135,7 +135,7 @@ contract PoolLiquidationCloseFactorTests is TestnetProcedures {
   ) internal {
     (, uint256 debtInBaseCurrency, , , , ) = contracts.poolProxy.getUserAccountData(bob);
     // first we calculate the maximal possible liquidatable
-    (, uint256 debtAmountAt100, , , ) = LiquidationHelper._getLiquidationParams(
+    (, uint256 debtAmountAt100, , ) = LiquidationHelper._getLiquidationParams(
       contracts.poolProxy,
       bob,
       collateralAsset,
@@ -146,7 +146,7 @@ contract PoolLiquidationCloseFactorTests is TestnetProcedures {
         contracts.aaveOracle.getAssetPrice(debtAsset)
     );
     // then we calculate the exact amounts
-    (uint256 collateralAmount, uint256 debtAmount, , , ) = LiquidationHelper._getLiquidationParams(
+    (uint256 collateralAmount, uint256 debtAmount, , ) = LiquidationHelper._getLiquidationParams(
       contracts.poolProxy,
       bob,
       collateralAsset,

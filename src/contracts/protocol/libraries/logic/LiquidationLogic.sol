@@ -89,7 +89,6 @@ library LiquidationLogic {
     uint256 totalDebtInBaseCurrency;
     uint256 collateralToLiquidateInBaseCurrency;
     uint256 userReserveDebtInBaseCurrency;
-    uint256 debtToRepayInBaseCurrency;
     uint256 collateralAssetPrice;
     uint256 debtAssetPrice;
     uint256 collateralAssetUnit;
@@ -213,8 +212,7 @@ library LiquidationLogic {
       vars.actualCollateralToLiquidate,
       vars.actualDebtToLiquidate,
       vars.liquidationProtocolFeeAmount,
-      vars.collateralToLiquidateInBaseCurrency,
-      vars.debtToRepayInBaseCurrency
+      vars.collateralToLiquidateInBaseCurrency
     ) = _calculateAvailableCollateralToLiquidate(
       collateralReserve.configuration,
       vars.collateralAssetPrice,
@@ -477,8 +475,6 @@ library LiquidationLogic {
     uint256 liquidationProtocolFeePercentage;
     uint256 liquidationProtocolFee;
     uint256 collateralToLiquidateInBaseCurrency;
-    uint256 debtToRepayInBaseCurrency;
-    uint256 debtAssetPrice;
     uint256 collateralAssetPrice;
   }
 
@@ -499,7 +495,6 @@ library LiquidationLogic {
    * @return The amount to repay with the liquidation
    * @return The fee taken from the liquidation bonus amount to be paid to the protocol
    * @return The collateral amount to liquidate in the base currency used by the price feed
-   * @return The amount to repay with the liquidation in the base currency used by the price feed
    */
   function _calculateAvailableCollateralToLiquidate(
     DataTypes.ReserveConfigurationMap memory collateralReserveConfiguration,
@@ -510,16 +505,15 @@ library LiquidationLogic {
     uint256 debtToCover,
     uint256 userCollateralBalance,
     uint256 liquidationBonus
-  ) internal pure returns (uint256, uint256, uint256, uint256, uint256) {
+  ) internal pure returns (uint256, uint256, uint256, uint256) {
     AvailableCollateralToLiquidateLocalVars memory vars;
-    vars.debtAssetPrice = debtAssetPrice;
     vars.collateralAssetPrice = collateralAssetPrice;
     vars.liquidationProtocolFeePercentage = collateralReserveConfiguration
       .getLiquidationProtocolFee();
 
     // This is the base collateral to liquidate based on the given debt to cover
     vars.baseCollateral =
-      ((vars.debtAssetPrice * debtToCover * collateralAssetUnit)) /
+      ((debtAssetPrice * debtToCover * collateralAssetUnit)) /
       (vars.collateralAssetPrice * debtAssetUnit);
 
     vars.maxCollateralToLiquidate = vars.baseCollateral.percentMul(liquidationBonus);
@@ -527,7 +521,7 @@ library LiquidationLogic {
     if (vars.maxCollateralToLiquidate > userCollateralBalance) {
       vars.collateralAmount = userCollateralBalance;
       vars.debtAmountNeeded = ((vars.collateralAssetPrice * vars.collateralAmount * debtAssetUnit) /
-        (vars.debtAssetPrice * collateralAssetUnit)).percentDiv(liquidationBonus);
+        (debtAssetPrice * collateralAssetUnit)).percentDiv(liquidationBonus);
     } else {
       vars.collateralAmount = vars.maxCollateralToLiquidate;
       vars.debtAmountNeeded = debtToCover;
@@ -536,8 +530,6 @@ library LiquidationLogic {
     vars.collateralToLiquidateInBaseCurrency =
       (vars.collateralAmount * vars.collateralAssetPrice) /
       collateralAssetUnit;
-
-    vars.debtToRepayInBaseCurrency = (vars.debtAmountNeeded * debtAssetPrice) / debtAssetUnit;
 
     if (vars.liquidationProtocolFeePercentage != 0) {
       vars.bonusCollateral =
@@ -553,8 +545,7 @@ library LiquidationLogic {
       vars.collateralAmount,
       vars.debtAmountNeeded,
       vars.liquidationProtocolFee,
-      vars.collateralToLiquidateInBaseCurrency,
-      vars.debtToRepayInBaseCurrency
+      vars.collateralToLiquidateInBaseCurrency
     );
   }
 
