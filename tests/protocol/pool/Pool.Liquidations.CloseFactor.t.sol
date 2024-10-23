@@ -127,6 +127,30 @@ contract PoolLiquidationCloseFactorTests is TestnetProcedures {
     test_fuzz_hf_gt_095_supply_gt_threshold_closeFactorShouldBe50(0.97 ether, 100 ether);
   }
 
+  function test_shouldRevertIfCloseFactorIs100ButCollateralIsBelowThreshold() external {
+    uint256 usdxSupply = LiquidationLogic.MIN_BASE_MAX_CLOSE_FACTOR_THRESHOLD / 1e2;
+    // supply collateral below threshold
+    _supplyToPool(tokenList.usdx, bob, usdxSupply);
+    // supply differe collateral to increase borrowing power
+    _supplyToPool(tokenList.weth, bob, 4 ether);
+    // borrow enough so close factor is at 100%
+    _borrowToBeBelowHf(bob, tokenList.usdx, 0.93 ether);
+
+    // this test is a bit fragile as it's implicitly assuming that 44e6 is the bonus, without the fee
+    uint256 liquidationAmount = (usdxSupply / 2) - 44e6;
+    vm.prank(liquidator);
+    IERC20Detailed(tokenList.usdx).approve(address(contracts.poolProxy), type(uint256).max);
+    vm.prank(liquidator);
+    vm.expectRevert(bytes(Errors.MUST_NOT_LEAVE_DUST));
+    contracts.poolProxy.liquidationCall(
+      tokenList.usdx,
+      tokenList.usdx,
+      bob,
+      liquidationAmount,
+      false
+    );
+  }
+
   function _liquidateAndValidateCloseFactor(
     address collateralAsset,
     address debtAsset,
@@ -153,7 +177,7 @@ contract PoolLiquidationCloseFactorTests is TestnetProcedures {
       debtAsset,
       amountToLiquidate
     );
-    uint256 balanceBefore = IERC20Detailed(tokenList.weth).balanceOf(liquidator);
+    uint256 balanceBefore = IERC20Detailed(collateralAsset).balanceOf(liquidator);
     vm.prank(liquidator);
     IERC20Detailed(debtAsset).approve(address(contracts.poolProxy), type(uint256).max);
     vm.prank(liquidator);
