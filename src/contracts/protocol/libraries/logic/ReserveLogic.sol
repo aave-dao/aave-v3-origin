@@ -14,7 +14,6 @@ import {DataTypes} from '../types/DataTypes.sol';
 import {SafeCast} from '../../../dependencies/openzeppelin/contracts/SafeCast.sol';
 import {IAToken} from '../../../interfaces/IAToken.sol';
 import {UserConfiguration} from '../configuration/UserConfiguration.sol';
-import {ValidationLogic} from './ValidationLogic.sol';
 
 /**
  * @title ReserveLogic library
