@@ -245,7 +245,8 @@ library LiquidationLogic {
         MIN_LEFTOVER_BASE;
 
       bool isCollateralMoreThanLeftoverThreshold = ((vars.userCollateralBalance -
-        vars.actualCollateralToLiquidate) * vars.collateralAssetPrice) /
+        vars.actualCollateralToLiquidate -
+        vars.liquidationProtocolFeeAmount) * vars.collateralAssetPrice) /
         vars.collateralAssetUnit >=
         MIN_LEFTOVER_BASE;
 
