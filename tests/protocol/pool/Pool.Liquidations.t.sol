@@ -87,11 +87,9 @@ contract PoolLiquidationTests is TestnetProcedures {
     uint256 priceImpactPercent;
     uint256 liquidationProtocolFeeAmount;
     uint256 collateralToLiquidateInBaseCurrency;
-    uint256 debtToLiquidateInBaseCurrency;
     uint256 totalCollateralInBaseCurrency;
     uint256 totalDebtInBaseCurrency;
     uint256 healthFactor;
-    bool isBadDebt;
   }
 
   function test_liquidate_variable_borrow_same_collateral_and_borrow() public {
@@ -203,13 +201,7 @@ contract PoolLiquidationTests is TestnetProcedures {
       params.receiveAToken
     );
 
-    _afterLiquidationChecksVariable(
-      params,
-      bob,
-      liquidatorBalanceBefore,
-      userDebtBefore,
-      params.isBadDebt
-    );
+    _afterLiquidationChecksVariable(params, bob, liquidatorBalanceBefore, userDebtBefore);
   }
 
   function test_liquidate_variable_borrow_no_fee() public {
@@ -266,13 +258,7 @@ contract PoolLiquidationTests is TestnetProcedures {
       params.liquidationAmountInput,
       params.receiveAToken
     );
-    _afterLiquidationChecksVariable(
-      params,
-      bob,
-      liquidatorBalanceBefore,
-      userDebtBefore,
-      params.isBadDebt
-    );
+    _afterLiquidationChecksVariable(params, bob, liquidatorBalanceBefore, userDebtBefore);
   }
 
   function test_partial_liquidate_variable_borrow() public {
@@ -327,13 +313,7 @@ contract PoolLiquidationTests is TestnetProcedures {
       params.receiveAToken
     );
 
-    _afterLiquidationChecksVariable(
-      params,
-      bob,
-      liquidatorBalanceBefore,
-      userDebtBefore,
-      params.isBadDebt
-    );
+    _afterLiquidationChecksVariable(params, bob, liquidatorBalanceBefore, userDebtBefore);
   }
 
   function test_partial_liquidate_atokens_variable_borrow() public {
@@ -389,13 +369,7 @@ contract PoolLiquidationTests is TestnetProcedures {
       params.receiveAToken
     );
 
-    _afterLiquidationChecksVariable(
-      params,
-      bob,
-      liquidatorBalanceBefore,
-      userDebtBefore,
-      params.isBadDebt
-    );
+    _afterLiquidationChecksVariable(params, bob, liquidatorBalanceBefore, userDebtBefore);
   }
 
   function test_full_liquidate_atokens_multiple_variable_borrows() public {
@@ -644,13 +618,7 @@ contract PoolLiquidationTests is TestnetProcedures {
       params.receiveAToken
     );
 
-    _afterLiquidationChecksVariable(
-      params,
-      bob,
-      liquidatorBalanceBefore,
-      userDebtBefore,
-      params.isBadDebt
-    );
+    _afterLiquidationChecksVariable(params, bob, liquidatorBalanceBefore, userDebtBefore);
   }
 
   function test_liquidate_emode_position_without_emode_oracle() public {
@@ -717,13 +685,7 @@ contract PoolLiquidationTests is TestnetProcedures {
       params.receiveAToken
     );
 
-    _afterLiquidationChecksVariable(
-      params,
-      bob,
-      liquidatorBalanceBefore,
-      userDebtBefore,
-      params.isBadDebt
-    );
+    _afterLiquidationChecksVariable(params, bob, liquidatorBalanceBefore, userDebtBefore);
   }
 
   function test_liquidate_borrow_bad_debt() public {
@@ -772,13 +734,7 @@ contract PoolLiquidationTests is TestnetProcedures {
       params.liquidationAmountInput,
       params.receiveAToken
     );
-    _afterLiquidationChecksVariable(
-      params,
-      bob,
-      liquidatorBalanceBefore,
-      userDebtBefore,
-      params.isBadDebt
-    );
+    _afterLiquidationChecksVariable(params, bob, liquidatorBalanceBefore, userDebtBefore);
   }
 
   function test_liquidate_borrow_burn_multiple_assets_bad_debt() public {
@@ -834,13 +790,7 @@ contract PoolLiquidationTests is TestnetProcedures {
       params.liquidationAmountInput,
       params.receiveAToken
     );
-    _afterLiquidationChecksVariable(
-      params,
-      bob,
-      liquidatorBalanceBefore,
-      userDebtBefore,
-      params.isBadDebt
-    );
+    _afterLiquidationChecksVariable(params, bob, liquidatorBalanceBefore, userDebtBefore);
     // check second borrow
     (, , varDebtToken) = contracts.protocolDataProvider.getReserveTokensAddresses(tokenList.wbtc);
     assertEq(IERC20(varDebtToken).balanceOf(params.user), 0, 'user balance doesnt match');
@@ -1013,8 +963,7 @@ contract PoolLiquidationTests is TestnetProcedures {
       params.actualCollateralToLiquidate,
       params.actualDebtToLiquidate,
       params.liquidationProtocolFeeAmount,
-      params.collateralToLiquidateInBaseCurrency,
-      params.debtToLiquidateInBaseCurrency
+      params.collateralToLiquidateInBaseCurrency
     ) = LiquidationHelper._getLiquidationParams(
       contracts.poolProxy,
       params.user,
@@ -1022,9 +971,6 @@ contract PoolLiquidationTests is TestnetProcedures {
       params.debtAsset,
       params.actualDebtToLiquidate
     );
-    params.isBadDebt =
-      params.totalCollateralInBaseCurrency == params.collateralToLiquidateInBaseCurrency &&
-      params.totalDebtInBaseCurrency != params.debtToLiquidateInBaseCurrency;
     return params;
   }
 
@@ -1306,8 +1252,7 @@ contract PoolLiquidationTests is TestnetProcedures {
     LiquidationInput memory params,
     address liquidator,
     uint256 liquidatorBalanceBefore,
-    uint256 userBalanceBefore,
-    bool isBadDebt
+    uint256 userBalanceBefore
   ) internal view {
     (address collateralBalance, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(
       params.collateralAsset
@@ -1328,12 +1273,20 @@ contract PoolLiquidationTests is TestnetProcedures {
         'liquidator balance doesnt match'
       );
     }
-    assertApproxEqAbs(
-      IERC20(variableDebtToken).balanceOf(params.user),
-      isBadDebt ? 0 : userBalanceBefore - params.actualDebtToLiquidate,
-      1,
-      'user balance doesnt match'
-    );
+    (
+      params.totalCollateralInBaseCurrency,
+      params.totalDebtInBaseCurrency,
+      ,
+      ,
+      ,
+      params.healthFactor
+    ) = contracts.poolProxy.getUserAccountData(params.user);
+    if (params.totalCollateralInBaseCurrency == 0) {
+      require(
+        !contracts.poolProxy.getUserConfiguration(params.user).isBorrowingAny(),
+        'BAD_DEBT_MUST_BE_CLEARED'
+      );
+    }
   }
 
   function _setLiquidationGracePeriod(address[] memory assets, uint40 gracePeriod) internal {

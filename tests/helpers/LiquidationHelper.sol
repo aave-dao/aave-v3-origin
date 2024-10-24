@@ -46,7 +46,7 @@ library LiquidationHelper {
     address collateralAsset,
     address debtAsset,
     uint256 liquidationAmount
-  ) internal view returns (uint256, uint256, uint256, uint256, uint256) {
+  ) internal view returns (uint256, uint256, uint256, uint256) {
     uint256 maxLiquidatableDebt = _getMaxLiquidatableDebt(pool, user, collateralAsset, debtAsset);
     return
       _getLiquidationParams(
@@ -69,7 +69,7 @@ library LiquidationHelper {
     address debtAsset,
     uint256 liquidationAmount,
     uint256 maxLiquidatableDebt
-  ) internal view returns (uint256, uint256, uint256, uint256, uint256) {
+  ) internal view returns (uint256, uint256, uint256, uint256) {
     LocalVars memory local;
     local.user = user;
     maxLiquidatableDebt = liquidationAmount > maxLiquidatableDebt
