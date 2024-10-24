@@ -12,6 +12,7 @@ interface IERC20AaveLM {
     uint248 lastUpdatedIndex;
   }
 
+  error ZeroIncentivesControllerIsForbidden();
   error InvalidClaimer(address claimer);
   error RewardNotInitialized(address reward);
 

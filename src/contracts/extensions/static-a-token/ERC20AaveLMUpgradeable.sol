@@ -39,6 +39,9 @@ abstract contract ERC20AaveLMUpgradeable is ERC20Upgradeable, IERC20AaveLM {
   IRewardsController public immutable INCENTIVES_CONTROLLER;
 
   constructor(IRewardsController rewardsController) {
+    if (address(rewardsController) == address(0)) {
+      revert ZeroIncentivesControllerIsForbidden();
+    }
     INCENTIVES_CONTROLLER = rewardsController;
   }
 
