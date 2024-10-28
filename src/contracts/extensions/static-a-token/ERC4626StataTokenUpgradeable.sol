@@ -75,6 +75,12 @@ abstract contract ERC4626StataTokenUpgradeable is ERC4626Upgradeable, IERC4626St
 
   ///@inheritdoc IERC4626StataToken
   function depositATokens(uint256 assets, address receiver) external returns (uint256) {
+    // because aToken is rebasable, we allow user to specify more then he has to compensate growth during the tx mining
+    uint256 actualUserBalance = IERC20(aToken()).balanceOf(_msgSender());
+    if (assets > actualUserBalance) {
+      assets = actualUserBalance;
+    }
+
     uint256 shares = previewDeposit(assets);
     _deposit(_msgSender(), receiver, assets, shares, false);
 
@@ -89,13 +95,26 @@ abstract contract ERC4626StataTokenUpgradeable is ERC4626Upgradeable, IERC4626St
     SignatureParams memory sig,
     bool depositToAave
   ) external returns (uint256) {
-    IERC20Permit assetToDeposit = IERC20Permit(
-      depositToAave ? asset() : address(_getERC4626StataTokenStorage()._aToken)
-    );
+    address assetToDeposit = depositToAave ? asset() : aToken();
 
     try
-      assetToDeposit.permit(_msgSender(), address(this), assets, deadline, sig.v, sig.r, sig.s)
+      IERC20Permit(assetToDeposit).permit(
+        _msgSender(),
+        address(this),
+        assets,
+        deadline,
+        sig.v,
+        sig.r,
+        sig.s
+      )
     {} catch {}
+
+    // because aToken is rebasable, we allow user to specify more then he has to compensate growth during the tx mining
+    // to make it consistent, we keep the same behaviour for the normal underlying too
+    uint256 actualUserBalance = IERC20(assetToDeposit).balanceOf(_msgSender());
+    if (assets > actualUserBalance) {
+      assets = actualUserBalance;
+    }
 
     uint256 shares = previewDeposit(assets);
     _deposit(_msgSender(), receiver, assets, shares, depositToAave);
