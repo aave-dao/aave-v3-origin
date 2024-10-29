@@ -351,6 +351,21 @@ library ReserveLogic {
       balanceWriteOff = currentDeficit;
     }
 
+    uint256 userBalance = reserveCache.reserveConfiguration.getIsVirtualAccActive()
+      ? IAToken(reserveCache.aTokenAddress).scaledBalanceOf(msg.sender).rayMul(
+        reserveCache.nextLiquidityIndex
+      )
+      : IERC20(params.asset).balanceOf(msg.sender);
+    require(balanceWriteOff <= userBalance, Errors.NOT_ENOUGH_AVAILABLE_USER_BALANCE);
+    bool isCollateral = userConfig.isUsingAsCollateral(reserve.id);
+    if (isCollateral && balanceWriteOff == userBalance) {
+      userConfig.setUsingAsCollateral(reserve.id, false);
+      emit ReserveUsedAsCollateralDisabled(params.asset, msg.sender);
+    }
+
+    // update ir due to updateState
+    reserve.updateInterestRatesAndVirtualBalance(reserveCache, params.asset, 0, 0);
+
     if (reserveCache.reserveConfiguration.getIsVirtualAccActive()) {
       IAToken(reserveCache.aTokenAddress).burn(
         msg.sender,
@@ -358,8 +373,6 @@ library ReserveLogic {
         balanceWriteOff,
         reserveCache.nextLiquidityIndex
       );
-      // update ir due to updateState
-      reserve.updateInterestRatesAndVirtualBalance(reserveCache, params.asset, 0, 0);
     } else {
       // This is a special case to allow mintable assets (ex. GHO), which by definition cannot be supplied
       // and thus do not use virtual underlying balances.
