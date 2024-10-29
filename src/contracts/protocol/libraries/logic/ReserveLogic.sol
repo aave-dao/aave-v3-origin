@@ -319,7 +319,9 @@ library ReserveLogic {
   }
 
   /**
-   * @notice Reduces a portion or all of the deficit of a specified reserve by burning the equivalent aToken `amount`.
+   * @notice Reduces a portion or all of the deficit of a specified reserve by burning:
+   * - the equivalent aToken `amount` for assets with virtual accounting enabled
+   * - the equivalent `amount` of underlying for assets with virtual accounting disabled (e.g. GHO)
    * The caller of this method MUST always be the Umbrella contract and the Umbrella contract is assumed to never have debt.
    * @dev Emits the `DeficitCovered() event`.
    * @dev If the coverage admin covers its entire balance, `ReserveUsedAsCollateralDisabled()` is emitted.
