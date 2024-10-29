@@ -357,16 +357,18 @@ library ReserveLogic {
       )
       : IERC20(params.asset).balanceOf(msg.sender);
     require(balanceWriteOff <= userBalance, Errors.NOT_ENOUGH_AVAILABLE_USER_BALANCE);
-    bool isCollateral = userConfig.isUsingAsCollateral(reserve.id);
-    if (isCollateral && balanceWriteOff == userBalance) {
-      userConfig.setUsingAsCollateral(reserve.id, false);
-      emit ReserveUsedAsCollateralDisabled(params.asset, msg.sender);
-    }
 
     // update ir due to updateState
     reserve.updateInterestRatesAndVirtualBalance(reserveCache, params.asset, 0, 0);
 
     if (reserveCache.reserveConfiguration.getIsVirtualAccActive()) {
+      // assets without virtual accounting can never be a collateral
+      bool isCollateral = userConfig.isUsingAsCollateral(reserve.id);
+      if (isCollateral && balanceWriteOff == userBalance) {
+        userConfig.setUsingAsCollateral(reserve.id, false);
+        emit ReserveUsedAsCollateralDisabled(params.asset, msg.sender);
+      }
+
       IAToken(reserveCache.aTokenAddress).burn(
         msg.sender,
         reserveCache.aTokenAddress,
@@ -383,6 +385,7 @@ library ReserveLogic {
         reserveCache.aTokenAddress,
         balanceWriteOff
       );
+      // it is assumed that handleRepayment does not touch the variable debt balance
       IAToken(reserveCache.aTokenAddress).handleRepayment(
         msg.sender,
         // In the context of GHO it's only relevant that the address has no debt.
