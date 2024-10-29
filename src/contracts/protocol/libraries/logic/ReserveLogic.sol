@@ -390,7 +390,6 @@ library ReserveLogic {
         address(this),
         balanceWriteOff
       );
-      // updating the IR is not needed in this case, as the IR is constant for assets without virtual accounting.
     }
 
     reserve.deficit -= balanceWriteOff.toUint128();
