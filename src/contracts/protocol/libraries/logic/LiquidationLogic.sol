@@ -465,11 +465,11 @@ library LiquidationLogic {
           // in order to clean the `accumulatedDebtInterest` storage the function will need to be called with the accruedInterest
           // discounted by the actualDebtToLiquidate, as in the main flow `handleRepayment` will be called with actualDebtToLiquidate already
           uint256 amountToBurn = accruedInterest - actualDebtToLiquidate;
+          // In the case of GHO, all obligations are to the protocol
+          // therefore the protocol assumes the losses on interest and only tracks the pure deficit by discounting be the not collected & burned debt
+          outstandingDebt -= amountToBurn;
           IAToken(debtReserveCache.aTokenAddress).handleRepayment(msg.sender, user, amountToBurn);
         }
-        // In the case of GHO, all obligations are to the protocol
-        // therefore the protocol assumes the losses on interest and only tracks the pure deficit
-        outstandingDebt -= accruedInterest;
       }
       debtReserve.deficit += outstandingDebt.toUint128();
       emit DeficitCreated(user, debtAsset, outstandingDebt);
