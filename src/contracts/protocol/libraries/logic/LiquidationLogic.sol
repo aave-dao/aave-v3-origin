@@ -20,6 +20,10 @@ import {IPriceOracleGetter} from '../../../interfaces/IPriceOracleGetter.sol';
 import {SafeCast} from '../../../dependencies/openzeppelin/contracts/SafeCast.sol';
 import {Errors} from '../helpers/Errors.sol';
 
+interface IGhoVariableDebtToken {
+  function getBalanceFromInterest(address user) external view returns (uint256);
+}
+
 /**
  * @title LiquidationLogic library
  * @author Aave
@@ -450,10 +454,25 @@ library LiquidationLogic {
 
     uint256 outstandingDebt = userReserveDebt - actualDebtToLiquidate;
     if (hasNoCollateralLeft && outstandingDebt != 0) {
+      // Special handling of GHO
+      // implicitly assuming that virtual acc !active == GHO, which is true
+      if (!debtReserveCache.reserveConfiguration.getIsVirtualAccActive()) {
+        uint256 accruedInterest = IGhoVariableDebtToken(debtReserveCache.variableDebtTokenAddress)
+          .getBalanceFromInterest(user);
+        // HandleRepayment will first discount the protocol fee from an internal `accumulatedDebtInterest` variable
+        // and then burn the excess GHO
+        if (accruedInterest != 0 && accruedInterest > actualDebtToLiquidate) {
+          // in order to clean the `accumulatedDebtInterest` storage the function will need to be called with at least the accruedInterest
+          uint256 amountToBurn = accruedInterest - actualDebtToLiquidate;
+          IAToken(debtReserveCache.aTokenAddress).handleRepayment(msg.sender, user, amountToBurn);
+        }
+        // In the case of GHO, all obligations are to the protocol
+        // therefore the protocol assumes the losses on interest and only tracks the pure deficit
+        outstandingDebt -= accruedInterest;
+      }
       debtReserve.deficit += outstandingDebt.toUint128();
       emit DeficitCreated(user, debtAsset, outstandingDebt);
 
-      IAToken(debtReserveCache.aTokenAddress).handleRepayment(msg.sender, user, outstandingDebt);
       outstandingDebt = 0;
     }
 
