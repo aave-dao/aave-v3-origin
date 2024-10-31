@@ -256,7 +256,15 @@ library LiquidationLogic {
     if (
       vars.actualCollateralToLiquidate + vars.liquidationProtocolFeeAmount ==
       vars.userCollateralBalance &&
-      !(msg.sender == params.user && params.receiveAToken)
+      !(msg.sender == params.user &&
+        params.receiveAToken &&
+        ValidationLogic.validateAutomaticUseAsCollateral(
+          reservesData,
+          reservesList,
+          userConfig,
+          collateralReserve.configuration,
+          address(vars.collateralAToken)
+        ))
     ) {
       userConfig.setUsingAsCollateral(collateralReserve.id, false);
       emit ReserveUsedAsCollateralDisabled(params.collateralAsset, params.user);

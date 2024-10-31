@@ -653,6 +653,82 @@ contract PoolLiquidationTests is TestnetProcedures {
     );
   }
 
+  function test_self_liquidate_position_shoulKeepCollateralEnabled() public {
+    uint256 borrowAmount = 11000e6;
+
+    vm.startPrank(alice);
+    contracts.poolProxy.supply(tokenList.wbtc, 0.5e8, alice, 0);
+    contracts.poolProxy.setUserUseReserveAsCollateral(tokenList.wbtc, true);
+    contracts.poolProxy.borrow(tokenList.usdx, borrowAmount, 2, 0, alice);
+    vm.stopPrank();
+
+    LiquidationInput memory params = _loadLiquidationInput(
+      alice,
+      tokenList.wbtc,
+      tokenList.usdx,
+      UINT256_MAX,
+      tokenList.wbtc,
+      40_00
+    );
+    params.receiveAToken = true;
+
+    (, , address varDebtToken) = contracts.protocolDataProvider.getReserveTokensAddresses(
+      params.debtAsset
+    );
+
+    // Liquidate
+    vm.prank(alice);
+    contracts.poolProxy.liquidationCall(
+      params.collateralAsset,
+      params.debtAsset,
+      params.user,
+      type(uint256).max,
+      params.receiveAToken
+    );
+    uint256 id = contracts.poolProxy.getReserveData(params.collateralAsset).id;
+    assertEq(contracts.poolProxy.getUserConfiguration(alice).isUsingAsCollateral(id), true);
+  }
+
+  function test_self_liquidate_isolated_position_shoulDisableCollateral() public {
+    uint256 borrowAmount = 11000e6;
+    vm.startPrank(poolAdmin);
+    contracts.poolConfiguratorProxy.setDebtCeiling(tokenList.wbtc, 12_000_00);
+    contracts.poolConfiguratorProxy.setBorrowableInIsolation(tokenList.usdx, true);
+    vm.stopPrank();
+
+    vm.startPrank(alice);
+    contracts.poolProxy.supply(tokenList.wbtc, 0.5e8, alice, 0);
+    contracts.poolProxy.setUserUseReserveAsCollateral(tokenList.wbtc, true);
+    contracts.poolProxy.borrow(tokenList.usdx, borrowAmount, 2, 0, alice);
+    vm.stopPrank();
+
+    LiquidationInput memory params = _loadLiquidationInput(
+      alice,
+      tokenList.wbtc,
+      tokenList.usdx,
+      UINT256_MAX,
+      tokenList.wbtc,
+      40_00
+    );
+    params.receiveAToken = true;
+
+    (, , address varDebtToken) = contracts.protocolDataProvider.getReserveTokensAddresses(
+      params.debtAsset
+    );
+
+    // Liquidate
+    vm.prank(alice);
+    contracts.poolProxy.liquidationCall(
+      params.collateralAsset,
+      params.debtAsset,
+      params.user,
+      type(uint256).max,
+      params.receiveAToken
+    );
+    uint256 id = contracts.poolProxy.getReserveData(params.collateralAsset).id;
+    assertEq(contracts.poolProxy.getUserConfiguration(alice).isUsingAsCollateral(id), false);
+  }
+
   function test_liquidate_emode_position_without_emode_oracle() public {
     EModeCategoryInput memory ct = _genCategoryOne();
 
