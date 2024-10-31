@@ -453,6 +453,7 @@ library LiquidationLogic {
       debtReserve.deficit += outstandingDebt.toUint128();
       emit DeficitCreated(user, debtAsset, outstandingDebt);
 
+      IAToken(debtReserveCache.aTokenAddress).handleRepayment(msg.sender, user, outstandingDebt);
       outstandingDebt = 0;
     }
 
