@@ -462,7 +462,8 @@ library LiquidationLogic {
         // HandleRepayment will first discount the protocol fee from an internal `accumulatedDebtInterest` variable
         // and then burn the excess GHO
         if (accruedInterest != 0 && accruedInterest > actualDebtToLiquidate) {
-          // in order to clean the `accumulatedDebtInterest` storage the function will need to be called with at least the accruedInterest
+          // in order to clean the `accumulatedDebtInterest` storage the function will need to be called with the accruedInterest
+          // discounted by the actualDebtToLiquidate, as in the main flow `handleRepayment` will be called with actualDebtToLiquidate already
           uint256 amountToBurn = accruedInterest - actualDebtToLiquidate;
           IAToken(debtReserveCache.aTokenAddress).handleRepayment(msg.sender, user, amountToBurn);
         }
