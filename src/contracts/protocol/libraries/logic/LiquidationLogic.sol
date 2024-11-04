@@ -253,7 +253,7 @@ library LiquidationLogic {
 
     // If the collateral being liquidated is equal to the user balance,
     // we set the currency as not being used as collateral anymore
-    // For the special case of msg.sender == params.user (self liquidation)
+    // For the special case of msg.sender == params.user (self-liquidation) with aToken
     // the collateral will only be disabled if it would not be automatically reenabled upon supplying
     if (
       vars.actualCollateralToLiquidate + vars.liquidationProtocolFeeAmount ==
