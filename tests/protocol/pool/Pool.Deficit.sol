@@ -32,11 +32,11 @@ contract PoolDeficitTests is TestnetProcedures {
     vm.prank(poolAdmin);
     contracts.poolAddressesProvider.setAddress(bytes32('UMBRELLA'), coverageAdmin);
 
-    deal(reserveToken, coverageAdmin, currentDeficit);
+    deal(reserveToken, coverageAdmin, currentDeficit + 1);
 
     vm.startPrank(coverageAdmin);
     IERC20(reserveToken).approve(report.poolProxy, UINT256_MAX);
-    contracts.poolProxy.supply(reserveToken, currentDeficit, coverageAdmin, 0);
+    contracts.poolProxy.supply(reserveToken, currentDeficit + 1, coverageAdmin, 0);
 
     // eliminate deficit
     vm.expectEmit(address(contracts.poolProxy));
@@ -57,11 +57,11 @@ contract PoolDeficitTests is TestnetProcedures {
     vm.prank(poolAdmin);
     contracts.poolAddressesProvider.setAddress(bytes32('UMBRELLA'), coverageAdmin);
 
-    deal(reserveToken, coverageAdmin, currentDeficit);
+    deal(reserveToken, coverageAdmin, currentDeficit + 1);
 
     vm.startPrank(coverageAdmin);
     IERC20(reserveToken).approve(report.poolProxy, UINT256_MAX);
-    contracts.poolProxy.supply(reserveToken, currentDeficit, coverageAdmin, 0);
+    contracts.poolProxy.supply(reserveToken, currentDeficit + 1, coverageAdmin, 0);
 
     // eliminate deficit
     vm.expectEmit(address(contracts.poolProxy));
