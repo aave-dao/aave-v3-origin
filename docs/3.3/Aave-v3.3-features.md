@@ -16,7 +16,12 @@ If an account ends up with zero collateral and non-zero debt, any remaining debt
 
 In terms of implementation, the feature checks whether the liquidation will result in a bad debt situation by comparing whether the total borrower’s collateral equals the collateral liquidated in the base currency.
 If the total borrower’s debt exceeds the debt repaid in base currency, the variable debt tokens of the borrower are burned, and it is accounted to the respective reserve as a deficit.
-For technical reasons in the special case of GHO, the protocol will burn it's claims on accrued GHO-interest when burning bad debt.
+
+The vGHO token, opposed to the usual variable debt token, maintains a custom storage per user debt, to track the amount of debt that on repayment will be redirected to the treasury.
+When calling `GHO.handleRepay(amount)` the fee to the treasury will be discounted from amount and the rest will be burned.
+In the case of bad debt burning the vGHO token will be burned, but no corresponding GHO will be repayed just yet.
+Therefore this would leave users with zero balance, but a pending accrued fee storage.
+To solve that situation, the protocol will burn it's claims on accrued GHO-interest when burning bad debt by resetting the accrued fee storage to zero.
 
 The new `deficit` data is introduced to the `ReserveData` struct by re-utilizing the deprecated stableBorrowRate (`__deprecatedStableBorrowRate`) storage, and can be fetched via the new `getReserveDeficit` function in the Pool contract.
 
