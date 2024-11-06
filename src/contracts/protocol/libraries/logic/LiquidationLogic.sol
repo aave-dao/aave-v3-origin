@@ -466,7 +466,7 @@ library LiquidationLogic {
           // discounted by the actualDebtToLiquidate, as in the main flow `handleRepayment` will be called with actualDebtToLiquidate already
           uint256 amountToBurn = accruedInterest - actualDebtToLiquidate;
           // In the case of GHO, all obligations are to the protocol
-          // therefore the protocol assumes the losses on interest and only tracks the pure deficit by discounting be the not collected & burned debt
+          // therefore the protocol assumes the losses on interest and only tracks the pure deficit by discounting the not-collected & burned debt
           outstandingDebt -= amountToBurn;
           IAToken(debtReserveCache.aTokenAddress).handleRepayment(msg.sender, user, amountToBurn);
         }
