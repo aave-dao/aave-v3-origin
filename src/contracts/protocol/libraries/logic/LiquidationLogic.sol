@@ -462,8 +462,8 @@ library LiquidationLogic {
        *             In this case handleRepayment will be called with the difference required to clear the storage.
        *             If we assume a liquidation of n debt, and m accrued interest, the difference is k = m-n.
        *             Therefore we call handleRepayment(k).
-       *             Additionally, as the dao (GHO issuer) accepts the loss on interest, we need to discount k from
-       *             the deficit (via reducing outstandingDebt).
+       *             Additionally, as the dao (GHO issuer) accepts the loss on interest on the bad debt,
+       *             we need to discount k from the deficit (via reducing outstandingDebt).
        *             Note: If a non GHO asset is liquidated and GHO bad debt is created in the process, Scenario 2 applies with n = 0.
        */
       if (!debtReserveCache.reserveConfiguration.getIsVirtualAccActive()) {
