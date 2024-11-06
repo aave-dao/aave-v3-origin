@@ -459,7 +459,7 @@ library LiquidationLogic {
       if (!debtReserveCache.reserveConfiguration.getIsVirtualAccActive()) {
         uint256 accruedInterest = IGhoVariableDebtToken(debtReserveCache.variableDebtTokenAddress)
           .getBalanceFromInterest(user);
-        // HandleRepayment will first discount the protocol fee from an internal `accumulatedDebtInterest` variable
+        // handleRepayment() will first discount the protocol fee from an internal `accumulatedDebtInterest` variable
         // and then burn the excess GHO
         if (accruedInterest != 0 && accruedInterest > actualDebtToLiquidate) {
           // in order to clean the `accumulatedDebtInterest` storage the function will need to be called with the accruedInterest
