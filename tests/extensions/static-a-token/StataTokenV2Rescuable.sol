@@ -16,7 +16,7 @@ contract StataTokenV2RescuableTest is BaseTest {
 
   function test_rescuable_shouldRevertForInvalidCaller() external {
     deal(tokenList.usdx, address(stataTokenV2), 1 ether);
-    vm.expectRevert('ONLY_RESCUE_GUARDIAN');
+    vm.expectRevert(abi.encodeWithSelector(IRescuable.OnlyRescueGuardian.selector));
     IRescuable(address(stataTokenV2)).emergencyTokenTransfer(
       tokenList.usdx,
       address(this),

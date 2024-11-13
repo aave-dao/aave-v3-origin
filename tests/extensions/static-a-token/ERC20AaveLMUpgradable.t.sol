@@ -93,6 +93,11 @@ contract ERC20AaveLMUpgradableTest is TestnetProcedures {
     );
   }
 
+  function test_zeroIncentivesController() external {
+    vm.expectRevert(IERC20AaveLM.ZeroIncentivesControllerIsForbidden.selector);
+    new MockERC20AaveLMUpgradeable(IRewardsController(address(0)));
+  }
+
   function test_noRewardsInitialized() external {
     vm.expectRevert(
       abi.encodeWithSelector(IERC20AaveLM.RewardNotInitialized.selector, rewardToken)

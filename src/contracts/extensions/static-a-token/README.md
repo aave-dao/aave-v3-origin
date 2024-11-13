@@ -45,7 +45,7 @@ For this project, the security procedures applied/being finished are:
 The `StaticATokenLM`(v1) was based on solmate.
 To allow more flexibility the new `StataTokenV2`(v2) is based on [openzeppelin-contracts-upgradeable](https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable) which relies on [`ERC-7201`](https://eips.ethereum.org/EIPS/eip-7201) which isolates storage per contract.
 
-The implementation is seperated in two ERC20 extentions and one actual "merger" contract stitching functionality together.
+The implementation is separated in two ERC20 extensions and one actual "merger" contract stitching functionality together.
 
 1. `ERC20AaveLM` is an abstract contract implementing the forwarding of liquidity mining from an underlying AaveERC20 - an ERC20 implementing `scaled` functions - to holders of a wrapper contract.
    The abstract contract is following `ERC-7201` and acts as erc20 extension.
@@ -70,13 +70,13 @@ To account for that specific use-case a dedicated `depositWithPermit` was added.
 ### Direct AToken Interaction
 
 In v1 deposit was overleaded to allow underlying & aToken deposits.
-While this appraoch was fine it seemed unclean and caused some confusion with integrators.
+While this approach was fine it seemed unclean and caused some confusion with integrators.
 Therefore v2 introduces dedicated `depositATokens` and `redeemATokens` methods.
 
-#### PermissionlessRescuable
+#### Rescuable
 
-[PermissionlessRescuable](https://github.com/bgd-labs/solidity-utils/blob/main/src/contracts/utils/PermissionlessRescuable.sol) has been applied to
-the `StataTokenV2` which will allow the anyone to rescue surplus tokens on the contract to the treasury.
+[Rescuable](https://github.com/bgd-labs/solidity-utils/blob/main/src/contracts/utils/Rescuable.sol) has been applied to
+the `StataTokenV2` which will allow the aclAdmin to rescue surplus tokens on the contract to the treasury.
 
 #### Pausability
 
