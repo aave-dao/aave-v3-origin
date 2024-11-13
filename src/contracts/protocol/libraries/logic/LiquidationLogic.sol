@@ -253,20 +253,9 @@ library LiquidationLogic {
 
     // If the collateral being liquidated is equal to the user balance,
     // we set the currency as not being used as collateral anymore
-    // For the special case of msg.sender == params.user (self-liquidation) with aToken
-    // the collateral will only be disabled if it would not be automatically reenabled upon supplying
     if (
       vars.actualCollateralToLiquidate + vars.liquidationProtocolFeeAmount ==
-      vars.userCollateralBalance &&
-      !(msg.sender == params.user &&
-        params.receiveAToken &&
-        ValidationLogic.validateAutomaticUseAsCollateral(
-          reservesData,
-          reservesList,
-          userConfig,
-          collateralReserve.configuration,
-          address(vars.collateralAToken)
-        ))
+      vars.userCollateralBalance
     ) {
       userConfig.setUsingAsCollateral(collateralReserve.id, false);
       emit ReserveUsedAsCollateralDisabled(params.collateralAsset, params.user);
@@ -407,7 +396,14 @@ library LiquidationLogic {
       vars.actualCollateralToLiquidate
     );
 
-    if (liquidatorPreviousATokenBalance == 0) {
+    if (
+      liquidatorPreviousATokenBalance == 0 ||
+      // For the special case of msg.sender == params.user (self-liquidation) the liquidatorPreviousATokenBalance
+      // will not yet be 0, but the liquidation will result in collateral being fully liquidated and then resupplied.
+      (msg.sender == params.user &&
+        vars.actualCollateralToLiquidate + vars.liquidationProtocolFeeAmount ==
+        vars.userCollateralBalance)
+    ) {
       DataTypes.UserConfigurationMap storage liquidatorConfig = usersConfig[msg.sender];
       if (
         ValidationLogic.validateAutomaticUseAsCollateral(
