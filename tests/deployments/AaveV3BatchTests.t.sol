@@ -164,12 +164,7 @@ contract AaveV3BatchTests is BatchTestProcedures {
   }
 
   function test6ParaswapRelease() public {
-    new AaveV3ParaswapBatch(
-      roles.poolAdmin,
-      config,
-      marketReportOne.poolAddressesProvider,
-      peripheryReportOne.treasury
-    );
+    new AaveV3ParaswapBatch(roles.poolAdmin, config, marketReportOne.poolAddressesProvider);
   }
 
   function test7SetupMarket() public {

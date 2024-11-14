@@ -18,15 +18,13 @@ contract AaveV3ParaswapProcedure {
     address paraswapAugustusRegistry,
     address paraswapFeeClaimer,
     address poolAddressesProvider,
-    address poolAdmin,
-    address treasury
+    address poolAdmin
   ) internal returns (ParaswapAdapters memory) {
     ParaswapAdapters memory report = _deployParaswapAdapters(
       paraswapAugustusRegistry,
       paraswapFeeClaimer,
       poolAddressesProvider,
-      poolAdmin,
-      treasury
+      poolAdmin
     );
 
     return report;
@@ -36,8 +34,7 @@ contract AaveV3ParaswapProcedure {
     address paraswapAugustusRegistry,
     address paraswapFeeClaimer,
     address poolAddressesProvider,
-    address poolAdmin,
-    address treasury
+    address poolAdmin
   ) internal returns (ParaswapAdapters memory) {
     ParaswapAdapters memory report;
 

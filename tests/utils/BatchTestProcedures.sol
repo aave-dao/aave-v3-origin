@@ -147,8 +147,7 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
     paraswapReport = AaveV3BatchOrchestration._deployParaswapAdapters(
       roles,
       config,
-      initialReport.poolAddressesProvider,
-      peripheryReport.treasury
+      initialReport.poolAddressesProvider
     );
 
     gettersReport2 = AaveV3BatchOrchestration._deployGettersBatch2(

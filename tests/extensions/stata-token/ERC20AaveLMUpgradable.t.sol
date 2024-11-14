@@ -4,7 +4,7 @@ pragma solidity ^0.8.10;
 import {IERC20Errors} from 'openzeppelin-contracts/contracts/interfaces/draft-IERC6093.sol';
 import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import {TestnetProcedures, TestnetERC20} from '../../utils/TestnetProcedures.sol';
-import {ERC20AaveLMUpgradeable, IERC20AaveLM} from '../../../src/contracts/extensions/static-a-token/ERC20AaveLMUpgradeable.sol';
+import {ERC20AaveLMUpgradeable, IERC20AaveLM} from '../../../src/contracts/extensions/stata-token/ERC20AaveLMUpgradeable.sol';
 import {IRewardsController} from '../../../src/contracts/rewards/interfaces/IRewardsController.sol';
 import {PullRewardsTransferStrategy, ITransferStrategyBase} from '../../../src/contracts/rewards/transfer-strategies/PullRewardsTransferStrategy.sol';
 import {RewardsDataTypes} from '../../../src/contracts/rewards/libraries/RewardsDataTypes.sol';

@@ -7,18 +7,12 @@ import '../../../interfaces/IMarketReportTypes.sol';
 contract AaveV3ParaswapBatch is AaveV3ParaswapProcedure {
   ParaswapReport internal _report;
 
-  constructor(
-    address poolAdmin,
-    MarketConfig memory config,
-    address poolAddressesProvider,
-    address treasury
-  ) {
+  constructor(address poolAdmin, MarketConfig memory config, address poolAddressesProvider) {
     ParaswapAdapters memory adaptersReport = _deployAaveV3ParaswapAdapters(
       config.paraswapAugustusRegistry,
       config.paraswapFeeClaimer,
       poolAddressesProvider,
-      poolAdmin,
-      treasury
+      poolAdmin
     );
     _report.paraSwapLiquiditySwapAdapter = adaptersReport.paraSwapLiquiditySwapAdapter;
     _report.paraSwapRepayAdapter = adaptersReport.paraSwapRepayAdapter;

@@ -76,8 +76,7 @@ library AaveV3BatchOrchestration {
     ParaswapReport memory paraswapReport = _deployParaswapAdapters(
       roles,
       config,
-      initialReport.poolAddressesProvider,
-      peripheryReport.treasury
+      initialReport.poolAddressesProvider
     );
 
     AaveV3GettersBatchTwo.GettersReportBatchTwo memory gettersReport2 = _deployGettersBatch2(
@@ -253,15 +252,13 @@ library AaveV3BatchOrchestration {
   function _deployParaswapAdapters(
     Roles memory roles,
     MarketConfig memory config,
-    address poolAddressesProvider,
-    address treasury
+    address poolAddressesProvider
   ) internal returns (ParaswapReport memory) {
     if (config.paraswapAugustusRegistry != address(0) && config.paraswapFeeClaimer != address(0)) {
       AaveV3ParaswapBatch parawswapBatch = new AaveV3ParaswapBatch(
         roles.poolAdmin,
         config,
-        poolAddressesProvider,
-        treasury
+        poolAddressesProvider
       );
       return parawswapBatch.getParaswapReport();
     }

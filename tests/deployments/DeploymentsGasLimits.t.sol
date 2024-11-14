@@ -149,12 +149,7 @@ contract DeploymentsGasLimits is BatchTestProcedures {
   }
 
   function test7ParaswapDeployment() public {
-    new AaveV3ParaswapBatch(
-      roles.poolAdmin,
-      config,
-      marketReportOne.poolAddressesProvider,
-      peripheryReportOne.treasury
-    );
+    new AaveV3ParaswapBatch(roles.poolAdmin, config, marketReportOne.poolAddressesProvider);
   }
 
   function test8SetupMarket() public {
