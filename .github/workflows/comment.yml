@@ -11,6 +11,13 @@ on:
     types:
       - completed
 
+permissions:
+  actions: read
+  issues: write
+  checks: read
+  statuses: read
+  pull-requests: write
+
 jobs:
   comment:
     name: Comment Bot
@@ -21,7 +28,7 @@ jobs:
           name: content
           path: /tmp/content
           run-id: ${{ github.event.workflow_run.id }}
-          github-token: ${{ secrets.READ_ONLY_PAT }}
+          github-token: ${{ secrets.READ_ONLY_PAT || github.token }}
 
       - name: Read pr number
         id: get_pr_number
@@ -40,6 +47,7 @@ jobs:
         with:
           issue-number: ${{ steps.get_pr_number.outputs.pr_number }}
           comment-author: "github-actions[bot]"
+          token: ${{ secrets.READ_ONLY_PAT || github.token }}
 
       - name: Create or update pr comment
         uses: peter-evans/create-or-update-comment@v4
@@ -49,6 +57,7 @@ jobs:
           issue-number: ${{ steps.get_pr_number.outputs.pr_number }}
           body-file: /tmp/all.txt
           edit-mode: replace
+          token: ${{ secrets.READ_ONLY_PAT || github.token }}
 
       - name: Create or update commit comment
         uses: peter-evans/commit-comment@v3
@@ -56,3 +65,4 @@ jobs:
         with:
           sha: ${{ github.event.workflow_run.head_sha }}
           body-file: /tmp/all.txt
+          token: ${{ secrets.READ_ONLY_PAT || github.token }}
