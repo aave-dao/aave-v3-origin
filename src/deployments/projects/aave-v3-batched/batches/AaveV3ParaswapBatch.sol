@@ -23,7 +23,6 @@ contract AaveV3ParaswapBatch is AaveV3ParaswapProcedure {
     _report.paraSwapLiquiditySwapAdapter = adaptersReport.paraSwapLiquiditySwapAdapter;
     _report.paraSwapRepayAdapter = adaptersReport.paraSwapRepayAdapter;
     _report.paraSwapWithdrawSwapAdapter = adaptersReport.paraSwapWithdrawSwapAdapter;
-    _report.aaveParaSwapFeeClaimer = adaptersReport.aaveParaSwapFeeClaimer;
   }
 
   function getParaswapReport() external view returns (ParaswapReport memory) {

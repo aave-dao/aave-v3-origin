@@ -204,7 +204,6 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
     assertTrue(r.paraSwapLiquiditySwapAdapter != address(0), 'report.paraSwapLiquiditySwapAdapter');
     assertTrue(r.paraSwapRepayAdapter != address(0), 'report.paraSwapRepayAdapter');
     assertTrue(r.paraSwapWithdrawSwapAdapter != address(0), 'report.paraSwapWithdrawSwapAdapter');
-    assertTrue(r.aaveParaSwapFeeClaimer != address(0), 'report.aaveParaSwapFeeClaimer');
 
     if (flags.l2) {
       assertTrue(r.l2Encoder != address(0), 'report.l2Encoder');

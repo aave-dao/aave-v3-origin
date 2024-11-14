@@ -75,7 +75,6 @@ struct MarketReport {
   address paraSwapLiquiditySwapAdapter;
   address paraSwapRepayAdapter;
   address paraSwapWithdrawSwapAdapter;
-  address aaveParaSwapFeeClaimer;
   address l2Encoder;
   address aToken;
   address variableDebtToken;
@@ -186,5 +185,4 @@ struct ParaswapReport {
   address paraSwapLiquiditySwapAdapter;
   address paraSwapRepayAdapter;
   address paraSwapWithdrawSwapAdapter;
-  address aaveParaSwapFeeClaimer;
 }

@@ -5,6 +5,4 @@ import './IMarketReportTypes.sol';
 
 interface IMarketReportStorage {
   event Deployment(MarketReport report);
-
-  function getMarketReport() external view returns (MarketReport memory);
 }

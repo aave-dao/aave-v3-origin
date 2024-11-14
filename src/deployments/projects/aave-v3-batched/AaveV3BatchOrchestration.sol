@@ -270,8 +270,7 @@ library AaveV3BatchOrchestration {
       ParaswapReport({
         paraSwapLiquiditySwapAdapter: address(0),
         paraSwapRepayAdapter: address(0),
-        paraSwapWithdrawSwapAdapter: address(0),
-        aaveParaSwapFeeClaimer: address(0)
+        paraSwapWithdrawSwapAdapter: address(0)
       });
   }
 
@@ -314,7 +313,6 @@ library AaveV3BatchOrchestration {
     report.paraSwapLiquiditySwapAdapter = paraswapReport.paraSwapLiquiditySwapAdapter;
     report.paraSwapRepayAdapter = paraswapReport.paraSwapRepayAdapter;
     report.paraSwapWithdrawSwapAdapter = paraswapReport.paraSwapWithdrawSwapAdapter;
-    report.aaveParaSwapFeeClaimer = paraswapReport.aaveParaSwapFeeClaimer;
     report.treasuryImplementation = peripheryReport.treasuryImplementation;
     report.proxyAdmin = peripheryReport.proxyAdmin;
     report.treasury = peripheryReport.treasury;
