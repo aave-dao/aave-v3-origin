@@ -1,4 +1,9 @@
-name: PR Comment
+# By calling this ci via `workflow_call` from another ci it has permissions to comment on prs from forks
+# This action expects the a artifact named `content` to be present in the workflow run
+# If the artifact contains a pr_number.txt, the action will comment on that pr. If not it comments on the commit.
+# The content of the messages composed by concatinating all *.txt files within content into a single file
+# If you want to enforce a specific order, you need to name the files in a way that sorts in the desired order
+name: Comment
 
 on:
   workflow_run:
@@ -6,69 +11,48 @@ on:
     types:
       - completed
 
-permissions:
-  actions: read
-  issues: write
-  checks: read
-  statuses: read
-  pull-requests: write
-
 jobs:
   comment:
     name: Comment Bot
     runs-on: ubuntu-latest
-    # workflow run triggers on all types of "completed" including "cancelled" and similar
-    # we want this action to only run on a success & failure though
-    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.conclusion == 'failure' }}
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: pr_number
-          path: pr/
+          name: content
+          path: /tmp/content
           run-id: ${{ github.event.workflow_run.id }}
-          github-token: ${{ github.token }}
+          github-token: ${{ secrets.READ_ONLY_PAT }}
 
       - name: Read pr number
         id: get_pr_number
-        run: echo "pr_number=$(cat pr/pr_number.txt)" >> $GITHUB_OUTPUT
+        run: |
+          echo "pr_number=$(cat /tmp/content/pr_number.txt)" >> $GITHUB_OUTPUT
+          rm /tmp/content/pr_number.txt
 
-      - uses: actions/download-artifact@v4
-        with:
-          name: ${{ github.event.workflow_run.head_sha }}
-          path: tmp/
-          run-id: ${{ github.event.workflow_run.id }}
-          github-token: ${{ github.token }}
+      - name: Combine
+        id: combine
+        run: cat /tmp/content/*.txt > /tmp/all.txt
 
       - name: Find Comment
-        uses: peter-evans/find-comment@782f37b1a8a2b3e2eb9e86a994f0871e9dc146e3
+        uses: peter-evans/find-comment@v3
         id: fc
         if: ${{ steps.get_pr_number.outputs.pr_number != null }}
         with:
           issue-number: ${{ steps.get_pr_number.outputs.pr_number }}
           comment-author: "github-actions[bot]"
-          body-includes: Foundry report
 
       - name: Create or update pr comment
-        uses: peter-evans/create-or-update-comment@48bb05bd5554c378187694936d277d48652922e7
+        uses: peter-evans/create-or-update-comment@v4
         if: ${{ steps.get_pr_number.outputs.pr_number != null }}
         with:
           comment-id: ${{ steps.fc.outputs.comment-id }}
           issue-number: ${{ steps.get_pr_number.outputs.pr_number }}
-          body-file: tmp/template.md
+          body-file: /tmp/all.txt
           edit-mode: replace
 
-      - id: get-comment-body
-        if: ${{ steps.get_pr_number.outputs.pr_number == null }}
-        run: |
-          body="$(cat tmp/template.md)"
-          delimiter="$(openssl rand -hex 8)"
-          echo "body<<$delimiter" >> $GITHUB_OUTPUT
-          echo "$body" >> $GITHUB_OUTPUT
-          echo "$delimiter" >> $GITHUB_OUTPUT
-
       - name: Create or update commit comment
-        uses: peter-evans/commit-comment@ae7c3825ead23dab7a1ad8cd4df9617ab4bf0b37
+        uses: peter-evans/commit-comment@v3
         if: ${{ steps.get_pr_number.outputs.pr_number == null }}
         with:
           sha: ${{ github.event.workflow_run.head_sha }}
-          body: ${{ steps.get-comment-body.outputs.body }}
+          body-file: /tmp/all.txt
