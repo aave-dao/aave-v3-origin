@@ -1,9 +1,4 @@
-# By calling this ci via `workflow_call` from another ci it has permissions to comment on prs from forks
-# This action expects the a artifact named `content` to be present in the workflow run
-# If the artifact contains a pr_number.txt, the action will comment on that pr. If not it comments on the commit.
-# The content of the messages composed by concatinating all *.txt files within content into a single file
-# If you want to enforce a specific order, you need to name the files in a way that sorts in the desired order
-name: Comment
+name: PR Comment
 
 on:
   workflow_run:
@@ -20,49 +15,6 @@ permissions:
 
 jobs:
   comment:
-    name: Comment Bot
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: content
-          path: /tmp/content
-          run-id: ${{ github.event.workflow_run.id }}
-          github-token: ${{ secrets.READ_ONLY_PAT || github.token }}
-
-      - name: Read pr number
-        id: get_pr_number
-        run: |
-          echo "pr_number=$(cat /tmp/content/pr_number.txt)" >> $GITHUB_OUTPUT
-          rm /tmp/content/pr_number.txt
-
-      - name: Combine
-        id: combine
-        run: cat /tmp/content/*.txt > /tmp/all.txt
-
-      - name: Find Comment
-        uses: peter-evans/find-comment@v3
-        id: fc
-        if: ${{ steps.get_pr_number.outputs.pr_number != null }}
-        with:
-          issue-number: ${{ steps.get_pr_number.outputs.pr_number }}
-          comment-author: "github-actions[bot]"
-          token: ${{ secrets.READ_ONLY_PAT || github.token }}
-
-      - name: Create or update pr comment
-        uses: peter-evans/create-or-update-comment@v4
-        if: ${{ steps.get_pr_number.outputs.pr_number != null }}
-        with:
-          comment-id: ${{ steps.fc.outputs.comment-id }}
-          issue-number: ${{ steps.get_pr_number.outputs.pr_number }}
-          body-file: /tmp/all.txt
-          edit-mode: replace
-          token: ${{ secrets.READ_ONLY_PAT || github.token }}
-
-      - name: Create or update commit comment
-        uses: peter-evans/commit-comment@v3
-        if: ${{ steps.get_pr_number.outputs.pr_number == null }}
-        with:
-          sha: ${{ github.event.workflow_run.head_sha }}
-          body-file: /tmp/all.txt
-          token: ${{ secrets.READ_ONLY_PAT || github.token }}
+    uses: bgd-labs/github-workflows/.github/workflows/comment.yml@main
+    secrets:
+      READ_ONLY_PAT: ${{ secrets.READ_ONLY_PAT }}
