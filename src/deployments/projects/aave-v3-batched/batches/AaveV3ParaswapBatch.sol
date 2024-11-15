@@ -10,7 +10,6 @@ contract AaveV3ParaswapBatch is AaveV3ParaswapProcedure {
   constructor(address poolAdmin, MarketConfig memory config, address poolAddressesProvider) {
     ParaswapAdapters memory adaptersReport = _deployAaveV3ParaswapAdapters(
       config.paraswapAugustusRegistry,
-      config.paraswapFeeClaimer,
       poolAddressesProvider,
       poolAdmin
     );

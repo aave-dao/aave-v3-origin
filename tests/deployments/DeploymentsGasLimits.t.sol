@@ -16,7 +16,6 @@ import {AaveV3HelpersBatchOne} from '../../src/deployments/projects/aave-v3-batc
 import {AaveV3HelpersBatchTwo} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3HelpersBatchTwo.sol';
 import {WETH9} from '../../src/contracts/dependencies/weth/WETH9.sol';
 import {AugustusRegistryMock} from '../mocks/AugustusRegistryMock.sol';
-import {MockParaSwapFeeClaimer} from '../../src/contracts/mocks/swap/MockParaSwapFeeClaimer.sol';
 import {SequencerOracle} from '../../src/contracts/mocks/oracle/SequencerOracle.sol';
 import {BatchTestProcedures} from '../utils/BatchTestProcedures.sol';
 
@@ -56,7 +55,6 @@ contract DeploymentsGasLimits is BatchTestProcedures {
       'Testnet Market',
       8,
       address(new AugustusRegistryMock()), // replace with mock of augustus registry
-      address(new MockParaSwapFeeClaimer()),
       address(new SequencerOracle(poolAdmin)),
       2 hours, // l2PriceOracleSentinelGracePeriod
       8080,

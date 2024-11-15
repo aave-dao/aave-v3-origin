@@ -112,7 +112,6 @@ struct MarketConfig {
   string marketId;
   uint8 oracleDecimals;
   address paraswapAugustusRegistry;
-  address paraswapFeeClaimer;
   address l2SequencerUptimeFeed;
   uint256 l2PriceOracleSentinelGracePeriod;
   uint256 providerId;

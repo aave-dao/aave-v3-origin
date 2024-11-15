@@ -254,7 +254,7 @@ library AaveV3BatchOrchestration {
     MarketConfig memory config,
     address poolAddressesProvider
   ) internal returns (ParaswapReport memory) {
-    if (config.paraswapAugustusRegistry != address(0) && config.paraswapFeeClaimer != address(0)) {
+    if (config.paraswapAugustusRegistry != address(0)) {
       AaveV3ParaswapBatch parawswapBatch = new AaveV3ParaswapBatch(
         roles.poolAdmin,
         config,
