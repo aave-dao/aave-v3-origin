@@ -10,7 +10,6 @@ import {SafeERC20} from '../../dependencies/openzeppelin/contracts/SafeERC20.sol
 import {SafeMath} from '../../dependencies/openzeppelin/contracts/SafeMath.sol';
 import {BaseParaSwapBuyAdapter} from './BaseParaSwapBuyAdapter.sol';
 import {IParaSwapAugustusRegistry} from './interfaces/IParaSwapAugustusRegistry.sol';
-import {IParaSwapAugustus} from './interfaces/IParaSwapAugustus.sol';
 import {ReentrancyGuard} from '../../dependencies/openzeppelin/ReentrancyGuard.sol';
 
 /**
@@ -57,7 +56,7 @@ contract ParaSwapRepayAdapter is BaseParaSwapBuyAdapter, ReentrancyGuard {
    *   uint256 debtRateMode Rate mode of the debt to be repaid
    *   bytes paraswapData Paraswap Data
    *                    * bytes buyCallData Call data for augustus
-   *                    * IParaSwapAugustus augustus Address of Augustus Swapper
+   *                    * address augustus Address of Augustus Swapper
    *   PermitSignature permitParams Struct containing the permit signatures, set to all zeroes if not used
    */
   function executeOperation(

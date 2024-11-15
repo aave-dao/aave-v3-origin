@@ -1,13 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import {IParaSwapAugustus} from '../../extensions/paraswap-adapters/interfaces/IParaSwapAugustus.sol';
-import {MockParaSwapTokenTransferProxy} from './MockParaSwapTokenTransferProxy.sol';
 import {IERC20} from '../../dependencies/openzeppelin/contracts/IERC20.sol';
 import {MintableERC20} from '../tokens/MintableERC20.sol';
 
-contract MockParaSwapAugustus is IParaSwapAugustus {
-  MockParaSwapTokenTransferProxy immutable TOKEN_TRANSFER_PROXY;
+contract MockParaSwapAugustus {
   bool _expectingSwap;
   address _expectedFromToken;
   address _expectedToToken;
@@ -19,14 +16,6 @@ contract MockParaSwapAugustus is IParaSwapAugustus {
   uint256 _fromAmount;
   uint256 _expectedToAmountMax;
   uint256 _expectedToAmountMin;
-
-  constructor() {
-    TOKEN_TRANSFER_PROXY = new MockParaSwapTokenTransferProxy();
-  }
-
-  function getTokenTransferProxy() external view override returns (address) {
-    return address(TOKEN_TRANSFER_PROXY);
-  }
 
   function expectSwap(
     address fromToken,
@@ -72,7 +61,7 @@ contract MockParaSwapAugustus is IParaSwapAugustus {
       'From amount out of range'
     );
     require(_receivedAmount >= toAmount, 'Received amount of tokens are less than expected');
-    TOKEN_TRANSFER_PROXY.transferFrom(fromToken, msg.sender, address(this), fromAmount);
+    _transferFrom(fromToken, msg.sender, address(this), fromAmount);
     MintableERC20(toToken).mint(_receivedAmount);
     IERC20(toToken).transfer(msg.sender, _receivedAmount);
     _expectingSwap = false;
@@ -93,9 +82,13 @@ contract MockParaSwapAugustus is IParaSwapAugustus {
       'To amount out of range'
     );
     require(_fromAmount <= fromAmount, 'From amount of tokens are higher than expected');
-    TOKEN_TRANSFER_PROXY.transferFrom(fromToken, msg.sender, address(this), _fromAmount);
+    _transferFrom(fromToken, msg.sender, address(this), _fromAmount);
     MintableERC20(toToken).mint(msg.sender, toAmount);
     _expectingSwap = false;
     return fromAmount;
+  }
+
+  function _transferFrom(address token, address from, address to, uint256 amount) internal {
+    IERC20(token).transferFrom(from, to, amount);
   }
 }

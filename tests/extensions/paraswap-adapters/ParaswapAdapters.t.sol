@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {ParaSwapLiquiditySwapAdapter, IParaSwapAugustus} from '../../../src/contracts/extensions/paraswap-adapters/ParaSwapLiquiditySwapAdapter.sol';
+import {ParaSwapLiquiditySwapAdapter} from '../../../src/contracts/extensions/paraswap-adapters/ParaSwapLiquiditySwapAdapter.sol';
 import {ParaSwapRepayAdapter, IParaSwapAugustusRegistry} from '../../../src/contracts/extensions/paraswap-adapters/ParaSwapRepayAdapter.sol';
 import {ParaSwapWithdrawSwapAdapter} from '../../../src/contracts/extensions/paraswap-adapters/ParaSwapWithdrawSwapAdapter.sol';
 import {AaveParaSwapFeeClaimer, IERC20} from '../../../src/contracts/extensions/paraswap-adapters/AaveParaSwapFeeClaimer.sol';
@@ -325,7 +325,7 @@ contract ParaswapAdaptersTest is TestnetProcedures {
       expectedUsdxAmount,
       0,
       augustusInput,
-      IParaSwapAugustus(address(mockParaSwapAugustus)),
+      address(mockParaSwapAugustus),
       emptyPermit
     );
   }
@@ -387,7 +387,7 @@ contract ParaswapAdaptersTest is TestnetProcedures {
       expectedUsdxAmount,
       0,
       augustusInput,
-      IParaSwapAugustus(address(mockParaSwapAugustus)),
+      address(mockParaSwapAugustus),
       permitInput
     );
   }
@@ -429,7 +429,7 @@ contract ParaswapAdaptersTest is TestnetProcedures {
       expectedUsdxAmount,
       amountToSwap,
       augustusInput,
-      IParaSwapAugustus(address(mockParaSwapAugustus)),
+      address(mockParaSwapAugustus),
       emptyPermit
     );
   }
@@ -809,7 +809,7 @@ contract ParaswapAdaptersTest is TestnetProcedures {
       expectedUsdxAmount,
       0,
       augustusInput,
-      IParaSwapAugustus(address(mockParaSwapAugustus)),
+      address(mockParaSwapAugustus),
       emptyPermit
     );
 
@@ -871,7 +871,7 @@ contract ParaswapAdaptersTest is TestnetProcedures {
       expectedUsdxAmount,
       0,
       augustusInput,
-      IParaSwapAugustus(address(mockParaSwapAugustus)),
+      address(mockParaSwapAugustus),
       permitInput
     );
 
@@ -914,7 +914,7 @@ contract ParaswapAdaptersTest is TestnetProcedures {
       expectedUsdxAmount,
       amountToSwap,
       augustusInput,
-      IParaSwapAugustus(address(mockParaSwapAugustus)),
+      address(mockParaSwapAugustus),
       emptyPermit
     );
 
