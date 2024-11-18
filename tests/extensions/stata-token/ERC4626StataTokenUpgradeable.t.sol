@@ -6,7 +6,7 @@ import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IE
 import {IERC20Permit} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol';
 import {IPool} from '../../../src/contracts/interfaces/IPool.sol';
 import {TestnetProcedures, TestnetERC20} from '../../utils/TestnetProcedures.sol';
-import {ERC4626Upgradeable, ERC4626StataTokenUpgradeable, IERC4626StataToken} from '../../../src/contracts/extensions/static-a-token/ERC4626StataTokenUpgradeable.sol';
+import {ERC4626Upgradeable, ERC4626StataTokenUpgradeable, IERC4626StataToken} from '../../../src/contracts/extensions/stata-token/ERC4626StataTokenUpgradeable.sol';
 import {DataTypes} from '../../../src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
 import {SigUtils} from '../../utils/SigUtils.sol';
 

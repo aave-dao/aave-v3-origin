@@ -9,7 +9,6 @@ import {ACLManager} from '../../src/contracts/protocol/configuration/ACLManager.
 import {RewardsController} from '../../src/contracts/rewards/RewardsController.sol';
 import {EmissionManager} from '../../src/contracts/rewards/EmissionManager.sol';
 import {AugustusRegistryMock} from '../mocks/AugustusRegistryMock.sol';
-import {MockParaSwapFeeClaimer} from '../../src/contracts/mocks/swap/MockParaSwapFeeClaimer.sol';
 import {WETH9} from '../../src/contracts/dependencies/weth/WETH9.sol';
 import {BatchTestProcedures} from '../utils/BatchTestProcedures.sol';
 import {IRevenueSplitter} from '../../src/contracts/treasury/IRevenueSplitter.sol';
@@ -40,7 +39,6 @@ contract AaveV3PermissionsTest is BatchTestProcedures {
     roles.poolAdmin = poolAdmin;
 
     config.paraswapAugustusRegistry = address(new AugustusRegistryMock());
-    config.paraswapFeeClaimer = address(new MockParaSwapFeeClaimer());
     config.wrappedNativeToken = address(new WETH9());
 
     MarketReport memory report = deployAaveV3Testnet(
@@ -187,7 +185,6 @@ contract AaveV3PermissionsTest is BatchTestProcedures {
     roles.poolAdmin = poolAdmin;
 
     config.paraswapAugustusRegistry = address(new AugustusRegistryMock());
-    config.paraswapFeeClaimer = address(new MockParaSwapFeeClaimer());
     config.wrappedNativeToken = address(new WETH9());
     config.treasuryPartner = treasuryPartner;
     config.treasurySplitPercent = 5000;

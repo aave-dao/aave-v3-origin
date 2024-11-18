@@ -67,7 +67,6 @@ contract MetadataReporter is IMetadataReporter {
       'paraSwapWithdrawSwapAdapter',
       report.paraSwapWithdrawSwapAdapter
     );
-    vm.serializeAddress(jsonReport, 'aaveParaSwapFeeClaimer', report.aaveParaSwapFeeClaimer);
     vm.serializeAddress(
       jsonReport,
       'defaultInterestRateStrategy',

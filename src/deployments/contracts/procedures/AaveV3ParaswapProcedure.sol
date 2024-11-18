@@ -4,8 +4,6 @@ pragma solidity ^0.8.0;
 import {ParaSwapLiquiditySwapAdapter, IParaSwapAugustusRegistry} from '../../../contracts/extensions/paraswap-adapters/ParaSwapLiquiditySwapAdapter.sol';
 import {ParaSwapRepayAdapter} from '../../../contracts/extensions/paraswap-adapters/ParaSwapRepayAdapter.sol';
 import {ParaSwapWithdrawSwapAdapter} from '../../../contracts/extensions/paraswap-adapters/ParaSwapWithdrawSwapAdapter.sol';
-import {AaveParaSwapFeeClaimer} from '../../../contracts/extensions/paraswap-adapters/AaveParaSwapFeeClaimer.sol';
-import {IFeeClaimer} from '../../../contracts/extensions/paraswap-adapters/interfaces/IFeeClaimer.sol';
 import {IPoolAddressesProvider} from '../../../contracts/interfaces/IPoolAddressesProvider.sol';
 
 contract AaveV3ParaswapProcedure {
@@ -13,22 +11,17 @@ contract AaveV3ParaswapProcedure {
     address paraSwapLiquiditySwapAdapter;
     address paraSwapRepayAdapter;
     address paraSwapWithdrawSwapAdapter;
-    address aaveParaSwapFeeClaimer;
   }
 
   function _deployAaveV3ParaswapAdapters(
     address paraswapAugustusRegistry,
-    address paraswapFeeClaimer,
     address poolAddressesProvider,
-    address poolAdmin,
-    address treasury
+    address poolAdmin
   ) internal returns (ParaswapAdapters memory) {
     ParaswapAdapters memory report = _deployParaswapAdapters(
       paraswapAugustusRegistry,
-      paraswapFeeClaimer,
       poolAddressesProvider,
-      poolAdmin,
-      treasury
+      poolAdmin
     );
 
     return report;
@@ -36,14 +29,12 @@ contract AaveV3ParaswapProcedure {
 
   function _deployParaswapAdapters(
     address paraswapAugustusRegistry,
-    address paraswapFeeClaimer,
     address poolAddressesProvider,
-    address poolAdmin,
-    address treasury
+    address poolAdmin
   ) internal returns (ParaswapAdapters memory) {
     ParaswapAdapters memory report;
 
-    if (paraswapAugustusRegistry != address(0) && paraswapFeeClaimer != address(0)) {
+    if (paraswapAugustusRegistry != address(0)) {
       report.paraSwapLiquiditySwapAdapter = address(
         new ParaSwapLiquiditySwapAdapter(
           IPoolAddressesProvider(poolAddressesProvider),
@@ -66,10 +57,6 @@ contract AaveV3ParaswapProcedure {
           IParaSwapAugustusRegistry(paraswapAugustusRegistry),
           poolAdmin
         )
-      );
-
-      report.aaveParaSwapFeeClaimer = address(
-        new AaveParaSwapFeeClaimer(treasury, IFeeClaimer(paraswapFeeClaimer))
       );
     }
     return report;

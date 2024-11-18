@@ -5,7 +5,6 @@ import 'forge-std/Test.sol';
 import '../../src/deployments/interfaces/IMarketReportTypes.sol';
 
 import {AugustusRegistryMock} from '../mocks/AugustusRegistryMock.sol';
-import {MockParaSwapFeeClaimer} from '../../src/contracts/mocks/swap/MockParaSwapFeeClaimer.sol';
 import {BatchTestProcedures} from '../utils/BatchTestProcedures.sol';
 import {AaveV3TestListing} from '../mocks/AaveV3TestListing.sol';
 import {ACLManager} from '../../src/contracts/protocol/configuration/ACLManager.sol';
@@ -46,7 +45,6 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
       'Testnet Market',
       8,
       address(new AugustusRegistryMock()),
-      address(new MockParaSwapFeeClaimer()),
       address(0), // l2SequencerUptimeFeed
       0, // l2PriceOracleSentinelGracePeriod
       8080,

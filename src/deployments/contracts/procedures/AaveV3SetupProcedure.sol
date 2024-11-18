@@ -12,6 +12,9 @@ import {IEmissionManager} from '../../../contracts/rewards/interfaces/IEmissionM
 import {IRewardsController} from '../../../contracts/rewards/interfaces/IRewardsController.sol';
 
 contract AaveV3SetupProcedure {
+  error MarketOwnerMustBeSet();
+  error RewardsControllerImplementationMustBeSet();
+
   struct AddressProviderInput {
     InitialReport initialReport;
     address poolImplementation;
@@ -126,10 +129,8 @@ contract AaveV3SetupProcedure {
 
     bytes32 controllerId = keccak256('INCENTIVES_CONTROLLER');
     if (input.rewardsControllerProxy == address(0)) {
-      require(
-        input.rewardsControllerImplementation != address(0),
-        'rewardsControllerImplementation must be set'
-      );
+      if (input.rewardsControllerImplementation == address(0))
+        revert RewardsControllerImplementationMustBeSet();
       provider.setAddressAsProxy(controllerId, input.rewardsControllerImplementation);
       report.rewardsControllerProxy = provider.getAddress(controllerId);
       IEmissionManager emissionManager = IEmissionManager(
@@ -211,6 +212,6 @@ contract AaveV3SetupProcedure {
   }
 
   function _validateMarketSetup(Roles memory roles) internal pure {
-    require(roles.marketOwner != address(0), 'roles.marketOwner must be set');
+    if (roles.marketOwner == address(0)) revert MarketOwnerMustBeSet();
   }
 }
