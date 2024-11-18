@@ -17,7 +17,6 @@ import {IERC20WithPermit} from '../../interfaces/IERC20WithPermit.sol';
 import {IPoolAddressesProvider} from '../../interfaces/IPoolAddressesProvider.sol';
 import {IPool} from '../../interfaces/IPool.sol';
 import {IACLManager} from '../../interfaces/IACLManager.sol';
-import {IAccessControl} from '../../dependencies/openzeppelin/contracts/IAccessControl.sol';
 import {PoolStorage} from './PoolStorage.sol';
 
 /**
