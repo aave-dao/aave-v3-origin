@@ -12,17 +12,22 @@ import {IAaveOracle} from '../../../src/contracts/interfaces/IAaveOracle.sol';
 import {TestnetProcedures} from '../../utils/TestnetProcedures.sol';
 import {IAccessControl} from '../../../src/contracts/dependencies/openzeppelin/contracts/IAccessControl.sol';
 import {IAToken} from '../../../src/contracts/interfaces/IAToken.sol';
+import {UserConfiguration} from '../../../src/contracts/protocol/libraries/configuration/UserConfiguration.sol';
 
 contract PoolDeficitTests is TestnetProcedures {
   using stdStorage for StdStorage;
+  using UserConfiguration for DataTypes.UserConfigurationMap;
 
   event DeficitCovered(address indexed reserve, address caller, uint256 amountDecreased);
 
   function setUp() public virtual {
-    initTestEnvironment();
+    initTestEnvironment(false);
   }
 
-  function test_eliminateReserveDeficit(address coverageAdmin, uint120 supplyAmount) public {
+  function test_eliminateReserveDeficit_exactDeficit(
+    address coverageAdmin,
+    uint120 supplyAmount
+  ) public {
     _filterAddresses(coverageAdmin);
     (address reserveToken, uint256 currentDeficit) = _createReserveDeficit(
       supplyAmount,
@@ -33,15 +38,61 @@ contract PoolDeficitTests is TestnetProcedures {
     contracts.poolAddressesProvider.setAddress(bytes32('UMBRELLA'), coverageAdmin);
 
     deal(reserveToken, coverageAdmin, currentDeficit + 1);
+    DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
+      reserveToken
+    );
 
     vm.startPrank(coverageAdmin);
+    // +1 to account for imprecision on supply
+    deal(reserveToken, coverageAdmin, currentDeficit + 1);
     IERC20(reserveToken).approve(report.poolProxy, UINT256_MAX);
     contracts.poolProxy.supply(reserveToken, currentDeficit + 1, coverageAdmin, 0);
+    DataTypes.UserConfigurationMap memory userConfigBefore = contracts
+      .poolProxy
+      .getUserConfiguration(coverageAdmin);
+    assertEq(userConfigBefore.isUsingAsCollateral(reserveData.id), true);
 
     // eliminate deficit
     vm.expectEmit(address(contracts.poolProxy));
     emit DeficitCovered(reserveToken, coverageAdmin, currentDeficit);
     contracts.poolProxy.eliminateReserveDeficit(reserveToken, currentDeficit);
+
+    assertEq(contracts.poolProxy.getReserveDeficit(reserveToken), 0);
+  }
+
+  function test_eliminateReserveDeficit_exactUserBalance(
+    address coverageAdmin,
+    uint120 supplyAmount
+  ) public {
+    _filterAddresses(coverageAdmin);
+    (address reserveToken, uint256 currentDeficit) = _createReserveDeficit(
+      supplyAmount,
+      tokenList.usdx
+    );
+
+    vm.prank(poolAdmin);
+    contracts.poolAddressesProvider.setAddress(bytes32('UMBRELLA'), coverageAdmin);
+
+    DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
+      reserveToken
+    );
+
+    vm.startPrank(coverageAdmin);
+    deal(reserveToken, coverageAdmin, currentDeficit);
+    IERC20(reserveToken).approve(report.poolProxy, UINT256_MAX);
+    contracts.poolProxy.supply(reserveToken, currentDeficit / 2, coverageAdmin, 0);
+    DataTypes.UserConfigurationMap memory userConfigBefore = contracts
+      .poolProxy
+      .getUserConfiguration(coverageAdmin);
+    assertEq(userConfigBefore.isUsingAsCollateral(reserveData.id), true);
+
+    uint256 deficitToCover = IERC20(reserveData.aTokenAddress).balanceOf(coverageAdmin);
+    contracts.poolProxy.eliminateReserveDeficit(reserveToken, deficitToCover);
+
+    DataTypes.UserConfigurationMap memory userConfigAfter = contracts
+      .poolProxy
+      .getUserConfiguration(coverageAdmin);
+    assertEq(userConfigAfter.isUsingAsCollateral(reserveData.id), false);
   }
 
   function test_eliminateReserveDeficit_surplus(
@@ -57,16 +108,24 @@ contract PoolDeficitTests is TestnetProcedures {
     vm.prank(poolAdmin);
     contracts.poolAddressesProvider.setAddress(bytes32('UMBRELLA'), coverageAdmin);
 
-    deal(reserveToken, coverageAdmin, currentDeficit + 1);
+    deal(reserveToken, coverageAdmin, currentDeficit + 1000);
 
     vm.startPrank(coverageAdmin);
     IERC20(reserveToken).approve(report.poolProxy, UINT256_MAX);
-    contracts.poolProxy.supply(reserveToken, currentDeficit + 1, coverageAdmin, 0);
+    contracts.poolProxy.supply(reserveToken, currentDeficit + 1000, coverageAdmin, 0);
 
     // eliminate deficit
     vm.expectEmit(address(contracts.poolProxy));
     emit DeficitCovered(reserveToken, coverageAdmin, currentDeficit);
     contracts.poolProxy.eliminateReserveDeficit(reserveToken, currentDeficit + 1000);
+
+    DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
+      reserveToken
+    );
+    DataTypes.UserConfigurationMap memory userConfig = contracts.poolProxy.getUserConfiguration(
+      coverageAdmin
+    );
+    assertEq(userConfig.isUsingAsCollateral(reserveData.id), true);
   }
 
   function test_eliminateReserveDeficit_virtualAccDisabled(
@@ -207,9 +266,11 @@ contract PoolDeficitTests is TestnetProcedures {
   ) internal returns (address, uint256) {
     vm.assume(supplyAmount != 0);
     deal(tokenList.wbtc, alice, supplyAmount);
-    vm.prank(alice);
+    vm.startPrank(alice);
+    IERC20(tokenList.wbtc).approve(address(contracts.poolProxy), supplyAmount);
     contracts.poolProxy.supply(tokenList.wbtc, supplyAmount, alice, 0);
     (, , uint256 availableBorrowsBase, , , ) = contracts.poolProxy.getUserAccountData(alice);
+    vm.stopPrank();
 
     uint256 borrowAmount = (availableBorrowsBase * 10 ** IERC20Detailed(borrowAsset).decimals()) /
       contracts.aaveOracle.getAssetPrice(borrowAsset);

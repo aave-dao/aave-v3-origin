@@ -641,10 +641,6 @@ contract PoolLiquidationTests is TestnetProcedures {
     );
     params.receiveAToken = true;
 
-    (, , address varDebtToken) = contracts.protocolDataProvider.getReserveTokensAddresses(
-      params.debtAsset
-    );
-
     // Liquidate
     vm.prank(alice);
     contracts.poolProxy.liquidationCall(
@@ -680,10 +676,6 @@ contract PoolLiquidationTests is TestnetProcedures {
       40_00
     );
     params.receiveAToken = true;
-
-    (, , address varDebtToken) = contracts.protocolDataProvider.getReserveTokensAddresses(
-      params.debtAsset
-    );
 
     // Liquidate
     vm.prank(alice);
@@ -724,10 +716,6 @@ contract PoolLiquidationTests is TestnetProcedures {
       40_00
     );
     params.receiveAToken = true;
-
-    (, , address varDebtToken) = contracts.protocolDataProvider.getReserveTokensAddresses(
-      params.debtAsset
-    );
 
     // Liquidate
     vm.prank(alice);
@@ -1377,9 +1365,6 @@ contract PoolLiquidationTests is TestnetProcedures {
   ) internal view {
     (address collateralBalance, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(
       params.collateralAsset
-    );
-    (, , address variableDebtToken) = contracts.protocolDataProvider.getReserveTokensAddresses(
-      params.debtAsset
     );
     if (params.receiveAToken) {
       assertEq(
