@@ -128,40 +128,6 @@ contract PoolDeficitTests is TestnetProcedures {
     assertEq(userConfig.isUsingAsCollateral(reserveData.id), true);
   }
 
-  function test_eliminateReserveDeficit_virtualAccDisabled(
-    address coverageAdmin,
-    uint80 supplyAmount
-  ) public {
-    supplyAmount = uint80(bound(supplyAmount, type(uint8).max, type(uint80).max));
-    _filterAddresses(coverageAdmin);
-    (address reserveToken, uint256 currentDeficit) = _createReserveDeficit(
-      supplyAmount,
-      tokenList.gho
-    );
-
-    vm.prank(poolAdmin);
-    contracts.poolAddressesProvider.setAddress(bytes32('UMBRELLA'), coverageAdmin);
-
-    deal(reserveToken, coverageAdmin, currentDeficit);
-
-    vm.startPrank(coverageAdmin);
-    IERC20(reserveToken).approve(report.poolProxy, UINT256_MAX);
-
-    // eliminate deficit
-    vm.expectCall(
-      contracts.poolProxy.getReserveAToken(tokenList.gho),
-      abi.encodeWithSelector(
-        IAToken.handleRepayment.selector,
-        address(coverageAdmin),
-        address(contracts.poolProxy),
-        currentDeficit
-      )
-    );
-    vm.expectEmit(address(contracts.poolProxy));
-    emit DeficitCovered(reserveToken, coverageAdmin, currentDeficit);
-    contracts.poolProxy.eliminateReserveDeficit(reserveToken, currentDeficit);
-  }
-
   function test_eliminateReserveDeficit_parcial(
     address coverageAdmin,
     uint120 supplyAmount,

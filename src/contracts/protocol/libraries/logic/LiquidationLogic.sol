@@ -20,6 +20,10 @@ import {IPriceOracleGetter} from '../../../interfaces/IPriceOracleGetter.sol';
 import {SafeCast} from '../../../dependencies/openzeppelin/contracts/SafeCast.sol';
 import {Errors} from '../helpers/Errors.sol';
 
+interface IGhoVariableDebtToken {
+  function getBalanceFromInterest(address user) external view returns (uint256);
+}
+
 /**
  * @title LiquidationLogic library
  * @author Aave
@@ -462,6 +466,33 @@ library LiquidationLogic {
 
     uint256 outstandingDebt = userReserveDebt - actualDebtToLiquidate;
     if (hasNoCollateralLeft && outstandingDebt != 0) {
+      /**
+       * Special handling of GHO. Implicitly assuming that virtual acc !active == GHO, which is true.
+       * Scenario 1: The amount of GHO debt being liquidated is greater or equal to the GHO accrued interest.
+       *             In this case, the outer handleRepayment will clear the storage and all additional operations can be skipped.
+       * Scenario 2: The amount of debt being liquidated is lower than the GHO accrued interest.
+       *             In this case handleRepayment will be called with the difference required to clear the storage.
+       *             If we assume a liquidation of n debt, and m accrued interest, the difference is k = m-n.
+       *             Therefore we call handleRepayment(k).
+       *             Additionally, as the dao (GHO issuer) accepts the loss on interest on the bad debt,
+       *             we need to discount k from the deficit (via reducing outstandingDebt).
+       * Note: If a non GHO asset is liquidated and GHO bad debt is created in the process, Scenario 2 applies with n = 0.
+       */
+      if (!debtReserveCache.reserveConfiguration.getIsVirtualAccActive()) {
+        uint256 accruedInterest = IGhoVariableDebtToken(debtReserveCache.variableDebtTokenAddress)
+          .getBalanceFromInterest(user);
+        // handleRepayment() will first discount the protocol fee from an internal `accumulatedDebtInterest` variable
+        // and then burn the excess GHO
+        if (accruedInterest != 0 && accruedInterest > actualDebtToLiquidate) {
+          // in order to clean the `accumulatedDebtInterest` storage the function will need to be called with the accruedInterest
+          // discounted by the actualDebtToLiquidate, as in the main flow `handleRepayment` will be called with actualDebtToLiquidate already
+          uint256 amountToBurn = accruedInterest - actualDebtToLiquidate;
+          // In the case of GHO, all obligations are to the protocol
+          // therefore the protocol assumes the losses on interest and only tracks the pure deficit by discounting the not-collected & burned debt
+          outstandingDebt -= amountToBurn;
+          IAToken(debtReserveCache.aTokenAddress).handleRepayment(msg.sender, user, amountToBurn);
+        }
+      }
       debtReserve.deficit += outstandingDebt.toUint128();
       emit DeficitCreated(user, debtAsset, outstandingDebt);
 
