@@ -15,60 +15,6 @@ permissions:
 
 jobs:
   comment:
-    name: Comment Bot
-    runs-on: ubuntu-latest
-    # workflow run triggeres on all types of "completed" including "cancelled" and similar
-    # we want this action to only run on a success & failure though
-    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.conclusion == 'failure' }}
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: pr_number
-          path: pr/
-          run-id: ${{ github.event.workflow_run.id }}
-          github-token: ${{ github.token }}
-
-      - name: Read pr number
-        id: get_pr_number
-        run: echo "pr_number=$(cat pr/pr_number.txt)" >> $GITHUB_OUTPUT
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: ${{ github.event.workflow_run.head_sha }}
-          path: tmp/
-          run-id: ${{ github.event.workflow_run.id }}
-          github-token: ${{ github.token }}
-
-      - name: Find Comment
-        uses: peter-evans/find-comment@782f37b1a8a2b3e2eb9e86a994f0871e9dc146e3
-        id: fc
-        if: ${{ steps.get_pr_number.outputs.pr_number != null }}
-        with:
-          issue-number: ${{ steps.get_pr_number.outputs.pr_number }}
-          comment-author: "github-actions[bot]"
-          body-includes: Foundry report
-
-      - name: Create or update pr comment
-        uses: peter-evans/create-or-update-comment@48bb05bd5554c378187694936d277d48652922e7
-        if: ${{ steps.get_pr_number.outputs.pr_number != null }}
-        with:
-          comment-id: ${{ steps.fc.outputs.comment-id }}
-          issue-number: ${{ steps.get_pr_number.outputs.pr_number }}
-          body-file: tmp/template.md
-          edit-mode: replace
-
-      - id: get-comment-body
-        if: ${{ steps.get_pr_number.outputs.pr_number == null }}
-        run: |
-          body="$(cat tmp/template.md)"
-          delimiter="$(openssl rand -hex 8)"
-          echo "body<<$delimiter" >> $GITHUB_OUTPUT
-          echo "$body" >> $GITHUB_OUTPUT
-          echo "$delimiter" >> $GITHUB_OUTPUT
-
-      - name: Create or update commit comment
-        uses: peter-evans/commit-comment@ae7c3825ead23dab7a1ad8cd4df9617ab4bf0b37
-        if: ${{ steps.get_pr_number.outputs.pr_number == null }}
-        with:
-          sha: ${{ github.event.workflow_run.head_sha }}
-          body: ${{ steps.get-comment-body.outputs.body }}
+    uses: bgd-labs/github-workflows/.github/workflows/comment.yml@main
+    secrets:
+      READ_ONLY_PAT: ${{ secrets.READ_ONLY_PAT }}

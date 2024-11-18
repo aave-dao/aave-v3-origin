@@ -75,7 +75,6 @@ struct MarketReport {
   address paraSwapLiquiditySwapAdapter;
   address paraSwapRepayAdapter;
   address paraSwapWithdrawSwapAdapter;
-  address aaveParaSwapFeeClaimer;
   address l2Encoder;
   address aToken;
   address variableDebtToken;
@@ -113,7 +112,6 @@ struct MarketConfig {
   string marketId;
   uint8 oracleDecimals;
   address paraswapAugustusRegistry;
-  address paraswapFeeClaimer;
   address l2SequencerUptimeFeed;
   uint256 l2PriceOracleSentinelGracePeriod;
   uint256 providerId;
@@ -186,5 +184,4 @@ struct ParaswapReport {
   address paraSwapLiquiditySwapAdapter;
   address paraSwapRepayAdapter;
   address paraSwapWithdrawSwapAdapter;
-  address aaveParaSwapFeeClaimer;
 }

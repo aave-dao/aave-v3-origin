@@ -76,8 +76,7 @@ library AaveV3BatchOrchestration {
     ParaswapReport memory paraswapReport = _deployParaswapAdapters(
       roles,
       config,
-      initialReport.poolAddressesProvider,
-      peripheryReport.treasury
+      initialReport.poolAddressesProvider
     );
 
     AaveV3GettersBatchTwo.GettersReportBatchTwo memory gettersReport2 = _deployGettersBatch2(
@@ -253,15 +252,13 @@ library AaveV3BatchOrchestration {
   function _deployParaswapAdapters(
     Roles memory roles,
     MarketConfig memory config,
-    address poolAddressesProvider,
-    address treasury
+    address poolAddressesProvider
   ) internal returns (ParaswapReport memory) {
-    if (config.paraswapAugustusRegistry != address(0) && config.paraswapFeeClaimer != address(0)) {
+    if (config.paraswapAugustusRegistry != address(0)) {
       AaveV3ParaswapBatch parawswapBatch = new AaveV3ParaswapBatch(
         roles.poolAdmin,
         config,
-        poolAddressesProvider,
-        treasury
+        poolAddressesProvider
       );
       return parawswapBatch.getParaswapReport();
     }
@@ -270,8 +267,7 @@ library AaveV3BatchOrchestration {
       ParaswapReport({
         paraSwapLiquiditySwapAdapter: address(0),
         paraSwapRepayAdapter: address(0),
-        paraSwapWithdrawSwapAdapter: address(0),
-        aaveParaSwapFeeClaimer: address(0)
+        paraSwapWithdrawSwapAdapter: address(0)
       });
   }
 
@@ -314,7 +310,6 @@ library AaveV3BatchOrchestration {
     report.paraSwapLiquiditySwapAdapter = paraswapReport.paraSwapLiquiditySwapAdapter;
     report.paraSwapRepayAdapter = paraswapReport.paraSwapRepayAdapter;
     report.paraSwapWithdrawSwapAdapter = paraswapReport.paraSwapWithdrawSwapAdapter;
-    report.aaveParaSwapFeeClaimer = paraswapReport.aaveParaSwapFeeClaimer;
     report.treasuryImplementation = peripheryReport.treasuryImplementation;
     report.proxyAdmin = peripheryReport.proxyAdmin;
     report.treasury = peripheryReport.treasury;

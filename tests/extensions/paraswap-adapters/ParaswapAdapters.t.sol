@@ -4,12 +4,10 @@ pragma solidity ^0.8.0;
 import {ParaSwapLiquiditySwapAdapter, IParaSwapAugustus} from '../../../src/contracts/extensions/paraswap-adapters/ParaSwapLiquiditySwapAdapter.sol';
 import {ParaSwapRepayAdapter, IParaSwapAugustusRegistry} from '../../../src/contracts/extensions/paraswap-adapters/ParaSwapRepayAdapter.sol';
 import {ParaSwapWithdrawSwapAdapter} from '../../../src/contracts/extensions/paraswap-adapters/ParaSwapWithdrawSwapAdapter.sol';
-import {AaveParaSwapFeeClaimer, IERC20} from '../../../src/contracts/extensions/paraswap-adapters/AaveParaSwapFeeClaimer.sol';
 import {BaseParaSwapAdapter} from '../../../src/contracts/extensions/paraswap-adapters/BaseParaSwapAdapter.sol';
 import {IPool, DataTypes} from '../../../src/contracts/interfaces/IPool.sol';
 import {IPoolAddressesProvider} from '../../../src/contracts/interfaces/IPoolAddressesProvider.sol';
 import {MockParaSwapAugustus} from '../../../src/contracts/mocks/swap/MockParaSwapAugustus.sol';
-import {MockParaSwapFeeClaimer} from '../../../src/contracts/mocks/swap/MockParaSwapFeeClaimer.sol';
 import {MockParaSwapAugustusRegistry} from '../../../src/contracts/mocks/swap/MockParaSwapAugustusRegistry.sol';
 import {IERC20Detailed} from '../../../src/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
 import {TestnetERC20} from '../../../src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
@@ -19,11 +17,9 @@ import {TestnetProcedures} from '../../utils/TestnetProcedures.sol';
 contract ParaswapAdaptersTest is TestnetProcedures {
   MockParaSwapAugustus internal mockParaSwapAugustus;
   MockParaSwapAugustusRegistry internal mockAugustusRegistry;
-  MockParaSwapFeeClaimer internal mockParaSwapFeeClaimer;
   ParaSwapLiquiditySwapAdapter internal paraSwapLiquiditySwapAdapter;
   ParaSwapRepayAdapter internal paraSwapRepayAdapter;
   ParaSwapWithdrawSwapAdapter internal paraSwapWithdrawSwapAdapter;
-  AaveParaSwapFeeClaimer internal aaveParaSwapFeeClaimer;
 
   IERC20Detailed internal aWETH;
   IERC20Detailed internal aUSDX;
@@ -52,7 +48,6 @@ contract ParaswapAdaptersTest is TestnetProcedures {
   function setUp() public {
     initTestEnvironment();
     mockParaSwapAugustus = new MockParaSwapAugustus();
-    mockParaSwapFeeClaimer = new MockParaSwapFeeClaimer();
     mockAugustusRegistry = new MockParaSwapAugustusRegistry(address(mockParaSwapAugustus));
     paraSwapLiquiditySwapAdapter = new ParaSwapLiquiditySwapAdapter(
       IPoolAddressesProvider(report.poolAddressesProvider),
@@ -68,10 +63,6 @@ contract ParaswapAdaptersTest is TestnetProcedures {
       IPoolAddressesProvider(report.poolAddressesProvider),
       IParaSwapAugustusRegistry(mockAugustusRegistry),
       carol
-    );
-    aaveParaSwapFeeClaimer = new AaveParaSwapFeeClaimer(
-      address(contracts.treasury),
-      mockParaSwapFeeClaimer
     );
 
     aWETH = IERC20Detailed(contracts.poolProxy.getReserveAToken(tokenList.weth));
@@ -938,79 +929,5 @@ contract ParaswapAdaptersTest is TestnetProcedures {
     paraSwapRepayAdapter.rescueTokens(IERC20Detailed(tokenList.usdx));
 
     assertEq(usdx.balanceOf(carol), balanceBefore + 100e6);
-  }
-
-  // AaveParaswapFeeClaimer Tests
-  function test_getters() public view {
-    assertEq(address(aaveParaSwapFeeClaimer.paraswapFeeClaimer()), address(mockParaSwapFeeClaimer));
-    assertEq(aaveParaSwapFeeClaimer.aaveCollector(), report.treasury);
-  }
-
-  function test_getClaimable() public {
-    mockParaSwapFeeClaimer.registerFee(
-      address(aaveParaSwapFeeClaimer),
-      IERC20(tokenList.weth),
-      1 ether
-    );
-
-    uint256 claimableWETH = aaveParaSwapFeeClaimer.getClaimable(tokenList.weth);
-    uint256 claimableUSDX = aaveParaSwapFeeClaimer.getClaimable(tokenList.usdx);
-    assertEq(claimableWETH, 1 ether);
-    assertEq(claimableUSDX, 0);
-  }
-
-  function test_batchGetClaimable() public {
-    mockParaSwapFeeClaimer.registerFee(
-      address(aaveParaSwapFeeClaimer),
-      IERC20(tokenList.weth),
-      1 ether
-    );
-
-    address[] memory assets = new address[](2);
-    assets[0] = tokenList.weth;
-    assets[1] = tokenList.usdx;
-    uint256[] memory amounts = aaveParaSwapFeeClaimer.batchGetClaimable(assets);
-    assertEq(amounts[0], 1 ether);
-    assertEq(amounts[1], 0);
-  }
-
-  function test_claimToCollector() public {
-    vm.prank(poolAdmin);
-    TestnetERC20(tokenList.wbtc).transferOwnership(address(mockParaSwapFeeClaimer));
-    mockParaSwapFeeClaimer.registerFee(
-      address(aaveParaSwapFeeClaimer),
-      IERC20(tokenList.wbtc),
-      1 ether
-    );
-    uint256 balanceBefore = IERC20(tokenList.wbtc).balanceOf(address(contracts.treasury));
-    uint256 claimableBefore = aaveParaSwapFeeClaimer.getClaimable(tokenList.wbtc);
-    assertGt(claimableBefore, 0);
-    aaveParaSwapFeeClaimer.claimToCollector(IERC20(tokenList.wbtc));
-    assertEq(
-      IERC20(tokenList.wbtc).balanceOf(address(contracts.treasury)),
-      balanceBefore + claimableBefore
-    );
-    uint256 claimableAfter = aaveParaSwapFeeClaimer.getClaimable(tokenList.wbtc);
-    assertEq(claimableAfter, 0);
-  }
-
-  function test_batchClaimToCollector() public {
-    vm.prank(poolAdmin);
-    TestnetERC20(tokenList.wbtc).transferOwnership(address(mockParaSwapFeeClaimer));
-    mockParaSwapFeeClaimer.registerFee(
-      address(aaveParaSwapFeeClaimer),
-      IERC20(tokenList.wbtc),
-      1 ether
-    );
-    uint256 balanceBefore = IERC20(tokenList.wbtc).balanceOf(address(contracts.treasury));
-    uint256 claimableBefore = aaveParaSwapFeeClaimer.getClaimable(tokenList.wbtc);
-    assertGt(claimableBefore, 0);
-    address[] memory assets = new address[](1);
-    assets[0] = tokenList.wbtc;
-    aaveParaSwapFeeClaimer.batchClaimToCollector(assets);
-    assertEq(
-      IERC20(tokenList.wbtc).balanceOf(address(contracts.treasury)),
-      balanceBefore + claimableBefore
-    );
   }
 }

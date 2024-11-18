@@ -24,8 +24,8 @@ cp .env.example .env
 
 forge install
 
-# optional, to install prettier
-bun install
+# required for tests & linting
+npm install
 ```
 
 <br>
