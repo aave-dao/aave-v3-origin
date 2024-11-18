@@ -2,7 +2,7 @@
 pragma solidity ^0.8.10;
 
 import {IERC20Metadata} from 'solidity-utils/contracts/oz-common/interfaces/IERC20Metadata.sol';
-import {ITransparentProxyFactory} from 'solidity-utils/contracts/transparent-proxy/interfaces/ITransparentProxyFactory.sol';
+import {ITransparentProxyFactory, ProxyAdmin} from 'solidity-utils/contracts/transparent-proxy/interfaces/ITransparentProxyFactory.sol';
 import {Initializable} from 'solidity-utils/contracts/transparent-proxy/Initializable.sol';
 import {IPool, DataTypes} from '../../../contracts/interfaces/IPool.sol';
 import {StataTokenV2} from './StataTokenV2.sol';
@@ -56,12 +56,12 @@ contract StataTokenFactory is Initializable, IStataTokenFactory {
         );
         address stataToken = TRANSPARENT_PROXY_FACTORY.createDeterministic(
           STATA_TOKEN_IMPL,
-          PROXY_ADMIN,
+          ProxyAdmin(PROXY_ADMIN),
           abi.encodeWithSelector(
             StataTokenV2.initialize.selector,
             reserveData.aTokenAddress,
             string(
-              abi.encodePacked('Static ', IERC20Metadata(reserveData.aTokenAddress).name(), ' v2')
+              abi.encodePacked('Stata ', IERC20Metadata(reserveData.aTokenAddress).name(), ' v2')
             ),
             string(symbol)
           ),
