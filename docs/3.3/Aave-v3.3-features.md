@@ -17,11 +17,17 @@ If an account ends up with zero collateral and non-zero debt, any remaining debt
 In terms of implementation, the feature checks whether the liquidation will result in a bad debt situation by comparing whether the total borrower’s collateral equals the collateral liquidated in the base currency.
 If the total borrower’s debt exceeds the debt repaid in base currency, the variable debt tokens of the borrower are burned, and it is accounted to the respective reserve as a deficit.
 
-The vGHO token, opposed to the usual variable debt token, maintains a custom storage per user debt, to track the amount of debt that on repayment will be redirected to the treasury.
-When calling `GHO.handleRepay(amount)` the fee to the treasury will be discounted from amount and the rest will be burned.
-In the case of bad debt burning the vGHO token will be burned, but no corresponding GHO will be repayed just yet.
-Therefore this would leave users with zero balance, but a pending accrued fee storage.
-To solve that situation, the protocol will burn it's claims on accrued GHO-interest when burning bad debt by resetting the accrued fee storage to zero.
+Conceptually the bad debt cleanup is seen as step **after** the actual liquidation.
+In the special case of vGHO, the liquidation process is split into two steps:
+1. vGHO.burn, burning the variable debt token.
+2. `aGHO.handleRepayment(address user, address onBehalfOf, uint256 amount)` which will first discount the fee from the amount as this is the part that belongs to the treasury and then burn the remaining GHO.
+
+When a deficit is created in GHO, there is the possibility that the no fee or only part of the fee is repaid to the treasury, but in any case, all corresponding vGHO is burned.
+This would leave the protocol in an inconsistent state as the user would have stale accrued fee storage, but no more debt so the accrued fee will likely never be redirected to the treasury.
+Therefore in order to maintain proper accounting and not leave users with stale fee storage on the vGHO token, the protocol will reset the accrued fee storage on the vGHO token when burning bad debt and discount the created deficit accordingly.
+In practice, this means the protocol will burn the claims / accept the loss on the accrued fee when burning bad debt.
+It is important to note, that this only applies to the **bad debt** part of the liquidation.
+If GHO is the liquidated asset, it is possible that part of the fee or even the full fee is repaid to the treasury.
 
 The new `deficit` data is introduced to the `ReserveData` struct by re-utilizing the deprecated stableBorrowRate (`__deprecatedStableBorrowRate`) storage, and can be fetched via the new `getReserveDeficit` function in the Pool contract.
 

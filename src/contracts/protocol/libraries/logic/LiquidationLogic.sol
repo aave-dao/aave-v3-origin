@@ -464,7 +464,7 @@ library LiquidationLogic {
        *             Therefore we call handleRepayment(k).
        *             Additionally, as the dao (GHO issuer) accepts the loss on interest on the bad debt,
        *             we need to discount k from the deficit (via reducing outstandingDebt).
-       *             Note: If a non GHO asset is liquidated and GHO bad debt is created in the process, Scenario 2 applies with n = 0.
+       * Note: If a non GHO asset is liquidated and GHO bad debt is created in the process, Scenario 2 applies with n = 0.
        */
       if (!debtReserveCache.reserveConfiguration.getIsVirtualAccActive()) {
         uint256 accruedInterest = IGhoVariableDebtToken(debtReserveCache.variableDebtTokenAddress)
