@@ -19,6 +19,7 @@ If the total borrower’s debt exceeds the debt repaid in base currency, the var
 
 Conceptually the bad debt cleanup is seen as step **after** the actual liquidation.
 In the special case of vGHO, the liquidation process is split into two steps:
+
 1. vGHO.burn, burning the variable debt token.
 2. `aGHO.handleRepayment(address user, address onBehalfOf, uint256 amount)` which will first discount the fee from the amount as this is the part that belongs to the treasury and then burn the remaining GHO.
 
