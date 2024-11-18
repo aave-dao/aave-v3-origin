@@ -40,6 +40,9 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
 
   IPoolAddressesProvider public immutable ADDRESSES_PROVIDER;
 
+  // @notice The name used to fetch the UMBRELLA contract
+  bytes32 public constant UMBRELLA = 'UMBRELLA';
+
   /**
    * @dev Only pool configurator can call functions marked by this modifier.
    */
@@ -68,10 +71,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
    * @dev Only the umbrella contract can call functions marked by this modifier.
    */
   modifier onlyUmbrella() {
-    require(
-      ADDRESSES_PROVIDER.getAddress(bytes32('UMBRELLA')) == msg.sender,
-      Errors.CALLER_NOT_UMBRELLA
-    );
+    require(ADDRESSES_PROVIDER.getAddress(UMBRELLA) == msg.sender, Errors.CALLER_NOT_UMBRELLA);
     _;
   }
 

@@ -804,7 +804,9 @@ interface IPool {
   function deposit(address asset, uint256 amount, address onBehalfOf, uint16 referralCode) external;
 
   /**
-   * @notice It Covers the deficit of a specified reserve by burning the equivalent aToken `amount`.
+   * @notice It Covers the deficit of a specified reserve by burning:
+   * - the equivalent aToken `amount` for assets with virtual accounting enabled
+   * - the equivalent `amount` of underlying for assets with virtual accounting disabled (e.g. GHO)
    * @dev The deficit of a reserve can occur due to situations where borrowed assets are not repaid, leading to bad debt.
    * @param asset The address of the underlying asset to cover the dificit.
    * @param amount The amount to be covered, in aToken or underlying on non-virtual accounted assets
