@@ -401,7 +401,14 @@ library LiquidationLogic {
       vars.actualCollateralToLiquidate
     );
 
-    if (liquidatorPreviousATokenBalance == 0) {
+    if (
+      liquidatorPreviousATokenBalance == 0 ||
+      // For the special case of msg.sender == params.user (self-liquidation) the liquidatorPreviousATokenBalance
+      // will not yet be 0, but the liquidation will result in collateral being fully liquidated and then resupplied.
+      (msg.sender == params.user &&
+        vars.actualCollateralToLiquidate + vars.liquidationProtocolFeeAmount ==
+        vars.userCollateralBalance)
+    ) {
       DataTypes.UserConfigurationMap storage liquidatorConfig = usersConfig[msg.sender];
       if (
         ValidationLogic.validateAutomaticUseAsCollateral(
