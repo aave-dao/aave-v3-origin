@@ -9,9 +9,9 @@ diff -ruN src/core/instances/ATokenInstance.sol src/core/instances/ATokenInstanc
 --- src/contracts/instances/ATokenInstance.sol	2024-09-05 19:01:54
 +++ src/contracts/instances/ATokenInstance.sol	2024-09-05 11:33:23
 @@ -35,15 +35,15 @@
- 
+
      _domainSeparator = _calculateDomainSeparator();
- 
+
 -    emit Initialized(
 -      underlyingAsset,
 -      address(POOL),
@@ -34,12 +34,12 @@ diff -ruN src/core/instances/ATokenInstance.sol src/core/instances/ATokenInstanc
 +    // );
    }
  }
-diff -ruN src/periphery/contracts/static-a-token/ERC20AaveLMUpgradeable.sol src/periphery/contracts/static-a-token/ERC20AaveLMUpgradeable.sol
---- src/contracts/extensions/static-a-token/ERC20AaveLMUpgradeable.sol	2024-09-05 19:01:54
-+++ src/contracts/extensions/static-a-token/ERC20AaveLMUpgradeable.sol	2024-09-05 13:48:31
+diff -ruN src/periphery/contracts/static-a-token/ERC20AaveLMUpgradeable.sol src/periphery/contracts/stata-token/ERC20AaveLMUpgradeable.sol
+--- src/contracts/extensions/stata-token/ERC20AaveLMUpgradeable.sol	2024-09-05 19:01:54
++++ src/contracts/extensions/stata-token/ERC20AaveLMUpgradeable.sol	2024-09-05 13:48:31
 @@ -147,7 +147,7 @@
    }
- 
+
    ///@inheritdoc IERC20AaveLM
 -  function rewardTokens() external view returns (address[] memory) {
 +  function rewardTokens() public view returns (address[] memory) {

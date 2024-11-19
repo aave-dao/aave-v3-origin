@@ -1,7 +1,7 @@
 # stataToken - Static aToken vault/wrapper
 
 <p align="center">
-<img src="../../../../resources/static-a-token-wrapping.jpeg" width="300">
+<img src="../../../../resources/stata-token-wrapping.jpeg" width="300">
 </p>
 
 ## About
