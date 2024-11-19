@@ -44,8 +44,6 @@ contract StataTokenV2RescuableTest is BaseTest {
     _fundAToken(donation, address(stataTokenV2));
     _fund4626(stake, address(this));
 
-    address treasury = IAToken(aToken).RESERVE_TREASURY_ADDRESS();
-
     vm.expectEmit(true, true, true, true);
     emit ERC20Rescued(poolAdmin, aToken, address(this), donation);
     vm.startPrank(poolAdmin);

@@ -16,9 +16,16 @@ import {IStataTokenFactory} from './interfaces/IStataTokenFactory.sol';
  * @author BGD labs
  */
 contract StataTokenFactory is Initializable, IStataTokenFactory {
+  ///@inheritdoc IStataTokenFactory
   IPool public immutable POOL;
+
+  ///@inheritdoc IStataTokenFactory
   address public immutable PROXY_ADMIN;
+
+  ///@inheritdoc IStataTokenFactory
   ITransparentProxyFactory public immutable TRANSPARENT_PROXY_FACTORY;
+
+  ///@inheritdoc IStataTokenFactory
   address public immutable STATA_TOKEN_IMPL;
 
   mapping(address => address) internal _underlyingToStataToken;
