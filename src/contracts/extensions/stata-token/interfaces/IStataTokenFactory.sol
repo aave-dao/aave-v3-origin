@@ -1,8 +1,35 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
+import {ITransparentProxyFactory} from 'solidity-utils/contracts/transparent-proxy/interfaces/ITransparentProxyFactory.sol';
+import {IPool, IPoolAddressesProvider} from '../../../interfaces/IPool.sol';
+
 interface IStataTokenFactory {
   error NotListedUnderlying(address underlying);
+
+  /**
+   * @notice The pool associated with the factory.
+   * @return The pool address.
+   */
+  function POOL() external view returns (IPool);
+
+  /**
+   * @notice The proxy admin used for all tokens created via the factory.
+   * @return The proxy admin address.
+   */
+  function PROXY_ADMIN() external view returns (address);
+
+  /**
+   * @notice The proxy factory used for all tokens created via the stata factory.
+   * @return The proxy factory address.
+   */
+  function TRANSPARENT_PROXY_FACTORY() external view returns (ITransparentProxyFactory);
+
+  /**
+   * @notice The stata implementation used for all tokens created via the factory.
+   * @return The implementation address.
+   */
+  function STATA_TOKEN_IMPL() external view returns (address);
 
   /**
    * @notice Creates new StataTokens

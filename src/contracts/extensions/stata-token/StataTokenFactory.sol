@@ -2,7 +2,7 @@
 pragma solidity ^0.8.10;
 
 import {IERC20Metadata} from 'solidity-utils/contracts/oz-common/interfaces/IERC20Metadata.sol';
-import {ITransparentProxyFactory} from 'solidity-utils/contracts/transparent-proxy/interfaces/ITransparentProxyFactory.sol';
+import {ITransparentProxyFactory, ProxyAdmin} from 'solidity-utils/contracts/transparent-proxy/interfaces/ITransparentProxyFactory.sol';
 import {Initializable} from 'solidity-utils/contracts/transparent-proxy/Initializable.sol';
 import {IPool, DataTypes} from '../../../contracts/interfaces/IPool.sol';
 import {StataTokenV2} from './StataTokenV2.sol';
@@ -16,9 +16,16 @@ import {IStataTokenFactory} from './interfaces/IStataTokenFactory.sol';
  * @author BGD labs
  */
 contract StataTokenFactory is Initializable, IStataTokenFactory {
+  ///@inheritdoc IStataTokenFactory
   IPool public immutable POOL;
+
+  ///@inheritdoc IStataTokenFactory
   address public immutable PROXY_ADMIN;
+
+  ///@inheritdoc IStataTokenFactory
   ITransparentProxyFactory public immutable TRANSPARENT_PROXY_FACTORY;
+
+  ///@inheritdoc IStataTokenFactory
   address public immutable STATA_TOKEN_IMPL;
 
   mapping(address => address) internal _underlyingToStataToken;
@@ -48,18 +55,14 @@ contract StataTokenFactory is Initializable, IStataTokenFactory {
       if (cachedStataToken == address(0)) {
         address aTokenAddress = POOL.getReserveAToken(underlyings[i]);
         if (aTokenAddress == address(0)) revert NotListedUnderlying(aTokenAddress);
-        bytes memory symbol = abi.encodePacked(
-          'stat',
-          IERC20Metadata(aTokenAddress).symbol(),
-          'v2'
-        );
+        bytes memory symbol = abi.encodePacked('w', IERC20Metadata(aTokenAddress).symbol());
         address stataToken = TRANSPARENT_PROXY_FACTORY.createDeterministic(
           STATA_TOKEN_IMPL,
-          PROXY_ADMIN,
+          ProxyAdmin(PROXY_ADMIN),
           abi.encodeWithSelector(
             StataTokenV2.initialize.selector,
             aTokenAddress,
-            string(abi.encodePacked('Static ', IERC20Metadata(aTokenAddress).name(), ' v2')),
+            string(abi.encodePacked('Wrapped ', IERC20Metadata(reserveData.aTokenAddress).name())),
             string(symbol)
           ),
           bytes32(uint256(uint160(underlyings[i])))

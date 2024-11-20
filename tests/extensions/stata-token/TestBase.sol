@@ -61,14 +61,6 @@ abstract contract BaseTest is TestnetProcedures {
     vm.warp(block.timestamp + blocks * 12); // assuming a block is around 12seconds
   }
 
-  function testAdmin() public {
-    vm.stopPrank();
-    vm.startPrank(proxyAdmin);
-    assertEq(TransparentUpgradeableProxy(payable(address(stataTokenV2))).admin(), proxyAdmin);
-    assertEq(TransparentUpgradeableProxy(payable(address(factory))).admin(), proxyAdmin);
-    vm.stopPrank();
-  }
-
   function _fundUnderlying(uint256 assets, address receiver) internal {
     deal(underlying, receiver, assets);
   }

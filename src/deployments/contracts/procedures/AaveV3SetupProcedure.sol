@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import '../../interfaces/IMarketReportTypes.sol';
-import {IOwnable} from 'solidity-utils/contracts/transparent-proxy/interfaces/IOwnable.sol';
+import {Ownable} from '../../../contracts/dependencies/openzeppelin/contracts/Ownable.sol';
 import {ACLManager} from '../../../contracts/protocol/configuration/ACLManager.sol';
 import {IPoolConfigurator} from '../../../contracts/interfaces/IPoolConfigurator.sol';
 import {IPoolAddressesProvider} from '../../../contracts/interfaces/IPoolAddressesProvider.sol';
@@ -99,7 +99,7 @@ contract AaveV3SetupProcedure {
         poolAddressesProvider,
         providerId
       );
-      IOwnable(poolAddressesProviderRegistry).transferOwnership(marketOwner);
+      Ownable(poolAddressesProviderRegistry).transferOwnership(marketOwner);
     } else {
       poolAddressesProviderRegistry = providerRegistry;
     }
@@ -137,7 +137,7 @@ contract AaveV3SetupProcedure {
         IRewardsController(report.rewardsControllerProxy).EMISSION_MANAGER()
       );
       emissionManager.setRewardsController(report.rewardsControllerProxy);
-      IOwnable(address(emissionManager)).transferOwnership(input.poolAdmin);
+      Ownable(address(emissionManager)).transferOwnership(input.poolAdmin);
     } else {
       provider.setAddress(controllerId, input.rewardsControllerProxy);
       report.rewardsControllerProxy = provider.getAddress(controllerId);
@@ -199,15 +199,15 @@ contract AaveV3SetupProcedure {
   }
 
   function _transferMarketOwnership(Roles memory roles, InitialReport memory report) internal {
-    address addressesProviderOwner = IOwnable(report.poolAddressesProvider).owner();
-    address marketOwner = IOwnable(report.poolAddressesProviderRegistry).owner();
+    address addressesProviderOwner = Ownable(report.poolAddressesProvider).owner();
+    address marketOwner = Ownable(report.poolAddressesProviderRegistry).owner();
 
     if (addressesProviderOwner == address(this)) {
-      IOwnable(report.poolAddressesProvider).transferOwnership(roles.marketOwner);
+      Ownable(report.poolAddressesProvider).transferOwnership(roles.marketOwner);
     }
 
     if (marketOwner == address(this)) {
-      IOwnable(report.poolAddressesProviderRegistry).transferOwnership(roles.marketOwner);
+      Ownable(report.poolAddressesProviderRegistry).transferOwnership(roles.marketOwner);
     }
   }
 

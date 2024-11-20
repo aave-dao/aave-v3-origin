@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import '../../interfaces/IMarketReportTypes.sol';
-import {ITransparentProxyFactory} from 'solidity-utils/contracts/transparent-proxy/interfaces/ITransparentProxyFactory.sol';
+import {ITransparentProxyFactory, ProxyAdmin} from 'solidity-utils/contracts/transparent-proxy/interfaces/ITransparentProxyFactory.sol';
 import {TransparentProxyFactory} from 'solidity-utils/contracts/transparent-proxy/TransparentProxyFactory.sol';
 import {StataTokenV2} from '../../../contracts/extensions/stata-token/StataTokenV2.sol';
 import {StataTokenFactory} from '../../../contracts/extensions/stata-token/StataTokenFactory.sol';
@@ -33,7 +33,7 @@ contract AaveV3HelpersProcedureTwo is IErrors {
       staticATokenReport.transparentProxyFactory
     ).create(
         staticATokenReport.staticATokenFactoryImplementation,
-        proxyAdmin,
+        ProxyAdmin(proxyAdmin),
         abi.encodeWithSelector(StataTokenFactory.initialize.selector)
       );
 
