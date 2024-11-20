@@ -62,7 +62,7 @@ contract StataTokenFactory is Initializable, IStataTokenFactory {
           abi.encodeWithSelector(
             StataTokenV2.initialize.selector,
             aTokenAddress,
-            string(abi.encodePacked('Wrapped ', IERC20Metadata(reserveData.aTokenAddress).name())),
+            string(abi.encodePacked('Wrapped ', IERC20Metadata(aTokenAddress).name())),
             string(symbol)
           ),
           bytes32(uint256(uint160(underlyings[i])))
