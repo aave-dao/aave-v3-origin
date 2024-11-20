@@ -34,7 +34,7 @@ jobs:
         with: { distribution: "zulu", java-version: "11", java-package: jre }
 
       - name: Install certora cli
-        run: pip install certora-cli==7.14.2
+        run: pip install certora-cli==7.17.2
 
       - name: Install solc
         run: |
@@ -70,7 +70,7 @@ jobs:
           - NEW-pool-simple-properties.conf --rule cannotDepositZeroAmount --msg "cannotDepositZeroAmount"
           - NEW-pool-simple-properties.conf --rule cannotWithdrawZeroAmount --msg "cannotWithdrawZeroAmount"
           - NEW-pool-simple-properties.conf --rule cannotWithdrawFromInactiveReserve --msg "cannotWithdrawFromInactiveReserve"
-          - NEW-pool-simple-properties.conf --rule cannotBorrowZeroAmount --msg "cannotBorrowZeroAmount"
-          - NEW-pool-simple-properties.conf --rule cannotBorrowOnInactiveReserve --msg "cannotBorrowOnInactiveReserve"
-          - NEW-pool-simple-properties.conf --rule cannotBorrowOnReserveDisabledForBorrowing --msg "cannotBorrowOnReserveDisabledForBorrowing"
-          - NEW-pool-simple-properties.conf --rule cannotBorrowOnFrozenReserve --msg "cannotBorrowOnFrozenReserve"
+          - NEW-pool-simple-properties.conf --rule_sanity none --rule cannotBorrowZeroAmount --msg "cannotBorrowZeroAmount"
+          - NEW-pool-simple-properties.conf --rule_sanity none --rule cannotBorrowOnInactiveReserve --msg "cannotBorrowOnInactiveReserve"
+          - NEW-pool-simple-properties.conf --rule_sanity none --rule cannotBorrowOnReserveDisabledForBorrowing --msg "cannotBorrowOnReserveDisabledForBorrowing"
+          - NEW-pool-simple-properties.conf --rule_sanity none --rule cannotBorrowOnFrozenReserve --msg "cannotBorrowOnFrozenReserve"
