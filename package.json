@@ -23,6 +23,6 @@
   },
   "dependencies": {
     "@bgd-labs/aave-cli": "^1.1.12",
-    "catapulta-verify": "^1.1.1"
+    "catapulta-verify": "^1.2.1"
   }
 }
