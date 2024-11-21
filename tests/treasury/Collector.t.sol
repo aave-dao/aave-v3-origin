@@ -10,13 +10,13 @@ import {Collector} from 'src/contracts/treasury/Collector.sol';
 contract CollectorTest is Test {
   Collector public collector;
 
-  IERC20 public constant AAVE = IERC20(0xD6DF932A45C0f255f85145f286eA0b292B21C90B);
+  IERC20 public constant AAVE = IERC20(0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9);
 
-  // https://polygonscan.com/address/0xDf7d0e6454DB638881302729F5ba99936EaAB233
-  address public constant EXECUTOR_LVL_1 = 0xDf7d0e6454DB638881302729F5ba99936EaAB233;
+  // https://etherscan.com/address/0x5300A1a15135EA4dc7aD5a167152C01EFc9b192A
+  address public constant EXECUTOR_LVL_1 = 0x5300A1a15135EA4dc7aD5a167152C01EFc9b192A;
 
-  // https://polygonscan.com/address/0xa72636CbcAa8F5FF95B2cc47F3CDEe83F3294a0B
-  address public constant ACL_MANAGER = 0xa72636CbcAa8F5FF95B2cc47F3CDEe83F3294a0B;
+  // https://etherscan.com/address/0xc2aaCf6553D20d1e9d78E365AAba8032af9c85b0
+  address public constant ACL_MANAGER = 0xc2aaCf6553D20d1e9d78E365AAba8032af9c85b0;
   address public constant RECIPIENT_STREAM_1 = 0xd3B5A38aBd16e2636F1e94D1ddF0Ffb4161D5f10;
 
   address public FUNDS_ADMIN;
@@ -65,7 +65,7 @@ contract CollectorTest is Test {
   error Withdraw_WrongEcoReserveBalanceStream(uint256 current, uint256 expected);
 
   function setUp() public {
-    vm.createSelectFork(vm.rpcUrl('polygon'));
+    vm.createSelectFork(vm.rpcUrl('mainnet'));
 
     collector = new Collector();
     collector.initialize(ACL_MANAGER, 100000);
