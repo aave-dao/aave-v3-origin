@@ -43,6 +43,7 @@ library LiquidationLogic {
   event ReserveUsedAsCollateralEnabled(address indexed reserve, address indexed user);
   event ReserveUsedAsCollateralDisabled(address indexed reserve, address indexed user);
   event DeficitCreated(address indexed user, address indexed debtAsset, uint256 amount);
+  event DeficitCovered(address indexed reserve, address caller, uint256 amountDecreased);
   event LiquidationCall(
     address indexed collateralAsset,
     address indexed debtAsset,
@@ -80,6 +81,90 @@ library LiquidationLogic {
    * This mechanic was introduced to ensure liquidators don't optimize gas by leaving some wei on the liquidation.
    */
   uint256 public constant MIN_LEFTOVER_BASE = MIN_BASE_MAX_CLOSE_FACTOR_THRESHOLD / 2;
+
+  /**
+   * @notice Reduces a portion or all of the deficit of a specified reserve by burning:
+   * - the equivalent aToken `amount` for assets with virtual accounting enabled
+   * - the equivalent `amount` of underlying for assets with virtual accounting disabled (e.g. GHO)
+   * The caller of this method MUST always be the Umbrella contract and the Umbrella contract is assumed to never have debt.
+   * @dev Emits the `DeficitCovered() event`.
+   * @dev If the coverage admin covers its entire balance, `ReserveUsedAsCollateralDisabled()` is emitted.
+   * @param reservesData The state of all the reserves
+   * @param userConfig The user configuration mapping that tracks the supplied/borrowed assets
+   * @param params The additional parameters needed to execute the eliminateDeficit function
+   */
+  function executeEliminateDeficit(
+    mapping(address => DataTypes.ReserveData) storage reservesData,
+    DataTypes.UserConfigurationMap storage userConfig,
+    DataTypes.ExecuteEliminateDeficitParams memory params
+  ) external {
+    require(params.amount != 0, Errors.INVALID_AMOUNT);
+
+    DataTypes.ReserveData storage reserve = reservesData[params.asset];
+    uint256 currentDeficit = reserve.deficit;
+
+    require(currentDeficit != 0, Errors.RESERVE_NOT_IN_DEFICIT);
+    require(!userConfig.isBorrowingAny(), Errors.USER_CANNOT_HAVE_DEBT);
+
+    DataTypes.ReserveCache memory reserveCache = reserve.cache();
+    reserve.updateState(reserveCache);
+    bool isActive = reserveCache.reserveConfiguration.getActive();
+    require(isActive, Errors.RESERVE_INACTIVE);
+
+    uint256 balanceWriteOff = params.amount;
+
+    if (params.amount > currentDeficit) {
+      balanceWriteOff = currentDeficit;
+    }
+
+    uint256 userBalance = reserveCache.reserveConfiguration.getIsVirtualAccActive()
+      ? IAToken(reserveCache.aTokenAddress).scaledBalanceOf(msg.sender).rayMul(
+        reserveCache.nextLiquidityIndex
+      )
+      : IERC20(params.asset).balanceOf(msg.sender);
+    require(balanceWriteOff <= userBalance, Errors.NOT_ENOUGH_AVAILABLE_USER_BALANCE);
+
+    // update ir due to updateState
+    reserve.updateInterestRatesAndVirtualBalance(reserveCache, params.asset, 0, 0);
+
+    if (reserveCache.reserveConfiguration.getIsVirtualAccActive()) {
+      // assets without virtual accounting can never be a collateral
+      bool isCollateral = userConfig.isUsingAsCollateral(reserve.id);
+      if (isCollateral && balanceWriteOff == userBalance) {
+        userConfig.setUsingAsCollateral(reserve.id, false);
+        emit ReserveUsedAsCollateralDisabled(params.asset, msg.sender);
+      }
+
+      IAToken(reserveCache.aTokenAddress).burn(
+        msg.sender,
+        reserveCache.aTokenAddress,
+        balanceWriteOff,
+        reserveCache.nextLiquidityIndex
+      );
+    } else {
+      // This is a special case to allow mintable assets (ex. GHO), which by definition cannot be supplied
+      // and thus do not use virtual underlying balances.
+      // In that case, the procedure is 1) sending the underlying asset to the aToken and
+      // 2) trigger the handleRepayment() for the aToken to dispose of those assets
+      IERC20(params.asset).safeTransferFrom(
+        msg.sender,
+        reserveCache.aTokenAddress,
+        balanceWriteOff
+      );
+      // it is assumed that handleRepayment does not touch the variable debt balance
+      IAToken(reserveCache.aTokenAddress).handleRepayment(
+        msg.sender,
+        // In the context of GHO it's only relevant that the address has no debt.
+        // Passing the pool is fitting as it's handeling the repayment on behalf of the protocol.
+        address(this),
+        balanceWriteOff
+      );
+    }
+
+    reserve.deficit -= balanceWriteOff.toUint128();
+
+    emit DeficitCovered(params.asset, msg.sender, balanceWriteOff);
+  }
 
   struct LiquidationCallLocalVars {
     uint256 userCollateralBalance;
