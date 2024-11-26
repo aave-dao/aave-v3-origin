@@ -795,7 +795,9 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
   }
 
   /// @inheritdoc IPool
-  function getLiquidationGracePeriod(address asset) external virtual override returns (uint40) {
+  function getLiquidationGracePeriod(
+    address asset
+  ) external view virtual override returns (uint40) {
     return _reserves[asset].liquidationGracePeriodUntil;
   }
 
