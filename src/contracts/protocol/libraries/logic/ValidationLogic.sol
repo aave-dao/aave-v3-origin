@@ -24,7 +24,7 @@ import {SafeCast} from '../../../dependencies/openzeppelin/contracts/SafeCast.so
 import {IncentivizedERC20} from '../../tokenization/base/IncentivizedERC20.sol';
 
 /**
- * @title ReserveLogic library
+ * @title ValidationLogic library
  * @author Aave
  * @notice Implements functions to validate the different actions of the protocol
  */
