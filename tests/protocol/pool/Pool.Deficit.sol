@@ -285,5 +285,8 @@ contract PoolDeficitTests is TestnetProcedures {
     vm.assume(user != tokenList.wbtc);
     vm.assume(user != tokenList.weth);
     vm.assume(user != 0xcF63D4456FCF098EF4012F6dbd2FA3a30f122D43);
+    vm.assume(user != contracts.poolProxy.getReserveAToken(tokenList.usdx));
+    vm.assume(user != contracts.poolProxy.getReserveAToken(tokenList.wbtc));
+    vm.assume(user != contracts.poolProxy.getReserveAToken(tokenList.weth));
   }
 }
