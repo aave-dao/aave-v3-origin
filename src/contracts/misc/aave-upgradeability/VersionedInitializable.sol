@@ -73,5 +73,5 @@ abstract contract VersionedInitializable {
   }
 
   // Reserved storage space to allow for layout changes in the future.
-  uint256[50] private ______gap;
+  uint256[49] private ______gap;
 }
