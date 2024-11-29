@@ -2,8 +2,8 @@
   "name": "aave-v3-origin",
   "version": "1.0.0",
   "scripts": {
-    "lint": "prettier .",
-    "lint:fix": "bun run lint -- --write"
+    "lint": "prettier . --check",
+    "lint:fix": "prettier . --write"
   },
   "repository": {
     "type": "git",
@@ -22,7 +22,7 @@
     "prettier-plugin-solidity": "^1.1.1"
   },
   "dependencies": {
-    "@bgd-labs/aave-cli": "^1.0.0",
-    "catapulta-verify": "^1.1.1"
+    "@bgd-labs/aave-cli": "^1.1.12",
+    "catapulta-verify": "^1.2.1"
   }
 }

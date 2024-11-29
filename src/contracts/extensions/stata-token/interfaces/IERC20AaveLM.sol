@@ -3,8 +3,8 @@ pragma solidity ^0.8.10;
 
 interface IERC20AaveLM {
   struct UserRewardsData {
-    uint128 rewardsIndexOnLastInteraction; // (in RAYs)
-    uint128 unclaimedRewards; // (in RAYs)
+    uint128 rewardsIndexOnLastInteraction;
+    uint128 unclaimedRewards;
   }
 
   struct RewardIndexCache {
@@ -12,6 +12,7 @@ interface IERC20AaveLM {
     uint248 lastUpdatedIndex;
   }
 
+  error ZeroIncentivesControllerIsForbidden();
   error InvalidClaimer(address claimer);
   error RewardNotInitialized(address reward);
 
@@ -58,18 +59,18 @@ interface IERC20AaveLM {
   function getTotalClaimableRewards(address reward) external view returns (uint256);
 
   /**
-   * @notice Get the total claimable rewards for a user in WAD
+   * @notice Get the total claimable rewards for a user in asset decimals
    * @param user The address of the user
    * @param reward The reward to claim
-   * @return uint256 The claimable amount of rewards in WAD
+   * @return uint256 The claimable amount of rewards in asset decimals
    */
   function getClaimableRewards(address user, address reward) external view returns (uint256);
 
   /**
-   * @notice The unclaimed rewards for a user in WAD
+   * @notice The unclaimed rewards for a user in asset decimals
    * @param user The address of the user
    * @param reward The reward to claim
-   * @return uint256 The unclaimed amount of rewards in WAD
+   * @return uint256 The unclaimed amount of rewards in asset decimals
    */
   function getUnclaimedRewards(address user, address reward) external view returns (uint256);
 

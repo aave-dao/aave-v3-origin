@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
+import {IPool, IPoolAddressesProvider} from '../../../interfaces/IPool.sol';
+
 interface IERC4626StataToken {
   struct SignatureParams {
     uint8 v;
@@ -13,6 +15,18 @@ interface IERC4626StataToken {
   error StaticATokenInvalidZeroShares();
 
   error OnlyPauseGuardian(address caller);
+
+  /**
+   * @notice The pool associated with the aToken.
+   * @return The pool address.
+   */
+  function POOL() external view returns (IPool);
+
+  /**
+   * @notice The poolAddressesProvider associated with the pool.
+   * @return The poolAddressesProvider address.
+   */
+  function POOL_ADDRESSES_PROVIDER() external view returns (IPoolAddressesProvider);
 
   /**
    * @notice Burns `shares` of static aToken, with receiver receiving the corresponding amount of aToken

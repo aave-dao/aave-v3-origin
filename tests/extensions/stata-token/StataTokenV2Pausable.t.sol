@@ -3,7 +3,7 @@ pragma solidity ^0.8.10;
 
 import {PausableUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/utils/PausableUpgradeable.sol';
 import {IERC20Metadata, IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
-import {IERC4626StataToken} from '../../../src/contracts/extensions/static-a-token/interfaces/IERC4626StataToken.sol';
+import {IERC4626StataToken} from '../../../src/contracts/extensions/stata-token/interfaces/IERC4626StataToken.sol';
 import {BaseTest} from './TestBase.sol';
 
 contract StataTokenV2PausableTest is BaseTest {

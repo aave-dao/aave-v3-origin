@@ -5,10 +5,9 @@ import {AaveV3TreasuryProcedure} from '../../../contracts/procedures/AaveV3Treas
 import {AaveV3OracleProcedure} from '../../../contracts/procedures/AaveV3OracleProcedure.sol';
 import {AaveV3IncentiveProcedure} from '../../../contracts/procedures/AaveV3IncentiveProcedure.sol';
 import {AaveV3DefaultRateStrategyProcedure} from '../../../contracts/procedures/AaveV3DefaultRateStrategyProcedure.sol';
-import {IOwnable} from 'solidity-utils/contracts/transparent-proxy/interfaces/IOwnable.sol';
+import {Ownable} from '../../../../contracts/dependencies/openzeppelin/contracts/Ownable.sol';
 import '../../../interfaces/IMarketReportTypes.sol';
 import {IRewardsController} from '../../../../contracts/rewards/interfaces/IRewardsController.sol';
-import {IOwnable} from 'solidity-utils/contracts/transparent-proxy/interfaces/IOwnable.sol';
 import {RevenueSplitter} from '../../../../contracts/treasury/RevenueSplitter.sol';
 
 contract AaveV3PeripheryBatch is
@@ -25,8 +24,7 @@ contract AaveV3PeripheryBatch is
     address setupBatch
   ) {
     if (config.proxyAdmin == address(0)) {
-      _report.proxyAdmin = address(new ProxyAdmin{salt: config.salt}());
-      IOwnable(_report.proxyAdmin).transferOwnership(poolAdmin);
+      _report.proxyAdmin = address(new ProxyAdmin{salt: config.salt}(poolAdmin));
     } else {
       _report.proxyAdmin = config.proxyAdmin;
     }

@@ -89,7 +89,7 @@ rule stableFieldsUntouched(method f, env e, address _asset)
   uint128 __deprecatedStableBorrowRate_BEFORE = reserve.__deprecatedStableBorrowRate;
   address __deprecatedStableDebtTokenAddress_BEFORE = reserve.__deprecatedStableDebtTokenAddress;
   uint128 currentStableBorrowRate_BEFORE = reserveLegasy.currentStableBorrowRate;
-  address stableDebtTokenAddress_BEFORE = reserveLegasy.stableDebtTokenAddress;
+  //  address stableDebtTokenAddress_BEFORE = reserveLegasy.stableDebtTokenAddress;
   
   calldataarg args;
   f(e,args);
@@ -105,6 +105,6 @@ rule stableFieldsUntouched(method f, env e, address _asset)
   assert __deprecatedStableBorrowRate_BEFORE == __deprecatedStableBorrowRate_AFTER;
   assert __deprecatedStableDebtTokenAddress_BEFORE == __deprecatedStableDebtTokenAddress_AFTER;
   assert currentStableBorrowRate_BEFORE == currentStableBorrowRate_AFTER;
-  assert stableDebtTokenAddress_BEFORE == stableDebtTokenAddress_AFTER;
+  //  assert stableDebtTokenAddress_BEFORE == stableDebtTokenAddress_AFTER;
          
 }

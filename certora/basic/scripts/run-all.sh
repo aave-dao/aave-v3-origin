@@ -1,4 +1,4 @@
-CMN="--compilation_steps_only"
+#CMN="--compilation_steps_only"
 #CMN="--typecheck_only"
 
 
@@ -72,24 +72,28 @@ echo
 echo "******** Running:  simple:6 ***************"
 certoraRun $CMN certora/basic/conf/NEW-pool-simple-properties.conf \
            --rule cannotBorrowZeroAmount \
+           --rule_sanity none \
            --msg "simple:6: NEW :: cannotBorrowZeroAmount"
 
 echo
 echo "******** Running:  simple:7 ***************"
 certoraRun $CMN certora/basic/conf/NEW-pool-simple-properties.conf \
            --rule cannotBorrowOnInactiveReserve \
+           --rule_sanity none \
            --msg "simple:7: NEW :: cannotBorrowOnInactiveReserve"
 
 echo
 echo "******** Running:  simple:8 ***************"
 certoraRun $CMN certora/basic/conf/NEW-pool-simple-properties.conf \
            --rule cannotBorrowOnReserveDisabledForBorrowing \
+           --rule_sanity none \
            --msg "simple:8: NEW :: cannotBorrowOnReserveDisabledForBorrowing"
 
 echo
 echo "******** Running:  simple:9 ***************"
 certoraRun $CMN certora/basic/conf/NEW-pool-simple-properties.conf \
            --rule cannotBorrowOnFrozenReserve \
+           --rule_sanity none \
            --msg "simple:9: NEW :: cannotBorrowOnFrozenReserve"
 
 

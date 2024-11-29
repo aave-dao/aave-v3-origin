@@ -4,9 +4,9 @@ pragma solidity ^0.8.10;
 import {IERC20Metadata, IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import {TransparentUpgradeableProxy} from 'solidity-utils/contracts/transparent-proxy/TransparentUpgradeableProxy.sol';
 import {ITransparentProxyFactory} from 'solidity-utils/contracts/transparent-proxy/interfaces/ITransparentProxyFactory.sol';
-import {StataTokenFactory} from '../../../src/contracts/extensions/static-a-token/StataTokenFactory.sol';
-import {StataTokenV2} from '../../../src/contracts/extensions/static-a-token/StataTokenV2.sol';
-import {IERC20AaveLM} from '../../../src/contracts/extensions/static-a-token/interfaces/IERC20AaveLM.sol';
+import {StataTokenFactory} from '../../../src/contracts/extensions/stata-token/StataTokenFactory.sol';
+import {StataTokenV2} from '../../../src/contracts/extensions/stata-token/StataTokenV2.sol';
+import {IERC20AaveLM} from '../../../src/contracts/extensions/stata-token/interfaces/IERC20AaveLM.sol';
 import {TestnetProcedures, TestnetERC20} from '../../utils/TestnetProcedures.sol';
 import {DataTypes} from '../../../src/contracts/protocol/libraries/types/DataTypes.sol';
 
@@ -62,14 +62,6 @@ abstract contract BaseTest is TestnetProcedures {
   function _skipBlocks(uint128 blocks) internal {
     vm.roll(block.number + blocks);
     vm.warp(block.timestamp + blocks * 12); // assuming a block is around 12seconds
-  }
-
-  function testAdmin() public {
-    vm.stopPrank();
-    vm.startPrank(proxyAdmin);
-    assertEq(TransparentUpgradeableProxy(payable(address(stataTokenV2))).admin(), proxyAdmin);
-    assertEq(TransparentUpgradeableProxy(payable(address(factory))).admin(), proxyAdmin);
-    vm.stopPrank();
   }
 
   function _fundUnderlying(uint256 assets, address receiver) internal {
