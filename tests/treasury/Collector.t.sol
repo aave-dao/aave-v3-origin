@@ -24,10 +24,6 @@ contract UpgradeCollectorTest is Test {
   uint256 public streamStopTime;
   uint256 public nextStreamID;
 
-  address public constant PROXY_ADMIN = 0xD3cF979e676265e4f6379749DECe4708B9A22476;
-  TransparentUpgradeableProxy public constant COLLECTOR_PROXY =
-    TransparentUpgradeableProxy(payable(0x464C71f6c2F760DdA6093dCB91C24c39e5d6e18c));
-
   function setUp() public {
     vm.createSelectFork(vm.rpcUrl('mainnet'));
 
@@ -117,10 +113,6 @@ contract UpgradeCollectorTest is Test {
       assertEq(address(originalCollector), sender);
     }
 
-    vm.prank(EXECUTOR_LVL_1);
-
-    ProxyAdmin(PROXY_ADMIN).upgrade(COLLECTOR_PROXY, address(newCollector));
-
     {
       bytes32 dataSlot = bytes32(uint256(55));
       bytes32 dataValueSlot = vm.getMappingSlotAt(address(originalCollector), dataSlot, 0);
@@ -159,10 +151,6 @@ contract CollectorTest is Test {
   // https://etherscan.com/address/0xc2aaCf6553D20d1e9d78E365AAba8032af9c85b0
   address public constant ACL_MANAGER = 0xc2aaCf6553D20d1e9d78E365AAba8032af9c85b0;
   address public constant RECIPIENT_STREAM_1 = 0xd3B5A38aBd16e2636F1e94D1ddF0Ffb4161D5f10;
-  TransparentUpgradeableProxy public constant COLLECTOR_PROXY =
-    TransparentUpgradeableProxy(payable(0x464C71f6c2F760DdA6093dCB91C24c39e5d6e18c));
-
-  address public constant PROXY_ADMIN = 0xD3cF979e676265e4f6379749DECe4708B9A22476;
 
   address public FUNDS_ADMIN;
 
@@ -213,7 +201,7 @@ contract CollectorTest is Test {
   function setUp() public {
     vm.createSelectFork(vm.rpcUrl('mainnet'));
 
-    Collector newCollector = new Collector();
+    collector = new Collector();
     deal(address(AAVE), address(collector), 10 ether);
 
     streamStartTime = block.timestamp + 10;
@@ -221,12 +209,7 @@ contract CollectorTest is Test {
 
     FUNDS_ADMIN = makeAddr('funds-admin');
 
-    vm.prank(EXECUTOR_LVL_1);
-    ProxyAdmin(PROXY_ADMIN).upgrade(COLLECTOR_PROXY, address(newCollector));
-
-    collector = Collector(address(COLLECTOR_PROXY));
-
-    nextStreamID = collector.getNextStreamId();
+    nextStreamID = 10;
 
     collector.initialize(ACL_MANAGER, nextStreamID);
 
@@ -272,11 +255,6 @@ contract StreamsTest is CollectorTest {
     assertEq(streamId, nextStreamID);
   }
 
-  function testGetStream() public view {
-    (, , , , uint256 startTime, , , ) = collector.getStream(nextStreamID - 1);
-    assertLt(startTime, block.timestamp);
-  }
-
   function testGetNotExistingStream() public {
     vm.expectRevert(bytes('stream does not exist'));
     collector.getStream(nextStreamID + 1);
@@ -319,6 +297,13 @@ contract StreamsTest is CollectorTest {
     assertEq(startTime, streamStartTime);
     assertEq(stopTime, streamStopTime);
     assertEq(remainingBalance, 6 ether);
+  }
+
+  function testGetStream() public {
+    vm.prank(FUNDS_ADMIN);
+    uint256 streamId = createStream();
+    (, , , , uint256 startTime, , , ) = collector.getStream(streamId);
+    assertEq(startTime, streamStartTime);
   }
 
   function testCreateStreamWhenNotFundsAdmin() public {
