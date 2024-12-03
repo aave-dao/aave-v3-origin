@@ -70,16 +70,15 @@ interface ICollector {
   function ETH_MOCK_ADDRESS() external pure returns (address);
 
   /** @notice Initializes the contracts
-   * @param aclManager The address of the ACL Manager
    * @param nextStreamId StreamId to set, applied if greater than 0
    **/
-  function initialize(address aclManager, uint256 nextStreamId) external;
+  function initialize(uint256 nextStreamId) external;
 
   /**
-   * @notice Return the funds admin, only entity to be able to interact with this contract (controller of reserve)
-   * @return address The address of the funds admin
+   * @notice [DEPRECATED] This function is no longer recommended for use.
+   * @dev Use `isFundsAdmin` instead to check if an address has the fundsAdmin role.
    **/
-  function getFundsAdmin() external view returns (address);
+ // function getFundsAdmin() external view returns (address);
 
     /**
    * @notice Checks if address is funds admin
@@ -110,13 +109,6 @@ interface ICollector {
    * @param amount Amount to transfer
    **/
   function transfer(IERC20 token, address recipient, uint256 amount) external;
-
-  /**
-   * @dev Switch ACL Manager contract address.
-          This function should only be callable by the current funds administrator.
-   * @param manager The address of the new ACL Manager contract address
-   */
-  function setACLManager(address manager) external;
 
   /**
    * @notice Creates a new stream funded by this contracts itself and paid towards `recipient`.

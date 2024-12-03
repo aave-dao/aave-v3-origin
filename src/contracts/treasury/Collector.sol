@@ -29,14 +29,23 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
   /*** Storage Properties ***/
 
   /**
-   * @notice Address of the current funds admin.
-   */
-  address internal _fundsAdmin;
-
-  /**
    * @notice Current revision of the contract.
    */
   uint256 public constant REVISION = 6;
+
+  /// @inheritdoc ICollector
+  address public constant ETH_MOCK_ADDRESS = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+
+  /**
+   * @notice FUNDS_ADMIN role granted in ACL Manager
+   */
+  bytes32 public constant FUNDS_ADMIN_ROLE =
+    0x75456b37135373dd0d9c06da636f8afc8a433394d71309d732eb6fb591fba90e;
+
+  /**
+   * @notice Address of the current ACL Manager.
+   */
+  address public immutable ACL_MANAGER;
 
   /**
    * @notice Counter for new stream ids.
@@ -49,24 +58,16 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
   mapping(uint256 => Stream) private _streams;
 
   /**
-   * @notice Address of the current ACL Manager.
+   * @notice [DEPRECATED] Use `isFundsAdmin()` to check address.
    */
-  address internal _aclManager;
-
-  /// @inheritdoc ICollector
-  address public constant ETH_MOCK_ADDRESS = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
-
-  /**
-   * @notice FUNDS_ADMIN role granted in ACL Manager
-   */
-  bytes32 public constant FUNDS_ADMIN_ROLE = keccak256('FUNDS_ADMIN');
+  address internal _fundsAdmin_deprecated;
 
   /*** Modifiers ***/
 
   /**
    * @dev Throws if the caller is not the funds admin.
    */
-  modifier onlyFundsAdmin() {
+  modifier onlyFundsAdmins() {
     require(_onlyFundsAdmins(), 'ONLY_BY_FUNDS_ADMIN');
     _;
   }
@@ -91,15 +92,18 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
     _;
   }
 
+  constructor(address aclManager) public {
+    require(aclManager != address(0), 'cannot be the zero-address');
+    ACL_MANAGER = aclManager;
+  }
+
   /*** Contract Logic Starts Here */
 
   /// @inheritdoc ICollector
-  function initialize(address aclManager, uint256 nextStreamId) external initializer {
+  function initialize(uint256 nextStreamId) external virtual initializer {
     if (nextStreamId != 0) {
       _nextStreamId = nextStreamId;
-    }
-
-    _setACLManager(aclManager);
+    }   
   }
 
   /*** View Functions ***/
@@ -110,13 +114,8 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
   }
 
   /// @inheritdoc ICollector
-  function getFundsAdmin() external view returns (address) {
-    return _fundsAdmin;
-  }
-
-  /// @inheritdoc ICollector
   function isFundsAdmin(address admin) external view returns (bool) {
-    return IAccessControl(_aclManager).hasRole(FUNDS_ADMIN_ROLE, admin);
+    return IAccessControl(ACL_MANAGER).hasRole(FUNDS_ADMIN_ROLE, admin);
   }
 
   /// @inheritdoc ICollector
@@ -205,12 +204,12 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
   /*** Public Effects & Interactions Functions ***/
 
   /// @inheritdoc ICollector
-  function approve(IERC20 token, address recipient, uint256 amount) external onlyFundsAdmin {
+  function approve(IERC20 token, address recipient, uint256 amount) external onlyFundsAdmins {
     token.safeApprove(recipient, amount);
   }
 
   /// @inheritdoc ICollector
-  function transfer(IERC20 token, address recipient, uint256 amount) external onlyFundsAdmin {
+  function transfer(IERC20 token, address recipient, uint256 amount) external onlyFundsAdmins {
     require(recipient != address(0), 'INVALID_0X_RECIPIENT');
 
     if (address(token) == ETH_MOCK_ADDRESS) {
@@ -220,23 +219,8 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
     }
   }
 
-  /// @inheritdoc ICollector
-  function setACLManager(address manager) external onlyFundsAdmin {
-    _setACLManager(manager);
-  }
-
-  /**
-   * @dev Switch ACL Manager contract address.
-   * @param manager The address of the new ACL Manager contract address
-   */
-  function _setACLManager(address manager) internal {
-    require(manager != address(0), 'cannot be the zero-address');
-    _aclManager = manager;
-    emit NewACLManager(manager);
-  }
-
   function _onlyFundsAdmins() internal view returns (bool) {
-    return IAccessControl(_aclManager).hasRole(FUNDS_ADMIN_ROLE, msg.sender);
+    return IAccessControl(ACL_MANAGER).hasRole(FUNDS_ADMIN_ROLE, msg.sender);
   }
 
   struct CreateStreamLocalVars {
@@ -264,7 +248,7 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
     address tokenAddress,
     uint256 startTime,
     uint256 stopTime
-  ) external onlyFundsAdmin returns (uint256) {
+  ) external onlyFundsAdmins returns (uint256) {
     require(recipient != address(0), 'stream to the zero address');
     require(recipient != address(this), 'stream to the contract itself');
     require(recipient != msg.sender, 'stream to the caller');

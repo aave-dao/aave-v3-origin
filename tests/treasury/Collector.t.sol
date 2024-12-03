@@ -29,8 +29,8 @@ contract UpgradeCollectorTest is Test {
 
     originalCollector = Collector(COLLECTOR_ADDRESS);
     nextStreamID = originalCollector.getNextStreamId();
-    newCollector = new Collector();
-    newCollector.initialize(ACL_MANAGER, nextStreamID);
+    newCollector = new Collector(ACL_MANAGER);
+    newCollector.initialize( nextStreamID);
     deal(address(AAVE), address(newCollector), 10 ether);
 
     streamStartTime = block.timestamp + 10;
@@ -201,7 +201,7 @@ contract CollectorTest is Test {
   function setUp() public {
     vm.createSelectFork(vm.rpcUrl('mainnet'));
 
-    collector = new Collector();
+    collector = new Collector(ACL_MANAGER);
     deal(address(AAVE), address(collector), 10 ether);
 
     streamStartTime = block.timestamp + 10;
@@ -211,7 +211,7 @@ contract CollectorTest is Test {
 
     nextStreamID = 10;
 
-    collector.initialize(ACL_MANAGER, nextStreamID);
+    collector.initialize( nextStreamID);
 
     vm.startPrank(EXECUTOR_LVL_1);
     IAccessControl(ACL_MANAGER).grantRole(collector.FUNDS_ADMIN_ROLE(), FUNDS_ADMIN);
@@ -568,28 +568,6 @@ contract GetRevision is CollectorTest {
 contract FundsAdminRoleBytesTest is CollectorTest {
   function test_successful() public view {
     assertEq(collector.FUNDS_ADMIN_ROLE(), keccak256('FUNDS_ADMIN'));
-  }
-}
-
-contract SetACLManagerTest is CollectorTest {
-  function test_revertsIf_invalidCaller() public {
-    vm.expectRevert('ONLY_BY_FUNDS_ADMIN');
-    collector.setACLManager(makeAddr('new-acl'));
-  }
-
-  function test_revertsIf_zeroAddress() public {
-    vm.startPrank(FUNDS_ADMIN);
-    vm.expectRevert('cannot be the zero-address');
-    collector.setACLManager(address(0));
-  }
-
-  function test_successful() public {
-    address newAcl = makeAddr('new-acl');
-
-    vm.startPrank(FUNDS_ADMIN);
-    vm.expectEmit(true, true, true, true, address(collector));
-    emit NewACLManager(newAcl);
-    collector.setACLManager(newAcl);
   }
 }
 
