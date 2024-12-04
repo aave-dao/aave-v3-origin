@@ -80,7 +80,7 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
    */
   modifier onlyAdminOrRecipient(uint256 streamId) {
     if(
-      _onlyFundsAdmin() == false && msg.sender != _streams[streamId].recipient,){
+      _onlyFundsAdmin() == false && msg.sender != _streams[streamId].recipient){
       revert OnlyFundsAdminOrRceipient();
     }
     _;
