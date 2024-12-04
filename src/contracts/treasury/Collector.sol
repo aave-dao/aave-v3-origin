@@ -46,6 +46,11 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
    */
   address public immutable ACL_MANAGER;
 
+    /**
+   * @notice [DEPRECATED] Use `isFundsAdmin()` to check address.
+   */
+  address internal _fundsAdmin_deprecated;
+
   /**
    * @notice Counter for new stream ids.
    */
@@ -56,18 +61,16 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
    */
   mapping(uint256 => Stream) private _streams;
 
-  /**
-   * @notice [DEPRECATED] Use `isFundsAdmin()` to check address.
-   */
-  address internal _fundsAdmin_deprecated;
 
   /*** Modifiers ***/
 
   /**
    * @dev Throws if the caller does not have the FUNDS_ADMIN role
    */
-  modifier onlyFundsAdmins() {
-    require(_onlyFundsAdmins(), OnlyFundsAdmin());
+  modifier onlyFundsAdmin() {
+    if(_onlyFundsAdmin() == false ){
+        revert OnlyFundsAdmin();
+    }
     _;
   }
 
@@ -76,10 +79,10 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
    * @param streamId The id of the stream to query.
    */
   modifier onlyAdminOrRecipient(uint256 streamId) {
-    require(
-      _onlyFundsAdmins() || msg.sender == _streams[streamId].recipient,
-      OnlyFundsAdminOrRceipient()
-    );
+    if(
+      _onlyFundsAdmin() == false && msg.sender != _streams[streamId].recipient,){
+      revert OnlyFundsAdminOrRceipient();
+    }
     _;
   }
 
@@ -203,12 +206,12 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
   /*** Public Effects & Interactions Functions ***/
 
   /// @inheritdoc ICollector
-  function approve(IERC20 token, address recipient, uint256 amount) external onlyFundsAdmins {
+  function approve(IERC20 token, address recipient, uint256 amount) external onlyFundsAdmin {
     token.safeApprove(recipient, amount);
   }
 
   /// @inheritdoc ICollector
-  function transfer(IERC20 token, address recipient, uint256 amount) external onlyFundsAdmins {
+  function transfer(IERC20 token, address recipient, uint256 amount) external onlyFundsAdmin {
     if (recipient == address(0)) revert InvalidZeroAddress();
 
     if (address(token) == ETH_MOCK_ADDRESS) {
@@ -218,7 +221,7 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
     }
   }
 
-  function _onlyFundsAdmins() internal view returns (bool) {
+  function _onlyFundsAdmin() internal view returns (bool) {
     return IAccessControl(ACL_MANAGER).hasRole(FUNDS_ADMIN_ROLE, msg.sender);
   }
 
@@ -247,22 +250,22 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
     address tokenAddress,
     uint256 startTime,
     uint256 stopTime
-  ) external onlyFundsAdmins returns (uint256) {
-    require(recipient != address(0), InvalidZeroAddress());
-    require(recipient != address(this), InvalidRecipient());
-    require(recipient != msg.sender, InvalidRecipient());
-    require(deposit > 0, InvalidZeroAmount());
-    require(startTime >= block.timestamp, InvalidStartTime());
-    require(stopTime > startTime, InvalidStopTime());
+  ) external onlyFundsAdmin returns (uint256) {
+    if(recipient == address(0)) revert InvalidZeroAddress();
+    if(recipient == address(this)) revert InvalidRecipient();
+    if(recipient == msg.sender) revert InvalidRecipient();
+    if(deposit == 0) revert InvalidZeroAmount();
+    if(startTime <= block.timestamp) revert InvalidStartTime();
+    if(stopTime < startTime) revert InvalidStopTime();
 
     CreateStreamLocalVars memory vars;
     vars.duration = stopTime - startTime;
 
     /* Without this, the rate per second would be zero. */
-    require(deposit >= vars.duration, DepositSmallerTimeDelta());
+    if(deposit < vars.duration) revert DepositSmallerTimeDelta();
 
     /* This condition avoids dealing with remainders */
-    require(deposit % vars.duration == 0, DepositNotMultipleTimeDelta());
+    if(deposit % vars.duration > 0) revert DepositNotMultipleTimeDelta();
 
     vars.ratePerSecond = deposit / vars.duration;
 
@@ -306,11 +309,11 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
     uint256 streamId,
     uint256 amount
   ) external nonReentrant streamExists(streamId) onlyAdminOrRecipient(streamId) returns (bool) {
-    require(amount > 0, InvalidZeroAmount());
+    if(amount == 0) revert InvalidZeroAmount();
     Stream memory stream = _streams[streamId];
 
     uint256 balance = balanceOf(streamId, stream.recipient);
-    require(balance >= amount, BalanceExceeded());
+    if(balance < amount) revert BalanceExceeded();
 
     _streams[streamId].remainingBalance = stream.remainingBalance - amount;
 
