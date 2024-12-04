@@ -15,12 +15,12 @@ contract AaveV3TreasuryProcedure {
   function _deployAaveV3Treasury(
     address poolAdmin,
     address deployedProxyAdmin,
+    address aclManager, 
     bytes32 collectorSalt
   ) internal returns (TreasuryReport memory) {
     TreasuryReport memory treasuryReport;
     bytes32 salt = collectorSalt;
     address treasuryOwner = poolAdmin;
-    address aclManager;
 
     if (salt != '') {
       Collector treasuryImplementation = new Collector{salt: salt}(aclManager);
@@ -31,7 +31,7 @@ contract AaveV3TreasuryProcedure {
         new TransparentUpgradeableProxy{salt: salt}(
           treasuryReport.treasuryImplementation,
           ProxyAdmin(deployedProxyAdmin),
-          abi.encodeWithSelector(treasuryImplementation.initialize.selector, 0)
+          abi.encodeWithSelector(treasuryImplementation.initialize.selector, 100_000)
         )
       );
     } else {
