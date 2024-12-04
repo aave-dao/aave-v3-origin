@@ -9,6 +9,7 @@ import {ProxyAdmin} from 'solidity-utils/contracts/transparent-proxy/ProxyAdmin.
 import {TransparentUpgradeableProxy} from 'solidity-utils/contracts/transparent-proxy/TransparentUpgradeableProxy.sol';
 
 import {Collector} from 'src/contracts/treasury/Collector.sol';
+import {ICollector} from 'src/contracts/treasury/ICollector.sol';
 
 contract UpgradeCollectorTest is Test {
   IERC20 public constant AAVE = IERC20(0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9);
@@ -30,7 +31,7 @@ contract UpgradeCollectorTest is Test {
     originalCollector = Collector(COLLECTOR_ADDRESS);
     nextStreamID = originalCollector.getNextStreamId();
     newCollector = new Collector(ACL_MANAGER);
-    newCollector.initialize( nextStreamID);
+    newCollector.initialize(nextStreamID);
     deal(address(AAVE), address(newCollector), 10 ether);
 
     streamStartTime = block.timestamp + 10;
@@ -42,38 +43,6 @@ contract UpgradeCollectorTest is Test {
     IAccessControl(ACL_MANAGER).grantRole(newCollector.FUNDS_ADMIN_ROLE(), FUNDS_ADMIN);
     IAccessControl(ACL_MANAGER).grantRole(newCollector.FUNDS_ADMIN_ROLE(), EXECUTOR_LVL_1);
     vm.stopPrank();
-  }
-
-  function test_slots() public {
-    vm.startMappingRecording();
-
-    vm.prank(EXECUTOR_LVL_1);
-    originalCollector.createStream(
-      RECIPIENT_STREAM_1,
-      6 ether,
-      address(AAVE),
-      streamStartTime,
-      streamStopTime
-    );
-
-    vm.prank(FUNDS_ADMIN);
-    newCollector.createStream(
-      RECIPIENT_STREAM_1,
-      6 ether,
-      address(AAVE),
-      streamStartTime,
-      streamStopTime
-    );
-
-    bytes32 dataSlot = bytes32(uint256(55));
-    bytes32 dataValueSlot = vm.getMappingSlotAt(address(originalCollector), dataSlot, 0);
-    bytes32 dataValueSlotNew = vm.getMappingSlotAt(address(newCollector), dataSlot, 0);
-
-    vm.getMappingLength(address(originalCollector), dataSlot);
-    vm.getMappingLength(address(newCollector), dataSlot);
-
-    vm.load(address(originalCollector), dataValueSlot);
-    vm.load(address(newCollector), dataValueSlotNew);
   }
 
   function test_slots_upgrade() public {
@@ -158,46 +127,6 @@ contract CollectorTest is Test {
   uint256 public streamStopTime;
   uint256 public nextStreamID;
 
-  event NewACLManager(address indexed manager);
-  event NewFundsAdmin(address indexed fundsAdmin);
-  event StreamIdChanged(uint256 indexed streamId);
-
-  event CreateStream(
-    uint256 indexed streamId,
-    address indexed sender,
-    address indexed recipient,
-    uint256 deposit,
-    address tokenAddress,
-    uint256 startTime,
-    uint256 stopTime
-  );
-
-  event CancelStream(
-    uint256 indexed streamId,
-    address indexed sender,
-    address indexed recipient,
-    uint256 senderBalance,
-    uint256 recipientBalance
-  );
-
-  event WithdrawFromStream(uint256 indexed streamId, address indexed recipient, uint256 amount);
-
-  error Create_InvalidStreamId(uint256 id);
-  error Create_InvalidSender(address sender);
-  error Create_InvalidRecipient(address recipient);
-  error Create_InvalidDeposit(uint256 amount);
-  error Create_InvalidAsset(address asset);
-  error Create_InvalidStartTime(uint256 startTime);
-  error Create_InvalidStopTime(uint256 stopTime);
-  error Create_InvalidRemaining(uint256 remainingBalance);
-  error Create_InvalidRatePerSecond(uint256 rate);
-  error Create_InvalidNextStreamId(uint256 id);
-  error Cancel_WrongRecipientBalance(uint256 current, uint256 expected);
-  error Withdraw_WrongRecipientBalance(uint256 current, uint256 expected);
-  error Withdraw_WrongRecipientBalanceStream(uint256 current, uint256 expected);
-  error Withdraw_WrongEcoReserveBalance(uint256 current, uint256 expected);
-  error Withdraw_WrongEcoReserveBalanceStream(uint256 current, uint256 expected);
-
   function setUp() public {
     vm.createSelectFork(vm.rpcUrl('mainnet'));
 
@@ -211,7 +140,7 @@ contract CollectorTest is Test {
 
     nextStreamID = 10;
 
-    collector.initialize( nextStreamID);
+    collector.initialize(nextStreamID);
 
     vm.startPrank(EXECUTOR_LVL_1);
     IAccessControl(ACL_MANAGER).grantRole(collector.FUNDS_ADMIN_ROLE(), FUNDS_ADMIN);
@@ -229,7 +158,7 @@ contract CollectorTest is Test {
   }
 
   function testApproveWhenNotFundsAdmin() public {
-    vm.expectRevert(bytes('ONLY_BY_FUNDS_ADMIN'));
+    vm.expectRevert(ICollector.OnlyFundsAdmin.selector);
     collector.approve(AAVE, address(0), 1 ether);
   }
 
@@ -243,7 +172,7 @@ contract CollectorTest is Test {
   }
 
   function testTransferWhenNotFundsAdmin() public {
-    vm.expectRevert(bytes('ONLY_BY_FUNDS_ADMIN'));
+    vm.expectRevert(ICollector.OnlyFundsAdmin.selector);
 
     collector.transfer(AAVE, address(112), 1 ether);
   }
@@ -256,7 +185,7 @@ contract StreamsTest is CollectorTest {
   }
 
   function testGetNotExistingStream() public {
-    vm.expectRevert(bytes('stream does not exist'));
+    vm.expectRevert(ICollector.StreamDoesNotExist.selector);
     collector.getStream(nextStreamID + 1);
   }
 
@@ -264,7 +193,7 @@ contract StreamsTest is CollectorTest {
   function testCreateStream() public {
     vm.expectEmit(true, true, true, true);
 
-    emit CreateStream(
+    emit ICollector.CreateStream(
       nextStreamID,
       address(collector),
       RECIPIENT_STREAM_1,
@@ -307,7 +236,7 @@ contract StreamsTest is CollectorTest {
   }
 
   function testCreateStreamWhenNotFundsAdmin() public {
-    vm.expectRevert(bytes('ONLY_BY_FUNDS_ADMIN'));
+    vm.expectRevert(ICollector.OnlyFundsAdmin.selector);
 
     collector.createStream(
       RECIPIENT_STREAM_1,
@@ -319,14 +248,14 @@ contract StreamsTest is CollectorTest {
   }
 
   function testCreateStreamWhenRecipientIsZero() public {
-    vm.expectRevert(bytes('stream to the zero address'));
+    vm.expectRevert(ICollector.InvalidZeroAddress.selector);
 
     vm.prank(FUNDS_ADMIN);
     collector.createStream(address(0), 6 ether, address(AAVE), streamStartTime, streamStopTime);
   }
 
   function testCreateStreamWhenRecipientIsCollector() public {
-    vm.expectRevert(bytes('stream to the contract itself'));
+    vm.expectRevert(ICollector.InvalidRecipient.selector);
 
     vm.prank(FUNDS_ADMIN);
     collector.createStream(
@@ -339,14 +268,14 @@ contract StreamsTest is CollectorTest {
   }
 
   function testCreateStreamWhenRecipientIsTheCaller() public {
-    vm.expectRevert(bytes('stream to the caller'));
+    vm.expectRevert(ICollector.InvalidRecipient.selector);
 
     vm.prank(FUNDS_ADMIN);
     collector.createStream(FUNDS_ADMIN, 6 ether, address(AAVE), streamStartTime, streamStopTime);
   }
 
   function testCreateStreamWhenDepositIsZero() public {
-    vm.expectRevert(bytes('deposit is zero'));
+    vm.expectRevert(ICollector.InvalidZeroAmount.selector);
 
     vm.prank(FUNDS_ADMIN);
     collector.createStream(
@@ -359,7 +288,7 @@ contract StreamsTest is CollectorTest {
   }
 
   function testCreateStreamWhenStartTimeInThePast() public {
-    vm.expectRevert(bytes('start time before block.timestamp'));
+    vm.expectRevert(ICollector.InvalidStartTime.selector);
 
     vm.prank(FUNDS_ADMIN);
     collector.createStream(
@@ -372,7 +301,7 @@ contract StreamsTest is CollectorTest {
   }
 
   function testCreateStreamWhenStopTimeBeforeStart() public {
-    vm.expectRevert(bytes('stop time before the start time'));
+    vm.expectRevert(ICollector.InvalidStopTime.selector);
 
     vm.prank(FUNDS_ADMIN);
     collector.createStream(
@@ -399,7 +328,7 @@ contract StreamsTest is CollectorTest {
     uint256 balanceCollectorStreamBefore = collector.balanceOf(streamId, address(collector));
 
     vm.expectEmit(true, true, true, true);
-    emit WithdrawFromStream(streamId, RECIPIENT_STREAM_1, 1 ether);
+    emit ICollector.WithdrawFromStream(streamId, RECIPIENT_STREAM_1, 1 ether);
 
     vm.prank(RECIPIENT_STREAM_1);
     // Act
@@ -429,7 +358,7 @@ contract StreamsTest is CollectorTest {
     uint256 balanceCollectorBefore = AAVE.balanceOf(address(collector));
 
     vm.expectEmit(true, true, true, true);
-    emit WithdrawFromStream(streamId, RECIPIENT_STREAM_1, 6 ether);
+    emit ICollector.WithdrawFromStream(streamId, RECIPIENT_STREAM_1, 6 ether);
 
     vm.prank(RECIPIENT_STREAM_1);
     // Act
@@ -442,12 +371,12 @@ contract StreamsTest is CollectorTest {
     assertEq(balanceRecipientAfter, balanceRecipientBefore + 6 ether);
     assertEq(balanceCollectorAfter, balanceCollectorBefore - 6 ether);
 
-    vm.expectRevert('stream does not exist');
+    vm.expectRevert(ICollector.StreamDoesNotExist.selector);
     collector.getStream(streamId);
   }
 
   function testWithdrawFromStreamWhenStreamNotExists() public {
-    vm.expectRevert(bytes('stream does not exist'));
+    vm.expectRevert(ICollector.StreamDoesNotExist.selector);
 
     collector.withdrawFromStream(nextStreamID, 1 ether);
   }
@@ -456,7 +385,7 @@ contract StreamsTest is CollectorTest {
     vm.prank(FUNDS_ADMIN);
     uint256 streamId = createStream();
 
-    vm.expectRevert(bytes('caller is not the funds admin nor the recipient of the stream'));
+    vm.expectRevert(ICollector.OnlyFundsAdminOrRceipient.selector);
     collector.withdrawFromStream(streamId, 1 ether);
   }
 
@@ -464,7 +393,7 @@ contract StreamsTest is CollectorTest {
     vm.startPrank(FUNDS_ADMIN);
     uint256 streamId = createStream();
 
-    vm.expectRevert(bytes('amount is zero'));
+    vm.expectRevert(ICollector.InvalidZeroAmount.selector);
 
     collector.withdrawFromStream(streamId, 0 ether);
   }
@@ -480,7 +409,7 @@ contract StreamsTest is CollectorTest {
     );
 
     vm.warp(block.timestamp + 20);
-    vm.expectRevert(bytes('amount exceeds the available balance'));
+    vm.expectRevert(ICollector.BalanceExceeded.selector);
 
     vm.prank(FUNDS_ADMIN);
     collector.withdrawFromStream(streamId, 2 ether);
@@ -494,7 +423,7 @@ contract StreamsTest is CollectorTest {
     uint256 balanceRecipientBefore = AAVE.balanceOf(RECIPIENT_STREAM_1);
 
     vm.expectEmit(true, true, true, true);
-    emit CancelStream(streamId, address(collector), RECIPIENT_STREAM_1, 6 ether, 0);
+    emit ICollector.CancelStream(streamId, address(collector), RECIPIENT_STREAM_1, 6 ether, 0);
 
     vm.prank(FUNDS_ADMIN);
     // Act
@@ -504,7 +433,7 @@ contract StreamsTest is CollectorTest {
     uint256 balanceRecipientAfter = AAVE.balanceOf(RECIPIENT_STREAM_1);
     assertEq(balanceRecipientAfter, balanceRecipientBefore);
 
-    vm.expectRevert(bytes('stream does not exist'));
+    vm.expectRevert(ICollector.StreamDoesNotExist.selector);
     collector.getStream(streamId);
   }
 
@@ -517,7 +446,13 @@ contract StreamsTest is CollectorTest {
     vm.warp(block.timestamp + 20);
 
     vm.expectEmit(true, true, true, true);
-    emit CancelStream(streamId, address(collector), RECIPIENT_STREAM_1, 5 ether, 1 ether);
+    emit ICollector.CancelStream(
+      streamId,
+      address(collector),
+      RECIPIENT_STREAM_1,
+      5 ether,
+      1 ether
+    );
 
     vm.prank(RECIPIENT_STREAM_1);
     // Act
@@ -527,12 +462,12 @@ contract StreamsTest is CollectorTest {
     uint256 balanceRecipientAfter = AAVE.balanceOf(RECIPIENT_STREAM_1);
     assertEq(balanceRecipientAfter, balanceRecipientBefore + 1 ether);
 
-    vm.expectRevert(bytes('stream does not exist'));
+    vm.expectRevert(ICollector.StreamDoesNotExist.selector);
     collector.getStream(streamId);
   }
 
   function testCancelStreamWhenStreamNotExists() public {
-    vm.expectRevert(bytes('stream does not exist'));
+    vm.expectRevert(ICollector.StreamDoesNotExist.selector);
 
     collector.cancelStream(nextStreamID);
   }
@@ -541,7 +476,7 @@ contract StreamsTest is CollectorTest {
     vm.prank(FUNDS_ADMIN);
     uint256 streamId = createStream();
 
-    vm.expectRevert(bytes('caller is not the funds admin nor the recipient of the stream'));
+    vm.expectRevert(ICollector.OnlyFundsAdminOrRceipient.selector);
     vm.prank(makeAddr('random'));
 
     collector.cancelStream(streamId);
@@ -567,7 +502,7 @@ contract GetRevision is CollectorTest {
 
 contract FundsAdminRoleBytesTest is CollectorTest {
   function test_successful() public view {
-    assertEq(collector.FUNDS_ADMIN_ROLE(), keccak256('FUNDS_ADMIN'));
+    assertEq(collector.FUNDS_ADMIN_ROLE(), 'FUNDS_ADMIN');
   }
 }
 

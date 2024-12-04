@@ -16,10 +16,60 @@ interface ICollector {
     bool isEntity;
   }
 
-  /** @notice Emitted during the switch of the ACL Manager contract address
-   * @param manager The new ACL Manager contract address.
-   **/
-  event NewACLManager(address indexed manager);
+  /**
+   * @dev Withdraw amount exceeds available balance
+   */
+  error BalanceExceeded();
+
+  /**
+   * @dev Deposit smaller than time delta
+   */
+  error DepositSmallerTimeDelta();
+
+  /**
+   * @dev Deposit not multiple of time delta
+   */
+  error DepositNotMultipleTimeDelta();
+
+  /**
+   * @dev Recipient cannot be the contract itself or msg.sender
+   */
+  error InvalidRecipient();
+
+  /**
+   * @dev Start time cannot be before block.timestamp
+   */
+  error InvalidStartTime();
+
+  /**
+   * @dev Stop time must be greater than startTime
+   */
+  error InvalidStopTime();
+
+  /**
+   * @dev Provided address cannot be the zero-address
+   */
+  error InvalidZeroAddress();
+
+  /**
+   * @dev Amount cannot be zero
+   */
+  error InvalidZeroAmount();
+
+  /**
+   * @dev Only caller with FUNDS_ADMIN role can call
+   */
+  error OnlyFundsAdmin();
+
+  /**
+   * @dev Only caller with FUNDS_ADMIN role or stream recipient can call
+   */
+  error OnlyFundsAdminOrRceipient();
+
+  /**
+   * @dev The provided ID does not belong to an existing stream
+   */
+  error StreamDoesNotExist();
 
   /** @notice Emitted when the new stream is created
    * @param streamId The identifier of the stream.
@@ -75,12 +125,6 @@ interface ICollector {
   function initialize(uint256 nextStreamId) external;
 
   /**
-   * @notice [DEPRECATED] This function is no longer recommended for use.
-   * @dev Use `isFundsAdmin` instead to check if an address has the fundsAdmin role.
-   **/
- // function getFundsAdmin() external view returns (address);
-
-    /**
    * @notice Checks if address is funds admin
    * @return bool If the address has the funds admin role
    **/

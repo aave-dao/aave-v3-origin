@@ -37,10 +37,9 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
   address public constant ETH_MOCK_ADDRESS = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
   /**
-   * @notice FUNDS_ADMIN role granted in ACL Manager
+   * @notice FUNDS_ADMIN role granted by ACL Manager
    */
-  bytes32 public constant FUNDS_ADMIN_ROLE =
-    0x75456b37135373dd0d9c06da636f8afc8a433394d71309d732eb6fb591fba90e;
+  bytes32 public constant FUNDS_ADMIN_ROLE = 'FUNDS_ADMIN';
 
   /**
    * @notice Address of the current ACL Manager.
@@ -65,10 +64,10 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
   /*** Modifiers ***/
 
   /**
-   * @dev Throws if the caller is not the funds admin.
+   * @dev Throws if the caller does not have the FUNDS_ADMIN role
    */
   modifier onlyFundsAdmins() {
-    require(_onlyFundsAdmins(), 'ONLY_BY_FUNDS_ADMIN');
+    require(_onlyFundsAdmins(), OnlyFundsAdmin());
     _;
   }
 
@@ -79,7 +78,7 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
   modifier onlyAdminOrRecipient(uint256 streamId) {
     require(
       _onlyFundsAdmins() || msg.sender == _streams[streamId].recipient,
-      'caller is not the funds admin nor the recipient of the stream'
+      OnlyFundsAdminOrRceipient()
     );
     _;
   }
@@ -88,12 +87,12 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
    * @dev Throws if the provided id does not point to a valid stream.
    */
   modifier streamExists(uint256 streamId) {
-    require(_streams[streamId].isEntity, 'stream does not exist');
+    if (!_streams[streamId].isEntity) revert StreamDoesNotExist();
     _;
   }
 
-  constructor(address aclManager) public {
-    require(aclManager != address(0), 'cannot be the zero-address');
+  constructor(address aclManager) {
+    if (aclManager == address(0)) revert InvalidZeroAddress();
     ACL_MANAGER = aclManager;
   }
 
@@ -103,7 +102,7 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
   function initialize(uint256 nextStreamId) external virtual initializer {
     if (nextStreamId != 0) {
       _nextStreamId = nextStreamId;
-    }   
+    }
   }
 
   /*** View Functions ***/
@@ -210,7 +209,7 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
 
   /// @inheritdoc ICollector
   function transfer(IERC20 token, address recipient, uint256 amount) external onlyFundsAdmins {
-    require(recipient != address(0), 'INVALID_0X_RECIPIENT');
+    if (recipient == address(0)) revert InvalidZeroAddress();
 
     if (address(token) == ETH_MOCK_ADDRESS) {
       payable(recipient).sendValue(amount);
@@ -249,21 +248,21 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
     uint256 startTime,
     uint256 stopTime
   ) external onlyFundsAdmins returns (uint256) {
-    require(recipient != address(0), 'stream to the zero address');
-    require(recipient != address(this), 'stream to the contract itself');
-    require(recipient != msg.sender, 'stream to the caller');
-    require(deposit > 0, 'deposit is zero');
-    require(startTime >= block.timestamp, 'start time before block.timestamp');
-    require(stopTime > startTime, 'stop time before the start time');
+    require(recipient != address(0), InvalidZeroAddress());
+    require(recipient != address(this), InvalidRecipient());
+    require(recipient != msg.sender, InvalidRecipient());
+    require(deposit > 0, InvalidZeroAmount());
+    require(startTime >= block.timestamp, InvalidStartTime());
+    require(stopTime > startTime, InvalidStopTime());
 
     CreateStreamLocalVars memory vars;
     vars.duration = stopTime - startTime;
 
     /* Without this, the rate per second would be zero. */
-    require(deposit >= vars.duration, 'deposit smaller than time delta');
+    require(deposit >= vars.duration, DepositSmallerTimeDelta());
 
     /* This condition avoids dealing with remainders */
-    require(deposit % vars.duration == 0, 'deposit not multiple of time delta');
+    require(deposit % vars.duration == 0, DepositNotMultipleTimeDelta());
 
     vars.ratePerSecond = deposit / vars.duration;
 
@@ -307,11 +306,11 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
     uint256 streamId,
     uint256 amount
   ) external nonReentrant streamExists(streamId) onlyAdminOrRecipient(streamId) returns (bool) {
-    require(amount > 0, 'amount is zero');
+    require(amount > 0, InvalidZeroAmount());
     Stream memory stream = _streams[streamId];
 
     uint256 balance = balanceOf(streamId, stream.recipient);
-    require(balance >= amount, 'amount exceeds the available balance');
+    require(balance >= amount, BalanceExceeded());
 
     _streams[streamId].remainingBalance = stream.remainingBalance - amount;
 
