@@ -2,32 +2,133 @@
 pragma solidity ^0.8.0;
 
 import {Test} from 'forge-std/Test.sol';
-import {StdUtils} from 'forge-std/StdUtils.sol';
 
 import {IERC20} from 'src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
 import {IAccessControl} from 'src/contracts/dependencies/openzeppelin/contracts/IAccessControl.sol';
-import {ACLManager} from 'src/contracts/protocol/configuration/ACLManager.sol';
-import {PoolAddressesProvider} from 'src/contracts/protocol/configuration/PoolAddressesProvider.sol';
+import {ProxyAdmin} from 'solidity-utils/contracts/transparent-proxy/ProxyAdmin.sol';
+import {TransparentUpgradeableProxy} from 'solidity-utils/contracts/transparent-proxy/TransparentUpgradeableProxy.sol';
+
 import {Collector} from 'src/contracts/treasury/Collector.sol';
 import {ICollector} from 'src/contracts/treasury/ICollector.sol';
 
-contract CollectorTest is StdUtils, Test {
+contract UpgradeCollectorTest is Test {
+  IERC20 public constant AAVE = IERC20(0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9);
+  address public constant COLLECTOR_ADDRESS = 0x464C71f6c2F760DdA6093dCB91C24c39e5d6e18c;
+  Collector originalCollector;
+  Collector newCollector;
+
+  address public constant EXECUTOR_LVL_1 = 0x5300A1a15135EA4dc7aD5a167152C01EFc9b192A;
+  address public constant ACL_MANAGER = 0xc2aaCf6553D20d1e9d78E365AAba8032af9c85b0;
+  address public constant RECIPIENT_STREAM_1 = 0xd3B5A38aBd16e2636F1e94D1ddF0Ffb4161D5f10;
+  address public FUNDS_ADMIN;
+  uint256 public streamStartTime;
+  uint256 public streamStopTime;
+  uint256 public nextStreamID;
+
+  function setUp() public {
+    vm.createSelectFork(vm.rpcUrl('mainnet'));
+
+    originalCollector = Collector(COLLECTOR_ADDRESS);
+    nextStreamID = originalCollector.getNextStreamId();
+    newCollector = new Collector(ACL_MANAGER);
+    newCollector.initialize(nextStreamID);
+    deal(address(AAVE), address(newCollector), 10 ether);
+
+    streamStartTime = block.timestamp + 10;
+    streamStopTime = block.timestamp + 70;
+
+    FUNDS_ADMIN = makeAddr('funds-admin');
+
+    vm.startPrank(EXECUTOR_LVL_1);
+    IAccessControl(ACL_MANAGER).grantRole(newCollector.FUNDS_ADMIN_ROLE(), FUNDS_ADMIN);
+    IAccessControl(ACL_MANAGER).grantRole(newCollector.FUNDS_ADMIN_ROLE(), EXECUTOR_LVL_1);
+    vm.stopPrank();
+  }
+
+  function test_slots_upgrade() public {
+    vm.startMappingRecording();
+
+    vm.prank(EXECUTOR_LVL_1);
+    originalCollector.createStream(
+      RECIPIENT_STREAM_1,
+      6 ether,
+      address(AAVE),
+      streamStartTime,
+      streamStopTime
+    );
+
+    {
+      bytes32 dataSlot = bytes32(uint256(55));
+      bytes32 dataValueSlot = vm.getMappingSlotAt(address(originalCollector), dataSlot, 0);
+
+      vm.getMappingLength(address(originalCollector), dataSlot);
+      vm.load(address(originalCollector), dataValueSlot);
+
+      (
+        address sender,
+        address recipient,
+        uint256 deposit,
+        address tokenAddress,
+        uint256 startTime,
+        uint256 stopTime,
+        ,
+
+      ) = originalCollector.getStream(nextStreamID);
+      assertEq(streamStartTime, startTime);
+      assertEq(streamStopTime, stopTime);
+      assertEq(address(AAVE), tokenAddress);
+      assertEq(6 ether, deposit);
+      assertEq(RECIPIENT_STREAM_1, recipient);
+      assertEq(address(originalCollector), sender);
+    }
+
+    {
+      bytes32 dataSlot = bytes32(uint256(55));
+      bytes32 dataValueSlot = vm.getMappingSlotAt(address(originalCollector), dataSlot, 0);
+
+      vm.getMappingLength(address(originalCollector), dataSlot);
+      vm.load(address(originalCollector), dataValueSlot);
+
+      (
+        address sender,
+        address recipient,
+        uint256 deposit,
+        address tokenAddress,
+        uint256 startTime,
+        uint256 stopTime,
+        ,
+
+      ) = originalCollector.getStream(nextStreamID);
+      assertEq(streamStartTime, startTime);
+      assertEq(streamStopTime, stopTime);
+      assertEq(address(AAVE), tokenAddress);
+      assertEq(6 ether, deposit);
+      assertEq(RECIPIENT_STREAM_1, recipient);
+      assertEq(address(originalCollector), sender);
+    }
+  }
+}
+
+contract CollectorTest is Test {
   Collector public collector;
 
-  address public EXECUTOR_LVL_1;
-  address public ACL_ADMIN;
-  address public RECIPIENT_STREAM_1;
-  address public FUNDS_ADMIN;
-  address public OWNER;
+  IERC20 public constant AAVE = IERC20(0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9);
 
-  IERC20 tokenA;
-  IERC20 tokenB;
+  // https://etherscan.com/address/0x5300A1a15135EA4dc7aD5a167152C01EFc9b192A
+  address public constant EXECUTOR_LVL_1 = 0x5300A1a15135EA4dc7aD5a167152C01EFc9b192A;
+
+  // https://etherscan.com/address/0xc2aaCf6553D20d1e9d78E365AAba8032af9c85b0
+  address public constant ACL_MANAGER = 0xc2aaCf6553D20d1e9d78E365AAba8032af9c85b0;
+  address public constant RECIPIENT_STREAM_1 = 0xd3B5A38aBd16e2636F1e94D1ddF0Ffb4161D5f10;
+
+  address public FUNDS_ADMIN;
 
   uint256 public streamStartTime;
   uint256 public streamStopTime;
   uint256 public nextStreamID;
 
   event StreamIdChanged(uint256 indexed streamId);
+
   event CreateStream(
     uint256 indexed streamId,
     address indexed sender,
@@ -37,6 +138,7 @@ contract CollectorTest is StdUtils, Test {
     uint256 startTime,
     uint256 stopTime
   );
+
   event CancelStream(
     uint256 indexed streamId,
     address indexed sender,
@@ -44,57 +146,49 @@ contract CollectorTest is StdUtils, Test {
     uint256 senderBalance,
     uint256 recipientBalance
   );
+
   event WithdrawFromStream(uint256 indexed streamId, address indexed recipient, uint256 amount);
 
   function setUp() public {
-    EXECUTOR_LVL_1 = makeAddr('governance');
-    FUNDS_ADMIN = makeAddr('funds-admin');
-    OWNER = makeAddr('owner');
-    RECIPIENT_STREAM_1 = makeAddr('recipient');
+    vm.createSelectFork(vm.rpcUrl('mainnet'));
 
-    PoolAddressesProvider provider = new PoolAddressesProvider('aave', OWNER);
-    vm.prank(OWNER);
-    provider.setACLAdmin(EXECUTOR_LVL_1);
-
-    ACLManager aclManager = new ACLManager(provider);
-
-    tokenA = IERC20(address(deployMockERC20('Token A', 'TK_A', 18)));
-    tokenB = IERC20(address(deployMockERC20('Token B', 'TK_B', 6)));
+    collector = new Collector(ACL_MANAGER);
+    deal(address(AAVE), address(collector), 10 ether);
 
     streamStartTime = block.timestamp + 10;
     streamStopTime = block.timestamp + 70;
-    nextStreamID = 0;
 
-    collector = new Collector(address(aclManager));
+    FUNDS_ADMIN = makeAddr('funds-admin');
+
+    nextStreamID = 10;
+
     collector.initialize(nextStreamID);
 
-    deal(address(tokenA), address(collector), 100 ether);
-
     vm.startPrank(EXECUTOR_LVL_1);
-    IAccessControl(address(aclManager)).grantRole(collector.FUNDS_ADMIN_ROLE(), FUNDS_ADMIN);
-    IAccessControl(address(aclManager)).grantRole(collector.FUNDS_ADMIN_ROLE(), EXECUTOR_LVL_1);
+    IAccessControl(ACL_MANAGER).grantRole(collector.FUNDS_ADMIN_ROLE(), FUNDS_ADMIN);
+    IAccessControl(ACL_MANAGER).grantRole(collector.FUNDS_ADMIN_ROLE(), EXECUTOR_LVL_1);
     vm.stopPrank();
   }
 
   function testApprove() public {
     vm.prank(FUNDS_ADMIN);
-    collector.approve(tokenA, address(42), 1 ether);
+    collector.approve(AAVE, address(42), 1 ether);
 
-    uint256 allowance = tokenA.allowance(address(collector), address(42));
+    uint256 allowance = AAVE.allowance(address(collector), address(42));
 
     assertEq(allowance, 1 ether);
   }
 
   function testApproveWhenNotFundsAdmin() public {
     vm.expectRevert(ICollector.OnlyFundsAdmin.selector);
-    collector.approve(tokenA, address(0), 1 ether);
+    collector.approve(AAVE, address(0), 1 ether);
   }
 
   function testTransfer() public {
     vm.prank(FUNDS_ADMIN);
-    collector.transfer(tokenA, address(112), 1 ether);
+    collector.transfer(AAVE, address(112), 1 ether);
 
-    uint256 balance = tokenA.balanceOf(address(112));
+    uint256 balance = AAVE.balanceOf(address(112));
 
     assertEq(balance, 1 ether);
   }
@@ -102,7 +196,7 @@ contract CollectorTest is StdUtils, Test {
   function testTransferWhenNotFundsAdmin() public {
     vm.expectRevert(ICollector.OnlyFundsAdmin.selector);
 
-    collector.transfer(tokenA, address(112), 1 ether);
+    collector.transfer(AAVE, address(112), 1 ether);
   }
 }
 
@@ -125,7 +219,7 @@ contract StreamsTest is CollectorTest {
       address(collector),
       RECIPIENT_STREAM_1,
       6 ether,
-      address(tokenA),
+      address(AAVE),
       streamStartTime,
       streamStopTime
     );
@@ -149,7 +243,7 @@ contract StreamsTest is CollectorTest {
     assertEq(sender, address(collector));
     assertEq(recipient, RECIPIENT_STREAM_1);
     assertEq(deposit, 6 ether);
-    assertEq(tokenAddress, address(tokenA));
+    assertEq(tokenAddress, address(AAVE));
     assertEq(startTime, streamStartTime);
     assertEq(stopTime, streamStopTime);
     assertEq(remainingBalance, 6 ether);
@@ -168,7 +262,7 @@ contract StreamsTest is CollectorTest {
     collector.createStream(
       RECIPIENT_STREAM_1,
       6 ether,
-      address(tokenA),
+      address(AAVE),
       streamStartTime,
       streamStopTime
     );
@@ -178,7 +272,7 @@ contract StreamsTest is CollectorTest {
     vm.expectRevert(ICollector.InvalidZeroAddress.selector);
 
     vm.prank(FUNDS_ADMIN);
-    collector.createStream(address(0), 6 ether, address(tokenA), streamStartTime, streamStopTime);
+    collector.createStream(address(0), 6 ether, address(AAVE), streamStartTime, streamStopTime);
   }
 
   function testCreateStreamWhenRecipientIsCollector() public {
@@ -188,7 +282,7 @@ contract StreamsTest is CollectorTest {
     collector.createStream(
       address(collector),
       6 ether,
-      address(tokenA),
+      address(AAVE),
       streamStartTime,
       streamStopTime
     );
@@ -198,7 +292,7 @@ contract StreamsTest is CollectorTest {
     vm.expectRevert(ICollector.InvalidRecipient.selector);
 
     vm.prank(FUNDS_ADMIN);
-    collector.createStream(FUNDS_ADMIN, 6 ether, address(tokenA), streamStartTime, streamStopTime);
+    collector.createStream(FUNDS_ADMIN, 6 ether, address(AAVE), streamStartTime, streamStopTime);
   }
 
   function testCreateStreamWhenDepositIsZero() public {
@@ -208,22 +302,20 @@ contract StreamsTest is CollectorTest {
     collector.createStream(
       RECIPIENT_STREAM_1,
       0 ether,
-      address(tokenA),
+      address(AAVE),
       streamStartTime,
       streamStopTime
     );
   }
 
   function testCreateStreamWhenStartTimeInThePast() public {
-    vm.warp(block.timestamp + 100);
-
     vm.expectRevert(ICollector.InvalidStartTime.selector);
 
     vm.prank(FUNDS_ADMIN);
     collector.createStream(
       RECIPIENT_STREAM_1,
       6 ether,
-      address(tokenA),
+      address(AAVE),
       block.timestamp - 10,
       streamStopTime
     );
@@ -236,7 +328,7 @@ contract StreamsTest is CollectorTest {
     collector.createStream(
       RECIPIENT_STREAM_1,
       6 ether,
-      address(tokenA),
+      address(AAVE),
       block.timestamp + 70,
       block.timestamp + 10
     );
@@ -251,9 +343,9 @@ contract StreamsTest is CollectorTest {
 
     vm.warp(block.timestamp + 20);
 
-    uint256 balanceRecipientBefore = tokenA.balanceOf(RECIPIENT_STREAM_1);
+    uint256 balanceRecipientBefore = AAVE.balanceOf(RECIPIENT_STREAM_1);
     uint256 balanceRecipientStreamBefore = collector.balanceOf(streamId, RECIPIENT_STREAM_1);
-    uint256 balanceCollectorBefore = tokenA.balanceOf(address(collector));
+    uint256 balanceCollectorBefore = AAVE.balanceOf(address(collector));
     uint256 balanceCollectorStreamBefore = collector.balanceOf(streamId, address(collector));
 
     vm.expectEmit(true, true, true, true);
@@ -264,9 +356,9 @@ contract StreamsTest is CollectorTest {
     collector.withdrawFromStream(streamId, 1 ether);
 
     // Assert
-    uint256 balanceRecipientAfter = tokenA.balanceOf(RECIPIENT_STREAM_1);
+    uint256 balanceRecipientAfter = AAVE.balanceOf(RECIPIENT_STREAM_1);
     uint256 balanceRecipientStreamAfter = collector.balanceOf(streamId, RECIPIENT_STREAM_1);
-    uint256 balanceCollectorAfter = tokenA.balanceOf(address(collector));
+    uint256 balanceCollectorAfter = AAVE.balanceOf(address(collector));
     uint256 balanceCollectorStreamAfter = collector.balanceOf(streamId, address(collector));
 
     assertEq(balanceRecipientAfter, balanceRecipientBefore + 1 ether);
@@ -283,8 +375,8 @@ contract StreamsTest is CollectorTest {
 
     vm.warp(block.timestamp + 70);
 
-    uint256 balanceRecipientBefore = tokenA.balanceOf(RECIPIENT_STREAM_1);
-    uint256 balanceCollectorBefore = tokenA.balanceOf(address(collector));
+    uint256 balanceRecipientBefore = AAVE.balanceOf(RECIPIENT_STREAM_1);
+    uint256 balanceCollectorBefore = AAVE.balanceOf(address(collector));
 
     vm.expectEmit(true, true, true, true);
     emit WithdrawFromStream(streamId, RECIPIENT_STREAM_1, 6 ether);
@@ -294,8 +386,8 @@ contract StreamsTest is CollectorTest {
     collector.withdrawFromStream(streamId, 6 ether);
 
     // Assert
-    uint256 balanceRecipientAfter = tokenA.balanceOf(RECIPIENT_STREAM_1);
-    uint256 balanceCollectorAfter = tokenA.balanceOf(address(collector));
+    uint256 balanceRecipientAfter = AAVE.balanceOf(RECIPIENT_STREAM_1);
+    uint256 balanceCollectorAfter = AAVE.balanceOf(address(collector));
 
     assertEq(balanceRecipientAfter, balanceRecipientBefore + 6 ether);
     assertEq(balanceCollectorAfter, balanceCollectorBefore - 6 ether);
@@ -332,7 +424,7 @@ contract StreamsTest is CollectorTest {
     uint256 streamId = collector.createStream(
       RECIPIENT_STREAM_1,
       6 ether,
-      address(tokenA),
+      address(AAVE),
       streamStartTime,
       streamStopTime
     );
@@ -349,7 +441,7 @@ contract StreamsTest is CollectorTest {
     vm.prank(FUNDS_ADMIN);
     // Arrange
     uint256 streamId = createStream();
-    uint256 balanceRecipientBefore = tokenA.balanceOf(RECIPIENT_STREAM_1);
+    uint256 balanceRecipientBefore = AAVE.balanceOf(RECIPIENT_STREAM_1);
 
     vm.expectEmit(true, true, true, true);
     emit CancelStream(streamId, address(collector), RECIPIENT_STREAM_1, 6 ether, 0);
@@ -359,7 +451,7 @@ contract StreamsTest is CollectorTest {
     collector.cancelStream(streamId);
 
     // Assert
-    uint256 balanceRecipientAfter = tokenA.balanceOf(RECIPIENT_STREAM_1);
+    uint256 balanceRecipientAfter = AAVE.balanceOf(RECIPIENT_STREAM_1);
     assertEq(balanceRecipientAfter, balanceRecipientBefore);
 
     vm.expectRevert(ICollector.StreamDoesNotExist.selector);
@@ -370,7 +462,7 @@ contract StreamsTest is CollectorTest {
     vm.prank(FUNDS_ADMIN);
     // Arrange
     uint256 streamId = createStream();
-    uint256 balanceRecipientBefore = tokenA.balanceOf(RECIPIENT_STREAM_1);
+    uint256 balanceRecipientBefore = AAVE.balanceOf(RECIPIENT_STREAM_1);
 
     vm.warp(block.timestamp + 20);
 
@@ -382,7 +474,7 @@ contract StreamsTest is CollectorTest {
     collector.cancelStream(streamId);
 
     // Assert
-    uint256 balanceRecipientAfter = tokenA.balanceOf(RECIPIENT_STREAM_1);
+    uint256 balanceRecipientAfter = AAVE.balanceOf(RECIPIENT_STREAM_1);
     assertEq(balanceRecipientAfter, balanceRecipientBefore + 1 ether);
 
     vm.expectRevert(ICollector.StreamDoesNotExist.selector);
@@ -410,7 +502,7 @@ contract StreamsTest is CollectorTest {
       collector.createStream(
         RECIPIENT_STREAM_1,
         6 ether,
-        address(tokenA),
+        address(AAVE),
         streamStartTime,
         streamStopTime
       );

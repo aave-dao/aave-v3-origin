@@ -74,12 +74,7 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
    * @param streamId The id of the stream to query.
    */
   modifier onlyAdminOrRecipient(uint256 streamId) {
-<<<<<<< HEAD
     if (_onlyFundsAdmin() == false && msg.sender != _streams[streamId].recipient) {
-=======
-    if(
-      _onlyFundsAdmin() == false && msg.sender != _streams[streamId].recipient){
->>>>>>> origin/collector-revision6
       revert OnlyFundsAdminOrRceipient();
     }
     _;
