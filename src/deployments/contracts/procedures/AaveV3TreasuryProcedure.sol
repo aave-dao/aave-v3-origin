@@ -15,7 +15,7 @@ contract AaveV3TreasuryProcedure {
   function _deployAaveV3Treasury(
     address poolAdmin,
     address deployedProxyAdmin,
-    address aclManager, 
+    address aclManager,
     bytes32 collectorSalt
   ) internal returns (TreasuryReport memory) {
     TreasuryReport memory treasuryReport;

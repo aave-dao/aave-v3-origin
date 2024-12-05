@@ -114,6 +114,16 @@ interface ICollector {
     uint256 recipientBalance
   );
 
+  /**
+   * @notice FUNDS_ADMIN role granted by ACL Manager
+   **/
+  function FUNDS_ADMIN_ROLE() external view returns (bytes32);
+
+  /**
+   * @notice Address of the current ACL Manager.
+   **/
+  function ACL_MANAGER() external view returns (address);
+
   /** @notice Returns the mock ETH reference address
    * @return address The address
    **/
@@ -135,7 +145,7 @@ interface ICollector {
    * @param streamId The id of the stream for which to query the balance.
    * @param who The address for which to query the balance.
    * @notice Returns the total funds allocated to `who` as uint256.
-   */
+   **/
   function balanceOf(uint256 streamId, address who) external view returns (uint256 balance);
 
   /**

@@ -36,17 +36,13 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
   /// @inheritdoc ICollector
   address public constant ETH_MOCK_ADDRESS = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
-  /**
-   * @notice FUNDS_ADMIN role granted by ACL Manager
-   */
+  /// @inheritdoc ICollector
   bytes32 public constant FUNDS_ADMIN_ROLE = 'FUNDS_ADMIN';
 
-  /**
-   * @notice Address of the current ACL Manager.
-   */
+  /// @inheritdoc ICollector
   address public immutable ACL_MANAGER;
 
-    /**
+  /**
    * @notice [DEPRECATED] Use `isFundsAdmin()` to check address.
    */
   address internal _fundsAdmin_deprecated;
@@ -61,15 +57,14 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
    */
   mapping(uint256 => Stream) private _streams;
 
-
   /*** Modifiers ***/
 
   /**
    * @dev Throws if the caller does not have the FUNDS_ADMIN role
    */
   modifier onlyFundsAdmin() {
-    if(_onlyFundsAdmin() == false ){
-        revert OnlyFundsAdmin();
+    if (_onlyFundsAdmin() == false) {
+      revert OnlyFundsAdmin();
     }
     _;
   }
@@ -79,8 +74,7 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
    * @param streamId The id of the stream to query.
    */
   modifier onlyAdminOrRecipient(uint256 streamId) {
-    if(
-      _onlyFundsAdmin() == false && msg.sender != _streams[streamId].recipient,){
+    if (_onlyFundsAdmin() == false && msg.sender != _streams[streamId].recipient) {
       revert OnlyFundsAdminOrRceipient();
     }
     _;
@@ -251,21 +245,21 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
     uint256 startTime,
     uint256 stopTime
   ) external onlyFundsAdmin returns (uint256) {
-    if(recipient == address(0)) revert InvalidZeroAddress();
-    if(recipient == address(this)) revert InvalidRecipient();
-    if(recipient == msg.sender) revert InvalidRecipient();
-    if(deposit == 0) revert InvalidZeroAmount();
-    if(startTime <= block.timestamp) revert InvalidStartTime();
-    if(stopTime < startTime) revert InvalidStopTime();
+    if (recipient == address(0)) revert InvalidZeroAddress();
+    if (recipient == address(this)) revert InvalidRecipient();
+    if (recipient == msg.sender) revert InvalidRecipient();
+    if (deposit == 0) revert InvalidZeroAmount();
+    if (startTime <= block.timestamp) revert InvalidStartTime();
+    if (stopTime < startTime) revert InvalidStopTime();
 
     CreateStreamLocalVars memory vars;
     vars.duration = stopTime - startTime;
 
     /* Without this, the rate per second would be zero. */
-    if(deposit < vars.duration) revert DepositSmallerTimeDelta();
+    if (deposit < vars.duration) revert DepositSmallerTimeDelta();
 
     /* This condition avoids dealing with remainders */
-    if(deposit % vars.duration > 0) revert DepositNotMultipleTimeDelta();
+    if (deposit % vars.duration > 0) revert DepositNotMultipleTimeDelta();
 
     vars.ratePerSecond = deposit / vars.duration;
 
@@ -309,11 +303,11 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
     uint256 streamId,
     uint256 amount
   ) external nonReentrant streamExists(streamId) onlyAdminOrRecipient(streamId) returns (bool) {
-    if(amount == 0) revert InvalidZeroAmount();
+    if (amount == 0) revert InvalidZeroAmount();
     Stream memory stream = _streams[streamId];
 
     uint256 balance = balanceOf(streamId, stream.recipient);
-    if(balance < amount) revert BalanceExceeded();
+    if (balance < amount) revert BalanceExceeded();
 
     _streams[streamId].remainingBalance = stream.remainingBalance - amount;
 
