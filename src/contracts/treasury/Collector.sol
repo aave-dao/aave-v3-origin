@@ -249,8 +249,8 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
     if (recipient == address(this)) revert InvalidRecipient();
     if (recipient == msg.sender) revert InvalidRecipient();
     if (deposit == 0) revert InvalidZeroAmount();
-    if (startTime <= block.timestamp) revert InvalidStartTime();
-    if (stopTime < startTime) revert InvalidStopTime();
+    if (startTime < block.timestamp) revert InvalidStartTime();
+    if (stopTime <= startTime) revert InvalidStopTime();
 
     CreateStreamLocalVars memory vars;
     vars.duration = stopTime - startTime;
