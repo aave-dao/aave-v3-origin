@@ -10,6 +10,10 @@ import {PoolAddressesProvider} from '../../../contracts/protocol/configuration/P
 import {PoolAddressesProviderRegistry} from '../../../contracts/protocol/configuration/PoolAddressesProviderRegistry.sol';
 import {IEmissionManager} from '../../../contracts/rewards/interfaces/IEmissionManager.sol';
 import {IRewardsController} from '../../../contracts/rewards/interfaces/IRewardsController.sol';
+import {Collector} from '../../../contracts/treasury/Collector.sol';
+import {ProxyAdmin} from 'solidity-utils/contracts/transparent-proxy/ProxyAdmin.sol';
+import {TransparentUpgradeableProxy} from 'solidity-utils/contracts/transparent-proxy/TransparentUpgradeableProxy.sol';
+import {RevenueSplitter} from '../../../contracts/treasury/RevenueSplitter.sol';
 
 contract AaveV3SetupProcedure {
   error MarketOwnerMustBeSet();
@@ -25,6 +29,15 @@ contract AaveV3SetupProcedure {
     address rewardsControllerProxy;
     address rewardsControllerImplementation;
     address priceOracleSentinel;
+  }
+
+  struct TreasuryInput {
+    address treasuryProxy;
+    address treasuryPartner;
+    uint16 treasurySplitPercent;
+    address proxyAdmin;
+    address aclManager;
+    bytes32 salt;
   }
 
   function _initialDeployment(
@@ -54,7 +67,8 @@ contract AaveV3SetupProcedure {
     address protocolDataProvider,
     address aaveOracle,
     address rewardsControllerImplementation,
-    address priceOracleSentinel
+    address priceOracleSentinel,
+    address proxyAdmin
   ) internal returns (SetupReport memory) {
     _validateMarketSetup(roles);
 
@@ -78,6 +92,17 @@ contract AaveV3SetupProcedure {
       report.poolConfiguratorProxy,
       config.flashLoanPremiumTotal,
       config.flashLoanPremiumToProtocol
+    );
+
+    (report.treasuryProxy, report.treasuryImplementation, report.revenueSplitter) = _setupTreasury(
+      TreasuryInput({
+        treasuryProxy: config.treasury,
+        treasuryPartner: config.treasuryPartner,
+        treasurySplitPercent: config.treasurySplitPercent,
+        proxyAdmin: proxyAdmin,
+        aclManager: report.aclManager,
+        salt: config.salt
+      })
     );
 
     _transferMarketOwnership(roles, initialReport);
@@ -181,6 +206,60 @@ contract AaveV3SetupProcedure {
     manager.revokeRole(manager.DEFAULT_ADMIN_ROLE(), address(this));
 
     return aclManager;
+  }
+
+  function _deployAaveV3Treasury(
+    address deployedProxyAdmin,
+    address aclManager,
+    bytes32 salt
+  ) internal returns (address treasuryProxy, address treasuryImplementation) {
+    if (salt != '') {
+      treasuryImplementation = address(new Collector{salt: salt}(aclManager));
+      Collector(treasuryImplementation).initialize(0);
+
+      treasuryProxy = address(
+        new TransparentUpgradeableProxy{salt: salt}(
+          treasuryImplementation,
+          ProxyAdmin(deployedProxyAdmin),
+          abi.encodeWithSelector(Collector.initialize.selector, 100_000)
+        )
+      );
+    } else {
+      treasuryImplementation = address(new Collector(aclManager));
+      Collector(treasuryImplementation).initialize(0);
+
+      treasuryProxy = address(
+        new TransparentUpgradeableProxy(
+          treasuryImplementation,
+          ProxyAdmin(deployedProxyAdmin),
+          abi.encodeWithSelector(Collector.initialize.selector, 100_000)
+        )
+      );
+    }
+  }
+
+  function _setupTreasury(
+    TreasuryInput memory input
+  ) internal returns (address treasuryProxy, address treasuryImplementation, address revenueSplitter) {
+    if (input.treasuryProxy == address(0)) {
+      (treasuryProxy, treasuryImplementation) = _deployAaveV3Treasury(
+        input.proxyAdmin,
+        input.aclManager,
+        input.salt
+      );
+    } else {
+      treasuryProxy = input.treasuryProxy;
+    }
+
+    if (
+      input.treasuryPartner != address(0) &&
+      input.treasurySplitPercent > 0 &&
+      input.treasurySplitPercent < 100_00
+    ) {
+      revenueSplitter = address(
+        new RevenueSplitter(treasuryProxy, input.treasuryPartner, input.treasurySplitPercent)
+      );
+    }
   }
 
   function _configureFlashloanParams(

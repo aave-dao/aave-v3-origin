@@ -141,7 +141,8 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
       gettersReport1.protocolDataProvider,
       peripheryReport.aaveOracle,
       peripheryReport.rewardsControllerImplementation,
-      miscReport.priceOracleSentinel
+      miscReport.priceOracleSentinel,
+      peripheryReport.proxyAdmin
     );
 
     paraswapReport = AaveV3BatchOrchestration._deployParaswapAdapters(

@@ -175,7 +175,8 @@ contract AaveV3BatchTests is BatchTestProcedures {
       gettersReportOne.protocolDataProvider,
       peripheryReportOne.aaveOracle,
       peripheryReportOne.rewardsControllerImplementation,
-      miscReport.priceOracleSentinel
+      miscReport.priceOracleSentinel,
+      peripheryReportOne.proxyAdmin
     );
   }
 
@@ -190,7 +191,7 @@ contract AaveV3BatchTests is BatchTestProcedures {
       miscReport.defaultInterestRateStrategy,
       peripheryReportOne.aaveOracle,
       setupReportTwo.rewardsControllerProxy,
-      peripheryReportOne.treasury,
+      setupReportTwo.treasuryProxy,
       tokensReport.aToken,
       tokensReport.variableDebtToken
     );

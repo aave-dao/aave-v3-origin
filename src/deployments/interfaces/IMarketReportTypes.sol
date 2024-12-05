@@ -168,16 +168,16 @@ struct SetupReport {
   address poolConfiguratorProxy;
   address rewardsControllerProxy;
   address aclManager;
+  address treasuryProxy;
+  address treasuryImplementation;
+  address revenueSplitter;
 }
 
 struct PeripheryReport {
   address aaveOracle;
   address proxyAdmin;
-  address treasury;
-  address treasuryImplementation;
   address emissionManager;
   address rewardsControllerImplementation;
-  address revenueSplitter;
 }
 
 struct ParaswapReport {
