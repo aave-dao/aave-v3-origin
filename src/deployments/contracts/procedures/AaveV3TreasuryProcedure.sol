@@ -15,6 +15,7 @@ contract AaveV3TreasuryProcedure {
   function _deployAaveV3Treasury(
     address poolAdmin,
     address deployedProxyAdmin,
+    address aclManager,
     bytes32 collectorSalt
   ) internal returns (TreasuryReport memory) {
     TreasuryReport memory treasuryReport;
@@ -22,35 +23,27 @@ contract AaveV3TreasuryProcedure {
     address treasuryOwner = poolAdmin;
 
     if (salt != '') {
-      Collector treasuryImplementation = new Collector{salt: salt}();
-      treasuryImplementation.initialize(address(0), 0);
+      Collector treasuryImplementation = new Collector{salt: salt}(aclManager);
+      treasuryImplementation.initialize(0);
       treasuryReport.treasuryImplementation = address(treasuryImplementation);
 
       treasuryReport.treasury = address(
         new TransparentUpgradeableProxy{salt: salt}(
           treasuryReport.treasuryImplementation,
           ProxyAdmin(deployedProxyAdmin),
-          abi.encodeWithSelector(
-            treasuryImplementation.initialize.selector,
-            address(treasuryOwner),
-            0
-          )
+          abi.encodeWithSelector(treasuryImplementation.initialize.selector, 100_000)
         )
       );
     } else {
-      Collector treasuryImplementation = new Collector();
-      treasuryImplementation.initialize(address(0), 0);
+      Collector treasuryImplementation = new Collector(aclManager);
+      treasuryImplementation.initialize(0);
       treasuryReport.treasuryImplementation = address(treasuryImplementation);
 
       treasuryReport.treasury = address(
         new TransparentUpgradeableProxy(
           treasuryReport.treasuryImplementation,
           ProxyAdmin(deployedProxyAdmin),
-          abi.encodeWithSelector(
-            treasuryImplementation.initialize.selector,
-            address(treasuryOwner),
-            100_000
-          )
+          abi.encodeWithSelector(treasuryImplementation.initialize.selector, 100_000)
         )
       );
     }

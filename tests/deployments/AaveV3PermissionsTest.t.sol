@@ -305,6 +305,7 @@ contract AaveV3PermissionsTest is BatchTestProcedures {
         report.proxyAdmin,
         'Treasury proxy admin does not match with report.proxyAdmin'
       );
+      assertEq(ICollector(report.treasury).ACL_MANAGER(), report.aclManager);
     }
     {
       address proxyAdminOwner = Ownable(report.proxyAdmin).owner();
