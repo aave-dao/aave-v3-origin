@@ -70,7 +70,8 @@ library AaveV3BatchOrchestration {
       gettersReport1.protocolDataProvider,
       peripheryReport.aaveOracle,
       peripheryReport.rewardsControllerImplementation,
-      miscReport.priceOracleSentinel
+      miscReport.priceOracleSentinel,
+      peripheryReport.proxyAdmin
     );
 
     ParaswapReport memory paraswapReport = _deployParaswapAdapters(
@@ -169,9 +170,9 @@ library AaveV3BatchOrchestration {
     PeripheryReport memory peripheryReport,
     AaveV3TokensBatch.TokensReport memory tokensReport
   ) internal returns (ConfigEngineReport memory) {
-    address treasury = peripheryReport.treasury;
-    if (peripheryReport.revenueSplitter != address(0)) {
-      treasury = peripheryReport.revenueSplitter;
+    address treasury = setupReport.treasuryProxy;
+    if (setupReport.revenueSplitter != address(0)) {
+      treasury = setupReport.revenueSplitter;
     }
 
     AaveV3HelpersBatchOne helpersBatchOne = new AaveV3HelpersBatchOne(
@@ -310,9 +311,9 @@ library AaveV3BatchOrchestration {
     report.paraSwapLiquiditySwapAdapter = paraswapReport.paraSwapLiquiditySwapAdapter;
     report.paraSwapRepayAdapter = paraswapReport.paraSwapRepayAdapter;
     report.paraSwapWithdrawSwapAdapter = paraswapReport.paraSwapWithdrawSwapAdapter;
-    report.treasuryImplementation = peripheryReport.treasuryImplementation;
+    report.treasuryImplementation = setupReport.treasuryImplementation;
     report.proxyAdmin = peripheryReport.proxyAdmin;
-    report.treasury = peripheryReport.treasury;
+    report.treasury = setupReport.treasuryProxy;
     report.poolProxy = setupReport.poolProxy;
     report.poolConfiguratorProxy = setupReport.poolConfiguratorProxy;
     report.rewardsControllerProxy = setupReport.rewardsControllerProxy;
@@ -326,7 +327,7 @@ library AaveV3BatchOrchestration {
     report.staticATokenFactoryProxy = staticATokenReport.staticATokenFactoryProxy;
     report.staticATokenImplementation = staticATokenReport.staticATokenImplementation;
     report.transparentProxyFactory = staticATokenReport.transparentProxyFactory;
-    report.revenueSplitter = peripheryReport.revenueSplitter;
+    report.revenueSplitter = setupReport.revenueSplitter;
 
     return report;
   }
