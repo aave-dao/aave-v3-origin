@@ -43,11 +43,6 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
   address public immutable ACL_MANAGER;
 
   /**
-   * @notice [DEPRECATED] Use `isFundsAdmin()` to check address.
-   */
-  address internal _fundsAdmin_deprecated;
-
-  /**
    * @notice Counter for new stream ids.
    */
   uint256 private _nextStreamId;
