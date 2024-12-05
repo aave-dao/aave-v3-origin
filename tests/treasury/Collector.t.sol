@@ -127,6 +127,28 @@ contract CollectorTest is Test {
   uint256 public streamStopTime;
   uint256 public nextStreamID;
 
+  event StreamIdChanged(uint256 indexed streamId);
+
+  event CreateStream(
+    uint256 indexed streamId,
+    address indexed sender,
+    address indexed recipient,
+    uint256 deposit,
+    address tokenAddress,
+    uint256 startTime,
+    uint256 stopTime
+  );
+
+  event CancelStream(
+    uint256 indexed streamId,
+    address indexed sender,
+    address indexed recipient,
+    uint256 senderBalance,
+    uint256 recipientBalance
+  );
+
+  event WithdrawFromStream(uint256 indexed streamId, address indexed recipient, uint256 amount);
+
   function setUp() public {
     vm.createSelectFork(vm.rpcUrl('mainnet'));
 
@@ -192,8 +214,7 @@ contract StreamsTest is CollectorTest {
   // create stream
   function testCreateStream() public {
     vm.expectEmit(true, true, true, true);
-
-    emit ICollector.CreateStream(
+    emit CreateStream(
       nextStreamID,
       address(collector),
       RECIPIENT_STREAM_1,
@@ -328,7 +349,7 @@ contract StreamsTest is CollectorTest {
     uint256 balanceCollectorStreamBefore = collector.balanceOf(streamId, address(collector));
 
     vm.expectEmit(true, true, true, true);
-    emit ICollector.WithdrawFromStream(streamId, RECIPIENT_STREAM_1, 1 ether);
+    emit WithdrawFromStream(streamId, RECIPIENT_STREAM_1, 1 ether);
 
     vm.prank(RECIPIENT_STREAM_1);
     // Act
@@ -358,7 +379,7 @@ contract StreamsTest is CollectorTest {
     uint256 balanceCollectorBefore = AAVE.balanceOf(address(collector));
 
     vm.expectEmit(true, true, true, true);
-    emit ICollector.WithdrawFromStream(streamId, RECIPIENT_STREAM_1, 6 ether);
+    emit WithdrawFromStream(streamId, RECIPIENT_STREAM_1, 6 ether);
 
     vm.prank(RECIPIENT_STREAM_1);
     // Act
@@ -423,7 +444,7 @@ contract StreamsTest is CollectorTest {
     uint256 balanceRecipientBefore = AAVE.balanceOf(RECIPIENT_STREAM_1);
 
     vm.expectEmit(true, true, true, true);
-    emit ICollector.CancelStream(streamId, address(collector), RECIPIENT_STREAM_1, 6 ether, 0);
+    emit CancelStream(streamId, address(collector), RECIPIENT_STREAM_1, 6 ether, 0);
 
     vm.prank(FUNDS_ADMIN);
     // Act
@@ -446,13 +467,7 @@ contract StreamsTest is CollectorTest {
     vm.warp(block.timestamp + 20);
 
     vm.expectEmit(true, true, true, true);
-    emit ICollector.CancelStream(
-      streamId,
-      address(collector),
-      RECIPIENT_STREAM_1,
-      5 ether,
-      1 ether
-    );
+    emit CancelStream(streamId, address(collector), RECIPIENT_STREAM_1, 5 ether, 1 ether);
 
     vm.prank(RECIPIENT_STREAM_1);
     // Act
