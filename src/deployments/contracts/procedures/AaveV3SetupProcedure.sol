@@ -240,7 +240,10 @@ contract AaveV3SetupProcedure {
 
   function _setupTreasury(
     TreasuryInput memory input
-  ) internal returns (address treasuryProxy, address treasuryImplementation, address revenueSplitter) {
+  )
+    internal
+    returns (address treasuryProxy, address treasuryImplementation, address revenueSplitter)
+  {
     if (input.treasuryProxy == address(0)) {
       (treasuryProxy, treasuryImplementation) = _deployAaveV3Treasury(
         input.proxyAdmin,

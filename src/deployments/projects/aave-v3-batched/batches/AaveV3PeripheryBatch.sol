@@ -8,10 +8,7 @@ import {Ownable} from '../../../../contracts/dependencies/openzeppelin/contracts
 import '../../../interfaces/IMarketReportTypes.sol';
 import {IRewardsController} from '../../../../contracts/rewards/interfaces/IRewardsController.sol';
 
-contract AaveV3PeripheryBatch is
-  AaveV3OracleProcedure,
-  AaveV3IncentiveProcedure
-{
+contract AaveV3PeripheryBatch is AaveV3OracleProcedure, AaveV3IncentiveProcedure {
   PeripheryReport internal _report;
 
   constructor(
