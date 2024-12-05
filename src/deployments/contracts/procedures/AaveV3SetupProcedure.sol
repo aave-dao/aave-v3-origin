@@ -73,17 +73,17 @@ contract AaveV3SetupProcedure {
     _validateMarketSetup(roles);
 
     SetupReport memory report = _setupPoolAddressesProvider(
-      AddressProviderInput(
-        initialReport,
-        poolImplementation,
-        poolConfiguratorImplementation,
-        protocolDataProvider,
-        roles.poolAdmin,
-        aaveOracle,
-        config.incentivesProxy,
-        rewardsControllerImplementation,
-        priceOracleSentinel
-      )
+      AddressProviderInput({
+        initialReport: initialReport,
+        poolImplementation: poolImplementation,
+        poolConfiguratorImplementation: poolConfiguratorImplementation,
+        protocolDataProvider: protocolDataProvider,
+        poolAdmin: roles.poolAdmin,
+        aaveOracle: aaveOracle,
+        rewardsControllerProxy: config.incentivesProxy,
+        rewardsControllerImplementation: rewardsControllerImplementation,
+        priceOracleSentinel: priceOracleSentinel
+      })
     );
 
     report.aclManager = _setupACL(
