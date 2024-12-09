@@ -71,7 +71,7 @@ Therefore in Aave v3.3 the Close Factor is altered to apply for the whole positi
 
 For the aave protocol it is problematic to have dust debt positions, as there is no incentive to liquidate them, while on the other hand they create an ever increasing liability to the protocol.
 Most of these dust debt positions are caused by the 50% close factor being applied to already small positions.
-In this liquidators can only liquidate 50% of a position which will decrease the overall position value to a point where the gas cost no longer outweighs the liquidation bonus.
+In this case, liquidators can only liquidate 50% of a position which will decrease the overall position value to a point where the gas cost no longer outweighs the liquidation bonus.
 
 Therefore in order to reduce the accumulation of minor debt positions, a new mechanism is introduced:
 Liquidations up to a 100% close factor are now allowed whenever the total principal or the total debt of the user on the specific reserve being liquidated is below a `MIN_BASE_MAX_CLOSE_FACTOR_THRESHOLD`
@@ -79,15 +79,13 @@ Liquidations up to a 100% close factor are now allowed whenever the total princi
 **Example**:
 Assuming a `MIN_BASE_MAX_CLOSE_FACTOR_THRESHOLD` of 1_000e8 and a position composed as:
 
-- 2_300e8 collateral A
-- 800e8 collateral B
-- 900e8 debt A
-- 1_100e8 debt B
+- 1200 $ collateral A
+- 900 $ debt B
 - a health-factor at 0.96
 
-In the previous system, a liquidation could have taken up to 50% of one of the two debt positions.
-With the new system the `collateral B` and the `debt A` are below the `MIN_BASE_MAX_CLOSE_FACTOR_THRESHOLD`.
-Therefore a liquidation could liquidate 100% of `debt A` for any principal and/or receive 100% of `collateral B` while liquidating any debt.
+In the previous system, a liquidation could have liquidated up to 50% of `debt B`.
+With the new system the debt position is below the `MIN_BASE_MAX_CLOSE_FACTOR_THRESHOLD`.
+Therefore a liquidation could liquidate 100% of `debt B`.
 
 **Acknowledged limitations**
 Liquidations are still highly influenced by gas prices, liquidation-bonus and secondary market liquidity.
