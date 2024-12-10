@@ -160,3 +160,7 @@ We plan on adding more dedicated getters in the future as we see fit.
 
 The previously deprecated `pool.getReserveDataExtended()` was removed.
 You can fetch the data via `pool.getReserveData()`, `pool.getVirtualUnderlyingBalance()` & `pool.getVirtualUnderlyingBalance()`.
+
+While the interface of `calculateInterestRates` did not change, the usage assumptions changed.
+Instead of passing `reserve.unbacked` you now have to pass `reserve.deficit + reserve.unbacked`.
+The rational being that both values represent unbacked tokens on the pool.

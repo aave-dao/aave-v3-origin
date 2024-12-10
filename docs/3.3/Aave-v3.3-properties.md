@@ -19,6 +19,7 @@ Formal properties in natural language of the 3.3 features.
 - Deficit added during the liquidation can't be more than the user's debt
 - Deficit can only be created and eliminated for an `active` reserve.
 - Edge case: deficit can be created and eliminated even is a reserve is `paused` in case it is not the main liquidated asset. Both actions don't affect a user negatively, and preventing the burning of bad debt on paused reserves could create overhead for the protocol.
+- For the interest rate calculation, deficit is treated equally as the unbacked parameter, given that it should be reducing utilisation.
 
 ### 2. Liquidation mechanics
 

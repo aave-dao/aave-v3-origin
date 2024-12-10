@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import 'forge-std/Test.sol';
 import 'forge-std/StdStorage.sol';
 
+import {IPriceOracleGetter} from '../../../src/contracts/interfaces/IPriceOracleGetter.sol';
 import {IERC20} from '../../../src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
 import {IERC20Detailed} from '../../../src/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
 import {IPool, DataTypes} from '../../../src/contracts/interfaces/IPool.sol';
@@ -26,27 +27,23 @@ contract PoolDeficitTests is TestnetProcedures {
 
   function test_eliminateReserveDeficit_exactDeficit(
     address coverageAdmin,
-    uint120 supplyAmount
+    uint120 borrowAmount
   ) public {
     _filterAddresses(coverageAdmin);
-    (address reserveToken, uint256 currentDeficit) = _createReserveDeficit(
-      supplyAmount,
-      tokenList.usdx
-    );
+    uint256 currentDeficit = _createReserveDeficit(borrowAmount, tokenList.usdx);
 
     vm.prank(poolAdmin);
     contracts.poolAddressesProvider.setAddress(bytes32('UMBRELLA'), coverageAdmin);
 
-    deal(reserveToken, coverageAdmin, currentDeficit + 1);
     DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
-      reserveToken
+      tokenList.usdx
     );
 
-    vm.startPrank(coverageAdmin);
     // +1 to account for imprecision on supply
-    deal(reserveToken, coverageAdmin, currentDeficit + 1);
-    IERC20(reserveToken).approve(report.poolProxy, UINT256_MAX);
-    contracts.poolProxy.supply(reserveToken, currentDeficit + 1, coverageAdmin, 0);
+    _mintATokens(tokenList.usdx, coverageAdmin, currentDeficit + 1);
+
+    vm.startPrank(coverageAdmin);
+    IERC20(tokenList.usdx).approve(report.poolProxy, UINT256_MAX);
     DataTypes.UserConfigurationMap memory userConfigBefore = contracts
       .poolProxy
       .getUserConfiguration(coverageAdmin);
@@ -54,40 +51,37 @@ contract PoolDeficitTests is TestnetProcedures {
 
     // eliminate deficit
     vm.expectEmit(address(contracts.poolProxy));
-    emit DeficitCovered(reserveToken, coverageAdmin, currentDeficit);
-    contracts.poolProxy.eliminateReserveDeficit(reserveToken, currentDeficit);
+    emit DeficitCovered(tokenList.usdx, coverageAdmin, currentDeficit);
+    contracts.poolProxy.eliminateReserveDeficit(tokenList.usdx, currentDeficit);
 
-    assertEq(contracts.poolProxy.getReserveDeficit(reserveToken), 0);
+    assertEq(contracts.poolProxy.getReserveDeficit(tokenList.usdx), 0);
   }
 
-  function test_eliminateReserveDeficit_exactUserBalance(
+  function test_eliminateReserveDeficit_fullUserBalance(
     address coverageAdmin,
-    uint120 supplyAmount
+    uint120 borrowAmount
   ) public {
     _filterAddresses(coverageAdmin);
-    (address reserveToken, uint256 currentDeficit) = _createReserveDeficit(
-      supplyAmount,
-      tokenList.usdx
-    );
+    uint256 currentDeficit = _createReserveDeficit(borrowAmount, tokenList.usdx);
 
     vm.prank(poolAdmin);
     contracts.poolAddressesProvider.setAddress(bytes32('UMBRELLA'), coverageAdmin);
 
     DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
-      reserveToken
+      tokenList.usdx
     );
 
+    _mintATokens(tokenList.usdx, coverageAdmin, currentDeficit / 2);
+
     vm.startPrank(coverageAdmin);
-    deal(reserveToken, coverageAdmin, currentDeficit);
-    IERC20(reserveToken).approve(report.poolProxy, UINT256_MAX);
-    contracts.poolProxy.supply(reserveToken, currentDeficit / 2, coverageAdmin, 0);
+    IERC20(tokenList.usdx).approve(report.poolProxy, UINT256_MAX);
     DataTypes.UserConfigurationMap memory userConfigBefore = contracts
       .poolProxy
       .getUserConfiguration(coverageAdmin);
     assertEq(userConfigBefore.isUsingAsCollateral(reserveData.id), true);
 
     uint256 deficitToCover = IERC20(reserveData.aTokenAddress).balanceOf(coverageAdmin);
-    contracts.poolProxy.eliminateReserveDeficit(reserveToken, deficitToCover);
+    contracts.poolProxy.eliminateReserveDeficit(tokenList.usdx, deficitToCover);
 
     DataTypes.UserConfigurationMap memory userConfigAfter = contracts
       .poolProxy
@@ -97,30 +91,25 @@ contract PoolDeficitTests is TestnetProcedures {
 
   function test_eliminateReserveDeficit_surplus(
     address coverageAdmin,
-    uint120 supplyAmount
+    uint120 borrowAmount
   ) public {
     _filterAddresses(coverageAdmin);
-    (address reserveToken, uint256 currentDeficit) = _createReserveDeficit(
-      supplyAmount,
-      tokenList.usdx
-    );
+    uint256 currentDeficit = _createReserveDeficit(borrowAmount, tokenList.usdx);
 
     vm.prank(poolAdmin);
     contracts.poolAddressesProvider.setAddress(bytes32('UMBRELLA'), coverageAdmin);
 
-    deal(reserveToken, coverageAdmin, currentDeficit + 1000);
-
-    vm.startPrank(coverageAdmin);
-    IERC20(reserveToken).approve(report.poolProxy, UINT256_MAX);
-    contracts.poolProxy.supply(reserveToken, currentDeficit + 1000, coverageAdmin, 0);
+    _mintATokens(tokenList.usdx, coverageAdmin, currentDeficit + 1000);
 
     // eliminate deficit
+    vm.startPrank(coverageAdmin);
+    IERC20(tokenList.usdx).approve(report.poolProxy, UINT256_MAX);
     vm.expectEmit(address(contracts.poolProxy));
-    emit DeficitCovered(reserveToken, coverageAdmin, currentDeficit);
-    contracts.poolProxy.eliminateReserveDeficit(reserveToken, currentDeficit + 1000);
+    emit DeficitCovered(tokenList.usdx, coverageAdmin, currentDeficit);
+    contracts.poolProxy.eliminateReserveDeficit(tokenList.usdx, currentDeficit + 1000);
 
     DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
-      reserveToken
+      tokenList.usdx
     );
     DataTypes.UserConfigurationMap memory userConfig = contracts.poolProxy.getUserConfiguration(
       coverageAdmin
@@ -130,86 +119,73 @@ contract PoolDeficitTests is TestnetProcedures {
 
   function test_eliminateReserveDeficit_parcial(
     address coverageAdmin,
-    uint120 supplyAmount,
+    uint120 borrowAmount,
     uint120 amountToCover
   ) public {
     _filterAddresses(coverageAdmin);
-    (address reserveToken, uint256 currentDeficit) = _createReserveDeficit(
-      supplyAmount,
-      tokenList.usdx
-    );
+    uint256 currentDeficit = _createReserveDeficit(borrowAmount, tokenList.usdx);
     amountToCover = uint120(bound(amountToCover, 1, currentDeficit));
 
     vm.prank(poolAdmin);
     contracts.poolAddressesProvider.setAddress(bytes32('UMBRELLA'), coverageAdmin);
 
-    deal(reserveToken, coverageAdmin, currentDeficit);
-
-    vm.startPrank(coverageAdmin);
-    IERC20(reserveToken).approve(report.poolProxy, UINT256_MAX);
-    contracts.poolProxy.supply(reserveToken, currentDeficit, coverageAdmin, 0);
+    _mintATokens(tokenList.usdx, coverageAdmin, currentDeficit);
 
     // eliminate deficit
+    vm.startPrank(coverageAdmin);
+    IERC20(tokenList.usdx).approve(report.poolProxy, UINT256_MAX);
     vm.expectEmit(address(contracts.poolProxy));
-    emit DeficitCovered(reserveToken, coverageAdmin, amountToCover);
-    contracts.poolProxy.eliminateReserveDeficit(reserveToken, amountToCover);
+    emit DeficitCovered(tokenList.usdx, coverageAdmin, amountToCover);
+    contracts.poolProxy.eliminateReserveDeficit(tokenList.usdx, amountToCover);
   }
 
   function test_reverts_eliminateReserveDeficit_has_borrows(
     address coverageAdmin,
-    uint120 supplyAmount,
+    uint120 borrowAmount,
     uint120 cAdminBorrowAmount
   ) public {
     _filterAddresses(coverageAdmin);
-    (address reserveToken, uint256 currentDeficit) = _createReserveDeficit(
-      supplyAmount,
-      tokenList.usdx
-    );
+    uint256 currentDeficit = _createReserveDeficit(borrowAmount, tokenList.usdx);
     cAdminBorrowAmount = uint120(bound(cAdminBorrowAmount, 1, currentDeficit / 2));
 
     vm.prank(poolAdmin);
     contracts.poolAddressesProvider.setAddress(bytes32('UMBRELLA'), coverageAdmin);
 
-    deal(reserveToken, coverageAdmin, currentDeficit);
-
+    _mintATokens(tokenList.usdx, coverageAdmin, currentDeficit);
     vm.startPrank(coverageAdmin);
-    IERC20(reserveToken).approve(report.poolProxy, UINT256_MAX);
-    contracts.poolProxy.supply(reserveToken, currentDeficit, coverageAdmin, 0);
-    contracts.poolProxy.borrow(reserveToken, cAdminBorrowAmount, 2, 0, coverageAdmin);
+    IERC20(tokenList.usdx).approve(report.poolProxy, UINT256_MAX);
+    contracts.poolProxy.borrow(tokenList.usdx, cAdminBorrowAmount, 2, 0, coverageAdmin);
 
     vm.expectRevert(bytes(Errors.USER_CANNOT_HAVE_DEBT));
-    contracts.poolProxy.eliminateReserveDeficit(reserveToken, currentDeficit);
+    contracts.poolProxy.eliminateReserveDeficit(tokenList.usdx, currentDeficit);
   }
 
   function test_reverts_eliminateReserveDeficit_invalid_caller(
     address caller,
-    uint120 supplyAmount
+    uint120 borrowAmount
   ) public {
     _filterAddresses(caller);
-    (address reserveToken, uint256 currentDeficit) = _createReserveDeficit(
-      supplyAmount,
-      tokenList.usdx
-    );
+    uint256 currentDeficit = _createReserveDeficit(borrowAmount, tokenList.usdx);
 
     vm.expectRevert(bytes(Errors.CALLER_NOT_UMBRELLA));
     vm.prank(caller);
-    contracts.poolProxy.eliminateReserveDeficit(reserveToken, currentDeficit);
+    contracts.poolProxy.eliminateReserveDeficit(tokenList.usdx, currentDeficit);
   }
 
   function test_reverts_eliminateReserveDeficit_invalid_amount(
     address coverageAdmin,
-    uint120 supplyAmount
+    uint120 borrowAmount
   ) public {
     _filterAddresses(coverageAdmin);
 
-    (address reserveToken, ) = _createReserveDeficit(supplyAmount, tokenList.usdx);
+    _createReserveDeficit(borrowAmount, tokenList.usdx);
 
     vm.prank(poolAdmin);
     contracts.poolAddressesProvider.setAddress(bytes32('UMBRELLA'), coverageAdmin);
 
     vm.startPrank(coverageAdmin);
     vm.expectRevert(bytes(Errors.INVALID_AMOUNT));
-    contracts.poolProxy.eliminateReserveDeficit(reserveToken, 0);
+    contracts.poolProxy.eliminateReserveDeficit(tokenList.usdx, 0);
   }
 
   function test_reverts_eliminateReserveDeficit_reserve_not_in_deficit(
@@ -226,40 +202,49 @@ contract PoolDeficitTests is TestnetProcedures {
     contracts.poolProxy.eliminateReserveDeficit(tokenList.usdx, 1);
   }
 
+  function test_interestRate() external {
+    address coverageAdmin = makeAddr('covAdmin');
+    vm.prank(poolAdmin);
+    contracts.poolAddressesProvider.setAddress(bytes32('UMBRELLA'), coverageAdmin);
+    _mintATokens(tokenList.usdx, bob, 1_000_000 ether);
+    vm.prank(bob);
+
+    contracts.poolProxy.borrow(tokenList.usdx, 200_000 ether, 2, 0, bob);
+    _checkIrInvariant(tokenList.usdx);
+
+    uint256 deficit = _createReserveDeficit(500_000 ether, tokenList.usdx, false);
+    _checkIrInvariant(tokenList.usdx);
+
+    _mintATokens(tokenList.usdx, coverageAdmin, deficit);
+    vm.startPrank(coverageAdmin);
+    IERC20(tokenList.usdx).approve(report.poolProxy, deficit);
+    contracts.poolProxy.eliminateReserveDeficit(tokenList.usdx, deficit);
+    _checkIrInvariant(tokenList.usdx);
+  }
+
+  function _checkIrInvariant(address asset) internal {
+    DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(asset);
+    assertLt(
+      reserveData.currentLiquidityRate * IERC20(reserveData.aTokenAddress).totalSupply(),
+      reserveData.currentVariableBorrowRate *
+        IERC20(reserveData.variableDebtTokenAddress).totalSupply()
+    );
+  }
+
   function _createReserveDeficit(
-    uint120 supplyAmount,
-    address borrowAsset
-  ) internal returns (address, uint256) {
-    vm.assume(supplyAmount != 0);
-    deal(tokenList.wbtc, alice, supplyAmount);
-    vm.startPrank(alice);
-    IERC20(tokenList.wbtc).approve(address(contracts.poolProxy), supplyAmount);
-    contracts.poolProxy.supply(tokenList.wbtc, supplyAmount, alice, 0);
-    (, , uint256 availableBorrowsBase, , , ) = contracts.poolProxy.getUserAccountData(alice);
-    vm.stopPrank();
+    uint256 borrowAmount,
+    address borrowAsset,
+    bool mintBorrowableAssets
+  ) internal returns (uint256) {
+    borrowAmount = bound(borrowAmount, 1e18, type(uint120).max);
+    _mintATokens(tokenList.wbtc, alice, 1);
 
-    uint256 borrowAmount = (availableBorrowsBase * 10 ** IERC20Detailed(borrowAsset).decimals()) /
-      contracts.aaveOracle.getAssetPrice(borrowAsset);
+    if (mintBorrowableAssets) {
+      // setup available amount to borrow
+      _mintATokens(borrowAsset, carol, borrowAmount);
+    }
 
-    // setup available amount to borrow
-    deal(borrowAsset, carol, borrowAmount);
-    vm.prank(carol);
-    IERC20(borrowAsset).approve(address(contracts.poolProxy), borrowAmount);
-    vm.prank(carol);
-    contracts.poolProxy.supply(borrowAsset, borrowAmount, carol, 0);
-
-    vm.prank(alice);
-    contracts.poolProxy.borrow(borrowAsset, borrowAmount, 2, 0, alice);
-    vm.stopPrank();
-
-    vm.warp(block.timestamp + 30 days);
-
-    stdstore
-      .target(IAaveOracle(report.aaveOracle).getSourceOfAsset(tokenList.wbtc))
-      .sig('_latestAnswer()')
-      .checked_write(
-        _calcPrice(IAaveOracle(report.aaveOracle).getAssetPrice(tokenList.wbtc), 20_00)
-      );
+    _borrowArbitraryAmount(borrowAsset, alice, borrowAmount);
 
     deal(borrowAsset, bob, borrowAmount);
     vm.prank(bob);
@@ -271,7 +256,14 @@ contract PoolDeficitTests is TestnetProcedures {
 
     assertGt(currentDeficit, 0);
 
-    return (borrowAsset, currentDeficit);
+    return currentDeficit;
+  }
+
+  function _createReserveDeficit(
+    uint120 borrowAmount,
+    address borrowAsset
+  ) internal returns (uint256) {
+    return _createReserveDeficit(borrowAmount, borrowAsset, true);
   }
 
   function _filterAddresses(address user) internal view {
@@ -288,5 +280,30 @@ contract PoolDeficitTests is TestnetProcedures {
     vm.assume(user != contracts.poolProxy.getReserveAToken(tokenList.usdx));
     vm.assume(user != contracts.poolProxy.getReserveAToken(tokenList.wbtc));
     vm.assume(user != contracts.poolProxy.getReserveAToken(tokenList.weth));
+  }
+
+  // we reinvent these helpers on each contract and should move them somewhere common
+  function _mintATokens(address underlying, address receiver, uint256 amount) internal {
+    deal(underlying, receiver, amount);
+    vm.startPrank(receiver);
+    IERC20(underlying).approve(address(contracts.poolProxy), amount);
+    contracts.poolProxy.deposit(underlying, amount, receiver, 0);
+    vm.stopPrank();
+  }
+
+  // assumes that the caller has at least one unit of collateralAsset that is not the borrowAsset
+  function _borrowArbitraryAmount(address borrowAsset, address borrower, uint256 amount) internal {
+    address oracle = contracts.poolProxy.ADDRESSES_PROVIDER().getPriceOracle();
+    // set the oracle price of the borrow asset to 0
+    vm.mockCall(
+      oracle,
+      abi.encodeWithSelector(IPriceOracleGetter.getAssetPrice.selector, address(borrowAsset)),
+      abi.encode(0)
+    );
+    // borrow the full emount of the asset
+    vm.prank(borrower);
+    contracts.poolProxy.borrow(borrowAsset, amount, 2, 0, borrower);
+    // revert the oracle price
+    vm.clearMockedCalls();
   }
 }
