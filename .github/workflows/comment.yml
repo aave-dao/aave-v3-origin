@@ -12,6 +12,7 @@ permissions:
   checks: read
   statuses: read
   pull-requests: write
+  contents: write
 
 jobs:
   comment:

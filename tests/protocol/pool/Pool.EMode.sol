@@ -16,6 +16,7 @@ import {PercentageMath} from '../../../src/contracts/protocol/libraries/math/Per
 import {IAaveOracle} from '../../../src/contracts/interfaces/IAaveOracle.sol';
 import {TestnetProcedures} from '../../utils/TestnetProcedures.sol';
 import {TestnetERC20} from '../../../src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
+import {LiquidationHelper} from '../../helpers/LiquidationHelper.sol';
 
 contract PoolEModeTests is TestnetProcedures {
   using stdStorage for StdStorage;
@@ -263,11 +264,11 @@ contract PoolEModeTests is TestnetProcedures {
       false
     );
 
-    DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
+    DataTypes.ReserveConfigurationMap memory reserveConfig = contracts.poolProxy.getConfiguration(
       tokenList.usdx
     );
     uint256 bonus = amount - amount.percentDiv(liquidationBonus);
-    uint256 protocolFee = bonus.percentMul(reserveData.configuration.getLiquidationProtocolFee());
+    uint256 protocolFee = bonus.percentMul(reserveConfig.getLiquidationProtocolFee());
     assertEq(IERC20(tokenList.usdx).balanceOf(liquidator), amount - protocolFee);
   }
 

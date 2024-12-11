@@ -103,12 +103,16 @@ contract RateStrategySettersTests is RateStrategyBase {
   function test_reverts_SetReserveInterestRateParams_when_gt_maxRate(
     IDefaultInterestRateStrategyV2.InterestRateData memory rateData
   ) public {
-    vm.assume(
-      rateData.optimalUsageRatio >= rateStrategy.MIN_OPTIMAL_POINT() &&
-        rateData.optimalUsageRatio <= rateStrategy.MAX_OPTIMAL_POINT()
+    rateData.optimalUsageRatio = uint16(
+      bound(
+        rateData.optimalUsageRatio,
+        rateStrategy.MIN_OPTIMAL_POINT(),
+        rateStrategy.MAX_OPTIMAL_POINT()
+      )
     );
-
-    vm.assume(rateData.variableRateSlope1 <= rateData.variableRateSlope2);
+    rateData.variableRateSlope1 = uint32(
+      bound(rateData.variableRateSlope1, 0, rateData.variableRateSlope2)
+    );
     vm.assume(
       uint256(rateData.baseVariableBorrowRate) +
         uint256(rateData.variableRateSlope1) +
