@@ -808,7 +808,7 @@ interface IPool {
    * - the equivalent aToken `amount` for assets with virtual accounting enabled
    * - the equivalent `amount` of underlying for assets with virtual accounting disabled (e.g. GHO)
    * @dev The deficit of a reserve can occur due to situations where borrowed assets are not repaid, leading to bad debt.
-   * @param asset The address of the underlying asset to cover the dificit.
+   * @param asset The address of the underlying asset to cover the deficit.
    * @param amount The amount to be covered, in aToken or underlying on non-virtual accounted assets
    */
   function eliminateReserveDeficit(address asset, uint256 amount) external;

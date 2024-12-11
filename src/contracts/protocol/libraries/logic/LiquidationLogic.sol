@@ -152,7 +152,7 @@ library LiquidationLogic {
       IAToken(reserveCache.aTokenAddress).handleRepayment(
         msg.sender,
         // In the context of GHO it's only relevant that the address has no debt.
-        // Passing the pool is fitting as it's handeling the repayment on behalf of the protocol.
+        // Passing the pool is fitting as it's handling the repayment on behalf of the protocol.
         address(this),
         balanceWriteOff
       );
@@ -404,7 +404,7 @@ library LiquidationLogic {
 
     // burn bad debt if necessary
     // Each additional debt asset already adds around ~75k gas to the liquidation.
-    // To keep the liquidation gas under control, 0 usd collateral positions are not touched, as there is no immediate benefit in burning or transfering to treasury.
+    // To keep the liquidation gas under control, 0 usd collateral positions are not touched, as there is no immediate benefit in burning or transferring to treasury.
     if (hasNoCollateralLeft && userConfig.isBorrowingAny()) {
       _burnBadDebt(reservesData, reservesList, userConfig, params.reservesCount, params.user);
     }
