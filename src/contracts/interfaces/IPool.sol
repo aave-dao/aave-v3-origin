@@ -816,7 +816,7 @@ interface IPool {
   /**
    * @notice Returns the current deficit of a reserve.
    * @param asset The address of the underlying asset of the reserve
-   * @return The the current deficit
+   * @return The current deficit of the reserve
    */
   function getReserveDeficit(address asset) external view returns (uint256);
 
