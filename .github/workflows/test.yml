@@ -47,20 +47,20 @@ jobs:
         run: npm ci --prefer-offline --no-audit
 
       - name: Run Foundry setup
-        uses: bgd-labs/github-workflows/.github/actions/foundry-setup@d738561b5afce35ca3752b28236c9dd68a3fa822
+        uses: bgd-labs/github-workflows/.github/actions/foundry-setup@4f16d15e380bbcf7e3933698c08b9fd34e967f78
 
       - name: Run Forge tests
-        uses: bgd-labs/github-workflows/.github/actions/foundry-test@d738561b5afce35ca3752b28236c9dd68a3fa822
+        uses: bgd-labs/github-workflows/.github/actions/foundry-test@4f16d15e380bbcf7e3933698c08b9fd34e967f78
 
       - name: Run Gas report
-        uses: bgd-labs/github-workflows/.github/actions/foundry-gas-report@d738561b5afce35ca3752b28236c9dd68a3fa822
+        uses: bgd-labs/github-workflows/.github/actions/foundry-gas-report@4f16d15e380bbcf7e3933698c08b9fd34e967f78
 
       - name: Cleanup
         # This test will currently fail on coverage due to the gas limit beaing breached with optimizer disabled
         run: rm tests/deployments/DeploymentsGasLimits.t.sol
 
       - name: Run Lcov report
-        uses: bgd-labs/github-workflows/.github/actions/foundry-lcov-report@d738561b5afce35ca3752b28236c9dd68a3fa822
+        uses: bgd-labs/github-workflows/.github/actions/foundry-lcov-report@4f16d15e380bbcf7e3933698c08b9fd34e967f78
 
       - name: Save PR number
         if: github.event_name == 'pull_request' || github.event_name == 'pull_request_target'

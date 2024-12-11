@@ -42,8 +42,8 @@ library LiquidationLogic {
   // See `IPool` for descriptions
   event ReserveUsedAsCollateralEnabled(address indexed reserve, address indexed user);
   event ReserveUsedAsCollateralDisabled(address indexed reserve, address indexed user);
-  event DeficitCreated(address indexed user, address indexed debtAsset, uint256 amount);
-  event DeficitCovered(address indexed reserve, address caller, uint256 amountDecreased);
+  event DeficitCreated(address indexed user, address indexed debtAsset, uint256 amountCreated);
+  event DeficitCovered(address indexed reserve, address caller, uint256 amountCovered);
   event LiquidationCall(
     address indexed collateralAsset,
     address indexed debtAsset,

@@ -201,12 +201,12 @@ interface IPool {
   event MintedToTreasury(address indexed reserve, uint256 amountMinted);
 
   /**
-   *
+   * @dev Emitted when deficit is realized on a liquidation.
    * @param user The user address where the bad debt will be burned
    * @param debtAsset The address of the underlying borrowed asset to be burned
-   * @param amount The amount to burn
+   * @param amountCreated The amount of deficit created
    */
-  event DeficitCreated(address indexed user, address indexed debtAsset, uint256 amount);
+  event DeficitCreated(address indexed user, address indexed debtAsset, uint256 amountCreated);
 
   /**
    * @notice Mints an `amount` of aTokens to the `onBehalfOf`
@@ -804,7 +804,7 @@ interface IPool {
   function deposit(address asset, uint256 amount, address onBehalfOf, uint16 referralCode) external;
 
   /**
-   * @notice It Covers the deficit of a specified reserve by burning:
+   * @notice It covers the deficit of a specified reserve by burning:
    * - the equivalent aToken `amount` for assets with virtual accounting enabled
    * - the equivalent `amount` of underlying for assets with virtual accounting disabled (e.g. GHO)
    * @dev The deficit of a reserve can occur due to situations where borrowed assets are not repaid, leading to bad debt.

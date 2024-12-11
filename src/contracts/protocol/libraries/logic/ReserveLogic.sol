@@ -12,8 +12,6 @@ import {PercentageMath} from '../math/PercentageMath.sol';
 import {Errors} from '../helpers/Errors.sol';
 import {DataTypes} from '../types/DataTypes.sol';
 import {SafeCast} from '../../../dependencies/openzeppelin/contracts/SafeCast.sol';
-import {IAToken} from '../../../interfaces/IAToken.sol';
-import {UserConfiguration} from '../configuration/UserConfiguration.sol';
 
 /**
  * @title ReserveLogic library
@@ -27,7 +25,6 @@ library ReserveLogic {
   using GPv2SafeERC20 for IERC20;
   using ReserveLogic for DataTypes.ReserveData;
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
-  using UserConfiguration for DataTypes.UserConfigurationMap;
 
   // See `IPool` for descriptions
   event ReserveDataUpdated(
@@ -38,8 +35,6 @@ library ReserveLogic {
     uint256 liquidityIndex,
     uint256 variableBorrowIndex
   );
-
-  event ReserveUsedAsCollateralDisabled(address indexed reserve, address indexed user);
 
   /**
    * @notice Returns the ongoing normalized income for the reserve.
