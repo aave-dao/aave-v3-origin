@@ -33,6 +33,9 @@ coverage :
 	make coverage-report
 	make coverage-badge
 
+# Gas reports
+forge test --mp 'tests/gas/*.t.sol' --isolate
+
 # Utilities
 download :; cast etherscan-source --chain ${chain} -d src/etherscan/${chain}_${address} ${address}
 git-diff :
