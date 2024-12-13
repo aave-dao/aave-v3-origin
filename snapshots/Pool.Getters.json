@@ -1,0 +1,10 @@
+{
+  "getEModeCategoryCollateralConfig": "8000",
+  "getEModeCategoryData": "13430",
+  "getLiquidationGracePeriod": "29197",
+  "getReserveData": "34935",
+  "getUserAccountData: supplies: 0, borrows: 0": "22641",
+  "getUserAccountData: supplies: 1, borrows: 0": "34774",
+  "getUserAccountData: supplies: 2, borrows: 0": "47296",
+  "getUserAccountData: supplies: 2, borrows: 1": "28968"
+}
