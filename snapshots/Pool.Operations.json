@@ -1,0 +1,15 @@
+{
+  "borrow: first borrow->borrowingEnabled": "256189",
+  "borrow: recurrent borrow": "248474",
+  "liquidationCall: deficit on liquidated asset": "392266",
+  "liquidationCall: deficit on liquidated asset + other asset": "422243",
+  "liquidationCall: full liquidation": "392266",
+  "liquidationCall: partial liquidation": "381149",
+  "repay: full repay": "176547",
+  "repay: partial repay": "189971",
+  "supply: collateralDisabled": "146829",
+  "supply: collateralEnabled": "146829",
+  "supply: first supply->collateralEnabled": "188344",
+  "withdraw: full withdraw": "165303",
+  "withdraw: partial withdraw": "181992"
+}
