@@ -16,6 +16,10 @@ contract PoolOperations_gas_Tests is Testhelpers {
   address liquidator = makeAddr('liquidator');
 
   function test_supply() external {
+    // borrow some, so hf checks are not skipped
+    _supplyOnReserve(supplier, 1 ether, tokenList.weth);
+    _borrowArbitraryAmount(supplier, 1e5, tokenList.wbtc);
+
     _supplyOnReserve(supplier, 100e6, tokenList.usdx);
     vm.snapshotGasLastCall('Pool.Operations', 'supply: first supply->collateralEnabled');
 
@@ -150,6 +154,9 @@ contract PoolOperations_gas_Tests is Testhelpers {
       type(uint256).max,
       false
     );
-    vm.snapshotGasLastCall('Pool.Operations', 'liquidationCall: deficit on liquidated asset + other asset');
+    vm.snapshotGasLastCall(
+      'Pool.Operations',
+      'liquidationCall: deficit on liquidated asset + other asset'
+    );
   }
 }
