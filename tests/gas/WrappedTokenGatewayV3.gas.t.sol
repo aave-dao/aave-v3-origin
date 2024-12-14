@@ -27,7 +27,10 @@ contract WrappedTokenGatewayV3_gas_Tests is Testhelpers {
 
     _skip(100);
 
-    VariableDebtToken(wEthVariableDebt).approveDelegation(report.wrappedTokenGateway, type(uint256).max);
+    VariableDebtToken(wEthVariableDebt).approveDelegation(
+      report.wrappedTokenGateway,
+      type(uint256).max
+    );
     contracts.wrappedTokenGateway.borrowETH(address(0), 0.1 ether, 0);
     vm.snapshotGasLastCall('WrappedTokenGatewayV3', 'borrowETH');
 
