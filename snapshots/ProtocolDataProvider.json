@@ -7,7 +7,6 @@
   "getPaused": "16855",
   "getReserveCaps": "16767",
   "getReserveConfigurationData": "17181",
-  "getReserveData": "74487",
   "getReserveTokensAddresses": "43054",
   "getSiloedBorrowing": "16770",
   "getTotalDebt": "57882",
