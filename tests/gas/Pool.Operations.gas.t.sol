@@ -83,9 +83,15 @@ contract PoolOperations_gas_Tests is Testhelpers {
   }
 
   function test_liquidationCall_partial() external {
+    // on v3.3 the amounts need to be adjusted to not cause error 103 (min leftover) issues
+    uint256 scalingFactor = 10;
     uint256 price = contracts.aaveOracle.getAssetPrice(tokenList.weth);
-    _supplyOnReserve(borrower, (((price * 1e6) / 1e8) * 90) / 100, tokenList.usdx);
-    _borrowArbitraryAmount(borrower, 1 ether, tokenList.weth);
+    _supplyOnReserve(
+      borrower,
+      ((((price * 1e6) / 1e8) * 90) / 100) * scalingFactor,
+      tokenList.usdx
+    );
+    _borrowArbitraryAmount(borrower, 1 ether * scalingFactor, tokenList.weth);
     deal(tokenList.weth, liquidator, 0.5 ether);
     vm.startPrank(liquidator);
     IERC20(tokenList.weth).approve(report.poolProxy, 0.5 ether);

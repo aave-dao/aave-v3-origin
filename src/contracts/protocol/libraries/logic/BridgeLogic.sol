@@ -14,6 +14,11 @@ import {Errors} from '../helpers/Errors.sol';
 import {ValidationLogic} from './ValidationLogic.sol';
 import {ReserveLogic} from './ReserveLogic.sol';
 
+/**
+ * @title BridgeLogic library
+ * @author Aave
+ * @notice Implements functions to mint unbacked aTokens and back the unbacked tokens.
+ */
 library BridgeLogic {
   using ReserveLogic for DataTypes.ReserveCache;
   using ReserveLogic for DataTypes.ReserveData;

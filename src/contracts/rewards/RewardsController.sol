@@ -8,7 +8,7 @@ import {RewardsDistributor} from './RewardsDistributor.sol';
 import {IRewardsController} from './interfaces/IRewardsController.sol';
 import {ITransferStrategyBase} from './interfaces/ITransferStrategyBase.sol';
 import {RewardsDataTypes} from './libraries/RewardsDataTypes.sol';
-import {IEACAggregatorProxy} from '../helpers/interfaces/IEACAggregatorProxy.sol';
+import {AggregatorInterface} from '../dependencies/chainlink/AggregatorInterface.sol';
 
 /**
  * @title RewardsController
@@ -34,7 +34,7 @@ contract RewardsController is RewardsDistributor, VersionedInitializable, IRewar
   // the current Aave UI without the need to setup an external price registry
   // At the moment of reward configuration, the Incentives Controller performs
   // a check to see if the provided reward oracle contains `latestAnswer`.
-  mapping(address => IEACAggregatorProxy) internal _rewardOracle;
+  mapping(address => AggregatorInterface) internal _rewardOracle;
 
   modifier onlyAuthorizedClaimers(address claimer, address user) {
     require(_authorizedClaimers[user] == claimer, 'CLAIMER_UNAUTHORIZED');
@@ -100,7 +100,7 @@ contract RewardsController is RewardsDistributor, VersionedInitializable, IRewar
   /// @inheritdoc IRewardsController
   function setRewardOracle(
     address reward,
-    IEACAggregatorProxy rewardOracle
+    AggregatorInterface rewardOracle
   ) external onlyEmissionManager {
     _setRewardOracle(reward, rewardOracle);
   }
@@ -341,13 +341,13 @@ contract RewardsController is RewardsDistributor, VersionedInitializable, IRewar
   }
 
   /**
-   * @dev Update the Price Oracle of a reward token. The Price Oracle must follow Chainlink IEACAggregatorProxy interface.
+   * @dev Update the Price Oracle of a reward token. The Price Oracle must follow Chainlink AggregatorInterface interface.
    * @notice The Price Oracle of a reward is used for displaying correct data about the incentives at the UI frontend.
    * @param reward The address of the reward token
    * @param rewardOracle The address of the price oracle
    */
 
-  function _setRewardOracle(address reward, IEACAggregatorProxy rewardOracle) internal {
+  function _setRewardOracle(address reward, AggregatorInterface rewardOracle) internal {
     require(rewardOracle.latestAnswer() > 0, 'ORACLE_MUST_RETURN_PRICE');
     _rewardOracle[reward] = rewardOracle;
     emit RewardOracleUpdated(reward, address(rewardOracle));
