@@ -1,4 +1,4 @@
-name: certora
+name: certora-basic
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -34,7 +34,7 @@ jobs:
         with: { distribution: "zulu", java-version: "11", java-package: jre }
 
       - name: Install certora cli
-        run: pip install certora-cli==7.17.2
+        run: pip install certora-cli==7.20.3
 
       - name: Install solc
         run: |
