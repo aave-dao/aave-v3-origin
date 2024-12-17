@@ -222,7 +222,7 @@ contract PoolDeficitTests is TestnetProcedures {
     _checkIrInvariant(tokenList.usdx);
   }
 
-  function _checkIrInvariant(address asset) internal {
+  function _checkIrInvariant(address asset) internal view {
     DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(asset);
     assertLt(
       reserveData.currentLiquidityRate * IERC20(reserveData.aTokenAddress).totalSupply(),

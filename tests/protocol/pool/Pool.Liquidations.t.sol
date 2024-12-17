@@ -21,7 +21,7 @@ import {DataTypes} from '../../../src/contracts/protocol/libraries/types/DataTyp
 import {PercentageMath} from '../../../src/contracts/protocol/libraries/math/PercentageMath.sol';
 import {WadRayMath} from '../../../src/contracts/protocol/libraries/math/WadRayMath.sol';
 import {TestnetProcedures} from '../../utils/TestnetProcedures.sol';
-import {LiquidationHelper} from '../../helpers/LiquidationHelper.sol';
+import {LiquidationDataProvider} from '../../../src/contracts/helpers/LiquidationDataProvider.sol';
 
 contract PoolLiquidationTests is TestnetProcedures {
   using stdStorage for StdStorage;
@@ -39,6 +39,7 @@ contract PoolLiquidationTests is TestnetProcedures {
 
   PriceOracleSentinel internal priceOracleSentinel;
   SequencerOracle internal sequencerOracleMock;
+  LiquidationDataProvider internal liquidationDataProvider;
 
   event IsolationModeTotalDebtUpdated(address indexed asset, uint256 totalDebt);
 
@@ -65,6 +66,10 @@ contract PoolLiquidationTests is TestnetProcedures {
       ISequencerOracle(address(sequencerOracleMock)),
       1 days
     );
+    liquidationDataProvider = new LiquidationDataProvider(
+      address(contracts.poolProxy),
+      address(contracts.poolAddressesProvider)
+    );
 
     vm.prank(poolAdmin);
     sequencerOracleMock.setAnswer(false, 0);
@@ -81,13 +86,8 @@ contract PoolLiquidationTests is TestnetProcedures {
     uint256 actualCollateralToLiquidate;
     bool receiveAToken;
     uint256 liquidationAmountInput;
-    address collateralPriceSource;
-    address debtPriceSource;
-    uint256 liquidationBonus;
     uint256 userCollateralBalance;
     uint256 priceImpactPercent;
-    uint256 liquidationProtocolFeeAmount;
-    uint256 collateralToLiquidateInBaseCurrency;
     uint256 totalCollateralInBaseCurrency;
     uint256 totalDebtInBaseCurrency;
     uint256 healthFactor;
@@ -966,22 +966,8 @@ contract PoolLiquidationTests is TestnetProcedures {
     uint256 priceImpact
   ) internal returns (LiquidationInput memory) {
     LiquidationInput memory params;
-    params.collateralAsset = collateralAsset;
-    params.debtAsset = debtAsset;
-    params.user = user;
-    params.liquidationAmountInput = liquidationAmount;
-    (
-      params.liquidationBonus,
-      params.collateralPriceSource,
-      params.debtPriceSource
-    ) = _getLiquidationBonus(params.user, params.collateralAsset, params.debtAsset);
-    params.receiveAToken = false;
-    (address aToken, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(
-      params.collateralAsset
-    );
-    params.userCollateralBalance = IAToken(aToken).balanceOf(params.user);
-    params.priceImpactPercent = priceImpact;
 
+    params.priceImpactPercent = priceImpact;
     // This test expects oracle source is MockAggregator.sol
     stdstore
       .target(IAaveOracle(report.aaveOracle).getSourceOfAsset(priceImpactSource))
@@ -993,38 +979,24 @@ contract PoolLiquidationTests is TestnetProcedures {
         )
       );
 
-    (
-      params.totalCollateralInBaseCurrency,
-      params.totalDebtInBaseCurrency,
-      ,
-      ,
-      ,
-      params.healthFactor
-    ) = contracts.poolProxy.getUserAccountData(params.user);
+    LiquidationDataProvider.LiquidationInfo memory liquidationInfo = liquidationDataProvider
+      .getLiquidationInfo(user, collateralAsset, debtAsset, liquidationAmount);
 
-    uint256 maxLiquidatableDebt = LiquidationHelper._getMaxLiquidatableDebt(
-      contracts.poolProxy,
-      user,
-      params.collateralAsset,
-      params.debtAsset
-    );
+    params.collateralAsset = collateralAsset;
+    params.debtAsset = debtAsset;
+    params.user = user;
+    params.liquidationAmountInput = liquidationAmount;
+    params.receiveAToken = false;
 
-    params.actualDebtToLiquidate = params.liquidationAmountInput > maxLiquidatableDebt
-      ? maxLiquidatableDebt
-      : params.liquidationAmountInput;
+    params.userCollateralBalance = liquidationInfo.collateralInfo.collateralBalance;
 
-    (
-      params.actualCollateralToLiquidate,
-      params.actualDebtToLiquidate,
-      params.liquidationProtocolFeeAmount,
-      params.collateralToLiquidateInBaseCurrency
-    ) = LiquidationHelper._getLiquidationParams(
-      contracts.poolProxy,
-      params.user,
-      params.collateralAsset,
-      params.debtAsset,
-      params.actualDebtToLiquidate
-    );
+    params.totalCollateralInBaseCurrency = liquidationInfo.userInfo.totalCollateralInBaseCurrency;
+    params.totalDebtInBaseCurrency = liquidationInfo.userInfo.totalDebtInBaseCurrency;
+    params.healthFactor = liquidationInfo.userInfo.healthFactor;
+
+    params.actualCollateralToLiquidate = liquidationInfo.maxCollateralToLiquidate;
+    params.actualDebtToLiquidate = liquidationInfo.maxDebtToLiquidate;
+
     return params;
   }
 
@@ -1281,25 +1253,6 @@ contract PoolLiquidationTests is TestnetProcedures {
       );
     }
     vm.stopPrank();
-  }
-
-  function _getLiquidationBonus(
-    address user,
-    address collateralAsset,
-    address debtAsset
-  ) internal view returns (uint256, address, address) {
-    uint256 id = contracts.poolProxy.getUserEMode(user);
-    if (id != 0) {
-      DataTypes.CollateralConfig memory cfg = contracts.poolProxy.getEModeCategoryCollateralConfig(
-        uint8(id)
-      );
-      return (cfg.liquidationBonus, collateralAsset, debtAsset);
-    } else {
-      DataTypes.ReserveConfigurationMap memory conf = contracts.poolProxy.getConfiguration(
-        debtAsset
-      );
-      return (conf.getLiquidationBonus(), collateralAsset, debtAsset);
-    }
   }
 
   function _afterLiquidationChecksVariable(

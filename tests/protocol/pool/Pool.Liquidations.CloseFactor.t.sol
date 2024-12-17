@@ -21,6 +21,7 @@ import {DataTypes} from '../../../src/contracts/protocol/libraries/types/DataTyp
 import {PercentageMath} from '../../../src/contracts/protocol/libraries/math/PercentageMath.sol';
 import {WadRayMath} from '../../../src/contracts/protocol/libraries/math/WadRayMath.sol';
 import {TestnetProcedures} from '../../utils/TestnetProcedures.sol';
+import {LiquidationDataProvider} from '../../../src/contracts/helpers/LiquidationDataProvider.sol';
 import {LiquidationHelper} from '../../helpers/LiquidationHelper.sol';
 
 contract PoolLiquidationCloseFactorTests is TestnetProcedures {
@@ -38,6 +39,7 @@ contract PoolLiquidationCloseFactorTests is TestnetProcedures {
 
   PriceOracleSentinel internal priceOracleSentinel;
   SequencerOracle internal sequencerOracleMock;
+  LiquidationDataProvider internal liquidationDataProvider;
 
   event IsolationModeTotalDebtUpdated(address indexed asset, uint256 totalDebt);
 
@@ -46,6 +48,11 @@ contract PoolLiquidationCloseFactorTests is TestnetProcedures {
 
     _addBorrowableLiquidity();
     _fundLiquidator();
+
+    liquidationDataProvider = new LiquidationDataProvider(
+      address(contracts.poolProxy),
+      address(contracts.poolAddressesProvider)
+    );
   }
 
   // ## Fuzzing suite ##
@@ -172,6 +179,74 @@ contract PoolLiquidationCloseFactorTests is TestnetProcedures {
     );
   }
 
+  // on aave v3.3 in certain edge scenarios, liquidation uint.max reverts on cf 50%
+  // the liquidationprovider should always return valid values
+  function test_liquidationdataprovider_edge_range() external {
+    // borrow supply 4k
+    _supplyToPool(tokenList.usdx, bob, 8000e6);
+    vm.prank(bob);
+    contracts.poolProxy.borrow(tokenList.usdx, 4200e6, 2, 0, bob);
+    _borrowToBeBelowHf(bob, tokenList.weth, 0.98 ether);
+
+    vm.startPrank(liquidator);
+    IERC20Detailed(tokenList.usdx).approve(address(contracts.poolProxy), type(uint256).max);
+
+    vm.expectRevert(bytes(Errors.MUST_NOT_LEAVE_DUST));
+    contracts.poolProxy.liquidationCall(
+      tokenList.usdx,
+      tokenList.usdx,
+      bob,
+      type(uint256).max,
+      false
+    );
+
+    // call with exact input
+    LiquidationDataProvider.LiquidationInfo memory liquidationInfo = liquidationDataProvider
+      .getLiquidationInfo(bob, tokenList.usdx, tokenList.usdx);
+    contracts.poolProxy.liquidationCall(
+      tokenList.usdx,
+      tokenList.usdx,
+      bob,
+      liquidationInfo.maxDebtToLiquidate,
+      false
+    );
+  }
+
+  // on aave v3.3 in certain edge scenarios, liquidation uint.max reverts on cf 50%
+  // the liquidationprovider should always return valid values
+  function test_liquidationdataprovider_edge_range_reverse() external {
+    // borrow supply 4k
+    _supplyToPool(tokenList.usdx, bob, 4200e6);
+    uint256 amount = (4000e8 * (10 ** IERC20Detailed(tokenList.weth).decimals())) /
+      contracts.aaveOracle.getAssetPrice(tokenList.weth);
+    _supplyToPool(tokenList.weth, bob, amount);
+    vm.prank(bob);
+    _borrowToBeBelowHf(bob, tokenList.usdx, 0.98 ether);
+
+    vm.startPrank(liquidator);
+    IERC20Detailed(tokenList.usdx).approve(address(contracts.poolProxy), type(uint256).max);
+
+    vm.expectRevert(bytes(Errors.MUST_NOT_LEAVE_DUST));
+    contracts.poolProxy.liquidationCall(
+      tokenList.usdx,
+      tokenList.usdx,
+      bob,
+      type(uint256).max,
+      false
+    );
+
+    // call with exact input
+    LiquidationDataProvider.LiquidationInfo memory liquidationInfo = liquidationDataProvider
+      .getLiquidationInfo(bob, tokenList.usdx, tokenList.usdx);
+    contracts.poolProxy.liquidationCall(
+      tokenList.usdx,
+      tokenList.usdx,
+      bob,
+      liquidationInfo.maxDebtToLiquidate,
+      false
+    );
+  }
+
   function _liquidateAndValidateCloseFactor(
     address collateralAsset,
     address debtAsset,
@@ -191,29 +266,29 @@ contract PoolLiquidationCloseFactorTests is TestnetProcedures {
         contracts.aaveOracle.getAssetPrice(debtAsset)
     );
     // then we calculate the exact amounts
-    (uint256 collateralAmount, uint256 debtAmount, , ) = LiquidationHelper._getLiquidationParams(
-      contracts.poolProxy,
-      bob,
-      collateralAsset,
-      debtAsset,
-      amountToLiquidate
-    );
+    LiquidationDataProvider.LiquidationInfo memory liquidationInfo = liquidationDataProvider
+      .getLiquidationInfo(bob, collateralAsset, debtAsset, amountToLiquidate);
     uint256 balanceBefore = IERC20Detailed(collateralAsset).balanceOf(liquidator);
     vm.prank(liquidator);
     IERC20Detailed(debtAsset).approve(address(contracts.poolProxy), type(uint256).max);
     vm.prank(liquidator);
     contracts.poolProxy.liquidationCall(collateralAsset, debtAsset, bob, amountToLiquidate, false);
     uint256 balanceAfter = IERC20Detailed(collateralAsset).balanceOf(liquidator);
-    assertEq(balanceAfter - balanceBefore, collateralAmount, 'WRONG_BALANCE');
-    assertApproxEqAbs(debtAmountAt100.percentMul(closeFactor), debtAmount, 1, 'WRONG_CLOSE_FACTOR');
+    assertEq(
+      balanceAfter - balanceBefore,
+      liquidationInfo.maxCollateralToLiquidate,
+      'WRONG_BALANCE'
+    );
+    assertApproxEqAbs(
+      debtAmountAt100.percentMul(closeFactor),
+      liquidationInfo.maxDebtToLiquidate,
+      1,
+      'WRONG_CLOSE_FACTOR'
+    );
   }
 
   function _borrowToBeBelowHf(address user, address assetToBorrow, uint256 desiredhf) internal {
-    uint256 requiredBorrowsInBase = LiquidationHelper._getRequiredBorrowsForHfBelow(
-      contracts.poolProxy,
-      user,
-      desiredhf
-    );
+    uint256 requiredBorrowsInBase = _getRequiredBorrowsForHfBelow(user, desiredhf);
     uint256 amount = (requiredBorrowsInBase * (10 ** IERC20Detailed(assetToBorrow).decimals())) /
       contracts.aaveOracle.getAssetPrice(assetToBorrow);
     vm.mockCall(
@@ -244,5 +319,25 @@ contract PoolLiquidationCloseFactorTests is TestnetProcedures {
     IERC20(erc20).approve(address(contracts.poolProxy), amount);
     contracts.poolProxy.supply(erc20, amount, user, 0);
     vm.stopPrank();
+  }
+
+  /**
+   * @notice Returns the required amount of borrows in base currency to reach a certain healthfactor
+   */
+  function _getRequiredBorrowsForHfBelow(
+    address user,
+    uint256 desiredHf
+  ) internal view returns (uint256) {
+    (
+      uint256 totalCollateralBase,
+      uint256 totalBorrowsBase,
+      ,
+      uint256 currentLiquidationThreshold,
+      ,
+
+    ) = contracts.poolProxy.getUserAccountData(user);
+    return
+      ((totalCollateralBase.percentMul(currentLiquidationThreshold + 1) * 1e18) / desiredHf) -
+      totalBorrowsBase;
   }
 }
