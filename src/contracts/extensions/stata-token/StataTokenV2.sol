@@ -59,7 +59,7 @@ contract StataTokenV2 is
     else _unpause();
   }
 
-  /// @inheritdoc IRescuable
+  /// @inheritdoc Rescuable
   function whoCanRescue() public view override returns (address) {
     return POOL_ADDRESSES_PROVIDER.getACLAdmin();
   }

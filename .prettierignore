@@ -3,3 +3,4 @@ lib
 cache
 node_modules
 report
+snapshots
