@@ -124,12 +124,6 @@ interface ICollector {
    **/
   function ETH_MOCK_ADDRESS() external pure returns (address);
 
-  /** @notice Initializes the contracts
-   * @param nextStreamId StreamId to set, applied if greater than 0
-   * @param admin The default admin managing the FundsAdmins
-   **/
-  function initialize(uint256 nextStreamId, address admin) external;
-
   /**
    * @notice Checks if address is funds admin
    * @return bool If the address has the funds admin role

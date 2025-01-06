@@ -83,7 +83,10 @@ contract Collector is AccessControlUpgradeable, ReentrancyGuardUpgradeable, ICol
 
   /*** Contract Logic Starts Here */
 
-  /// @inheritdoc ICollector
+  /** @notice Initializes the contracts
+   * @param nextStreamId StreamId to set, applied if greater than 0
+   * @param admin The default admin managing the FundsAdmins
+   **/
   function initialize(uint256 nextStreamId, address admin) external virtual initializer {
     __AccessControl_init();
     __ReentrancyGuard_init();
