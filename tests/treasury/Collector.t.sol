@@ -4,6 +4,8 @@ pragma solidity ^0.8.0;
 import {Test} from 'forge-std/Test.sol';
 import {StdUtils} from 'forge-std/StdUtils.sol';
 
+import {ProxyAdmin} from 'solidity-utils/contracts/transparent-proxy/ProxyAdmin.sol';
+import {TransparentUpgradeableProxy} from 'solidity-utils/contracts/transparent-proxy/TransparentUpgradeableProxy.sol';
 import {IERC20} from 'src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
 import {IAccessControl} from 'src/contracts/dependencies/openzeppelin/contracts/IAccessControl.sol';
 import {ACLManager} from 'src/contracts/protocol/configuration/ACLManager.sol';
@@ -25,7 +27,7 @@ contract CollectorTest is StdUtils, Test {
 
   uint256 public streamStartTime;
   uint256 public streamStopTime;
-  uint256 public nextStreamID;
+  uint256 public nextStreamID = 100_000;
 
   event StreamIdChanged(uint256 indexed streamId);
   event CreateStream(
@@ -56,8 +58,6 @@ contract CollectorTest is StdUtils, Test {
     vm.prank(OWNER);
     provider.setACLAdmin(EXECUTOR_LVL_1);
 
-    ACLManager aclManager = new ACLManager(provider);
-
     tokenA = IERC20(address(deployMockERC20('Token A', 'TK_A', 18)));
     tokenB = IERC20(address(deployMockERC20('Token B', 'TK_B', 6)));
 
@@ -65,14 +65,20 @@ contract CollectorTest is StdUtils, Test {
     streamStopTime = block.timestamp + 70;
     nextStreamID = 0;
 
-    collector = new Collector(address(aclManager));
-    collector.initialize(nextStreamID);
+    address collectorImpl = address(new Collector());
+    collector = Collector(address(
+      new TransparentUpgradeableProxy(
+        collectorImpl,
+        new ProxyAdmin(address(this)), // mock proxy admin
+        abi.encodeWithSelector(Collector.initialize.selector, nextStreamID, EXECUTOR_LVL_1)
+      )
+    ));
 
     deal(address(tokenA), address(collector), 100 ether);
 
     vm.startPrank(EXECUTOR_LVL_1);
-    IAccessControl(address(aclManager)).grantRole(collector.FUNDS_ADMIN_ROLE(), FUNDS_ADMIN);
-    IAccessControl(address(aclManager)).grantRole(collector.FUNDS_ADMIN_ROLE(), EXECUTOR_LVL_1);
+    IAccessControl(address(collector)).grantRole(collector.FUNDS_ADMIN_ROLE(), FUNDS_ADMIN);
+    IAccessControl(address(collector)).grantRole(collector.FUNDS_ADMIN_ROLE(), EXECUTOR_LVL_1);
     vm.stopPrank();
   }
 
@@ -414,12 +420,6 @@ contract StreamsTest is CollectorTest {
         streamStartTime,
         streamStopTime
       );
-  }
-}
-
-contract GetRevision is CollectorTest {
-  function test_successful() public view {
-    assertEq(collector.REVISION(), 6);
   }
 }
 

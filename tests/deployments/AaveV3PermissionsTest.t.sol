@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
+import {IAccessControl} from 'openzeppelin-contracts/contracts/access/IAccessControl.sol';
 import {Ownable} from '../../src/contracts/dependencies/openzeppelin/contracts/Ownable.sol';
 import {IPoolAddressesProvider} from '../../src/contracts/interfaces/IPoolAddressesProvider.sol';
 import '../../src/deployments/interfaces/IMarketReportTypes.sol';
@@ -305,7 +306,7 @@ contract AaveV3PermissionsTest is BatchTestProcedures {
         report.proxyAdmin,
         'Treasury proxy admin does not match with report.proxyAdmin'
       );
-      assertEq(ICollector(report.treasury).ACL_MANAGER(), report.aclManager);
+      assertEq(IAccessControl(report.treasury).hasRole(emptyBytes, roles.poolAdmin), true);
     }
     {
       address proxyAdminOwner = Ownable(report.proxyAdmin).owner();
