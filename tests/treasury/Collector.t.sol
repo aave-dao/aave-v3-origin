@@ -8,7 +8,6 @@ import {ProxyAdmin} from 'solidity-utils/contracts/transparent-proxy/ProxyAdmin.
 import {TransparentUpgradeableProxy} from 'solidity-utils/contracts/transparent-proxy/TransparentUpgradeableProxy.sol';
 import {IERC20} from '../../src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
 import {IAccessControl} from '../../src/contracts/dependencies/openzeppelin/contracts/IAccessControl.sol';
-import {ACLManager} from '../../src/contracts/protocol/configuration/ACLManager.sol';
 import {PoolAddressesProvider} from '../../src/contracts/protocol/configuration/PoolAddressesProvider.sol';
 import {Collector} from '../../src/contracts/treasury/Collector.sol';
 import {ICollector} from '../../src/contracts/treasury/ICollector.sol';
