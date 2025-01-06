@@ -6,12 +6,12 @@ import {StdUtils} from 'forge-std/StdUtils.sol';
 
 import {ProxyAdmin} from 'solidity-utils/contracts/transparent-proxy/ProxyAdmin.sol';
 import {TransparentUpgradeableProxy} from 'solidity-utils/contracts/transparent-proxy/TransparentUpgradeableProxy.sol';
-import {IERC20} from 'src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
-import {IAccessControl} from 'src/contracts/dependencies/openzeppelin/contracts/IAccessControl.sol';
-import {ACLManager} from 'src/contracts/protocol/configuration/ACLManager.sol';
-import {PoolAddressesProvider} from 'src/contracts/protocol/configuration/PoolAddressesProvider.sol';
-import {Collector} from 'src/contracts/treasury/Collector.sol';
-import {ICollector} from 'src/contracts/treasury/ICollector.sol';
+import {IERC20} from '../../src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {IAccessControl} from '../../src/contracts/dependencies/openzeppelin/contracts/IAccessControl.sol';
+import {ACLManager} from '../../src/contracts/protocol/configuration/ACLManager.sol';
+import {PoolAddressesProvider} from '../../src/contracts/protocol/configuration/PoolAddressesProvider.sol';
+import {Collector} from '../../src/contracts/treasury/Collector.sol';
+import {ICollector} from '../../src/contracts/treasury/ICollector.sol';
 
 contract CollectorTest is StdUtils, Test {
   Collector public collector;
@@ -66,13 +66,15 @@ contract CollectorTest is StdUtils, Test {
     nextStreamID = 0;
 
     address collectorImpl = address(new Collector());
-    collector = Collector(address(
-      new TransparentUpgradeableProxy(
-        collectorImpl,
-        new ProxyAdmin(address(this)), // mock proxy admin
-        abi.encodeWithSelector(Collector.initialize.selector, nextStreamID, EXECUTOR_LVL_1)
+    collector = Collector(
+      address(
+        new TransparentUpgradeableProxy(
+          collectorImpl,
+          new ProxyAdmin(address(this)), // mock proxy admin
+          abi.encodeWithSelector(Collector.initialize.selector, nextStreamID, EXECUTOR_LVL_1)
+        )
       )
-    ));
+    );
 
     deal(address(tokenA), address(collector), 100 ether);
 
