@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import {AccessControlUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/access/AccessControlUpgradeable.sol';
+import {ReentrancyGuardUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/utils/ReentrancyGuardUpgradeable.sol';
 import {ICollector} from './ICollector.sol';
 import {IAccessControl} from '../dependencies/openzeppelin/contracts/IAccessControl.sol';
-import {ReentrancyGuard} from '../dependencies/openzeppelin/ReentrancyGuard.sol';
-import {VersionedInitializable} from '../misc/aave-upgradeability/VersionedInitializable.sol';
 import {IERC20} from '../dependencies/openzeppelin/contracts/IERC20.sol';
 import {SafeERC20} from '../dependencies/openzeppelin/contracts/SafeERC20.sol';
 import {Address} from '../dependencies/openzeppelin/contracts/Address.sol';
@@ -22,25 +22,19 @@ import {Address} from '../dependencies/openzeppelin/contracts/Address.sol';
  * - Same as with creation, on Sablier the `sender` and `recipient` can cancel a stream. Here, only fund admin and recipient
  * @author BGD Labs
  **/
-contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
+contract Collector is AccessControlUpgradeable, ReentrancyGuardUpgradeable, ICollector {
   using SafeERC20 for IERC20;
   using Address for address payable;
 
   /*** Storage Properties ***/
-
-  /**
-   * @notice Current revision of the contract.
-   */
-  uint256 public constant REVISION = 6;
-
   /// @inheritdoc ICollector
   address public constant ETH_MOCK_ADDRESS = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
   /// @inheritdoc ICollector
   bytes32 public constant FUNDS_ADMIN_ROLE = 'FUNDS_ADMIN';
 
-  /// @inheritdoc ICollector
-  address public immutable ACL_MANAGER;
+  // Reserved storage space to account for deprecated inherited storage
+  uint256[53] private ______gap;
 
   /**
    * @notice Counter for new stream ids.
@@ -83,33 +77,29 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
     _;
   }
 
-  constructor(address aclManager) {
-    if (aclManager == address(0)) revert InvalidZeroAddress();
-    ACL_MANAGER = aclManager;
+  constructor() {
+    _disableInitializers();
   }
 
   /*** Contract Logic Starts Here */
 
-  /// @inheritdoc ICollector
-  function initialize(uint256 nextStreamId) external virtual initializer {
+  /** @notice Initializes the contracts
+   * @param nextStreamId StreamId to set, applied if greater than 0
+   * @param admin The default admin managing the FundsAdmins
+   **/
+  function initialize(uint256 nextStreamId, address admin) external virtual initializer {
+    __AccessControl_init();
+    __ReentrancyGuard_init();
+    _grantRole(DEFAULT_ADMIN_ROLE, admin);
     if (nextStreamId != 0) {
       _nextStreamId = nextStreamId;
     }
-
-    _initGuard();
-    _setFundsAdmin(fundsAdmin);
   }
 
   /*** View Functions ***/
-
-  /// @inheritdoc VersionedInitializable
-  function getRevision() internal pure override returns (uint256) {
-    return REVISION;
-  }
-
   /// @inheritdoc ICollector
   function isFundsAdmin(address admin) external view returns (bool) {
-    return IAccessControl(ACL_MANAGER).hasRole(FUNDS_ADMIN_ROLE, admin);
+    return hasRole(FUNDS_ADMIN_ROLE, admin);
   }
 
   /// @inheritdoc ICollector
@@ -214,7 +204,7 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
   }
 
   function _onlyFundsAdmin() internal view returns (bool) {
-    return IAccessControl(ACL_MANAGER).hasRole(FUNDS_ADMIN_ROLE, msg.sender);
+    return hasRole(FUNDS_ADMIN_ROLE, msg.sender);
   }
 
   struct CreateStreamLocalVars {

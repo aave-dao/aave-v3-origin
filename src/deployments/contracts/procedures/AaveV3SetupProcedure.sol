@@ -36,7 +36,7 @@ contract AaveV3SetupProcedure {
     address treasuryPartner;
     uint16 treasurySplitPercent;
     address proxyAdmin;
-    address aclManager;
+    address aclAdmin;
     bytes32 salt;
   }
 
@@ -100,7 +100,7 @@ contract AaveV3SetupProcedure {
         treasuryPartner: config.treasuryPartner,
         treasurySplitPercent: config.treasurySplitPercent,
         proxyAdmin: proxyAdmin,
-        aclManager: report.aclManager,
+        aclAdmin: roles.poolAdmin,
         salt: config.salt
       })
     );
@@ -210,29 +210,27 @@ contract AaveV3SetupProcedure {
 
   function _deployAaveV3Treasury(
     address deployedProxyAdmin,
-    address aclManager,
+    address aclAdmin,
     bytes32 salt
   ) internal returns (address treasuryProxy, address treasuryImplementation) {
     if (salt != '') {
-      treasuryImplementation = address(new Collector{salt: salt}(aclManager));
-      Collector(treasuryImplementation).initialize(0);
+      treasuryImplementation = address(new Collector{salt: salt}());
 
       treasuryProxy = address(
         new TransparentUpgradeableProxy{salt: salt}(
           treasuryImplementation,
           ProxyAdmin(deployedProxyAdmin),
-          abi.encodeWithSelector(Collector.initialize.selector, 100_000)
+          abi.encodeWithSelector(Collector.initialize.selector, 100_000, aclAdmin)
         )
       );
     } else {
-      treasuryImplementation = address(new Collector(aclManager));
-      Collector(treasuryImplementation).initialize(0);
+      treasuryImplementation = address(new Collector());
 
       treasuryProxy = address(
         new TransparentUpgradeableProxy(
           treasuryImplementation,
           ProxyAdmin(deployedProxyAdmin),
-          abi.encodeWithSelector(Collector.initialize.selector, 100_000)
+          abi.encodeWithSelector(Collector.initialize.selector, 100_000, aclAdmin)
         )
       );
     }
@@ -247,7 +245,7 @@ contract AaveV3SetupProcedure {
     if (input.treasuryProxy == address(0)) {
       (treasuryProxy, treasuryImplementation) = _deployAaveV3Treasury(
         input.proxyAdmin,
-        input.aclManager,
+        input.aclAdmin,
         input.salt
       );
     } else {

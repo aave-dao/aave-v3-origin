@@ -119,20 +119,10 @@ interface ICollector {
    **/
   function FUNDS_ADMIN_ROLE() external view returns (bytes32);
 
-  /**
-   * @notice Address of the current ACL Manager.
-   **/
-  function ACL_MANAGER() external view returns (address);
-
   /** @notice Returns the mock ETH reference address
    * @return address The address
    **/
   function ETH_MOCK_ADDRESS() external pure returns (address);
-
-  /** @notice Initializes the contracts
-   * @param nextStreamId StreamId to set, applied if greater than 0
-   **/
-  function initialize(uint256 nextStreamId) external;
 
   /**
    * @notice Checks if address is funds admin
