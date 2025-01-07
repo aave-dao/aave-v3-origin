@@ -85,7 +85,8 @@ contract WrappedTokenGatewayTests is TestnetProcedures {
     vm.startPrank(alice);
     vm.expectEmit();
     emit ReserveUsedAsCollateralEnabled(tokenList.weth, alice);
-    emit Supply(tokenList.weth, alice, alice, depositSize, 0);
+    vm.expectEmit();
+    emit Supply(tokenList.weth, address(wrappedTokenGatewayV3), alice, depositSize, 0);
     wrappedTokenGatewayV3.depositETH{value: depositSize}(report.poolProxy, alice, 0);
     vm.stopPrank();
 
@@ -278,6 +279,7 @@ contract WrappedTokenGatewayTests is TestnetProcedures {
 
     vm.expectEmit();
     emit ReserveUsedAsCollateralEnabled(tokenList.usdx, bob);
+    vm.expectEmit();
     emit Supply(tokenList.usdx, bob, bob, usdxSize, 0);
     contracts.poolProxy.deposit(address(usdx), usdxSize, bob, 0);
 
@@ -347,6 +349,7 @@ contract WrappedTokenGatewayTests is TestnetProcedures {
 
     vm.expectEmit();
     emit ReserveUsedAsCollateralEnabled(tokenList.usdx, bob);
+    vm.expectEmit();
     emit Supply(tokenList.usdx, bob, bob, usdxSize, 0);
     contracts.poolProxy.deposit(address(usdx), usdxSize, bob, 0);
 
