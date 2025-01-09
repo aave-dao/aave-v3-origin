@@ -2,11 +2,11 @@
 pragma solidity ^0.8.0;
 
 import {ERC20Upgradeable, ERC20PermitUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC20PermitUpgradeable.sol';
-import {IERC20Metadata} from '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import {PausableUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/utils/PausableUpgradeable.sol';
+import {IERC20Metadata} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
+import {IERC20Permit} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol';
 import {IRescuable, Rescuable} from 'solidity-utils/contracts/utils/Rescuable.sol';
 import {IRescuableBase, RescuableBase} from 'solidity-utils/contracts/utils/RescuableBase.sol';
-import {IERC20Permit} from '@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol';
 
 import {IACLManager} from '../../../contracts/interfaces/IACLManager.sol';
 import {ERC4626Upgradeable, ERC4626StataTokenUpgradeable, IPool, Math, IERC20} from './ERC4626StataTokenUpgradeable.sol';
