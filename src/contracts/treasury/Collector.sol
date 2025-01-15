@@ -34,6 +34,12 @@ contract Collector is AccessControlUpgradeable, ReentrancyGuardUpgradeable, ICol
   bytes32 public constant FUNDS_ADMIN_ROLE = 'FUNDS_ADMIN';
 
   // Reserved storage space to account for deprecated inherited storage
+  // 0 was lastInitializedRevision
+  // 1-50 were the ____gap
+  // 51 was the reentrancy guard _status
+  // 52 was the _fundsAdmin
+  // On some networks the layout was shifted by 1 due to `initializing` being on slot 1
+  // The upgrade proposal would in this case manually shift the storage layout to properly align the networks
   uint256[53] private ______gap;
 
   /**
