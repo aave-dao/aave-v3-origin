@@ -200,7 +200,7 @@ contract AaveV3BatchTests is BatchTestProcedures {
     new AaveV3HelpersBatchTwo(
       setupReportTwo.poolProxy,
       setupReportTwo.rewardsControllerProxy,
-      peripheryReportOne.proxyAdmin
+      roles.poolAdmin
     );
   }
 }

@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {ProxyAdmin} from 'solidity-utils/contracts/transparent-proxy/ProxyAdmin.sol';
-import {TransparentUpgradeableProxy} from 'solidity-utils/contracts/transparent-proxy/TransparentUpgradeableProxy.sol';
+import {TransparentUpgradeableProxy} from 'openzeppelin-contracts/contracts/proxy/transparent/TransparentUpgradeableProxy.sol';
 import {Collector} from '../../../contracts/treasury/Collector.sol';
 import '../../interfaces/IMarketReportTypes.sol';
 
@@ -29,7 +28,7 @@ contract AaveV3TreasuryProcedure {
       treasuryReport.treasury = address(
         new TransparentUpgradeableProxy{salt: salt}(
           treasuryReport.treasuryImplementation,
-          ProxyAdmin(deployedProxyAdmin),
+          poolAdmin,
           abi.encodeWithSelector(
             treasuryImplementation.initialize.selector,
             address(treasuryOwner),
@@ -45,7 +44,7 @@ contract AaveV3TreasuryProcedure {
       treasuryReport.treasury = address(
         new TransparentUpgradeableProxy(
           treasuryReport.treasuryImplementation,
-          ProxyAdmin(deployedProxyAdmin),
+          poolAdmin,
           abi.encodeWithSelector(
             treasuryImplementation.initialize.selector,
             address(treasuryOwner),

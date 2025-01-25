@@ -2,7 +2,7 @@
 pragma solidity ^0.8.10;
 
 import {IERC20Metadata} from 'solidity-utils/contracts/oz-common/interfaces/IERC20Metadata.sol';
-import {ITransparentProxyFactory, ProxyAdmin} from 'solidity-utils/contracts/transparent-proxy/interfaces/ITransparentProxyFactory.sol';
+import {ITransparentProxyFactory} from 'solidity-utils/contracts/transparent-proxy/interfaces/ITransparentProxyFactory.sol';
 import {Initializable} from 'solidity-utils/contracts/transparent-proxy/Initializable.sol';
 import {IPool, DataTypes} from '../../../contracts/interfaces/IPool.sol';
 import {StataTokenV2} from './StataTokenV2.sol';
@@ -20,7 +20,7 @@ contract StataTokenFactory is Initializable, IStataTokenFactory {
   IPool public immutable POOL;
 
   ///@inheritdoc IStataTokenFactory
-  address public immutable PROXY_ADMIN;
+  address public immutable INITIAL_OWNER;
 
   ///@inheritdoc IStataTokenFactory
   ITransparentProxyFactory public immutable TRANSPARENT_PROXY_FACTORY;
@@ -35,12 +35,12 @@ contract StataTokenFactory is Initializable, IStataTokenFactory {
 
   constructor(
     IPool pool,
-    address proxyAdmin,
+    address initialOwner,
     ITransparentProxyFactory transparentProxyFactory,
     address stataTokenImpl
   ) {
     POOL = pool;
-    PROXY_ADMIN = proxyAdmin;
+    INITIAL_OWNER = initialOwner;
     TRANSPARENT_PROXY_FACTORY = transparentProxyFactory;
     STATA_TOKEN_IMPL = stataTokenImpl;
   }
@@ -62,7 +62,7 @@ contract StataTokenFactory is Initializable, IStataTokenFactory {
         );
         address stataToken = TRANSPARENT_PROXY_FACTORY.createDeterministic(
           STATA_TOKEN_IMPL,
-          ProxyAdmin(PROXY_ADMIN),
+          INITIAL_OWNER,
           abi.encodeWithSelector(
             StataTokenV2.initialize.selector,
             reserveData.aTokenAddress,

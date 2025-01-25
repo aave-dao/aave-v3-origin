@@ -98,7 +98,7 @@ library AaveV3BatchOrchestration {
     StaticATokenReport memory staticATokenReport = _deployHelpersBatch2(
       setupReport.poolProxy,
       setupReport.rewardsControllerProxy,
-      peripheryReport.proxyAdmin
+      roles.poolAdmin
     );
 
     // Save final report at AaveV3SetupBatch contract
@@ -191,12 +191,12 @@ library AaveV3BatchOrchestration {
   function _deployHelpersBatch2(
     address pool,
     address rewardsController,
-    address proxyAdmin
+    address poolAdmin
   ) internal returns (StaticATokenReport memory) {
     AaveV3HelpersBatchTwo helpersBatchTwo = new AaveV3HelpersBatchTwo(
       pool,
       rewardsController,
-      proxyAdmin
+      poolAdmin
     );
 
     return helpersBatchTwo.staticATokenReport();

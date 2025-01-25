@@ -22,7 +22,7 @@ import '../../contracts/extensions/paraswap-adapters/ParaSwapWithdrawSwapAdapter
 import '../../contracts/helpers/interfaces/IWrappedTokenGatewayV3.sol';
 import '../../contracts/helpers/L2Encoder.sol';
 import {ICollector} from '../../contracts/treasury/ICollector.sol';
-import {ProxyAdmin} from 'solidity-utils/contracts/transparent-proxy/ProxyAdmin.sol';
+import {ProxyAdmin} from 'openzeppelin-contracts/contracts/proxy/transparent/ProxyAdmin.sol';
 
 struct ContractsReport {
   IPoolAddressesProviderRegistry poolAddressesProviderRegistry;
