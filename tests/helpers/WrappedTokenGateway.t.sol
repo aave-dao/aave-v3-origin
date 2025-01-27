@@ -227,6 +227,45 @@ contract WrappedTokenGatewayTests is TestnetProcedures {
     assertEq(alice.balance, userEthBalanceBefore + userATokenBalance);
   }
 
+  function test_withdrawEth_permit_frontrunRegression() public {
+    test_depositNativeEthInPool();
+
+    uint256 withdrawAmount = 0.6e18;
+
+    EIP712SigUtils.Permit memory permit = EIP712SigUtils.Permit({
+      owner: alice,
+      spender: address(wrappedTokenGatewayV3),
+      value: withdrawAmount,
+      nonce: 0,
+      deadline: block.timestamp + 1 days
+    });
+    bytes32 digest = EIP712SigUtils.getTypedDataHash(
+      permit,
+      bytes(aWEth.name()),
+      bytes('1'),
+      address(aWEth)
+    );
+
+    (uint8 v, bytes32 r, bytes32 s) = vm.sign(alicePrivateKey, digest);
+
+    uint256 userEthBalanceBefore = alice.balance;
+
+    vm.prank(alice);
+    aWEth.permit(permit.owner, permit.spender, permit.value, permit.deadline, v, r, s);
+
+    // should not revert if permit is already executed
+    vm.prank(alice);
+    wrappedTokenGatewayV3.withdrawETHWithPermit(
+      report.poolProxy,
+      withdrawAmount,
+      alice,
+      permit.deadline,
+      v,
+      r,
+      s
+    );
+  }
+
   function test_withdrawEth_full() public {
     uint256 fullWithdraw = depositSize;
 
