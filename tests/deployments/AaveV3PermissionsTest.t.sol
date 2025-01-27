@@ -150,10 +150,11 @@ contract AaveV3PermissionsTest is BatchTestProcedures {
       );
     }
     {
-      address treasuryAdmin = address(uint160(uint256(vm.load(report.treasury, ADMIN_SLOT))));
+      address proxyAdmin = address(uint160(uint256(vm.load(report.treasury, ADMIN_SLOT))));
+      address owner = Ownable(proxyAdmin).owner();
       assertEq(
-        treasuryAdmin,
-        report.proxyAdmin,
+        owner,
+        roles.poolAdmin,
         'Treasury proxy admin does not match with report.proxyAdmin'
       );
     }
@@ -299,10 +300,11 @@ contract AaveV3PermissionsTest is BatchTestProcedures {
       );
     }
     {
-      address treasuryAdmin = address(uint160(uint256(vm.load(report.treasury, ADMIN_SLOT))));
+      address proxyAdmin = address(uint160(uint256(vm.load(report.treasury, ADMIN_SLOT))));
+      address owner = Ownable(proxyAdmin).owner();
       assertEq(
-        treasuryAdmin,
-        report.proxyAdmin,
+        owner,
+        roles.poolAdmin,
         'Treasury proxy admin does not match with report.proxyAdmin'
       );
     }

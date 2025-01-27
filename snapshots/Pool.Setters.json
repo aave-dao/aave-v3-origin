@@ -1,6 +1,6 @@
 {
-  "setUserEMode: enter eMode, 1 borrow, 1 supply": "140164",
-  "setUserEMode: leave eMode, 1 borrow, 1 supply": "112199",
-  "setUserUseReserveAsCollateral: disableCollateral, 1 supply": "93434",
-  "setUserUseReserveAsCollateral: enableCollateral, 1 supply": "105145"
+  "setUserEMode: enter eMode, 1 borrow, 1 supply": "46460",
+  "setUserEMode: leave eMode, 1 borrow, 1 supply": "22007",
+  "setUserUseReserveAsCollateral: disableCollateral, 1 supply": "28874",
+  "setUserUseReserveAsCollateral: enableCollateral, 1 supply": "34073"
 }
