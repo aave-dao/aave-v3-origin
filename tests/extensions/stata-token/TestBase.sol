@@ -11,6 +11,10 @@ import {TestnetProcedures, TestnetERC20} from '../../utils/TestnetProcedures.sol
 import {DataTypes} from '../../../src/contracts/protocol/libraries/types/DataTypes.sol';
 
 abstract contract BaseTest is TestnetProcedures {
+  /// @dev Storage slot with the admin of the contract.
+  bytes32 internal constant ADMIN_SLOT =
+    0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103;
+
   address constant OWNER = address(1234);
   address public constant EMISSION_ADMIN = address(25);
 
@@ -51,12 +55,12 @@ abstract contract BaseTest is TestnetProcedures {
     rewardTokens.push(rewardToken);
 
     proxyFactory = ITransparentProxyFactory(report.transparentProxyFactory);
-    proxyAdmin = report.proxyAdmin;
 
     factory = StataTokenFactory(report.staticATokenFactoryProxy);
     factory.createStataTokens(contracts.poolProxy.getReservesList());
 
     stataTokenV2 = StataTokenV2(factory.getStataToken(underlying));
+    proxyAdmin = address(uint160(uint256(vm.load(address(stataTokenV2), ADMIN_SLOT))));
   }
 
   function _skipBlocks(uint128 blocks) internal {

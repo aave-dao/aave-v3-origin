@@ -23,12 +23,6 @@ contract AaveV3PeripheryBatch is
     address poolAddressesProvider,
     address setupBatch
   ) {
-    if (config.proxyAdmin == address(0)) {
-      _report.proxyAdmin = address(new ProxyAdmin{salt: config.salt}(poolAdmin));
-    } else {
-      _report.proxyAdmin = config.proxyAdmin;
-    }
-
     _report.aaveOracle = _deployAaveOracle(config.oracleDecimals, poolAddressesProvider);
 
     if (config.treasury == address(0)) {

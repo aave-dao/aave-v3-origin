@@ -313,7 +313,6 @@ library AaveV3BatchOrchestration {
     report.paraSwapRepayAdapter = paraswapReport.paraSwapRepayAdapter;
     report.paraSwapWithdrawSwapAdapter = paraswapReport.paraSwapWithdrawSwapAdapter;
     report.treasuryImplementation = peripheryReport.treasuryImplementation;
-    report.proxyAdmin = peripheryReport.proxyAdmin;
     report.treasury = peripheryReport.treasury;
     report.poolProxy = setupReport.poolProxy;
     report.poolConfiguratorProxy = setupReport.poolConfiguratorProxy;

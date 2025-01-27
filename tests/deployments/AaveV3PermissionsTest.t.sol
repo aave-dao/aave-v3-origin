@@ -158,14 +158,6 @@ contract AaveV3PermissionsTest is BatchTestProcedures {
         'Treasury proxy admin does not match with report.proxyAdmin'
       );
     }
-    {
-      address proxyAdminOwner = Ownable(report.proxyAdmin).owner();
-      assertEq(
-        proxyAdminOwner,
-        roles.poolAdmin,
-        'ProxyAdmin owner does not match with roles.poolAdmin'
-      );
-    }
   }
 
   function testCheckPermissionsTreasuryPartner() public {
@@ -306,14 +298,6 @@ contract AaveV3PermissionsTest is BatchTestProcedures {
         owner,
         roles.poolAdmin,
         'Treasury proxy admin does not match with report.proxyAdmin'
-      );
-    }
-    {
-      address proxyAdminOwner = Ownable(report.proxyAdmin).owner();
-      assertEq(
-        proxyAdminOwner,
-        roles.poolAdmin,
-        'ProxyAdmin owner does not match with roles.poolAdmin'
       );
     }
     {
