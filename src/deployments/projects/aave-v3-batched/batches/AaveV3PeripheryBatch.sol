@@ -32,11 +32,7 @@ contract AaveV3PeripheryBatch is
     _report.aaveOracle = _deployAaveOracle(config.oracleDecimals, poolAddressesProvider);
 
     if (config.treasury == address(0)) {
-      TreasuryReport memory treasuryReport = _deployAaveV3Treasury(
-        poolAdmin,
-        _report.proxyAdmin,
-        config.salt
-      );
+      TreasuryReport memory treasuryReport = _deployAaveV3Treasury(poolAdmin, config.salt);
 
       _report.treasury = treasuryReport.treasury;
       _report.treasuryImplementation = treasuryReport.treasuryImplementation;
