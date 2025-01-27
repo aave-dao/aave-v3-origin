@@ -88,6 +88,8 @@ library AaveV3BatchOrchestration {
 
     AaveV3TokensBatch.TokensReport memory tokensReport = _deployTokens(setupReport.poolProxy);
 
+    // to avoid issues when running without --via-ir we copy the variable
+    address pa = roles.poolAdmin;
     ConfigEngineReport memory configEngineReport = _deployHelpersBatch1(
       setupReport,
       miscReport,
@@ -98,7 +100,7 @@ library AaveV3BatchOrchestration {
     StaticATokenReport memory staticATokenReport = _deployHelpersBatch2(
       setupReport.poolProxy,
       setupReport.rewardsControllerProxy,
-      roles.poolAdmin
+      pa
     );
 
     // Save final report at AaveV3SetupBatch contract
