@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.10;
 
-import {IERC20Metadata} from 'solidity-utils/contracts/oz-common/interfaces/IERC20Metadata.sol';
+import {IERC20Metadata} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
+import {Initializable} from 'openzeppelin-contracts/contracts/proxy/utils/Initializable.sol';
 import {ITransparentProxyFactory} from 'solidity-utils/contracts/transparent-proxy/interfaces/ITransparentProxyFactory.sol';
-import {Initializable} from 'solidity-utils/contracts/transparent-proxy/Initializable.sol';
 import {IPool, DataTypes} from '../../../contracts/interfaces/IPool.sol';
 import {StataTokenV2} from './StataTokenV2.sol';
 import {IStataTokenFactory} from './interfaces/IStataTokenFactory.sol';

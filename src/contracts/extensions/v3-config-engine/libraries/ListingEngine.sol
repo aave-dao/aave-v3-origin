@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.18;
 
+import {Address} from 'openzeppelin-contracts/contracts/utils/Address.sol';
 import {IAaveV3ConfigEngine as IEngine, IPoolConfigurator, IPool, IDefaultInterestRateStrategyV2} from '../IAaveV3ConfigEngine.sol';
 import {PriceFeedEngine} from './PriceFeedEngine.sol';
 import {CapsEngine} from './CapsEngine.sol';
@@ -8,7 +9,6 @@ import {BorrowEngine} from './BorrowEngine.sol';
 import {CollateralEngine} from './CollateralEngine.sol';
 import {EModeEngine} from './EModeEngine.sol';
 import {ConfiguratorInputTypes} from '../../../protocol/libraries/types/ConfiguratorInputTypes.sol';
-import {Address} from 'solidity-utils/contracts/oz-common/Address.sol';
 import {SafeCast} from '../../../dependencies/openzeppelin/contracts/SafeCast.sol';
 
 library ListingEngine {
