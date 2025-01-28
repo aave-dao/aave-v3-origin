@@ -105,7 +105,7 @@ struct ReserveConfig {
 }
 
 struct LocalVars {
-  IPoolDataProvider.TokenData[] reserves;
+  address[] reserves;
   ReserveConfig[] configs;
 }
 
@@ -137,10 +137,10 @@ contract ProtocolV3TestBase is DiffUtils {
     bool poolConfigs
   ) public virtual returns (ReserveConfig[] memory) {
     string memory path = string(abi.encodePacked('./reports/', reportName, '.json'));
-    // overwrite with empty json to later be extended
+    // overwrite with empty json to later be extended as foundry does not currently support adding new keys
     vm.writeFile(
       path,
-      '{ "eModes": {}, "reserves": {}, "strategies": {}, "poolConfiguration": {} }'
+      '{ "eModes": {}, "reserves": {}, "strategies": {}, "poolConfiguration": {}, "raw": {} }'
     );
     vm.serializeUint('root', 'chainId', block.chainid);
     ReserveConfig[] memory configs = _getReservesConfigs(pool);
@@ -280,21 +280,8 @@ contract ProtocolV3TestBase is DiffUtils {
       vm.serializeAddress(key, 'underlying', config.underlying);
       vm.serializeAddress(key, 'aToken', config.aToken);
       vm.serializeAddress(key, 'variableDebtToken', config.variableDebtToken);
-      vm.serializeAddress(
-        key,
-        'aTokenImpl',
-        ProxyHelpers.getInitializableAdminUpgradeabilityProxyImplementation(vm, config.aToken)
-      );
       vm.serializeString(key, 'aTokenSymbol', IERC20Detailed(config.aToken).symbol());
       vm.serializeString(key, 'aTokenName', IERC20Detailed(config.aToken).name());
-      vm.serializeAddress(
-        key,
-        'variableDebtTokenImpl',
-        ProxyHelpers.getInitializableAdminUpgradeabilityProxyImplementation(
-          vm,
-          config.variableDebtToken
-        )
-      );
       vm.serializeString(
         key,
         'variableDebtTokenSymbol',
@@ -361,22 +348,12 @@ contract ProtocolV3TestBase is DiffUtils {
     // pool configurator
     IPoolConfigurator configurator = IPoolConfigurator(addressesProvider.getPoolConfigurator());
     vm.serializeAddress(poolConfigKey, 'poolConfigurator', address(configurator));
-    vm.serializeAddress(
-      poolConfigKey,
-      'poolConfiguratorImpl',
-      ProxyHelpers.getInitializableAdminUpgradeabilityProxyImplementation(vm, address(configurator))
-    );
 
     // PoolDataProvider
     IPoolDataProvider pdp = IPoolDataProvider(addressesProvider.getPoolDataProvider());
     vm.serializeAddress(poolConfigKey, 'protocolDataProvider', address(pdp));
 
     // pool
-    vm.serializeAddress(
-      poolConfigKey,
-      'poolImpl',
-      ProxyHelpers.getInitializableAdminUpgradeabilityProxyImplementation(vm, address(pool))
-    );
     string memory content = vm.serializeAddress(poolConfigKey, 'pool', address(pool));
 
     string memory output = vm.serializeString('root', 'poolConfig', content);
@@ -384,53 +361,31 @@ contract ProtocolV3TestBase is DiffUtils {
   }
 
   function _getReservesConfigs(IPool pool) internal view virtual returns (ReserveConfig[] memory) {
-    IPoolAddressesProvider addressesProvider = IPoolAddressesProvider(pool.ADDRESSES_PROVIDER());
-    IPoolDataProvider poolDataProvider = IPoolDataProvider(addressesProvider.getPoolDataProvider());
     LocalVars memory vars;
 
-    vars.reserves = poolDataProvider.getAllReservesTokens();
+    vars.reserves = pool.getReservesList();
 
     vars.configs = new ReserveConfig[](vars.reserves.length);
 
     for (uint256 i = 0; i < vars.reserves.length; i++) {
-      vars.configs[i] = _getStructReserveConfig(pool, poolDataProvider, vars.reserves[i]);
+      vars.configs[i] = _getStructReserveConfig(pool, vars.reserves[i]);
     }
 
     return vars.configs;
   }
 
-  function _getStructReserveTokens(
-    IPoolDataProvider pdp,
-    address underlyingAddress
-  ) internal view virtual returns (ReserveTokens memory) {
-    ReserveTokens memory reserveTokens;
-    (reserveTokens.aToken, , reserveTokens.variableDebtToken) = pdp.getReserveTokensAddresses(
-      underlyingAddress
-    );
-
-    return reserveTokens;
-  }
-
   function _getStructReserveConfig(
     IPool pool,
-    IPoolDataProvider poolDataProvider,
-    IPoolDataProvider.TokenData memory reserve
+    address reserve
   ) internal view virtual returns (ReserveConfig memory) {
     ReserveConfig memory localConfig;
-    DataTypes.ReserveConfigurationMap memory configuration = pool.getConfiguration(
-      reserve.tokenAddress
-    );
+    DataTypes.ReserveConfigurationMap memory configuration = pool.getConfiguration(reserve);
+    DataTypes.ReserveDataLegacy memory reserveData = pool.getReserveData(reserve);
 
-    localConfig.underlying = reserve.tokenAddress;
-    ReserveTokens memory reserveTokens = _getStructReserveTokens(
-      poolDataProvider,
-      reserve.tokenAddress
-    );
-    localConfig.aToken = reserveTokens.aToken;
-    localConfig.variableDebtToken = reserveTokens.variableDebtToken;
-    localConfig.interestRateStrategy = pool
-      .getReserveData(reserve.tokenAddress)
-      .interestRateStrategyAddress;
+    localConfig.underlying = reserve;
+    localConfig.aToken = reserveData.aTokenAddress;
+    localConfig.variableDebtToken = reserveData.variableDebtTokenAddress;
+    localConfig.interestRateStrategy = reserveData.interestRateStrategyAddress;
     (
       localConfig.ltv,
       localConfig.liquidationThreshold,
@@ -444,7 +399,11 @@ contract ProtocolV3TestBase is DiffUtils {
       localConfig.borrowingEnabled,
       localConfig.isPaused
     ) = configuration.getFlags();
-    localConfig.symbol = reserve.symbol;
+    if (reserve == 0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2) {
+      localConfig.symbol = 'MKR';
+    } else {
+      localConfig.symbol = IERC20Detailed(reserve).symbol();
+    }
     localConfig.usageAsCollateralEnabled = localConfig.liquidationThreshold != 0;
     localConfig.isSiloed = configuration.getSiloedBorrowing();
     (localConfig.borrowCap, localConfig.supplyCap) = configuration.getCaps();
@@ -458,11 +417,9 @@ contract ProtocolV3TestBase is DiffUtils {
     localConfig.virtualAccActive = configuration.getIsVirtualAccActive();
 
     if (localConfig.virtualAccActive) {
-      localConfig.virtualBalance = pool.getVirtualUnderlyingBalance(reserve.tokenAddress);
+      localConfig.virtualBalance = pool.getVirtualUnderlyingBalance(reserve);
     }
-    localConfig.aTokenUnderlyingBalance = IERC20Detailed(reserve.tokenAddress).balanceOf(
-      localConfig.aToken
-    );
+    localConfig.aTokenUnderlyingBalance = IERC20Detailed(reserve).balanceOf(localConfig.aToken);
 
     return localConfig;
   }
