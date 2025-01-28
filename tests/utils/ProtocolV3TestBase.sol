@@ -380,11 +380,12 @@ contract ProtocolV3TestBase is DiffUtils {
   ) internal view virtual returns (ReserveConfig memory) {
     ReserveConfig memory localConfig;
     DataTypes.ReserveConfigurationMap memory configuration = pool.getConfiguration(reserve);
+    DataTypes.ReserveDataLegacy memory reserveData = pool.getReserveData(reserve);
 
     localConfig.underlying = reserve;
-    localConfig.aToken = pool.getReserveAToken(reserve);
-    localConfig.variableDebtToken = pool.getReserveVariableDebtToken(reserve);
-    localConfig.interestRateStrategy = pool.getReserveData(reserve).interestRateStrategyAddress;
+    localConfig.aToken = reserveData.aTokenAddress;
+    localConfig.variableDebtToken = reserveData.variableDebtTokenAddress;
+    localConfig.interestRateStrategy = reserveData.interestRateStrategyAddress;
     (
       localConfig.ltv,
       localConfig.liquidationThreshold,
