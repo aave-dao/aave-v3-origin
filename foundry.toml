@@ -4,7 +4,7 @@ test = 'tests'
 script = 'scripts'
 optimizer = true
 optimizer_runs = 200
-solc = '0.8.20'
+solc = '0.8.22'
 evm_version = 'shanghai'
 bytecode_hash = 'none'
 ignored_warnings_from = ["src/periphery/contracts/treasury/RevenueSplitter.sol"]
@@ -12,9 +12,9 @@ out = 'out'
 libs = ['lib']
 remappings = []
 fs_permissions = [
-    { access = "write", path = "./reports" },
-    { access = "read", path = "./out" },
-    { access = "read", path = "./config" },
+  { access = "write", path = "./reports" },
+  { access = "read", path = "./out" },
+  { access = "read", path = "./config" },
 ]
 ffi = true
 

@@ -14,10 +14,10 @@ interface IStataTokenFactory {
   function POOL() external view returns (IPool);
 
   /**
-   * @notice The proxy admin used for all tokens created via the factory.
-   * @return The proxy admin address.
+   * @notice The initial owner used for all tokens created via the factory.
+   * @return The address of the initial owner.
    */
-  function PROXY_ADMIN() external view returns (address);
+  function INITIAL_OWNER() external view returns (address);
 
   /**
    * @notice The proxy factory used for all tokens created via the stata factory.
