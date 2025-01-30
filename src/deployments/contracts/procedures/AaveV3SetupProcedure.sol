@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {TransparentUpgradeableProxy} from 'openzeppelin-contracts/contracts/proxy/transparent/TransparentUpgradeableProxy.sol';
 import '../../interfaces/IMarketReportTypes.sol';
 import {Ownable} from '../../../contracts/dependencies/openzeppelin/contracts/Ownable.sol';
 import {ACLManager} from '../../../contracts/protocol/configuration/ACLManager.sol';
@@ -11,8 +10,6 @@ import {PoolAddressesProvider} from '../../../contracts/protocol/configuration/P
 import {PoolAddressesProviderRegistry} from '../../../contracts/protocol/configuration/PoolAddressesProviderRegistry.sol';
 import {IEmissionManager} from '../../../contracts/rewards/interfaces/IEmissionManager.sol';
 import {IRewardsController} from '../../../contracts/rewards/interfaces/IRewardsController.sol';
-import {Collector} from '../../../contracts/treasury/Collector.sol';
-import {RevenueSplitter} from '../../../contracts/treasury/RevenueSplitter.sol';
 
 contract AaveV3SetupProcedure {
   error MarketOwnerMustBeSet();
@@ -28,14 +25,6 @@ contract AaveV3SetupProcedure {
     address rewardsControllerProxy;
     address rewardsControllerImplementation;
     address priceOracleSentinel;
-  }
-
-  struct TreasuryInput {
-    address treasuryProxy;
-    address treasuryPartner;
-    uint16 treasurySplitPercent;
-    address aclAdmin;
-    bytes32 salt;
   }
 
   function _initialDeployment(
@@ -70,17 +59,17 @@ contract AaveV3SetupProcedure {
     _validateMarketSetup(roles);
 
     SetupReport memory report = _setupPoolAddressesProvider(
-      AddressProviderInput({
-        initialReport: initialReport,
-        poolImplementation: poolImplementation,
-        poolConfiguratorImplementation: poolConfiguratorImplementation,
-        protocolDataProvider: protocolDataProvider,
-        poolAdmin: roles.poolAdmin,
-        aaveOracle: aaveOracle,
-        rewardsControllerProxy: config.incentivesProxy,
-        rewardsControllerImplementation: rewardsControllerImplementation,
-        priceOracleSentinel: priceOracleSentinel
-      })
+      AddressProviderInput(
+        initialReport,
+        poolImplementation,
+        poolConfiguratorImplementation,
+        protocolDataProvider,
+        roles.poolAdmin,
+        aaveOracle,
+        config.incentivesProxy,
+        rewardsControllerImplementation,
+        priceOracleSentinel
+      )
     );
 
     report.aclManager = _setupACL(
@@ -89,16 +78,6 @@ contract AaveV3SetupProcedure {
       report.poolConfiguratorProxy,
       config.flashLoanPremiumTotal,
       config.flashLoanPremiumToProtocol
-    );
-
-    (report.treasuryProxy, report.treasuryImplementation, report.revenueSplitter) = _setupTreasury(
-      TreasuryInput({
-        treasuryProxy: config.treasury,
-        treasuryPartner: config.treasuryPartner,
-        treasurySplitPercent: config.treasurySplitPercent,
-        aclAdmin: roles.poolAdmin,
-        salt: config.salt
-      })
     );
 
     _transferMarketOwnership(roles, initialReport);
@@ -202,56 +181,6 @@ contract AaveV3SetupProcedure {
     manager.revokeRole(manager.DEFAULT_ADMIN_ROLE(), address(this));
 
     return aclManager;
-  }
-
-  function _deployAaveV3Treasury(
-    address aclAdmin,
-    bytes32 salt
-  ) internal returns (address treasuryProxy, address treasuryImplementation) {
-    if (salt != '') {
-      treasuryImplementation = address(new Collector{salt: salt}());
-
-      treasuryProxy = address(
-        new TransparentUpgradeableProxy{salt: salt}(
-          treasuryImplementation,
-          aclAdmin,
-          abi.encodeWithSelector(Collector.initialize.selector, 100_000, aclAdmin)
-        )
-      );
-    } else {
-      treasuryImplementation = address(new Collector());
-
-      treasuryProxy = address(
-        new TransparentUpgradeableProxy(
-          treasuryImplementation,
-          aclAdmin,
-          abi.encodeWithSelector(Collector.initialize.selector, 100_000, aclAdmin)
-        )
-      );
-    }
-  }
-
-  function _setupTreasury(
-    TreasuryInput memory input
-  )
-    internal
-    returns (address treasuryProxy, address treasuryImplementation, address revenueSplitter)
-  {
-    if (input.treasuryProxy == address(0)) {
-      (treasuryProxy, treasuryImplementation) = _deployAaveV3Treasury(input.aclAdmin, input.salt);
-    } else {
-      treasuryProxy = input.treasuryProxy;
-    }
-
-    if (
-      input.treasuryPartner != address(0) &&
-      input.treasurySplitPercent > 0 &&
-      input.treasurySplitPercent < 100_00
-    ) {
-      revenueSplitter = address(
-        new RevenueSplitter(treasuryProxy, input.treasuryPartner, input.treasurySplitPercent)
-      );
-    }
   }
 
   function _configureFlashloanParams(

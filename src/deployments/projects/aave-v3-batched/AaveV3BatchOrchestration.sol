@@ -49,6 +49,7 @@ library AaveV3BatchOrchestration {
     );
 
     PeripheryReport memory peripheryReport = _deployPeripherals(
+      roles,
       config,
       initialReport.poolAddressesProvider,
       address(setupBatch)
@@ -170,9 +171,9 @@ library AaveV3BatchOrchestration {
     PeripheryReport memory peripheryReport,
     AaveV3TokensBatch.TokensReport memory tokensReport
   ) internal returns (ConfigEngineReport memory) {
-    address treasury = setupReport.treasuryProxy;
-    if (setupReport.revenueSplitter != address(0)) {
-      treasury = setupReport.revenueSplitter;
+    address treasury = peripheryReport.treasury;
+    if (peripheryReport.revenueSplitter != address(0)) {
+      treasury = peripheryReport.revenueSplitter;
     }
 
     AaveV3HelpersBatchOne helpersBatchOne = new AaveV3HelpersBatchOne(
@@ -235,11 +236,13 @@ library AaveV3BatchOrchestration {
   }
 
   function _deployPeripherals(
+    Roles memory roles,
     MarketConfig memory config,
     address poolAddressesProvider,
     address setupBatch
   ) internal returns (PeripheryReport memory) {
     AaveV3PeripheryBatch peripheryBatch = new AaveV3PeripheryBatch(
+      roles.poolAdmin,
       config,
       poolAddressesProvider,
       setupBatch
@@ -309,8 +312,8 @@ library AaveV3BatchOrchestration {
     report.paraSwapLiquiditySwapAdapter = paraswapReport.paraSwapLiquiditySwapAdapter;
     report.paraSwapRepayAdapter = paraswapReport.paraSwapRepayAdapter;
     report.paraSwapWithdrawSwapAdapter = paraswapReport.paraSwapWithdrawSwapAdapter;
-    report.treasuryImplementation = setupReport.treasuryImplementation;
-    report.treasury = setupReport.treasuryProxy;
+    report.treasuryImplementation = peripheryReport.treasuryImplementation;
+    report.treasury = peripheryReport.treasury;
     report.poolProxy = setupReport.poolProxy;
     report.poolConfiguratorProxy = setupReport.poolConfiguratorProxy;
     report.rewardsControllerProxy = setupReport.rewardsControllerProxy;
@@ -324,7 +327,7 @@ library AaveV3BatchOrchestration {
     report.staticATokenFactoryProxy = staticATokenReport.staticATokenFactoryProxy;
     report.staticATokenImplementation = staticATokenReport.staticATokenImplementation;
     report.transparentProxyFactory = staticATokenReport.transparentProxyFactory;
-    report.revenueSplitter = setupReport.revenueSplitter;
+    report.revenueSplitter = peripheryReport.revenueSplitter;
 
     return report;
   }

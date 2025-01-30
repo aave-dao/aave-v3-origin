@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
-import {IAccessControl} from 'openzeppelin-contracts/contracts/access/IAccessControl.sol';
 import {Ownable} from '../../src/contracts/dependencies/openzeppelin/contracts/Ownable.sol';
 import {IPoolAddressesProvider} from '../../src/contracts/interfaces/IPoolAddressesProvider.sol';
 import '../../src/deployments/interfaces/IMarketReportTypes.sol';

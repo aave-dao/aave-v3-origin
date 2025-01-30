@@ -129,6 +129,7 @@ contract DeploymentsGasLimits is BatchTestProcedures {
 
   function test5PeripheralsRelease() public {
     new AaveV3PeripheryBatch(
+      roles.poolAdmin,
       config,
       marketReportOne.poolAddressesProvider,
       address(aaveV3SetupOne)
@@ -173,7 +174,7 @@ contract DeploymentsGasLimits is BatchTestProcedures {
       miscReport.defaultInterestRateStrategy,
       peripheryReportOne.aaveOracle,
       setupReportTwo.rewardsControllerProxy,
-      setupReportTwo.treasuryProxy,
+      peripheryReportOne.treasury,
       tokensReport.aToken,
       tokensReport.variableDebtToken
     );
@@ -191,6 +192,7 @@ contract DeploymentsGasLimits is BatchTestProcedures {
     config.treasuryPartner = address(1);
     config.treasurySplitPercent = 5000;
     new AaveV3PeripheryBatch(
+      roles.poolAdmin,
       config,
       marketReportOne.poolAddressesProvider,
       address(aaveV3SetupOne)

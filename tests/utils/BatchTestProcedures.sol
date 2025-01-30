@@ -87,6 +87,7 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
     );
 
     peripheryReport = AaveV3BatchOrchestration._deployPeripherals(
+      roles,
       config,
       initialReport.poolAddressesProvider,
       address(setupContract)

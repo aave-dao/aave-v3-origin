@@ -144,6 +144,7 @@ contract AaveV3BatchTests is BatchTestProcedures {
 
   function test4PeripheralsRelease() public {
     new AaveV3PeripheryBatch(
+      roles.poolAdmin,
       config,
       marketReportOne.poolAddressesProvider,
       address(aaveV3SetupOne)
@@ -188,7 +189,7 @@ contract AaveV3BatchTests is BatchTestProcedures {
       miscReport.defaultInterestRateStrategy,
       peripheryReportOne.aaveOracle,
       setupReportTwo.rewardsControllerProxy,
-      setupReportTwo.treasuryProxy,
+      peripheryReportOne.treasury,
       tokensReport.aToken,
       tokensReport.variableDebtToken
     );
