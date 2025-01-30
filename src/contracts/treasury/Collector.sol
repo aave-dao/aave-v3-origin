@@ -333,4 +333,7 @@ contract Collector is AccessControlUpgradeable, ReentrancyGuardUpgradeable, ICol
     emit CancelStream(streamId, stream.sender, stream.recipient, senderBalance, recipientBalance);
     return true;
   }
+
+  /// @dev needed in order to receive ETH from the Aave v1 ecosystem reserve
+  receive() external payable {}
 }

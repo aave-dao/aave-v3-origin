@@ -66,7 +66,7 @@ contract CollectorTest is StdUtils, Test {
 
     address collectorImpl = address(new Collector());
     collector = Collector(
-      address(
+      payable(
         new TransparentUpgradeableProxy(
           collectorImpl,
           new ProxyAdmin(address(this)), // mock proxy admin
@@ -110,6 +110,12 @@ contract CollectorTest is StdUtils, Test {
     vm.expectRevert(ICollector.OnlyFundsAdmin.selector);
 
     collector.transfer(tokenA, address(112), 1 ether);
+  }
+
+  function test_receiveEth() external {
+    deal(address(this), 1000 ether);
+    (bool success, ) = address(collector).call{value: 1000 ether}(new bytes(0));
+    assertEq(success, true);
   }
 }
 
