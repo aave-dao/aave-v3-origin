@@ -238,10 +238,7 @@ contract AaveV3SetupProcedure {
     returns (address treasuryProxy, address treasuryImplementation, address revenueSplitter)
   {
     if (input.treasuryProxy == address(0)) {
-      (treasuryProxy, treasuryImplementation) = _deployAaveV3Treasury(
-        input.aclAdmin,
-        input.salt
-      );
+      (treasuryProxy, treasuryImplementation) = _deployAaveV3Treasury(input.aclAdmin, input.salt);
     } else {
       treasuryProxy = input.treasuryProxy;
     }

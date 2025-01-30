@@ -11,11 +11,7 @@ import {IRewardsController} from '../../../../contracts/rewards/interfaces/IRewa
 contract AaveV3PeripheryBatch is AaveV3OracleProcedure, AaveV3IncentiveProcedure {
   PeripheryReport internal _report;
 
-  constructor(
-    MarketConfig memory config,
-    address poolAddressesProvider,
-    address setupBatch
-  ) {
+  constructor(MarketConfig memory config, address poolAddressesProvider, address setupBatch) {
     _report.aaveOracle = _deployAaveOracle(config.oracleDecimals, poolAddressesProvider);
 
     if (config.incentivesProxy == address(0)) {
