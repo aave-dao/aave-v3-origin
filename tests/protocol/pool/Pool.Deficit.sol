@@ -268,7 +268,6 @@ contract PoolDeficitTests is TestnetProcedures {
 
   function _filterAddresses(address user) internal view {
     vm.assume(user != address(0));
-    vm.assume(user != report.proxyAdmin);
     vm.assume(user != report.poolAddressesProvider);
     vm.assume(user != alice);
     vm.assume(user != bob);

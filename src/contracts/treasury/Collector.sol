@@ -88,6 +88,7 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
       _nextStreamId = nextStreamId;
     }
 
+    _initGuard();
     _setFundsAdmin(fundsAdmin);
   }
 

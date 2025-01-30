@@ -88,6 +88,8 @@ library AaveV3BatchOrchestration {
 
     AaveV3TokensBatch.TokensReport memory tokensReport = _deployTokens(setupReport.poolProxy);
 
+    // to avoid issues when running without --via-ir we copy the variable
+    address pa = roles.poolAdmin;
     ConfigEngineReport memory configEngineReport = _deployHelpersBatch1(
       setupReport,
       miscReport,
@@ -98,7 +100,7 @@ library AaveV3BatchOrchestration {
     StaticATokenReport memory staticATokenReport = _deployHelpersBatch2(
       setupReport.poolProxy,
       setupReport.rewardsControllerProxy,
-      peripheryReport.proxyAdmin
+      pa
     );
 
     // Save final report at AaveV3SetupBatch contract
@@ -191,12 +193,12 @@ library AaveV3BatchOrchestration {
   function _deployHelpersBatch2(
     address pool,
     address rewardsController,
-    address proxyAdmin
+    address poolAdmin
   ) internal returns (StaticATokenReport memory) {
     AaveV3HelpersBatchTwo helpersBatchTwo = new AaveV3HelpersBatchTwo(
       pool,
       rewardsController,
-      proxyAdmin
+      poolAdmin
     );
 
     return helpersBatchTwo.staticATokenReport();
@@ -311,7 +313,6 @@ library AaveV3BatchOrchestration {
     report.paraSwapRepayAdapter = paraswapReport.paraSwapRepayAdapter;
     report.paraSwapWithdrawSwapAdapter = paraswapReport.paraSwapWithdrawSwapAdapter;
     report.treasuryImplementation = peripheryReport.treasuryImplementation;
-    report.proxyAdmin = peripheryReport.proxyAdmin;
     report.treasury = peripheryReport.treasury;
     report.poolProxy = setupReport.poolProxy;
     report.poolConfiguratorProxy = setupReport.poolConfiguratorProxy;

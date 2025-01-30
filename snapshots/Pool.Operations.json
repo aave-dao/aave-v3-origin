@@ -2,7 +2,7 @@
   "borrow: first borrow->borrowingEnabled": "256480",
   "borrow: recurrent borrow": "248834",
   "liquidationCall: deficit on liquidated asset": "392439",
-  "liquidationCall: deficit on liquidated asset + other asset": "492078",
+  "liquidationCall: deficit on liquidated asset + other asset": "491810",
   "liquidationCall: full liquidation": "392439",
   "liquidationCall: full liquidation and receive ATokens": "368797",
   "liquidationCall: partial liquidation": "383954",

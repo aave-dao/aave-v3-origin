@@ -38,7 +38,6 @@ contract MetadataReporter is IMetadataReporter {
     );
     vm.serializeAddress(jsonReport, 'aaveOracle', report.aaveOracle);
     vm.serializeAddress(jsonReport, 'treasury', report.treasury);
-    vm.serializeAddress(jsonReport, 'proxyAdmin', report.proxyAdmin);
     vm.serializeAddress(jsonReport, 'wrappedTokenGateway', report.wrappedTokenGateway);
     vm.serializeAddress(jsonReport, 'walletBalanceProvider', report.walletBalanceProvider);
     vm.serializeAddress(jsonReport, 'uiIncentiveDataProvider', report.uiIncentiveDataProvider);
