@@ -37,7 +37,7 @@ contract AaveV3TreasuryProcedure {
         new TransparentUpgradeableProxy(
           treasuryReport.treasuryImplementation,
           poolAdmin,
-          abi.encodeWithSelector(treasuryImplementation.initialize.selector, poolAdmin, 100_000)
+          abi.encodeWithSelector(treasuryImplementation.initialize.selector, 100_000, poolAdmin)
         )
       );
     }
