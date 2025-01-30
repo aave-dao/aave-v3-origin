@@ -26,11 +26,7 @@ contract AaveV3TreasuryProcedure {
         new TransparentUpgradeableProxy{salt: salt}(
           treasuryReport.treasuryImplementation,
           poolAdmin,
-          abi.encodeWithSelector(
-            treasuryImplementation.initialize.selector,
-            100_000,
-            poolAdmin
-          )
+          abi.encodeWithSelector(treasuryImplementation.initialize.selector, 100_000, poolAdmin)
         )
       );
     } else {
@@ -41,11 +37,7 @@ contract AaveV3TreasuryProcedure {
         new TransparentUpgradeableProxy(
           treasuryReport.treasuryImplementation,
           poolAdmin,
-          abi.encodeWithSelector(
-            treasuryImplementation.initialize.selector,
-            poolAdmin,
-            100_000
-          )
+          abi.encodeWithSelector(treasuryImplementation.initialize.selector, poolAdmin, 100_000)
         )
       );
     }
