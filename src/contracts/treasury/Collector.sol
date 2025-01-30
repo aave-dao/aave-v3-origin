@@ -5,8 +5,8 @@ import {AccessControlUpgradeable} from 'openzeppelin-contracts-upgradeable/contr
 import {ReentrancyGuardUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/utils/ReentrancyGuardUpgradeable.sol';
 import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
 import {SafeERC20} from 'openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol';
+import {Address} from 'openzeppelin-contracts/contracts/utils/Address.sol';
 import {ICollector} from './ICollector.sol';
-import {Address} from '../dependencies/openzeppelin/contracts/Address.sol';
 
 /**
  * @title Collector
