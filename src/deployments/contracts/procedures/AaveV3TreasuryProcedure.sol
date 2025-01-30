@@ -17,38 +17,27 @@ contract AaveV3TreasuryProcedure {
   ) internal returns (TreasuryReport memory) {
     TreasuryReport memory treasuryReport;
     bytes32 salt = collectorSalt;
-    address treasuryOwner = poolAdmin;
 
     if (salt != '') {
       Collector treasuryImplementation = new Collector{salt: salt}();
-      treasuryImplementation.initialize(address(0), 0);
       treasuryReport.treasuryImplementation = address(treasuryImplementation);
 
       treasuryReport.treasury = address(
         new TransparentUpgradeableProxy{salt: salt}(
           treasuryReport.treasuryImplementation,
           poolAdmin,
-          abi.encodeWithSelector(
-            treasuryImplementation.initialize.selector,
-            address(treasuryOwner),
-            0
-          )
+          abi.encodeWithSelector(treasuryImplementation.initialize.selector, 100_000, poolAdmin)
         )
       );
     } else {
       Collector treasuryImplementation = new Collector();
-      treasuryImplementation.initialize(address(0), 0);
       treasuryReport.treasuryImplementation = address(treasuryImplementation);
 
       treasuryReport.treasury = address(
         new TransparentUpgradeableProxy(
           treasuryReport.treasuryImplementation,
           poolAdmin,
-          abi.encodeWithSelector(
-            treasuryImplementation.initialize.selector,
-            address(treasuryOwner),
-            100_000
-          )
+          abi.encodeWithSelector(treasuryImplementation.initialize.selector, 100_000, poolAdmin)
         )
       );
     }
