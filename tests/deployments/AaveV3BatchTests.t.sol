@@ -64,7 +64,6 @@ contract AaveV3BatchTests is BatchTestProcedures {
       8080,
       emptySalt,
       address(new WETH9()),
-      address(0),
       0.0005e4,
       0.0004e4,
       address(0),
@@ -175,8 +174,7 @@ contract AaveV3BatchTests is BatchTestProcedures {
       gettersReportOne.protocolDataProvider,
       peripheryReportOne.aaveOracle,
       peripheryReportOne.rewardsControllerImplementation,
-      miscReport.priceOracleSentinel,
-      peripheryReportOne.proxyAdmin
+      miscReport.priceOracleSentinel
     );
   }
 
@@ -191,7 +189,7 @@ contract AaveV3BatchTests is BatchTestProcedures {
       miscReport.defaultInterestRateStrategy,
       peripheryReportOne.aaveOracle,
       setupReportTwo.rewardsControllerProxy,
-      setupReportTwo.treasuryProxy,
+      peripheryReportOne.treasury,
       tokensReport.aToken,
       tokensReport.variableDebtToken
     );
@@ -201,7 +199,7 @@ contract AaveV3BatchTests is BatchTestProcedures {
     new AaveV3HelpersBatchTwo(
       setupReportTwo.poolProxy,
       setupReportTwo.rewardsControllerProxy,
-      peripheryReportOne.proxyAdmin
+      roles.poolAdmin
     );
   }
 }

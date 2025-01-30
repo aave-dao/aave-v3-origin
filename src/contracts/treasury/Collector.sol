@@ -3,10 +3,9 @@ pragma solidity ^0.8.0;
 
 import {AccessControlUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/access/AccessControlUpgradeable.sol';
 import {ReentrancyGuardUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/utils/ReentrancyGuardUpgradeable.sol';
+import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
+import {SafeERC20} from 'openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol';
 import {ICollector} from './ICollector.sol';
-import {IAccessControl} from '../dependencies/openzeppelin/contracts/IAccessControl.sol';
-import {IERC20} from '../dependencies/openzeppelin/contracts/IERC20.sol';
-import {SafeERC20} from '../dependencies/openzeppelin/contracts/SafeERC20.sol';
 import {Address} from '../dependencies/openzeppelin/contracts/Address.sol';
 
 /**
@@ -195,7 +194,7 @@ contract Collector is AccessControlUpgradeable, ReentrancyGuardUpgradeable, ICol
 
   /// @inheritdoc ICollector
   function approve(IERC20 token, address recipient, uint256 amount) external onlyFundsAdmin {
-    token.safeApprove(recipient, amount);
+    token.forceApprove(recipient, amount);
   }
 
   /// @inheritdoc ICollector
@@ -333,4 +332,7 @@ contract Collector is AccessControlUpgradeable, ReentrancyGuardUpgradeable, ICol
     emit CancelStream(streamId, stream.sender, stream.recipient, senderBalance, recipientBalance);
     return true;
   }
+
+  /// @dev needed in order to receive ETH from the Aave v1 ecosystem reserve
+  receive() external payable {}
 }

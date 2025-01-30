@@ -22,7 +22,6 @@ import '../../contracts/extensions/paraswap-adapters/ParaSwapWithdrawSwapAdapter
 import '../../contracts/helpers/interfaces/IWrappedTokenGatewayV3.sol';
 import '../../contracts/helpers/L2Encoder.sol';
 import {ICollector} from '../../contracts/treasury/ICollector.sol';
-import {ProxyAdmin} from 'solidity-utils/contracts/transparent-proxy/ProxyAdmin.sol';
 
 struct ContractsReport {
   IPoolAddressesProviderRegistry poolAddressesProviderRegistry;
@@ -36,7 +35,6 @@ struct ContractsReport {
   IACLManager aclManager;
   ICollector treasury;
   IDefaultInterestRateStrategyV2 defaultInterestRateStrategy;
-  ProxyAdmin proxyAdmin;
   ICollector treasuryImplementation;
   IWrappedTokenGatewayV3 wrappedTokenGateway;
   WalletBalanceProvider walletBalanceProvider;
@@ -66,7 +64,6 @@ struct MarketReport {
   address priceOracleSentinel;
   address aclManager;
   address treasury;
-  address proxyAdmin;
   address treasuryImplementation;
   address wrappedTokenGateway;
   address walletBalanceProvider;
@@ -117,7 +114,6 @@ struct MarketConfig {
   uint256 providerId;
   bytes32 salt;
   address wrappedNativeToken;
-  address proxyAdmin;
   uint128 flashLoanPremiumTotal;
   uint128 flashLoanPremiumToProtocol;
   address incentivesProxy;
@@ -168,16 +164,15 @@ struct SetupReport {
   address poolConfiguratorProxy;
   address rewardsControllerProxy;
   address aclManager;
-  address treasuryProxy;
-  address treasuryImplementation;
-  address revenueSplitter;
 }
 
 struct PeripheryReport {
   address aaveOracle;
-  address proxyAdmin;
+  address treasury;
+  address treasuryImplementation;
   address emissionManager;
   address rewardsControllerImplementation;
+  address revenueSplitter;
 }
 
 struct ParaswapReport {

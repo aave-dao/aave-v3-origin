@@ -4,9 +4,8 @@ pragma solidity ^0.8.0;
 import {Test} from 'forge-std/Test.sol';
 import {StdUtils} from 'forge-std/StdUtils.sol';
 
-import {ProxyAdmin} from 'solidity-utils/contracts/transparent-proxy/ProxyAdmin.sol';
-import {TransparentUpgradeableProxy} from 'solidity-utils/contracts/transparent-proxy/TransparentUpgradeableProxy.sol';
-import {IERC20} from '../../src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {TransparentUpgradeableProxy} from 'openzeppelin-contracts/contracts/proxy/transparent/TransparentUpgradeableProxy.sol';
+import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
 import {IAccessControl} from '../../src/contracts/dependencies/openzeppelin/contracts/IAccessControl.sol';
 import {PoolAddressesProvider} from '../../src/contracts/protocol/configuration/PoolAddressesProvider.sol';
 import {Collector} from '../../src/contracts/treasury/Collector.sol';
@@ -66,10 +65,10 @@ contract CollectorTest is StdUtils, Test {
 
     address collectorImpl = address(new Collector());
     collector = Collector(
-      address(
+      payable(
         new TransparentUpgradeableProxy(
           collectorImpl,
-          new ProxyAdmin(address(this)), // mock proxy admin
+          address(this),
           abi.encodeWithSelector(Collector.initialize.selector, nextStreamID, EXECUTOR_LVL_1)
         )
       )
@@ -110,6 +109,12 @@ contract CollectorTest is StdUtils, Test {
     vm.expectRevert(ICollector.OnlyFundsAdmin.selector);
 
     collector.transfer(tokenA, address(112), 1 ether);
+  }
+
+  function test_receiveEth() external {
+    deal(address(this), 1000 ether);
+    (bool success, ) = address(collector).call{value: 1000 ether}(new bytes(0));
+    assertEq(success, true);
   }
 }
 

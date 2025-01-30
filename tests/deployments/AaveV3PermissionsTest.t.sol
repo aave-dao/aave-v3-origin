@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
-import {IAccessControl} from 'openzeppelin-contracts/contracts/access/IAccessControl.sol';
 import {Ownable} from '../../src/contracts/dependencies/openzeppelin/contracts/Ownable.sol';
 import {IPoolAddressesProvider} from '../../src/contracts/interfaces/IPoolAddressesProvider.sol';
 import '../../src/deployments/interfaces/IMarketReportTypes.sol';
@@ -151,19 +150,12 @@ contract AaveV3PermissionsTest is BatchTestProcedures {
       );
     }
     {
-      address treasuryAdmin = address(uint160(uint256(vm.load(report.treasury, ADMIN_SLOT))));
+      address proxyAdmin = address(uint160(uint256(vm.load(report.treasury, ADMIN_SLOT))));
+      address owner = Ownable(proxyAdmin).owner();
       assertEq(
-        treasuryAdmin,
-        report.proxyAdmin,
-        'Treasury proxy admin does not match with report.proxyAdmin'
-      );
-    }
-    {
-      address proxyAdminOwner = Ownable(report.proxyAdmin).owner();
-      assertEq(
-        proxyAdminOwner,
+        owner,
         roles.poolAdmin,
-        'ProxyAdmin owner does not match with roles.poolAdmin'
+        'Treasury proxy admin does not match with report.proxyAdmin'
       );
     }
   }
@@ -300,20 +292,12 @@ contract AaveV3PermissionsTest is BatchTestProcedures {
       );
     }
     {
-      address treasuryAdmin = address(uint160(uint256(vm.load(report.treasury, ADMIN_SLOT))));
+      address proxyAdmin = address(uint160(uint256(vm.load(report.treasury, ADMIN_SLOT))));
+      address owner = Ownable(proxyAdmin).owner();
       assertEq(
-        treasuryAdmin,
-        report.proxyAdmin,
-        'Treasury proxy admin does not match with report.proxyAdmin'
-      );
-      assertEq(IAccessControl(report.treasury).hasRole(emptyBytes, roles.poolAdmin), true);
-    }
-    {
-      address proxyAdminOwner = Ownable(report.proxyAdmin).owner();
-      assertEq(
-        proxyAdminOwner,
+        owner,
         roles.poolAdmin,
-        'ProxyAdmin owner does not match with roles.poolAdmin'
+        'Treasury proxy admin does not match with report.proxyAdmin'
       );
     }
     {
