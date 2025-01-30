@@ -12,17 +12,10 @@ contract AaveV3PeripheryBatch is AaveV3OracleProcedure, AaveV3IncentiveProcedure
   PeripheryReport internal _report;
 
   constructor(
-    address poolAdmin,
     MarketConfig memory config,
     address poolAddressesProvider,
     address setupBatch
   ) {
-    if (config.proxyAdmin == address(0)) {
-      _report.proxyAdmin = address(new ProxyAdmin{salt: config.salt}(poolAdmin));
-    } else {
-      _report.proxyAdmin = config.proxyAdmin;
-    }
-
     _report.aaveOracle = _deployAaveOracle(config.oracleDecimals, poolAddressesProvider);
 
     if (config.incentivesProxy == address(0)) {

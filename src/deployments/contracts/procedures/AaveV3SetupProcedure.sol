@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+import {TransparentUpgradeableProxy} from 'openzeppelin-contracts/contracts/proxy/transparent/TransparentUpgradeableProxy.sol';
 import '../../interfaces/IMarketReportTypes.sol';
 import {Ownable} from '../../../contracts/dependencies/openzeppelin/contracts/Ownable.sol';
 import {ACLManager} from '../../../contracts/protocol/configuration/ACLManager.sol';
@@ -11,8 +12,6 @@ import {PoolAddressesProviderRegistry} from '../../../contracts/protocol/configu
 import {IEmissionManager} from '../../../contracts/rewards/interfaces/IEmissionManager.sol';
 import {IRewardsController} from '../../../contracts/rewards/interfaces/IRewardsController.sol';
 import {Collector} from '../../../contracts/treasury/Collector.sol';
-import {ProxyAdmin} from 'solidity-utils/contracts/transparent-proxy/ProxyAdmin.sol';
-import {TransparentUpgradeableProxy} from 'solidity-utils/contracts/transparent-proxy/TransparentUpgradeableProxy.sol';
 import {RevenueSplitter} from '../../../contracts/treasury/RevenueSplitter.sol';
 
 contract AaveV3SetupProcedure {
@@ -35,7 +34,6 @@ contract AaveV3SetupProcedure {
     address treasuryProxy;
     address treasuryPartner;
     uint16 treasurySplitPercent;
-    address proxyAdmin;
     address aclAdmin;
     bytes32 salt;
   }
@@ -67,8 +65,7 @@ contract AaveV3SetupProcedure {
     address protocolDataProvider,
     address aaveOracle,
     address rewardsControllerImplementation,
-    address priceOracleSentinel,
-    address proxyAdmin
+    address priceOracleSentinel
   ) internal returns (SetupReport memory) {
     _validateMarketSetup(roles);
 
@@ -99,7 +96,6 @@ contract AaveV3SetupProcedure {
         treasuryProxy: config.treasury,
         treasuryPartner: config.treasuryPartner,
         treasurySplitPercent: config.treasurySplitPercent,
-        proxyAdmin: proxyAdmin,
         aclAdmin: roles.poolAdmin,
         salt: config.salt
       })
@@ -209,7 +205,6 @@ contract AaveV3SetupProcedure {
   }
 
   function _deployAaveV3Treasury(
-    address deployedProxyAdmin,
     address aclAdmin,
     bytes32 salt
   ) internal returns (address treasuryProxy, address treasuryImplementation) {
@@ -219,7 +214,7 @@ contract AaveV3SetupProcedure {
       treasuryProxy = address(
         new TransparentUpgradeableProxy{salt: salt}(
           treasuryImplementation,
-          ProxyAdmin(deployedProxyAdmin),
+          aclAdmin,
           abi.encodeWithSelector(Collector.initialize.selector, 100_000, aclAdmin)
         )
       );
@@ -229,7 +224,7 @@ contract AaveV3SetupProcedure {
       treasuryProxy = address(
         new TransparentUpgradeableProxy(
           treasuryImplementation,
-          ProxyAdmin(deployedProxyAdmin),
+          aclAdmin,
           abi.encodeWithSelector(Collector.initialize.selector, 100_000, aclAdmin)
         )
       );
@@ -244,7 +239,6 @@ contract AaveV3SetupProcedure {
   {
     if (input.treasuryProxy == address(0)) {
       (treasuryProxy, treasuryImplementation) = _deployAaveV3Treasury(
-        input.proxyAdmin,
         input.aclAdmin,
         input.salt
       );

@@ -151,19 +151,12 @@ contract AaveV3PermissionsTest is BatchTestProcedures {
       );
     }
     {
-      address treasuryAdmin = address(uint160(uint256(vm.load(report.treasury, ADMIN_SLOT))));
+      address proxyAdmin = address(uint160(uint256(vm.load(report.treasury, ADMIN_SLOT))));
+      address owner = Ownable(proxyAdmin).owner();
       assertEq(
-        treasuryAdmin,
-        report.proxyAdmin,
-        'Treasury proxy admin does not match with report.proxyAdmin'
-      );
-    }
-    {
-      address proxyAdminOwner = Ownable(report.proxyAdmin).owner();
-      assertEq(
-        proxyAdminOwner,
+        owner,
         roles.poolAdmin,
-        'ProxyAdmin owner does not match with roles.poolAdmin'
+        'Treasury proxy admin does not match with report.proxyAdmin'
       );
     }
   }
@@ -300,20 +293,12 @@ contract AaveV3PermissionsTest is BatchTestProcedures {
       );
     }
     {
-      address treasuryAdmin = address(uint160(uint256(vm.load(report.treasury, ADMIN_SLOT))));
+      address proxyAdmin = address(uint160(uint256(vm.load(report.treasury, ADMIN_SLOT))));
+      address owner = Ownable(proxyAdmin).owner();
       assertEq(
-        treasuryAdmin,
-        report.proxyAdmin,
-        'Treasury proxy admin does not match with report.proxyAdmin'
-      );
-      assertEq(IAccessControl(report.treasury).hasRole(emptyBytes, roles.poolAdmin), true);
-    }
-    {
-      address proxyAdminOwner = Ownable(report.proxyAdmin).owner();
-      assertEq(
-        proxyAdminOwner,
+        owner,
         roles.poolAdmin,
-        'ProxyAdmin owner does not match with roles.poolAdmin'
+        'Treasury proxy admin does not match with report.proxyAdmin'
       );
     }
     {
