@@ -9,6 +9,6 @@
   "getUserAccountData: supplies: 1, borrows: 0 with eMode enabled": "27360",
   "getUserAccountData: supplies: 2, borrows: 0": "47575",
   "getUserAccountData: supplies: 2, borrows: 0 with eMode enabled": "40267",
-  "getUserAccountData: supplies: 2, borrows: 1": "29247",
-  "getUserAccountData: supplies: 2, borrows: 1 with eMode enabled": "30439"
+  "getUserAccountData: supplies: 2, borrows: 1": "29431",
+  "getUserAccountData: supplies: 2, borrows: 1 with eMode enabled": "30623"
 }

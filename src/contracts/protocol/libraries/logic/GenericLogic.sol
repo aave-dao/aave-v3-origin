@@ -137,12 +137,20 @@ library GenericLogic {
       }
 
       if (params.userConfig.isBorrowing(vars.i)) {
-        vars.totalDebtInBaseCurrency += _getUserDebtInBaseCurrency(
-          params.user,
-          currentReserve,
-          vars.assetPrice,
-          vars.assetUnit
-        );
+        if (currentReserve.configuration.getIsVirtualAccActive()) {
+          vars.totalDebtInBaseCurrency += _getUserDebtInBaseCurrency(
+            params.user,
+            currentReserve,
+            vars.assetPrice,
+            vars.assetUnit
+          );
+        } else {
+          // custom case for GHO, which applies the GHO discount on balanceOf
+          vars.totalDebtInBaseCurrency +=
+            (IERC20(currentReserve.variableDebtTokenAddress).balanceOf(params.user) *
+              vars.assetPrice) /
+            vars.assetUnit;
+        }
       }
 
       unchecked {
