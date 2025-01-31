@@ -598,6 +598,9 @@ contract PoolLiquidationTests is TestnetProcedures {
       liquidatorBalanceBefore = IERC20(params.collateralAsset).balanceOf(bob);
     }
 
+    vm.expectEmit();
+    emit IsolationModeTotalDebtUpdated(params.collateralAsset, 0);
+
     vm.expectEmit(address(contracts.poolProxy));
     emit LiquidationLogic.LiquidationCall(
       params.collateralAsset,
@@ -608,7 +611,6 @@ contract PoolLiquidationTests is TestnetProcedures {
       bob,
       params.receiveAToken
     );
-
     // Liquidate
     vm.prank(bob);
     contracts.poolProxy.liquidationCall(
@@ -676,6 +678,12 @@ contract PoolLiquidationTests is TestnetProcedures {
       40_00
     );
     params.receiveAToken = true;
+
+    vm.expectEmit(true, true, false, false);
+    emit IsolationModeTotalDebtUpdated(
+      params.collateralAsset,
+      ((borrowAmount - params.actualDebtToLiquidate) / 1e4)
+    );
 
     // Liquidate
     vm.prank(alice);

@@ -367,16 +367,17 @@ library LiquidationLogic {
       hasNoCollateralLeft
     );
 
-    // IsolationModeTotalDebt only discounts `actualDebtToLiquidate`, not the fully burned amount in case of deficit creation.
-    // This is by design as otherwise debt debt ceiling would render ineffective if a collateral asset faces bad debt events.
-    // The governance can decide the raise the ceiling to discount manifested deficit.
-    IsolationModeLogic.updateIsolatedDebtIfIsolated(
-      reservesData,
-      reservesList,
-      userConfig,
-      vars.debtReserveCache,
-      vars.actualDebtToLiquidate
-    );
+    if (collateralReserve.configuration.getDebtCeiling() != 0) {
+      // IsolationModeTotalDebt only discounts `actualDebtToLiquidate`, not the fully burned amount in case of deficit creation.
+      // This is by design as otherwise debt debt ceiling would render ineffective if a collateral asset faces bad debt events.
+      // The governance can decide the raise the ceiling to discount manifested deficit.
+      IsolationModeLogic.updateIsolatedDebt(
+        reservesData,
+        vars.debtReserveCache,
+        vars.actualDebtToLiquidate,
+        params.collateralAsset
+      );
+    }
 
     if (params.receiveAToken) {
       _liquidateATokens(reservesData, reservesList, usersConfig, collateralReserve, params, vars);
