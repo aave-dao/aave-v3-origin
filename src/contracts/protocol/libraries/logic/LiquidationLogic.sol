@@ -10,7 +10,6 @@ import {ReserveLogic} from './ReserveLogic.sol';
 import {ValidationLogic} from './ValidationLogic.sol';
 import {GenericLogic} from './GenericLogic.sol';
 import {IsolationModeLogic} from './IsolationModeLogic.sol';
-import {EModeLogic} from './EModeLogic.sol';
 import {UserConfiguration} from '../../libraries/configuration/UserConfiguration.sol';
 import {ReserveConfiguration} from '../../libraries/configuration/ReserveConfiguration.sol';
 import {EModeConfiguration} from '../../libraries/configuration/EModeConfiguration.sol';
@@ -369,7 +368,7 @@ library LiquidationLogic {
 
     if (collateralReserve.configuration.getDebtCeiling() != 0) {
       // IsolationModeTotalDebt only discounts `actualDebtToLiquidate`, not the fully burned amount in case of deficit creation.
-      // This is by design as otherwise debt debt ceiling would render ineffective if a collateral asset faces bad debt events.
+      // This is by design as otherwise the debt ceiling would render ineffective if a collateral asset faces bad debt events.
       // The governance can decide the raise the ceiling to discount manifested deficit.
       IsolationModeLogic.updateIsolatedDebt(
         reservesData,
@@ -575,7 +574,9 @@ library LiquidationLogic {
           // In the case of GHO, all obligations are to the protocol
           // therefore the protocol assumes the losses on interest and only tracks the pure deficit by discounting the not-collected & burned debt
           outstandingDebt -= amountToBurn;
-          IAToken(debtReserveCache.aTokenAddress).handleRepayment(msg.sender, user, amountToBurn);
+          // IMPORTANT: address(0) is used here to indicate that the accrued fee is discounted and not actually repayed.
+          // The value passed has no relevance as it is unused on the aGHO.handleRepayment, therefore the value is purely esthetical.
+          IAToken(debtReserveCache.aTokenAddress).handleRepayment(address(0), user, amountToBurn);
         }
       }
       debtReserve.deficit += outstandingDebt.toUint128();
