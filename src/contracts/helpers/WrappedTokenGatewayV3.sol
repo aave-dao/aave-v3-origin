@@ -137,7 +137,9 @@ contract WrappedTokenGatewayV3 is IWrappedTokenGatewayV3, Ownable {
       amountToWithdraw = userBalance;
     }
     // permit `amount` rather than `amountToWithdraw` to make it easier for front-ends and integrators
-    aWETH.permit(msg.sender, address(this), amount, deadline, permitV, permitR, permitS);
+    try
+      aWETH.permit(msg.sender, address(this), amount, deadline, permitV, permitR, permitS)
+    {} catch {}
     aWETH.transferFrom(msg.sender, address(this), amountToWithdraw);
     POOL.withdraw(address(WETH), amountToWithdraw, address(this));
     WETH.withdraw(amountToWithdraw);
