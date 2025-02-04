@@ -20,7 +20,7 @@ contract PoolConfiguratorInitReservesTest is TestnetProcedures {
   );
 
   function setUp() public {
-    initTestEnvironment();
+    initTestEnvironment(false);
   }
 
   function test_initReserves_validNumberOfAssets(TestVars[128] memory t, uint8 length) public {
@@ -134,7 +134,7 @@ contract PoolConfiguratorInitReservesTest is TestnetProcedures {
   }
 
   function test_initReserves_notEnoughDecimal(TestVars memory t) public {
-    vm.assume(t.underlyingDecimals < 6);
+    t.underlyingDecimals = uint8(bound(t.underlyingDecimals, 0, 5));
 
     ConfiguratorInputTypes.InitReserveInput[] memory input = _generateInitConfig(
       t,

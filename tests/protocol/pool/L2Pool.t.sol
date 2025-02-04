@@ -133,9 +133,11 @@ contract L2PoolTests is PoolTests {
     uint128 repayAmount
   ) public {
     vm.assume(userPk != 0);
-    vm.assume(supplyAmount != 0 && supplyAmount <= underlyingBalance);
-    vm.assume(borrowAmount != 0 && uint256(borrowAmount) * 2 <= supplyAmount);
-    vm.assume(repayAmount != 0 && repayAmount <= borrowAmount);
+    underlyingBalance = uint128(bound(underlyingBalance, 2, type(uint120).max));
+    supplyAmount = uint128(bound(supplyAmount, 2, underlyingBalance));
+    borrowAmount = uint128(bound(borrowAmount, 1, supplyAmount / 2));
+    repayAmount = uint128(bound(repayAmount, 1, borrowAmount));
+
     address user = vm.addr(userPk);
     deal(tokenList.usdx, user, underlyingBalance);
     vm.startPrank(user);

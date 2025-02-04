@@ -2,7 +2,6 @@
 pragma solidity ^0.8.10;
 
 import {Pool} from './Pool.sol';
-import {IPoolAddressesProvider} from '../../interfaces/IPoolAddressesProvider.sol';
 import {IL2Pool} from '../../interfaces/IL2Pool.sol';
 import {CalldataLogic} from '../libraries/logic/CalldataLogic.sol';
 
