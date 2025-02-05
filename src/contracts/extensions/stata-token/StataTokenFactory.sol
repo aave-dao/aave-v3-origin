@@ -39,6 +39,7 @@ contract StataTokenFactory is Initializable, IStataTokenFactory {
     ITransparentProxyFactory transparentProxyFactory,
     address stataTokenImpl
   ) {
+    _disableInitializers();
     POOL = pool;
     INITIAL_OWNER = initialOwner;
     TRANSPARENT_PROXY_FACTORY = transparentProxyFactory;
