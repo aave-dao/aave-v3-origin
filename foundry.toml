@@ -22,6 +22,9 @@ ffi = true
 runs = 1000
 max_test_rejects = 20000
 
+[profile.linea]
+evm_version = 'london'
+
 [rpc_endpoints]
 mainnet = "${RPC_MAINNET}"
 optimism = "${RPC_OPTIMISM}"
@@ -41,6 +44,7 @@ bnb = "${RPC_BNB}"
 gnosis = "${RPC_GNOSIS}"
 base = "${RPC_BASE}"
 metis = "${RPC_METIS}"
+linea = "${RPC_LINEA}"
 
 [etherscan]
 mainnet = { key = "${ETHERSCAN_API_KEY_MAINNET}", chainId = 1 }

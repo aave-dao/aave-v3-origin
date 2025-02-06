@@ -47,6 +47,16 @@ Do you want to connect with him?
 **_pre-review commit hash_ - [07c1da7cebc30e1378fd12f0a9de50e6d0eb8e75](https://github.com/aave-dao/aave-v3-origin/blob/07c1da7cebc30e1378fd12f0a9de50e6d0eb8e75)**
 **_review commit hash_ - [0c6fac8a1421f21bc62eaf26eb79bd05ee183ed8](https://github.com/aave-dao/aave-v3-origin/blob/0c6fac8a1421f21bc62eaf26eb79bd05ee183ed8)**
 
+## UPDATE 1 January 31, 2025
+
+BGD has provided three additional commits to be reviewed:
+
+- Commit [1a0f12a4157e47bb816707ce3ac69c4db4e4b73b](https://github.com/bgd-labs/aave-v3-origin-stermi/commit/1a0f12a4157e47bb816707ce3ac69c4db4e4b73b): Optimized isolated debt update during the liquidation process
+- Commit [786635f71327f0a500926742aec962b8897df3ed](https://github.com/bgd-labs/aave-v3-origin-stermi/commit/786635f71327f0a500926742aec962b8897df3ed): fixed the debt calculation for `vGHO` debt inside `GenericLogic.sol`. Debt is calculated using `vGHO.balanceOf(user)` instead of `vGHO.scaledBalanceOf(user).rayMul(ghoReserve.getNormalizedDebt())`
+- Commit [ea556899f770b5a15567eef766f507ad69c42d8e](https://github.com/bgd-labs/aave-v3-origin-stermi/commit/ea556899f770b5a15567eef766f507ad69c42d8e): Implement a `try/catch` wrapper around the `aWETH.permit` call in `WrappedTokenGatewayV3.sol` to prevent a possible permit griefing attack
+
+The discussion of these three commits can be found at the end of the report.
+
 # Severity classification
 
 | Severity               | Impact: High | Impact: Medium | Impact: Low |
@@ -1376,3 +1386,68 @@ contract MainnetTest is UpgradeTest("mainnet", 20930840) {
   }
 }
 ```
+
+# Review of the commits submitted January 31, 2025
+
+## Commit `1a0f12a4157e47bb816707ce3ac69c4db4e4b73b`
+
+Link: [1a0f12a4157e47bb816707ce3ac69c4db4e4b73b](https://github.com/bgd-labs/aave-v3-origin/commit/1a0f12a4157e47bb816707ce3ac69c4db4e4b73b)
+The change implements a gas and logic optimization when the isolated debt is updated during the liquidation process.
+
+```diff
+-IsolationModeLogic.updateIsolatedDebtIfIsolated(
+-  reservesData,
+-  reservesList,
+-  userConfig,
+-  vars.debtReserveCache,
+-  vars.actualDebtToLiquidate
+-);
+
++if (collateralReserve.configuration.getDebtCeiling() != 0) {
++  IsolationModeLogic.updateIsolatedDebt(
++    reservesData,
++    vars.debtReserveCache,
++    vars.actualDebtToLiquidate,
++    params.collateralAsset
++  );
++}
+```
+
+1. The liquidation is an atomic operation for a single tuple `(debtToken, collateralToken)`
+2. We already know that `collateralToken` was enabled as collateral for the borrower; otherwise the liquidation would have already reverted
+3. if `collateralReserve.configuration.getDebtCeiling() > 0` it means that
+   - it's a collateral that is in isolation mode
+   - the user was in isolation mode and cannot have other collateral enabled other than this one (because 1 and 2 + the collateral asset being in isolation mode)
+
+Another important point: Looking at [`PoolConfiguration.setDebtCeiling`](https://github.com/aave-dao/aave-v3-origin/blob/main/src/contracts/protocol/pool/PoolConfigurator.sol#L294-L313) we know that trying to set a `debtCeiling > 0` when the existing value is `0` (not in isolation mode) and has existing suppliers, it will result in a **revert**. This information is important because it ensures that it's **impossible** for a user who has multiple non-isolated collaterals to be in isolated-mode (in an incoherent state) after that `setDebtCeiling(userCollateral, x>0)` has been executed.
+
+Given this context, we know that the change made has been correctly implemented.
+Given the complexity of the **implicit** logic and checks I have suggested BGD to extensively document the change in code. The comment has been added inside the commit [21c30148d1484ddec57f5d223f530179b103cae6](https://github.com/bgd-labs/aave-v3-origin/commit/21c30148d1484ddec57f5d223f530179b103cae6)
+
+## Commit `786635f71327f0a500926742aec962b8897df3ed`
+
+Link: [786635f71327f0a500926742aec962b8897df3ed](https://github.com/bgd-labs/aave-v3-origin/commit/786635f71327f0a500926742aec962b8897df3ed)
+Quoted from the BGD commit description:
+
+> vGHO has a special mechanic to handle the discount through stkAAVE, applied on any user action and when fetching the balance via `balanceOf`.
+> When calculating the users debt balance, the protocol currently uses the scaledBalanceOf \* index, to save roundtrips to token addresses. While for "usual" tokens, this optimisation makes sense, it will overaccount the vGHO balance by ignoring the discount since the last interaction, as scaledBalanceOf doesn't take it into account.
+> Therefore, this patch relies on the fact that `!virtualAccounting == GHO` to enter a code-branch opting out of the optimization.
+>
+> This approach was chosen as it does not require an update on vGHO itself. We consider a more permanent solution in an upcoming upgrade.
+
+The change has been correctly implemented with no security issue.
+Given the change, I have suggested BGD to look at `UiPoolDataProviderV3.getUserReservesData` (see [UiPoolDataProviderV3.sol#L245-L247](https://github.com/aave-dao/aave-v3-origin/blob/main/src/contracts/helpers/UiPoolDataProviderV3.sol#L245-L247)) which is fetching and returning the scaled debt balance of the user. While there is no security issue per se in the implementation, they should check where and how this value is used when the debt token is `vGHO`.
+
+## Commit `ea556899f770b5a15567eef766f507ad69c42d8e`
+
+Link: [ea556899f770b5a15567eef766f507ad69c42d8e](https://github.com/bgd-labs/aave-v3-origin/commit/ea556899f770b5a15567eef766f507ad69c42d8e)
+The change has been applied to the `WrappedTokenGatewayV3.withdrawETHWithPermit` function
+
+```diff
+-aWETH.permit(msg.sender, address(this), amount, deadline, permitV, permitR, permitS);
++aWETH.permit(msg.sender, address(this), amount, deadline, permitV, permitR, permitS) {} catch {}
+```
+
+The `aWETH.permit` has been wrapped with a `try/catch` statement to prevent possible permit griefing attacks on the `wETH` gateway. The change made has no security issue.
+
+While I agree that the change made brings no harm, in this case a **revert** caused by the previous consumption of the permit signature cannot be seen as a "griefing" attack. The signer and executor of the `permit` function are the same actor, `msg.sender` itself. If the transaction reverts, it means that `msg.sender` itself has already "consumed" the signature.
