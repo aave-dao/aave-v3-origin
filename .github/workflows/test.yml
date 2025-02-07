@@ -1,3 +1,6 @@
+# This action runs all common tooling for foundry repos
+# It does not comment any results though.
+# If you want to have comments on your repo, also install comment.yml
 name: Test
 
 concurrency:
@@ -7,78 +10,13 @@ concurrency:
 on:
   pull_request:
   push:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   lint:
-    name: lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6
-        with:
-          node-version-file: .nvmrc
-          cache: "npm"
-
-      - name: install
-        run: npm ci --prefer-offline --no-audit
-
-      - name: lint
-        run: npm run lint
-
+    uses: bgd-labs/github-workflows/.github/workflows/foundry-lint-prettier.yml@main
   test:
-    name: Foundry build n test
-    runs-on: ubuntu-latest
-    env:
-      FOUNDRY_PROFILE: ci
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6
-        with:
-          node-version-file: .nvmrc
-          cache: "npm"
-
-      - name: Install node dependencies
-        run: npm ci --prefer-offline --no-audit
-
-      - name: Run Foundry setup
-        uses: bgd-labs/github-workflows/.github/actions/foundry-setup@9ab528d7b505e74caf4e485d175fc0cc9ac1e9fb
-
-      - name: Run Forge tests
-        uses: bgd-labs/github-workflows/.github/actions/foundry-test@9ab528d7b505e74caf4e485d175fc0cc9ac1e9fb
-
-      - name: Run Gas report
-        uses: bgd-labs/github-workflows/.github/actions/foundry-gas-report@9ab528d7b505e74caf4e485d175fc0cc9ac1e9fb
-
-      - name: Cleanup
-        # This test will currently fail on coverage due to the gas limit beaing breached with optimizer disabled
-        run: rm tests/deployments/DeploymentsGasLimits.t.sol
-
-      - name: Run Lcov report
-        uses: bgd-labs/github-workflows/.github/actions/foundry-lcov-report@9ab528d7b505e74caf4e485d175fc0cc9ac1e9fb
-
-      - name: Save PR number
-        if: always() && (github.event_name == 'pull_request' || github.event_name == 'pull_request_target')
-        env:
-          PR_NUMBER: ${{ github.event.number }}
-        run: |
-          mkdir -p ./pr
-          echo $PR_NUMBER > /tmp/content/pr_number.txt
-
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: content
-          path: /tmp/content
-
-      # we let failing tests pass so we can log them in the comment, still we want the ci to fail
-      - name: Post test
-        if: ${{ env.testStatus != 0 }}
-        run: |
-          echo "tests failed"
-          exit 1
+    uses: bgd-labs/github-workflows/.github/workflows/foundry-test.yml@main
+# only when the repo has zksync code
+#  test-zk:
+#    uses: bgd-labs/github-workflows/.github/workflows/foundry-test-zk.yml@main

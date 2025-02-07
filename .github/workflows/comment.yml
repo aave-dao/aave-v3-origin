@@ -2,6 +2,7 @@ name: PR Comment
 
 on:
   workflow_run:
+    # The workflow generating the artifacts
     workflows: [Test]
     types:
       - completed
@@ -12,10 +13,11 @@ permissions:
   checks: read
   statuses: read
   pull-requests: write
-  contents: write
 
 jobs:
   comment:
     uses: bgd-labs/github-workflows/.github/workflows/comment.yml@main
     secrets:
+      # the provided PAT needs write and write permissions on issues and pull requests
+      # the PAT is only really needed when commenting of prs from forks
       READ_ONLY_PAT: ${{ secrets.READ_ONLY_PAT }}
