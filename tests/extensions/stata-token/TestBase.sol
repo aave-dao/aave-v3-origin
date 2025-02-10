@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.10;
 
+import {Initializable} from 'openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol';
 import {IERC20Metadata, IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import {TransparentUpgradeableProxy} from 'openzeppelin-contracts/contracts/proxy/transparent/TransparentUpgradeableProxy.sol';
 import {ITransparentProxyFactory} from 'solidity-utils/contracts/transparent-proxy/interfaces/ITransparentProxyFactory.sol';
@@ -54,6 +55,8 @@ abstract contract BaseTest is TestnetProcedures {
     proxyFactory = ITransparentProxyFactory(report.transparentProxyFactory);
 
     factory = StataTokenFactory(report.staticATokenFactoryProxy);
+    vm.expectRevert(Initializable.InvalidInitialization.selector);
+    StataTokenFactory(report.staticATokenFactoryImplementation).initialize();
     factory.createStataTokens(contracts.poolProxy.getReservesList());
 
     stataTokenV2 = StataTokenV2(factory.getStataToken(underlying));
