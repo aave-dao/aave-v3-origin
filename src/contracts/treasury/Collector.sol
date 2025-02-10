@@ -69,7 +69,7 @@ contract Collector is AccessControlUpgradeable, ReentrancyGuardUpgradeable, ICol
    */
   modifier onlyAdminOrRecipient(uint256 streamId) {
     if (_onlyFundsAdmin() == false && msg.sender != _streams[streamId].recipient) {
-      revert OnlyFundsAdminOrRceipient();
+      revert OnlyFundsAdminOrRecipient();
     }
     _;
   }

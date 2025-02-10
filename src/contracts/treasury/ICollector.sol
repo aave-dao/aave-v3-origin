@@ -64,7 +64,7 @@ interface ICollector {
   /**
    * @dev Only caller with FUNDS_ADMIN role or stream recipient can call
    */
-  error OnlyFundsAdminOrRceipient();
+  error OnlyFundsAdminOrRecipient();
 
   /**
    * @dev The provided ID does not belong to an existing stream

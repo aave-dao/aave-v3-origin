@@ -326,7 +326,7 @@ contract StreamsTest is CollectorTest {
     vm.prank(FUNDS_ADMIN);
     uint256 streamId = createStream();
 
-    vm.expectRevert(ICollector.OnlyFundsAdminOrRceipient.selector);
+    vm.expectRevert(ICollector.OnlyFundsAdminOrRecipient.selector);
     collector.withdrawFromStream(streamId, 1 ether);
   }
 
@@ -411,7 +411,7 @@ contract StreamsTest is CollectorTest {
     vm.prank(FUNDS_ADMIN);
     uint256 streamId = createStream();
 
-    vm.expectRevert(ICollector.OnlyFundsAdminOrRceipient.selector);
+    vm.expectRevert(ICollector.OnlyFundsAdminOrRecipient.selector);
     vm.prank(makeAddr('random'));
 
     collector.cancelStream(streamId);
