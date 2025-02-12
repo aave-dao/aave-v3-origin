@@ -96,6 +96,7 @@ contract Collector is AccessControlUpgradeable, ReentrancyGuardUpgradeable, ICol
     __AccessControl_init();
     __ReentrancyGuard_init();
     _grantRole(DEFAULT_ADMIN_ROLE, admin);
+    _grantRole(FUNDS_ADMIN_ROLE, admin);
     if (nextStreamId != 0) {
       _nextStreamId = nextStreamId;
     }
