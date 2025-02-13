@@ -95,7 +95,7 @@ library ReserveLogic {
   ) internal {
     // If time didn't pass since last stored timestamp, skip state update
     //solium-disable-next-line
-    if (reserve.lastUpdateTimestamp == uint40(block.timestamp)) {
+    if (reserveCache.reserveLastUpdateTimestamp == uint40(block.timestamp)) {
       return;
     }
 
@@ -104,6 +104,7 @@ library ReserveLogic {
 
     //solium-disable-next-line
     reserve.lastUpdateTimestamp = uint40(block.timestamp);
+    reserveCache.reserveLastUpdateTimestamp = uint40(block.timestamp);
   }
 
   /**
@@ -173,13 +174,13 @@ library ReserveLogic {
       reserve.interestRateStrategyAddress
     ).calculateInterestRates(
         DataTypes.CalculateInterestRatesParams({
-          unbacked: reserve.unbacked,
+          unbacked: reserve.unbacked + reserve.deficit,
           liquidityAdded: liquidityAdded,
           liquidityTaken: liquidityTaken,
           totalDebt: totalVariableDebt,
           reserveFactor: reserveCache.reserveFactor,
           reserve: reserveAddress,
-          usingVirtualBalance: reserve.configuration.getIsVirtualAccActive(),
+          usingVirtualBalance: reserveCache.reserveConfiguration.getIsVirtualAccActive(),
           virtualUnderlyingBalance: reserve.virtualUnderlyingBalance
         })
       );
@@ -188,7 +189,7 @@ library ReserveLogic {
     reserve.currentVariableBorrowRate = nextVariableRate.toUint128();
 
     // Only affect virtual balance if the reserve uses it
-    if (reserve.configuration.getIsVirtualAccActive()) {
+    if (reserveCache.reserveConfiguration.getIsVirtualAccActive()) {
       if (liquidityAdded > 0) {
         reserve.virtualUnderlyingBalance += liquidityAdded.toUint128();
       }

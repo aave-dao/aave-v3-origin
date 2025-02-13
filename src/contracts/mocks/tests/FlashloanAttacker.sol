@@ -30,9 +30,8 @@ contract FlashloanAttacker is FlashLoanSimpleReceiverBase {
   }
 
   function _innerBorrow(address asset) internal {
-    DataTypes.ReserveDataLegacy memory config = _pool.getReserveData(asset);
     IERC20 token = IERC20(asset);
-    uint256 avail = token.balanceOf(config.aTokenAddress);
+    uint256 avail = token.balanceOf(_pool.getReserveAToken(asset));
     _pool.borrow(asset, avail, 2, 0, address(this));
   }
 

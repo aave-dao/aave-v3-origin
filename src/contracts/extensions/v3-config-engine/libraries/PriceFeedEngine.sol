@@ -2,7 +2,7 @@
 pragma solidity ^0.8.18;
 
 import {IAaveV3ConfigEngine as IEngine, IAaveOracle} from '../IAaveV3ConfigEngine.sol';
-import {IEACAggregatorProxy} from '../../../helpers/interfaces/IEACAggregatorProxy.sol';
+import {AggregatorInterface} from '../../../dependencies/chainlink/AggregatorInterface.sol';
 
 library PriceFeedEngine {
   function executePriceFeedsUpdate(
@@ -21,7 +21,7 @@ library PriceFeedEngine {
     for (uint256 i = 0; i < updates.length; i++) {
       require(updates[i].priceFeed != address(0), 'PRICE_FEED_ALWAYS_REQUIRED');
       require(
-        IEACAggregatorProxy(updates[i].priceFeed).latestAnswer() > 0,
+        AggregatorInterface(updates[i].priceFeed).latestAnswer() > 0,
         'FEED_SHOULD_RETURN_POSITIVE_PRICE'
       );
       assets[i] = updates[i].asset;
