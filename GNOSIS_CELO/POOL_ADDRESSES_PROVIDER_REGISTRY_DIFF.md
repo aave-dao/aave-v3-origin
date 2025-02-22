@@ -1,0 +1,7 @@
+```diff
+diff --git a/./downloads/GNOSIS/POOL_ADDRESSES_PROVIDER_REGISTRY.sol b/./downloads/CELO/POOL_ADDRESSES_PROVIDER_REGISTRY.sol
+index e53c84f..8086e31 100644
+--- a/./downloads/GNOSIS/POOL_ADDRESSES_PROVIDER_REGISTRY.sol
++++ b/./downloads/CELO/POOL_ADDRESSES_PROVIDER_REGISTRY.sol
+
+```
