@@ -33,13 +33,11 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
     userPrivateKey = 0xA11CE;
     user = address(vm.addr(userPrivateKey));
 
-    DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
-      tokenList.usdx
-    );
+    address aUsdx = contracts.poolProxy.getReserveAToken(tokenList.usdx);
     underlying = address(tokenList.usdx);
-    aToken = reserveData.aTokenAddress;
+    aToken = aUsdx;
     erc4626Upgradeable = new MockERC4626StataTokenUpgradeable(contracts.poolProxy);
-    erc4626Upgradeable.mockInit(address(reserveData.aTokenAddress));
+    erc4626Upgradeable.mockInit(address(aUsdx));
   }
 
   function test_7201() external pure {

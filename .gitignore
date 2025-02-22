@@ -33,3 +33,7 @@ broadcast/
 certora-logs
 certora_debug_log.txt
 resource_errors.json
+
+# invariants
+_corpus/
+crytic-export/

@@ -20,7 +20,7 @@ library IsolationModeLogic {
   event IsolationModeTotalDebtUpdated(address indexed asset, uint256 totalDebt);
 
   /**
-   * @notice updated the isolated debt whenever a position collateralized by an isolated asset is repaid or liquidated
+   * @notice updated the isolated debt whenever a position collateralized by an isolated asset is repaid
    * @param reservesData The state of all the reserves
    * @param reservesList The addresses of all the active reserves
    * @param userConfig The user configuration mapping
@@ -38,27 +38,43 @@ library IsolationModeLogic {
       .getIsolationModeState(reservesData, reservesList);
 
     if (isolationModeActive) {
-      uint128 isolationModeTotalDebt = reservesData[isolationModeCollateralAddress]
-        .isolationModeTotalDebt;
+      updateIsolatedDebt(reservesData, reserveCache, repayAmount, isolationModeCollateralAddress);
+    }
+  }
 
-      uint128 isolatedDebtRepaid = (repayAmount /
-        10 **
-          (reserveCache.reserveConfiguration.getDecimals() -
-            ReserveConfiguration.DEBT_CEILING_DECIMALS)).toUint128();
+  /**
+   * @notice updated the isolated debt whenever a position collateralized by an isolated asset is liquidated
+   * @param reservesData The state of all the reserves
+   * @param reserveCache The cached data of the reserve
+   * @param repayAmount The amount being repaid
+   * @param isolationModeCollateralAddress The address of the isolated collateral
+   */
+  function updateIsolatedDebt(
+    mapping(address => DataTypes.ReserveData) storage reservesData,
+    DataTypes.ReserveCache memory reserveCache,
+    uint256 repayAmount,
+    address isolationModeCollateralAddress
+  ) internal {
+    uint128 isolationModeTotalDebt = reservesData[isolationModeCollateralAddress]
+      .isolationModeTotalDebt;
 
-      // since the debt ceiling does not take into account the interest accrued, it might happen that amount
-      // repaid > debt in isolation mode
-      if (isolationModeTotalDebt <= isolatedDebtRepaid) {
-        reservesData[isolationModeCollateralAddress].isolationModeTotalDebt = 0;
-        emit IsolationModeTotalDebtUpdated(isolationModeCollateralAddress, 0);
-      } else {
-        uint256 nextIsolationModeTotalDebt = reservesData[isolationModeCollateralAddress]
-          .isolationModeTotalDebt = isolationModeTotalDebt - isolatedDebtRepaid;
-        emit IsolationModeTotalDebtUpdated(
-          isolationModeCollateralAddress,
-          nextIsolationModeTotalDebt
-        );
-      }
+    uint128 isolatedDebtRepaid = (repayAmount /
+      10 **
+        (reserveCache.reserveConfiguration.getDecimals() -
+          ReserveConfiguration.DEBT_CEILING_DECIMALS)).toUint128();
+
+    // since the debt ceiling does not take into account the interest accrued, it might happen that amount
+    // repaid > debt in isolation mode
+    if (isolationModeTotalDebt <= isolatedDebtRepaid) {
+      reservesData[isolationModeCollateralAddress].isolationModeTotalDebt = 0;
+      emit IsolationModeTotalDebtUpdated(isolationModeCollateralAddress, 0);
+    } else {
+      uint256 nextIsolationModeTotalDebt = reservesData[isolationModeCollateralAddress]
+        .isolationModeTotalDebt = isolationModeTotalDebt - isolatedDebtRepaid;
+      emit IsolationModeTotalDebtUpdated(
+        isolationModeCollateralAddress,
+        nextIsolationModeTotalDebt
+      );
     }
   }
 }

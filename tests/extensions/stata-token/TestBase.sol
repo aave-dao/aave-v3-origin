@@ -45,13 +45,10 @@ abstract contract BaseTest is TestnetProcedures {
     spender = vm.addr(spenderPrivateKey);
 
     initTestEnvironment(false);
-    DataTypes.ReserveDataLegacy memory reserveDataWETH = contracts.poolProxy.getReserveData(
-      tokenList.weth
-    );
 
     underlying = address(weth);
     rewardToken = address(new TestnetERC20('LM Reward ERC20', 'RWD', 18, OWNER));
-    aToken = reserveDataWETH.aTokenAddress;
+    aToken = contracts.poolProxy.getReserveAToken(tokenList.weth);
 
     rewardTokens.push(rewardToken);
 

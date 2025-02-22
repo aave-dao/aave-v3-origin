@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
+import {VmSafe} from 'forge-std/Base.sol';
 import {IAaveV3ConfigEngine} from '../../../src/contracts/extensions/v3-config-engine/IAaveV3ConfigEngine.sol';
 import {AaveV3MockListing} from './mocks/AaveV3MockListing.sol';
 import {AaveV3MockListingCustom} from './mocks/AaveV3MockListingCustom.sol';
@@ -301,7 +302,7 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
   // engine doesn't call the POOL_CONFIGURATOR.
   // So the solution is expecting the event emitted on the POOL_CONFIGURATOR,
   // and as this doesn't happen, expect the failure of the test
-  function testFailCollateralsUpdatesNoChange() public {
+  function testCollateralsUpdatesNoChangeShouldNotEmit() public {
     // this asset has been listed before
     address asset = tokenList.usdx;
     AaveV3MockCollateralUpdateNoChange payload = new AaveV3MockCollateralUpdateNoChange(
@@ -312,22 +313,13 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
     vm.prank(roleList.marketOwner);
     contracts.aclManager.addPoolAdmin(address(payload));
 
-    ReserveConfig[] memory allConfigsBefore = createConfigurationSnapshot(
-      'preTestEngineCollateralNoChange',
-      IPool(address(contracts.poolProxy))
-    );
-
-    vm.expectEmit();
-    emit CollateralConfigurationChanged(
-      allConfigsBefore[0].underlying,
-      allConfigsBefore[0].ltv,
-      allConfigsBefore[0].liquidationThreshold,
-      allConfigsBefore[0].liquidationBonus
-    );
     payload.execute();
+
+    VmSafe.Log[] memory emittedLogs = vm.getRecordedLogs();
+    assertEq(emittedLogs.length, 0);
   }
 
-  // Same as testFailCollateralsUpdatesNoChange, but this time should work, as we are not expecting any event emitted
+  // Same as testCollateralsUpdatesNoChangeShouldNotEmit, but this time should work, as we are not expecting any event emitted
   function testCollateralsUpdatesNoChange() public {
     // this asset has been listed before
     address asset = tokenList.usdx;
@@ -563,31 +555,21 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
   }
 
   // TODO manage this after testFail* deprecation.
-  function testFailEModeCategoryUpdatesNoChange() public {
+  function testEModeCategoryUpdatesNoChangeShouldNotEmit() public {
     AaveV3MockEModeCategoryUpdateNoChange payload = new AaveV3MockEModeCategoryUpdateNoChange(
       configEngine
     );
 
-    DataTypes.EModeCategoryLegacy memory eModeCategoryDataBefore = contracts
-      .poolProxy
-      .getEModeCategoryData(1);
-
     vm.prank(roleList.marketOwner);
     contracts.aclManager.addPoolAdmin(address(payload));
 
-    vm.expectEmit(true, true, true, true);
-    emit EModeCategoryAdded(
-      1,
-      eModeCategoryDataBefore.ltv,
-      eModeCategoryDataBefore.liquidationThreshold,
-      eModeCategoryDataBefore.liquidationBonus,
-      address(0),
-      eModeCategoryDataBefore.label
-    );
     payload.execute();
+
+    VmSafe.Log[] memory emittedLogs = vm.getRecordedLogs();
+    assertEq(emittedLogs.length, 0);
   }
 
-  // Same as testFailEModeCategoryUpdatesNoChange, but this time should work, as we are not expecting any event emitted
+  // Same as testEModeCategoryUpdatesNoChangeShouldNotEmit, but this time should work, as we are not expecting any event emitted
   function testEModeCategoryUpdatesNoChange() public {
     AaveV3MockEModeCategoryUpdateNoChange payload = new AaveV3MockEModeCategoryUpdateNoChange(
       configEngine

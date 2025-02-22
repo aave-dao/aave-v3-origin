@@ -201,7 +201,7 @@ contract RateStrategyCalculateRatesTests is RateStrategyBase {
   function test_fuzz_calculate_rates_80_percent_usage_added_and_virtual_equal(
     uint256 virtualBalanceAmount
   ) public view {
-    vm.assume(virtualBalanceAmount <= 200000000000000000);
+    virtualBalanceAmount = bound(virtualBalanceAmount, 0, 200000000000000000);
     uint256 liquidityAddedAmount = 200000000000000000 - virtualBalanceAmount;
 
     // First, calculate using only virtual balance
@@ -332,9 +332,9 @@ contract RateStrategyCalculateRatesTests is RateStrategyBase {
     uint256 availableLiquidity,
     uint256 virtualBalanceAmount
   ) public setRateParams(rateData, tokenList.usdx) {
-    vm.assume(totalDebt > 0);
-    vm.assume(totalDebt < availableLiquidity && availableLiquidity < 1e28);
-    vm.assume(virtualBalanceAmount < 1e28);
+    availableLiquidity = bound(availableLiquidity, 2, 1e28 - 1);
+    totalDebt = bound(totalDebt, 1, availableLiquidity - 1);
+    virtualBalanceAmount = bound(virtualBalanceAmount, 0, 1e28);
     uint256 availableLiquidityPlusDebt = totalDebt + availableLiquidity + virtualBalanceAmount;
     borrowUsageRatio = totalDebt.rayDiv(availableLiquidityPlusDebt);
     vm.assume(borrowUsageRatio < (uint256(rateData.optimalUsageRatio) * 1e23));
@@ -421,9 +421,9 @@ contract RateStrategyCalculateRatesTests is RateStrategyBase {
     uint256 availableLiquidity,
     uint256 virtualBalanceAmount
   ) public setRateParams(rateData, tokenList.usdx) {
-    availableLiquidity = bound(availableLiquidity, 1, 1e28);
+    availableLiquidity = bound(availableLiquidity, 1, 1e28 - 1);
     totalDebt = bound(totalDebt, 1, availableLiquidity);
-    vm.assume(virtualBalanceAmount < 1e28);
+    virtualBalanceAmount = bound(virtualBalanceAmount, 0, 1e28 - 1);
     uint256 availableLiquidityPlusDebt = totalDebt + availableLiquidity + virtualBalanceAmount;
 
     borrowUsageRatio = totalDebt.rayDiv(availableLiquidityPlusDebt);

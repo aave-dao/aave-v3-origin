@@ -3,7 +3,10 @@ pragma solidity ^0.8.0;
 
 import {IERC20} from 'openzeppelin-contracts/contracts/interfaces/IERC20.sol';
 import {IPriceOracleGetter} from '../../src/contracts/interfaces/IPriceOracleGetter.sol';
-import {TestnetProcedures} from '../utils/TestnetProcedures.sol';
+import {RewardsDataTypes} from '../../src/contracts/rewards/libraries/RewardsDataTypes.sol';
+import {TestnetProcedures, TestnetERC20} from '../utils/TestnetProcedures.sol';
+import {ITransferStrategyBase} from '../../src/contracts/rewards/transfer-strategies/PullRewardsTransferStrategy.sol';
+import {AggregatorInterface} from '../../src/contracts/dependencies/chainlink/AggregatorInterface.sol';
 
 contract Testhelpers is TestnetProcedures {
   address rando = makeAddr('randomUser');
@@ -12,7 +15,7 @@ contract Testhelpers is TestnetProcedures {
     initTestEnvironment(false);
 
     // supply and borrow some on reserve with a random user as "some" interest accrual
-    // is the realisitc usecase we want to check in gas snapshots
+    // is the realistic use case we want to check in gas snapshots
     _supplyOnReserve(rando, 100 ether, tokenList.weth);
     _supplyOnReserve(rando, 1_000_000e6, tokenList.usdx);
     _supplyOnReserve(rando, 100e8, tokenList.wbtc);
@@ -43,7 +46,7 @@ contract Testhelpers is TestnetProcedures {
       abi.encodeWithSelector(IPriceOracleGetter.getAssetPrice.selector, address(asset)),
       abi.encode(0)
     );
-    // borrow the full emount of the asset
+    // borrow the full amount of the asset
     vm.prank(borrower);
     contracts.poolProxy.borrow(asset, amount, 2, 0, borrower);
     // revert the oracle price
@@ -57,5 +60,37 @@ contract Testhelpers is TestnetProcedures {
   function _skip(uint256 amount) internal {
     vm.warp(vm.getBlockTimestamp() + amount * 12);
     vm.roll(vm.getBlockNumber() + amount);
+  }
+
+  function _setupEmission(
+    address rewardToken,
+    address asset,
+    uint32 emissionEnd,
+    uint88 emissionPerSecond,
+    address emissionAdmin,
+    address strategy
+  ) internal {
+    RewardsDataTypes.RewardsConfigInput[] memory config = new RewardsDataTypes.RewardsConfigInput[](
+      1
+    );
+    config[0] = RewardsDataTypes.RewardsConfigInput(
+      emissionPerSecond,
+      0,
+      emissionEnd,
+      asset,
+      rewardToken,
+      ITransferStrategyBase(strategy),
+      AggregatorInterface(address(2))
+    );
+
+    // configure asset
+    vm.prank(emissionAdmin);
+    contracts.emissionManager.configureAssets(config);
+
+    // fund admin & approve transfers to allow claiming
+    uint256 fundsToEmit = (emissionEnd - vm.getBlockTimestamp()) * emissionPerSecond;
+    deal(rewardToken, emissionAdmin, fundsToEmit, true);
+    vm.prank(emissionAdmin);
+    IERC20(rewardToken).approve(address(strategy), fundsToEmit);
   }
 }

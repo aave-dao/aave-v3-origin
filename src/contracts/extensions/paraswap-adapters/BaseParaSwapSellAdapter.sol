@@ -6,7 +6,6 @@ import {SafeMath} from '../../dependencies/openzeppelin/contracts/SafeMath.sol';
 import {PercentageMath} from '../../protocol/libraries/math/PercentageMath.sol';
 import {IPoolAddressesProvider} from '../../interfaces/IPoolAddressesProvider.sol';
 import {IERC20Detailed} from '../../dependencies/openzeppelin/contracts/IERC20Detailed.sol';
-import {IParaSwapAugustus} from './interfaces/IParaSwapAugustus.sol';
 import {IParaSwapAugustusRegistry} from './interfaces/IParaSwapAugustusRegistry.sol';
 import {BaseParaSwapAdapter} from './BaseParaSwapAdapter.sol';
 
@@ -45,7 +44,7 @@ abstract contract BaseParaSwapSellAdapter is BaseParaSwapAdapter {
   function _sellOnParaSwap(
     uint256 fromAmountOffset,
     bytes memory swapCalldata,
-    IParaSwapAugustus augustus,
+    address augustus,
     IERC20Detailed assetToSwapFrom,
     IERC20Detailed assetToSwapTo,
     uint256 amountToSwap,
@@ -72,9 +71,7 @@ abstract contract BaseParaSwapSellAdapter is BaseParaSwapAdapter {
     require(balanceBeforeAssetFrom >= amountToSwap, 'INSUFFICIENT_BALANCE_BEFORE_SWAP');
     uint256 balanceBeforeAssetTo = assetToSwapTo.balanceOf(address(this));
 
-    address tokenTransferProxy = augustus.getTokenTransferProxy();
-    assetToSwapFrom.safeApprove(tokenTransferProxy, 0);
-    assetToSwapFrom.safeApprove(tokenTransferProxy, amountToSwap);
+    assetToSwapFrom.safeApprove(augustus, amountToSwap);
 
     if (fromAmountOffset != 0) {
       // Ensure 256 bit (32 bytes) fromAmount value is within bounds of the
@@ -90,7 +87,7 @@ abstract contract BaseParaSwapSellAdapter is BaseParaSwapAdapter {
         mstore(add(swapCalldata, add(fromAmountOffset, 32)), amountToSwap)
       }
     }
-    (bool success, ) = address(augustus).call(swapCalldata);
+    (bool success, ) = augustus.call(swapCalldata);
     if (!success) {
       // Copy revert reason from call
       assembly {
@@ -98,6 +95,9 @@ abstract contract BaseParaSwapSellAdapter is BaseParaSwapAdapter {
         revert(0, returndatasize())
       }
     }
+
+    // Reset allowance
+    assetToSwapFrom.safeApprove(augustus, 0);
 
     require(
       assetToSwapFrom.balanceOf(address(this)) == balanceBeforeAssetFrom - amountToSwap,
