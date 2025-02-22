@@ -3,13 +3,10 @@ diff --git a/./downloads/GNOSIS/COLLECTOR_IMPL.sol b/./downloads/CELO/COLLECTOR_
 index 2ac55c8..7a7eb91 100644
 --- a/./downloads/GNOSIS/COLLECTOR_IMPL.sol
 +++ b/./downloads/CELO/COLLECTOR_IMPL.sol
-@@ -659,7 +659,7 @@ abstract contract ContextUpgradeable is Initializable {
-   }
- }
- 
+
 -// downloads/GNOSIS/COLLECTOR_IMPL/CollectorWithCustomImpl/lib/aave-v3-origin/src/contracts/treasury/ICollector.sol
 +// downloads/CELO/COLLECTOR_IMPL/Collector/src/contracts/treasury/ICollector.sol
- 
+
  interface ICollector {
    struct Stream {
 @@ -722,7 +722,7 @@ interface ICollector {
@@ -18,16 +15,16 @@ index 2ac55c8..7a7eb91 100644
     */
 -  error OnlyFundsAdminOrRceipient();
 +  error OnlyFundsAdminOrRecipient();
- 
+
    /**
     * @dev The provided ID does not belong to an existing stream
 @@ -1553,7 +1553,7 @@ library SafeERC20 {
    }
  }
- 
+
 -// downloads/GNOSIS/COLLECTOR_IMPL/CollectorWithCustomImpl/lib/aave-v3-origin/src/contracts/treasury/Collector.sol
 +// downloads/CELO/COLLECTOR_IMPL/Collector/src/contracts/treasury/Collector.sol
- 
+
  /**
   * @title Collector
 @@ -1616,7 +1616,7 @@ contract Collector is AccessControlUpgradeable, ReentrancyGuardUpgradeable, ICol
