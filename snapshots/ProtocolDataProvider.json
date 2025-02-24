@@ -11,6 +11,6 @@
   "getSiloedBorrowing": "16792",
   "getTotalDebt": "35491",
   "getUnbackedMintCap": "16721",
-  "getUserReserveData": "29607",
+  "getUserReserveData": "72607",
   "getVirtualUnderlyingBalance": "16533"
 }
