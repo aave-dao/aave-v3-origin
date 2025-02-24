@@ -1,0 +1,11 @@
+{
+  "full amount; receiver: ->enableCollateral": "144881",
+  "full amount; sender: ->disableCollateral;": "103318",
+  "full amount; sender: ->disableCollateral; receiver: ->enableCollateral": "145060",
+  "full amount; sender: ->disableCollateral; receiver: dirty, ->enableCollateral": "133158",
+  "full amount; sender: collateralDisabled": "103139",
+  "partial amount; sender: collateralDisabled;": "103139",
+  "partial amount; sender: collateralDisabled; receiver: ->enableCollateral": "144881",
+  "partial amount; sender: collateralEnabled;": "103347",
+  "partial amount; sender: collateralEnabled; receiver: ->enableCollateral": "145089"
+}

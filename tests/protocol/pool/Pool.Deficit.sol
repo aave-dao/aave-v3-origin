@@ -222,7 +222,7 @@ contract PoolDeficitTests is TestnetProcedures {
     _checkIrInvariant(tokenList.usdx);
   }
 
-  function _checkIrInvariant(address asset) internal {
+  function _checkIrInvariant(address asset) internal view {
     DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(asset);
     assertLt(
       reserveData.currentLiquidityRate * IERC20(reserveData.aTokenAddress).totalSupply(),
@@ -268,7 +268,6 @@ contract PoolDeficitTests is TestnetProcedures {
 
   function _filterAddresses(address user) internal view {
     vm.assume(user != address(0));
-    vm.assume(user != report.proxyAdmin);
     vm.assume(user != report.poolAddressesProvider);
     vm.assume(user != alice);
     vm.assume(user != bob);

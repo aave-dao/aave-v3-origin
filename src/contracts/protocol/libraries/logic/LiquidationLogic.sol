@@ -10,7 +10,6 @@ import {ReserveLogic} from './ReserveLogic.sol';
 import {ValidationLogic} from './ValidationLogic.sol';
 import {GenericLogic} from './GenericLogic.sol';
 import {IsolationModeLogic} from './IsolationModeLogic.sol';
-import {EModeLogic} from './EModeLogic.sol';
 import {UserConfiguration} from '../../libraries/configuration/UserConfiguration.sol';
 import {ReserveConfiguration} from '../../libraries/configuration/ReserveConfiguration.sol';
 import {EModeConfiguration} from '../../libraries/configuration/EModeConfiguration.sol';
@@ -367,16 +366,20 @@ library LiquidationLogic {
       hasNoCollateralLeft
     );
 
-    // IsolationModeTotalDebt only discounts `actualDebtToLiquidate`, not the fully burned amount in case of deficit creation.
-    // This is by design as otherwise debt debt ceiling would render ineffective if a collateral asset faces bad debt events.
-    // The governance can decide the raise the ceiling to discount manifested deficit.
-    IsolationModeLogic.updateIsolatedDebtIfIsolated(
-      reservesData,
-      reservesList,
-      userConfig,
-      vars.debtReserveCache,
-      vars.actualDebtToLiquidate
-    );
+    // An asset can only be ceiled if it has no supply or if it was not a collateral previously.
+    // Therefore we can be sure that no inconsistent state can be reached in which a user has multiple collaterals, with one being ceiled.
+    // This allows for the implicit assumption that: if the asset was a collateral & the asset was ceiled, the user must have been in isolation.
+    if (collateralReserve.configuration.getDebtCeiling() != 0) {
+      // IsolationModeTotalDebt only discounts `actualDebtToLiquidate`, not the fully burned amount in case of deficit creation.
+      // This is by design as otherwise the debt ceiling would render ineffective if a collateral asset faces bad debt events.
+      // The governance can decide the raise the ceiling to discount manifested deficit.
+      IsolationModeLogic.updateIsolatedDebt(
+        reservesData,
+        vars.debtReserveCache,
+        vars.actualDebtToLiquidate,
+        params.collateralAsset
+      );
+    }
 
     if (params.receiveAToken) {
       _liquidateATokens(reservesData, reservesList, usersConfig, collateralReserve, params, vars);
@@ -574,7 +577,9 @@ library LiquidationLogic {
           // In the case of GHO, all obligations are to the protocol
           // therefore the protocol assumes the losses on interest and only tracks the pure deficit by discounting the not-collected & burned debt
           outstandingDebt -= amountToBurn;
-          IAToken(debtReserveCache.aTokenAddress).handleRepayment(msg.sender, user, amountToBurn);
+          // IMPORTANT: address(0) is used here to indicate that the accrued fee is discounted and not actually repayed.
+          // The value passed has no relevance as it is unused on the aGHO.handleRepayment, therefore the value is purely esthetical.
+          IAToken(debtReserveCache.aTokenAddress).handleRepayment(address(0), user, amountToBurn);
         }
       }
       debtReserve.deficit += outstandingDebt.toUint128();

@@ -19,44 +19,12 @@ library LiquidationHelper {
   using PercentageMath for uint256;
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
 
-  /**
-   * @notice Returns the required amount of borrows in base currency to reach a certain healthfactor
-   */
-  function _getRequiredBorrowsForHfBelow(
-    IPool pool,
-    address user,
-    uint256 desiredHf
-  ) internal view returns (uint256) {
-    (uint256 totalCollateralBase, , , uint256 currentLiquidationThreshold, , ) = pool
-      .getUserAccountData(user);
-    return (totalCollateralBase.percentMul(currentLiquidationThreshold + 1) * 1e18) / desiredHf;
-  }
-
   struct LocalVars {
     address user;
     uint256 liquidationBonus;
     uint256 userEMode;
     address oracle;
     address vToken;
-  }
-
-  function _getLiquidationParams(
-    IPool pool,
-    address user,
-    address collateralAsset,
-    address debtAsset,
-    uint256 liquidationAmount
-  ) internal view returns (uint256, uint256, uint256, uint256) {
-    uint256 maxLiquidatableDebt = _getMaxLiquidatableDebt(pool, user, collateralAsset, debtAsset);
-    return
-      _getLiquidationParams(
-        pool,
-        user,
-        collateralAsset,
-        debtAsset,
-        liquidationAmount,
-        maxLiquidatableDebt
-      );
   }
 
   /**
@@ -99,47 +67,5 @@ library LiquidationHelper {
         IERC20Detailed(collateralReserveData.aTokenAddress).balanceOf(local.user),
         local.liquidationBonus
       );
-  }
-
-  function _getMaxLiquidatableDebt(
-    IPool pool,
-    address user,
-    address collateralAsset,
-    address debtAsset
-  ) internal view returns (uint256) {
-    (, uint256 totalDebtInBaseCurrency, , , , uint256 healthFactor) = pool.getUserAccountData(user);
-    address oracle = pool.ADDRESSES_PROVIDER().getPriceOracle();
-    uint256 reserveCollateralInBaseCurrency;
-    {
-      address aToken = pool.getReserveAToken(collateralAsset);
-      uint256 maxLiquidatableCollateral = IERC20Detailed(aToken).balanceOf(user);
-      uint256 collateralAssetUnits = 10 ** IERC20Detailed(aToken).decimals();
-      uint256 collateralAssetPrice = IAaveOracle(oracle).getAssetPrice(collateralAsset);
-      reserveCollateralInBaseCurrency =
-        (collateralAssetPrice * maxLiquidatableCollateral) /
-        collateralAssetUnits;
-    }
-    address vToken = pool.getReserveVariableDebtToken(debtAsset);
-    uint256 maxLiquidatableDebt = IERC20Detailed(vToken).balanceOf(user);
-    uint256 debtAssetUnits = 10 ** IERC20Detailed(vToken).decimals();
-    uint256 debtAssetPrice = IAaveOracle(oracle).getAssetPrice(debtAsset);
-    uint256 reserveDebtInBaseCurrency = (debtAssetPrice * maxLiquidatableDebt) / debtAssetUnits;
-
-    if (
-      reserveDebtInBaseCurrency >= LiquidationLogic.MIN_BASE_MAX_CLOSE_FACTOR_THRESHOLD &&
-      reserveCollateralInBaseCurrency >= LiquidationLogic.MIN_BASE_MAX_CLOSE_FACTOR_THRESHOLD &&
-      healthFactor > LiquidationLogic.CLOSE_FACTOR_HF_THRESHOLD
-    ) {
-      uint256 totalDefaultLiquidatableDebtInBaseCurrency = totalDebtInBaseCurrency.percentMul(
-        LiquidationLogic.DEFAULT_LIQUIDATION_CLOSE_FACTOR
-      );
-
-      if (reserveDebtInBaseCurrency > totalDefaultLiquidatableDebtInBaseCurrency) {
-        maxLiquidatableDebt =
-          (totalDefaultLiquidatableDebtInBaseCurrency * debtAssetUnits) /
-          debtAssetPrice;
-      }
-    }
-    return maxLiquidatableDebt;
   }
 }

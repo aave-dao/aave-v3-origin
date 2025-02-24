@@ -16,7 +16,6 @@ import {PercentageMath} from '../../../src/contracts/protocol/libraries/math/Per
 import {IAaveOracle} from '../../../src/contracts/interfaces/IAaveOracle.sol';
 import {TestnetProcedures} from '../../utils/TestnetProcedures.sol';
 import {TestnetERC20} from '../../../src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
-import {LiquidationHelper} from '../../helpers/LiquidationHelper.sol';
 
 contract PoolEModeTests is TestnetProcedures {
   using stdStorage for StdStorage;

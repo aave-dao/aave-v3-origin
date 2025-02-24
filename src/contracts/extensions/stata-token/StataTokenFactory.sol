@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.10;
 
-import {IERC20Metadata} from 'solidity-utils/contracts/oz-common/interfaces/IERC20Metadata.sol';
-import {ITransparentProxyFactory, ProxyAdmin} from 'solidity-utils/contracts/transparent-proxy/interfaces/ITransparentProxyFactory.sol';
-import {Initializable} from 'solidity-utils/contracts/transparent-proxy/Initializable.sol';
+import {IERC20Metadata} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
+import {Initializable} from 'openzeppelin-contracts/contracts/proxy/utils/Initializable.sol';
+import {ITransparentProxyFactory} from 'solidity-utils/contracts/transparent-proxy/interfaces/ITransparentProxyFactory.sol';
 import {IPool, DataTypes} from '../../../contracts/interfaces/IPool.sol';
 import {StataTokenV2} from './StataTokenV2.sol';
 import {IStataTokenFactory} from './interfaces/IStataTokenFactory.sol';
@@ -20,7 +20,7 @@ contract StataTokenFactory is Initializable, IStataTokenFactory {
   IPool public immutable POOL;
 
   ///@inheritdoc IStataTokenFactory
-  address public immutable PROXY_ADMIN;
+  address public immutable INITIAL_OWNER;
 
   ///@inheritdoc IStataTokenFactory
   ITransparentProxyFactory public immutable TRANSPARENT_PROXY_FACTORY;
@@ -35,12 +35,13 @@ contract StataTokenFactory is Initializable, IStataTokenFactory {
 
   constructor(
     IPool pool,
-    address proxyAdmin,
+    address initialOwner,
     ITransparentProxyFactory transparentProxyFactory,
     address stataTokenImpl
   ) {
+    _disableInitializers();
     POOL = pool;
-    PROXY_ADMIN = proxyAdmin;
+    INITIAL_OWNER = initialOwner;
     TRANSPARENT_PROXY_FACTORY = transparentProxyFactory;
     STATA_TOKEN_IMPL = stataTokenImpl;
   }
@@ -58,7 +59,7 @@ contract StataTokenFactory is Initializable, IStataTokenFactory {
         bytes memory symbol = abi.encodePacked('w', IERC20Metadata(aTokenAddress).symbol());
         address stataToken = TRANSPARENT_PROXY_FACTORY.createDeterministic(
           STATA_TOKEN_IMPL,
-          ProxyAdmin(PROXY_ADMIN),
+          INITIAL_OWNER,
           abi.encodeWithSelector(
             StataTokenV2.initialize.selector,
             aTokenAddress,

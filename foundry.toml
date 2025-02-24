@@ -4,7 +4,7 @@ test = 'tests'
 script = 'scripts'
 optimizer = true
 optimizer_runs = 200
-solc = '0.8.20'
+solc = '0.8.22'
 evm_version = 'shanghai'
 bytecode_hash = 'none'
 ignored_warnings_from = ["src/periphery/contracts/treasury/RevenueSplitter.sol"]
@@ -12,15 +12,18 @@ out = 'out'
 libs = ['lib']
 remappings = []
 fs_permissions = [
-    { access = "write", path = "./reports" },
-    { access = "read", path = "./out" },
-    { access = "read", path = "./config" },
+  { access = "write", path = "./reports" },
+  { access = "read", path = "./out" },
+  { access = "read", path = "./config" },
 ]
 ffi = true
 
 [fuzz]
 runs = 1000
 max_test_rejects = 20000
+
+[profile.linea]
+evm_version = 'london'
 
 [rpc_endpoints]
 mainnet = "${RPC_MAINNET}"
@@ -41,6 +44,7 @@ bnb = "${RPC_BNB}"
 gnosis = "${RPC_GNOSIS}"
 base = "${RPC_BASE}"
 metis = "${RPC_METIS}"
+linea = "${RPC_LINEA}"
 
 [etherscan]
 mainnet = { key = "${ETHERSCAN_API_KEY_MAINNET}", chainId = 1 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {IERC20} from '../dependencies/openzeppelin/contracts/IERC20.sol';
+import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
 
 interface ICollector {
   struct Stream {
@@ -16,10 +16,60 @@ interface ICollector {
     bool isEntity;
   }
 
-  /** @notice Emitted when the funds admin changes
-   * @param fundsAdmin The new funds admin.
-   **/
-  event NewFundsAdmin(address indexed fundsAdmin);
+  /**
+   * @dev Withdraw amount exceeds available balance
+   */
+  error BalanceExceeded();
+
+  /**
+   * @dev Deposit smaller than time delta
+   */
+  error DepositSmallerTimeDelta();
+
+  /**
+   * @dev Deposit not multiple of time delta
+   */
+  error DepositNotMultipleTimeDelta();
+
+  /**
+   * @dev Recipient cannot be the contract itself or msg.sender
+   */
+  error InvalidRecipient();
+
+  /**
+   * @dev Start time cannot be before block.timestamp
+   */
+  error InvalidStartTime();
+
+  /**
+   * @dev Stop time must be greater than startTime
+   */
+  error InvalidStopTime();
+
+  /**
+   * @dev Provided address cannot be the zero-address
+   */
+  error InvalidZeroAddress();
+
+  /**
+   * @dev Amount cannot be zero
+   */
+  error InvalidZeroAmount();
+
+  /**
+   * @dev Only caller with FUNDS_ADMIN role can call
+   */
+  error OnlyFundsAdmin();
+
+  /**
+   * @dev Only caller with FUNDS_ADMIN role or stream recipient can call
+   */
+  error OnlyFundsAdminOrRecipient();
+
+  /**
+   * @dev The provided ID does not belong to an existing stream
+   */
+  error StreamDoesNotExist();
 
   /** @notice Emitted when the new stream is created
    * @param streamId The identifier of the stream.
@@ -64,29 +114,28 @@ interface ICollector {
     uint256 recipientBalance
   );
 
+  /**
+   * @notice FUNDS_ADMIN role granted by ACL Manager
+   **/
+  function FUNDS_ADMIN_ROLE() external view returns (bytes32);
+
   /** @notice Returns the mock ETH reference address
    * @return address The address
    **/
   function ETH_MOCK_ADDRESS() external pure returns (address);
 
-  /** @notice Initializes the contracts
-   * @param fundsAdmin Funds admin address
-   * @param nextStreamId StreamId to set, applied if greater than 0
-   **/
-  function initialize(address fundsAdmin, uint256 nextStreamId) external;
-
   /**
-   * @notice Return the funds admin, only entity to be able to interact with this contract (controller of reserve)
-   * @return address The address of the funds admin
+   * @notice Checks if address is funds admin
+   * @return bool If the address has the funds admin role
    **/
-  function getFundsAdmin() external view returns (address);
+  function isFundsAdmin(address admin) external view returns (bool);
 
   /**
    * @notice Returns the available funds for the given stream id and address.
    * @param streamId The id of the stream for which to query the balance.
    * @param who The address for which to query the balance.
    * @notice Returns the total funds allocated to `who` as uint256.
-   */
+   **/
   function balanceOf(uint256 streamId, address who) external view returns (uint256 balance);
 
   /**
@@ -104,13 +153,6 @@ interface ICollector {
    * @param amount Amount to transfer
    **/
   function transfer(IERC20 token, address recipient, uint256 amount) external;
-
-  /**
-   * @dev Transfer the ownership of the funds administrator role.
-          This function should only be callable by the current funds administrator.
-   * @param admin The address of the new funds administrator
-   */
-  function setFundsAdmin(address admin) external;
 
   /**
    * @notice Creates a new stream funded by this contracts itself and paid towards `recipient`.

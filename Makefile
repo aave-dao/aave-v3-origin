@@ -33,6 +33,7 @@ coverage :
 	make coverage-report
 	make coverage-badge
 
+
 # Utilities
 download :; cast etherscan-source --chain ${chain} -d src/etherscan/${chain}_${address} ${address}
 git-diff :
@@ -42,9 +43,9 @@ git-diff :
 
 # Deploy
 deploy-libs-one	:;
-	forge script scripts/misc/LibraryPreCompileOne.sol --rpc-url ${chain} --ledger --mnemonic-indexes ${MNEMONIC_INDEX} --sender ${LEDGER_SENDER} --verify --slow --broadcast
+	FOUNDRY_PROFILE=${chain} forge script scripts/misc/LibraryPreCompileOne.sol --rpc-url ${chain} --ledger --mnemonic-indexes ${MNEMONIC_INDEX} --sender ${LEDGER_SENDER} --slow --broadcast
 deploy-libs-two	:;
-	forge script scripts/misc/LibraryPreCompileTwo.sol --rpc-url ${chain} --ledger --mnemonic-indexes ${MNEMONIC_INDEX} --sender ${LEDGER_SENDER} --verify --slow --broadcast
+	FOUNDRY_PROFILE=${chain} forge script scripts/misc/LibraryPreCompileTwo.sol --rpc-url ${chain} --ledger --mnemonic-indexes ${MNEMONIC_INDEX} --sender ${LEDGER_SENDER} --slow --broadcast
 
 deploy-libs :
 	make deploy-libs-one chain=${chain}
@@ -52,4 +53,34 @@ deploy-libs :
 	make deploy-libs-two chain=${chain}
 	npx catapulta-verify -b broadcast/LibraryPreCompileTwo.sol/${chainId}/run-latest.json
 
-gas-report :; forge test --fuzz-runs 50 --gas-report
+# Gas reports
+gas-report :; forge test --mp 'tests/gas/*.t.sol' --isolate
+
+
+# Invariants
+echidna:
+	echidna tests/invariants/Tester.t.sol --contract Tester --config ./tests/invariants/_config/echidna_config.yaml --corpus-dir ./tests/invariants/_corpus/echidna/default/_data/corpus
+
+echidna-assert:
+	echidna tests/invariants/Tester.t.sol --contract Tester --test-mode assertion --config ./tests/invariants/_config/echidna_config.yaml --corpus-dir ./tests/invariants/_corpus/echidna/default/_data/corpus
+
+echidna-explore:
+	echidna tests/invariants/Tester.t.sol --contract Tester --test-mode exploration --config ./tests/invariants/_config/echidna_config.yaml --corpus-dir ./tests/invariants/_corpus/echidna/default/_data/corpus
+
+# Medusa
+medusa:
+	medusa fuzz --config ./medusa.json
+
+# Echidna Runner
+
+HOST = power-runner
+LOCAL_FOLDER = ./
+REMOTE_FOLDER = ./echidna-runner
+REMOTE_COMMAND = cd $(REMOTE_FOLDER)/aave-v3-origin && make echidna > process_output.log 2>&1
+REMOTE_COMMAND_ASSERT = cd $(REMOTE_FOLDER)/aave-v3-origin && make echidna-assert > process_output.log 2>&1
+
+echidna-runner:
+	tar --exclude='./tests/invariants/_corpus' -czf - $(LOCAL_FOLDER) | ssh $(HOST) "export PATH=$$PATH:/root/.local/bin:/root/.foundry/bin && mkdir -p $(REMOTE_FOLDER)/aave-v3-origin && tar -xzf - -C $(REMOTE_FOLDER)/aave-v3-origin && $(REMOTE_COMMAND)"
+
+echidna-assert-runner:
+	tar --exclude='./tests/invariants/_corpus' -czf - $(LOCAL_FOLDER) | ssh $(HOST) "export PATH=$$PATH:/root/.local/bin:/root/.foundry/bin && mkdir -p $(REMOTE_FOLDER)/aave-v3-origin && tar -xzf - -C $(REMOTE_FOLDER)/aave-v3-origin && $(REMOTE_COMMAND_ASSERT)"

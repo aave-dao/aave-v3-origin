@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import {AccessControlUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/access/AccessControlUpgradeable.sol';
+import {ReentrancyGuardUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/utils/ReentrancyGuardUpgradeable.sol';
+import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
+import {SafeERC20} from 'openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol';
+import {Address} from 'openzeppelin-contracts/contracts/utils/Address.sol';
 import {ICollector} from './ICollector.sol';
-import {ReentrancyGuard} from '../dependencies/openzeppelin/ReentrancyGuard.sol';
-import {VersionedInitializable} from '../misc/aave-upgradeability/VersionedInitializable.sol';
-import {IERC20} from '../dependencies/openzeppelin/contracts/IERC20.sol';
-import {SafeERC20} from '../dependencies/openzeppelin/contracts/SafeERC20.sol';
-import {Address} from '../dependencies/openzeppelin/contracts/Address.sol';
 
 /**
  * @title Collector
@@ -21,21 +21,25 @@ import {Address} from '../dependencies/openzeppelin/contracts/Address.sol';
  * - Same as with creation, on Sablier the `sender` and `recipient` can cancel a stream. Here, only fund admin and recipient
  * @author BGD Labs
  **/
-contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
+contract Collector is AccessControlUpgradeable, ReentrancyGuardUpgradeable, ICollector {
   using SafeERC20 for IERC20;
   using Address for address payable;
 
   /*** Storage Properties ***/
+  /// @inheritdoc ICollector
+  address public constant ETH_MOCK_ADDRESS = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
-  /**
-   * @notice Address of the current funds admin.
-   */
-  address internal _fundsAdmin;
+  /// @inheritdoc ICollector
+  bytes32 public constant FUNDS_ADMIN_ROLE = 'FUNDS_ADMIN';
 
-  /**
-   * @notice Current revision of the contract.
-   */
-  uint256 public constant REVISION = 5;
+  // Reserved storage space to account for deprecated inherited storage
+  // 0 was lastInitializedRevision
+  // 1-50 were the ____gap
+  // 51 was the reentrancy guard _status
+  // 52 was the _fundsAdmin
+  // On some networks the layout was shifted by 1 due to `initializing` being on slot 1
+  // The upgrade proposal would in this case manually shift the storage layout to properly align the networks
+  uint256[53] private ______gap;
 
   /**
    * @notice Counter for new stream ids.
@@ -47,16 +51,15 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
    */
   mapping(uint256 => Stream) private _streams;
 
-  /// @inheritdoc ICollector
-  address public constant ETH_MOCK_ADDRESS = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
-
   /*** Modifiers ***/
 
   /**
-   * @dev Throws if the caller is not the funds admin.
+   * @dev Throws if the caller does not have the FUNDS_ADMIN role
    */
   modifier onlyFundsAdmin() {
-    require(msg.sender == _fundsAdmin, 'ONLY_BY_FUNDS_ADMIN');
+    if (_onlyFundsAdmin() == false) {
+      revert OnlyFundsAdmin();
+    }
     _;
   }
 
@@ -65,10 +68,9 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
    * @param streamId The id of the stream to query.
    */
   modifier onlyAdminOrRecipient(uint256 streamId) {
-    require(
-      msg.sender == _fundsAdmin || msg.sender == _streams[streamId].recipient,
-      'caller is not the funds admin or the recipient of the stream'
-    );
+    if (_onlyFundsAdmin() == false && msg.sender != _streams[streamId].recipient) {
+      revert OnlyFundsAdminOrRecipient();
+    }
     _;
   }
 
@@ -76,31 +78,34 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
    * @dev Throws if the provided id does not point to a valid stream.
    */
   modifier streamExists(uint256 streamId) {
-    require(_streams[streamId].isEntity, 'stream does not exist');
+    if (!_streams[streamId].isEntity) revert StreamDoesNotExist();
     _;
+  }
+
+  constructor() {
+    _disableInitializers();
   }
 
   /*** Contract Logic Starts Here */
 
-  /// @inheritdoc ICollector
-  function initialize(address fundsAdmin, uint256 nextStreamId) external initializer {
+  /** @notice Initializes the contracts
+   * @param nextStreamId StreamId to set, applied if greater than 0
+   * @param admin The default admin managing the FundsAdmins
+   **/
+  function initialize(uint256 nextStreamId, address admin) external virtual initializer {
+    __AccessControl_init();
+    __ReentrancyGuard_init();
+    _grantRole(DEFAULT_ADMIN_ROLE, admin);
+    _grantRole(FUNDS_ADMIN_ROLE, admin);
     if (nextStreamId != 0) {
       _nextStreamId = nextStreamId;
     }
-
-    _setFundsAdmin(fundsAdmin);
   }
 
   /*** View Functions ***/
-
-  /// @inheritdoc VersionedInitializable
-  function getRevision() internal pure override returns (uint256) {
-    return REVISION;
-  }
-
   /// @inheritdoc ICollector
-  function getFundsAdmin() external view returns (address) {
-    return _fundsAdmin;
+  function isFundsAdmin(address admin) external view returns (bool) {
+    return hasRole(FUNDS_ADMIN_ROLE, admin);
   }
 
   /// @inheritdoc ICollector
@@ -190,12 +195,12 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
 
   /// @inheritdoc ICollector
   function approve(IERC20 token, address recipient, uint256 amount) external onlyFundsAdmin {
-    token.safeApprove(recipient, amount);
+    token.forceApprove(recipient, amount);
   }
 
   /// @inheritdoc ICollector
   function transfer(IERC20 token, address recipient, uint256 amount) external onlyFundsAdmin {
-    require(recipient != address(0), 'INVALID_0X_RECIPIENT');
+    if (recipient == address(0)) revert InvalidZeroAddress();
 
     if (address(token) == ETH_MOCK_ADDRESS) {
       payable(recipient).sendValue(amount);
@@ -204,18 +209,8 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
     }
   }
 
-  /// @inheritdoc ICollector
-  function setFundsAdmin(address admin) external onlyFundsAdmin {
-    _setFundsAdmin(admin);
-  }
-
-  /**
-   * @dev Transfer the ownership of the funds administrator role.
-   * @param admin The address of the new funds administrator
-   */
-  function _setFundsAdmin(address admin) internal {
-    _fundsAdmin = admin;
-    emit NewFundsAdmin(admin);
+  function _onlyFundsAdmin() internal view returns (bool) {
+    return hasRole(FUNDS_ADMIN_ROLE, msg.sender);
   }
 
   struct CreateStreamLocalVars {
@@ -244,21 +239,21 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
     uint256 startTime,
     uint256 stopTime
   ) external onlyFundsAdmin returns (uint256) {
-    require(recipient != address(0), 'stream to the zero address');
-    require(recipient != address(this), 'stream to the contract itself');
-    require(recipient != msg.sender, 'stream to the caller');
-    require(deposit > 0, 'deposit is zero');
-    require(startTime >= block.timestamp, 'start time before block.timestamp');
-    require(stopTime > startTime, 'stop time before the start time');
+    if (recipient == address(0)) revert InvalidZeroAddress();
+    if (recipient == address(this)) revert InvalidRecipient();
+    if (recipient == msg.sender) revert InvalidRecipient();
+    if (deposit == 0) revert InvalidZeroAmount();
+    if (startTime < block.timestamp) revert InvalidStartTime();
+    if (stopTime <= startTime) revert InvalidStopTime();
 
     CreateStreamLocalVars memory vars;
     vars.duration = stopTime - startTime;
 
     /* Without this, the rate per second would be zero. */
-    require(deposit >= vars.duration, 'deposit smaller than time delta');
+    if (deposit < vars.duration) revert DepositSmallerTimeDelta();
 
     /* This condition avoids dealing with remainders */
-    require(deposit % vars.duration == 0, 'deposit not multiple of time delta');
+    if (deposit % vars.duration > 0) revert DepositNotMultipleTimeDelta();
 
     vars.ratePerSecond = deposit / vars.duration;
 
@@ -302,11 +297,11 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
     uint256 streamId,
     uint256 amount
   ) external nonReentrant streamExists(streamId) onlyAdminOrRecipient(streamId) returns (bool) {
-    require(amount > 0, 'amount is zero');
+    if (amount == 0) revert InvalidZeroAmount();
     Stream memory stream = _streams[streamId];
 
     uint256 balance = balanceOf(streamId, stream.recipient);
-    require(balance >= amount, 'amount exceeds the available balance');
+    if (balance < amount) revert BalanceExceeded();
 
     _streams[streamId].remainingBalance = stream.remainingBalance - amount;
 
@@ -338,4 +333,7 @@ contract Collector is VersionedInitializable, ICollector, ReentrancyGuard {
     emit CancelStream(streamId, stream.sender, stream.recipient, senderBalance, recipientBalance);
     return true;
   }
+
+  /// @dev needed in order to receive ETH from the Aave v1 ecosystem reserve
+  receive() external payable {}
 }

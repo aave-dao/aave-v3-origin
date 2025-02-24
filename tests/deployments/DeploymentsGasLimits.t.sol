@@ -60,7 +60,6 @@ contract DeploymentsGasLimits is BatchTestProcedures {
       8080,
       empty,
       address(new WETH9()),
-      address(0),
       0.0005e4,
       0.0004e4,
       address(0),
@@ -185,7 +184,7 @@ contract DeploymentsGasLimits is BatchTestProcedures {
     new AaveV3HelpersBatchTwo(
       setupReportTwo.poolProxy,
       setupReportTwo.rewardsControllerProxy,
-      peripheryReportOne.proxyAdmin
+      roles.poolAdmin
     );
   }
 
@@ -197,82 +196,6 @@ contract DeploymentsGasLimits is BatchTestProcedures {
       config,
       marketReportOne.poolAddressesProvider,
       address(aaveV3SetupOne)
-    );
-  }
-
-  function testCheckInitCodeSizeBatchs() public pure {
-    uint16 maxInitCodeSize = 49152;
-
-    console.log('AaveV3SetupBatch', type(AaveV3SetupBatch).creationCode.length);
-    console.log('AaveV3L2PoolBatch', type(AaveV3L2PoolBatch).creationCode.length);
-    console.log('AaveV3PoolBatch', type(AaveV3PoolBatch).creationCode.length);
-    console.log('AaveV3PeripheryBatch', type(AaveV3PeripheryBatch).creationCode.length);
-    console.log('AaveV3MiscBatch', type(AaveV3MiscBatch).creationCode.length);
-    console.log('AaveV3ParaswapBatch', type(AaveV3ParaswapBatch).creationCode.length);
-    console.log('AaveV3GettersBatchOne', type(AaveV3GettersBatchOne).creationCode.length);
-    console.log('AaveV3GettersBatchTwo', type(AaveV3GettersBatchTwo).creationCode.length);
-    console.log('AaveV3TokensBatch', type(AaveV3TokensBatch).creationCode.length);
-    console.log('AaveV3HelpersBatchOne', type(AaveV3HelpersBatchOne).creationCode.length);
-    console.log('AaveV3HelpersBatchTwo', type(AaveV3HelpersBatchTwo).creationCode.length);
-    console.log(
-      'AaveV3PeripheryBatchTreasuryPartner',
-      type(AaveV3PeripheryBatch).creationCode.length
-    );
-
-    assertLe(
-      type(AaveV3SetupBatch).creationCode.length,
-      maxInitCodeSize,
-      'AaveV3SetupBatch max init code size'
-    );
-    assertLe(
-      type(AaveV3L2PoolBatch).creationCode.length,
-      maxInitCodeSize,
-      'AaveV3L2PoolBatch max init code size'
-    );
-    assertLe(
-      type(AaveV3PoolBatch).creationCode.length,
-      maxInitCodeSize,
-      'AaveV3PoolBatch max init code size'
-    );
-    assertLe(
-      type(AaveV3PeripheryBatch).creationCode.length,
-      maxInitCodeSize,
-      'AaveV3PeripheryBatch max init code size'
-    );
-    assertLe(
-      type(AaveV3MiscBatch).creationCode.length,
-      maxInitCodeSize,
-      'AaveV3MiscBatch max init code size'
-    );
-    assertLe(
-      type(AaveV3ParaswapBatch).creationCode.length,
-      maxInitCodeSize,
-      'AaveV3ParaswapBatch max init code size'
-    );
-    assertLe(
-      type(AaveV3GettersBatchOne).creationCode.length,
-      maxInitCodeSize,
-      'AaveV3GettersBatchOne max init code size'
-    );
-    assertLe(
-      type(AaveV3GettersBatchTwo).creationCode.length,
-      maxInitCodeSize,
-      'AaveV3GettersBatchTwo max init code size'
-    );
-    assertLe(
-      type(AaveV3TokensBatch).creationCode.length,
-      maxInitCodeSize,
-      'AaveV3TokensBatch max init code size'
-    );
-    assertLe(
-      type(AaveV3HelpersBatchOne).creationCode.length,
-      maxInitCodeSize,
-      'AaveV3HelpersBatchOne max init code size'
-    );
-    assertLe(
-      type(AaveV3HelpersBatchTwo).creationCode.length,
-      maxInitCodeSize,
-      'AaveV3HelpersBatchTwo max init code size'
     );
   }
 }

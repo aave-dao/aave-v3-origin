@@ -24,7 +24,6 @@ library MarketReportUtils {
         defaultInterestRateStrategy: IDefaultInterestRateStrategyV2(
           report.defaultInterestRateStrategy
         ),
-        proxyAdmin: ProxyAdmin(report.proxyAdmin),
         treasuryImplementation: ICollector(report.treasuryImplementation),
         wrappedTokenGateway: IWrappedTokenGatewayV3(report.wrappedTokenGateway),
         walletBalanceProvider: WalletBalanceProvider(payable(report.walletBalanceProvider)),
