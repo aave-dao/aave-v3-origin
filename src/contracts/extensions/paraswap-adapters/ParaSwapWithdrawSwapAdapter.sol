@@ -7,7 +7,6 @@ import {IPoolAddressesProvider} from '../../interfaces/IPoolAddressesProvider.so
 import {BaseParaSwapSellAdapter} from './BaseParaSwapSellAdapter.sol';
 import {IParaSwapAugustusRegistry} from './interfaces/IParaSwapAugustusRegistry.sol';
 import {SafeERC20} from '../../dependencies/openzeppelin/contracts/SafeERC20.sol';
-import {IParaSwapAugustus} from './interfaces/IParaSwapAugustus.sol';
 import {ReentrancyGuard} from '../../dependencies/openzeppelin/ReentrancyGuard.sol';
 
 contract ParaSwapWithdrawSwapAdapter is BaseParaSwapSellAdapter, ReentrancyGuard {
@@ -50,12 +49,10 @@ contract ParaSwapWithdrawSwapAdapter is BaseParaSwapSellAdapter, ReentrancyGuard
     uint256 minAmountToReceive,
     uint256 swapAllBalanceOffset,
     bytes calldata swapCalldata,
-    IParaSwapAugustus augustus,
+    address augustus,
     PermitSignature calldata permitParams
   ) external nonReentrant {
-    IERC20WithPermit aToken = IERC20WithPermit(
-      _getReserveData(address(assetToSwapFrom)).aTokenAddress
-    );
+    IERC20WithPermit aToken = IERC20WithPermit(POOL.getReserveAToken(address(assetToSwapFrom)));
 
     if (swapAllBalanceOffset != 0) {
       uint256 balance = aToken.balanceOf(msg.sender);

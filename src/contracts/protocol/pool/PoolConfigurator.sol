@@ -15,8 +15,6 @@ import {IPoolConfigurator} from '../../interfaces/IPoolConfigurator.sol';
 import {IPool} from '../../interfaces/IPool.sol';
 import {IACLManager} from '../../interfaces/IACLManager.sol';
 import {IPoolDataProvider} from '../../interfaces/IPoolDataProvider.sol';
-import {IERC20} from '../../dependencies/openzeppelin/contracts/IERC20.sol';
-import {IERC20Detailed} from '../../dependencies/openzeppelin/contracts/IERC20Detailed.sol';
 
 /**
  * @title PoolConfigurator

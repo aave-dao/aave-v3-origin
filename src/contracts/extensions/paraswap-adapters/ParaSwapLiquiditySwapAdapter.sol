@@ -8,7 +8,6 @@ import {SafeERC20} from '../../dependencies/openzeppelin/contracts/SafeERC20.sol
 import {SafeMath} from '../../dependencies/openzeppelin/contracts/SafeMath.sol';
 import {BaseParaSwapSellAdapter} from './BaseParaSwapSellAdapter.sol';
 import {IParaSwapAugustusRegistry} from './interfaces/IParaSwapAugustusRegistry.sol';
-import {IParaSwapAugustus} from './interfaces/IParaSwapAugustus.sol';
 import {ReentrancyGuard} from '../../dependencies/openzeppelin/ReentrancyGuard.sol';
 
 /**
@@ -63,12 +62,9 @@ contract ParaSwapLiquiditySwapAdapter is BaseParaSwapSellAdapter, ReentrancyGuar
       uint256 minAmountToReceive,
       uint256 swapAllBalanceOffset,
       bytes memory swapCalldata,
-      IParaSwapAugustus augustus,
+      address augustus,
       PermitSignature memory permitParams
-    ) = abi.decode(
-        params,
-        (IERC20Detailed, uint256, uint256, bytes, IParaSwapAugustus, PermitSignature)
-      );
+    ) = abi.decode(params, (IERC20Detailed, uint256, uint256, bytes, address, PermitSignature));
 
     _swapLiquidity(
       swapAllBalanceOffset,
@@ -106,12 +102,10 @@ contract ParaSwapLiquiditySwapAdapter is BaseParaSwapSellAdapter, ReentrancyGuar
     uint256 minAmountToReceive,
     uint256 swapAllBalanceOffset,
     bytes calldata swapCalldata,
-    IParaSwapAugustus augustus,
+    address augustus,
     PermitSignature calldata permitParams
   ) external nonReentrant {
-    IERC20WithPermit aToken = IERC20WithPermit(
-      _getReserveData(address(assetToSwapFrom)).aTokenAddress
-    );
+    IERC20WithPermit aToken = IERC20WithPermit(POOL.getReserveAToken(address(assetToSwapFrom)));
 
     if (swapAllBalanceOffset != 0) {
       uint256 balance = aToken.balanceOf(msg.sender);
@@ -158,7 +152,7 @@ contract ParaSwapLiquiditySwapAdapter is BaseParaSwapSellAdapter, ReentrancyGuar
   function _swapLiquidity(
     uint256 swapAllBalanceOffset,
     bytes memory swapCalldata,
-    IParaSwapAugustus augustus,
+    address augustus,
     PermitSignature memory permitParams,
     uint256 flashLoanAmount,
     uint256 premium,
@@ -167,9 +161,7 @@ contract ParaSwapLiquiditySwapAdapter is BaseParaSwapSellAdapter, ReentrancyGuar
     IERC20Detailed assetToSwapTo,
     uint256 minAmountToReceive
   ) internal {
-    IERC20WithPermit aToken = IERC20WithPermit(
-      _getReserveData(address(assetToSwapFrom)).aTokenAddress
-    );
+    IERC20WithPermit aToken = IERC20WithPermit(POOL.getReserveAToken(address(assetToSwapFrom)));
     uint256 amountToSwap = flashLoanAmount;
 
     uint256 balance = aToken.balanceOf(initiator);

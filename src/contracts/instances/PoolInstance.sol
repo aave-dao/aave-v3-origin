@@ -6,7 +6,7 @@ import {IPoolAddressesProvider} from '../interfaces/IPoolAddressesProvider.sol';
 import {Errors} from '../protocol/libraries/helpers/Errors.sol';
 
 contract PoolInstance is Pool {
-  uint256 public constant POOL_REVISION = 6;
+  uint256 public constant POOL_REVISION = 7;
 
   constructor(IPoolAddressesProvider provider) Pool(provider) {}
 
@@ -14,7 +14,7 @@ contract PoolInstance is Pool {
    * @notice Initializes the Pool.
    * @dev Function is invoked by the proxy contract when the Pool contract is added to the
    * PoolAddressesProvider of the market.
-   * @dev Caching the address of the PoolAddressesProvider in order to reduce gas consumption on subsequent operations
+   * @dev The passed PoolAddressesProvider is validated against the POOL.ADDRESSES_PROVIDER, to ensure the upgrade is done with correct intention.
    * @param provider The address of the PoolAddressesProvider
    */
   function initialize(IPoolAddressesProvider provider) external virtual override initializer {

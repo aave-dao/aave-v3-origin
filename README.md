@@ -106,6 +106,19 @@ The following are the security procedures historically applied to Aave v3.X vers
 
 <br>
 
+**-> Aave v3.3 - January 2025**
+
+#### Deficit tracking & Liquidation optimizations
+
+- [Certora](./audits/2024-11-07_Certora_Aave-v3.3.0.pdf)
+- [StErMi](./audits/2024-10-22_StErMi_Aave-v3.3.pdf)
+- [Oxorio](./audits/2025-01-29_Oxorio_Aave-v3.3.0.pdf)
+- [Sherlock](./audits/2025-01-22_Sherlock_Aave-v3.3.0.pdf)
+
+In addition, Enigma Dark has adapted the Foundry-based fuzzing [invariant suite](./tests/invariants) to the Aave v3.3 codebase.
+
+<br>
+
 ### Bug bounty
 
 This repository will be subjected to [this bug bounty](https://immunefi.com/bounty/aave/) once the Aave Governance upgrades the smart contracts in the applicable production instances.

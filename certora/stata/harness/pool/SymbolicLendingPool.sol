@@ -81,12 +81,6 @@ contract SymbolicLendingPool {
     return res;
   }
 
-  function getReserveDataExtended(
-    address asset
-  ) external view returns (DataTypes.ReserveData memory) {
-    return reserve;
-  }
-
   function getConfiguration(
     address asset
   ) external view virtual returns (DataTypes.ReserveConfigurationMap memory) {

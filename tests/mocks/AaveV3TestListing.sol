@@ -6,6 +6,7 @@ import {TestnetERC20} from '../../src/contracts/mocks/testnet-helpers/TestnetERC
 import {MockAggregator} from '../../src/contracts/mocks/oracle/CLAggregators/MockAggregator.sol';
 import {ACLManager} from '../../src/contracts/protocol/configuration/ACLManager.sol';
 import {MarketReport} from '../../src/deployments/interfaces/IMarketReportTypes.sol';
+import {IPoolConfigurator, ConfiguratorInputTypes} from '../../src/contracts/interfaces/IPoolConfigurator.sol';
 
 /**
  * @dev Smart contract for token listing, for testing purposes
@@ -25,10 +26,14 @@ contract AaveV3TestListing is AaveV3Payload {
   address public immutable WETH_ADDRESS;
   address public immutable WETH_MOCK_PRICE_FEED;
 
+  address public immutable GHO_ADDRESS;
+  address public immutable GHO_MOCK_PRICE_FEED;
+
   address immutable ATOKEN_IMPLEMENTATION;
   address immutable VARIABLE_DEBT_TOKEN_IMPLEMENTATION;
 
   ACLManager immutable ACL_MANAGER;
+  IPoolConfigurator immutable CONFIGURATOR;
 
   constructor(
     IEngine customEngine,
@@ -45,10 +50,61 @@ contract AaveV3TestListing is AaveV3Payload {
     WETH_ADDRESS = weth9;
     WETH_MOCK_PRICE_FEED = address(new MockAggregator(1800e8));
 
+    GHO_ADDRESS = address(new TestnetERC20('GHO', 'GHO', 18, erc20Owner));
+    GHO_MOCK_PRICE_FEED = address(new MockAggregator(1e8));
+
     ATOKEN_IMPLEMENTATION = report.aToken;
     VARIABLE_DEBT_TOKEN_IMPLEMENTATION = report.variableDebtToken;
 
     ACL_MANAGER = ACLManager(report.aclManager);
+    CONFIGURATOR = IPoolConfigurator(report.poolConfiguratorProxy);
+  }
+
+  // list a token with virtual accounting deactivated (ex. GHO)
+  function _preExecute() internal override {
+    IEngine.InterestRateInputData memory rateParams = IEngine.InterestRateInputData({
+      optimalUsageRatio: 45_00,
+      baseVariableBorrowRate: 0,
+      variableRateSlope1: 4_00,
+      variableRateSlope2: 60_00
+    });
+    ConfiguratorInputTypes.InitReserveInput[]
+      memory reserves = new ConfiguratorInputTypes.InitReserveInput[](1);
+    reserves[0] = ConfiguratorInputTypes.InitReserveInput({
+      aTokenImpl: ATOKEN_IMPLEMENTATION,
+      variableDebtTokenImpl: VARIABLE_DEBT_TOKEN_IMPLEMENTATION,
+      useVirtualBalance: false,
+      interestRateStrategyAddress: CONFIG_ENGINE.DEFAULT_INTEREST_RATE_STRATEGY(),
+      underlyingAsset: GHO_ADDRESS,
+      treasury: CONFIG_ENGINE.COLLECTOR(),
+      incentivesController: CONFIG_ENGINE.REWARDS_CONTROLLER(),
+      aTokenName: 'aGHO',
+      aTokenSymbol: 'aGHO',
+      variableDebtTokenName: 'vGHO',
+      variableDebtTokenSymbol: 'vGHO',
+      params: bytes(''),
+      interestRateData: abi.encode(rateParams)
+    });
+    CONFIGURATOR.initReserves(reserves);
+  }
+
+  function priceFeedsUpdates() public view override returns (IEngine.PriceFeedUpdate[] memory) {
+    IEngine.PriceFeedUpdate[] memory feeds = new IEngine.PriceFeedUpdate[](1);
+    feeds[0] = IEngine.PriceFeedUpdate({asset: GHO_ADDRESS, priceFeed: GHO_MOCK_PRICE_FEED});
+    return feeds;
+  }
+
+  function borrowsUpdates() public view override returns (IEngine.BorrowUpdate[] memory) {
+    IEngine.BorrowUpdate[] memory borrows = new IEngine.BorrowUpdate[](1);
+    borrows[0] = IEngine.BorrowUpdate({
+      asset: GHO_ADDRESS,
+      enabledToBorrow: EngineFlags.ENABLED,
+      borrowableInIsolation: EngineFlags.DISABLED,
+      withSiloedBorrowing: EngineFlags.DISABLED,
+      flashloanable: EngineFlags.DISABLED,
+      reserveFactor: 10_00
+    });
+    return borrows;
   }
 
   function newListingsCustom()

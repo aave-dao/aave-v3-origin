@@ -124,9 +124,9 @@ library ConfiguratorLogic {
     IPool cachedPool,
     ConfiguratorInputTypes.UpdateATokenInput calldata input
   ) external {
-    DataTypes.ReserveDataLegacy memory reserveData = cachedPool.getReserveData(input.asset);
+    address aTokenAddress = cachedPool.getReserveAToken(input.asset);
 
-    (, , , uint256 decimals, ) = cachedPool.getConfiguration(input.asset).getParams();
+    uint256 decimals = cachedPool.getConfiguration(input.asset).getDecimals();
 
     bytes memory encodedCall = abi.encodeWithSelector(
       IInitializableAToken.initialize.selector,
@@ -140,9 +140,9 @@ library ConfiguratorLogic {
       input.params
     );
 
-    _upgradeTokenImplementation(reserveData.aTokenAddress, input.implementation, encodedCall);
+    _upgradeTokenImplementation(aTokenAddress, input.implementation, encodedCall);
 
-    emit ATokenUpgraded(input.asset, reserveData.aTokenAddress, input.implementation);
+    emit ATokenUpgraded(input.asset, aTokenAddress, input.implementation);
   }
 
   /**
@@ -155,9 +155,9 @@ library ConfiguratorLogic {
     IPool cachedPool,
     ConfiguratorInputTypes.UpdateDebtTokenInput calldata input
   ) external {
-    DataTypes.ReserveDataLegacy memory reserveData = cachedPool.getReserveData(input.asset);
+    address variableDebtTokenAddress = cachedPool.getReserveVariableDebtToken(input.asset);
 
-    (, , , uint256 decimals, ) = cachedPool.getConfiguration(input.asset).getParams();
+    uint256 decimals = cachedPool.getConfiguration(input.asset).getDecimals();
 
     bytes memory encodedCall = abi.encodeWithSelector(
       IInitializableDebtToken.initialize.selector,
@@ -170,17 +170,9 @@ library ConfiguratorLogic {
       input.params
     );
 
-    _upgradeTokenImplementation(
-      reserveData.variableDebtTokenAddress,
-      input.implementation,
-      encodedCall
-    );
+    _upgradeTokenImplementation(variableDebtTokenAddress, input.implementation, encodedCall);
 
-    emit VariableDebtTokenUpgraded(
-      input.asset,
-      reserveData.variableDebtTokenAddress,
-      input.implementation
-    );
+    emit VariableDebtTokenUpgraded(input.asset, variableDebtTokenAddress, input.implementation);
   }
 
   /**

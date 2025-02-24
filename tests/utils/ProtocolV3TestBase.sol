@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.7.5 <0.9.0;
 
+import {AggregatorInterface} from '../../src/contracts/dependencies/chainlink/AggregatorInterface.sol';
 import {IERC20Detailed} from '../../src/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
 import {IDefaultInterestRateStrategyV2} from '../../src/contracts/interfaces/IDefaultInterestRateStrategyV2.sol';
 import {ReserveConfiguration} from '../../src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
@@ -18,55 +19,10 @@ struct ReserveTokens {
   address variableDebtToken;
 }
 
-interface ExtendedAggregatorV2V3Interface {
-  function latestAnswer() external view returns (int256);
-
-  function latestTimestamp() external view returns (uint256);
-
-  function latestRound() external view returns (uint256);
-
-  function getAnswer(uint256 roundId) external view returns (int256);
-
-  function getTimestamp(uint256 roundId) external view returns (uint256);
-
-  function decimals() external view returns (uint8);
-
+interface ExtendedAggregatorV2V3Interface is AggregatorInterface {
   function DECIMALS() external view returns (uint8);
 
-  function description() external view returns (string memory);
-
   function version() external view returns (uint256);
-
-  // getRoundData and latestRoundData should both raise "No data present"
-  // if they do not have data to report, instead of returning unset values
-  // which could be misinterpreted as actual reported values.
-  function getRoundData(
-    uint80 _roundId
-  )
-    external
-    view
-    returns (
-      uint80 roundId,
-      int256 answer,
-      uint256 startedAt,
-      uint256 updatedAt,
-      uint80 answeredInRound
-    );
-
-  function latestRoundData()
-    external
-    view
-    returns (
-      uint80 roundId,
-      int256 answer,
-      uint256 startedAt,
-      uint256 updatedAt,
-      uint80 answeredInRound
-    );
-
-  event AnswerUpdated(int256 indexed current, uint256 indexed roundId, uint256 updatedAt);
-
-  event NewRound(uint256 indexed roundId, address indexed startedBy, uint256 startedAt);
 
   /**
    * @notice Returns the name identifier of the feed

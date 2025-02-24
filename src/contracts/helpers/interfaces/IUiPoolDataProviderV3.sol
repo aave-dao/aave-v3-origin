@@ -52,6 +52,8 @@ interface IUiPoolDataProviderV3 {
     // v3.1
     bool virtualAccActive;
     uint128 virtualUnderlyingBalance;
+    // v3.3
+    uint128 deficit;
   }
 
   struct UserReserveData {

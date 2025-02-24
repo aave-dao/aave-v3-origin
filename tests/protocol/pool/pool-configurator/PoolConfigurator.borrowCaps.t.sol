@@ -88,11 +88,8 @@ contract PoolConfiguratorBorrowCapTests is TestnetProcedures {
       'Alice balance should match borrow amount'
     );
 
-    DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
-      tokenList.usdx
-    );
-
-    uint256 variableDebt = IERC20(reserveData.variableDebtTokenAddress).totalSupply();
+    uint256 variableDebt = IERC20(contracts.poolProxy.getReserveVariableDebtToken(tokenList.usdx))
+      .totalSupply();
 
     assertEq(
       variableDebt,
@@ -114,11 +111,8 @@ contract PoolConfiguratorBorrowCapTests is TestnetProcedures {
     );
     vm.warp(block.timestamp + 30 days);
 
-    DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
-      tokenList.usdx
-    );
-
-    uint256 variableDebt = IERC20(reserveData.variableDebtTokenAddress).totalSupply();
+    uint256 variableDebt = IERC20(contracts.poolProxy.getReserveVariableDebtToken(tokenList.usdx))
+      .totalSupply();
 
     (uint256 borrowCapUsdx, ) = contracts.protocolDataProvider.getReserveCaps(tokenList.usdx);
 

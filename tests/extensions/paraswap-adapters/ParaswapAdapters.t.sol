@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {ParaSwapLiquiditySwapAdapter, IParaSwapAugustus} from '../../../src/contracts/extensions/paraswap-adapters/ParaSwapLiquiditySwapAdapter.sol';
+import {ParaSwapLiquiditySwapAdapter} from '../../../src/contracts/extensions/paraswap-adapters/ParaSwapLiquiditySwapAdapter.sol';
 import {ParaSwapRepayAdapter, IParaSwapAugustusRegistry} from '../../../src/contracts/extensions/paraswap-adapters/ParaSwapRepayAdapter.sol';
 import {ParaSwapWithdrawSwapAdapter} from '../../../src/contracts/extensions/paraswap-adapters/ParaSwapWithdrawSwapAdapter.sol';
 import {BaseParaSwapAdapter} from '../../../src/contracts/extensions/paraswap-adapters/BaseParaSwapAdapter.sol';
@@ -65,14 +65,8 @@ contract ParaswapAdaptersTest is TestnetProcedures {
       carol
     );
 
-    DataTypes.ReserveDataLegacy memory wethData = contracts.poolProxy.getReserveData(
-      tokenList.weth
-    );
-    DataTypes.ReserveDataLegacy memory usdxData = contracts.poolProxy.getReserveData(
-      tokenList.usdx
-    );
-    aWETH = IERC20Detailed(wethData.aTokenAddress);
-    aUSDX = IERC20Detailed(usdxData.aTokenAddress);
+    aWETH = IERC20Detailed(contracts.poolProxy.getReserveAToken(tokenList.weth));
+    aUSDX = IERC20Detailed(contracts.poolProxy.getReserveAToken(tokenList.usdx));
 
     vm.prank(poolAdmin);
     TestnetERC20(tokenList.usdx).transferOwnership(address(mockParaSwapAugustus));
@@ -316,7 +310,7 @@ contract ParaswapAdaptersTest is TestnetProcedures {
       expectedUsdxAmount,
       0,
       augustusInput,
-      IParaSwapAugustus(address(mockParaSwapAugustus)),
+      address(mockParaSwapAugustus),
       emptyPermit
     );
   }
@@ -378,7 +372,7 @@ contract ParaswapAdaptersTest is TestnetProcedures {
       expectedUsdxAmount,
       0,
       augustusInput,
-      IParaSwapAugustus(address(mockParaSwapAugustus)),
+      address(mockParaSwapAugustus),
       permitInput
     );
   }
@@ -420,7 +414,7 @@ contract ParaswapAdaptersTest is TestnetProcedures {
       expectedUsdxAmount,
       amountToSwap,
       augustusInput,
-      IParaSwapAugustus(address(mockParaSwapAugustus)),
+      address(mockParaSwapAugustus),
       emptyPermit
     );
   }
@@ -800,7 +794,7 @@ contract ParaswapAdaptersTest is TestnetProcedures {
       expectedUsdxAmount,
       0,
       augustusInput,
-      IParaSwapAugustus(address(mockParaSwapAugustus)),
+      address(mockParaSwapAugustus),
       emptyPermit
     );
 
@@ -862,7 +856,7 @@ contract ParaswapAdaptersTest is TestnetProcedures {
       expectedUsdxAmount,
       0,
       augustusInput,
-      IParaSwapAugustus(address(mockParaSwapAugustus)),
+      address(mockParaSwapAugustus),
       permitInput
     );
 
@@ -905,7 +899,7 @@ contract ParaswapAdaptersTest is TestnetProcedures {
       expectedUsdxAmount,
       amountToSwap,
       augustusInput,
-      IParaSwapAugustus(address(mockParaSwapAugustus)),
+      address(mockParaSwapAugustus),
       emptyPermit
     );
 

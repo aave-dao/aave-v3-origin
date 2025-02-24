@@ -13,7 +13,7 @@ import {WadRayMath} from '../protocol/libraries/math/WadRayMath.sol';
 import {ReserveConfiguration} from '../protocol/libraries/configuration/ReserveConfiguration.sol';
 import {UserConfiguration} from '../protocol/libraries/configuration/UserConfiguration.sol';
 import {DataTypes} from '../protocol/libraries/types/DataTypes.sol';
-import {IEACAggregatorProxy} from './interfaces/IEACAggregatorProxy.sol';
+import {AggregatorInterface} from '../dependencies/chainlink/AggregatorInterface.sol';
 import {IERC20DetailedBytes} from './interfaces/IERC20DetailedBytes.sol';
 import {IUiPoolDataProviderV3} from './interfaces/IUiPoolDataProviderV3.sol';
 
@@ -22,14 +22,14 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
   using UserConfiguration for DataTypes.UserConfigurationMap;
 
-  IEACAggregatorProxy public immutable networkBaseTokenPriceInUsdProxyAggregator;
-  IEACAggregatorProxy public immutable marketReferenceCurrencyPriceInUsdProxyAggregator;
+  AggregatorInterface public immutable networkBaseTokenPriceInUsdProxyAggregator;
+  AggregatorInterface public immutable marketReferenceCurrencyPriceInUsdProxyAggregator;
   uint256 public constant ETH_CURRENCY_UNIT = 1 ether;
   address public constant MKR_ADDRESS = 0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2;
 
   constructor(
-    IEACAggregatorProxy _networkBaseTokenPriceInUsdProxyAggregator,
-    IEACAggregatorProxy _marketReferenceCurrencyPriceInUsdProxyAggregator
+    AggregatorInterface _networkBaseTokenPriceInUsdProxyAggregator,
+    AggregatorInterface _marketReferenceCurrencyPriceInUsdProxyAggregator
   ) {
     networkBaseTokenPriceInUsdProxyAggregator = _networkBaseTokenPriceInUsdProxyAggregator;
     marketReferenceCurrencyPriceInUsdProxyAggregator = _marketReferenceCurrencyPriceInUsdProxyAggregator;
@@ -127,6 +127,7 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
       } catch {}
 
       // v3 only
+      reserveData.deficit = uint128(pool.getReserveDeficit(reserveData.underlyingAsset));
       reserveData.debtCeiling = reserveConfigurationMap.getDebtCeiling();
       reserveData.debtCeilingDecimals = poolDataProvider.getDebtCeilingDecimals();
       (reserveData.borrowCap, reserveData.supplyCap) = reserveConfigurationMap.getCaps();

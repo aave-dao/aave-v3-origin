@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import {PoolConfigurator, IPoolAddressesProvider, IPool, VersionedInitializable} from '../protocol/pool/PoolConfigurator.sol';
 
 contract PoolConfiguratorInstance is PoolConfigurator {
-  uint256 public constant CONFIGURATOR_REVISION = 4;
+  uint256 public constant CONFIGURATOR_REVISION = 5;
 
   /// @inheritdoc VersionedInitializable
   function getRevision() internal pure virtual override returns (uint256) {

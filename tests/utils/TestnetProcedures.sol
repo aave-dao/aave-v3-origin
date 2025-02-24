@@ -76,6 +76,7 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     address wbtc;
     address weth;
     address usdx;
+    address gho;
   }
 
   struct EModeCategoryInput {
@@ -229,6 +230,7 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
 
     assetsList.wbtc = testnetListingPayload.WBTC_ADDRESS();
     assetsList.usdx = testnetListingPayload.USDX_ADDRESS();
+    assetsList.gho = testnetListingPayload.GHO_ADDRESS();
 
     ACLManager manager = ACLManager(r.aclManager);
 

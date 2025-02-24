@@ -4,8 +4,6 @@ pragma solidity ^0.8.10;
 import {IERC20} from '../../../dependencies/openzeppelin/contracts/IERC20.sol';
 import {Address} from '../../../dependencies/openzeppelin/contracts/Address.sol';
 import {GPv2SafeERC20} from '../../../dependencies/gnosis/contracts/GPv2SafeERC20.sol';
-import {IReserveInterestRateStrategy} from '../../../interfaces/IReserveInterestRateStrategy.sol';
-import {IScaledBalanceToken} from '../../../interfaces/IScaledBalanceToken.sol';
 import {IPriceOracleGetter} from '../../../interfaces/IPriceOracleGetter.sol';
 import {IAToken} from '../../../interfaces/IAToken.sol';
 import {IPriceOracleSentinel} from '../../../interfaces/IPriceOracleSentinel.sol';
@@ -24,7 +22,7 @@ import {SafeCast} from '../../../dependencies/openzeppelin/contracts/SafeCast.so
 import {IncentivizedERC20} from '../../tokenization/base/IncentivizedERC20.sol';
 
 /**
- * @title ReserveLogic library
+ * @title ValidationLogic library
  * @author Aave
  * @notice Implements functions to validate the different actions of the protocol
  */
