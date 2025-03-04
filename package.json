@@ -1,10 +1,16 @@
 {
-  "name": "aave-v3-origin",
-  "version": "1.0.0",
+  "name": "@aave-dao/aave-v3-origin",
+  "version": "3.3.0",
   "scripts": {
     "lint": "prettier . --check",
     "lint:fix": "prettier . --write"
   },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "src"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/aave-dao/aave-v3-origin.git"
