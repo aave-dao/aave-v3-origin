@@ -28,6 +28,7 @@ jobs:
 
       - name: Cleanup lcov
         run: |
+          sudo apt-get -y install lcov
           lcov --remove ./lcov/lcov.info -o ./lcov/lcov.info \
           'src/contracts/helpers/UiIncentiveDataProviderV3.sol' \
           'src/contracts/helpers/UiPoolDataProviderV3.sol' \
