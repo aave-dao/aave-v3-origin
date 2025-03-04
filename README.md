@@ -4,7 +4,7 @@
 
 Aave v3.3 complete codebase, Foundry-based.
 
-[![codecov](https://codecov.io/gh/bgd-labs/aave-v3-origin/graph/badge.svg?token=5Z7XVTIUBU)](https://codecov.io/gh/bgd-labs/aave-v3-origin)
+[![codecov](https://codecov.io/gh/aave-dao/aave-v3-origin/graph/badge.svg?token=6HX4NXCNIQ)](https://codecov.io/gh/aave-dao/aave-v3-origin)
 <br>
 
 ## Dependencies
