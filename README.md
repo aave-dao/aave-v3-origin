@@ -7,34 +7,9 @@ Aave v3.3 complete codebase, Foundry-based.
 [![codecov](https://codecov.io/gh/aave-dao/aave-v3-origin/graph/badge.svg?token=6HX4NXCNIQ)](https://codecov.io/gh/aave-dao/aave-v3-origin)
 <br>
 
-## Dependencies
+## Contributing
 
-- Foundry, [how-to install](https://book.getfoundry.sh/getting-started/installation) (we recommend also update to the last version with `foundryup`)
-- Lcov
-  - Optional, only needed for coverage testing
-  - For Ubuntu, you can install via `apt install lcov`
-  - For Mac, you can install via `brew install lcov`
-
-<br>
-
-## Setup
-
-```sh
-cp .env.example .env
-
-forge install
-
-# required for tests & linting
-npm install
-```
-
-<br>
-
-## Tests
-
-- To run the full test suite: `make test`
-- To re-generate the coverage report: `make coverage`
-- To run the enigma fuzzing suite, checkout the dedicated docs [HERE](./tests/invariants/README.md)
+If you're interested in contributing, please read the [contributing docs](/.github/CONTRIBUTING.md) **before submitting a pull request**.
 
 <br>
 
@@ -52,8 +27,6 @@ npm install
 <br>
 
 ## Security
-
-Aave v3.1 is an upgraded version of Aave v3, more precisely on top of the initial Aave v3 release and a follow-up 3.0.2 later update.
 
 The following are the security procedures historically applied to Aave v3.X versions.
 

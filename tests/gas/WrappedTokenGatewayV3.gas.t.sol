@@ -11,6 +11,7 @@ import {VariableDebtToken} from '../../src/contracts/protocol/tokenization/Varia
 /**
  * Scenario suite for PDP getters.
  */
+/// forge-config: default.isolate = true
 contract WrappedTokenGatewayV3_gas_Tests is Testhelpers {
   // mock users to supply and borrow liquidity
   address user = makeAddr('user');

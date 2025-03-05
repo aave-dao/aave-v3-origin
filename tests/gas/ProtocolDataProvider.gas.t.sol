@@ -10,6 +10,7 @@ import {Testhelpers, IERC20} from './Testhelpers.sol';
 /**
  * Scenario suite for PDP getters.
  */
+/// forge-config: default.isolate = true
 contract ProtocolDataProvider_gas_Tests is Testhelpers {
   // mock users to supply and borrow liquidity
   address user = makeAddr('user');

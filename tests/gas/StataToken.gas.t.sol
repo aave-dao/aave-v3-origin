@@ -14,6 +14,7 @@ import {DataTypes} from '../../src/contracts/protocol/libraries/types/DataTypes.
 /**
  * Scenario suite for statatoken operations.
  */
+/// forge-config: default.isolate = true
 contract StataToken_gas_Tests is Testhelpers {
   StataTokenV2 public stataToken;
 

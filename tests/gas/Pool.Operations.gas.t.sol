@@ -10,6 +10,7 @@ import {Testhelpers, IERC20} from './Testhelpers.sol';
 /**
  * Scenario suite for common operations supply/borrow/repay/withdraw/liquidationCall.
  */
+/// forge-config: default.isolate = true
 contract PoolOperations_gas_Tests is Testhelpers {
   address supplier = makeAddr('supplier');
   address borrower = makeAddr('borrower');

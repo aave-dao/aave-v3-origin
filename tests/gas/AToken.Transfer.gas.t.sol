@@ -10,6 +10,7 @@ import {Testhelpers, IERC20} from './Testhelpers.sol';
 /**
  * Scenario suite for transfer operations.
  */
+/// forge-config: default.isolate = true
 contract ATokenTransfer_gas_Tests is Testhelpers {
   address token;
   IAToken aToken;
