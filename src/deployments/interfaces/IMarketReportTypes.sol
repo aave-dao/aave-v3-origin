@@ -173,6 +173,8 @@ struct PeripheryReport {
   address emissionManager;
   address rewardsControllerImplementation;
   address revenueSplitter;
+  address emptyImplementation;
+  address dustBin;
 }
 
 struct ParaswapReport {
