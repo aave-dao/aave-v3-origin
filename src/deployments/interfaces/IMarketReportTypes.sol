@@ -84,6 +84,8 @@ struct MarketReport {
   address staticATokenFactoryProxy;
   address staticATokenImplementation;
   address revenueSplitter;
+  address dustBin;
+  address emptyImplementation;
 }
 
 struct LibrariesReport {
