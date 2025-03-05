@@ -3,7 +3,10 @@
   "version": "3.3.0",
   "scripts": {
     "lint": "prettier . --check",
-    "lint:fix": "prettier . --write"
+    "lint:fix": "prettier . --write",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "changeset publish"
   },
   "publishConfig": {
     "access": "public"
@@ -24,6 +27,7 @@
   "homepage": "https://github.com/aave-dao/aave-v3-origin#readme",
   "type": "module",
   "devDependencies": {
+    "@changesets/cli": "^2.28.1",
     "prettier": "^2.8.3",
     "prettier-plugin-solidity": "^1.1.1"
   },
