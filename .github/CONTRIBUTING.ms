@@ -94,9 +94,9 @@ When you submit a pull request, GitHub will automatically lint, build, and test 
 
 ### Versioning
 
-When adding new features or fixing bugs, we'll need to bump the package versions. We use [Changesets](https://github.com/changesets/changesets) to do this.
+When adding new features or fixing bugs, we'll need to bump the package version. We use [Changesets](https://github.com/changesets/changesets) to do this.
 
-Each changeset defines which package(s) should be published and whether the change should be a minor/patch release, as well as providing release notes that will be added to the changelog upon release.
+Each changeset defines which package should be published and whether the change should be a minor/patch release, as well as providing release notes that will be added to the changelog upon release.
 
 To create a new changeset, run `npm run changeset`. This will run the Changesets CLI, prompting you for details about the change. You’ll be able to edit the file after it’s created — don’t worry about getting everything perfect up front.
 

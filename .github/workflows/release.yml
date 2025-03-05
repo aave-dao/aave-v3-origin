@@ -18,14 +18,6 @@ jobs:
 
       - uses: bgd-labs/github-workflows/.github/actions/setup-node@main
 
-      - name: Creating .npmrc
-        run: |
-          cat << EOF > "$HOME/.npmrc"
-            //registry.npmjs.org/:_authToken=$NODE_AUTH_TOKEN
-          EOF
-        env:
-          NPM_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
-
       - name: Create Release Pull Request or Publish to npm
         id: changesets
         uses: changesets/action@v1
@@ -33,4 +25,4 @@ jobs:
           publish: npm run release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
