@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Bug report
+    url: https://immunefi.com/bounty/aave/
+    about: Protocol bugs should be privately disclosed via immunify.
