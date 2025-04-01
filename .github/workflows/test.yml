@@ -25,6 +25,9 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
       - uses: actions/download-artifact@v4
         with:
           name: lcov-report
