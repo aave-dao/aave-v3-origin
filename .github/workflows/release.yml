@@ -2,10 +2,12 @@ name: Release
 
 on:
   push:
-    branches:
-      - main
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+permissions:
+  contents: write
+  pull-requests: write
 
 jobs:
   release:
@@ -20,7 +22,7 @@ jobs:
 
       - name: Create Release Pull Request or Publish to npm
         id: changesets
-        uses: changesets/action@v1
+        uses: changesets/action@ff7179cf129faeb3e444f56e6290adef5901f936
         with:
           publish: npm run release
         env:
