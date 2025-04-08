@@ -1,20 +1,22 @@
 // SPDX-License-Identifier: agpl-3
 pragma solidity ^0.8.19;
 
-import {ERC4626} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/ERC4626.sol';
+import  'openzeppelin-contracts/contracts/token/ERC20/extensions/ERC4626.sol';
 import {IERC20Permit} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol';
-import {ECDSA} from 'openzeppelin/utils/cryptography/ECDSA.sol';
-import {EIP712} from 'openzeppelin/utils/cryptography/EIP712.sol';
-import {Nonces} from 'openzeppelin/utils/Nonces.sol';
+import {ECDSA} from 'openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol';
+import {EIP712} from 'openzeppelin-contracts/contracts/utils/cryptography/EIP712.sol';
+import {Nonces} from 'openzeppelin-contracts/contracts/utils/Nonces.sol';
+import {IYieldMaestro} from './interfaces/IYieldMaestro.sol';
 
 interface IERC1271 {
   function isValidSignature(bytes32, bytes memory) external view returns (bytes4);
 }
 
 contract sGHO is ERC4626, IERC20Permit, EIP712, Nonces {
-  IERC20 public constant gho;
-  address public constant YIELD_MAESTRO;
+  address public immutable gho;
+  address public YIELD_MAESTRO;
   uint256 internal internalTotalAssets;
+  uint256 internal lastupdate;
 
   // --- EIP712 niceties ---
   uint256 public immutable deploymentChainId;
@@ -41,7 +43,9 @@ contract sGHO is ERC4626, IERC20Permit, EIP712, Nonces {
   constructor(
     address _gho,
     address _yieldMaestro
-  ) ERC20('sGHO', 'sGHO') ERC4626(IERC20(_gho)) EIP712('sGHO', '1') {
+  ) ERC20("sGHO", "sGHO") 
+  ERC4626(IERC20(_gho)) 
+  EIP712('sGHO', '1') {
     deploymentChainId = block.chainid;
     _DOMAIN_SEPARATOR = _calculateDomainSeparator(block.chainid);
     gho = _gho;
@@ -123,7 +127,6 @@ contract sGHO is ERC4626, IERC20Permit, EIP712, Nonces {
   /**
    * @dev See {IERC20Permit-nonces}.
    */
-
   function nonces(
     address owner
   ) public view virtual override(IERC20Permit, Nonces) returns (uint256) {
@@ -174,15 +177,15 @@ contract sGHO is ERC4626, IERC20Permit, EIP712, Nonces {
       revert ERC4626ExceededMaxMint(receiver, shares, maxShares);
     }
 
+    uint256 assets = previewMint(shares);
     _updateVault(assets, true);
 
-    uint256 assets = previewMint(shares);
     _deposit(_msgSender(), receiver, assets, shares);
 
     return assets;
   }
 
-  /** @dev See {IERC4626-withdraw}. */
+    
   function withdraw(
     uint256 assets,
     address receiver,
@@ -221,7 +224,7 @@ contract sGHO is ERC4626, IERC20Permit, EIP712, Nonces {
   }
 
   /** @dev See {IERC4626-totalAssets}. */
-  function totalAssets() public view returns (uint256) {
+  function totalAssets() public view override returns (uint256) {
     return internalTotalAssets;
   }
 
@@ -234,12 +237,11 @@ contract sGHO is ERC4626, IERC20Permit, EIP712, Nonces {
    */
   function _updateVault(uint256 assets, bool assetIncrease) internal {
     uint256 currentTime = block.timestamp;
-    uint256 lastupdate = lastUpdate;
     uint256 claimed;
     if (currentTime > lastupdate + 600) {
       claimed = IYieldMaestro(YIELD_MAESTRO).claimSavings();
       internalTotalAssets += claimed;
-      lastUpdate = currentTime;
+      lastupdate = currentTime;
     }
 
     if (assetIncrease) {
@@ -248,7 +250,7 @@ contract sGHO is ERC4626, IERC20Permit, EIP712, Nonces {
       internalTotalAssets -= assets;
     }
     //verify asset balance changed as expected, if it doesn't match, then set internal balances to asset balance
-    uint256 balance = gho.balanceOf(address(this));
+    uint256 balance = IERC20(gho).balanceOf(address(this));
     // In case of assetIncrease transfer has not happened yet. Therefore we need to discount the amount of assets
     uint256 expectedBalance = (assetIncrease) ? internalTotalAssets - assets : internalTotalAssets;
     if (balance < expectedBalance) {
@@ -260,9 +262,9 @@ contract sGHO is ERC4626, IERC20Permit, EIP712, Nonces {
    * @dev Transfer any excess GHO tokens to the Yield Maestro.
    */
   function takeDonated() external {
-    uint256 balance = gho.balanceOf(address(this));
+    uint256 balance = IERC20(gho).balanceOf(address(this));
     if (balance > totalAssets()) {
-      gho.transfer(YIELD_MAESTRO, balance - totalAssets());
+      IERC20(gho).transfer(YIELD_MAESTRO, balance - totalAssets());
     }
   }
 }
