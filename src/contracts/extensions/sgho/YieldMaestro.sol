@@ -4,11 +4,14 @@ pragma solidity ^0.8.19;
 import {Initializable} from 'openzeppelin-contracts/contracts/proxy/utils/Initializable.sol';
 import 'openzeppelin-contracts/contracts/interfaces/IERC4626.sol';
 import {IERC20Permit} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol';
-import {sGHO} from './sGHO.sol';
+import {IACLManager} from '../../interfaces/IACLManager.sol';
+import {AccessControl} from 'openzeppelin-contracts/contracts/access/AccessControl.sol';
+import {IYieldMaestro} from './interfaces/IYieldMaestro.sol';
 
-contract YieldMaestro is Initializable {
-  IERC20 public constant gho;
-  address public constant sGHO;
+contract YieldMaestro is Initializable, AccessControl, IYieldMaestro {
+  IERC20 public immutable gho;
+  address public immutable sGHO;
+  IACLManager internal aclManager;
 
   uint256 public lastClaimTimestamp;
   uint256 public targetRate;
@@ -16,11 +19,13 @@ contract YieldMaestro is Initializable {
   uint256 internal constant RATE_PRECISION = 1e8;
   uint256 internal constant ONE_YEAR = 365 days;
 
-  event Claimed(uint256 indexed amount);
+  bytes32 public constant FUNDS_ADMIN_ROLE = 'FUNDS_ADMIN';
+  bytes32 public constant YIELD_MANAGER_ROLE = 'YIELD_MANAGER';
 
-  constructor(address _sGho, address aclm) {
+  constructor(address _gho, address _sGho, address _aclmanager) {
+    gho = IERC20(_gho);
     sGHO = _sGho;
-    claimer = msg.sender;
+    aclManager = IACLManager(_aclmanager);
   }
 
   modifier isInitialized() {
@@ -28,19 +33,27 @@ contract YieldMaestro is Initializable {
     _;
   }
 
-  modifier onlyYieldManagerOrAdmin() {
-    if( msg.sender != aclManager.isYieldManager() && msg.sender != aclManager.isPoolAdmin(), 'Not Yield Manager'){
-        revert onlyAdmin();
+  /**
+   * @dev Throws if the caller does not have the YIELD_MANAGER role
+   */
+  modifier onlyYieldManager() {
+    if (_onlyYieldManager() == false) {
+      revert OnlyYieldManager();
     }
     _;
   }
 
-  modifier onlyAdmin() {
-    if (msg.sender != aclManager.isPoolAdmin()) {
-      revert onlyAdmin();
+  /**
+   * @dev Throws if the caller does not have the FUNDS_ADMIN role
+   */
+  modifier onlyFundsAdmin() {
+    if (_onlyFundsAdmin() == false) {
+      revert OnlyFundsAdmin();
     }
     _;
   }
+
+  
 
   /**
    * @dev Initialize receiver, require minimum balance to not set a dripRate of 0
@@ -51,15 +64,14 @@ contract YieldMaestro is Initializable {
   }
 
   function claimSavings() public isInitialized returns (uint256 claimed) {
-    // if APY is 0 skip it
-    if (apy > 0) {
-      (unclaimed) = _calculateUnclaimed();
+    // if targetRate is 0 skip it
+    if (targetRate > 0) {
+      uint256 unclaimed = _calculateUnclaimed();
       gho.transfer(sGHO, unclaimed);
       claimed = unclaimed;
       emit Claimed(claimed);
     }
     lastClaimTimestamp = block.timestamp;
-
   }
 
   function _calculateUnclaimed() public view returns (uint256) {
@@ -67,16 +79,17 @@ contract YieldMaestro is Initializable {
     uint256 elapsedTime = block.timestamp - lastClaimTimestamp;
     uint256 vaultAssets = IERC4626(sGHO).totalAssets();
 
-    // Calculate unclaimed rewards based on APY
-    uint256 unclaimedRewards = (vaultAssets * targetRate * elapsedTime) / (RATE_PRECISION * ONE_YEAR);
+    // Calculate unclaimed rewards based on targetRate
+    uint256 unclaimedRewards = (vaultAssets * targetRate * elapsedTime) /
+      (RATE_PRECISION * ONE_YEAR);
     return unclaimedRewards;
-}
+  }
 
   /**
    * @dev Preview how much would be claimable
    */
   function previewClaimable() external view returns (uint256 claimable) {
-    claimable = _calculateUnclaimed();  
+    claimable = _calculateUnclaimed();
   }
 
   /**
@@ -89,23 +102,29 @@ contract YieldMaestro is Initializable {
 
   /**
    * @dev set new target rate in APR, such that a target rate of 10% should have input 1000
-   * @param newRate 
-   * @return amount of interest collected per year divided by amount of current deposits in vault
+   * @param newRate New APR to be set
    */
-  function setTargetRate(uint256 newRate) external onlyYieldManagerOrAdmin {
+  function setTargetRate(uint256 newRate) public onlyYieldManager {
     // offset by 2 decimals relative to RATE_PRECISION
-    targetRate = newRate * 1e6
+    targetRate = newRate * 1e6;
   }
 
-  /// @inheritdoc IRescuableBase
-  function rescueERC20(address erc20Token, address to, uint256 amount) external onlyAdmin() {
+  function rescueERC20(address erc20Token, address to, uint256 amount) external onlyFundsAdmin {
     uint256 max = IERC20(erc20Token).balanceOf(address(this));
     amount = max > amount ? amount : max;
-    IERC20(erc20Token).safeTransfer(to, amount);
+    IERC20(erc20Token).transfer(to, amount);
     emit ERC20Rescued(msg.sender, erc20Token, to, amount);
   }
 
   receive() external payable {
     revert('No ETH allowed');
+  }
+
+  function _onlyFundsAdmin() internal view returns (bool) {
+    return hasRole(FUNDS_ADMIN_ROLE, msg.sender);
+  }
+
+  function _onlyYieldManager() internal view returns (bool) {
+    return hasRole(YIELD_MANAGER_ROLE, msg.sender);
   }
 }
