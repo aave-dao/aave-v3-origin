@@ -185,7 +185,7 @@ contract sGHO is ERC4626, IERC20Permit, EIP712, Nonces {
     return assets;
   }
 
-    
+
   function withdraw(
     uint256 assets,
     address receiver,
@@ -204,7 +204,6 @@ contract sGHO is ERC4626, IERC20Permit, EIP712, Nonces {
     return shares;
   }
 
-  /** @dev See {IERC4626-redeem}. */
   function redeem(
     uint256 shares,
     address receiver,
@@ -223,7 +222,7 @@ contract sGHO is ERC4626, IERC20Permit, EIP712, Nonces {
     return assets;
   }
 
-  /** @dev See {IERC4626-totalAssets}. */
+
   function totalAssets() public view override returns (uint256) {
     return internalTotalAssets;
   }
