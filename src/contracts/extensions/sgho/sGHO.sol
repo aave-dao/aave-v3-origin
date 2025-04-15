@@ -228,7 +228,7 @@ contract sGHO is ERC4626, IERC20Permit, EIP712, Nonces {
   /**
    * @dev Update the internal total assets of the vault.
    * This function is called when assets are deposited or withdrawn.
-   * It also claims the savings from the Yield Maestro if the last update was more than 100 seconds ago.
+   * It also claims the savings from the Yield Maestro if the last update was more than 10 minutes ago.
    * @param assets The amount of assets to update.
    * @param assetIncrease A boolean indicating whether the assets are being increased or decreased.
    */
@@ -236,7 +236,7 @@ contract sGHO is ERC4626, IERC20Permit, EIP712, Nonces {
     uint256 currentTime = block.timestamp;
     uint256 lastupdate = lastUpdate;
     uint256 claimed;
-    if (currentTime > lastupdate + 100) {
+    if (currentTime > lastupdate + 600) {
       claimed = IYieldMaestro(YIELD_MAESTRO).claimSavings();
       internalTotalAssets += claimed;
       lastUpdate = currentTime;

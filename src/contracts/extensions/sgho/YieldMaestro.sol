@@ -4,7 +4,6 @@ pragma solidity ^0.8.19;
 import {Initializable} from 'openzeppelin-contracts/contracts/proxy/utils/Initializable.sol';
 import 'openzeppelin-contracts/contracts/interfaces/IERC4626.sol';
 import {IERC20Permit} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol';
-import {IWXDAI} from './interfaces/IWXDAI.sol';
 import {sGHO} from './sGHO.sol';
 
 contract YieldMaestro is Initializable {
@@ -85,9 +84,7 @@ contract YieldMaestro is Initializable {
    * @return amount of interest collected per year divided by amount of current deposits in vault
    */
   function vaultAPR() external view returns (uint256) {
-    uint256 deposits = sDAI.totalAssets();
-    uint256 annualYield = (dripRate * 365 days);
-    return (1 ether * annualYield) / deposits;
+    return targetRate / 1e6;
   }
 
   /**
