@@ -9,8 +9,6 @@ out/
 
 # artifacts
 reports/
-diffs/
-downloads/
 
 # editors
 .idea
