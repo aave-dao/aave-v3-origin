@@ -7,7 +7,7 @@ index 9de846c..b55ed75 100644
  // SPDX-License-Identifier: BUSL-1.1
 -pragma solidity ^0.8.10;
 +pragma solidity ^0.8.0 ^0.8.10;
- 
+
 -// downloads/LINEA/EMISSION_MANAGER/EmissionManager/src/contracts/dependencies/openzeppelin/contracts/Context.sol
 +// downloads/MANTLE/EMISSION_MANAGER/EmissionManager/src/contracts/dependencies/chainlink/AggregatorInterface.sol
 +
@@ -58,13 +58,13 @@ index 9de846c..b55ed75 100644
 +}
 +
 +// downloads/MANTLE/EMISSION_MANAGER/EmissionManager/src/contracts/dependencies/openzeppelin/contracts/Context.sol
- 
+
  /*
   * @dev Provides information about the current execution context, including the
 @@ -24,26 +72,7 @@ abstract contract Context {
    }
  }
- 
+
 -// downloads/LINEA/EMISSION_MANAGER/EmissionManager/src/contracts/helpers/interfaces/IEACAggregatorProxy.sol
 -
 -interface IEACAggregatorProxy {
@@ -83,37 +83,10 @@ index 9de846c..b55ed75 100644
 -  event AnswerUpdated(int256 indexed current, uint256 indexed roundId, uint256 timestamp);
 -  event NewRound(uint256 indexed roundId, address indexed startedBy);
 -}
--
--// downloads/LINEA/EMISSION_MANAGER/EmissionManager/src/contracts/rewards/interfaces/IRewardsDistributor.sol
-+// downloads/MANTLE/EMISSION_MANAGER/EmissionManager/src/contracts/rewards/interfaces/IRewardsDistributor.sol
- 
- /**
-  * @title IRewardsDistributor
-@@ -220,7 +249,7 @@ interface IRewardsDistributor {
-   function getEmissionManager() external view returns (address);
- }
- 
--// downloads/LINEA/EMISSION_MANAGER/EmissionManager/src/contracts/rewards/interfaces/ITransferStrategyBase.sol
-+// downloads/MANTLE/EMISSION_MANAGER/EmissionManager/src/contracts/rewards/interfaces/ITransferStrategyBase.sol
- 
- interface ITransferStrategyBase {
-   event EmergencyWithdrawal(
-@@ -258,7 +287,7 @@ interface ITransferStrategyBase {
-   function emergencyWithdrawal(address token, address to, uint256 amount) external;
- }
- 
--// downloads/LINEA/EMISSION_MANAGER/EmissionManager/src/contracts/dependencies/openzeppelin/contracts/Ownable.sol
-+// downloads/MANTLE/EMISSION_MANAGER/EmissionManager/src/contracts/dependencies/openzeppelin/contracts/Ownable.sol
- 
- /**
-  * @dev Contract module which provides a basic access control mechanism, where
-@@ -324,7 +353,7 @@ contract Ownable is Context {
-   }
- }
- 
+
 -// downloads/LINEA/EMISSION_MANAGER/EmissionManager/src/contracts/rewards/libraries/RewardsDataTypes.sol
 +// downloads/MANTLE/EMISSION_MANAGER/EmissionManager/src/contracts/rewards/libraries/RewardsDataTypes.sol
- 
+
  library RewardsDataTypes {
    struct RewardsConfigInput {
 @@ -334,7 +363,7 @@ library RewardsDataTypes {
@@ -123,15 +96,15 @@ index 9de846c..b55ed75 100644
 -    IEACAggregatorProxy rewardOracle;
 +    AggregatorInterface rewardOracle;
    }
- 
+
    struct UserAssetBalance {
 @@ -375,7 +404,7 @@ library RewardsDataTypes {
    }
  }
- 
+
 -// downloads/LINEA/EMISSION_MANAGER/EmissionManager/src/contracts/rewards/interfaces/IRewardsController.sol
 +// downloads/MANTLE/EMISSION_MANAGER/EmissionManager/src/contracts/rewards/interfaces/IRewardsController.sol
- 
+
  /**
   * @title IRewardsController
 @@ -441,9 +470,9 @@ interface IRewardsController is IRewardsDistributor {
@@ -143,7 +116,7 @@ index 9de846c..b55ed75 100644
     */
 -  function setRewardOracle(address reward, IEACAggregatorProxy rewardOracle) external;
 +  function setRewardOracle(address reward, AggregatorInterface rewardOracle) external;
- 
+
    /**
     * @dev Get the price aggregator oracle address
 @@ -475,8 +504,8 @@ interface IRewardsController is IRewardsDistributor {
@@ -156,14 +129,14 @@ index 9de846c..b55ed75 100644
 +   *                                     Must follow Chainlink Aggregator AggregatorInterface interface to be compatible.
     */
    function configureAssets(RewardsDataTypes.RewardsConfigInput[] memory config) external;
- 
+
 @@ -573,7 +602,7 @@ interface IRewardsController is IRewardsDistributor {
    ) external returns (address[] memory rewardsList, uint256[] memory claimedAmounts);
  }
- 
+
 -// downloads/LINEA/EMISSION_MANAGER/EmissionManager/src/contracts/rewards/interfaces/IEmissionManager.sol
 +// downloads/MANTLE/EMISSION_MANAGER/EmissionManager/src/contracts/rewards/interfaces/IEmissionManager.sol
- 
+
  /**
   * @title IEmissionManager
 @@ -603,8 +632,8 @@ interface IEmissionManager {
@@ -176,7 +149,7 @@ index 9de846c..b55ed75 100644
 +   *                                     Must follow Chainlink Aggregator AggregatorInterface interface to be compatible.
     */
    function configureAssets(RewardsDataTypes.RewardsConfigInput[] memory config) external;
- 
+
 @@ -620,13 +649,13 @@ interface IEmissionManager {
     * @dev Sets an Aave Oracle contract to enforce rewards with a source of value.
     * @dev Only callable by the emission admin of the given reward
@@ -191,16 +164,16 @@ index 9de846c..b55ed75 100644
     */
 -  function setRewardOracle(address reward, IEACAggregatorProxy rewardOracle) external;
 +  function setRewardOracle(address reward, AggregatorInterface rewardOracle) external;
- 
+
    /**
     * @dev Sets the end date for the distribution
 @@ -686,7 +715,7 @@ interface IEmissionManager {
    function getEmissionAdmin(address reward) external view returns (address);
  }
- 
+
 -// downloads/LINEA/EMISSION_MANAGER/EmissionManager/src/contracts/rewards/EmissionManager.sol
 +// downloads/MANTLE/EMISSION_MANAGER/EmissionManager/src/contracts/rewards/EmissionManager.sol
- 
+
  /**
   * @title EmissionManager
 @@ -734,7 +763,7 @@ contract EmissionManager is Ownable, IEmissionManager {
