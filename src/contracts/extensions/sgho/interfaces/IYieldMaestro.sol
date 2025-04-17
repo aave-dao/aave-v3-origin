@@ -38,13 +38,15 @@ interface IYieldMaestro {
   error OnlyYieldManager();
 
   /**
+   * @dev Throws if the contract is not initialized.
+   */
+  error NotInitialized();
 
-    // --- State Variables (as external view functions) ---
+  /**
+   * @dev Returns the address of the GHO token.
+  */
 
-    /**
-     * @dev Returns the address of the GHO token.
-     */
-  function gho() external view returns (IERC20);
+  function GHO() external view returns (IERC20);
 
   /**
    * @dev Returns the address of the sGHO (Savings GHO) contract.

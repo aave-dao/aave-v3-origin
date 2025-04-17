@@ -4,32 +4,35 @@ pragma solidity ^0.8.19;
 import {Initializable} from 'openzeppelin-contracts/contracts/proxy/utils/Initializable.sol';
 import 'openzeppelin-contracts/contracts/interfaces/IERC4626.sol';
 import {IERC20Permit} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol';
-import {IACLManager} from '../../interfaces/IACLManager.sol';
-import {AccessControl} from 'openzeppelin-contracts/contracts/access/AccessControl.sol';
+import {IAccessControl} from 'openzeppelin-contracts/contracts/access/IAccessControl.sol';  
 import {IYieldMaestro} from './interfaces/IYieldMaestro.sol';
 
-contract YieldMaestro is Initializable, AccessControl, IYieldMaestro {
-  IERC20 public immutable gho;
-  address public immutable sGHO;
-  IACLManager internal aclManager;
+contract YieldMaestro is Initializable, IYieldMaestro {
+  IERC20 public immutable GHO;
+  IAccessControl internal aclManager;
 
+  address public sGHO;
   uint256 public lastClaimTimestamp;
   uint256 public targetRate;
 
-  uint256 internal constant RATE_PRECISION = 1e8;
+  uint256 internal constant RATE_PRECISION = 1e10;
   uint256 internal constant ONE_YEAR = 365 days;
 
   bytes32 public constant FUNDS_ADMIN_ROLE = 'FUNDS_ADMIN';
   bytes32 public constant YIELD_MANAGER_ROLE = 'YIELD_MANAGER';
 
-  constructor(address _gho, address _sGho, address _aclmanager) {
-    gho = IERC20(_gho);
-    sGHO = _sGho;
-    aclManager = IACLManager(_aclmanager);
+  constructor(address _gho, address _aclmanager) {
+    GHO = IERC20(_gho);
+    aclManager = IAccessControl(_aclmanager);
   }
 
+  /**
+   * @dev Throws if the contract is not initialized.
+   */
   modifier isInitialized() {
-    require(_getInitializedVersion() > 0, 'Not Initialized');
+    if (_getInitializedVersion() == 0) {
+      revert NotInitialized();
+    }
     _;
   }
 
@@ -53,21 +56,20 @@ contract YieldMaestro is Initializable, AccessControl, IYieldMaestro {
     _;
   }
 
-  
-
   /**
    * @dev Initialize receiver, require minimum balance to not set a dripRate of 0
    */
-  function initialize() public payable initializer {
+  function initialize(address _sGho) public payable initializer {
+    sGHO = _sGho;
     lastClaimTimestamp = block.timestamp;
-    setTargetRate(0);
+    targetRate = 0;
   }
 
   function claimSavings() public isInitialized returns (uint256 claimed) {
     // if targetRate is 0 skip it
     if (targetRate > 0) {
       uint256 unclaimed = _calculateUnclaimed();
-      gho.transfer(sGHO, unclaimed);
+      GHO.transfer(sGHO, unclaimed);
       claimed = unclaimed;
       emit Claimed(claimed);
     }
@@ -121,10 +123,10 @@ contract YieldMaestro is Initializable, AccessControl, IYieldMaestro {
   }
 
   function _onlyFundsAdmin() internal view returns (bool) {
-    return hasRole(FUNDS_ADMIN_ROLE, msg.sender);
+    return aclManager.hasRole(FUNDS_ADMIN_ROLE, msg.sender);
   }
 
   function _onlyYieldManager() internal view returns (bool) {
-    return hasRole(YIELD_MANAGER_ROLE, msg.sender);
+    return aclManager.hasRole(YIELD_MANAGER_ROLE, msg.sender);
   }
 }

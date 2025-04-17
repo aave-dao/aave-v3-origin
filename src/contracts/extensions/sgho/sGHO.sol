@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: agpl-3
 pragma solidity ^0.8.19;
 
-import  'openzeppelin-contracts/contracts/token/ERC20/extensions/ERC4626.sol';
+import 'openzeppelin-contracts/contracts/token/ERC20/extensions/ERC4626.sol';
 import {IERC20Permit} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol';
 import {ECDSA} from 'openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol';
 import {EIP712} from 'openzeppelin-contracts/contracts/utils/cryptography/EIP712.sol';
@@ -43,13 +43,13 @@ contract sGHO is ERC4626, IERC20Permit, EIP712, Nonces {
   constructor(
     address _gho,
     address _yieldMaestro
-  ) ERC20("sGHO", "sGHO") 
-  ERC4626(IERC20(_gho)) 
-  EIP712('sGHO', '1') {
+  ) ERC20('sGHO', 'sGHO') ERC4626(IERC20(_gho)) EIP712('sGHO', '1') {
     deploymentChainId = block.chainid;
     _DOMAIN_SEPARATOR = _calculateDomainSeparator(block.chainid);
     gho = _gho;
     YIELD_MAESTRO = _yieldMaestro;
+    internalTotalAssets = 0;
+    lastupdate = block.timestamp;
   }
 
   receive() external payable {
@@ -163,9 +163,8 @@ contract sGHO is ERC4626, IERC20Permit, EIP712, Nonces {
       revert ERC4626ExceededMaxDeposit(receiver, assets, maxAssets);
     }
 
-    _updateVault(assets, true);
-
     uint256 shares = previewDeposit(assets);
+    _updateVault(assets, true);
     _deposit(_msgSender(), receiver, assets, shares);
 
     return shares;
@@ -184,7 +183,6 @@ contract sGHO is ERC4626, IERC20Permit, EIP712, Nonces {
 
     return assets;
   }
-
 
   function withdraw(
     uint256 assets,
@@ -222,7 +220,6 @@ contract sGHO is ERC4626, IERC20Permit, EIP712, Nonces {
     return assets;
   }
 
-
   function totalAssets() public view override returns (uint256) {
     return internalTotalAssets;
   }
@@ -237,10 +234,9 @@ contract sGHO is ERC4626, IERC20Permit, EIP712, Nonces {
   function _updateVault(uint256 assets, bool assetIncrease) internal {
     uint256 currentTime = block.timestamp;
     uint256 claimed;
+
     if (currentTime > lastupdate + 600) {
-      claimed = IYieldMaestro(YIELD_MAESTRO).claimSavings();
-      internalTotalAssets += claimed;
-      lastupdate = currentTime;
+      _claimSavings();
     }
 
     if (assetIncrease) {
@@ -248,13 +244,12 @@ contract sGHO is ERC4626, IERC20Permit, EIP712, Nonces {
     } else {
       internalTotalAssets -= assets;
     }
-    //verify asset balance changed as expected, if it doesn't match, then set internal balances to asset balance
-    uint256 balance = IERC20(gho).balanceOf(address(this));
-    // In case of assetIncrease transfer has not happened yet. Therefore we need to discount the amount of assets
-    uint256 expectedBalance = (assetIncrease) ? internalTotalAssets - assets : internalTotalAssets;
-    if (balance < expectedBalance) {
-      internalTotalAssets = balance;
-    }
+  }
+
+  function _claimSavings() internal {
+    uint256 claimed = IYieldMaestro(YIELD_MAESTRO).claimSavings();
+    internalTotalAssets += claimed;
+    lastupdate = block.timestamp;
   }
 
   /**
@@ -262,8 +257,8 @@ contract sGHO is ERC4626, IERC20Permit, EIP712, Nonces {
    */
   function takeDonated() external {
     uint256 balance = IERC20(gho).balanceOf(address(this));
-    if (balance > totalAssets()) {
-      IERC20(gho).transfer(YIELD_MAESTRO, balance - totalAssets());
+    if (balance > internalTotalAssets) {
+      IERC20(gho).transfer(YIELD_MAESTRO, balance - internalTotalAssets);
     }
   }
 }
