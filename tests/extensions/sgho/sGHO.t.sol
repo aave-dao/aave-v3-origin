@@ -4,9 +4,10 @@ pragma solidity ^0.8.19;
 
 import {console} from 'forge-std/console.sol';
 import {stdStorage, StdStorage} from 'forge-std/Test.sol';
-import {TestnetProcedures, TestnetERC20} from '../../utils/TestnetProcedures.sol'; 
-import {sGHO, IERC1271} from '../../../src/contracts/extensions/sgho/sGHO.sol'; 
-import {YieldMaestro} from '../../../src/contracts/extensions/sgho/YieldMaestro.sol'; 
+import {TestnetProcedures, TestnetERC20} from '../../utils/TestnetProcedures.sol';
+import {sGHO, IERC1271} from '../../../src/contracts/extensions/sgho/sGHO.sol';
+import {YieldMaestro} from '../../../src/contracts/extensions/sgho/YieldMaestro.sol';
+import {IAccessControl} from 'openzeppelin-contracts/contracts/access/IAccessControl.sol';
 import {IERC20Permit} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol';
 import {IERC4626} from 'openzeppelin-contracts/contracts/interfaces/IERC4626.sol';
 import {IERC20Errors} from 'openzeppelin-contracts/contracts/interfaces/draft-IERC6093.sol';
@@ -15,227 +16,302 @@ import {IERC20Metadata as IERC20} from 'openzeppelin-contracts/contracts/token/E
 // --- Test Contract ---
 
 contract sGhoTest is TestnetProcedures {
-    using stdStorage for StdStorage;
+  using stdStorage for StdStorage;
 
-    // Contracts
-    sGHO internal sgho;
-    TestnetERC20 internal gho;
-    YieldMaestro internal yieldMaestro;
+  // Contracts
+  sGHO internal sgho;
+  TestnetERC20 internal gho;
+  YieldMaestro internal yieldMaestro;
+  IAccessControl internal aclManager;
 
-    // Users & Keys
-    address internal user1;
-    uint256 internal user1PrivateKey;
-    address internal user2;
-    address internal Admin; 
+  // Users & Keys
+  address internal user1;
+  uint256 internal user1PrivateKey;
+  address internal user2;
+  address internal Admin;
+  address internal yManager; // Yield manager user
 
-    // Permit constants
-    bytes32 internal constant PERMIT_TYPEHASH = keccak256(
-        'Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)'
+  // Permit constants
+  bytes32 internal constant PERMIT_TYPEHASH =
+    keccak256('Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)');
+  string internal constant VERSION = '1'; // Matches sGHO constructor
+  bytes32 internal DOMAIN_SEPARATOR_sGHO;
+
+  function setUp() public virtual {
+    initTestEnvironment(false); // Use TestnetProcedures setup
+
+    // Users
+    user1PrivateKey = 0xB0B;
+    user1 = vm.addr(user1PrivateKey);
+    user2 = vm.addr(0xCAFE);
+    Admin = address(this);
+    yManager = vm.addr(0xDEAD); // Yield manager address
+
+    // Deploy Mocks & sGHO
+    gho = new TestnetERC20('Mock GHO', 'GHO', 18, poolAdmin);
+
+    // Deploy YieldMaestro first
+    yieldMaestro = new YieldMaestro(address(gho), address(contracts.aclManager));
+
+    // Deploy sGHO with YieldMaestro address
+    sgho = new sGHO(address(gho), address(yieldMaestro));
+    deal(address(gho), address(sgho), 1 ether, true);
+    // Initialize YieldMaestro with sGHO address
+    yieldMaestro.initialize(address(sgho));
+
+    // Grant YIELD_MANAGER role to yManager through ACLManager
+    vm.startPrank(poolAdmin);
+    aclManager = IAccessControl(address(contracts.aclManager));
+    aclManager.grantRole(yieldMaestro.YIELD_MANAGER_ROLE(), yManager);
+    vm.stopPrank();
+
+    // Set target rate as yield manager
+    vm.startPrank(yManager);
+    yieldMaestro.setTargetRate(1000); // 10% APR
+    vm.stopPrank();
+
+    // Calculate domain separator for permits
+    DOMAIN_SEPARATOR_sGHO = sgho.DOMAIN_SEPARATOR();
+
+    // Initial GHO funding for users
+    deal(address(gho), user1, 1_000_000 ether, true);
+    deal(address(gho), user2, 1_000_000 ether, true);
+    deal(address(gho), address(yieldMaestro), 1_000_000 ether, true);
+
+    // Approve sGHO to spend user GHO
+    vm.startPrank(user1);
+    gho.approve(address(sgho), type(uint256).max);
+    vm.stopPrank();
+    vm.startPrank(user2);
+    gho.approve(address(sgho), type(uint256).max);
+    vm.stopPrank();
+  }
+
+  // --- Constructor Tests ---
+
+  // --- Receive ETH Test ---
+  function test_revert_ReceiveETH() external {
+    vm.expectRevert('No ETH allowed');
+    payable(address(sgho)).transfer(1 ether);
+  }
+
+  // --- ERC4626 Tests ---
+
+  function test_4626_initialState() external view {
+    assertEq(sgho.asset(), address(gho), 'Asset mismatch');
+    assertEq(sgho.totalAssets(), 0, 'Initial totalAssets mismatch');
+    assertEq(sgho.totalSupply(), 0, 'Initial totalSupply mismatch');
+    assertEq(sgho.decimals(), gho.decimals(), 'Decimals mismatch'); // Inherits ERC20 decimals
+  }
+
+  function test_4626_deposit_mint_preview(uint256 amount) external {
+    amount = uint256(bound(amount, 1, 100_000 ether));
+    vm.startPrank(user1);
+
+    // Preview
+    uint256 previewShares = sgho.previewDeposit(amount);
+    uint256 previewAssets = sgho.previewMint(previewShares);
+    assertEq(previewAssets, amount, 'Preview mismatch deposit/mint'); // Should be 1:1 initially
+    assertEq(sgho.convertToShares(amount), previewShares, 'convertToShares mismatch');
+    assertEq(sgho.convertToAssets(previewShares), amount, 'convertToAssets mismatch');
+
+    // Deposit
+    uint256 initialGhoBalance = gho.balanceOf(user1);
+    uint256 initialSghoBalance = sgho.balanceOf(user1);
+    uint256 shares = sgho.deposit(amount, user1);
+
+    assertEq(shares, previewShares, 'Shares mismatch');
+    assertEq(sgho.balanceOf(user1), initialSghoBalance + shares, 'sGHO balance mismatch');
+    assertEq(gho.balanceOf(user1), initialGhoBalance - amount, 'GHO balance mismatch');
+    assertEq(sgho.totalAssets(), amount, 'totalAssets mismatch after deposit');
+    assertEq(sgho.totalSupply(), shares, 'totalSupply mismatch after deposit');
+
+    vm.stopPrank();
+  }
+
+  function test_4626_withdraw_redeem_preview(uint256 depositAmount, uint256 withdrawAmount) external {
+    depositAmount = uint256(bound(depositAmount, 1, 100_000 ether));
+    vm.assume(withdrawAmount <= depositAmount);
+    withdrawAmount = uint256(bound(withdrawAmount, 1, depositAmount));
+
+    // Initial deposit
+    vm.startPrank(user1);
+    uint256 sharesDeposited = sgho.deposit(depositAmount, user1);
+
+    // Preview
+    uint256 previewShares = sgho.previewWithdraw(withdrawAmount);
+    uint256 previewAssets = sgho.previewRedeem(previewShares);
+    // Allow for rounding differences if ratio != 1
+    assertApproxEqAbs(previewAssets, withdrawAmount, 1, 'Preview mismatch withdraw/redeem');
+
+    // Withdraw
+    uint256 initialGhoBalance = gho.balanceOf(user1);
+    uint256 initialSghoBalance = sgho.balanceOf(user1);
+    uint256 sharesWithdrawn = sgho.withdraw(withdrawAmount, user1, user1);
+
+    assertApproxEqAbs(sharesWithdrawn, previewShares, 1, 'Shares withdrawn mismatch');
+    assertApproxEqAbs(
+      sgho.balanceOf(user1),
+      initialSghoBalance - sharesWithdrawn,
+      1,
+      'sGHO balance mismatch after withdraw'
     );
-    string internal constant VERSION = '1'; // Matches sGHO constructor
-    bytes32 internal DOMAIN_SEPARATOR_sGHO;
+    assertEq(
+      gho.balanceOf(user1),
+      initialGhoBalance + withdrawAmount,
+      'GHO balance mismatch after withdraw'
+    );
+    assertApproxEqAbs(
+      sgho.totalAssets(),
+      depositAmount - withdrawAmount,
+      1,
+      'totalAssets mismatch after withdraw'
+    );
+    assertApproxEqAbs(
+      sgho.totalSupply(),
+      sharesDeposited - sharesWithdrawn,
+      1,
+      'totalSupply mismatch after withdraw'
+    );
 
-    function setUp() public virtual {
-        initTestEnvironment(false); // Use TestnetProcedures setup
+    vm.stopPrank();
+  }
 
-        // Users
-        user1PrivateKey = 0xB0B;
-        user1 = vm.addr(user1PrivateKey);
-        user2 = vm.addr(0xCAFE);
-        Admin = address(this); 
+  function test_4626_maxMethods() external {
+    // Deposit max checks (no limits implemented in this sGHO version)
+    assertEq(sgho.maxDeposit(user1), type(uint256).max, 'maxDeposit should be max');
+    assertEq(sgho.maxMint(user1), type(uint256).max, 'maxMint should be max');
 
-        // Deploy Mocks & sGHO
-        gho = new TestnetERC20('Mock GHO', 'GHO', 18, poolAdmin);
-        yieldMaestro = new YieldMaestro(address(gho), address(sgho), poolAdmin); // Deploy first with dummy addr
-        sgho = new sGHO(address(gho), address(yieldMaestro));
+    // Withdraw max checks
+    vm.startPrank(user1);
+    uint256 depositAmount = 100 ether;
+    sgho.deposit(depositAmount, user1);
+    uint256 shares = sgho.balanceOf(user1);
 
-        // Calculate domain separator for permits
-        DOMAIN_SEPARATOR_sGHO = sgho.DOMAIN_SEPARATOR();
+    assertEq(sgho.maxWithdraw(user1), depositAmount, 'maxWithdraw mismatch');
+    assertEq(sgho.maxRedeem(user1), shares, 'maxRedeem mismatch');
+    vm.stopPrank();
+  }
 
-        // Initial GHO funding for users
-        deal(address(gho), user1, 1_000_000 ether, true);
-        deal(address(gho), user2, 1_000_000 ether, true);
+  // --- Yield Integration Tests (_updateVault) ---
 
-        // Approve sGHO to spend user GHO
-        vm.startPrank(user1);
-        gho.approve(address(sgho), type(uint256).max);
-        vm.stopPrank();
-        vm.startPrank(user2);
-        gho.approve(address(sgho), type(uint256).max);
-        vm.stopPrank();
-    }
+  function test_yield_claimSavingsIntegration(
+    uint256 depositAmount,
+    uint64 timeSkip
+  ) external {
+    depositAmount = uint256(bound(depositAmount, 1 ether, 100_000 ether));
+    timeSkip = uint64(bound(timeSkip, 601, 30 days)); // Ensure > 600s
 
-    // --- Constructor Tests ---
+    // Initial deposit
+    vm.startPrank(user1);
+    uint256 initialBalance = gho.balanceOf(address(sgho));
+    uint256 initialTotalAssets = sgho.totalAssets();
+    console.log('Initial balance:', initialBalance);
+    console.log('Initial totalAssets:', initialTotalAssets);
+    
+    sgho.deposit(depositAmount, user1);
+    
+    uint256 finalBalance = gho.balanceOf(address(sgho));
+    uint256 finalTotalAssets = sgho.totalAssets();
+    console.log('Final balance:', finalBalance);
+    console.log('Final totalAssets:', finalTotalAssets);
+    console.log('Deposit amount:', depositAmount);
+    
+    assertEq(sgho.totalAssets(), depositAmount, 'Initial totalAssets');
 
-    // --- Receive ETH Test ---
-    function test_revert_ReceiveETH() external {
-        vm.expectRevert('No ETH allowed');
-        payable(address(sgho)).transfer(1 ether);
-    }
+    // Skip time and trigger _updateVault via another deposit
+    vm.warp(block.timestamp + timeSkip);
+    uint256 depositAmount2 = 1 ether;
+    deal(address(gho), user1, depositAmount2, true); // Ensure user1 has more GHO
+    gho.approve(address(sgho), depositAmount2);
+    sgho.deposit(depositAmount2, user1); // This deposit triggers _updateVault
 
-    // --- ERC4626 Tests ---
+    // Calculate expected yield based on time elapsed and target rate
+    uint256 expectedYield = (depositAmount * yieldMaestro.targetRate() * timeSkip) / (1e10 * 365 days);
+    uint256 expectedAssets = depositAmount + expectedYield + depositAmount2;
+    assertEq(sgho.totalAssets(), expectedAssets, 'totalAssets mismatch after yield claim');
 
-    function test_4626_initialState() external view {
-        assertEq(sgho.asset(), address(gho), "Asset mismatch");
-        assertEq(sgho.totalAssets(), 0, "Initial totalAssets mismatch");
-        assertEq(sgho.totalSupply(), 0, "Initial totalSupply mismatch");
-        assertEq(sgho.decimals(), gho.decimals(), "Decimals mismatch"); // Inherits ERC20 decimals
-    }
+    // Check if withdraw/redeem reflects yield (share price > 1)
+    uint256 shares = sgho.balanceOf(user1);
+    uint256 expectedWithdrawAssets = sgho.previewRedeem(shares);
+    assertTrue(
+      expectedWithdrawAssets > depositAmount + depositAmount2,
+      'Assets per share should increase with yield'
+    );
+    assertApproxEqAbs(
+      expectedWithdrawAssets,
+      expectedAssets,
+      1,
+      'Preview redeem should equal total assets'
+    ); // Single depositor case
+    vm.stopPrank();
+  }
 
-    function test_4626_deposit_mint_preview(uint96 amount) external {
-        amount = uint96(bound(amount, 1, 100_000 ether));
-        vm.prank(user1);
+  function test_yield_noClaimIfTimeSkipLow(
+    uint256 depositAmount,
+    uint64 timeSkip,
+    uint256 yieldAmount
+  ) external {
+    depositAmount = uint256(bound(depositAmount, 1 ether, 100_000 ether));
+    timeSkip = uint64(bound(timeSkip, 1, 599)); // Ensure <= 600s
+    yieldAmount = uint256(bound(yieldAmount, 1 wei, 1_000 ether));
 
-        // Preview
-        uint256 previewShares = sgho.previewDeposit(amount);
-        uint256 previewAssets = sgho.previewMint(previewShares);
-        assertEq(previewAssets, amount, "Preview mismatch deposit/mint"); // Should be 1:1 initially
-        assertEq(sgho.convertToShares(amount), previewShares, "convertToShares mismatch");
-        assertEq(sgho.convertToAssets(previewShares), amount, "convertToAssets mismatch");
+    // Initial deposit
+    vm.startPrank(user1);
+    sgho.deposit(depositAmount, user1);
 
-        // Deposit
-        uint256 initialGhoBalance = gho.balanceOf(user1);
-        uint256 initialSghoBalance = sgho.balanceOf(user1);
-        uint256 shares = sgho.deposit(amount, user1);
+    assertEq(sgho.totalAssets(), depositAmount);
 
-        assertEq(shares, previewShares, "Shares mismatch");
-        assertEq(sgho.balanceOf(user1), initialSghoBalance + shares, "sGHO balance mismatch");
-        assertEq(gho.balanceOf(user1), initialGhoBalance - amount, "GHO balance mismatch");
-        assertEq(sgho.totalAssets(), amount, "totalAssets mismatch after deposit");
-        assertEq(sgho.totalSupply(), shares, "totalSupply mismatch after deposit");
-        assertEq(gho.balanceOf(address(sgho)), amount, "sGHO GHO balance mismatch");
+    // Skip time and trigger _updateVault via another deposit
+    vm.warp(block.timestamp + timeSkip);
+    uint256 depositAmount2 = 1 ether;
 
-        // Mint (similar logic, deposit is usually sufficient to test core mechanics)
-        // uint256 assets = sgho.mint(sharesToMint, user1);
-    }
+    // Ensure user1 has enough GHO for second deposit
+    deal(address(gho), user1, depositAmount2, true);
 
-    function test_4626_withdraw_redeem_preview(uint96 depositAmount, uint96 withdrawAmount) external {
-        depositAmount = uint96(bound(depositAmount, 1, 100_000 ether));
-        vm.assume(withdrawAmount <= depositAmount);
-        withdrawAmount = uint96(bound(withdrawAmount, 1, depositAmount));
+    gho.approve(address(sgho), depositAmount2);
+    sgho.deposit(depositAmount2, user1); // This deposit triggers _updateVault
+    vm.stopPrank();
 
-        // Initial deposit
-        vm.prank(user1);
-        uint256 sharesDeposited = sgho.deposit(depositAmount, user1);
+    // Check yield was NOT added
+    uint256 expectedAssets = depositAmount + depositAmount2;
+    assertEq(sgho.totalAssets(), expectedAssets, 'totalAssets should not include yield');
+  }
 
-        // Preview
-        uint256 previewShares = sgho.previewWithdraw(withdrawAmount);
-        uint256 previewAssets = sgho.previewRedeem(previewShares);
-        // Allow for rounding differences if ratio != 1
-        assertApproxEqAbs(previewAssets, withdrawAmount, 1, "Preview mismatch withdraw/redeem");
+  // --- takeDonated() Test ---
+  function test_takeDonated() external {
+    uint256 depositAmount = 100 ether;
+    uint256 donatedAmount = 50 ether;
 
-        // Withdraw
-        uint256 initialGhoBalance = gho.balanceOf(user1);
-        uint256 initialSghoBalance = sgho.balanceOf(user1);
-        uint256 sharesWithdrawn = sgho.withdraw(withdrawAmount, user1, user1);
+    uint256 sghoBalanceInitial = gho.balanceOf(address(sgho));
 
-        assertApproxEqAbs(sharesWithdrawn, previewShares, 1, "Shares withdrawn mismatch");
-        assertApproxEqAbs(sgho.balanceOf(user1), initialSghoBalance - sharesWithdrawn, 1, "sGHO balance mismatch after withdraw");
-        assertEq(gho.balanceOf(user1), initialGhoBalance + withdrawAmount, "GHO balance mismatch after withdraw");
-        assertApproxEqAbs(sgho.totalAssets(), depositAmount - withdrawAmount, 1, "totalAssets mismatch after withdraw");
-        assertApproxEqAbs(sgho.totalSupply(), sharesDeposited - sharesWithdrawn, 1, "totalSupply mismatch after withdraw");
-        assertApproxEqAbs(gho.balanceOf(address(sgho)), depositAmount - withdrawAmount, 1, "sGHO GHO balance mismatch after withdraw");
+    // User deposits
+    vm.prank(user1);
+    sgho.deposit(depositAmount, user1);
+    assertEq(sgho.totalAssets(), depositAmount);
+    assertEq(gho.balanceOf(address(sgho)), depositAmount + sghoBalanceInitial);
 
-        // Redeem (similar logic)
-        // uint256 assetsRedeemed = sgho.redeem(sharesToRedeem, user1, user1);
-    }
+    // Simulate external donation (direct transfer)
+    deal(address(gho), address(sgho), gho.balanceOf(address(sgho)) + donatedAmount); // Force balance increase
+    assertEq(gho.balanceOf(address(sgho)), depositAmount + donatedAmount + sghoBalanceInitial);
 
-    function test_4626_maxMethods() external {
-        // Deposit max checks (no limits implemented in this sGHO version)
-        assertEq(sgho.maxDeposit(user1), type(uint256).max, "maxDeposit should be max");
-        assertEq(sgho.maxMint(user1), type(uint256).max, "maxMint should be max");
+    // Check YieldMaestro balance before
+    uint256 ymBalanceBefore = gho.balanceOf(address(yieldMaestro));
 
-        // Withdraw max checks
-        vm.prank(user1);
-        uint256 depositAmount = 100 ether;
-        sgho.deposit(depositAmount, user1);
-        uint256 shares = sgho.balanceOf(user1);
+    // Call takeDonated
+    sgho.takeDonated();
 
-        assertEq(sgho.maxWithdraw(user1), depositAmount, "maxWithdraw mismatch");
-        assertEq(sgho.maxRedeem(user1), shares, "maxRedeem mismatch");
-    }
-
-    // --- Yield Integration Tests (_updateVault) ---
-
-    function test_yield_claimSavingsIntegration(uint96 depositAmount, uint64 timeSkip, uint96 yieldAmount) external {
-        depositAmount = uint96(bound(depositAmount, 1 ether, 100_000 ether));
-        timeSkip = uint64(bound(timeSkip, 601, 30 days)); // Ensure > 600s
-        yieldAmount = uint96(bound(yieldAmount, 1 wei, 1_000 ether));
-
-        // Initial deposit
-        vm.prank(user1);
-        sgho.deposit(depositAmount, user1);
-        assertEq(sgho.totalAssets(), depositAmount, "Initial totalAssets");
-
-        // Skip time and trigger _updateVault via another deposit
-        vm.warp(block.timestamp + timeSkip);
-        uint256 depositAmount2 = 1 ether;
-        deal(address(gho), user1, depositAmount2); // Ensure user1 has more GHO
-        vm.prank(user1);
-        gho.approve(address(sgho), depositAmount2);
-        sgho.deposit(depositAmount2, user1); // This deposit triggers _updateVault
-
-        // Check if yield was added to totalAssets
-        uint256 expectedAssets = depositAmount + yieldAmount + depositAmount2;
-        assertEq(sgho.totalAssets(), expectedAssets, "totalAssets mismatch after yield claim");
-
-        // Check if withdraw/redeem reflects yield (share price > 1)
-        uint256 shares = sgho.balanceOf(user1);
-        uint256 expectedWithdrawAssets = sgho.previewRedeem(shares);
-        assertTrue(expectedWithdrawAssets > depositAmount + depositAmount2, "Assets per share should increase with yield");
-        assertApproxEqAbs(expectedWithdrawAssets, expectedAssets, 1, "Preview redeem should equal total assets"); // Single depositor case
-    }
-
-     function test_yield_noClaimIfTimeSkipLow(uint96 depositAmount, uint64 timeSkip, uint96 yieldAmount) external {
-        depositAmount = uint96(bound(depositAmount, 1 ether, 100_000 ether));
-        timeSkip = uint64(bound(timeSkip, 1, 599)); // Ensure <= 600s
-        yieldAmount = uint96(bound(yieldAmount, 1 wei, 1_000 ether));
-
-        // Initial deposit
-        vm.prank(user1);
-        sgho.deposit(depositAmount, user1);
-        assertEq(sgho.totalAssets(), depositAmount);
-
-        // Skip time and trigger _updateVault via another deposit
-        vm.warp(block.timestamp + timeSkip);
-         uint256 depositAmount2 = 1 ether;
-        deal(address(gho), user1, depositAmount2); // Ensure user1 has more GHO
-        vm.prank(user1);
-        gho.approve(address(sgho), depositAmount2);
-        sgho.deposit(depositAmount2, user1); // This deposit triggers _updateVault
-
-        // Check yield was NOT added
-        uint256 expectedAssets = depositAmount + depositAmount2;
-        assertEq(sgho.totalAssets(), expectedAssets, "totalAssets should not include yield");
-    }
-
-
-
-    // --- takeDonated() Test ---
-    function test_takeDonated() external {
-        uint256 depositAmount = 100 ether;
-        uint256 donatedAmount = 50 ether;
-
-        // User deposits
-        vm.prank(user1);
-        sgho.deposit(depositAmount, user1);
-        assertEq(sgho.totalAssets(), depositAmount);
-        assertEq(gho.balanceOf(address(sgho)), depositAmount);
-
-        // Simulate external donation (direct transfer)
-        deal(address(gho), address(sgho), gho.balanceOf(address(sgho)) + donatedAmount); // Force balance increase
-        assertEq(gho.balanceOf(address(sgho)), depositAmount + donatedAmount);
-
-        // Check YieldMaestro balance before
-        uint256 ymBalanceBefore = gho.balanceOf(address(yieldMaestro));
-
-        // Call takeDonated
-        sgho.takeDonated();
-
-        // Check balances after
-        assertEq(sgho.totalAssets(), depositAmount, "totalAssets should be unchanged"); // Should not change internal accounting
-        assertEq(gho.balanceOf(address(sgho)), depositAmount, "sGHO GHO balance should revert to totalAssets");
-        assertEq(gho.balanceOf(address(yieldMaestro)), ymBalanceBefore + donatedAmount, "YieldMaestro should receive donated amount");
-    }
-
+    // Check balances after
+    assertEq(sgho.totalAssets(), depositAmount, 'totalAssets should be unchanged'); // Should not change internal accounting
+    assertEq(
+      gho.balanceOf(address(sgho)),
+      depositAmount,
+      'sGHO GHO balance should revert to totalAssets'
+    );
+    assertEq(
+      gho.balanceOf(address(yieldMaestro)),
+      ymBalanceBefore + donatedAmount + sghoBalanceInitial,
+      'YieldMaestro should receive donated amount'
+    );
+  }
 }
