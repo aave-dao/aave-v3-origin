@@ -38,6 +38,11 @@ interface IYieldMaestro {
   error OnlyYieldManager();
 
   /**
+   * @dev Only sGHO vault can call
+   */
+  error OnlyVault();
+  
+  /**
    * @dev Throws if the contract is not initialized.
    */
   error NotInitialized();
