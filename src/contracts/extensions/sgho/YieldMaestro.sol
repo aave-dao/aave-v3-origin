@@ -56,6 +56,16 @@ contract YieldMaestro is Initializable, IYieldMaestro {
     _;
   }
 
+    /**
+   * @dev Throws if the caller is not the sGHO vault
+   */
+  modifier onlyVault() {
+    if (_onlyVault() == false) {
+      revert OnlyVault();
+    }
+    _;
+  }
+
   /**
    * @dev Initialize receiver, require minimum balance to not set a dripRate of 0
    */
@@ -65,7 +75,7 @@ contract YieldMaestro is Initializable, IYieldMaestro {
     targetRate = 0;
   }
 
-  function claimSavings() public isInitialized returns (uint256 claimed) {
+  function claimSavings() public isInitialized onlyVault() returns (uint256 claimed) {
     // if targetRate is 0 skip it
     if (targetRate > 0) {
       uint256 unclaimed = _calculateUnclaimed();
@@ -128,5 +138,9 @@ contract YieldMaestro is Initializable, IYieldMaestro {
 
   function _onlyYieldManager() internal view returns (bool) {
     return aclManager.hasRole(YIELD_MANAGER_ROLE, msg.sender);
+  }
+
+  function _onlyVault() internal view returns (bool) {
+    return msg.sender == sGHO;
   }
 }
