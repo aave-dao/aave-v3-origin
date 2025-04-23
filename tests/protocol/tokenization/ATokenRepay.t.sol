@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import 'forge-std/Test.sol';
 
 import {IAToken} from '../../../src/contracts/interfaces/IAToken.sol';
+import {IPool} from '../../../src/contracts/interfaces/IPool.sol';
 import {IVariableDebtToken} from '../../../src/contracts/interfaces/IVariableDebtToken.sol';
 import {IERC20Detailed} from '../../../src/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
 import {TestnetProcedures} from '../../utils/TestnetProcedures.sol';
@@ -13,14 +14,6 @@ interface IVariableDebtTokenWithERC20 is IVariableDebtToken, IERC20Detailed {}
 contract ATokenRepayTests is TestnetProcedures {
   IAToken public aToken;
   IVariableDebtTokenWithERC20 public variableDebtToken;
-
-  event Repay(
-    address indexed reserve,
-    address indexed user,
-    address indexed repayer,
-    uint256 amount,
-    bool useATokens
-  );
 
   function setUp() public {
     initTestEnvironment(false);
@@ -53,7 +46,7 @@ contract ATokenRepayTests is TestnetProcedures {
 
     contracts.poolProxy.supply(tokenList.wbtc, 10e8, alice, 0);
     contracts.poolProxy.borrow(tokenList.usdx, 1000e6, 2, 0, alice);
-    vm.warp(block.timestamp + 1 days);
+    vm.warp(vm.getBlockTimestamp() + 1 days);
 
     vm.stopPrank();
   }
@@ -70,7 +63,7 @@ contract ATokenRepayTests is TestnetProcedures {
 
     uint256 previousDebt = variableDebtToken.balanceOf(alice);
     vm.expectEmit(address(contracts.poolProxy));
-    emit Repay(tokenList.usdx, alice, alice, 500e6, true);
+    emit IPool.Repay(tokenList.usdx, alice, alice, 500e6, true);
 
     vm.prank(alice);
     contracts.poolProxy.repayWithATokens(tokenList.usdx, 500e6, 2);
@@ -91,7 +84,7 @@ contract ATokenRepayTests is TestnetProcedures {
     uint256 debt = variableDebtToken.balanceOf(alice);
 
     vm.expectEmit();
-    emit Repay(tokenList.usdx, alice, alice, debt, true);
+    emit IPool.Repay(tokenList.usdx, alice, alice, debt, true);
 
     vm.prank(alice);
     contracts.poolProxy.repayWithATokens(tokenList.usdx, UINT256_MAX, 2);

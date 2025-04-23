@@ -24,19 +24,6 @@ contract ParaswapAdaptersTest is TestnetProcedures {
   IERC20Detailed internal aWETH;
   IERC20Detailed internal aUSDX;
 
-  event Swapped(
-    address indexed fromAsset,
-    address indexed toAsset,
-    uint256 fromAmount,
-    uint256 receivedAmount
-  );
-  event Bought(
-    address indexed fromAsset,
-    address indexed toAsset,
-    uint256 amountSold,
-    uint256 receivedAmount
-  );
-
   struct PermitSignature {
     uint256 amount;
     uint256 deadline;
@@ -131,7 +118,12 @@ contract ParaswapAdaptersTest is TestnetProcedures {
     );
 
     vm.expectEmit(address(paraSwapLiquiditySwapAdapter));
-    emit Swapped(tokenList.weth, tokenList.usdx, amountToSwap, expectedUsdxAmount);
+    emit BaseParaSwapAdapter.Swapped(
+      tokenList.weth,
+      tokenList.usdx,
+      amountToSwap,
+      expectedUsdxAmount
+    );
 
     vm.prank(alice);
     contracts.poolProxy.flashLoanSimple(
@@ -156,7 +148,7 @@ contract ParaswapAdaptersTest is TestnetProcedures {
       spender: address(paraSwapLiquiditySwapAdapter),
       value: flashloanTotal,
       nonce: 0,
-      deadline: block.timestamp + 1 days
+      deadline: vm.getBlockTimestamp() + 1 days
     });
     bytes32 digest = EIP712SigUtils.getTypedDataHash(
       permit,
@@ -196,7 +188,12 @@ contract ParaswapAdaptersTest is TestnetProcedures {
     );
 
     vm.expectEmit(address(paraSwapLiquiditySwapAdapter));
-    emit Swapped(tokenList.weth, tokenList.usdx, amountToSwap, expectedUsdxAmount);
+    emit BaseParaSwapAdapter.Swapped(
+      tokenList.weth,
+      tokenList.usdx,
+      amountToSwap,
+      expectedUsdxAmount
+    );
 
     vm.prank(alice);
     contracts.poolProxy.flashLoanSimple(
@@ -221,7 +218,7 @@ contract ParaswapAdaptersTest is TestnetProcedures {
       spender: address(paraSwapLiquiditySwapAdapter),
       value: flashloanTotal,
       nonce: 0,
-      deadline: block.timestamp + 1 days
+      deadline: vm.getBlockTimestamp() + 1 days
     });
     bytes32 digest = EIP712SigUtils.getTypedDataHash(
       permit,
@@ -300,7 +297,12 @@ contract ParaswapAdaptersTest is TestnetProcedures {
     );
 
     vm.expectEmit(address(paraSwapLiquiditySwapAdapter));
-    emit Swapped(tokenList.weth, tokenList.usdx, amountToSwap, expectedUsdxAmount);
+    emit BaseParaSwapAdapter.Swapped(
+      tokenList.weth,
+      tokenList.usdx,
+      amountToSwap,
+      expectedUsdxAmount
+    );
 
     vm.prank(alice);
     paraSwapLiquiditySwapAdapter.swapAndDeposit(
@@ -327,7 +329,7 @@ contract ParaswapAdaptersTest is TestnetProcedures {
       spender: address(paraSwapLiquiditySwapAdapter),
       value: amountToSwap,
       nonce: 0,
-      deadline: block.timestamp + 1 days
+      deadline: vm.getBlockTimestamp() + 1 days
     });
     bytes32 digest = EIP712SigUtils.getTypedDataHash(
       permit,
@@ -362,7 +364,12 @@ contract ParaswapAdaptersTest is TestnetProcedures {
     );
 
     vm.expectEmit(address(paraSwapLiquiditySwapAdapter));
-    emit Swapped(tokenList.weth, tokenList.usdx, amountToSwap, expectedUsdxAmount);
+    emit BaseParaSwapAdapter.Swapped(
+      tokenList.weth,
+      tokenList.usdx,
+      amountToSwap,
+      expectedUsdxAmount
+    );
 
     vm.prank(alice);
     paraSwapLiquiditySwapAdapter.swapAndDeposit(
@@ -452,7 +459,12 @@ contract ParaswapAdaptersTest is TestnetProcedures {
     bytes memory params = abi.encode(augustusInput, address(mockParaSwapAugustus));
 
     vm.expectEmit(address(paraSwapRepayAdapter));
-    emit Bought(tokenList.weth, tokenList.usdx, amountToSwap, expectedUsdxAmount);
+    emit BaseParaSwapAdapter.Bought(
+      tokenList.weth,
+      tokenList.usdx,
+      amountToSwap,
+      expectedUsdxAmount
+    );
 
     vm.prank(alice);
     paraSwapRepayAdapter.swapAndRepay(
@@ -500,7 +512,7 @@ contract ParaswapAdaptersTest is TestnetProcedures {
     bytes memory params = abi.encode(augustusInput, address(mockParaSwapAugustus));
 
     vm.expectEmit(address(paraSwapRepayAdapter));
-    emit Bought(tokenList.weth, tokenList.usdx, 9 ether, expectedUsdxAmount);
+    emit BaseParaSwapAdapter.Bought(tokenList.weth, tokenList.usdx, 9 ether, expectedUsdxAmount);
 
     vm.prank(alice);
     paraSwapRepayAdapter.swapAndRepay(
@@ -529,7 +541,7 @@ contract ParaswapAdaptersTest is TestnetProcedures {
       spender: address(paraSwapRepayAdapter),
       value: amountToSwap,
       nonce: 0,
-      deadline: block.timestamp + 1 days
+      deadline: vm.getBlockTimestamp() + 1 days
     });
     bytes32 digest = EIP712SigUtils.getTypedDataHash(
       permit,
@@ -569,7 +581,12 @@ contract ParaswapAdaptersTest is TestnetProcedures {
     bytes memory params = abi.encode(augustusInput, address(mockParaSwapAugustus));
 
     vm.expectEmit(address(paraSwapRepayAdapter));
-    emit Bought(tokenList.weth, tokenList.usdx, amountToSwap, expectedUsdxAmount);
+    emit BaseParaSwapAdapter.Bought(
+      tokenList.weth,
+      tokenList.usdx,
+      amountToSwap,
+      expectedUsdxAmount
+    );
 
     vm.prank(alice);
     paraSwapRepayAdapter.swapAndRepay(
@@ -627,7 +644,12 @@ contract ParaswapAdaptersTest is TestnetProcedures {
     );
 
     vm.expectEmit(address(paraSwapRepayAdapter));
-    emit Bought(tokenList.weth, tokenList.usdx, amountToSwap, expectedUsdxAmount);
+    emit BaseParaSwapAdapter.Bought(
+      tokenList.weth,
+      tokenList.usdx,
+      amountToSwap,
+      expectedUsdxAmount
+    );
 
     vm.prank(alice);
     contracts.poolProxy.flashLoanSimple(
@@ -652,7 +674,7 @@ contract ParaswapAdaptersTest is TestnetProcedures {
       spender: address(paraSwapRepayAdapter),
       value: approvalAmount,
       nonce: 0,
-      deadline: block.timestamp + 1 days
+      deadline: vm.getBlockTimestamp() + 1 days
     });
     bytes32 digest = EIP712SigUtils.getTypedDataHash(
       permit,
@@ -698,7 +720,12 @@ contract ParaswapAdaptersTest is TestnetProcedures {
     );
 
     vm.expectEmit(address(paraSwapRepayAdapter));
-    emit Bought(tokenList.weth, tokenList.usdx, amountToSwap, expectedUsdxAmount);
+    emit BaseParaSwapAdapter.Bought(
+      tokenList.weth,
+      tokenList.usdx,
+      amountToSwap,
+      expectedUsdxAmount
+    );
 
     vm.prank(alice);
     contracts.poolProxy.flashLoanSimple(
@@ -785,7 +812,12 @@ contract ParaswapAdaptersTest is TestnetProcedures {
     );
 
     vm.expectEmit(address(paraSwapWithdrawSwapAdapter));
-    emit Swapped(tokenList.weth, tokenList.usdx, amountToSwap, expectedUsdxAmount);
+    emit BaseParaSwapAdapter.Swapped(
+      tokenList.weth,
+      tokenList.usdx,
+      amountToSwap,
+      expectedUsdxAmount
+    );
 
     paraSwapWithdrawSwapAdapter.withdrawAndSwap(
       IERC20Detailed(tokenList.weth),
@@ -813,7 +845,7 @@ contract ParaswapAdaptersTest is TestnetProcedures {
       spender: address(paraSwapWithdrawSwapAdapter),
       value: amountToSwap,
       nonce: 0,
-      deadline: block.timestamp + 1 days
+      deadline: vm.getBlockTimestamp() + 1 days
     });
     bytes32 digest = EIP712SigUtils.getTypedDataHash(
       permit,
@@ -845,7 +877,12 @@ contract ParaswapAdaptersTest is TestnetProcedures {
     );
 
     vm.expectEmit(address(paraSwapWithdrawSwapAdapter));
-    emit Swapped(tokenList.weth, tokenList.usdx, amountToSwap, expectedUsdxAmount);
+    emit BaseParaSwapAdapter.Swapped(
+      tokenList.weth,
+      tokenList.usdx,
+      amountToSwap,
+      expectedUsdxAmount
+    );
 
     vm.startPrank(alice);
 

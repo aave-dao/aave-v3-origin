@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import {IPool} from '../../../interfaces/IPool.sol';
 import {Errors} from '../helpers/Errors.sol';
 import {DataTypes} from '../types/DataTypes.sol';
 import {ReserveConfiguration} from './ReserveConfiguration.sol';
@@ -30,7 +31,7 @@ library UserConfiguration {
     bool borrowing
   ) internal {
     unchecked {
-      require(reserveIndex < ReserveConfiguration.MAX_RESERVES_COUNT, Errors.INVALID_RESERVE_INDEX);
+      require(reserveIndex < ReserveConfiguration.MAX_RESERVES_COUNT, Errors.InvalidReserveIndex());
       uint256 bit = 1 << (reserveIndex << 1);
       if (borrowing) {
         self.data |= bit;
@@ -44,20 +45,26 @@ library UserConfiguration {
    * @notice Sets if the user is using as collateral the reserve identified by reserveIndex
    * @param self The configuration object
    * @param reserveIndex The index of the reserve in the bitmap
+   * @param asset The address of the reserve
+   * @param user The address of the user
    * @param usingAsCollateral True if the user is using the reserve as collateral, false otherwise
    */
   function setUsingAsCollateral(
     DataTypes.UserConfigurationMap storage self,
     uint256 reserveIndex,
+    address asset,
+    address user,
     bool usingAsCollateral
   ) internal {
     unchecked {
-      require(reserveIndex < ReserveConfiguration.MAX_RESERVES_COUNT, Errors.INVALID_RESERVE_INDEX);
+      require(reserveIndex < ReserveConfiguration.MAX_RESERVES_COUNT, Errors.InvalidReserveIndex());
       uint256 bit = 1 << ((reserveIndex << 1) + 1);
       if (usingAsCollateral) {
         self.data |= bit;
+        emit IPool.ReserveUsedAsCollateralEnabled(asset, user);
       } else {
         self.data &= ~bit;
+        emit IPool.ReserveUsedAsCollateralDisabled(asset, user);
       }
     }
   }
@@ -73,7 +80,7 @@ library UserConfiguration {
     uint256 reserveIndex
   ) internal pure returns (bool) {
     unchecked {
-      require(reserveIndex < ReserveConfiguration.MAX_RESERVES_COUNT, Errors.INVALID_RESERVE_INDEX);
+      require(reserveIndex < ReserveConfiguration.MAX_RESERVES_COUNT, Errors.InvalidReserveIndex());
       return (self.data >> (reserveIndex << 1)) & 3 != 0;
     }
   }
@@ -89,7 +96,7 @@ library UserConfiguration {
     uint256 reserveIndex
   ) internal pure returns (bool) {
     unchecked {
-      require(reserveIndex < ReserveConfiguration.MAX_RESERVES_COUNT, Errors.INVALID_RESERVE_INDEX);
+      require(reserveIndex < ReserveConfiguration.MAX_RESERVES_COUNT, Errors.InvalidReserveIndex());
       return (self.data >> (reserveIndex << 1)) & 1 != 0;
     }
   }
@@ -105,7 +112,7 @@ library UserConfiguration {
     uint256 reserveIndex
   ) internal pure returns (bool) {
     unchecked {
-      require(reserveIndex < ReserveConfiguration.MAX_RESERVES_COUNT, Errors.INVALID_RESERVE_INDEX);
+      require(reserveIndex < ReserveConfiguration.MAX_RESERVES_COUNT, Errors.InvalidReserveIndex());
       return (self.data >> ((reserveIndex << 1) + 1)) & 1 != 0;
     }
   }
@@ -211,6 +218,21 @@ library UserConfiguration {
     }
 
     return (false, address(0));
+  }
+
+  /**
+   * @notice Returns the borrowed and collateral flags for the first asset on the bitmap and the bitmap shifted by two.
+   * @dev This function mutates the input and the 2 bit slots in the bitmap will no longer correspond to the reserve index.
+   * This is useful in situations where we want to iterate the bitmap as it allows for early exit once the bitmap turns zero.
+   * @param data The configuration uint256
+   * @return The bitmap shifted by 2 bits, so that the first asset points to the *next* asset.
+   * @return True if the first asset in the bitmap is borrowed.
+   * @return True if the first asset in the bitmap is a collateral.
+   */
+  function getNextFlags(uint256 data) internal pure returns (uint256, bool, bool) {
+    bool isBorrowed = data & 1 == 1;
+    bool isEnabledAsCollateral = data & 2 == 2;
+    return (data >> 2, isBorrowed, isEnabledAsCollateral);
   }
 
   /**

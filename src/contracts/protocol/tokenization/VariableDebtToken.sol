@@ -2,7 +2,7 @@
 pragma solidity ^0.8.10;
 
 import {IERC20} from '../../dependencies/openzeppelin/contracts/IERC20.sol';
-import {SafeCast} from '../../dependencies/openzeppelin/contracts/SafeCast.sol';
+import {SafeCast} from 'openzeppelin-contracts/contracts/utils/math/SafeCast.sol';
 import {VersionedInitializable} from '../../misc/aave-upgradeability/VersionedInitializable.sol';
 import {WadRayMath} from '../libraries/math/WadRayMath.sol';
 import {Errors} from '../libraries/helpers/Errors.sol';
@@ -28,12 +28,20 @@ abstract contract VariableDebtToken is DebtTokenBase, ScaledBalanceTokenBase, IV
   /**
    * @dev Constructor.
    * @param pool The address of the Pool contract
+   * @param rewardsController The address of the rewards controller contract
    */
   constructor(
-    IPool pool
+    IPool pool,
+    address rewardsController
   )
     DebtTokenBase()
-    ScaledBalanceTokenBase(pool, 'VARIABLE_DEBT_TOKEN_IMPL', 'VARIABLE_DEBT_TOKEN_IMPL', 0)
+    ScaledBalanceTokenBase(
+      pool,
+      'VARIABLE_DEBT_TOKEN_IMPL',
+      'VARIABLE_DEBT_TOKEN_IMPL',
+      0,
+      rewardsController
+    )
   {
     // Intentionally left blank
   }
@@ -42,7 +50,6 @@ abstract contract VariableDebtToken is DebtTokenBase, ScaledBalanceTokenBase, IV
   function initialize(
     IPool initializingPool,
     address underlyingAsset,
-    IAaveIncentivesController incentivesController,
     uint8 debtTokenDecimals,
     string memory debtTokenName,
     string memory debtTokenSymbol,
@@ -66,11 +73,12 @@ abstract contract VariableDebtToken is DebtTokenBase, ScaledBalanceTokenBase, IV
     address onBehalfOf,
     uint256 amount,
     uint256 index
-  ) external virtual override onlyPool returns (bool, uint256) {
+  ) external virtual override onlyPool returns (uint256) {
     if (user != onBehalfOf) {
       _decreaseBorrowAllowance(onBehalfOf, user, amount);
     }
-    return (_mintScaled(user, onBehalfOf, amount, index), scaledTotalSupply());
+    _mintScaled(user, onBehalfOf, amount, index);
+    return scaledTotalSupply();
   }
 
   /// @inheritdoc IVariableDebtToken
@@ -78,9 +86,8 @@ abstract contract VariableDebtToken is DebtTokenBase, ScaledBalanceTokenBase, IV
     address from,
     uint256 amount,
     uint256 index
-  ) external virtual override onlyPool returns (uint256) {
-    _burnScaled(from, address(0), amount, index);
-    return scaledTotalSupply();
+  ) external virtual override onlyPool returns (bool, uint256) {
+    return (_burnScaled(from, address(0), amount, index), scaledTotalSupply());
   }
 
   /// @inheritdoc IERC20
@@ -98,27 +105,27 @@ abstract contract VariableDebtToken is DebtTokenBase, ScaledBalanceTokenBase, IV
    * standard ERC20 functions for transfer and allowance.
    */
   function transfer(address, uint256) external virtual override returns (bool) {
-    revert(Errors.OPERATION_NOT_SUPPORTED);
+    revert Errors.OperationNotSupported();
   }
 
   function allowance(address, address) external view virtual override returns (uint256) {
-    revert(Errors.OPERATION_NOT_SUPPORTED);
+    revert Errors.OperationNotSupported();
   }
 
   function approve(address, uint256) external virtual override returns (bool) {
-    revert(Errors.OPERATION_NOT_SUPPORTED);
+    revert Errors.OperationNotSupported();
   }
 
   function transferFrom(address, address, uint256) external virtual override returns (bool) {
-    revert(Errors.OPERATION_NOT_SUPPORTED);
+    revert Errors.OperationNotSupported();
   }
 
   function increaseAllowance(address, uint256) external virtual override returns (bool) {
-    revert(Errors.OPERATION_NOT_SUPPORTED);
+    revert Errors.OperationNotSupported();
   }
 
   function decreaseAllowance(address, uint256) external virtual override returns (bool) {
-    revert(Errors.OPERATION_NOT_SUPPORTED);
+    revert Errors.OperationNotSupported();
   }
 
   /// @inheritdoc IVariableDebtToken

@@ -5,6 +5,7 @@ import 'forge-std/Test.sol';
 
 import {Errors} from '../../../../src/contracts/protocol/libraries/helpers/Errors.sol';
 import {IERC20} from '../../../../src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {IPoolConfigurator} from '../../../../src/contracts/interfaces/IPoolConfigurator.sol';
 import {TestnetProcedures} from '../../../utils/TestnetProcedures.sol';
 
 contract PoolConfiguratorSupplyCapTests is TestnetProcedures {
@@ -12,18 +13,16 @@ contract PoolConfiguratorSupplyCapTests is TestnetProcedures {
 
   uint256 constant MAX_SUPPLY_CAP = 68719476735;
 
-  event SupplyCapChanged(address indexed asset, uint256 oldSupplyCap, uint256 newSupplyCap);
-
   function setUp() public {
     initTestEnvironment();
 
-    (aUSDX, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(tokenList.usdx);
+    aUSDX = contracts.poolProxy.getReserveAToken(tokenList.usdx);
   }
 
   function _setSupplyCapAction(address admin, address token, uint256 amount) internal {
     (, uint256 previousCap) = contracts.protocolDataProvider.getReserveCaps(token);
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit SupplyCapChanged(token, previousCap, amount);
+    emit IPoolConfigurator.SupplyCapChanged(token, previousCap, amount);
 
     vm.prank(admin);
     contracts.poolConfiguratorProxy.setSupplyCap(token, amount);
@@ -38,7 +37,7 @@ contract PoolConfiguratorSupplyCapTests is TestnetProcedures {
   }
 
   function test_reverts_unauthorized_setSupplyCap() public {
-    vm.expectRevert(bytes(Errors.CALLER_NOT_RISK_OR_POOL_ADMIN));
+    vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotRiskOrPoolAdmin.selector));
 
     vm.prank(bob);
     contracts.poolConfiguratorProxy.setSupplyCap(tokenList.usdx, 10);
@@ -77,7 +76,7 @@ contract PoolConfiguratorSupplyCapTests is TestnetProcedures {
     vm.prank(alice);
     contracts.poolProxy.borrow(tokenList.usdx, 100e6, 2, 0, alice);
 
-    vm.warp(block.timestamp + 30 days);
+    vm.warp(vm.getBlockTimestamp() + 30 days);
 
     uint256 totalCollateral = IERC20(aUSDX).totalSupply();
 
@@ -119,7 +118,7 @@ contract PoolConfiguratorSupplyCapTests is TestnetProcedures {
   function test_reverts_supply_gt_cap() public {
     _setSupplyCapAction(poolAdmin, tokenList.usdx, 5000);
 
-    vm.expectRevert(bytes(Errors.SUPPLY_CAP_EXCEEDED));
+    vm.expectRevert(abi.encodeWithSelector(Errors.SupplyCapExceeded.selector));
     vm.prank(bob);
     contracts.poolProxy.supply(tokenList.usdx, 6000e6, bob, 0);
   }
@@ -127,13 +126,13 @@ contract PoolConfiguratorSupplyCapTests is TestnetProcedures {
   function test_reverts_interests_gt_cap_and_supply() public {
     test_supply_interests_reach_cap();
 
-    vm.expectRevert(bytes(Errors.SUPPLY_CAP_EXCEEDED));
+    vm.expectRevert(abi.encodeWithSelector(Errors.SupplyCapExceeded.selector));
     vm.prank(alice);
     contracts.poolProxy.supply(tokenList.usdx, 1e6, alice, 0);
   }
 
   function test_reverts_setSupplyCap_gt_max_cap() public {
-    vm.expectRevert(bytes(Errors.INVALID_SUPPLY_CAP));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidSupplyCap.selector));
 
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setSupplyCap(tokenList.usdx, MAX_SUPPLY_CAP + 1);

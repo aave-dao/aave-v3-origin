@@ -2,6 +2,7 @@
 pragma solidity ^0.8.10;
 
 import {IPoolAddressesProvider} from '../../interfaces/IPoolAddressesProvider.sol';
+import {IReserveInterestRateStrategy} from '../../interfaces/IReserveInterestRateStrategy.sol';
 
 import {PoolInstance} from '../../instances/PoolInstance.sol';
 
@@ -12,7 +13,10 @@ contract MockPoolInherited is PoolInstance {
     return super.getRevision() + 1;
   }
 
-  constructor(IPoolAddressesProvider provider) PoolInstance(provider) {}
+  constructor(
+    IPoolAddressesProvider provider,
+    IReserveInterestRateStrategy interestRateStrategy
+  ) PoolInstance(provider, interestRateStrategy) {}
 
   function setMaxNumberOfReserves(uint16 newMaxNumberOfReserves) public {
     _maxNumberOfReserves = newMaxNumberOfReserves;

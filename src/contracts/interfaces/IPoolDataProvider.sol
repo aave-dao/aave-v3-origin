@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {IPoolAddressesProvider} from './IPoolAddressesProvider.sol';
+import {IPool} from './IPool.sol';
 
 /**
  * @title IPoolDataProvider
@@ -19,6 +20,12 @@ interface IPoolDataProvider {
    * @return The address for the PoolAddressesProvider contract
    */
   function ADDRESSES_PROVIDER() external view returns (IPoolAddressesProvider);
+
+  /**
+   * @notice Returns the address for the Pool contract.
+   * @return The address for the Pool contract
+   */
+  function POOL() external view returns (IPool);
 
   /**
    * @notice Returns the list of the existing reserves in the pool.
@@ -237,7 +244,7 @@ interface IPoolDataProvider {
   /**
    * @notice Returns whether virtual accounting is enabled/not for a reserve
    * @param asset The address of the underlying asset of the reserve
-   * @return True if active, false otherwise
+   * @return True, DEPRECATED in v3.4.0 as all reserves are active
    */
   function getIsVirtualAccActive(address asset) external view returns (bool);
 

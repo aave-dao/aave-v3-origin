@@ -5,13 +5,14 @@ import {IERC20} from '../../../dependencies/openzeppelin/contracts/IERC20.sol';
 import {GPv2SafeERC20} from '../../../dependencies/gnosis/contracts/GPv2SafeERC20.sol';
 import {IVariableDebtToken} from '../../../interfaces/IVariableDebtToken.sol';
 import {IReserveInterestRateStrategy} from '../../../interfaces/IReserveInterestRateStrategy.sol';
+import {IPool} from '../../../interfaces/IPool.sol';
 import {ReserveConfiguration} from '../configuration/ReserveConfiguration.sol';
 import {MathUtils} from '../math/MathUtils.sol';
 import {WadRayMath} from '../math/WadRayMath.sol';
 import {PercentageMath} from '../math/PercentageMath.sol';
 import {Errors} from '../helpers/Errors.sol';
 import {DataTypes} from '../types/DataTypes.sol';
-import {SafeCast} from '../../../dependencies/openzeppelin/contracts/SafeCast.sol';
+import {SafeCast} from 'openzeppelin-contracts/contracts/utils/math/SafeCast.sol';
 
 /**
  * @title ReserveLogic library
@@ -25,16 +26,6 @@ library ReserveLogic {
   using GPv2SafeERC20 for IERC20;
   using ReserveLogic for DataTypes.ReserveData;
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
-
-  // See `IPool` for descriptions
-  event ReserveDataUpdated(
-    address indexed reserve,
-    uint256 liquidityRate,
-    uint256 stableBorrowRate,
-    uint256 variableBorrowRate,
-    uint256 liquidityIndex,
-    uint256 variableBorrowIndex
-  );
 
   /**
    * @notice Returns the ongoing normalized income for the reserve.
@@ -108,47 +99,22 @@ library ReserveLogic {
   }
 
   /**
-   * @notice Accumulates a predefined amount of asset to the reserve as a fixed, instantaneous income. Used for example
-   * to accumulate the flashloan fee to the reserve, and spread it between all the suppliers.
-   * @param reserve The reserve object
-   * @param totalLiquidity The total liquidity available in the reserve
-   * @param amount The amount to accumulate
-   * @return The next liquidity index of the reserve
-   */
-  function cumulateToLiquidityIndex(
-    DataTypes.ReserveData storage reserve,
-    uint256 totalLiquidity,
-    uint256 amount
-  ) internal returns (uint256) {
-    //next liquidity index is calculated this way: `((amount / totalLiquidity) + 1) * liquidityIndex`
-    //division `amount / totalLiquidity` done in ray for precision
-    uint256 result = (amount.wadToRay().rayDiv(totalLiquidity.wadToRay()) + WadRayMath.RAY).rayMul(
-      reserve.liquidityIndex
-    );
-    reserve.liquidityIndex = result.toUint128();
-    return result;
-  }
-
-  /**
    * @notice Initializes a reserve.
    * @param reserve The reserve object
    * @param aTokenAddress The address of the overlying atoken contract
    * @param variableDebtTokenAddress The address of the overlying variable debt token contract
-   * @param interestRateStrategyAddress The address of the interest rate strategy contract
    */
   function init(
     DataTypes.ReserveData storage reserve,
     address aTokenAddress,
-    address variableDebtTokenAddress,
-    address interestRateStrategyAddress
+    address variableDebtTokenAddress
   ) internal {
-    require(reserve.aTokenAddress == address(0), Errors.RESERVE_ALREADY_INITIALIZED);
+    require(reserve.aTokenAddress == address(0), Errors.ReserveAlreadyInitialized());
 
     reserve.liquidityIndex = uint128(WadRayMath.RAY);
     reserve.variableBorrowIndex = uint128(WadRayMath.RAY);
     reserve.aTokenAddress = aTokenAddress;
     reserve.variableDebtTokenAddress = variableDebtTokenAddress;
-    reserve.interestRateStrategyAddress = interestRateStrategyAddress;
   }
 
   /**
@@ -164,23 +130,24 @@ library ReserveLogic {
     DataTypes.ReserveCache memory reserveCache,
     address reserveAddress,
     uint256 liquidityAdded,
-    uint256 liquidityTaken
+    uint256 liquidityTaken,
+    address interestRateStrategyAddress
   ) internal {
     uint256 totalVariableDebt = reserveCache.nextScaledVariableDebt.rayMul(
       reserveCache.nextVariableBorrowIndex
     );
 
     (uint256 nextLiquidityRate, uint256 nextVariableRate) = IReserveInterestRateStrategy(
-      reserve.interestRateStrategyAddress
+      interestRateStrategyAddress
     ).calculateInterestRates(
         DataTypes.CalculateInterestRatesParams({
-          unbacked: reserve.unbacked + reserve.deficit,
+          unbacked: reserve.deficit,
           liquidityAdded: liquidityAdded,
           liquidityTaken: liquidityTaken,
           totalDebt: totalVariableDebt,
           reserveFactor: reserveCache.reserveFactor,
           reserve: reserveAddress,
-          usingVirtualBalance: reserveCache.reserveConfiguration.getIsVirtualAccActive(),
+          usingVirtualBalance: true,
           virtualUnderlyingBalance: reserve.virtualUnderlyingBalance
         })
       );
@@ -188,17 +155,14 @@ library ReserveLogic {
     reserve.currentLiquidityRate = nextLiquidityRate.toUint128();
     reserve.currentVariableBorrowRate = nextVariableRate.toUint128();
 
-    // Only affect virtual balance if the reserve uses it
-    if (reserveCache.reserveConfiguration.getIsVirtualAccActive()) {
-      if (liquidityAdded > 0) {
-        reserve.virtualUnderlyingBalance += liquidityAdded.toUint128();
-      }
-      if (liquidityTaken > 0) {
-        reserve.virtualUnderlyingBalance -= liquidityTaken.toUint128();
-      }
+    if (liquidityAdded > 0) {
+      reserve.virtualUnderlyingBalance += liquidityAdded.toUint128();
+    }
+    if (liquidityTaken > 0) {
+      reserve.virtualUnderlyingBalance -= liquidityTaken.toUint128();
     }
 
-    emit ReserveDataUpdated(
+    emit IPool.ReserveDataUpdated(
       reserveAddress,
       nextLiquidityRate,
       0,

@@ -12,7 +12,7 @@ contract StataTokenV2PermitTest is BaseTest {
       spender: spender,
       value: 1 ether,
       nonce: stataTokenV2.nonces(user),
-      deadline: block.timestamp + 1 days
+      deadline: vm.getBlockTimestamp() + 1 days
     });
 
     bytes32 permitDigest = SigUtils.getTypedDataHash(
@@ -36,7 +36,7 @@ contract StataTokenV2PermitTest is BaseTest {
       spender: spender,
       value: 1 ether,
       nonce: stataTokenV2.nonces(user),
-      deadline: block.timestamp - 1 days
+      deadline: vm.getBlockTimestamp() - 1 days
     });
 
     bytes32 permitDigest = SigUtils.getTypedDataHash(
@@ -61,7 +61,7 @@ contract StataTokenV2PermitTest is BaseTest {
       spender: spender,
       value: 1 ether,
       nonce: stataTokenV2.nonces(user),
-      deadline: block.timestamp + 1 days
+      deadline: vm.getBlockTimestamp() + 1 days
     });
 
     bytes32 permitDigest = SigUtils.getTypedDataHash(

@@ -286,7 +286,7 @@ contract ERC20AaveLMUpgradableTest is TestnetProcedures {
 
   function test_isRegisteredRewardToken() external {
     assertEq(lmUpgradeable.isRegisteredRewardToken(rewardToken), false);
-    _setupEmission(uint32(block.timestamp), 0);
+    _setupEmission(uint32(vm.getBlockTimestamp()), 0);
     assertEq(lmUpgradeable.isRegisteredRewardToken(rewardToken), false);
     lmUpgradeable.refreshRewardTokens();
     assertEq(lmUpgradeable.isRegisteredRewardToken(rewardToken), true);
@@ -298,7 +298,7 @@ contract ERC20AaveLMUpgradableTest is TestnetProcedures {
   }
 
   function test_rewardTokens() external {
-    _setupEmission(uint32(block.timestamp), 0);
+    _setupEmission(uint32(vm.getBlockTimestamp()), 0);
     lmUpgradeable.refreshRewardTokens();
     address[] memory assets = lmUpgradeable.rewardTokens();
     assertEq(assets.length, 1);
@@ -308,16 +308,16 @@ contract ERC20AaveLMUpgradableTest is TestnetProcedures {
   function test_correctAccountingForDelayedRegistration() external {
     address earlyDepositor = address(0xB0B);
     _fund(1 ether, earlyDepositor);
-    _setupEmission(uint32(block.timestamp + 2 days), 1 ether);
+    _setupEmission(uint32(vm.getBlockTimestamp() + 2 days), 1 ether);
 
-    vm.warp(block.timestamp + 1 days);
+    vm.warp(vm.getBlockTimestamp() + 1 days);
     _fund(1 ether, user);
     lmUpgradeable.refreshRewardTokens();
     // as the rewards were not tracked before they should be zero
     assertEq(lmUpgradeable.getClaimableRewards(earlyDepositor, rewardToken), 0);
     assertEq(lmUpgradeable.getClaimableRewards(user, rewardToken), 0);
 
-    vm.warp(block.timestamp + 3 days);
+    vm.warp(vm.getBlockTimestamp() + 3 days);
     uint256 claimableBob = lmUpgradeable.getClaimableRewards(earlyDepositor, rewardToken);
     uint256 claimableUser = lmUpgradeable.getClaimableRewards(user, rewardToken);
     assertEq(claimableBob, claimableUser);
@@ -344,11 +344,11 @@ contract ERC20AaveLMUpgradableTest is TestnetProcedures {
   ) internal returns (TestEnv memory) {
     TestEnv memory env;
     env.depositAmount = bound(depositAmount, 1 ether, type(uint96).max);
-    env.emissionEnd = uint32(bound(emissionEnd, block.timestamp, 365 days * 100));
-    uint32 endTimestamp = uint32(bound(waitDuration, block.timestamp, 365 days * 100));
+    env.emissionEnd = uint32(bound(emissionEnd, vm.getBlockTimestamp(), 365 days * 100));
+    uint32 endTimestamp = uint32(bound(waitDuration, vm.getBlockTimestamp(), 365 days * 100));
     env.emissionDuration = env.emissionEnd > endTimestamp
-      ? endTimestamp - uint32(block.timestamp)
-      : env.emissionEnd - uint32(block.timestamp);
+      ? endTimestamp - uint32(vm.getBlockTimestamp())
+      : env.emissionEnd - uint32(vm.getBlockTimestamp());
     env.emissionPerSecond = uint88(
       bound(
         emissionPerSecond,
@@ -390,7 +390,7 @@ contract ERC20AaveLMUpgradableTest is TestnetProcedures {
     contracts.emissionManager.configureAssets(config);
 
     // fund admin & approve transfers to allow claiming
-    uint256 fundsToEmit = (emissionEnd - block.timestamp) * emissionPerSecond;
+    uint256 fundsToEmit = (emissionEnd - vm.getBlockTimestamp()) * emissionPerSecond;
     deal(rewardToken, emissionAdmin, fundsToEmit, true);
     vm.prank(emissionAdmin);
     IERC20(rewardToken).approve(address(strategy), fundsToEmit);

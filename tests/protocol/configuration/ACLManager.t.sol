@@ -225,7 +225,7 @@ contract ACLManagerTest is TestnetProcedures {
     PoolAddressesProvider provider = new PoolAddressesProvider('1', deployer);
     provider.setACLAdmin(address(0));
 
-    vm.expectRevert(bytes(Errors.ACL_ADMIN_CANNOT_BE_ZERO));
+    vm.expectRevert(abi.encodeWithSelector(Errors.AclAdminCannotBeZero.selector));
     new ACLManager(provider);
     vm.stopPrank();
   }

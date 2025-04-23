@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import 'forge-std/Test.sol';
 
 import {IAToken, IERC20} from '../../../src/contracts/interfaces/IAToken.sol';
+import {IPool} from '../../../src/contracts/interfaces/IPool.sol';
 import {Errors} from '../../../src/contracts/protocol/libraries/helpers/Errors.sol';
 import {TestnetProcedures} from '../../utils/TestnetProcedures.sol';
 
@@ -11,14 +12,11 @@ contract PoolWithdrawTests is TestnetProcedures {
   address internal aUSDX;
   address internal aWBTC;
 
-  event Withdraw(address indexed reserve, address indexed user, address indexed to, uint256 amount);
-  event ReserveUsedAsCollateralDisabled(address indexed reserve, address indexed user);
-
   function setUp() public {
     initTestEnvironment();
 
-    (aUSDX, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(tokenList.usdx);
-    (aWBTC, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(tokenList.wbtc);
+    aUSDX = contracts.poolProxy.getReserveAToken(tokenList.usdx);
+    aWBTC = contracts.poolProxy.getReserveAToken(tokenList.wbtc);
   }
 
   function test_full_withdraw() public {
@@ -26,15 +24,15 @@ contract PoolWithdrawTests is TestnetProcedures {
     vm.startPrank(alice);
     contracts.poolProxy.supply(tokenList.usdx, amount, alice, 0);
 
-    vm.warp(block.timestamp + 10 days);
+    vm.warp(vm.getBlockTimestamp() + 10 days);
 
     uint256 amountToWithdraw = IAToken(aUSDX).balanceOf(alice);
     uint256 balanceBefore = IERC20(tokenList.usdx).balanceOf(alice);
 
     vm.expectEmit(address(contracts.poolProxy));
-    emit ReserveUsedAsCollateralDisabled(tokenList.usdx, alice);
+    emit IPool.ReserveUsedAsCollateralDisabled(tokenList.usdx, alice);
     vm.expectEmit(address(contracts.poolProxy));
-    emit Withdraw(tokenList.usdx, alice, alice, amountToWithdraw);
+    emit IPool.Withdraw(tokenList.usdx, alice, alice, amountToWithdraw);
 
     contracts.poolProxy.withdraw(tokenList.usdx, amountToWithdraw, alice);
     vm.stopPrank();
@@ -48,15 +46,15 @@ contract PoolWithdrawTests is TestnetProcedures {
     vm.startPrank(alice);
     contracts.poolProxy.supply(tokenList.usdx, amount, alice, 0);
 
-    vm.warp(block.timestamp + 10 days);
+    vm.warp(vm.getBlockTimestamp() + 10 days);
 
     uint256 amountToWithdraw = IAToken(aUSDX).balanceOf(alice);
     uint256 balanceBefore = IERC20(tokenList.usdx).balanceOf(alice);
 
     vm.expectEmit(address(contracts.poolProxy));
-    emit ReserveUsedAsCollateralDisabled(tokenList.usdx, alice);
+    emit IPool.ReserveUsedAsCollateralDisabled(tokenList.usdx, alice);
     vm.expectEmit(address(contracts.poolProxy));
-    emit Withdraw(tokenList.usdx, alice, alice, amountToWithdraw);
+    emit IPool.Withdraw(tokenList.usdx, alice, alice, amountToWithdraw);
 
     contracts.poolProxy.withdraw(tokenList.usdx, type(uint256).max, alice);
     vm.stopPrank();
@@ -69,15 +67,15 @@ contract PoolWithdrawTests is TestnetProcedures {
     vm.startPrank(alice);
     contracts.poolProxy.supply(tokenList.usdx, amount, alice, 0);
 
-    vm.warp(block.timestamp + 10 days);
+    vm.warp(vm.getBlockTimestamp() + 10 days);
 
     uint256 amountToWithdraw = IAToken(aUSDX).balanceOf(alice);
     uint256 balanceBefore = IERC20(tokenList.usdx).balanceOf(bob);
 
     vm.expectEmit(address(contracts.poolProxy));
-    emit ReserveUsedAsCollateralDisabled(tokenList.usdx, alice);
+    emit IPool.ReserveUsedAsCollateralDisabled(tokenList.usdx, alice);
     vm.expectEmit(address(contracts.poolProxy));
-    emit Withdraw(tokenList.usdx, alice, bob, amountToWithdraw);
+    emit IPool.Withdraw(tokenList.usdx, alice, bob, amountToWithdraw);
 
     contracts.poolProxy.withdraw(tokenList.usdx, type(uint256).max, bob);
     vm.stopPrank();
@@ -92,16 +90,16 @@ contract PoolWithdrawTests is TestnetProcedures {
     contracts.poolProxy.supply(tokenList.usdx, amount, alice, 0);
 
     vm.expectEmit(address(contracts.poolProxy));
-    emit ReserveUsedAsCollateralDisabled(tokenList.usdx, alice);
+    emit IPool.ReserveUsedAsCollateralDisabled(tokenList.usdx, alice);
     contracts.poolProxy.setUserUseReserveAsCollateral(tokenList.usdx, false);
 
-    vm.warp(block.timestamp + 10 days);
+    vm.warp(vm.getBlockTimestamp() + 10 days);
 
     uint256 amountToWithdraw = IAToken(aUSDX).balanceOf(alice);
     uint256 balanceBefore = IERC20(tokenList.usdx).balanceOf(alice);
 
     vm.expectEmit(address(contracts.poolProxy));
-    emit Withdraw(tokenList.usdx, alice, alice, amountToWithdraw);
+    emit IPool.Withdraw(tokenList.usdx, alice, alice, amountToWithdraw);
 
     contracts.poolProxy.withdraw(tokenList.usdx, type(uint256).max, alice);
     vm.stopPrank();
@@ -115,18 +113,18 @@ contract PoolWithdrawTests is TestnetProcedures {
     vm.startPrank(alice);
     contracts.poolProxy.supply(tokenList.usdx, amount, alice, 0);
 
-    vm.expectRevert(bytes(Errors.INVALID_AMOUNT));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidAmount.selector));
 
     contracts.poolProxy.withdraw(tokenList.usdx, 0, alice);
     vm.stopPrank();
   }
 
-  function test_reverts_withdraw_to_atoken() public {
+  function test_reverts_WithdrawToAToken() public {
     uint256 amount = 142e6;
     vm.startPrank(alice);
     contracts.poolProxy.supply(tokenList.usdx, amount, alice, 0);
 
-    vm.expectRevert(bytes(Errors.WITHDRAW_TO_ATOKEN));
+    vm.expectRevert(abi.encodeWithSelector(Errors.WithdrawToAToken.selector));
 
     contracts.poolProxy.withdraw(tokenList.usdx, amount, aUSDX);
     vm.stopPrank();
@@ -155,7 +153,7 @@ contract PoolWithdrawTests is TestnetProcedures {
     vm.startPrank(carol);
     contracts.poolProxy.supply(tokenList.usdx, amount, carol, 0);
 
-    vm.expectRevert(bytes(Errors.NOT_ENOUGH_AVAILABLE_USER_BALANCE));
+    vm.expectRevert(abi.encodeWithSelector(Errors.NotEnoughAvailableUserBalance.selector));
 
     contracts.poolProxy.withdraw(tokenList.usdx, 200e6, alice);
     vm.stopPrank();
@@ -168,7 +166,7 @@ contract PoolWithdrawTests is TestnetProcedures {
     vm.prank(report.poolProxy);
     IAToken(aUSDX).mint(alice, alice, 1000e6, 1e27);
 
-    vm.expectRevert(bytes(Errors.RESERVE_INACTIVE));
+    vm.expectRevert(abi.encodeWithSelector(Errors.ReserveInactive.selector));
 
     vm.prank(alice);
     contracts.poolProxy.withdraw(tokenList.usdx, 1000e6, alice);
@@ -182,7 +180,7 @@ contract PoolWithdrawTests is TestnetProcedures {
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setReservePause(tokenList.usdx, true, 0);
 
-    vm.expectRevert(bytes(Errors.RESERVE_PAUSED));
+    vm.expectRevert(abi.encodeWithSelector(Errors.ReservePaused.selector));
 
     vm.prank(alice);
     contracts.poolProxy.withdraw(tokenList.usdx, 122, alice);
@@ -194,7 +192,7 @@ contract PoolWithdrawTests is TestnetProcedures {
     uint256 amount = 1e8;
     vm.startPrank(alice);
     contracts.poolProxy.supply(tokenList.wbtc, amount, alice, 0);
-    vm.warp(block.timestamp + 1 days);
+    vm.warp(vm.getBlockTimestamp() + 1 days);
     contracts.poolProxy.borrow(tokenList.usdx, 8000e6, 2, 0, alice);
     vm.stopPrank();
 
@@ -206,7 +204,9 @@ contract PoolWithdrawTests is TestnetProcedures {
       105_00
     );
 
-    vm.expectRevert(bytes(Errors.HEALTH_FACTOR_LOWER_THAN_LIQUIDATION_THRESHOLD));
+    vm.expectRevert(
+      abi.encodeWithSelector(Errors.HealthFactorLowerThanLiquidationThreshold.selector)
+    );
 
     vm.prank(alice);
     contracts.poolProxy.withdraw(tokenList.wbtc, 0.5e8, alice);

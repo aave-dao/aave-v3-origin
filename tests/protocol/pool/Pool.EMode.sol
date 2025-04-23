@@ -24,8 +24,6 @@ contract PoolEModeTests is TestnetProcedures {
   using WadRayMath for uint256;
   using PercentageMath for uint256;
 
-  event UserEModeSet(address indexed user, uint8 categoryId);
-
   IPool internal pool;
 
   function setUp() public virtual {
@@ -36,7 +34,7 @@ contract PoolEModeTests is TestnetProcedures {
 
   function test_setUserEMode_shouldRevertForNonExistingEmode() public {
     vm.prank(alice);
-    vm.expectRevert(bytes(Errors.INCONSISTENT_EMODE_CATEGORY));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InconsistentEModeCategory.selector));
     pool.setUserEMode(1);
   }
 
@@ -48,7 +46,7 @@ contract PoolEModeTests is TestnetProcedures {
     vm.stopPrank();
 
     vm.expectEmit(address(pool));
-    emit UserEModeSet(alice, ct1.id);
+    emit IPool.UserEModeSet(alice, ct1.id);
     vm.prank(alice);
     pool.setUserEMode(ct1.id);
 
@@ -176,7 +174,9 @@ contract PoolEModeTests is TestnetProcedures {
     _borrowMaxLt(tokenList.wbtc, alice);
 
     vm.prank(alice);
-    vm.expectRevert(bytes(Errors.HEALTH_FACTOR_LOWER_THAN_LIQUIDATION_THRESHOLD));
+    vm.expectRevert(
+      abi.encodeWithSelector(Errors.HealthFactorLowerThanLiquidationThreshold.selector)
+    );
     pool.setUserEMode(1);
   }
 
@@ -197,7 +197,7 @@ contract PoolEModeTests is TestnetProcedures {
     _borrowMaxLt(tokenList.wbtc, alice);
 
     vm.prank(alice);
-    vm.expectRevert(bytes(Errors.NOT_BORROWABLE_IN_EMODE));
+    vm.expectRevert(abi.encodeWithSelector(Errors.NotBorrowableInEMode.selector));
     pool.setUserEMode(2);
   }
 
@@ -223,7 +223,7 @@ contract PoolEModeTests is TestnetProcedures {
     _supplyToPool(tokenList.usdx, alice, amount);
 
     vm.prank(alice);
-    vm.expectRevert(bytes(Errors.BORROWING_NOT_ENABLED));
+    vm.expectRevert(abi.encodeWithSelector(Errors.BorrowingNotEnabled.selector));
     contracts.poolProxy.borrow(tokenList.wbtc, 1, 2, 0, alice);
   }
 

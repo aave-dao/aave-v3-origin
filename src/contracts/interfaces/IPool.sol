@@ -11,31 +11,6 @@ import {DataTypes} from '../protocol/libraries/types/DataTypes.sol';
  */
 interface IPool {
   /**
-   * @dev Emitted on mintUnbacked()
-   * @param reserve The address of the underlying asset of the reserve
-   * @param user The address initiating the supply
-   * @param onBehalfOf The beneficiary of the supplied assets, receiving the aTokens
-   * @param amount The amount of supplied assets
-   * @param referralCode The referral code used
-   */
-  event MintUnbacked(
-    address indexed reserve,
-    address user,
-    address indexed onBehalfOf,
-    uint256 amount,
-    uint16 indexed referralCode
-  );
-
-  /**
-   * @dev Emitted on backUnbacked()
-   * @param reserve The address of the underlying asset of the reserve
-   * @param backer The address paying for the backing
-   * @param amount The amount added as backing
-   * @param fee The amount paid in fees
-   */
-  event BackUnbacked(address indexed reserve, address indexed backer, uint256 amount, uint256 fee);
-
-  /**
    * @dev Emitted on supply()
    * @param reserve The address of the underlying asset of the reserve
    * @param user The address initiating the supply
@@ -209,28 +184,18 @@ interface IPool {
   event DeficitCreated(address indexed user, address indexed debtAsset, uint256 amountCreated);
 
   /**
-   * @notice Mints an `amount` of aTokens to the `onBehalfOf`
-   * @param asset The address of the underlying asset to mint
-   * @param amount The amount to mint
-   * @param onBehalfOf The address that will receive the aTokens
-   * @param referralCode Code used to register the integrator originating the operation, for potential rewards.
-   *   0 if the action is executed directly by the user, without any middle-man
+   * @dev Emitted when a position manager is approved by the user.
+   * @param user The user address
+   * @param positionManager The address of the position manager
    */
-  function mintUnbacked(
-    address asset,
-    uint256 amount,
-    address onBehalfOf,
-    uint16 referralCode
-  ) external;
+  event PositionManagerApproved(address indexed user, address indexed positionManager);
 
   /**
-   * @notice Back the current unbacked underlying with `amount` and pay `fee`.
-   * @param asset The address of the underlying asset to back
-   * @param amount The amount to back
-   * @param fee The amount paid in fees
-   * @return The backed amount
+   * @dev Emitted when a position manager is revoked by the user.
+   * @param user The user address
+   * @param positionManager The address of the position manager
    */
-  function backUnbacked(address asset, uint256 amount, uint256 fee) external returns (uint256);
+  event PositionManagerRevoked(address indexed user, address indexed positionManager);
 
   /**
    * @notice Supplies an `amount` of underlying asset into the reserve, receiving in return overlying aTokens.
@@ -383,7 +348,7 @@ interface IPool {
    *   a proportionally amount of the `collateralAsset` plus a bonus to cover market risk
    * @param collateralAsset The address of the underlying asset used as collateral, to receive as result of the liquidation
    * @param debtAsset The address of the underlying borrowed asset to be repaid with the liquidation
-   * @param user The address of the borrower getting liquidated
+   * @param borrower The address of the borrower getting liquidated
    * @param debtToCover The debt amount of borrowed `asset` the liquidator wants to cover
    * @param receiveAToken True if the liquidators wants to receive the collateral aTokens, `false` if he wants
    * to receive the underlying collateral asset directly
@@ -391,7 +356,7 @@ interface IPool {
   function liquidationCall(
     address collateralAsset,
     address debtAsset,
-    address user,
+    address borrower,
     uint256 debtToCover,
     bool receiveAToken
   ) external;
@@ -468,20 +433,13 @@ interface IPool {
     );
 
   /**
-   * @notice Initializes a reserve, activating it, assigning an aToken and debt tokens and an
-   * interest rate strategy
+   * @notice Initializes a reserve, activating it, assigning an aToken and debt tokens
    * @dev Only callable by the PoolConfigurator contract
    * @param asset The address of the underlying asset of the reserve
    * @param aTokenAddress The address of the aToken that will be assigned to the reserve
    * @param variableDebtAddress The address of the VariableDebtToken that will be assigned to the reserve
-   * @param interestRateStrategyAddress The address of the interest rate strategy contract
    */
-  function initReserve(
-    address asset,
-    address aTokenAddress,
-    address variableDebtAddress,
-    address interestRateStrategyAddress
-  ) external;
+  function initReserve(address asset, address aTokenAddress, address variableDebtAddress) external;
 
   /**
    * @notice Drop a reserve
@@ -490,17 +448,6 @@ interface IPool {
    * @param asset The address of the underlying asset of the reserve
    */
   function dropReserve(address asset) external;
-
-  /**
-   * @notice Updates the address of the interest rate strategy contract
-   * @dev Only callable by the PoolConfigurator contract
-   * @param asset The address of the underlying asset of the reserve
-   * @param rateStrategyAddress The address of the interest rate strategy contract
-   */
-  function setReserveInterestRateStrategyAddress(
-    address asset,
-    address rateStrategyAddress
-  ) external;
 
   /**
    * @notice Accumulates interest to all indexes of the reserve
@@ -629,25 +576,18 @@ interface IPool {
   function ADDRESSES_PROVIDER() external view returns (IPoolAddressesProvider);
 
   /**
-   * @notice Updates the protocol fee on the bridging
-   * @param bridgeProtocolFee The part of the premium sent to the protocol treasury
+   * @notice Returns the ReserveInterestRateStrategy connected to all the reserves
+   * @return The address of the ReserveInterestRateStrategy contract
    */
-  function updateBridgeProtocolFee(uint256 bridgeProtocolFee) external;
+  function RESERVE_INTEREST_RATE_STRATEGY() external view returns (address);
 
   /**
-   * @notice Updates flash loan premiums. Flash loan premium consists of two parts:
-   * - A part is sent to aToken holders as extra, one time accumulated interest
-   * - A part is collected by the protocol treasury
-   * @dev The total premium is calculated on the total borrowed amount
-   * @dev The premium to protocol is calculated on the total premium, being a percentage of `flashLoanPremiumTotal`
+   * @notice Updates flash loan premium. All this premium is collected by the protocol treasury.
+   * @dev The premium is calculated on the total borrowed amount
    * @dev Only callable by the PoolConfigurator contract
-   * @param flashLoanPremiumTotal The total premium, expressed in bps
-   * @param flashLoanPremiumToProtocol The part of the premium sent to the protocol treasury, expressed in bps
+   * @param flashLoanPremium The flash loan premium, expressed in bps
    */
-  function updateFlashloanPremiums(
-    uint128 flashLoanPremiumTotal,
-    uint128 flashLoanPremiumToProtocol
-  ) external;
+  function updateFlashloanPremium(uint128 flashLoanPremium) external;
 
   /**
    * @notice Configures a new or alters an existing collateral configuration of an eMode.
@@ -752,19 +692,16 @@ interface IPool {
   function getLiquidationGracePeriod(address asset) external view returns (uint40);
 
   /**
-   * @notice Returns the total fee on flash loans
+   * @notice Returns the total fee on flash loans.
+   * @dev From v3.4 all flashloan fees will be send to the treasury.
    * @return The total fee on flashloans
    */
   function FLASHLOAN_PREMIUM_TOTAL() external view returns (uint128);
 
   /**
-   * @notice Returns the part of the bridge fees sent to protocol
-   * @return The bridge fee sent to the protocol treasury
-   */
-  function BRIDGE_PROTOCOL_FEE() external view returns (uint256);
-
-  /**
    * @notice Returns the part of the flashloan fees sent to protocol
+   * @dev From v3.4 all flashloan fees will be send to the treasury and this value
+   *      is always 100_00.
    * @return The flashloan fee sent to the protocol treasury
    */
   function FLASHLOAN_PREMIUM_TO_PROTOCOL() external view returns (uint128);
@@ -805,13 +742,56 @@ interface IPool {
 
   /**
    * @notice It covers the deficit of a specified reserve by burning:
-   * - the equivalent aToken `amount` for assets with virtual accounting enabled
-   * - the equivalent `amount` of underlying for assets with virtual accounting disabled (e.g. GHO)
+   * - the equivalent aToken `amount` for assets
    * @dev The deficit of a reserve can occur due to situations where borrowed assets are not repaid, leading to bad debt.
    * @param asset The address of the underlying asset to cover the deficit.
-   * @param amount The amount to be covered, in aToken or underlying on non-virtual accounted assets
+   * @param amount The amount to be covered, in aToken
    */
   function eliminateReserveDeficit(address asset, uint256 amount) external;
+
+  /**
+   * @notice Approves or disapproves a position manager. This position manager will be able
+   * to call the setUserUseReserveAsCollateral and the the setUserEMode function on behalf of the user.
+   * @param positionManager The address of the position manager
+   * @param approve True if the position manager should be approved, false otherwise
+   */
+  function approvePositionManager(address positionManager, bool approve) external;
+
+  /**
+   * @notice Renounces a position manager role for a given user.
+   * @param user The address of the user
+   */
+  function renouncePositionManagerRole(address user) external;
+
+  /**
+   * @notice Sets the use as collateral flag for the user on the specific reserve on behalf of the user.
+   * @param asset The address of the underlying asset of the reserve
+   * @param useAsCollateral True if the user wants to use the reserve as collateral, false otherwise
+   * @param onBehalfOf The address of the user
+   */
+  function setUserUseReserveAsCollateralOnBehalfOf(
+    address asset,
+    bool useAsCollateral,
+    address onBehalfOf
+  ) external;
+
+  /**
+   * @notice Sets the eMode category for the user on the specific reserve on behalf of the user.
+   * @param categoryId The id of the category
+   * @param onBehalfOf The address of the user
+   */
+  function setUserEModeOnBehalfOf(uint8 categoryId, address onBehalfOf) external;
+
+  /*
+   * @notice Returns true if the user is approved to use the position manager on behalf of the user.
+   * @param user The address of the user
+   * @param positionManager The address of the position manager
+   * @return True if the user is approved to use the position manager, false otherwise
+   */
+  function isApprovedPositionManager(
+    address user,
+    address positionManager
+  ) external view returns (bool);
 
   /**
    * @notice Returns the current deficit of a reserve.
@@ -843,11 +823,6 @@ interface IPool {
    * @notice Gets the address of the external BorrowLogic
    */
   function getBorrowLogic() external view returns (address);
-
-  /**
-   * @notice Gets the address of the external BridgeLogic
-   */
-  function getBridgeLogic() external view returns (address);
 
   /**
    * @notice Gets the address of the external EModeLogic

@@ -4,36 +4,33 @@ pragma solidity ^0.8.0;
 import 'forge-std/Test.sol';
 
 import {IAToken, IERC20} from '../../../src/contracts/interfaces/IAToken.sol';
+import {IScaledBalanceToken} from '../../../src/contracts/interfaces/IScaledBalanceToken.sol';
 import {IVariableDebtToken} from '../../../src/contracts/interfaces/IVariableDebtToken.sol';
+import {IPool} from '../../../src/contracts/interfaces/IPool.sol';
 import {Errors} from '../../../src/contracts/protocol/libraries/helpers/Errors.sol';
 import {SupplyLogic} from '../../../src/contracts/protocol/libraries/logic/SupplyLogic.sol';
 import {MathUtils} from '../../../src/contracts/protocol/libraries/math/MathUtils.sol';
 import {WadRayMath} from '../../../src/contracts/protocol/libraries/math/WadRayMath.sol';
 import {DataTypes} from '../../../src/contracts/protocol/libraries/types/DataTypes.sol';
 import {TestnetProcedures} from '../../utils/TestnetProcedures.sol';
+import {MockAToken} from '../../../src/contracts/mocks/tokens/MockAToken.sol';
 
 contract ATokenTransferTests is TestnetProcedures {
   using WadRayMath for uint256;
   IAToken public aToken;
   IVariableDebtToken public variableDebtToken;
-
-  event BalanceTransfer(address indexed from, address indexed to, uint256 value, uint256 index);
-  event Transfer(address indexed from, address indexed to, uint256 amount);
-  event Mint(
-    address indexed caller,
-    address indexed onBehalfOf,
-    uint256 value,
-    uint256 balanceIncrease,
-    uint256 index
-  );
+  MockAToken public mockAToken;
 
   function setUp() public {
     initTestEnvironment(false);
 
-    (address aUSDX, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(tokenList.usdx);
-    (, , address variableDebtWBTC) = contracts.protocolDataProvider.getReserveTokensAddresses(
-      tokenList.wbtc
+    mockAToken = new MockAToken(
+      IPool(report.poolProxy),
+      report.rewardsControllerProxy,
+      report.treasury
     );
+    address aUSDX = contracts.poolProxy.getReserveAToken(tokenList.usdx);
+    address variableDebtWBTC = contracts.poolProxy.getReserveVariableDebtToken(tokenList.wbtc);
     aToken = IAToken(aUSDX);
     variableDebtToken = IVariableDebtToken(variableDebtWBTC);
 
@@ -70,7 +67,7 @@ contract ATokenTransferTests is TestnetProcedures {
 
   function test_atoken_alice_transfer_to_herself() public {
     vm.expectEmit(address(aToken));
-    emit Transfer(alice, alice, 120e6);
+    emit IERC20.Transfer(alice, alice, 120e6);
 
     vm.prank(alice);
     aToken.transfer(alice, 120e6);
@@ -78,7 +75,7 @@ contract ATokenTransferTests is TestnetProcedures {
 
   function test_atoken_alice_transfer_to_herself_zero() public {
     vm.expectEmit(address(aToken));
-    emit Transfer(alice, alice, 0);
+    emit IERC20.Transfer(alice, alice, 0);
 
     vm.prank(alice);
     aToken.transfer(alice, 0);
@@ -89,9 +86,9 @@ contract ATokenTransferTests is TestnetProcedures {
     uint256 aliceBalanceBefore = aToken.balanceOf(alice);
     uint256 bobBalanceBefore = aToken.balanceOf(bob);
     vm.expectEmit(address(aToken));
-    emit Transfer(alice, bob, transferAmount);
+    emit IERC20.Transfer(alice, bob, transferAmount);
     vm.expectEmit(report.poolProxy);
-    emit SupplyLogic.ReserveUsedAsCollateralEnabled(tokenList.usdx, bob);
+    emit IPool.ReserveUsedAsCollateralEnabled(tokenList.usdx, bob);
 
     vm.prank(alice);
     aToken.transfer(bob, transferAmount);
@@ -115,14 +112,14 @@ contract ATokenTransferTests is TestnetProcedures {
   function test_atoken_alice_transfer_all_to_bob() public {
     uint256 transferAmount = aToken.balanceOf(alice);
     vm.expectEmit(address(aToken));
-    emit Transfer(alice, bob, transferAmount);
+    emit IERC20.Transfer(alice, bob, transferAmount);
 
-    vm.expectEmit(report.poolProxy);
-    emit SupplyLogic.ReserveUsedAsCollateralDisabled(tokenList.usdx, alice);
-    vm.expectEmit(report.poolProxy);
-    emit SupplyLogic.ReserveUsedAsCollateralEnabled(tokenList.usdx, bob);
     vm.expectEmit(address(aToken));
-    emit BalanceTransfer(alice, bob, transferAmount, 1e27);
+    emit IScaledBalanceToken.BalanceTransfer(alice, bob, transferAmount, 1e27);
+    vm.expectEmit(report.poolProxy);
+    emit IPool.ReserveUsedAsCollateralDisabled(tokenList.usdx, alice);
+    vm.expectEmit(report.poolProxy);
+    emit IPool.ReserveUsedAsCollateralEnabled(tokenList.usdx, bob);
 
     vm.prank(alice);
     aToken.transfer(bob, transferAmount);
@@ -138,7 +135,7 @@ contract ATokenTransferTests is TestnetProcedures {
 
   function test_atoken_alice_transfer_to_bob_zero() public {
     vm.expectEmit(address(aToken));
-    emit Transfer(alice, bob, 0);
+    emit IERC20.Transfer(alice, bob, 0);
 
     vm.prank(alice);
     aToken.transfer(bob, 0);
@@ -151,19 +148,19 @@ contract ATokenTransferTests is TestnetProcedures {
 
   function test_atoken_multiple_transfers() public {
     vm.expectEmit(address(aToken));
-    emit Transfer(alice, bob, 10_000e6);
+    emit IERC20.Transfer(alice, bob, 10_000e6);
 
     vm.prank(alice);
     aToken.transfer(bob, 10_000e6);
 
     vm.expectEmit(address(aToken));
-    emit Transfer(bob, alice, 444e6);
+    emit IERC20.Transfer(bob, alice, 444e6);
 
     vm.prank(bob);
     aToken.transfer(alice, 444e6);
 
     vm.expectEmit(address(aToken));
-    emit Transfer(bob, carol, 555e6);
+    emit IERC20.Transfer(bob, carol, 555e6);
 
     vm.prank(bob);
     aToken.transfer(carol, 555e6);
@@ -172,7 +169,7 @@ contract ATokenTransferTests is TestnetProcedures {
   function test_atoken_transfer_to_bob_them_bob_borrows() public {
     uint256 transferAmount = 50_000e6;
     vm.expectEmit(address(aToken));
-    emit Transfer(alice, bob, transferAmount);
+    emit IERC20.Transfer(alice, bob, transferAmount);
 
     vm.prank(alice);
     aToken.transfer(bob, transferAmount);
@@ -192,7 +189,7 @@ contract ATokenTransferTests is TestnetProcedures {
 
   function test_reverts_atoken_transfer_all_collateral_from_bob_borrower_to_alice() public {
     vm.expectEmit(address(aToken));
-    emit Transfer(alice, bob, 50_000e6);
+    emit IERC20.Transfer(alice, bob, 50_000e6);
 
     vm.prank(alice);
     aToken.transfer(bob, 50_000e6);
@@ -202,14 +199,16 @@ contract ATokenTransferTests is TestnetProcedures {
 
     uint256 transferAmount = aToken.balanceOf(bob);
 
-    vm.expectRevert(bytes(Errors.HEALTH_FACTOR_LOWER_THAN_LIQUIDATION_THRESHOLD));
+    vm.expectRevert(
+      abi.encodeWithSelector(Errors.HealthFactorLowerThanLiquidationThreshold.selector)
+    );
     vm.prank(bob);
     aToken.transfer(alice, transferAmount);
   }
 
   function test_atoken_transfer_some_collateral_from_bob_borrower_to_alice() public {
     vm.expectEmit(address(aToken));
-    emit Transfer(alice, bob, 50_000e6);
+    emit IERC20.Transfer(alice, bob, 50_000e6);
 
     vm.prank(alice);
     aToken.transfer(bob, 50_000e6);
@@ -267,7 +266,7 @@ contract ATokenTransferTests is TestnetProcedures {
       .getUserReserveData(tokenList.usdx, carol);
 
     vm.expectEmit(address(aToken));
-    emit Transfer(alice, carol, transferAmount);
+    emit IERC20.Transfer(alice, carol, transferAmount);
 
     vm.prank(alice);
     aToken.transfer(carol, transferAmount);
@@ -305,7 +304,7 @@ contract ATokenTransferTests is TestnetProcedures {
     contracts.poolProxy.borrow(tokenList.usdx, 200_000e6, 2, 0, carol);
 
     // wait to inflate the index
-    vm.warp(block.timestamp + timePassed);
+    vm.warp(vm.getBlockTimestamp() + timePassed);
     // transfer the usdx
     vm.prank(alice);
     aToken.transfer(mockReceiver, amount);
@@ -319,5 +318,79 @@ contract ATokenTransferTests is TestnetProcedures {
     } else {
       assertEq(collateralEnabled, true);
     }
+  }
+
+  function test_scaled_balance_token_base_alice_transfer_to_bob_accrues_interests() public {
+    uint256 transferAmount = 120e6;
+    uint256 aliceScaledBalanceBefore = 140e6;
+    uint256 bobScaledBalanceBefore = 30e6;
+
+    uint256 previousIndex = 1e27;
+    uint256 expectedIndex = 1.0001e27;
+    uint256 expectedScaledTransferAmount = transferAmount.rayDiv(expectedIndex);
+
+    mockAToken.setStorage(
+      alice,
+      bob,
+      previousIndex,
+      aliceScaledBalanceBefore,
+      bobScaledBalanceBefore
+    );
+
+    uint256 senderBalanceIncrease = aliceScaledBalanceBefore.rayMul(expectedIndex) -
+      aliceScaledBalanceBefore.rayMul(previousIndex);
+    uint256 recipientBalanceIncrease = bobScaledBalanceBefore.rayMul(expectedIndex) -
+      bobScaledBalanceBefore.rayMul(previousIndex);
+
+    vm.expectEmit(address(mockAToken));
+    emit IERC20.Transfer(address(0), alice, senderBalanceIncrease);
+    vm.expectEmit(address(mockAToken));
+    emit IScaledBalanceToken.Mint(
+      alice,
+      alice,
+      senderBalanceIncrease,
+      senderBalanceIncrease,
+      expectedIndex
+    );
+    vm.expectEmit(address(mockAToken));
+    emit IERC20.Transfer(address(0), bob, recipientBalanceIncrease);
+    vm.expectEmit(address(mockAToken));
+    emit IScaledBalanceToken.Mint(
+      alice,
+      bob,
+      recipientBalanceIncrease,
+      recipientBalanceIncrease,
+      expectedIndex
+    );
+    vm.expectEmit(address(mockAToken));
+    emit IERC20.Transfer(alice, bob, transferAmount);
+
+    vm.prank(alice);
+    mockAToken.transferWithIndex(alice, bob, transferAmount, expectedIndex);
+    assertEq(
+      mockAToken.scaledBalanceOf(bob),
+      bobScaledBalanceBefore + expectedScaledTransferAmount,
+      'bob scaled balance should accrue scaled transfer amount'
+    );
+
+    assertEq(
+      mockAToken.scaledBalanceOf(alice),
+      aliceScaledBalanceBefore - expectedScaledTransferAmount,
+      'alice scaled balance should be minus scaled transfer amount'
+    );
+    assertEq(
+      getBalanceOf(mockAToken.scaledBalanceOf(alice), expectedIndex),
+      aliceScaledBalanceBefore - transferAmount + senderBalanceIncrease,
+      'alice atoken balance'
+    );
+    assertEq(
+      getBalanceOf(mockAToken.scaledBalanceOf(bob), expectedIndex),
+      bobScaledBalanceBefore + transferAmount + recipientBalanceIncrease,
+      'bob atoken balance'
+    );
+  }
+
+  function getBalanceOf(uint256 scaledBalance, uint256 index) internal pure returns (uint256) {
+    return scaledBalance.rayMul(index);
   }
 }

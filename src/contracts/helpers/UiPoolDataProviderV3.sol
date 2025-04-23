@@ -141,27 +141,13 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
       }
 
       reserveData.isSiloedBorrowing = reserveConfigurationMap.getSiloedBorrowing();
-      reserveData.unbacked = baseData.unbacked;
       reserveData.isolationModeTotalDebt = baseData.isolationModeTotalDebt;
       reserveData.accruedToTreasury = baseData.accruedToTreasury;
 
       reserveData.borrowableInIsolation = reserveConfigurationMap.getBorrowableInIsolation();
-
-      try poolDataProvider.getIsVirtualAccActive(reserveData.underlyingAsset) returns (
-        bool virtualAccActive
-      ) {
-        reserveData.virtualAccActive = virtualAccActive;
-      } catch (bytes memory) {
-        reserveData.virtualAccActive = false;
-      }
-
-      try pool.getVirtualUnderlyingBalance(reserveData.underlyingAsset) returns (
-        uint128 virtualUnderlyingBalance
-      ) {
-        reserveData.virtualUnderlyingBalance = virtualUnderlyingBalance;
-      } catch (bytes memory) {
-        reserveData.virtualUnderlyingBalance = 0;
-      }
+      reserveData.virtualUnderlyingBalance = pool.getVirtualUnderlyingBalance(
+        reserveData.underlyingAsset
+      );
     }
 
     BaseCurrencyInfo memory baseCurrencyInfo;

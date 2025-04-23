@@ -15,14 +15,6 @@ contract PoolInstanceHarness is PoolInstance {
 
   constructor(IPoolAddressesProvider provider) PoolInstance(provider) {}
 
-  function cumulateToLiquidityIndex(
-    address asset,
-    uint256 totalLiquidity,
-    uint256 amount
-  ) external returns (uint256) {
-    return ReserveLogic.cumulateToLiquidityIndex(_reserves[asset], totalLiquidity, amount);
-  }
-
   function getNormalizedIncome(address asset) external returns (uint256) {
     return ReserveLogic.getNormalizedIncome(_reserves[asset]);
   }

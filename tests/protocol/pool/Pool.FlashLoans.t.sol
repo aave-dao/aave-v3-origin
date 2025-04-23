@@ -13,6 +13,7 @@ import {PercentageMath} from '../../../src/contracts/protocol/libraries/math/Per
 import {MockFlashLoanReceiver} from '../../../src/contracts/mocks/flashloan/MockFlashLoanReceiver.sol';
 import {MockFlashLoanSimpleReceiver} from '../../../src/contracts/mocks/flashloan/MockSimpleFlashLoanReceiver.sol';
 import {IPoolAddressesProvider} from '../../../src/contracts/interfaces/IPoolAddressesProvider.sol';
+import {IPool} from '../../../src/contracts/interfaces/IPool.sol';
 import {DataTypes} from '../../../src/contracts/protocol/libraries/types/DataTypes.sol';
 import {IERC20} from '../../../src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
 import {MockFlashLoanATokenReceiver} from '../../mocks/MockFlashLoanATokenReceiver.sol';
@@ -53,7 +54,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
     mockFlashReceiver.setFailExecutionTransfer(true);
     mockFlashReceiver.setSimulateEOA(true);
 
-    vm.expectRevert(bytes(Errors.INVALID_FLASHLOAN_EXECUTOR_RETURN));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidFlashloanExecutorReturn.selector));
 
     vm.prank(alice);
     contracts.poolProxy.flashLoan(
@@ -78,7 +79,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setReserveFlashLoaning(tokenList.usdx, false);
 
-    vm.expectRevert(bytes(Errors.FLASHLOAN_DISABLED));
+    vm.expectRevert(abi.encodeWithSelector(Errors.FlashloanDisabled.selector));
 
     vm.prank(alice);
     contracts.poolProxy.flashLoan(
@@ -103,7 +104,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setReservePause(tokenList.usdx, true, 0);
 
-    vm.expectRevert(bytes(Errors.RESERVE_PAUSED));
+    vm.expectRevert(abi.encodeWithSelector(Errors.ReservePaused.selector));
 
     vm.prank(alice);
     contracts.poolProxy.flashLoan(
@@ -130,7 +131,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setReserveActive(tokenList.weth, false);
 
-    vm.expectRevert(bytes(Errors.RESERVE_INACTIVE));
+    vm.expectRevert(abi.encodeWithSelector(Errors.ReserveInactive.selector));
 
     vm.prank(alice);
     contracts.poolProxy.flashLoan(
@@ -155,7 +156,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
       amounts[i] = 1;
     }
 
-    vm.expectRevert(bytes(Errors.INCONSISTENT_FLASHLOAN_PARAMS));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InconsistentFlashloanParams.selector));
     vm.prank(alice);
     contracts.poolProxy.flashLoan(
       address(mockFlashReceiver),
@@ -174,7 +175,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
     mockFlashSimpleReceiver.setFailExecutionTransfer(true);
     mockFlashSimpleReceiver.setSimulateEOA(true);
 
-    vm.expectRevert(bytes(Errors.INVALID_FLASHLOAN_EXECUTOR_RETURN));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidFlashloanExecutorReturn.selector));
 
     vm.prank(alice);
     contracts.poolProxy.flashLoanSimple(
@@ -201,7 +202,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
   }
 
   function test_reverts_flashloan_transferred_funds() public {
-    (address aUSDX, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(tokenList.usdx);
+    address aUSDX = contracts.poolProxy.getReserveAToken(tokenList.usdx);
 
     vm.startPrank(carol);
     contracts.poolProxy.withdraw(tokenList.usdx, 50_000e6, carol);
@@ -218,7 +219,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
     ) = _defaultInput();
 
     vm.prank(alice);
-    vm.expectRevert(bytes(Errors.INVALID_AMOUNT));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidAmount.selector));
     contracts.poolProxy.flashLoan(
       address(mockFlashSimpleReceiver),
       assets,
@@ -231,7 +232,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
   }
 
   function test_reverts_flashloan_simple_transferred_funds() public {
-    (address aUSDX, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(tokenList.usdx);
+    address aUSDX = contracts.poolProxy.getReserveAToken(tokenList.usdx);
 
     vm.startPrank(carol);
     contracts.poolProxy.withdraw(tokenList.usdx, 50_000e6, carol);
@@ -243,7 +244,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
     bytes memory emptyParams;
 
     vm.prank(alice);
-    vm.expectRevert(bytes(Errors.INVALID_AMOUNT));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidAmount.selector));
     contracts.poolProxy.flashLoanSimple(
       address(mockFlashSimpleReceiver),
       tokenList.usdx,
@@ -254,7 +255,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
   }
 
   function test_reverts_supply_flashloan_transfer_withdraw() public {
-    (address aUSDX, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(tokenList.usdx);
+    address aUSDX = contracts.poolProxy.getReserveAToken(tokenList.usdx);
 
     vm.startPrank(carol);
     contracts.poolProxy.withdraw(tokenList.usdx, 50_000e6, carol);
@@ -293,7 +294,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
   }
 
   function test_reverts_supply_flashloan_simple_transfer_withdraw() public {
-    (address aUSDX, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(tokenList.usdx);
+    address aUSDX = contracts.poolProxy.getReserveAToken(tokenList.usdx);
 
     vm.startPrank(carol);
     contracts.poolProxy.withdraw(tokenList.usdx, 50_000e6, carol);
@@ -325,7 +326,9 @@ contract PoolFlashLoansTests is TestnetProcedures {
   }
 
   function test_flashloan_simple() public {
-    bytes memory emptyParams;
+    uint256 virtualUnderlyingBalanceBefore = contracts.poolProxy.getVirtualUnderlyingBalance(
+      tokenList.usdx
+    );
 
     vm.prank(poolAdmin);
     TestnetERC20(tokenList.usdx).transferOwnership(address(mockFlashSimpleReceiver));
@@ -335,13 +338,20 @@ contract PoolFlashLoansTests is TestnetProcedures {
       address(mockFlashSimpleReceiver),
       tokenList.usdx,
       10e6,
-      emptyParams,
+      '0x',
       0
     );
+
+    uint256 virtualUnderlyingBalanceAfter = contracts.poolProxy.getVirtualUnderlyingBalance(
+      tokenList.usdx
+    );
+    assertEq(virtualUnderlyingBalanceBefore, virtualUnderlyingBalanceAfter);
   }
 
   function test_flashloan_simple_2() public {
-    bytes memory emptyParams;
+    uint256 virtualUnderlyingBalanceBefore = contracts.poolProxy.getVirtualUnderlyingBalance(
+      tokenList.usdx
+    );
 
     vm.prank(poolAdmin);
     TestnetERC20(tokenList.wbtc).transferOwnership(address(mockFlashSimpleReceiver));
@@ -351,9 +361,14 @@ contract PoolFlashLoansTests is TestnetProcedures {
       address(mockFlashSimpleReceiver),
       tokenList.wbtc,
       3e8,
-      emptyParams,
+      '0x',
       0
     );
+
+    uint256 virtualUnderlyingBalanceAfter = contracts.poolProxy.getVirtualUnderlyingBalance(
+      tokenList.usdx
+    );
+    assertEq(virtualUnderlyingBalanceBefore, virtualUnderlyingBalanceAfter);
   }
 
   function test_flashloan() public {
@@ -364,6 +379,10 @@ contract PoolFlashLoansTests is TestnetProcedures {
       bytes memory emptyParams
     ) = _defaultInput(true, 0);
 
+    uint256 virtualUnderlyingBalanceBefore = contracts.poolProxy.getVirtualUnderlyingBalance(
+      assets[0]
+    );
+
     vm.prank(alice);
     contracts.poolProxy.flashLoan(
       address(mockFlashReceiver),
@@ -374,6 +393,11 @@ contract PoolFlashLoansTests is TestnetProcedures {
       emptyParams,
       0
     );
+
+    uint256 virtualUnderlyingBalanceAfter = contracts.poolProxy.getVirtualUnderlyingBalance(
+      assets[0]
+    );
+    assertEq(virtualUnderlyingBalanceBefore, virtualUnderlyingBalanceAfter);
   }
 
   function test_flashloan_multiple() public {
@@ -384,6 +408,13 @@ contract PoolFlashLoansTests is TestnetProcedures {
       bytes memory emptyParams
     ) = _defaultMultipleInput(true);
 
+    uint256 virtualUnderlyingBalanceBefore0 = contracts.poolProxy.getVirtualUnderlyingBalance(
+      assets[0]
+    );
+    uint256 virtualUnderlyingBalanceBefore1 = contracts.poolProxy.getVirtualUnderlyingBalance(
+      assets[1]
+    );
+
     vm.prank(alice);
     contracts.poolProxy.flashLoan(
       address(mockFlashReceiver),
@@ -394,6 +425,16 @@ contract PoolFlashLoansTests is TestnetProcedures {
       emptyParams,
       0
     );
+
+    uint256 virtualUnderlyingBalanceAfter0 = contracts.poolProxy.getVirtualUnderlyingBalance(
+      assets[0]
+    );
+    uint256 virtualUnderlyingBalanceAfter1 = contracts.poolProxy.getVirtualUnderlyingBalance(
+      assets[1]
+    );
+
+    assertEq(virtualUnderlyingBalanceBefore0, virtualUnderlyingBalanceAfter0);
+    assertEq(virtualUnderlyingBalanceBefore1, virtualUnderlyingBalanceAfter1);
   }
 
   function test_flashloan_borrow() public {
@@ -428,7 +469,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
     ) = _defaultInput(false, 1);
 
     vm.prank(alice);
-    vm.expectRevert(bytes(Errors.INVALID_INTEREST_RATE_MODE_SELECTED));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidInterestRateModeSelected.selector));
     contracts.poolProxy.flashLoan(
       address(mockFlashReceiver),
       assets,
@@ -507,7 +548,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
     for (uint8 x; x < assets.length; x++) {
       if (modes[x] > 0) {
         vm.expectEmit(address(contracts.poolProxy));
-        emit BorrowLogic.Borrow(
+        emit IPool.Borrow(
           assets[x],
           alice,
           alice,
@@ -518,7 +559,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
         );
       }
       vm.expectEmit(address(contracts.poolProxy));
-      emit FlashLoanLogic.FlashLoan(
+      emit IPool.FlashLoan(
         address(mockFlashReceiver),
         alice,
         assets[x],

@@ -37,9 +37,11 @@ contract PoolAddressesProviderRegistry is Ownable, IPoolAddressesProviderRegistr
 
   /// @inheritdoc IPoolAddressesProviderRegistry
   function registerAddressesProvider(address provider, uint256 id) external override onlyOwner {
-    require(id != 0, Errors.INVALID_ADDRESSES_PROVIDER_ID);
-    require(_idToAddressesProvider[id] == address(0), Errors.INVALID_ADDRESSES_PROVIDER_ID);
-    require(_addressesProviderToId[provider] == 0, Errors.ADDRESSES_PROVIDER_ALREADY_ADDED);
+    require(
+      id != 0 && _idToAddressesProvider[id] == address(0),
+      Errors.InvalidAddressesProviderId()
+    );
+    require(_addressesProviderToId[provider] == 0, Errors.AddressesProviderAlreadyAdded());
 
     _addressesProviderToId[provider] = id;
     _idToAddressesProvider[id] = provider;
@@ -50,7 +52,7 @@ contract PoolAddressesProviderRegistry is Ownable, IPoolAddressesProviderRegistr
 
   /// @inheritdoc IPoolAddressesProviderRegistry
   function unregisterAddressesProvider(address provider) external override onlyOwner {
-    require(_addressesProviderToId[provider] != 0, Errors.ADDRESSES_PROVIDER_NOT_REGISTERED);
+    require(_addressesProviderToId[provider] != 0, Errors.AddressesProviderNotRegistered());
     uint256 oldId = _addressesProviderToId[provider];
     _idToAddressesProvider[oldId] = address(0);
     _addressesProviderToId[provider] = 0;

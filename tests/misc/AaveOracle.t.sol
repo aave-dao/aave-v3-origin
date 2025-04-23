@@ -72,7 +72,7 @@ contract AaveOracleTest is TestnetProcedures {
 
     vm.startPrank(poolAdmin);
 
-    vm.expectRevert(bytes(Errors.INCONSISTENT_PARAMS_LENGTH));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InconsistentParamsLength.selector));
     contracts.aaveOracle.setAssetSources(tokens, sources);
     vm.stopPrank();
   }
@@ -88,7 +88,7 @@ contract AaveOracleTest is TestnetProcedures {
     address[] memory tokens = new address[](1);
     address[] memory sources = new address[](1);
 
-    vm.expectRevert(bytes(Errors.CALLER_NOT_ASSET_LISTING_OR_POOL_ADMIN));
+    vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotAssetListingOrPoolAdmin.selector));
 
     contracts.aaveOracle.setAssetSources(tokens, sources);
   }

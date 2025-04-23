@@ -55,4 +55,14 @@ abstract contract Invariants is BaseInvariants {
     }
     return true;
   }
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////
+  //                                  INTEREST RATE STRATEGY                                   //
+  ///////////////////////////////////////////////////////////////////////////////////////////////
+  function echidna_IR_INVARIANT_A() public returns (bool) {
+    for (uint256 i; i < baseAssets.length; ++i) {
+      assert_IR_INVARIANT_A(baseAssets[i]);
+    }
+    return true;
+  }
 }

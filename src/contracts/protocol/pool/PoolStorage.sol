@@ -35,17 +35,23 @@ contract PoolStorage {
   mapping(address => uint8) internal _usersEModeCategory;
 
   // Fee of the protocol bridge, expressed in bps
-  uint256 internal _bridgeProtocolFee;
+  uint256 internal __DEPRECATED_bridgeProtocolFee;
 
-  // Total FlashLoan Premium, expressed in bps
-  uint128 internal _flashLoanPremiumTotal;
+  // FlashLoan Premium, expressed in bps.
+  // From v3.4 all flashloan premium is paid to treasury.
+  uint128 internal _flashLoanPremium;
 
-  // FlashLoan premium paid to protocol treasury, expressed in bps
-  uint128 internal _flashLoanPremiumToProtocol;
+  // FlashLoan premium paid to protocol treasury, expressed in bps.
+  // From v3.4 all flashloan premium is paid to treasury.
+  uint128 internal __DEPRECATED_flashLoanPremiumToProtocol;
 
   // DEPRECATED on v3.2.0
   uint64 internal __DEPRECATED_maxStableRateBorrowSizePercent;
 
   // Maximum number of active reserves there have been in the protocol. It is the upper bound of the reserves list
   uint16 internal _reservesCount;
+
+  // Allowlisted permissionManagers can enable collaterals & switch eModes on behalf of a user
+  mapping(address user => mapping(address permittedPositionManager => bool))
+    internal _positionManager;
 }

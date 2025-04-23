@@ -23,7 +23,7 @@ contract RateStrategySettersTests is RateStrategyBase {
   ) public {
     _validateSetRateParams(rateData);
 
-    vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_CONFIGURATOR));
+    vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotPoolConfigurator.selector));
     _setInterestRateParams(tokenList.usdx, rateData);
   }
 
@@ -34,7 +34,7 @@ contract RateStrategySettersTests is RateStrategyBase {
 
     vm.prank(report.poolConfiguratorProxy);
     vm.expectEmit(true, false, false, true);
-    emit RateDataUpdate(
+    emit IDefaultInterestRateStrategyV2.RateDataUpdate(
       tokenList.usdx,
       rateData.optimalUsageRatio,
       rateData.baseVariableBorrowRate,
@@ -74,7 +74,7 @@ contract RateStrategySettersTests is RateStrategyBase {
     _validateSetRateParams(rateData);
 
     vm.prank(report.poolConfiguratorProxy);
-    vm.expectRevert(bytes(Errors.ZERO_ADDRESS_NOT_VALID));
+    vm.expectRevert(abi.encodeWithSelector(Errors.ZeroAddressNotValid.selector));
     _setInterestRateParams(address(0), rateData);
   }
 
@@ -85,7 +85,7 @@ contract RateStrategySettersTests is RateStrategyBase {
 
     vm.prank(report.poolConfiguratorProxy);
 
-    vm.expectRevert(bytes(Errors.INVALID_OPTIMAL_USAGE_RATIO));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidOptimalUsageRatio.selector));
     _setInterestRateParams(tokenList.usdx, rateData);
   }
 
@@ -96,7 +96,7 @@ contract RateStrategySettersTests is RateStrategyBase {
 
     vm.prank(report.poolConfiguratorProxy);
 
-    vm.expectRevert(bytes(Errors.INVALID_OPTIMAL_USAGE_RATIO));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidOptimalUsageRatio.selector));
     _setInterestRateParams(tokenList.usdx, rateData);
   }
 
@@ -122,7 +122,7 @@ contract RateStrategySettersTests is RateStrategyBase {
 
     vm.prank(report.poolConfiguratorProxy);
 
-    vm.expectRevert(bytes(Errors.INVALID_MAX_RATE));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidMaxRate.selector));
     _setInterestRateParams(tokenList.usdx, rateData);
   }
 
@@ -138,7 +138,7 @@ contract RateStrategySettersTests is RateStrategyBase {
 
     vm.prank(report.poolConfiguratorProxy);
 
-    vm.expectRevert(bytes(Errors.SLOPE_2_MUST_BE_GTE_SLOPE_1));
+    vm.expectRevert(abi.encodeWithSelector(Errors.Slope2MustBeGteSlope1.selector));
     _setInterestRateParams(tokenList.usdx, rateData);
   }
 }
