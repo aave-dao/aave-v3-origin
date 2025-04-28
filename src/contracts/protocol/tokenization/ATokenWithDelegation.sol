@@ -11,18 +11,25 @@ import {BaseDelegation} from './delegation/BaseDelegation.sol';
 
 /**
  * @author BGD Labs
- * @notice Designed primarily for Aave aTokens, but can potentially be adapted for other delegation scenarios.
- * @dev This contract extends the AToken contract and specifically handles delegation balances. The core token
- *      balance (principal) is managed by the parent AToken contract.
+ * @notice contract that gives a tokens the delegation functionality. For now should only be used for AAVE aToken
+ * @dev uint sizes are used taken into account that is tailored for AAVE token. In this AToken child we only update
+        delegation balances. Balances amount is taken care of by AToken contract
  */
 abstract contract ATokenWithDelegation is AToken, BaseDelegation {
   using WadRayMath for uint256;
+
+  struct ATokenDelegationState {
+    uint72 delegatedPropositionBalance;
+    uint72 delegatedVotingBalance;
+  }
+
+  mapping(address => ATokenDelegationState) internal _delegatedState;
 
   /**
    * @dev Constructor.
    * @param pool The address of the Pool contract
    * @param rewardsController The address of the rewards controller contract
-   * @param treasury The address of the treasury.  This is where accrued interest is sent.
+   * @param treasury The address of the treasury. This is where accrued interest is sent.
    */
   constructor(
     IPool pool,
@@ -30,7 +37,40 @@ abstract contract ATokenWithDelegation is AToken, BaseDelegation {
     address treasury
   ) AToken(pool, rewardsController, treasury) {}
 
-  /* INTERNAL FUNCTIONS */
+  function _getDomainSeparator() internal view override returns (bytes32) {
+    return DOMAIN_SEPARATOR();
+  }
+
+  function _getDelegationState(
+    address user
+  ) internal view override returns (DelegationState memory) {
+    return
+      DelegationState({
+        delegatedPropositionBalance: _delegatedState[user].delegatedPropositionBalance,
+        delegatedVotingBalance: _delegatedState[user].delegatedVotingBalance,
+        delegationMode: _userState[user].delegationMode
+      });
+  }
+
+  function _getBalance(address user) internal view override returns (uint256) {
+    return _userState[user].balance;
+  }
+
+  function _incrementNonces(address user) internal override returns (uint256) {
+    unchecked {
+      // Does not make sense to check because it's not realistic to reach uint256.max in nonce
+      return _nonces[user]++;
+    }
+  }
+
+  function _setDelegationState(
+    address user,
+    DelegationState memory delegationState
+  ) internal override {
+    _userState[user].delegationMode = delegationState.delegationMode;
+    _delegatedState[user].delegatedPropositionBalance = delegationState.delegatedPropositionBalance;
+    _delegatedState[user].delegatedVotingBalance = delegationState.delegatedVotingBalance;
+  }
 
   /**
    * @notice Transfers tokens and updates delegation balances.  This function overrides the parent `_transfer`
@@ -65,14 +105,7 @@ abstract contract ATokenWithDelegation is AToken, BaseDelegation {
    * @param amount The amount of tokens to mint (scaled)
    */
   function _mint(address account, uint120 amount) internal override {
-    _delegationChangeOnTransfer({
-      from: address(0),
-      to: account,
-      fromBalanceBefore: 0,
-      toBalanceBefore: _userState[account].balance,
-      amount: amount
-    });
-
+    _delegationChangeOnTransfer(address(0), account, 0, _getBalance(account), amount);
     super._mint(account, amount);
   }
 
@@ -82,58 +115,7 @@ abstract contract ATokenWithDelegation is AToken, BaseDelegation {
    * @param amount The amount of tokens to burn (scaled)
    */
   function _burn(address account, uint120 amount) internal override {
-    _delegationChangeOnTransfer({
-      from: account,
-      to: address(0),
-      fromBalanceBefore: _userState[account].balance,
-      toBalanceBefore: 0,
-      amount: amount
-    });
-
+    _delegationChangeOnTransfer(account, address(0), _getBalance(account), 0, amount);
     super._burn(account, amount);
-  }
-
-  /* INTERNAL VIEW FUNCTIONS */
-
-  /// @inheritdoc BaseDelegation
-  function _getDomainSeparator() internal view virtual override returns (bytes32) {
-    return DOMAIN_SEPARATOR();
-  }
-
-  /// @inheritdoc BaseDelegation
-  function _getUserDelegationMode(
-    address user
-  ) internal view virtual override returns (DelegationMode) {
-    return _userState[user].delegationMode;
-  }
-
-  /// @inheritdoc BaseDelegation
-  function _getUserBalanceAndDelegationMode(
-    address user
-  ) internal view virtual override returns (uint256, DelegationMode) {
-    UserState memory userState = _userState[user];
-
-    return (userState.balance, userState.delegationMode);
-  }
-
-  /// @inheritdoc BaseDelegation
-  function _setUserDelegationMode(
-    address user,
-    DelegationMode delegationMode
-  ) internal virtual override {
-    _userState[user].delegationMode = delegationMode;
-  }
-
-  /// @inheritdoc BaseDelegation
-  function _incrementNonces(address user) internal virtual override returns (uint256) {
-    unchecked {
-      // Does not make sense to check because it's not realistic to reach uint256.max in nonce
-      return _nonces[user]++;
-    }
-  }
-
-  /// @inheritdoc BaseDelegation
-  function _getReserveNormalizedIncome() internal view virtual override returns (uint256) {
-    return POOL.getReserveNormalizedIncome(_underlyingAsset);
   }
 }

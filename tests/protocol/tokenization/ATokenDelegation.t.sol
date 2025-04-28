@@ -398,12 +398,19 @@ contract ATokenDelegationTest is TestnetProcedures {
 
     assertApproxEqAbs(
       votingPower,
-      _getDownscaleVotingPower(alice) + bobBalance + _getDownscaleVotingPower(carol),
+      _getDownscaleVotingPower(alice) +
+        aToken.scaledBalanceOf(bob) +
+        _getDownscaleVotingPower(carol),
       1,
       '1'
     );
     assertEq(votingPower, aToken.getPowerCurrent(bob, IBaseDelegation.GovernancePowerType.VOTING));
-    assertApproxEqAbs(propositionPower, _getDownscaleVotingPower(alice) + bobBalance, 1, '2');
+    assertApproxEqAbs(
+      propositionPower,
+      _getDownscaleVotingPower(alice) + aToken.scaledBalanceOf(bob),
+      1,
+      '2'
+    );
     assertEq(
       propositionPower,
       aToken.getPowerCurrent(bob, IBaseDelegation.GovernancePowerType.PROPOSITION)
@@ -420,12 +427,19 @@ contract ATokenDelegationTest is TestnetProcedures {
 
     assertApproxEqAbs(
       votingPower,
-      _getDownscaleVotingPower(alice) + bobBalance + _getDownscaleVotingPower(carol),
+      _getDownscaleVotingPower(alice) +
+        aToken.scaledBalanceOf(bob) +
+        _getDownscaleVotingPower(carol),
       1,
       '3'
     );
     assertEq(votingPower, aToken.getPowerCurrent(bob, IBaseDelegation.GovernancePowerType.VOTING));
-    assertApproxEqAbs(propositionPower, _getDownscaleVotingPower(alice) + bobBalance, 1, '4');
+    assertApproxEqAbs(
+      propositionPower,
+      _getDownscaleVotingPower(alice) + aToken.scaledBalanceOf(bob),
+      1,
+      '4'
+    );
     assertEq(
       propositionPower,
       aToken.getPowerCurrent(bob, IBaseDelegation.GovernancePowerType.PROPOSITION)
@@ -748,10 +762,6 @@ contract ATokenDelegationTest is TestnetProcedures {
 
     uint256 POWER_SCALE_FACTOR = aToken.POWER_SCALE_FACTOR();
 
-    uint256 downScaledBalance = (scaledBalance / POWER_SCALE_FACTOR) * POWER_SCALE_FACTOR;
-
-    uint256 normalizedIncome = contracts.poolProxy.getReserveNormalizedIncome(underlyingAsset);
-
-    return downScaledBalance.rayMul(normalizedIncome);
+    return (scaledBalance / POWER_SCALE_FACTOR) * POWER_SCALE_FACTOR;
   }
 }

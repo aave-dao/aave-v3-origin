@@ -22,23 +22,21 @@ import {DelegationMode} from '../base/DelegationMode.sol';
  *   *************************************************************
  */
 abstract contract BaseDelegation is IBaseDelegation {
-  using WadRayMath for uint256;
-
-  /* STRUCTS */
-
-  /// @notice Stores delegation balances, scaled to a maximum of 8 decimals.
-  /// @dev Amounts will be divided by the `POWER_SCALE_FACTOR` global variable
   struct DelegationState {
     uint72 delegatedPropositionBalance;
     uint72 delegatedVotingBalance;
+    DelegationMode delegationMode;
   }
-
-  uint256 public constant POWER_SCALE_FACTOR = 1e10;
 
   mapping(address => address) internal _votingDelegatee;
   mapping(address => address) internal _propositionDelegatee;
 
-  mapping(address => DelegationState) private _delegationState;
+  /** @dev we assume that for the governance system delegation with 18 decimals of precision is not needed,
+   *   by this constant we reduce it by 10, to 8 decimals.
+   *   In case of Aave token this will allow to work with up to 47'223'664'828'696,45213696 total supply
+   *   If your token already have less then 10 decimals, please change it to appropriate.
+   */
+  uint256 public constant POWER_SCALE_FACTOR = 1e10;
 
   bytes32 public constant DELEGATE_BY_TYPE_TYPEHASH =
     keccak256(
@@ -55,25 +53,18 @@ abstract contract BaseDelegation is IBaseDelegation {
   function _getDomainSeparator() internal view virtual returns (bytes32);
 
   /**
-   * @notice Retrieves the delegation mode of a specific user.
-   * @param user The address of the user whose delegation mode is being queried.
+   * @notice gets the delegation state of a user
+   * @param user address
+   * @return state of a user's delegation
    */
-  function _getUserDelegationMode(address user) internal view virtual returns (DelegationMode);
+  function _getDelegationState(address user) internal view virtual returns (DelegationState memory);
 
   /**
-   * @notice Retrieves both the scaled balance and delegation mode of a specific user.
-   * @param user The address of the user whose balance and delegation mode are being queried.
+   * @notice returns the token balance of a user
+   * @param user address
+   * @return current nonce before increase
    */
-  function _getUserBalanceAndDelegationMode(
-    address user
-  ) internal view virtual returns (uint256, DelegationMode);
-
-  /**
-   * @notice Sets the delegation mode for a specific user.
-   * @param user The address of the user whose delegation mode is being set.
-   * @param delegationMode The new delegation mode to set for the user (a `DelegationMode` enum value).
-   */
-  function _setUserDelegationMode(address user, DelegationMode delegationMode) internal virtual;
+  function _getBalance(address user) internal view virtual returns (uint256);
 
   /**
    * @notice increases and return the current nonce of a user
@@ -84,32 +75,27 @@ abstract contract BaseDelegation is IBaseDelegation {
   function _incrementNonces(address user) internal virtual returns (uint256);
 
   /**
-   * @notice Retrieves the normalized income of the underlying asset's reserve.
-   * @dev This function fetches the current normalized income from the Pool contract,
-   *      representing the accumulated interest for the underlying asset.
+   * @notice sets the delegation state of a user
+   * @param user address
+   * @param delegationState state of a user's delegation
    */
-  function _getReserveNormalizedIncome() internal view virtual returns (uint256);
+  function _setDelegationState(
+    address user,
+    DelegationState memory delegationState
+  ) internal virtual;
 
   /// @inheritdoc IBaseDelegation
   function delegateByType(
     address delegatee,
     GovernancePowerType delegationType
   ) external virtual override {
-    _delegateByType({delegator: msg.sender, delegatee: delegatee, delegationType: delegationType});
+    _delegateByType(msg.sender, delegatee, delegationType);
   }
 
   /// @inheritdoc IBaseDelegation
   function delegate(address delegatee) external override {
-    _delegateByType({
-      delegator: msg.sender,
-      delegatee: delegatee,
-      delegationType: GovernancePowerType.VOTING
-    });
-    _delegateByType({
-      delegator: msg.sender,
-      delegatee: delegatee,
-      delegationType: GovernancePowerType.PROPOSITION
-    });
+    _delegateByType(msg.sender, delegatee, GovernancePowerType.VOTING);
+    _delegateByType(msg.sender, delegatee, GovernancePowerType.PROPOSITION);
   }
 
   /// @inheritdoc IBaseDelegation
@@ -117,29 +103,15 @@ abstract contract BaseDelegation is IBaseDelegation {
     address delegator,
     GovernancePowerType delegationType
   ) external view override returns (address) {
-    return
-      _getDelegateeByType({
-        delegator: delegator,
-        delegatorDelegationMode: _getUserDelegationMode(delegator),
-        delegationType: delegationType
-      });
+    return _getDelegateeByType(delegator, _getDelegationState(delegator), delegationType);
   }
 
   /// @inheritdoc IBaseDelegation
   function getDelegates(address delegator) external view override returns (address, address) {
-    DelegationMode delegatorDelegationMode = _getUserDelegationMode(delegator);
-
+    DelegationState memory delegatorBalance = _getDelegationState(delegator);
     return (
-      _getDelegateeByType({
-        delegator: delegator,
-        delegatorDelegationMode: delegatorDelegationMode,
-        delegationType: GovernancePowerType.VOTING
-      }),
-      _getDelegateeByType({
-        delegator: delegator,
-        delegatorDelegationMode: delegatorDelegationMode,
-        delegationType: GovernancePowerType.PROPOSITION
-      })
+      _getDelegateeByType(delegator, delegatorBalance, GovernancePowerType.VOTING),
+      _getDelegateeByType(delegator, delegatorBalance, GovernancePowerType.PROPOSITION)
     );
   }
 
@@ -148,17 +120,14 @@ abstract contract BaseDelegation is IBaseDelegation {
     address user,
     GovernancePowerType delegationType
   ) public view virtual override returns (uint256) {
-    (uint256 userBalance, DelegationMode userDelegationMode) = _getUserBalanceAndDelegationMode(
-      user
-    );
-
-    uint256 scaledUserOwnPower = uint8(userDelegationMode) & (uint8(delegationType) + 1) == 0
-      ? userBalance
+    DelegationState memory userState = _getDelegationState(user);
+    uint256 userOwnPower = uint8(userState.delegationMode) & (uint8(delegationType) + 1) == 0
+      ? _getBalance(user)
       : 0;
+    uint256 userDelegatedPower = _getDelegatedPowerByType(userState, delegationType);
 
-    uint256 scaledUserDelegatedPower = _getDelegatedPowerByType(user, delegationType);
-
-    return (scaledUserOwnPower + scaledUserDelegatedPower).rayMul(_getReserveNormalizedIncome());
+    // The power returned is the scaled power, assuming an index of 1e27. The voting strategy is based on the same assumption.
+    return userOwnPower + userDelegatedPower;
   }
 
   /// @inheritdoc IBaseDelegation
@@ -251,6 +220,8 @@ abstract contract BaseDelegation is IBaseDelegation {
     if (delegatee == address(0)) return;
     if (impactOnDelegationBefore == impactOnDelegationAfter) return;
 
+    // we use uint72, because this is the most optimal for AaveTokenV3
+    // To make delegated balance fit into uint72 we're decreasing precision of delegated balance by POWER_SCALE_FACTOR
     uint72 impactOnDelegationBefore72 = SafeCast.toUint72(
       impactOnDelegationBefore / POWER_SCALE_FACTOR
     );
@@ -258,17 +229,19 @@ abstract contract BaseDelegation is IBaseDelegation {
       impactOnDelegationAfter / POWER_SCALE_FACTOR
     );
 
+    DelegationState memory delegateeState = _getDelegationState(delegatee);
     if (delegationType == GovernancePowerType.VOTING) {
-      _delegationState[delegatee].delegatedVotingBalance =
-        _delegationState[delegatee].delegatedVotingBalance -
+      delegateeState.delegatedVotingBalance =
+        delegateeState.delegatedVotingBalance -
         impactOnDelegationBefore72 +
         impactOnDelegationAfter72;
     } else {
-      _delegationState[delegatee].delegatedPropositionBalance =
-        _delegationState[delegatee].delegatedPropositionBalance -
+      delegateeState.delegatedPropositionBalance =
+        delegateeState.delegatedPropositionBalance -
         impactOnDelegationBefore72 +
         impactOnDelegationAfter72;
     }
+    _setDelegationState(delegatee, delegateeState);
   }
 
   /**
@@ -291,79 +264,60 @@ abstract contract BaseDelegation is IBaseDelegation {
     }
 
     if (from != address(0)) {
-      DelegationMode fromUserDelegationMode = _getUserDelegationMode(from);
-
-      if (fromUserDelegationMode != DelegationMode.NO_DELEGATION) {
-        uint256 fromBalanceAfter = fromBalanceBefore - amount;
-
-        _governancePowerTransferByType({
-          impactOnDelegationBefore: fromBalanceBefore,
-          impactOnDelegationAfter: fromBalanceAfter,
-          delegatee: _getDelegateeByType({
-            delegator: from,
-            delegatorDelegationMode: fromUserDelegationMode,
-            delegationType: GovernancePowerType.VOTING
-          }),
-          delegationType: GovernancePowerType.VOTING
-        });
-        _governancePowerTransferByType({
-          impactOnDelegationBefore: fromBalanceBefore,
-          impactOnDelegationAfter: fromBalanceAfter,
-          delegatee: _getDelegateeByType({
-            delegator: from,
-            delegatorDelegationMode: fromUserDelegationMode,
-            delegationType: GovernancePowerType.PROPOSITION
-          }),
-          delegationType: GovernancePowerType.PROPOSITION
-        });
+      DelegationState memory fromUserState = _getDelegationState(from);
+      uint256 fromBalanceAfter = fromBalanceBefore - amount;
+      if (fromUserState.delegationMode != DelegationMode.NO_DELEGATION) {
+        _governancePowerTransferByType(
+          fromBalanceBefore,
+          fromBalanceAfter,
+          _getDelegateeByType(from, fromUserState, GovernancePowerType.VOTING),
+          GovernancePowerType.VOTING
+        );
+        _governancePowerTransferByType(
+          fromBalanceBefore,
+          fromBalanceAfter,
+          _getDelegateeByType(from, fromUserState, GovernancePowerType.PROPOSITION),
+          GovernancePowerType.PROPOSITION
+        );
       }
     }
 
     if (to != address(0)) {
-      DelegationMode toUserDelegationMode = _getUserDelegationMode(to);
+      DelegationState memory toUserState = _getDelegationState(to);
+      uint256 toBalanceAfter = toBalanceBefore + amount;
 
-      if (toUserDelegationMode != DelegationMode.NO_DELEGATION) {
-        uint256 toBalanceAfter = toBalanceBefore + amount;
-
-        _governancePowerTransferByType({
-          impactOnDelegationBefore: toBalanceBefore,
-          impactOnDelegationAfter: toBalanceAfter,
-          delegatee: _getDelegateeByType({
-            delegator: to,
-            delegatorDelegationMode: toUserDelegationMode,
-            delegationType: GovernancePowerType.VOTING
-          }),
-          delegationType: GovernancePowerType.VOTING
-        });
-        _governancePowerTransferByType({
-          impactOnDelegationBefore: toBalanceBefore,
-          impactOnDelegationAfter: toBalanceAfter,
-          delegatee: _getDelegateeByType({
-            delegator: to,
-            delegatorDelegationMode: toUserDelegationMode,
-            delegationType: GovernancePowerType.PROPOSITION
-          }),
-          delegationType: GovernancePowerType.PROPOSITION
-        });
+      if (toUserState.delegationMode != DelegationMode.NO_DELEGATION) {
+        _governancePowerTransferByType(
+          toBalanceBefore,
+          toBalanceAfter,
+          _getDelegateeByType(to, toUserState, GovernancePowerType.VOTING),
+          GovernancePowerType.VOTING
+        );
+        _governancePowerTransferByType(
+          toBalanceBefore,
+          toBalanceAfter,
+          _getDelegateeByType(to, toUserState, GovernancePowerType.PROPOSITION),
+          GovernancePowerType.PROPOSITION
+        );
       }
     }
   }
 
   /**
    * @dev Extracts from state and returns delegated governance power (Voting, Proposition)
-   * @param user the current user
+   * @param userState the current state of a user
    * @param delegationType the type of governance power delegation (VOTING, PROPOSITION)
    **/
   function _getDelegatedPowerByType(
-    address user,
+    DelegationState memory userState,
     GovernancePowerType delegationType
-  ) internal view returns (uint256) {
+  ) internal pure returns (uint256) {
     return
       POWER_SCALE_FACTOR *
       (
         delegationType == GovernancePowerType.VOTING
-          ? _delegationState[user].delegatedVotingBalance
-          : _delegationState[user].delegatedPropositionBalance
+          ? userState.delegatedVotingBalance
+          : userState.delegatedPropositionBalance
       );
   }
 
@@ -371,124 +325,117 @@ abstract contract BaseDelegation is IBaseDelegation {
    * @dev Extracts from state and returns the delegatee of a delegator by type of governance power (Voting, Proposition)
    * - If the delegator doesn't have any delegatee, returns address(0)
    * @param delegator delegator
-   * @param delegatorDelegationMode the current delegation mode of a user
+   * @param userState the current state of a user
    * @param delegationType the type of governance power delegation (VOTING, PROPOSITION)
    **/
   function _getDelegateeByType(
     address delegator,
-    DelegationMode delegatorDelegationMode,
+    DelegationState memory userState,
     GovernancePowerType delegationType
   ) internal view returns (address) {
     if (delegationType == GovernancePowerType.VOTING) {
       return
         /// With the & operation, we cover both VOTING_DELEGATED delegation and FULL_POWER_DELEGATED
         /// as VOTING_DELEGATED is equivalent to 01 in binary and FULL_POWER_DELEGATED is equivalent to 11
-        (uint8(delegatorDelegationMode) & uint8(DelegationMode.VOTING_DELEGATED)) != 0
+        (uint8(userState.delegationMode) & uint8(DelegationMode.VOTING_DELEGATED)) != 0
           ? _votingDelegatee[delegator]
           : address(0);
     }
     return
-      delegatorDelegationMode >= DelegationMode.PROPOSITION_DELEGATED
+      userState.delegationMode >= DelegationMode.PROPOSITION_DELEGATED
         ? _propositionDelegatee[delegator]
         : address(0);
   }
 
   /**
+   * @dev Changes user's delegatee address by type of governance power (Voting, Proposition)
+   * @param delegator delegator
+   * @param delegationType the type of governance power delegation (VOTING, PROPOSITION)
+   * @param _newDelegatee the new delegatee
+   **/
+  function _updateDelegateeByType(
+    address delegator,
+    GovernancePowerType delegationType,
+    address _newDelegatee
+  ) internal {
+    address newDelegatee = _newDelegatee == delegator ? address(0) : _newDelegatee;
+    if (delegationType == GovernancePowerType.VOTING) {
+      _votingDelegatee[delegator] = newDelegatee;
+    } else {
+      _propositionDelegatee[delegator] = newDelegatee;
+    }
+  }
+
+  /**
    * @dev Updates the specific flag which signaling about existence of delegation of governance power (Voting, Proposition)
-   * @param user a user to change delegation mode
-   * @param userDelegationMode the current delegation mode of a user
+   * @param userState a user state to change
    * @param delegationType the type of governance power delegation (VOTING, PROPOSITION)
    * @param willDelegate next state of delegation
    **/
   function _updateDelegationModeByType(
-    address user,
-    DelegationMode userDelegationMode,
+    DelegationState memory userState,
     GovernancePowerType delegationType,
     bool willDelegate
-  ) internal {
-    DelegationMode newUserDelegationMode;
-
+  ) internal pure returns (DelegationState memory) {
     if (willDelegate) {
       // Because GovernancePowerType starts from 0, we should add 1 first, then we apply bitwise OR
-      newUserDelegationMode = DelegationMode(
-        uint8(userDelegationMode) | (uint8(delegationType) + 1)
+      userState.delegationMode = DelegationMode(
+        uint8(userState.delegationMode) | (uint8(delegationType) + 1)
       );
     } else {
       // First bitwise NEGATION, ie was 01, after XOR with 11 will be 10,
       // then bitwise AND, which means it will keep only another delegation type if it exists
-      newUserDelegationMode = DelegationMode(
-        uint8(userDelegationMode) &
+      userState.delegationMode = DelegationMode(
+        uint8(userState.delegationMode) &
           ((uint8(delegationType) + 1) ^ uint8(DelegationMode.FULL_POWER_DELEGATED))
       );
     }
-
-    _setUserDelegationMode(user, newUserDelegationMode);
+    return userState;
   }
 
   /**
    * @dev This is the equivalent of an ERC20 transfer(), but for a power type: an atomic transfer of a balance (power).
    * When needed, it decreases the power of the `delegator` and when needed, it increases the power of the `delegatee`
    * @param delegator delegator
-   * @param delegatee the user which delegated power will change
+   * @param _delegatee the user which delegated power will change
    * @param delegationType the type of delegation (VOTING, PROPOSITION)
    **/
   function _delegateByType(
     address delegator,
-    address delegatee,
+    address _delegatee,
     GovernancePowerType delegationType
   ) internal {
     // Here we unify the property that delegating power to address(0) == delegating power to yourself == no delegation
     // So from now on, not being delegating is (exclusively) that delegatee == address(0)
-    address _delegatee = delegatee == delegator ? address(0) : delegatee;
+    address delegatee = _delegatee == delegator ? address(0) : _delegatee;
 
-    (
-      uint256 delegatorBalance,
-      DelegationMode delegatorDelegationMode
-    ) = _getUserBalanceAndDelegationMode(delegator);
-
-    address currentDelegatee = _getDelegateeByType({
-      delegator: delegator,
-      delegatorDelegationMode: delegatorDelegationMode,
-      delegationType: delegationType
-    });
-    if (_delegatee == currentDelegatee) return;
+    // We read the whole struct before validating delegatee, because in the optimistic case
+    // (_delegatee != currentDelegatee) we will reuse userState in the rest of the function
+    DelegationState memory delegatorState = _getDelegationState(delegator);
+    address currentDelegatee = _getDelegateeByType(delegator, delegatorState, delegationType);
+    if (delegatee == currentDelegatee) return;
 
     bool delegatingNow = currentDelegatee != address(0);
-    bool willDelegateAfter = _delegatee != address(0);
+    bool willDelegateAfter = delegatee != address(0);
+    uint256 delegatorBalance = _getBalance(delegator);
 
     if (delegatingNow) {
-      _governancePowerTransferByType({
-        impactOnDelegationBefore: delegatorBalance,
-        impactOnDelegationAfter: 0,
-        delegatee: currentDelegatee,
-        delegationType: delegationType
-      });
+      _governancePowerTransferByType(delegatorBalance, 0, currentDelegatee, delegationType);
     }
 
     if (willDelegateAfter) {
-      _governancePowerTransferByType({
-        impactOnDelegationBefore: 0,
-        impactOnDelegationAfter: delegatorBalance,
-        delegatee: _delegatee,
-        delegationType: delegationType
-      });
+      _governancePowerTransferByType(0, delegatorBalance, delegatee, delegationType);
     }
 
-    if (delegationType == GovernancePowerType.VOTING) {
-      _votingDelegatee[delegator] = _delegatee;
-    } else {
-      _propositionDelegatee[delegator] = _delegatee;
-    }
+    _updateDelegateeByType(delegator, delegationType, delegatee);
 
     if (willDelegateAfter != delegatingNow) {
-      _updateDelegationModeByType({
-        user: delegator,
-        userDelegationMode: delegatorDelegationMode,
-        delegationType: delegationType,
-        willDelegate: willDelegateAfter
-      });
+      _setDelegationState(
+        delegator,
+        _updateDelegationModeByType(delegatorState, delegationType, willDelegateAfter)
+      );
     }
 
-    emit DelegateChanged(delegator, _delegatee, delegationType);
+    emit DelegateChanged(delegator, delegatee, delegationType);
   }
 }

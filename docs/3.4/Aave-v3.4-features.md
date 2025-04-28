@@ -93,10 +93,6 @@ Currently, the treasury on each aToken is stored in storage, although it is the 
 This causes unnecessary storage reads on liquidations and mintToTreasury.
 Therefore, in Aave 3.4 the treasury was moved to an immutable, which reduces gas cost on these methods.
 
-### Changed implementation of aToken for UNI token in Mainnet Core pool
-
-In the previous version the (implementation)[https://etherscan.io/address/0x21714092d90c7265f52fdfdae068ec11a23c6248] of (UNI aToken)[https://etherscan.io/address/0xF6D2224916DDFbbab6e6bd0D1B7034f4Ae0CaB18] has a function `delegateUnderlyingTo` for the Pool admin that allows to delegate voting power of aToken suppliers to some delegatee. In Aave 3.4 the implementation will be changed to a default one and the function will be removed.
-
 ### Errors
 
 Aave has historically used `error codes` opposed to `Error` signatures, because there was a preference for `require(cond, error)` which did not support signatures.
@@ -109,6 +105,26 @@ While this change could be **breaking** for anyone relying on exact error codes,
 - Every single Aave release since v3.0 had breaking changes in regards to error emission (either due to new Errors or the order of Errors)
 - We checked all the major integrations and did not find a single example of people relying on exact error codes
 
+### Token Storage & implementation alignment
+
+Currently there are 3 different versions of the aToken deployed:
+
+- the main one you can find on this repository
+- a [custom version](https://etherscan.io/address/0xF6D2224916DDFbbab6e6bd0D1B7034f4Ae0CaB18) for UNI token voting delegation
+- a custom one for aAAVE that can be found [here](https://github.com/bgd-labs/aave-a-token-with-delegation)
+
+In the previous version the (implementation)[https://etherscan.io/address/0x21714092d90c7265f52fdfdae068ec11a23c6248] of (UNI aToken)[https://etherscan.io/address/0xF6D2224916DDFbbab6e6bd0D1B7034f4Ae0CaB18] has a function `delegateUnderlyingTo` for the Pool admin that allows to delegate voting power of aToken suppliers to some delegatee. Delegating the suppliers UNI token to the AAVE DAO or similar is debatable and the feature has never been used. Therefore in Aave 3.4 the implementation will be changed to a default one and the function will be removed.
+
+In order to remove code complexity between aAAVE and other aTokens, the storage layout between the versions was aligned.
+In practice this means that on ScaledBalanceTokenBase the `.balance` storage was changed from 128 to 120 bits. For Aave this storage change is perfectly fine given the following rational:
+
+- the protocol works with uin256 and has no assumptions about the token storage **already**
+- the uint120 storage was audited for the case of AAVE, but the same artificial limitation can be applied for all tokens given that 2^120 ~= 10^36, still accepts values that exceed what could ever be required
+- the "freed" 8 bits are at the end of the current balance and always 0 (except for aAAve where the occupy delegation related storage)
+- the storage is not directly exposed on the token (no interface change)
+
+The implementation for aAAVE was upgraded in line with the other tokens: [ATokenWithDelegation diff](./appendix/ATokenWithDelegation.diff), [BaseDelegation diff](./appendix/BaseDelegation.diff).
+
 ### Misc improvements
 
 - Gas usage of `executeUseReserveAsCollateral` was greatly reduced by optimizing storage access
@@ -119,7 +135,6 @@ While this change could be **breaking** for anyone relying on exact error codes,
 - Self-liquidation is now forbidden. While this is a breaking change, it's unlikely to affect anyone, as there are essentially no onchain traces of people relying on this functionality.
 - SafeCast was upgraded from openzeppelin v4 to v5. The main difference is the usage of error signatures, reducing the codesize of various contracts.
 - VersionedInitializable now bricks the initializer on the implementation, so implementations no longer have to be initialized in order to prevent malicious initialization.
-- ScaledBalanceTokenBase changed the .balance storage from 128 to 120 bits. This was done in order to align storage across all tokens (currently on aAave on ethereum mainnet uses 120 bits storage)
 - Now all fees from flash-loans are sent to the `RESERVE_TREASURY_ADDRESS` in the form of the underlying token. Also, the function `FLASHLOAN_PREMIUM_TO_PROTOCOL` in the `Pool` contract now always returns `100_00` value.
 - Improved the accuracy and gas consumption of the `calculateCompoundedInterest` function without changing the formula. Inside calculations of the `second_term` and `third_term` variables now at first the function performs multiplications by `exp` and then divides by `SECONDS_PER_YEAR`. Previously it was the other way around, first there was division, then multiplication.
 
