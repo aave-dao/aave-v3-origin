@@ -115,14 +115,14 @@ library BorrowLogic {
    * @dev  Emits the `Repay()` event
    * @param reservesData The state of all the reserves
    * @param reservesList The addresses of all the active reserves
-   * @param userConfig The user configuration mapping that tracks the supplied/borrowed assets
+   * @param onBehalfOfConfig The user configuration mapping that tracks the supplied/borrowed assets
    * @param params The additional parameters needed to execute the repay function
    * @return The actual amount being repaid
    */
   function executeRepay(
     mapping(address => DataTypes.ReserveData) storage reservesData,
     mapping(uint256 => address) storage reservesList,
-    DataTypes.UserConfigurationMap storage userConfig,
+    DataTypes.UserConfigurationMap storage onBehalfOfConfig,
     DataTypes.ExecuteRepayParams memory params
   ) external returns (uint256) {
     DataTypes.ReserveData storage reserve = reservesData[params.asset];
@@ -167,13 +167,13 @@ library BorrowLogic {
     );
 
     if (noMoreDebt) {
-      userConfig.setBorrowing(reserve.id, false);
+      onBehalfOfConfig.setBorrowing(reserve.id, false);
     }
 
     IsolationModeLogic.reduceIsolatedDebtIfIsolated(
       reservesData,
       reservesList,
-      userConfig,
+      onBehalfOfConfig,
       reserveCache,
       paybackAmount
     );
@@ -186,9 +186,9 @@ library BorrowLogic {
         paybackAmount,
         reserveCache.nextLiquidityIndex
       );
-      bool isCollateral = userConfig.isUsingAsCollateral(reserve.id);
+      bool isCollateral = onBehalfOfConfig.isUsingAsCollateral(reserve.id);
       if (isCollateral && IAToken(reserveCache.aTokenAddress).scaledBalanceOf(params.user) == 0) {
-        userConfig.setUsingAsCollateral(reserve.id, params.asset, params.user, false);
+        onBehalfOfConfig.setUsingAsCollateral(reserve.id, params.asset, params.user, false);
       }
     } else {
       IERC20(params.asset).safeTransferFrom(params.user, reserveCache.aTokenAddress, paybackAmount);

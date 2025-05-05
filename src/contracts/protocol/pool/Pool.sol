@@ -62,6 +62,9 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
     _;
   }
 
+  /**
+   * @dev Only an approved position manager can call functions marked by this modifier.
+   */
   modifier onlyPositionManager(address onBehalfOf) {
     _onlyPositionManager(onBehalfOf);
     _;
@@ -102,6 +105,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
    */
   constructor(IPoolAddressesProvider provider, IReserveInterestRateStrategy interestRateStrategy) {
     ADDRESSES_PROVIDER = provider;
+    require(address(interestRateStrategy) != address(0), Errors.ZeroAddressNotValid());
     RESERVE_INTEREST_RATE_STRATEGY = address(interestRateStrategy);
   }
 
@@ -315,17 +319,16 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
     address asset,
     bool useAsCollateral
   ) public virtual override {
-    address user = _msgSender();
     SupplyLogic.executeUseReserveAsCollateral(
       _reserves,
       _reservesList,
       _eModeCategories,
-      _usersConfig[user],
-      user,
+      _usersConfig[_msgSender()],
+      _msgSender(),
       asset,
       useAsCollateral,
       ADDRESSES_PROVIDER.getPriceOracle(),
-      _usersEModeCategory[user]
+      _usersEModeCategory[_msgSender()]
     );
   }
 

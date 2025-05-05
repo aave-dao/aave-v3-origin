@@ -10,6 +10,11 @@ import {VersionedInitializable} from '../misc/aave-upgradeability/VersionedIniti
 
 import {ATokenWithDelegation} from '../protocol/tokenization/ATokenWithDelegation.sol';
 
+/**
+ * @title Aave ERC20 ATokenWithDelegation Instance
+ * @author BGD Labs
+ * @notice Instance of the interest bearing token for the Aave protocol with additional delegation functionality used on aAAVE(mainnet)
+ */
 contract ATokenWithDelegationInstance is ATokenWithDelegation {
   uint256 public constant ATOKEN_REVISION = 3;
 

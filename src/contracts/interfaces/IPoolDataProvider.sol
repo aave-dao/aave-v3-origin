@@ -107,7 +107,7 @@ interface IPoolDataProvider {
   /**
    * @notice Returns the unbacked mint cap of the reserve
    * @param asset The address of the underlying asset of the reserve
-   * @return The unbacked mint cap of the reserve
+   * @return 0, DEPRECATED in v3.4.0
    */
   function getUnbackedMintCap(address asset) external view returns (uint256);
 
@@ -244,7 +244,7 @@ interface IPoolDataProvider {
   /**
    * @notice Returns whether virtual accounting is enabled/not for a reserve
    * @param asset The address of the underlying asset of the reserve
-   * @return True, DEPRECATED in v3.4.0 as all reserves are active
+   * @return True, DEPRECATED in v3.4.0 as all reserves have virtual accounting set as active
    */
   function getIsVirtualAccActive(address asset) external view returns (bool);
 

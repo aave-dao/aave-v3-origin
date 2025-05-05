@@ -20,10 +20,6 @@ import {IPriceOracleGetter} from '../../../interfaces/IPriceOracleGetter.sol';
 import {SafeCast} from 'openzeppelin-contracts/contracts/utils/math/SafeCast.sol';
 import {Errors} from '../helpers/Errors.sol';
 
-interface IGhoVariableDebtToken {
-  function getBalanceFromInterest(address user) external view returns (uint256);
-}
-
 /**
  * @title LiquidationLogic library
  * @author Aave
@@ -68,8 +64,7 @@ library LiquidationLogic {
   uint256 public constant MIN_LEFTOVER_BASE = MIN_BASE_MAX_CLOSE_FACTOR_THRESHOLD / 2;
 
   /**
-   * @notice Reduces a portion or all of the deficit of a specified reserve by burning:
-   * - the equivalent aToken `amount`
+   * @notice Reduces a portion or all of the deficit of a specified reserve by burning the equivalent aToken `amount`
    * The caller of this method MUST always be the Umbrella contract and the Umbrella contract is assumed to never have debt.
    * @dev Emits the `DeficitCovered() event`.
    * @dev If the coverage admin covers its entire balance, `ReserveUsedAsCollateralDisabled()` is emitted.

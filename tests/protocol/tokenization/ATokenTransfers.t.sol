@@ -115,7 +115,7 @@ contract ATokenTransferTests is TestnetProcedures {
     emit IERC20.Transfer(alice, bob, transferAmount);
 
     vm.expectEmit(address(aToken));
-    emit IScaledBalanceToken.BalanceTransfer(alice, bob, transferAmount, 1e27);
+    emit IAToken.BalanceTransfer(alice, bob, transferAmount, 1e27);
     vm.expectEmit(report.poolProxy);
     emit IPool.ReserveUsedAsCollateralDisabled(tokenList.usdx, alice);
     vm.expectEmit(report.poolProxy);

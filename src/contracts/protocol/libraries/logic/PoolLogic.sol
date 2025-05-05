@@ -70,25 +70,24 @@ library PoolLogic {
   }
 
   /**
-   * @notice Accumulates interest to all indexes of the reserve
+   * @notice Updates interest rates on the reserve data
    * @param reserve The state of the reserve
    * @param asset The address of the asset
-   * @param interestRate The address of the interest rate
+   * @param interestRateStrategyAddress The address of the interest rate
    */
   function executeSyncRatesState(
     DataTypes.ReserveData storage reserve,
     address asset,
-    address interestRate
+    address interestRateStrategyAddress
   ) external {
     DataTypes.ReserveCache memory reserveCache = reserve.cache();
 
-    ReserveLogic.updateInterestRatesAndVirtualBalance(
-      reserve,
+    reserve.updateInterestRatesAndVirtualBalance(
       reserveCache,
       asset,
       0,
       0,
-      interestRate
+      interestRateStrategyAddress
     );
   }
 

@@ -12,6 +12,15 @@ import {IInitializableAToken} from './IInitializableAToken.sol';
  */
 interface IAToken is IERC20, IScaledBalanceToken, IInitializableAToken {
   /**
+   * @dev Emitted during the transfer action
+   * @param from The user whose tokens are being transferred
+   * @param to The recipient
+   * @param value The scaled amount being transferred
+   * @param index The next liquidity index of the reserve
+   */
+  event BalanceTransfer(address indexed from, address indexed to, uint256 value, uint256 index);
+
+  /**
    * @notice Mints `amount` aTokens to `user`
    * @param caller The address performing the mint
    * @param onBehalfOf The address of the user that will receive the minted aTokens

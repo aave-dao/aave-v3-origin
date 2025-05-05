@@ -8,15 +8,6 @@ pragma solidity ^0.8.0;
  */
 interface IScaledBalanceToken {
   /**
-   * @dev Emitted during the transfer action
-   * @param from The user whose tokens are being transferred
-   * @param to The recipient
-   * @param value The scaled amount being transferred
-   * @param index The next liquidity index of the reserve
-   */
-  event BalanceTransfer(address indexed from, address indexed to, uint256 value, uint256 index);
-
-  /**
    * @dev Emitted after the mint action
    * @param caller The address performing the mint
    * @param onBehalfOf The address of the user that will receive the minted tokens

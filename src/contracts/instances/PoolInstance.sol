@@ -6,6 +6,11 @@ import {IPoolAddressesProvider} from '../interfaces/IPoolAddressesProvider.sol';
 import {IReserveInterestRateStrategy} from '../interfaces/IReserveInterestRateStrategy.sol';
 import {Errors} from '../protocol/libraries/helpers/Errors.sol';
 
+/**
+ * @title Aave Pool Instance
+ * @author BGD Labs
+ * @notice Instance of the Pool for the Aave protocol
+ */
 contract PoolInstance is Pool {
   uint256 public constant POOL_REVISION = 8;
 

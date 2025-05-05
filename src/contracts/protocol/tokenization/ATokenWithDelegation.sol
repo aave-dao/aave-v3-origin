@@ -10,6 +10,7 @@ import {DelegationMode} from './base/DelegationMode.sol';
 import {BaseDelegation} from './delegation/BaseDelegation.sol';
 
 /**
+ * @title Aave ERC20 ATokenWithDelegation
  * @author BGD Labs
  * @notice contract that gives a tokens the delegation functionality. For now should only be used for AAVE aToken
  * @dev uint sizes are used taken into account that is tailored for AAVE token. In this AToken child we only update

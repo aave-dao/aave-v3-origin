@@ -65,7 +65,7 @@ library DataTypes {
     address __deprecatedStableDebtTokenAddress;
     //variableDebtToken address
     address variableDebtTokenAddress;
-    // DEPRECATED on v3.4.0
+    // DEPRECATED on v3.4.0, should use the `RESERVE_INTEREST_RATE_STRATEGY` variable from the Pool contract
     address __deprecatedInterestRateStrategyAddress;
     //the current treasury balance, scaled
     uint128 accruedToTreasury;
@@ -98,7 +98,7 @@ library DataTypes {
     //bit 168-175: DEPRECATED: eMode category
     //bit 176-211: DEPRECATED: unbacked mint cap
     //bit 212-251: debt ceiling for isolation mode with (ReserveConfiguration::DEBT_CEILING_DECIMALS) decimals
-    //bit 252: virtual accounting is enabled for the reserve
+    //bit 252: DEPRECATED: virtual accounting is enabled for the reserve
     //bit 253-255 unused
 
     uint256 data;

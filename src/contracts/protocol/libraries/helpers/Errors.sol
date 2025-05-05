@@ -95,5 +95,5 @@ library Errors {
   error MustNotLeaveDust(); // Below a certain threshold liquidators need to take the full position
   error UserCannotHaveDebt(); // Thrown when a user tries to interact with a method that requires a position without debt
   error SelfLiquidation(); // Thrown when a user tries to liquidate themselves
-  error CallerNotPositionManager(); // Thrown when a user tries to interact with a method that is allowed only for position managers
+  error CallerNotPositionManager(); // Thrown when the caller has not been enabled as a position manager of the on-behalf-of user
 }
