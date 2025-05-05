@@ -58,7 +58,8 @@ contract AaveV3MockListingCustom is AaveV3Payload {
         supplyCap: 85_000,
         borrowCap: 60_000,
         debtCeiling: 0,
-        liqProtocolFee: 10_00
+        liqProtocolFee: 10_00,
+        rwa: false
       }),
       IEngine.TokenImplementations({aToken: A_TOKEN_IMPL, vToken: V_TOKEN_IMPL})
     );

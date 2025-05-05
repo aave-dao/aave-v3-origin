@@ -15,6 +15,7 @@ contract AaveV3HelpersBatchOne is AaveV3HelpersProcedureOne {
     address rewardsController,
     address collector,
     address aTokenImpl,
+    address rwaATokenImpl,
     address vTokenImpl
   ) {
     _report = _deployConfigEngine(
@@ -25,6 +26,7 @@ contract AaveV3HelpersBatchOne is AaveV3HelpersProcedureOne {
       rewardsController,
       collector,
       aTokenImpl,
+      rwaATokenImpl,
       vTokenImpl
     );
   }

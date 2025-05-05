@@ -97,6 +97,7 @@ interface IAaveV3ConfigEngine {
     uint256 borrowCap; // If passing any value distinct to EngineFlags.KEEP_CURRENT, always configured
     uint256 debtCeiling; // Only considered if liqThreshold > 0
     uint256 liqProtocolFee; // Only considered if liqThreshold > 0
+    bool rwa; // If true, the asset is an RWA
   }
 
   struct RepackedListings {

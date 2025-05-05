@@ -191,6 +191,7 @@ contract AaveV3BatchTests is BatchTestProcedures {
       setupReportTwo.rewardsControllerProxy,
       peripheryReportOne.treasury,
       tokensReport.aToken,
+      tokensReport.rwaAToken,
       tokensReport.variableDebtToken
     );
   }

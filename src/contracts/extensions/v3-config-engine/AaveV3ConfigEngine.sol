@@ -29,6 +29,7 @@ contract AaveV3ConfigEngine is IAaveV3ConfigEngine {
   IPoolConfigurator public immutable POOL_CONFIGURATOR;
   IAaveOracle public immutable ORACLE;
   address public immutable ATOKEN_IMPL;
+  address public immutable RWA_ATOKEN_IMPL;
   address public immutable VTOKEN_IMPL;
   address public immutable REWARDS_CONTROLLER;
   address public immutable COLLECTOR;
@@ -45,12 +46,14 @@ contract AaveV3ConfigEngine is IAaveV3ConfigEngine {
   /**
    * @dev Constructor.
    * @param aTokenImpl The address of default aToken implementation.
+   * @param rwaATokenImpl The address of default RWA aToken implementation.
    * @param vTokenImpl The address of default variable debt token implementation.
    * @param engineConstants The struct containing all the engine constants.
    * @param engineLibraries The struct containing the addresses of stateless libraries containing the engine logic.
    */
   constructor(
     address aTokenImpl,
+    address rwaATokenImpl,
     address vTokenImpl,
     EngineConstants memory engineConstants,
     EngineLibraries memory engineLibraries
@@ -77,6 +80,7 @@ contract AaveV3ConfigEngine is IAaveV3ConfigEngine {
     );
 
     ATOKEN_IMPL = aTokenImpl;
+    RWA_ATOKEN_IMPL = rwaATokenImpl;
     VTOKEN_IMPL = vTokenImpl;
     POOL = engineConstants.pool;
     POOL_CONFIGURATOR = engineConstants.poolConfigurator;
@@ -99,9 +103,10 @@ contract AaveV3ConfigEngine is IAaveV3ConfigEngine {
 
     ListingWithCustomImpl[] memory customListings = new ListingWithCustomImpl[](listings.length);
     for (uint256 i = 0; i < listings.length; i++) {
+      address aTokenImplementation = listings[i].rwa ? RWA_ATOKEN_IMPL : ATOKEN_IMPL;
       customListings[i] = ListingWithCustomImpl({
         base: listings[i],
-        implementations: TokenImplementations({aToken: ATOKEN_IMPL, vToken: VTOKEN_IMPL})
+        implementations: TokenImplementations({aToken: aTokenImplementation, vToken: VTOKEN_IMPL})
       });
     }
 

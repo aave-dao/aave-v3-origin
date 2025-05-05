@@ -1,16 +1,17 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {AToken, IPool, IAaveIncentivesController, IInitializableAToken, Errors, VersionedInitializable} from '../protocol/tokenization/AToken.sol';
+import {RWAAToken} from 'src/contracts/protocol/tokenization/RWAAToken.sol';
+import {IPool, IAaveIncentivesController, IInitializableAToken, Errors, VersionedInitializable} from 'src/contracts/protocol/tokenization/AToken.sol';
 
-contract ATokenInstance is AToken {
-  uint256 public constant ATOKEN_REVISION = 1;
+contract RWAATokenInstance is RWAAToken {
+  uint256 public constant RWA_ATOKEN_REVISION = 1;
 
-  constructor(IPool pool) AToken(pool, 'ATOKEN_IMPL', 'ATOKEN_IMPL') {}
+  constructor(IPool pool) RWAAToken(pool, 'RWA_ATOKEN_IMPL', 'RWA_ATOKEN_IMPL') {}
 
   /// @inheritdoc VersionedInitializable
   function getRevision() internal pure virtual override returns (uint256) {
-    return ATOKEN_REVISION;
+    return RWA_ATOKEN_REVISION;
   }
 
   /// @inheritdoc IInitializableAToken
