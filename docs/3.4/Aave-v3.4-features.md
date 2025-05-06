@@ -137,6 +137,7 @@ The implementation for aAAVE was upgraded in line with the other tokens: [AToken
 - VersionedInitializable now bricks the initializer on the implementation, so implementations no longer have to be initialized in order to prevent malicious initialization.
 - Now all fees from flash-loans are sent to the `RESERVE_TREASURY_ADDRESS` in the form of the underlying token. Also, the function `FLASHLOAN_PREMIUM_TO_PROTOCOL` in the `Pool` contract now always returns `100_00` value.
 - Improved the accuracy and gas consumption of the `calculateCompoundedInterest` function without changing the formula. Inside calculations of the `second_term` and `third_term` variables now at first the function performs multiplications by `exp` and then divides by `SECONDS_PER_YEAR`. Previously it was the other way around, first there was division, then multiplication.
+- Replaced the use of the `ecrecover` function call with the OpenZeppelin's `ECDSA.recover` function call.
 
 ## Changelog
 

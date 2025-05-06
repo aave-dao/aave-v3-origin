@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {MessageHashUtils} from 'openzeppelin-contracts/contracts/utils/cryptography/MessageHashUtils.sol';
+import {ECDSA} from 'openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol';
 import {SafeCast} from 'openzeppelin-contracts/contracts/utils/math/SafeCast.sol';
 
 import {WadRayMath} from '../../libraries/math/WadRayMath.sol';
@@ -166,7 +167,7 @@ abstract contract BaseDelegation is IBaseDelegation {
       )
     );
 
-    require(delegator == ecrecover(digest, v, r, s), Errors.InvalidSignature());
+    require(delegator == ECDSA.recover(digest, v, r, s), Errors.InvalidSignature());
 
     _delegateByType(delegator, delegatee, delegationType);
   }
@@ -191,7 +192,7 @@ abstract contract BaseDelegation is IBaseDelegation {
       )
     );
 
-    require(delegator == ecrecover(digest, v, r, s), Errors.InvalidSignature());
+    require(delegator == ECDSA.recover(digest, v, r, s), Errors.InvalidSignature());
 
     _delegateByType(delegator, delegatee, GovernancePowerType.VOTING);
     _delegateByType(delegator, delegatee, GovernancePowerType.PROPOSITION);

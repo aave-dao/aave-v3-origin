@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
+import {ECDSA} from 'openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol';
+
 import {Context} from '../../../dependencies/openzeppelin/contracts/Context.sol';
 import {Errors} from '../../libraries/helpers/Errors.sol';
 import {VersionedInitializable} from '../../../misc/aave-upgradeability/VersionedInitializable.sol';
@@ -62,7 +64,7 @@ abstract contract DebtTokenBase is
         )
       )
     );
-    require(delegator == ecrecover(digest, v, r, s), Errors.InvalidSignature());
+    require(delegator == ECDSA.recover(digest, v, r, s), Errors.InvalidSignature());
     _nonces[delegator] = currentValidNonce + 1;
     _approveDelegation(delegator, delegatee, value);
   }
