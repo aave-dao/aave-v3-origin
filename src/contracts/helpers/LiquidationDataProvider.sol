@@ -175,8 +175,11 @@ contract LiquidationDataProvider is ILiquidationDataProvider {
     );
 
     if (
-      liquidationInfo.maxDebtToLiquidate != 0 &&
-      liquidationInfo.maxDebtToLiquidate == liquidationInfo.debtInfo.debtBalance
+      (liquidationInfo.maxDebtToLiquidate != 0 &&
+        liquidationInfo.maxDebtToLiquidate == liquidationInfo.debtInfo.debtBalance) ||
+      (liquidationInfo.maxCollateralToLiquidate != 0 &&
+        liquidationInfo.maxCollateralToLiquidate ==
+        liquidationInfo.collateralInfo.collateralBalance)
     ) {
       liquidationInfo.amountToPassToLiquidationCall = type(uint256).max;
     } else {
