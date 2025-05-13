@@ -184,7 +184,7 @@ Solc was upgraded from `8.20` to `8.27`
 - `PoolLogic` contract:
   - The `PoolLogic` contract was extended with two methods `executeSyncIndexesState` & `executeSyncRatesState`, which simply replicate what was previously on the Pool itself. This is done to free some code-space on the pool itself.
 - `FlashLoanLogic` library:
-  - Now all fees from flash-loans are sent to the `RESERVE_TREASURY_ADDRESS`.
+  - Now all fees from flash-loans are accrued to the `RESERVE_TREASURY_ADDRESS`.
 - `MathUtils` library:
   - The `calculateCompoundedInterest` function was improved to be more accurate and gas efficient without changing the formula.
 
