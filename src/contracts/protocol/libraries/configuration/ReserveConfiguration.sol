@@ -469,7 +469,7 @@ library ReserveConfiguration {
   }
 
   /**
-   * @notice Sets the virtual account active state of the reserve
+   * @notice Forcefully set the virtual account active state of the reserve to `true`
    * @dev DEPRECATED: in v3.4 all reserves have virtual accounting enabled.
    * The flag is carried along for backward compatibility with integrations directly querying the configuration.
    * @param self The reserve configuration

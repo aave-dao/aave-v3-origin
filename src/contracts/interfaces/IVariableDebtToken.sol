@@ -33,7 +33,7 @@ interface IVariableDebtToken is IScaledBalanceToken, IInitializableDebtToken {
    * @param from The address from which the debt will be burned
    * @param amount The amount getting burned
    * @param index The variable debt index of the reserve
-   * @return True if balance is zero
+   * @return True if the new balance is zero
    * @return The scaled total debt of the reserve
    */
   function burn(address from, uint256 amount, uint256 index) external returns (bool, uint256);

@@ -41,6 +41,9 @@ contract AaveProtocolDataProvider is IPoolDataProvider {
     address pool = addressesProvider.getPool();
     require(pool != address(0), Errors.ZeroAddressNotValid());
 
+    // @dev The pool can be immutable, because in practice it never changes after initialization.
+    // The reason why it is not an actual `immutable` on `ADDRESSES_PROVIDER` is that there is a cross reference between ADDRESSES_PROVIDER <> Pool,
+    // which in turn makes is complicated to have it `immutable` on both contracts.
     POOL = IPool(pool);
   }
 
@@ -157,7 +160,7 @@ contract AaveProtocolDataProvider is IPoolDataProvider {
     view
     override
     returns (
-      uint256,
+      uint256 /* unbacked */,
       uint256 accruedToTreasuryScaled,
       uint256 totalAToken,
       uint256,
@@ -175,7 +178,7 @@ contract AaveProtocolDataProvider is IPoolDataProvider {
 
     // @notice all stable debt related parameters deprecated in v3.2.0
     return (
-      0,
+      0, // @dev unbacked is deprecated from v3.4.0, always zero, never used
       reserve.accruedToTreasury,
       IERC20Detailed(reserve.aTokenAddress).totalSupply(),
       0,

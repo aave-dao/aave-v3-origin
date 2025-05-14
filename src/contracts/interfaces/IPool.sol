@@ -741,8 +741,7 @@ interface IPool {
   function deposit(address asset, uint256 amount, address onBehalfOf, uint16 referralCode) external;
 
   /**
-   * @notice It covers the deficit of a specified reserve by burning:
-   * - the equivalent aToken `amount` for assets
+   * @notice It covers the deficit of a specified reserve by burning the equivalent aToken `amount` for assets
    * @dev The deficit of a reserve can occur due to situations where borrowed assets are not repaid, leading to bad debt.
    * @param asset The address of the underlying asset to cover the deficit.
    * @param amount The amount to be covered, in aToken
@@ -751,7 +750,8 @@ interface IPool {
 
   /**
    * @notice Approves or disapproves a position manager. This position manager will be able
-   * to call the setUserUseReserveAsCollateral and the the setUserEMode function on behalf of the user.
+   * to call the `setUserUseReserveAsCollateralOnBehalfOf` and the
+   * `setUserEModeOnBehalfOf` function on behalf of the user.
    * @param positionManager The address of the position manager
    * @param approve True if the position manager should be approved, false otherwise
    */
@@ -783,7 +783,7 @@ interface IPool {
   function setUserEModeOnBehalfOf(uint8 categoryId, address onBehalfOf) external;
 
   /*
-   * @notice Returns true if the user is approved to use the position manager on behalf of the user.
+   * @notice Returns true if the `positionManager` address is approved to use the position manager role on behalf of the user.
    * @param user The address of the user
    * @param positionManager The address of the position manager
    * @return True if the user is approved to use the position manager, false otherwise

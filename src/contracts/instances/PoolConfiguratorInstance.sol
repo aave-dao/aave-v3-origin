@@ -3,6 +3,11 @@ pragma solidity ^0.8.0;
 
 import {PoolConfigurator, IPoolAddressesProvider, IPool, VersionedInitializable} from '../protocol/pool/PoolConfigurator.sol';
 
+/**
+ * @title Aave PoolConfigurator Instance
+ * @author BGD Labs
+ * @notice Instance of the PoolConfigurator of the Aave protocol
+ */
 contract PoolConfiguratorInstance is PoolConfigurator {
   uint256 public constant CONFIGURATOR_REVISION = 6;
 

@@ -259,8 +259,8 @@ library ValidationLogic {
    * @notice Validates a repay action.
    * @param user The user initiating the repayment
    * @param reserveCache The cached data of the reserve
-   * @param amountSent The amount sent for the repayment. Can be an actual value or uint(-1)
-   * @param onBehalfOf The address of the user the sender is repaying for
+   * @param amountSent The amount sent for the repayment. Can be an actual value or type(uint256).max
+   * @param onBehalfOf The address of the user sender is repaying for
    * @param debt The borrow balance of the user
    */
   function validateRepay(
@@ -349,13 +349,13 @@ library ValidationLogic {
 
   /**
    * @notice Validates the liquidation action.
-   * @param userConfig The user configuration mapping
+   * @param borrowerConfig The user configuration mapping
    * @param collateralReserve The reserve data of the collateral
    * @param debtReserve The reserve data of the debt
    * @param params Additional parameters needed for the validation
    */
   function validateLiquidationCall(
-    DataTypes.UserConfigurationMap storage userConfig,
+    DataTypes.UserConfigurationMap storage borrowerConfig,
     DataTypes.ReserveData storage collateralReserve,
     DataTypes.ReserveData storage debtReserve,
     DataTypes.ValidateLiquidationCallParams memory params
@@ -396,7 +396,7 @@ library ValidationLogic {
 
     vars.isCollateralEnabled =
       collateralReserve.configuration.getLiquidationThreshold() != 0 &&
-      userConfig.isUsingAsCollateral(collateralReserve.id);
+      borrowerConfig.isUsingAsCollateral(collateralReserve.id);
 
     //if collateral isn't enabled as collateral by user, it cannot be liquidated
     require(vars.isCollateralEnabled, Errors.CollateralCannotBeLiquidated());

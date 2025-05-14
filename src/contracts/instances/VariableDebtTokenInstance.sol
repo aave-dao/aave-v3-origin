@@ -1,8 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {VariableDebtToken, IPool, IInitializableDebtToken, VersionedInitializable, IAaveIncentivesController, Errors} from '../protocol/tokenization/VariableDebtToken.sol';
+import {VersionedInitializable} from '../misc/aave-upgradeability/VersionedInitializable.sol';
+import {VariableDebtToken, IPool, IInitializableDebtToken, Errors} from '../protocol/tokenization/VariableDebtToken.sol';
 
+/**
+ * @title Aave ERC20 VariableDebtToken Instance
+ * @author BGD Labs
+ * @notice Instance of the variable debt token for the Aave protocol
+ */
 contract VariableDebtTokenInstance is VariableDebtToken {
   uint256 public constant DEBT_TOKEN_REVISION = 3;
 

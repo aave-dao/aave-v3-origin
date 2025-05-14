@@ -10,6 +10,11 @@ import {VersionedInitializable} from '../misc/aave-upgradeability/VersionedIniti
 
 import {AToken} from '../protocol/tokenization/AToken.sol';
 
+/**
+ * @title Aave ERC20 AToken Instance
+ * @author BGD Labs
+ * @notice Instance of the interest bearing token for the Aave protocol
+ */
 contract ATokenInstance is AToken {
   uint256 public constant ATOKEN_REVISION = 3;
 
