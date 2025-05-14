@@ -218,18 +218,29 @@ library FlashLoanLogic {
     DataTypes.ReserveData storage reserve,
     DataTypes.FlashLoanRepaymentParams memory params
   ) internal {
-    reserve.virtualUnderlyingBalance += params.amount.toUint128();
+    uint256 amountPlusPremium = params.amount + params.totalPremium;
+
+    DataTypes.ReserveCache memory reserveCache = reserve.cache();
+    reserve.updateState(reserveCache);
+
+    reserve.accruedToTreasury += params
+      .totalPremium
+      .rayDiv(reserveCache.nextLiquidityIndex)
+      .toUint128();
+
+    reserve.updateInterestRatesAndVirtualBalance(
+      reserveCache,
+      params.asset,
+      amountPlusPremium,
+      0,
+      params.interestRateStrategyAddress
+    );
 
     IERC20(params.asset).safeTransferFrom(
       params.receiverAddress,
-      reserve.aTokenAddress,
-      params.amount
+      reserveCache.aTokenAddress,
+      amountPlusPremium
     );
-    if (params.totalPremium != 0) {
-      address treasury = IAToken(reserve.aTokenAddress).RESERVE_TREASURY_ADDRESS();
-
-      IERC20(params.asset).safeTransferFrom(params.receiverAddress, treasury, params.totalPremium);
-    }
 
     emit IPool.FlashLoan(
       params.receiverAddress,
