@@ -652,21 +652,21 @@ library LiquidationLogic {
         if (reserveAddress != address(0)) {
           DataTypes.ReserveData storage currentReserve = reservesData[reserveAddress];
           DataTypes.ReserveCache memory reserveCache = currentReserve.cache();
-          if (!reserveCache.reserveConfiguration.getActive()) continue;
+          if (reserveCache.reserveConfiguration.getActive()) {
+            currentReserve.updateState(reserveCache);
 
-          currentReserve.updateState(reserveCache);
-
-          _burnDebtTokens(
-            reserveCache,
-            currentReserve,
-            borrowerConfig,
-            borrower,
-            reserveAddress,
-            IERC20(reserveCache.variableDebtTokenAddress).balanceOf(borrower),
-            0,
-            true,
-            interestRateStrategyAddress
-          );
+            _burnDebtTokens(
+              reserveCache,
+              currentReserve,
+              borrowerConfig,
+              borrower,
+              reserveAddress,
+              IERC20(reserveCache.variableDebtTokenAddress).balanceOf(borrower),
+              0,
+              true,
+              interestRateStrategyAddress
+            );
+          }
         }
       }
       unchecked {
