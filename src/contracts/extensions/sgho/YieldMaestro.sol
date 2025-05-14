@@ -79,9 +79,19 @@ contract YieldMaestro is Initializable, IYieldMaestro {
     // if targetRate is 0 skip it
     if (targetRate > 0) {
       uint256 unclaimed = _calculateUnclaimed();
-      GHO.transfer(sGHO, unclaimed);
+      uint256 availableBalance = GHO.balanceOf(address(this));
+      
       claimed = unclaimed;
-      emit Claimed(claimed);
+      // if available balance is less than unclaimed, set targetRate to 0
+      if (availableBalance < unclaimed) {
+        claimed = availableBalance;
+        targetRate = 0;
+      }
+
+      if (claimed > 0) {
+        GHO.transfer(sGHO, claimed);
+        emit Claimed(claimed);
+      }
     }
     lastClaimTimestamp = block.timestamp;
   }

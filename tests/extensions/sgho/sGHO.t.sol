@@ -89,6 +89,14 @@ contract sGhoTest is TestnetProcedures {
 
   // --- Constructor Tests ---
 
+  function test_constructor() external {
+    assertEq(sgho.gho(), address(gho), 'GHO address mismatch');
+    assertEq(sgho.YIELD_MAESTRO(), address(yieldMaestro), 'YieldMaestro address mismatch');
+    assertEq(sgho.deploymentChainId(), block.chainid, 'Chain ID mismatch');
+    assertEq(sgho.VERSION(), VERSION, 'Version mismatch');
+    assertEq(sgho.PERMIT_TYPEHASH(), PERMIT_TYPEHASH, 'Permit typehash mismatch');
+  }
+
   // --- Receive ETH Test ---
   function test_revert_ReceiveETH() external {
     vm.expectRevert('No ETH allowed');
@@ -193,6 +201,71 @@ contract sGhoTest is TestnetProcedures {
     vm.stopPrank();
   }
 
+  // --- Permit Tests ---
+  function test_permit() external {
+    uint256 privateKey = 0xA11CE;
+    address owner = vm.addr(privateKey);
+    address spender = user2;
+    uint256 value = 100 ether;
+    uint256 deadline = block.timestamp + 1 hours;
+    uint256 nonce = sgho.nonces(owner);
+
+    // Create permit signature
+    bytes32 structHash = keccak256(
+      abi.encode(PERMIT_TYPEHASH, owner, spender, value, nonce, deadline)
+    );
+    bytes32 hash = keccak256(
+      abi.encodePacked('\x19\x01', DOMAIN_SEPARATOR_sGHO, structHash)
+    );
+    (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, hash);
+
+    // Execute permit
+    sgho.permit(owner, spender, value, deadline, v, r, s);
+
+    assertEq(sgho.allowance(owner, spender), value, 'Allowance not set correctly');
+  }
+
+  function test_revert_permit_expired() external {
+    uint256 privateKey = 0xA11CE;
+    address owner = vm.addr(privateKey);
+    address spender = user2;
+    uint256 value = 100 ether;
+    uint256 deadline = block.timestamp - 1; // Expired
+    uint256 nonce = sgho.nonces(owner);
+
+    bytes32 structHash = keccak256(
+      abi.encode(PERMIT_TYPEHASH, owner, spender, value, nonce, deadline)
+    );
+    bytes32 hash = keccak256(
+      abi.encodePacked('\x19\x01', DOMAIN_SEPARATOR_sGHO, structHash)
+    );
+    (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, hash);
+
+    vm.expectRevert('SavingsXDai/permit-expired');
+    sgho.permit(owner, spender, value, deadline, v, r, s);
+  }
+
+  function test_revert_permit_invalidSignature() external {
+    uint256 privateKey = 0xA11CE;
+    address owner = vm.addr(privateKey);
+    address spender = user2;
+    uint256 value = 100 ether;
+    uint256 deadline = block.timestamp + 1 hours;
+    uint256 nonce = sgho.nonces(owner);
+
+    bytes32 structHash = keccak256(
+      abi.encode(PERMIT_TYPEHASH, owner, spender, value, nonce, deadline)
+    );
+    bytes32 hash = keccak256(
+      abi.encodePacked('\x19\x01', DOMAIN_SEPARATOR_sGHO, structHash)
+    );
+    (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, hash);
+
+    // Use wrong owner
+    vm.expectRevert('SavingsXDai/invalid-permit');
+    sgho.permit(user1, spender, value, deadline, v, r, s);
+  }
+
   // --- Yield Integration Tests (_updateVault) ---
 
   function test_yield_claimSavingsIntegration(
@@ -276,6 +349,136 @@ contract sGhoTest is TestnetProcedures {
     // Check yield was NOT added
     uint256 expectedAssets = depositAmount + depositAmount2;
     assertEq(sgho.totalAssets(), expectedAssets, 'totalAssets should not include yield');
+  }
+
+  // --- Precision Tests ---
+  function test_precision_multipleOperations(
+    uint256[5] memory depositAmounts,
+    uint256[5] memory withdrawAmounts,
+    uint64[5] memory timeSkips
+  ) external {
+    // Bound inputs to reasonable ranges
+    for (uint i = 0; i < 5; i++) {
+      depositAmounts[i] = bound(depositAmounts[i], 1 ether, 100_000 ether);
+      timeSkips[i] = uint64(bound(timeSkips[i], 601, 30 days)); // Ensure > 600s
+    }
+
+    // Set target rate
+    vm.startPrank(yManager);
+    yieldMaestro.setTargetRate(1000); // 10% APR
+    vm.stopPrank();
+
+    // Track state
+    uint256 lastTotalAssets = 0;
+    uint256 totalShares = 0;
+    uint256 totalDeposited = 0;
+    uint256 totalClaimedYield = 0;
+    uint256 totalWithdrawn = 0;
+
+    // Perform sequence of operations
+    for (uint i = 0; i < 5; i++) {
+      // Skip time if not first operation
+      if (i > 0) {
+        vm.warp(block.timestamp + timeSkips[i]);
+      }
+
+      // Deposit
+      vm.startPrank(user1);
+      deal(address(gho), user1, depositAmounts[i], true);
+      gho.approve(address(sgho), depositAmounts[i]);
+      
+      uint256 shares = sgho.deposit(depositAmounts[i], user1);
+      totalDeposited += depositAmounts[i];
+      totalShares += shares;
+
+      // Calculate expected yield for this period
+      if (i > 0) {
+        uint256 expectedYield = (lastTotalAssets * yieldMaestro.targetRate() * timeSkips[i]) / (1e10 * 365 days);
+        totalClaimedYield += expectedYield;
+      }
+
+      // Verify deposit precision
+      assertEq(
+        sgho.totalAssets(),
+        totalDeposited + totalClaimedYield - totalWithdrawn,
+        'totalAssets mismatch after deposit'
+      );
+      assertEq(
+        sgho.totalSupply(),
+        totalShares,
+        'totalSupply mismatch after deposit'
+      );
+
+      // Withdraw if not first operation and if we have enough balance
+      if (i > 0 && withdrawAmounts[i] <= sgho.balanceOf(user1)) {
+        uint256 withdrawAmount = bound(withdrawAmounts[i], 1 ether, sgho.balanceOf(user1));
+        uint256 withdrawnShares = sgho.withdraw(withdrawAmount, user1, user1);
+        totalShares -= withdrawnShares;
+        totalWithdrawn += withdrawAmount;
+
+        // Verify withdrawal precision
+        assertApproxEqAbs(
+          sgho.totalAssets(),
+          totalDeposited + totalClaimedYield - totalWithdrawn,
+          1,
+          'totalAssets mismatch after withdraw'
+        );
+        assertApproxEqAbs(
+          sgho.totalSupply(),
+          totalShares,
+          1,
+          'totalSupply mismatch after withdraw'
+        );
+      }
+
+      // Verify share price consistency
+      if (sgho.totalSupply() > 0) {
+        // Calculate user's share of total assets directly instead of using share price
+        uint256 userShares = sgho.balanceOf(user1);
+        uint256 userAssets = sgho.previewRedeem(userShares);
+        uint256 expectedUserAssets = (sgho.totalAssets() * userShares) / sgho.totalSupply();
+        
+        // Allow for 1 wei rounding error
+        assertApproxEqAbs(
+          userAssets,
+          expectedUserAssets,
+          1,
+          'share price calculation mismatch'
+        );
+      }
+
+      // Verify yield calculation precision
+      if (i > 0) {
+        uint256 expectedYield = (lastTotalAssets * yieldMaestro.targetRate() * timeSkips[i]) / (1e10 * 365 days);
+        // Calculate actual yield by comparing total assets before and after the operation
+        uint256 actualYield = sgho.totalAssets() + totalWithdrawn - totalDeposited ;
+        
+        // Allow for 1 wei rounding error in yield calculation
+        assertApproxEqAbs(
+          actualYield,
+          totalClaimedYield,
+          1,
+          'yield calculation mismatch'
+        );
+      }
+
+      lastTotalAssets = sgho.totalAssets();
+      vm.stopPrank();
+    }
+
+    // Final checks
+    vm.startPrank(user1);
+    uint256 finalShares = sgho.balanceOf(user1);
+    uint256 finalAssets = sgho.previewRedeem(finalShares);
+    
+    // Verify final redemption precision
+    assertApproxEqAbs(
+      finalAssets,
+      sgho.totalAssets(),
+      1,
+      'final redemption mismatch'
+    );
+    vm.stopPrank();
   }
 
   // --- takeDonated() Test ---
