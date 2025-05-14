@@ -187,7 +187,7 @@ contract PoolTests is TestnetProcedures {
   function test_reverts_setUserUseReserveAsCollateralOnBehalfOf_caller_not_position_manager(
     address caller
   ) public {
-    vm.assume(caller != address(this) && caller != report.poolAddressesProvider && caller != alice);
+    vm.assume(caller != address(this) && caller != report.poolAddressesProvider);
 
     _supplyAndEnableAsCollateral(alice, 1e6, tokenList.usdx);
 
@@ -529,7 +529,7 @@ contract PoolTests is TestnetProcedures {
   }
 
   function test_revert_setUserEModeOnBehalfOf_not_position_manager(address caller) public {
-    vm.assume(caller != address(this) && caller != report.poolAddressesProvider && caller != alice);
+    vm.assume(caller != address(this) && caller != report.poolAddressesProvider);
 
     EModeCategoryInput memory ct = _genCategoryOne();
     vm.startPrank(poolAdmin);
