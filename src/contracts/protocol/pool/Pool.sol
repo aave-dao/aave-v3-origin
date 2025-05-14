@@ -90,10 +90,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
   }
 
   function _onlyPositionManager(address onBehalfOf) internal view virtual {
-    require(
-      onBehalfOf == _msgSender() || _positionManager[onBehalfOf][_msgSender()],
-      Errors.CallerNotPositionManager()
-    );
+    require(_positionManager[onBehalfOf][_msgSender()], Errors.CallerNotPositionManager());
   }
 
   /**
