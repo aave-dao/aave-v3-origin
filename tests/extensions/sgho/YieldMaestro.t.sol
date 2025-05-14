@@ -133,6 +133,44 @@ contract YieldMaestroTest is TestnetProcedures {
     yieldMaestro.claimSavings();
   }
 
+  function test_claimSavings_insufficientBalance() external {
+    // Set target rate
+    vm.startPrank(yManager);
+    yieldMaestro.setTargetRate(1000); // 10% APR
+    vm.stopPrank();
+
+    // Mock vault assets
+    vm.mockCall(
+      address(sgho),
+      abi.encodeWithSelector(sgho.totalAssets.selector),
+      abi.encode(1000 ether)
+    );
+
+    // Skip time
+    vm.warp(block.timestamp + 30 days);
+
+    // Calculate expected yield
+    uint256 assets = 1000 ether;
+    uint256 rate = 1000 * 1e6; // 10% APR
+    uint256 timeElapsed = 30 days;
+    uint256 expectedYield = (assets * rate) / 1e10; // First divide by precision
+    expectedYield = (expectedYield * timeElapsed) / 365 days; // Then apply time factor
+
+    // Ensure YieldMaestro has less balance than expected yield
+    uint256 availableBalance = expectedYield / 2;
+    deal(address(gho), address(yieldMaestro), availableBalance, true);
+
+    // Claim savings
+    vm.prank(address(sgho));
+    uint256 claimed = yieldMaestro.claimSavings();
+
+    // Should only claim what's available
+    assertEq(claimed, availableBalance, 'should only claim available balance');
+    assertEq(gho.balanceOf(address(sgho)), availableBalance, 'sGHO should receive available balance');
+    assertEq(gho.balanceOf(address(yieldMaestro)), 0, 'YieldMaestro should be empty');
+    assertEq(yieldMaestro.lastClaimTimestamp(), block.timestamp, 'lastClaimTimestamp not updated');
+  }
+
   // --- Preview Claimable Tests ---
   function test_previewClaimable() external {
     // Set target rate
