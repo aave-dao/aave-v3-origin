@@ -291,17 +291,13 @@ library ValidationLogic {
   /**
    * @notice Validates the action of setting an asset as collateral.
    * @param reserveConfig The config of the reserve
-   * @param aToken The balance of the user
    */
   function validateSetUseReserveAsCollateral(
-    DataTypes.ReserveConfigurationMap memory reserveConfig,
-    address user,
-    address aToken
-  ) internal view {
+    DataTypes.ReserveConfigurationMap memory reserveConfig
+  ) internal pure {
     (bool isActive, , , bool isPaused) = reserveConfig.getFlags();
     require(isActive, Errors.ReserveInactive());
     require(!isPaused, Errors.ReservePaused());
-    require(IAToken(aToken).scaledBalanceOf(user) != 0, Errors.UnderlyingBalanceZero());
   }
 
   /**
