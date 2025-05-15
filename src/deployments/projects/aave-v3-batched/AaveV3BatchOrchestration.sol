@@ -319,6 +319,7 @@ library AaveV3BatchOrchestration {
     report.rewardsControllerProxy = setupReport.rewardsControllerProxy;
     report.aclManager = setupReport.aclManager;
     report.aToken = tokensReport.aToken;
+    report.rwaAToken = tokensReport.rwaAToken;
     report.variableDebtToken = tokensReport.variableDebtToken;
     report.priceOracleSentinel = miscReport.priceOracleSentinel;
     report.defaultInterestRateStrategy = miscReport.defaultInterestRateStrategy;

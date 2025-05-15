@@ -89,7 +89,7 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
     address from,
     address to,
     uint256 value
-  ) external virtual override onlyPool {
+  ) public virtual override onlyPool {
     // Being a normal transfer, the Transfer() and BalanceTransfer() are emitted
     // so no need to emit a specific event here
     _transfer(from, to, value, false);
@@ -146,7 +146,7 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
     uint8 v,
     bytes32 r,
     bytes32 s
-  ) external override {
+  ) external virtual override {
     require(owner != address(0), Errors.ZERO_ADDRESS_NOT_VALID);
     //solium-disable-next-line
     require(block.timestamp <= deadline, Errors.INVALID_EXPIRATION);

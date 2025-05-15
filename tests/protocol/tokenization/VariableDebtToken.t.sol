@@ -63,9 +63,9 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     variableDebtToken = VariableDebtTokenInstance(variableDebtUsdx);
 
     vm.prank(alice);
-    contracts.poolProxy.supply(tokenList.usdx, 10000e6, alice, 0);
+    contracts.poolProxy.supply(tokenList.usdx, 10_000e6, alice, 0);
     vm.prank(bob);
-    contracts.poolProxy.supply(tokenList.usdx, 10000e6, bob, 0);
+    contracts.poolProxy.supply(tokenList.usdx, 10_000e6, bob, 0);
   }
 
   function test_new_VariableDebtToken_implementation() public returns (VariableDebtTokenInstance) {

@@ -1,12 +1,12 @@
 {
-  "borrow: first borrow->borrowingEnabled": "256480",
-  "borrow: recurrent borrow": "249018",
-  "liquidationCall: deficit on liquidated asset": "392365",
-  "liquidationCall: deficit on liquidated asset + other asset": "491921",
-  "liquidationCall: full liquidation": "392365",
-  "liquidationCall: full liquidation and receive ATokens": "368722",
-  "liquidationCall: partial liquidation": "383166",
-  "liquidationCall: partial liquidation and receive ATokens": "359520",
+  "borrow: first borrow->borrowingEnabled": "257306",
+  "borrow: recurrent borrow": "249844",
+  "liquidationCall: deficit on liquidated asset": "393192",
+  "liquidationCall: deficit on liquidated asset + other asset": "493832",
+  "liquidationCall: full liquidation": "393192",
+  "liquidationCall: full liquidation and receive ATokens": "369549",
+  "liquidationCall: partial liquidation": "383994",
+  "liquidationCall: partial liquidation and receive ATokens": "360347",
   "repay: full repay": "176521",
   "repay: full repay with ATokens": "173922",
   "repay: partial repay": "189949",
@@ -16,5 +16,5 @@
   "supply: first supply->collateralEnabled": "176366",
   "withdraw: full withdraw": "165226",
   "withdraw: partial withdraw": "181916",
-  "withdraw: partial withdraw with active borrows": "239471"
+  "withdraw: partial withdraw with active borrows": "240296"
 }
