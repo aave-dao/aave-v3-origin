@@ -59,7 +59,7 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
     address onBehalfOf,
     uint256 amount,
     uint256 index
-  ) external virtual override onlyPool returns (bool) {
+  ) public virtual override onlyPool returns (bool) {
     return _mintScaled(caller, onBehalfOf, amount, index);
   }
 

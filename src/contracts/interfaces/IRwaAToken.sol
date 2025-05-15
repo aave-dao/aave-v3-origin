@@ -69,6 +69,22 @@ interface IRwaAToken {
   function authorizedTransfer(address from, address to, uint256 amount) external returns (bool);
 
   /**
+   * @notice Mints `amount` aTokens to `user`.
+   * @dev onBehalfOf must match the caller.
+   * @param caller The address performing the mint
+   * @param onBehalfOf The address of the user that will receive the minted aTokens
+   * @param amount The amount of tokens getting minted
+   * @param index The next liquidity index of the reserve
+   * @return `true` if the the previous balance of the user was 0
+   */
+  function mint(
+    address caller,
+    address onBehalfOf,
+    uint256 amount,
+    uint256 index
+  ) external returns (bool);
+
+  /**
    * @notice Returns the identifier of the AuthorizedATokenTransfer role
    * @return The id of the AuthorizedATokenTransfer role
    */
