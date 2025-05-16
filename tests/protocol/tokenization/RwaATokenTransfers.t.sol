@@ -14,26 +14,12 @@ contract RwaATokenTransferTests is TestnetProcedures {
     initTestEnvironment();
     aBuidl = RwaAToken(rwaATokenList.aBuidl);
 
-    vm.startPrank(poolAdmin);
-    // authorize alice to hold BUIDL
-    buidl.authorize(alice, true);
-    // mint BUIDL to alice
-    buidl.mint(alice, 100_000e6);
-    // authorize carol to hold BUIDL
-    buidl.authorize(carol, true);
-    // mint BUIDL to carol
-    buidl.mint(carol, 1e6);
-    vm.stopPrank();
-
-    vm.startPrank(alice);
-    buidl.approve(report.poolProxy, UINT256_MAX);
+    vm.prank(alice);
     contracts.poolProxy.supply(tokenList.buidl, 100e6, alice, 0);
     vm.stopPrank();
 
-    vm.startPrank(carol);
-    buidl.approve(report.poolProxy, UINT256_MAX);
+    vm.prank(carol);
     contracts.poolProxy.supply(tokenList.buidl, 1e6, carol, 0);
-    vm.stopPrank();
   }
 
   function test_fuzz_reverts_rwaAToken_transfer_OperationNotSupported(

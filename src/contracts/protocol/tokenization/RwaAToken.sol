@@ -86,11 +86,27 @@ abstract contract RwaAToken is AToken, IRwaAToken {
   }
 
   /// @inheritdoc IRwaAToken
+  function mintToTreasury(
+    uint256 amount,
+    uint256 index
+  ) external virtual override(AToken, IRwaAToken) {
+    revert(Errors.OPERATION_NOT_SUPPORTED);
+  }
+
+  /// @inheritdoc IRwaAToken
   function transferOnLiquidation(
     address from,
     address to,
     uint256 value
   ) public virtual override(AToken, IRwaAToken) {
+    revert(Errors.OPERATION_NOT_SUPPORTED);
+  }
+
+  /// @inheritdoc IRwaAToken
+  function transferUnderlyingTo(
+    address target,
+    uint256 amount
+  ) external virtual override(AToken, IRwaAToken) {
     revert(Errors.OPERATION_NOT_SUPPORTED);
   }
 

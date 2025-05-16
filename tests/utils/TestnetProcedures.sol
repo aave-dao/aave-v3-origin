@@ -75,8 +75,6 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
 
   Roles internal roleList;
 
-  address internal aclManagerAddress;
-
   TestnetERC20 internal usdx;
   TestnetERC20 internal wbtc;
   TestnetRWAERC20 internal buidl;
@@ -157,12 +155,13 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     vm.label(tokenList.ustb, 'USTB');
     vm.label(tokenList.wtgxx, 'WTGXX');
 
-    aclManagerAddress = address(contracts.aclManager);
-
     if (mintUserTokens) {
       // Perform setup of user positions
       uint256 mintAmount_USDX = 100_000e6;
       uint256 mintAmount_WBTC = 100e8;
+      uint256 mintAmount_BUIDL = 100_000e6;
+      uint256 mintAmount_USTB = 10_000e6;
+      uint256 mintAmount_WTGXX = 100_000e18;
       address[] memory users = new address[](3);
       users[0] = alice;
       users[1] = bob;
@@ -173,12 +172,21 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
         usdx.mint(users[x], mintAmount_USDX);
         wbtc.mint(users[x], mintAmount_WBTC);
         deal(address(weth), users[x], 100e18);
+        buidl.authorize(users[x], true);
+        buidl.mint(users[x], mintAmount_BUIDL);
+        ustb.authorize(users[x], true);
+        ustb.mint(users[x], mintAmount_USTB);
+        wtgxx.authorize(users[x], true);
+        wtgxx.mint(users[x], mintAmount_WTGXX);
         vm.stopPrank();
 
         vm.startPrank(users[x]);
         usdx.approve(report.poolProxy, UINT256_MAX);
         wbtc.approve(report.poolProxy, UINT256_MAX);
         weth.approve(report.poolProxy, UINT256_MAX);
+        buidl.approve(report.poolProxy, UINT256_MAX);
+        ustb.approve(report.poolProxy, UINT256_MAX);
+        wtgxx.approve(report.poolProxy, UINT256_MAX);
         vm.stopPrank();
       }
     }
@@ -214,6 +222,22 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
       IRwaAToken(rwaATokenList.aBuidl).AUTHORIZED_ATOKEN_TRANSFER_ROLE(),
       rwaATokenTransferAdmin
     );
+    vm.stopPrank();
+  }
+
+  function _seedLiquidity(address token, uint256 amount, bool isRwa) internal {
+    if (isRwa) {
+      vm.prank(poolAdmin);
+      TestnetRWAERC20(token).authorize(liquidityProvider, true);
+    }
+
+    vm.prank(poolAdmin);
+    TestnetERC20(token).mint(liquidityProvider, amount);
+
+    // supply liquidity through liquidityProvider
+    vm.startPrank(liquidityProvider);
+    IERC20(token).approve(report.poolProxy, UINT256_MAX);
+    contracts.poolProxy.supply(token, amount, liquidityProvider, 0);
     vm.stopPrank();
   }
 

@@ -11,16 +11,6 @@ contract RwaATokenAllowanceTests is TestnetProcedures {
   function setUp() public {
     initTestEnvironment();
     aBuidl = RwaAToken(rwaATokenList.aBuidl);
-
-    vm.startPrank(poolAdmin);
-    // authorize alice to hold BUIDL
-    buidl.authorize(alice, true);
-    // mint BUIDL to alice
-    buidl.mint(alice, 100_000e6);
-    vm.stopPrank();
-
-    vm.prank(alice);
-    buidl.approve(report.poolProxy, UINT256_MAX);
   }
 
   function test_fuzz_reverts_rwaAToken_permit_OperationNotSupported(

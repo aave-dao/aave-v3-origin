@@ -14,15 +14,6 @@ contract PoolSupplyRwaTests is TestnetProcedures {
   function setUp() public {
     initTestEnvironment();
 
-    vm.startPrank(poolAdmin);
-    // authorize & mint BUIDL to alice
-    buidl.authorize(alice, true);
-    buidl.mint(alice, 100_000e6);
-    vm.stopPrank();
-
-    vm.prank(alice);
-    buidl.approve(report.poolProxy, UINT256_MAX);
-
     aBuidl = IAToken(rwaATokenList.aBuidl);
   }
 
@@ -63,6 +54,19 @@ contract PoolSupplyRwaTests is TestnetProcedures {
 
     vm.prank(alice);
     contracts.poolProxy.supply(tokenList.buidl, supplyAmount, onBehalfOf, 0);
+  }
+
+  // supply fails because user is no longer authrized to hold RWA
+  function test_fuzz_reverts_supply_UnauthorizedRwaAccount(uint256 supplyAmount) public {
+    supplyAmount = bound(supplyAmount, 1, IERC20(tokenList.buidl).balanceOf(alice));
+
+    vm.prank(poolAdmin);
+    buidl.authorize(alice, false);
+
+    vm.expectRevert(bytes('UNAUTHORIZED_RWA_ACCOUNT'));
+
+    vm.prank(alice);
+    contracts.poolProxy.supply(tokenList.buidl, supplyAmount, alice, 0);
   }
 
   function test_supply_after_collateral_enabled() public {

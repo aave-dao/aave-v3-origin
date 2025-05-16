@@ -64,7 +64,7 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
   LiquidationDataProvider internal liquidationDataProvider;
 
   function setUp() public {
-    initTestEnvironment();
+    initTestEnvironment(false);
 
     liquidationDataProvider = new LiquidationDataProvider(
       address(contracts.poolProxy),
@@ -108,12 +108,7 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     wtgxx.approve(report.poolProxy, UINT256_MAX);
 
     // supply 100000 USDX such that users can borrow USDX against RWAs
-    vm.prank(poolAdmin);
-    usdx.mint(liquidityProvider, 100_000e6);
-    vm.startPrank(liquidityProvider);
-    usdx.approve(report.poolProxy, UINT256_MAX);
-    contracts.poolProxy.supply(tokenList.usdx, 100_000e6, liquidityProvider, 0);
-    vm.stopPrank();
+    _seedLiquidity({token: tokenList.usdx, amount: 100_000e6, isRwa: false});
 
     vm.prank(buidlLiquidator);
     usdx.approve(report.poolProxy, UINT256_MAX);
