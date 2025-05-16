@@ -264,15 +264,17 @@ library SupplyLogic {
     DataTypes.ReserveData storage reserve = reservesData[asset];
     DataTypes.ReserveConfigurationMap memory reserveConfigCached = reserve.configuration;
 
-    ValidationLogic.validateSetUseReserveAsCollateral(
-      reserveConfigCached,
-      user,
-      reserve.aTokenAddress
-    );
+    ValidationLogic.validateSetUseReserveAsCollateral(reserveConfigCached);
 
     if (useAsCollateral == userConfig.isUsingAsCollateral(reserve.id)) return;
 
     if (useAsCollateral) {
+      // When enabeling a reserve as collateral, we want to ensure the user has at least some collateral
+      require(
+        IAToken(reserve.aTokenAddress).scaledBalanceOf(user) != 0,
+        Errors.UnderlyingBalanceZero()
+      );
+
       require(
         ValidationLogic.validateUseAsCollateral(
           reservesData,
