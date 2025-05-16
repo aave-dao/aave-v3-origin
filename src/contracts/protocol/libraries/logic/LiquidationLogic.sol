@@ -515,7 +515,7 @@ library LiquidationLogic {
     bool hasNoCollateralLeft,
     address interestRateStrategyAddress
   ) internal {
-    bool noMoreDebt;
+    bool noMoreDebt = true;
     // Prior v3.1, there were cases where, after liquidation, the `isBorrowing` flag was left on
     // even after the user debt was fully repaid, so to avoid this function reverting in the `_burnScaled`
     // (see ScaledBalanceTokenBase contract), we check for any debt remaining.
