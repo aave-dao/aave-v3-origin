@@ -694,7 +694,7 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
   ) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
 
-    LiquidationDataProvider.LiquidationInfo memory liquidationInfo = _checkLiquidation(
+    _checkLiquidation(
       LiquidationCheck({
         user: rwaTokenInfos[rwaTokenIndex].user,
         supplyToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
@@ -890,7 +890,8 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     );
 
     if (input.beforeLiquidationCallbackCalldata.length > 0) {
-      address(this).delegatecall(input.beforeLiquidationCallbackCalldata);
+      (bool success, ) = address(this).delegatecall(input.beforeLiquidationCallbackCalldata);
+      assertTrue(success);
     }
 
     vars.liquidationAmount = IERC20Detailed(

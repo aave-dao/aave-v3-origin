@@ -20,8 +20,7 @@ abstract contract RwaAToken is AToken, IRwaAToken {
   using SafeCast for uint256;
 
   /// @inheritdoc IRwaAToken
-  bytes32 public constant override AUTHORIZED_ATOKEN_TRANSFER_ROLE =
-    keccak256('AUTHORIZED_ATOKEN_TRANSFER_ROLE');
+  bytes32 public constant override ATOKEN_ADMIN_ROLE = keccak256('ATOKEN_ADMIN');
 
   /**
    * @dev Constructor.
@@ -33,80 +32,74 @@ abstract contract RwaAToken is AToken, IRwaAToken {
 
   /// @inheritdoc IRwaAToken
   function permit(
-    address owner,
-    address spender,
-    uint256 value,
-    uint256 deadline,
-    uint8 v,
-    bytes32 r,
-    bytes32 s
+    address,
+    address,
+    uint256,
+    uint256,
+    uint8,
+    bytes32,
+    bytes32
   ) external virtual override(AToken, IRwaAToken) {
     revert(Errors.OPERATION_NOT_SUPPORTED);
   }
 
   /// @inheritdoc IRwaAToken
   function approve(
-    address spender,
-    uint256 amount
+    address,
+    uint256
   ) external virtual override(IERC20, IncentivizedERC20, IRwaAToken) returns (bool) {
     revert(Errors.OPERATION_NOT_SUPPORTED);
   }
 
   /// @inheritdoc IRwaAToken
   function increaseAllowance(
-    address spender,
-    uint256 addedValue
+    address,
+    uint256
   ) external virtual override(IncentivizedERC20, IRwaAToken) returns (bool) {
     revert(Errors.OPERATION_NOT_SUPPORTED);
   }
 
   /// @inheritdoc IRwaAToken
   function decreaseAllowance(
-    address spender,
-    uint256 subtractedValue
+    address,
+    uint256
   ) external virtual override(IncentivizedERC20, IRwaAToken) returns (bool) {
     revert(Errors.OPERATION_NOT_SUPPORTED);
   }
 
   /// @inheritdoc IRwaAToken
   function transfer(
-    address recipient,
-    uint256 amount
+    address,
+    uint256
   ) external virtual override(IERC20, IncentivizedERC20, IRwaAToken) returns (bool) {
     revert(Errors.OPERATION_NOT_SUPPORTED);
   }
 
   /// @inheritdoc IRwaAToken
   function transferFrom(
-    address sender,
-    address recipient,
-    uint256 amount
+    address,
+    address,
+    uint256
   ) external virtual override(IERC20, IncentivizedERC20, IRwaAToken) returns (bool) {
     revert(Errors.OPERATION_NOT_SUPPORTED);
   }
 
   /// @inheritdoc IRwaAToken
-  function mintToTreasury(
-    uint256 amount,
-    uint256 index
-  ) external virtual override(AToken, IRwaAToken) {
+  function mintToTreasury(uint256, uint256) external virtual override(AToken, IRwaAToken) {
     revert(Errors.OPERATION_NOT_SUPPORTED);
   }
 
   /// @inheritdoc IRwaAToken
   function transferOnLiquidation(
-    address from,
-    address to,
-    uint256 value
+    address,
+    address,
+    uint256
   ) public virtual override(AToken, IRwaAToken) {
     revert(Errors.OPERATION_NOT_SUPPORTED);
   }
 
   /// @inheritdoc IRwaAToken
-  function transferUnderlyingTo(
-    address target,
-    uint256 amount
-  ) external virtual override(AToken, IRwaAToken) {
+  function transferUnderlyingTo(address, uint256) external virtual override(AToken, IRwaAToken) {
     revert(Errors.OPERATION_NOT_SUPPORTED);
   }
 
@@ -117,10 +110,7 @@ abstract contract RwaAToken is AToken, IRwaAToken {
     uint256 amount
   ) external virtual override returns (bool) {
     require(
-      IAccessControl(_addressesProvider.getACLManager()).hasRole(
-        AUTHORIZED_ATOKEN_TRANSFER_ROLE,
-        msg.sender
-      ),
+      IAccessControl(_addressesProvider.getACLManager()).hasRole(ATOKEN_ADMIN_ROLE, msg.sender),
       Errors.CALLER_NOT_ATOKEN_TRANSFER_ADMIN
     );
 

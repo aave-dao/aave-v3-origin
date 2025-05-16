@@ -17,6 +17,7 @@ import {TestnetRWAERC20} from 'src/contracts/mocks/testnet-helpers/TestnetRWAERC
 import {TestnetERC20} from 'src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
 import {PoolConfigurator} from 'src/contracts/protocol/pool/PoolConfigurator.sol';
 import {DefaultReserveInterestRateStrategyV2} from 'src/contracts/misc/DefaultReserveInterestRateStrategyV2.sol';
+import {RwaATokenManager} from 'src/contracts/misc/RwaATokenManager.sol';
 import {ReserveConfiguration} from 'src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
 import {PercentageMath} from 'src/contracts/protocol/libraries/math/PercentageMath.sol';
 import {AaveProtocolDataProvider} from 'src/contracts/helpers/AaveProtocolDataProvider.sol';
@@ -82,6 +83,7 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
   TestnetRWAERC20 internal wtgxx;
   WETH9 internal weth;
 
+  address internal rwaATokenManagerOwner;
   address internal rwaATokenTransferAdmin;
 
   struct TokenList {
@@ -195,7 +197,8 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
   }
 
   function _rwaInit() internal {
-    rwaATokenTransferAdmin = makeAddr('ATOKEN_TRANSFER_ADMIN_1');
+    rwaATokenManagerOwner = makeAddr('RWA_ATOKEN_MANAGER_OWNER');
+    rwaATokenTransferAdmin = address(new RwaATokenManager(rwaATokenManagerOwner));
 
     (rwaATokenList.aBuidl, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(
       tokenList.buidl
@@ -218,8 +221,8 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     wtgxx.authorize(rwaATokenList.aWtgxx, true);
     // grant Authorized Transfer Role to the aToken Transfer Admin
     AccessControl(report.aclManager).grantRole(
-      // fetch role from aBuild (it is the same for all RwaATokens)
-      IRwaAToken(rwaATokenList.aBuidl).AUTHORIZED_ATOKEN_TRANSFER_ROLE(),
+      // fetch role from aBuidl (it is the same for all RwaATokens)
+      IRwaAToken(rwaATokenList.aBuidl).ATOKEN_ADMIN_ROLE(),
       rwaATokenTransferAdmin
     );
     vm.stopPrank();

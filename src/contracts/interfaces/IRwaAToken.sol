@@ -72,7 +72,7 @@ interface IRwaAToken {
   /**
    * @notice Transfers an amount of aTokens between two users.
    * @dev It checks for valid HF after the tranfer.
-   * @dev Only callable by transfer role admin.
+   * @dev Only callable by aToken admin.
    * @param from The address to transfer from.
    * @param to The address to transfer to.
    * @param amount The amount to be transferred.
@@ -97,8 +97,8 @@ interface IRwaAToken {
   ) external returns (bool);
 
   /**
-   * @notice Returns the identifier of the AuthorizedATokenTransfer role
-   * @return The id of the AuthorizedATokenTransfer role
+   * @notice Returns the identifier of the ATokenAdmin role
+   * @return The id of the ATokenAdmin role
    */
-  function AUTHORIZED_ATOKEN_TRANSFER_ROLE() external pure returns (bytes32);
+  function ATOKEN_ADMIN_ROLE() external pure returns (bytes32);
 }

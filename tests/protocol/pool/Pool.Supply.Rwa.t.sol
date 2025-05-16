@@ -12,7 +12,15 @@ contract PoolSupplyRwaTests is TestnetProcedures {
   IAToken internal aBuidl;
 
   function setUp() public {
-    initTestEnvironment();
+    initTestEnvironment(false);
+
+    vm.startPrank(poolAdmin);
+    buidl.authorize(alice, true);
+    buidl.mint(alice, 100_000e6);
+    vm.stopPrank();
+
+    vm.prank(alice);
+    buidl.approve(report.poolProxy, UINT256_MAX);
 
     aBuidl = IAToken(rwaATokenList.aBuidl);
   }
