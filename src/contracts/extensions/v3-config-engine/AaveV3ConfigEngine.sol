@@ -176,6 +176,17 @@ contract AaveV3ConfigEngine is IAaveV3ConfigEngine {
   }
 
   /// @inheritdoc IAaveV3ConfigEngine
+  function createEModeCategories(EModeCategoryCreation[] calldata creations) external {
+    EMODE_ENGINE.functionDelegateCall(
+      abi.encodeWithSelector(
+        EModeEngine.executeEModeCategoriesCreate.selector,
+        _getEngineConstants(),
+        creations
+      )
+    );
+  }
+
+  /// @inheritdoc IAaveV3ConfigEngine
   function updateEModeCategories(EModeCategoryUpdate[] calldata updates) external {
     EMODE_ENGINE.functionDelegateCall(
       abi.encodeWithSelector(

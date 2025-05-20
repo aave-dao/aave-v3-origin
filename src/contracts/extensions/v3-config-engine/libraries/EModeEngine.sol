@@ -11,6 +11,8 @@ library EModeEngine {
   using PercentageMath for uint256;
   using SafeCast for uint256;
 
+  error NoAvailableEmodeCategory();
+
   function executeAssetsEModeUpdate(
     IEngine.EngineConstants calldata engineConstants,
     IEngine.AssetEModeUpdate[] memory updates
@@ -18,6 +20,38 @@ library EModeEngine {
     require(updates.length != 0, 'AT_LEAST_ONE_UPDATE_REQUIRED');
 
     _configAssetsEMode(engineConstants.poolConfigurator, updates);
+  }
+
+  function executeEModeCategoriesCreate(
+    IEngine.EngineConstants calldata engineConstants,
+    IEngine.EModeCategoryCreation[] memory creations
+  ) external {
+    for (uint256 i; i < creations.length; i++) {
+      uint8 categoryId = _findFirstUnusedEmodeCategory(engineConstants.pool);
+      engineConstants.poolConfigurator.setEModeCategory(
+        categoryId,
+        creations[i].ltv.toUint16(),
+        creations[i].liqThreshold.toUint16(),
+        // For reference, this is to simplify the interaction with the Aave protocol,
+        // as there the definition is as e.g. 105% (5% bonus for liquidators)
+        (100_00 + creations[i].liqBonus).toUint16(),
+        creations[i].label
+      );
+      for (uint256 j; j < creations[i].collaterals.length; j++) {
+        engineConstants.poolConfigurator.setAssetCollateralInEMode(
+          creations[i].collaterals[j],
+          categoryId,
+          true
+        );
+      }
+      for (uint256 k; k < creations[i].borrowable.length; k++) {
+        engineConstants.poolConfigurator.setAssetBorrowableInEMode(
+          creations[i].borrowable[k],
+          categoryId,
+          true
+        );
+      }
+    }
   }
 
   function executeEModeCategoriesUpdate(
@@ -113,5 +147,16 @@ library EModeEngine {
         );
       }
     }
+  }
+
+  /**
+   * @dev eModes must have a non-zero lt so we select the first that has a zero lt.
+   */
+  function _findFirstUnusedEmodeCategory(IPool pool) private view returns (uint8) {
+    // eMode id 0 is skipped intentially as it is the reserved default
+    for (uint8 i = 1; i < 256; i++) {
+      if (pool.getEModeCategoryCollateralConfig(i).liquidationThreshold == 0) return i;
+    }
+    revert NoAvailableEmodeCategory();
   }
 }
