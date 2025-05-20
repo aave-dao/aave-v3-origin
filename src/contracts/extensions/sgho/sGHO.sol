@@ -39,6 +39,11 @@ contract sGHO is ERC4626, IERC20Permit, EIP712, Nonces, IStakedToken {
    */
   error ERC2612InvalidSigner(address signer, address owner);
 
+      /**
+     * @dev Thrown when a direct ETH transfer is attempted.
+     */
+    error NoEthAllowed();
+
   /**
    * @dev Set the underlying asset contract. This must be an ERC20-compatible contract (ERC20 or ERC777).
    * @param _gho The address of the GHO token contract.
@@ -58,7 +63,7 @@ contract sGHO is ERC4626, IERC20Permit, EIP712, Nonces, IStakedToken {
   }
 
   receive() external payable {
-    revert('No ETH allowed');
+    revert NoEthAllowed();
   }
 
   // --- IStakedToken Implementation ---

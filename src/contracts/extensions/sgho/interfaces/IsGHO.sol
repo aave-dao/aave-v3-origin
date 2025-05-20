@@ -23,6 +23,11 @@ interface IsGHO is IERC4626, IERC20Permit {
      */
     error ERC2612InvalidSigner(address signer, address owner);
 
+    /**
+     * @dev Thrown when a direct ETH transfer is attempted.
+     */
+    error NoEthAllowed();
+
     // --- State Variables (as view functions) ---
 
     /**
