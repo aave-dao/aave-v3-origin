@@ -249,4 +249,33 @@ contract YieldMaestroTest is TestnetProcedures {
     vm.expectRevert('No ETH allowed');
     payable(address(yieldMaestro)).transfer(1 ether);
   }
+
+  // --- APR Calculation Tests ---
+  function test_APRCalculation_OneYear() external {
+    // Set target rate to 1000 (10%)
+    vm.startPrank(yManager);
+    yieldMaestro.setTargetRate(1000);
+    vm.stopPrank();
+
+    // Set initial vault assets to 1000 GHO
+    vm.startPrank(user1);
+    gho.approve(address(sgho), 1000 ether);
+    sgho.deposit(1000 ether, address(user1));
+    vm.stopPrank();
+
+    // Move forward 1 year
+    vm.warp(block.timestamp + 365 days);
+
+    // Get initial total assets
+    uint256 initialAssets = sgho.totalAssets();
+    assertEq(initialAssets, 1000 ether, 'should be 1000 GHO');
+
+    // Claim savings
+    vm.prank(address(sgho));
+    uint256 claimed = yieldMaestro.claimSavings();
+
+    // Verify claimed amount is exactly 10% of initial assets
+    assertEq(claimed, 100 ether, 'should claim exactly 10% after 1 year');
+    assertEq(gho.balanceOf(address(sgho)), initialAssets + claimed, 'sGHO should receive 10% yield');
+  }
 } 

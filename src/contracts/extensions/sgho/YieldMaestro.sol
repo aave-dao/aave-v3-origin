@@ -139,8 +139,9 @@ contract YieldMaestro is Initializable, IYieldMaestro {
   }
 
   receive() external payable {
-    revert('No ETH allowed');
+    revert NoEthAllowed();
   }
+
 
   function _onlyFundsAdmin() internal view returns (bool) {
     return aclManager.hasRole(FUNDS_ADMIN_ROLE, msg.sender);

@@ -48,6 +48,11 @@ interface IYieldMaestro {
   error NotInitialized();
 
   /**
+   * @dev Throws if the contract is not initialized.
+   */
+  error NoEthAllowed();
+
+  /**
    * @dev Returns the address of the GHO token.
   */
 
