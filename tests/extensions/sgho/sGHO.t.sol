@@ -517,4 +517,82 @@ contract sGhoTest is TestnetProcedures {
       'YieldMaestro should receive donated amount'
     );
   }
+
+  // --- IStakedToken Interface Tests ---
+
+  function test_stakedToken() external {
+    assertEq(sgho.STAKED_TOKEN(), address(gho), 'STAKED_TOKEN should return GHO address');
+  }
+
+  function test_stake() external {
+    uint256 amount = 100 ether;
+    uint256 initialBalance = gho.balanceOf(user1);
+    uint256 initialSghoBalance = sgho.balanceOf(user2);
+
+    vm.startPrank(user1);
+    sgho.stake(user2, amount);
+    vm.stopPrank();
+
+    assertEq(gho.balanceOf(user1), initialBalance - amount, 'GHO balance not decreased');
+    assertEq(sgho.balanceOf(user2), initialSghoBalance + amount, 'sGHO balance not increased');
+    assertEq(sgho.totalAssets(), amount, 'totalAssets not updated');
+  }
+
+  function test_redeem() external {
+    uint256 amount = 100 ether;
+    
+    // First stake some tokens
+    vm.startPrank(user1);
+    sgho.stake(user1, amount);
+    vm.stopPrank();
+
+    uint256 initialBalance = gho.balanceOf(user1);
+    uint256 initialSghoBalance = sgho.balanceOf(user1);
+
+    vm.startPrank(user1);
+    sgho.redeem(user1, amount);
+    vm.stopPrank();
+
+    assertEq(gho.balanceOf(user1), initialBalance + amount, 'GHO balance not increased');
+    assertEq(sgho.balanceOf(user1), initialSghoBalance - amount, 'sGHO balance not decreased');
+    assertEq(sgho.totalAssets(), 0, 'totalAssets not updated');
+  }
+
+  function test_claimRewards() external {
+    uint256 amount = 100 ether;
+    
+    // First stake some tokens
+    vm.startPrank(user1);
+    sgho.stake(user1, amount);
+    vm.stopPrank();
+
+    // Set target rate and skip time to generate yield
+    vm.startPrank(yManager);
+    yieldMaestro.setTargetRate(1000); // 10% APR
+    vm.stopPrank();
+
+    vm.warp(block.timestamp + 30 days);
+
+    // Initial state
+    uint256 initialTotalAssets = sgho.totalAssets();
+    uint256 initialGhoBalance = gho.balanceOf(address(sgho));
+
+    // Claim rewards
+    vm.startPrank(user1);
+    sgho.claimRewards(user1, 0); // amount parameter is ignored
+    vm.stopPrank();
+
+    // Calculate expected yield
+    uint256 expectedYield = (amount * yieldMaestro.targetRate() * 30 days) / (1e10 * 365 days);
+    
+    assertEq(sgho.totalAssets(), initialTotalAssets + expectedYield, 'totalAssets not updated with yield');
+    assertEq(gho.balanceOf(address(sgho)), initialGhoBalance + expectedYield, 'GHO balance not updated with yield');
+  }
+
+  function test_cooldown() external {
+    // cooldown is a no-op in sGHO, so we just verify it doesn't revert
+    vm.startPrank(user1);
+    sgho.cooldown();
+    vm.stopPrank();
+  }
 }
