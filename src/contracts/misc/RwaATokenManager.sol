@@ -9,7 +9,7 @@ import {IRwaATokenManager} from 'src/contracts/interfaces/IRwaATokenManager.sol'
  * @title RwaATokenManager
  * @author Aave
  * @notice Implementation of the RWA aToken Manager, allowing transfer permissions to be granted individually for each RWA aToken.
- * @dev Requires the AuthorizedATokenTransferAdmin role on the Aave V3 Pool.
+ * @dev Requires the ATokenAdmin role on the Aave V3 Pool.
  */
 contract RwaATokenManager is AccessControl, IRwaATokenManager {
   /// @inheritdoc IRwaATokenManager
