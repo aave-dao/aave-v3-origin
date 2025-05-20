@@ -44,9 +44,9 @@ library EModeEngine {
           true
         );
       }
-      for (uint256 k; k < creations[i].borrowable.length; k++) {
+      for (uint256 k; k < creations[i].borrowables.length; k++) {
         engineConstants.poolConfigurator.setAssetBorrowableInEMode(
-          creations[i].borrowable[k],
+          creations[i].borrowables[k],
           categoryId,
           true
         );

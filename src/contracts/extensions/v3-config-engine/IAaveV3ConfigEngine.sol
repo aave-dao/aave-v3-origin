@@ -226,7 +226,7 @@ interface IAaveV3ConfigEngine {
    *   liqThreshold: 70_00,
    *   liqBonus: EngineFlags.KEEP_CURRENT,
    *   label: EngineFlags.KEEP_CURRENT_STRING,
-   *   borrowable:[USDC],
+   *   borrowables:[USDC],
    *   collaterals:[ETH]
    * })
    */
@@ -235,7 +235,7 @@ interface IAaveV3ConfigEngine {
     uint256 liqThreshold;
     uint256 liqBonus;
     string label;
-    address[] borrowable;
+    address[] borrowables;
     address[] collaterals;
   }
 
