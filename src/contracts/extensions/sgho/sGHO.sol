@@ -7,16 +7,20 @@ import {ECDSA} from 'openzeppelin-contracts/contracts/utils/cryptography/ECDSA.s
 import {EIP712} from 'openzeppelin-contracts/contracts/utils/cryptography/EIP712.sol';
 import {Nonces} from 'openzeppelin-contracts/contracts/utils/Nonces.sol';
 import {IYieldMaestro} from './interfaces/IYieldMaestro.sol';
+import {IStakedToken} from '../../../contracts/rewards/interfaces/IStakedToken.sol';
 
 interface IERC1271 {
   function isValidSignature(bytes32, bytes memory) external view returns (bytes4);
 }
 
-contract sGHO is ERC4626, IERC20Permit, EIP712, Nonces {
+contract sGHO is ERC4626, IERC20Permit, EIP712, Nonces, IStakedToken {
   address public immutable gho;
   address public YIELD_MAESTRO;
   uint256 internal internalTotalAssets;
   uint256 internal lastupdate;
+
+  /// @inheritdoc IStakedToken
+  address public STAKED_TOKEN = gho;
 
   // --- EIP712 niceties ---
   uint256 public immutable deploymentChainId;
@@ -47,6 +51,7 @@ contract sGHO is ERC4626, IERC20Permit, EIP712, Nonces {
     deploymentChainId = block.chainid;
     _DOMAIN_SEPARATOR = _calculateDomainSeparator(block.chainid);
     gho = _gho;
+    STAKED_TOKEN = gho;
     YIELD_MAESTRO = _yieldMaestro;
     internalTotalAssets = 0;
     lastupdate = block.timestamp;
@@ -55,6 +60,27 @@ contract sGHO is ERC4626, IERC20Permit, EIP712, Nonces {
   receive() external payable {
     revert('No ETH allowed');
   }
+
+  // --- IStakedToken Implementation ---
+  // @dev This is intended for backwards compatibility with the stkGHO contract and easy integration with the User Interface.
+
+  /// @inheritdoc IStakedToken
+  function stake(address to, uint256 amount) external {
+    deposit(amount, to);
+  }
+
+  /// @inheritdoc IStakedToken
+  function redeem(address to, uint256 amount) external {
+    withdraw(amount, to, msg.sender);
+  }
+
+  /// @inheritdoc IStakedToken
+  function claimRewards(address to, uint256 amount) external {
+    _claimSavings();
+  }
+
+    /// @inheritdoc IStakedToken
+  function cooldown() external {}
 
   // --- Approve by signature ---
 
