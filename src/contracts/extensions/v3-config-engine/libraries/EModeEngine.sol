@@ -103,11 +103,13 @@ library EModeEngine {
         keccak256(abi.encode(updates[i].label)) !=
         keccak256(abi.encode(EngineFlags.KEEP_CURRENT_STRING));
 
-      if (notAllKeepCurrent && atLeastOneKeepCurrent) {
-        DataTypes.CollateralConfig memory cfg = pool.getEModeCategoryCollateralConfig(
-          updates[i].eModeCategory
-        );
+      DataTypes.CollateralConfig memory cfg = pool.getEModeCategoryCollateralConfig(
+        updates[i].eModeCategory
+      );
+      // should only be able to update existing eModes, not create new ones
+      require(cfg.liquidationThreshold != 0, 'INVALID_UPDATE');
 
+      if (notAllKeepCurrent && atLeastOneKeepCurrent) {
         if (updates[i].ltv == EngineFlags.KEEP_CURRENT) {
           updates[i].ltv = cfg.ltv;
         }
