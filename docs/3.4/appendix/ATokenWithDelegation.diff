@@ -1,8 +1,8 @@
-diff --git a/docs/3.4/diffs/ATokenWithDelegation.sol b/src/contracts/protocol/tokenization/ATokenWithDelegation.sol
-index b3967209..717e91a9 100644
---- a/docs/3.4/diffs/ATokenWithDelegation.sol
+diff --git a/docs/3.4/ATokenWithDelegation.sol b/src/contracts/protocol/tokenization/ATokenWithDelegation.sol
+index b3967209..0d3d4b7b 100644
+--- a/docs/3.4/ATokenWithDelegation.sol
 +++ b/src/contracts/protocol/tokenization/ATokenWithDelegation.sol
-@@ -1,17 +1,23 @@
+@@ -1,17 +1,24 @@
 -// SPDX-License-Identifier: MIT
 -pragma solidity ^0.8.0;
 +// SPDX-License-Identifier: BUSL-1.1
@@ -10,15 +10,16 @@ index b3967209..717e91a9 100644
 +
 +import {WadRayMath} from '../libraries/math/WadRayMath.sol';
 +import {IPool} from '../../interfaces/IPool.sol';
- 
+
 -import {IPool} from 'aave-v3-core/contracts/interfaces/IPool.sol';
 -import {BaseDelegation} from 'aave-token-v3/BaseDelegation.sol';
  import {AToken} from './AToken.sol';
- 
+
 +import {DelegationMode} from './base/DelegationMode.sol';
 +import {BaseDelegation} from './delegation/BaseDelegation.sol';
 +
  /**
++ * @title Aave ERC20 ATokenWithDelegation
   * @author BGD Labs
   * @notice contract that gives a tokens the delegation functionality. For now should only be used for AAVE aToken
   * @dev uint sizes are used taken into account that is tailored for AAVE token. In this AToken child we only update
@@ -31,10 +32,10 @@ index b3967209..717e91a9 100644
    struct ATokenDelegationState {
      uint72 delegatedPropositionBalance;
      uint72 delegatedVotingBalance;
-@@ -19,7 +25,17 @@ contract ATokenWithDelegation is AToken, BaseDelegation {
- 
+@@ -19,7 +26,17 @@ contract ATokenWithDelegation is AToken, BaseDelegation {
+
    mapping(address => ATokenDelegationState) internal _delegatedState;
- 
+
 -  constructor(IPool pool) AToken(pool) {}
 +  /**
 +   * @dev Constructor.
@@ -47,12 +48,12 @@ index b3967209..717e91a9 100644
 +    address rewardsController,
 +    address treasury
 +  ) AToken(pool, rewardsController, treasury) {}
- 
+
    function _getDomainSeparator() internal view override returns (bytes32) {
      return DOMAIN_SEPARATOR();
-@@ -57,20 +73,36 @@ contract ATokenWithDelegation is AToken, BaseDelegation {
+@@ -57,20 +74,36 @@ contract ATokenWithDelegation is AToken, BaseDelegation {
    }
- 
+
    /**
 -   * @notice Overrides the parent _transfer to force validated transfer() and delegation balance transfers
 -   * @param from The source address
@@ -86,7 +87,7 @@ index b3967209..717e91a9 100644
 +
 +    super._transfer(from, to, amount, index);
    }
- 
+
    /**
     * @notice Overrides the parent _mint to force delegation balance transfers
     * @param account The address receiving tokens
@@ -95,7 +96,7 @@ index b3967209..717e91a9 100644
     */
    function _mint(address account, uint120 amount) internal override {
      _delegationChangeOnTransfer(address(0), account, 0, _getBalance(account), amount);
-@@ -80,7 +112,7 @@ contract ATokenWithDelegation is AToken, BaseDelegation {
+@@ -80,7 +113,7 @@ contract ATokenWithDelegation is AToken, BaseDelegation {
    /**
     * @notice Overrides the parent _burn to force delegation balance transfers
     * @param account The account whose tokens are burnt

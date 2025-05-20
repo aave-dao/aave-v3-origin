@@ -1,13 +1,14 @@
-diff --git a/docs/3.4/diffs/BaseDelegation.sol b/src/contracts/protocol/tokenization/delegation/BaseDelegation.sol
-index c1a95d08..f15ccb69 100644
---- a/docs/3.4/diffs/BaseDelegation.sol
+diff --git a/docs/3.4/BaseDelegation.sol b/src/contracts/protocol/tokenization/delegation/BaseDelegation.sol
+index c1a95d08..dae21a67 100644
+--- a/docs/3.4/BaseDelegation.sol
 +++ b/src/contracts/protocol/tokenization/delegation/BaseDelegation.sol
-@@ -1,11 +1,14 @@
+@@ -1,11 +1,15 @@
  // SPDX-License-Identifier: MIT
- pragma solidity ^0.8.0;
+-pragma solidity ^0.8.0;
++pragma solidity ^0.8.10;
 
--import {ECDSA} from 'openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol';
 +import {MessageHashUtils} from 'openzeppelin-contracts/contracts/utils/cryptography/MessageHashUtils.sol';
+ import {ECDSA} from 'openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol';
 +import {SafeCast} from 'openzeppelin-contracts/contracts/utils/math/SafeCast.sol';
 
 -import {SafeCast72} from './utils/SafeCast72.sol';
@@ -21,7 +22,7 @@ index c1a95d08..f15ccb69 100644
 
  /**
   * @notice The contract implements generic delegation functionality for the upcoming governance v3
-@@ -18,7 +21,7 @@ import {DelegationMode} from './DelegationAwareBalance.sol';
+@@ -18,7 +22,7 @@ import {DelegationMode} from './DelegationAwareBalance.sol';
   *   otherwise at least POWER_SCALE_FACTOR should be adjusted !!!
   *   *************************************************************
   */
@@ -30,7 +31,7 @@ index c1a95d08..f15ccb69 100644
    struct DelegationState {
      uint72 delegatedPropositionBalance;
      uint72 delegatedVotingBalance;
-@@ -81,7 +84,7 @@ abstract contract BaseDelegation is IGovernancePowerDelegationToken {
+@@ -81,7 +85,7 @@ abstract contract BaseDelegation is IGovernancePowerDelegationToken {
      DelegationState memory delegationState
    ) internal virtual;
 
@@ -39,7 +40,7 @@ index c1a95d08..f15ccb69 100644
    function delegateByType(
      address delegatee,
      GovernancePowerType delegationType
-@@ -89,13 +92,13 @@ abstract contract BaseDelegation is IGovernancePowerDelegationToken {
+@@ -89,13 +93,13 @@ abstract contract BaseDelegation is IGovernancePowerDelegationToken {
      _delegateByType(msg.sender, delegatee, delegationType);
    }
 
@@ -55,7 +56,7 @@ index c1a95d08..f15ccb69 100644
    function getDelegateeByType(
      address delegator,
      GovernancePowerType delegationType
-@@ -103,7 +106,7 @@ abstract contract BaseDelegation is IGovernancePowerDelegationToken {
+@@ -103,7 +107,7 @@ abstract contract BaseDelegation is IGovernancePowerDelegationToken {
      return _getDelegateeByType(delegator, _getDelegationState(delegator), delegationType);
    }
 
@@ -64,7 +65,7 @@ index c1a95d08..f15ccb69 100644
    function getDelegates(address delegator) external view override returns (address, address) {
      DelegationState memory delegatorBalance = _getDelegationState(delegator);
      return (
-@@ -112,7 +115,7 @@ abstract contract BaseDelegation is IGovernancePowerDelegationToken {
+@@ -112,7 +116,7 @@ abstract contract BaseDelegation is IGovernancePowerDelegationToken {
      );
    }
 
@@ -73,7 +74,7 @@ index c1a95d08..f15ccb69 100644
    function getPowerCurrent(
      address user,
      GovernancePowerType delegationType
-@@ -122,10 +125,12 @@ abstract contract BaseDelegation is IGovernancePowerDelegationToken {
+@@ -122,10 +126,12 @@ abstract contract BaseDelegation is IGovernancePowerDelegationToken {
        ? _getBalance(user)
        : 0;
      uint256 userDelegatedPower = _getDelegatedPowerByType(userState, delegationType);
@@ -87,7 +88,7 @@ index c1a95d08..f15ccb69 100644
    function getPowersCurrent(address user) external view override returns (uint256, uint256) {
      return (
        getPowerCurrent(user, GovernancePowerType.VOTING),
-@@ -133,7 +138,7 @@ abstract contract BaseDelegation is IGovernancePowerDelegationToken {
+@@ -133,7 +139,7 @@ abstract contract BaseDelegation is IGovernancePowerDelegationToken {
      );
    }
 
@@ -96,7 +97,7 @@ index c1a95d08..f15ccb69 100644
    function metaDelegateByType(
      address delegator,
      address delegatee,
-@@ -143,10 +148,11 @@ abstract contract BaseDelegation is IGovernancePowerDelegationToken {
+@@ -143,10 +149,11 @@ abstract contract BaseDelegation is IGovernancePowerDelegationToken {
      bytes32 r,
      bytes32 s
    ) external override {
@@ -111,12 +112,12 @@ index c1a95d08..f15ccb69 100644
        _getDomainSeparator(),
        keccak256(
          abi.encode(
-@@ -160,11 +166,12 @@ abstract contract BaseDelegation is IGovernancePowerDelegationToken {
+@@ -160,11 +167,12 @@ abstract contract BaseDelegation is IGovernancePowerDelegationToken {
        )
      );
 
 -    require(delegator == ECDSA.recover(digest, v, r, s), 'INVALID_SIGNATURE');
-+    require(delegator == ecrecover(digest, v, r, s), Errors.InvalidSignature());
++    require(delegator == ECDSA.recover(digest, v, r, s), Errors.InvalidSignature());
 +
      _delegateByType(delegator, delegatee, delegationType);
    }
@@ -126,7 +127,7 @@ index c1a95d08..f15ccb69 100644
    function metaDelegate(
      address delegator,
      address delegatee,
-@@ -173,17 +180,19 @@ abstract contract BaseDelegation is IGovernancePowerDelegationToken {
+@@ -173,17 +181,19 @@ abstract contract BaseDelegation is IGovernancePowerDelegationToken {
      bytes32 r,
      bytes32 s
    ) external override {
@@ -145,12 +146,12 @@ index c1a95d08..f15ccb69 100644
      );
 
 -    require(delegator == ECDSA.recover(digest, v, r, s), 'INVALID_SIGNATURE');
-+    require(delegator == ecrecover(digest, v, r, s), Errors.InvalidSignature());
++    require(delegator == ECDSA.recover(digest, v, r, s), Errors.InvalidSignature());
 +
      _delegateByType(delegator, delegatee, GovernancePowerType.VOTING);
      _delegateByType(delegator, delegatee, GovernancePowerType.PROPOSITION);
    }
-@@ -213,10 +222,10 @@ abstract contract BaseDelegation is IGovernancePowerDelegationToken {
+@@ -213,10 +223,10 @@ abstract contract BaseDelegation is IGovernancePowerDelegationToken {
 
      // we use uint72, because this is the most optimal for AaveTokenV3
      // To make delegated balance fit into uint72 we're decreasing precision of delegated balance by POWER_SCALE_FACTOR
