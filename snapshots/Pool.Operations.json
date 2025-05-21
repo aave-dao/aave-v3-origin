@@ -1,6 +1,11 @@
 {
   "borrow: first borrow->borrowingEnabled": "257306",
   "borrow: recurrent borrow": "249844",
+  "flashLoan: flash loan for one asset": "197361",
+  "flashLoan: flash loan for one asset and borrow": "279883",
+  "flashLoan: flash loan for two assets": "325455",
+  "flashLoan: flash loan for two assets and borrow": "486091",
+  "flashLoanSimple: simple flash loan": "170603",
   "liquidationCall: deficit on liquidated asset": "393192",
   "liquidationCall: deficit on liquidated asset + other asset": "493832",
   "liquidationCall: full liquidation": "393192",

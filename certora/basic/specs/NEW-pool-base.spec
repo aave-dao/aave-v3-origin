@@ -99,7 +99,7 @@ function calculateCompoundedInterestSummary(uint256 rate, uint40 t0, uint256 t1)
 }
 
 function isActiveReserve(env e, address asset) returns bool {
-  DataTypes.ReserveData data = getReserveDataExtended(e, asset);
+  DataTypes.ReserveDataLegacy data = getReserveData(e, asset);
   DataTypes.ReserveConfigurationMap configuration = data.configuration;
   bool isActive = getActive(e, configuration);
 
@@ -107,7 +107,7 @@ function isActiveReserve(env e, address asset) returns bool {
 }
 
 function isFrozenReserve(env e, address asset) returns bool {
-  DataTypes.ReserveData data = getReserveDataExtended(e, asset);
+  DataTypes.ReserveDataLegacy data = getReserveData(e, asset);
   DataTypes.ReserveConfigurationMap configuration = data.configuration;
   bool isFrozen = getFrozen(e, configuration);
 
@@ -115,7 +115,7 @@ function isFrozenReserve(env e, address asset) returns bool {
 }
 
 function isEnabledForBorrow(env e, address asset) returns bool {
-  DataTypes.ReserveData data = getReserveDataExtended(e, asset);
+  DataTypes.ReserveDataLegacy data = getReserveData(e, asset);
   DataTypes.ReserveConfigurationMap configuration = data.configuration;
   bool isBorrowEnabled = getBorrowingEnabled(e, configuration);
 
@@ -123,12 +123,12 @@ function isEnabledForBorrow(env e, address asset) returns bool {
 }
 
 function getCurrentLiquidityRate(env e, address asset) returns mathint {
-  DataTypes.ReserveData data = getReserveDataExtended(e, asset);
+  DataTypes.ReserveDataLegacy data = getReserveData(e, asset);
   return data.currentLiquidityRate;
 }
 
 function getLiquidityIndex(env e, address asset) returns mathint {
-  DataTypes.ReserveData data = getReserveDataExtended(e, asset);
+  DataTypes.ReserveDataLegacy data = getReserveData(e, asset);
   return data.liquidityIndex;
 }
 

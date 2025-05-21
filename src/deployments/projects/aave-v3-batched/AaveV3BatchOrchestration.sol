@@ -314,6 +314,8 @@ library AaveV3BatchOrchestration {
     report.paraSwapWithdrawSwapAdapter = paraswapReport.paraSwapWithdrawSwapAdapter;
     report.treasuryImplementation = peripheryReport.treasuryImplementation;
     report.treasury = peripheryReport.treasury;
+    report.dustBin = peripheryReport.dustBin;
+    report.emptyImplementation = peripheryReport.emptyImplementation;
     report.poolProxy = setupReport.poolProxy;
     report.poolConfiguratorProxy = setupReport.poolConfiguratorProxy;
     report.rewardsControllerProxy = setupReport.rewardsControllerProxy;

@@ -53,9 +53,6 @@ deploy-libs :
 	make deploy-libs-two chain=${chain}
 	npx catapulta-verify -b broadcast/LibraryPreCompileTwo.sol/${chainId}/run-latest.json
 
-# Gas reports
-gas-report :; forge test --mp 'tests/gas/*.t.sol' --isolate
-
 
 # Invariants
 echidna:

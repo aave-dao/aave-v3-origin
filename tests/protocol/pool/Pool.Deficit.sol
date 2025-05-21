@@ -279,6 +279,7 @@ contract PoolDeficitTests is TestnetProcedures {
     vm.assume(user != contracts.poolProxy.getReserveAToken(tokenList.usdx));
     vm.assume(user != contracts.poolProxy.getReserveAToken(tokenList.wbtc));
     vm.assume(user != contracts.poolProxy.getReserveAToken(tokenList.weth));
+    vm.assume(user != report.poolConfiguratorProxy);
   }
 
   // we reinvent these helpers on each contract and should move them somewhere common

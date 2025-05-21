@@ -131,6 +131,7 @@ function indexForToken(address token, env e) returns uint256 {
 
 // todo: adjust for stable debt token
 function aTokenBalanceOfCVL(address token, address user, env e) returns uint256 {
+  require token != 0;
     uint storedBalance = balanceOfCVL(token, user);
     if (aTokenToUnderlying[token] == 0) {
         // not a properly initialized aToken, return the regular ERC20 balance

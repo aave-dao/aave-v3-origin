@@ -3,12 +3,15 @@ pragma solidity ^0.8.0;
 
 import {TransparentUpgradeableProxy} from 'openzeppelin-contracts/contracts/proxy/transparent/TransparentUpgradeableProxy.sol';
 import {Collector} from '../../../contracts/treasury/Collector.sol';
+import {EmptyImplementation} from '../../../contracts/misc/EmptyImplementation.sol';
 import '../../interfaces/IMarketReportTypes.sol';
 
 contract AaveV3TreasuryProcedure {
   struct TreasuryReport {
     address treasuryImplementation;
     address treasury;
+    address emptyImplementation;
+    address dustBin;
   }
 
   function _deployAaveV3Treasury(
@@ -29,6 +32,14 @@ contract AaveV3TreasuryProcedure {
           abi.encodeWithSelector(treasuryImplementation.initialize.selector, 100_000, poolAdmin)
         )
       );
+      treasuryReport.emptyImplementation = address(new EmptyImplementation{salt: salt}());
+      treasuryReport.dustBin = address(
+        new TransparentUpgradeableProxy{salt: salt}(
+          treasuryReport.emptyImplementation,
+          poolAdmin,
+          ''
+        )
+      );
     } else {
       Collector treasuryImplementation = new Collector();
       treasuryReport.treasuryImplementation = address(treasuryImplementation);
@@ -39,6 +50,10 @@ contract AaveV3TreasuryProcedure {
           poolAdmin,
           abi.encodeWithSelector(treasuryImplementation.initialize.selector, 100_000, poolAdmin)
         )
+      );
+      treasuryReport.emptyImplementation = address(new EmptyImplementation());
+      treasuryReport.dustBin = address(
+        new TransparentUpgradeableProxy(treasuryReport.emptyImplementation, poolAdmin, '')
       );
     }
 

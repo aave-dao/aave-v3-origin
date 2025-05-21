@@ -85,6 +85,8 @@ struct MarketReport {
   address staticATokenFactoryProxy;
   address staticATokenImplementation;
   address revenueSplitter;
+  address dustBin;
+  address emptyImplementation;
 }
 
 struct LibrariesReport {
@@ -174,6 +176,8 @@ struct PeripheryReport {
   address emissionManager;
   address rewardsControllerImplementation;
   address revenueSplitter;
+  address emptyImplementation;
+  address dustBin;
 }
 
 struct ParaswapReport {
