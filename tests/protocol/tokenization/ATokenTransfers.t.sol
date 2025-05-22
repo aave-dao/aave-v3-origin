@@ -292,7 +292,7 @@ contract ATokenTransferTests is TestnetProcedures {
   }
 
   function test_atoken_transfer_sets_enabled_as_collateral(
-    uint64 timePassed,
+    uint56 timePassed,
     uint256 amount
   ) public {
     uint256 aliceBalance = IERC20(aToken).balanceOf(alice);
