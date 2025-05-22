@@ -1,1 +1,0 @@
-genhtml ./lcov.info.p -o report --branch-coverage --rc derive_function_end_line=0 --parallel

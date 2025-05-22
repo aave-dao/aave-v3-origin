@@ -4,11 +4,11 @@
   "getLiquidationGracePeriod": "7765",
   "getReserveData": "32157",
   "getUserAccountData: supplies: 0, borrows: 0": "22641",
-  "getUserAccountData: supplies: 0, borrows: 0 with eMode enabled": "7641",
-  "getUserAccountData: supplies: 1, borrows: 0": "35891",
-  "getUserAccountData: supplies: 1, borrows: 0 with eMode enabled": "28199",
-  "getUserAccountData: supplies: 2, borrows: 0": "48414",
-  "getUserAccountData: supplies: 2, borrows: 0 with eMode enabled": "41106",
-  "getUserAccountData: supplies: 2, borrows: 1": "30270",
-  "getUserAccountData: supplies: 2, borrows: 1 with eMode enabled": "31462"
+  "getUserAccountData: supplies: 0, borrows: 0 with eMode enabled": "22641",
+  "getUserAccountData: supplies: 1, borrows: 0": "59391",
+  "getUserAccountData: supplies: 1, borrows: 0 with eMode enabled": "62199",
+  "getUserAccountData: supplies: 2, borrows: 0": "88414",
+  "getUserAccountData: supplies: 2, borrows: 0 with eMode enabled": "91606",
+  "getUserAccountData: supplies: 2, borrows: 1": "119770",
+  "getUserAccountData: supplies: 2, borrows: 1 with eMode enabled": "122962"
 }

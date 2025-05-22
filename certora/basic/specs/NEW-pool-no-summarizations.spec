@@ -81,7 +81,7 @@ rule liquidityIndexNonDecresingFor_cumulateToLiquidityIndex() {
 
 
 function get_AToken_of_asset(env e, address asset) returns address {
-  DataTypes.ReserveData data = getReserveDataExtended(e, asset);
+  DataTypes.ReserveDataLegacy data = getReserveData(e, asset);
   return data.aTokenAddress;
 }
 

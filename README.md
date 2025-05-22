@@ -1,39 +1,15 @@
-# Aave V3.2 Origin
+# Aave V3.3 Origin
 
 ![Aave v3.1 Origin_banner](./resources/v3-1-banner.jpeg)
 
-Aave v3.2 complete codebase, Foundry-based.
+Aave v3.3 complete codebase, Foundry-based.
 
-[![Coverage badge](./report/coverage.svg)](https://aave-dao.github.io/aave-v3-origin)
+[![codecov](https://codecov.io/gh/aave-dao/aave-v3-origin/graph/badge.svg?token=6HX4NXCNIQ)](https://codecov.io/gh/aave-dao/aave-v3-origin)
 <br>
 
-## Dependencies
+## Contributing
 
-- Foundry, [how-to install](https://book.getfoundry.sh/getting-started/installation) (we recommend also update to the last version with `foundryup`)
-- Lcov
-  - Optional, only needed for coverage testing
-  - For Ubuntu, you can install via `apt install lcov`
-  - For Mac, you can install via `brew install lcov`
-
-<br>
-
-## Setup
-
-```sh
-cp .env.example .env
-
-forge install
-
-# required for tests & linting
-npm install
-```
-
-<br>
-
-## Tests
-
-- To run the full test suite: `make test`
-- To re-generate the coverage report: `make coverage`
+If you're interested in contributing, please read the [contributing docs](/.github/CONTRIBUTING.md) **before submitting a pull request**.
 
 <br>
 
@@ -41,16 +17,16 @@ npm install
 
 - [Aave v3 technical Paper](./docs/Aave_V3_Technical_Paper.pdf)
 - [v3 to v3.0.2 production upgrade](https://github.com/bgd-labs/proposal-3.0.2-upgrade/blob/main/README.md)
-- [Aave v3.1 features](./docs/Aave-v3.1-features.md)
-- [Aave v3.2 features](./docs/3.2/Aave-v3.2-features.md)
-- [v3.1 to v3.2.0 production upgrade](https://github.com/bgd-labs/protocol-3.2.0-upgrade/blob/main/README.md)
+- [Aave v3.1 features](./docs/3.1/Aave-v3.1-features.md)
+- [Aave v3.2 features](./docs/3.2/Aave-3.2-features.md)
+- [Aave v3.3 features](./docs/3.3/Aave-v3.3-features.md)
+- [v3.1 to v3.2 production upgrade](https://github.com/bgd-labs/protocol-3.2.0-upgrade/blob/main/README.md)
+- [v3.2 to v3.3 production upgrade](https://github.com/bgd-labs/protocol-3.3.0-upgrade/blob/main/README.md)
 - [Set Ltv to 0 on Freeze Feature State diagram](./docs/freeze-ltv0-states.png)
 
 <br>
 
 ## Security
-
-Aave v3.1 is an upgraded version of Aave v3, more precisely on top of the initial Aave v3 release and a follow-up 3.0.2 later update.
 
 The following are the security procedures historically applied to Aave v3.X versions.
 

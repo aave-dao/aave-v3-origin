@@ -33,9 +33,9 @@ certoraRun $CMN certora/basic/conf/stableRemoved.conf \
            --msg "6: Stable fields are un-touched"
 
 echo
-echo "******** Running:  6 EModeConfiguration ***************"
+echo "******** Running:  7 EModeConfiguration ***************"
 certoraRun $CMN certora/basic/conf/EModeConfiguration.conf \
-           --msg "6: EModeConfiguration"
+           --msg "7: EModeConfiguration"
 
 
 echo

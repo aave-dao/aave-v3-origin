@@ -30,6 +30,9 @@ contract AaveV3PeripheryBatch is
 
       _report.treasury = treasuryReport.treasury;
       _report.treasuryImplementation = treasuryReport.treasuryImplementation;
+      // bin and treasury are shared per network, so skipping based on treasury not being zero is fine
+      _report.dustBin = treasuryReport.dustBin;
+      _report.emptyImplementation = treasuryReport.emptyImplementation;
     } else {
       _report.treasury = config.treasury;
     }

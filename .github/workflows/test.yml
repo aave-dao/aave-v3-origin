@@ -12,11 +12,42 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   lint:
     uses: bgd-labs/github-workflows/.github/workflows/foundry-lint-prettier.yml@main
   test:
     uses: bgd-labs/github-workflows/.github/workflows/foundry-test.yml@main
+  codecov:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: lcov-report
+          path: lcov
+
+      - name: Cleanup lcov
+        run: |
+          sudo apt-get -y install lcov
+          lcov --remove ./lcov/lcov.info -o ./lcov/lcov.info \
+          'src/contracts/helpers/UiIncentiveDataProviderV3.sol' \
+          'src/contracts/helpers/UiPoolDataProviderV3.sol' \
+          'src/contracts/helpers/WalletBalanceProvider.sol' \
+          'src/contracts/dependencies/*'
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@ea99328d1c4d5f39fda7cbffe104afd6906c50b0
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: ${{ github.repository }}
+          files: ./lcov/lcov.info
 # only when the repo has zksync code
 #  test-zk:
 #    uses: bgd-labs/github-workflows/.github/workflows/foundry-test-zk.yml@main
