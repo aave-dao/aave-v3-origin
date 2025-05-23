@@ -47,6 +47,7 @@ contract MetadataReporter is IMetadataReporter {
     vm.serializeAddress(jsonReport, 'emptyImplementation', report.emptyImplementation);
     vm.serializeAddress(jsonReport, 'l2Encoder', report.l2Encoder);
     vm.serializeAddress(jsonReport, 'aToken', report.aToken);
+    vm.serializeAddress(jsonReport, 'rwaAToken', report.rwaAToken);
     vm.serializeAddress(jsonReport, 'variableDebtToken', report.variableDebtToken);
     vm.serializeAddress(jsonReport, 'emissionManager', report.emissionManager);
     vm.serializeAddress(

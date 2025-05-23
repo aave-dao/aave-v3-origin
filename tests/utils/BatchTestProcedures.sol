@@ -97,7 +97,8 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
       flags.l2,
       initialReport.poolAddressesProvider,
       config.l2SequencerUptimeFeed,
-      config.l2PriceOracleSentinelGracePeriod
+      config.l2PriceOracleSentinelGracePeriod,
+      roles.rwaATokenManagerAdmin
     );
 
     return (initialReport, gettersReport1, poolReport, peripheryReport, miscReport, setupContract);

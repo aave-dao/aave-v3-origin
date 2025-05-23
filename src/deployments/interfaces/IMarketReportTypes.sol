@@ -104,6 +104,7 @@ struct Roles {
   address marketOwner;
   address poolAdmin;
   address emergencyAdmin;
+  address rwaATokenManagerAdmin;
 }
 
 struct MarketConfig {
@@ -137,6 +138,7 @@ struct PoolReport {
 struct MiscReport {
   address priceOracleSentinel;
   address defaultInterestRateStrategy;
+  address rwaATokenManager;
 }
 
 struct ConfigEngineReport {

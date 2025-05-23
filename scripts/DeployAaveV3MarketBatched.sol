@@ -3,6 +3,6 @@ pragma solidity ^0.8.0;
 
 import {DeployAaveV3MarketBatchedBase} from './misc/DeployAaveV3MarketBatchedBase.sol';
 
-import {DefaultMarketInput} from '../src/deployments/inputs/DefaultMarketInput.sol';
+import {MainnetInput} from '../src/deployments/inputs/MainnetInput.sol';
 
-contract Default is DeployAaveV3MarketBatchedBase, DefaultMarketInput {}
+contract Default is DeployAaveV3MarketBatchedBase, MainnetInput {}

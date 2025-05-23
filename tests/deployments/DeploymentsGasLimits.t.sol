@@ -141,7 +141,8 @@ contract DeploymentsGasLimits is BatchTestProcedures {
       flags.l2,
       marketReportOne.poolAddressesProvider,
       config.l2SequencerUptimeFeed,
-      config.l2PriceOracleSentinelGracePeriod
+      config.l2PriceOracleSentinelGracePeriod,
+      roles.rwaATokenManagerAdmin
     );
   }
 

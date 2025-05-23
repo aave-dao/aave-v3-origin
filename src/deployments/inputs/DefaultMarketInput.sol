@@ -19,6 +19,7 @@ contract DefaultMarketInput is MarketInput {
     roles.marketOwner = deployer;
     roles.emergencyAdmin = deployer;
     roles.poolAdmin = deployer;
+    roles.rwaATokenManagerAdmin = deployer;
 
     config.marketId = 'Aave V3 Testnet Market';
     config.providerId = 8080;
