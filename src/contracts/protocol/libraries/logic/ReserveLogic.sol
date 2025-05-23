@@ -76,7 +76,7 @@ library ReserveLogic {
   }
 
   /**
-   * @notice Updates the liquidity cumulative index and the variable borrow index.
+   * @notice Updates the liquidity cumulative index, the variable borrow index and the timestamp of the update.
    * @param reserve The reserve object
    * @param reserveCache The caching layer for the reserve data
    */
@@ -207,7 +207,7 @@ library ReserveLogic {
   }
 
   /**
-   * @notice Updates the reserve indexes and the timestamp of the update.
+   * @notice Updates the reserve indexes.
    * @param reserve The reserve reserve to be updated
    * @param reserveCache The cache layer holding the cached protocol data
    */
