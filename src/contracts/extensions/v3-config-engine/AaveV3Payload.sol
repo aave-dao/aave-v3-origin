@@ -150,7 +150,7 @@ abstract contract AaveV3Payload {
   /// @dev to be defined in the child with a list of priceFeeds to update
   function priceFeedsUpdates() public view virtual returns (IEngine.PriceFeedUpdate[] memory) {}
 
-  /// @dev to be defined in the child with a list of eMode categories to update
+  /// @dev to be defined in the child with a list of eMode categories to create
   function eModeCategoryCreations()
     public
     view
