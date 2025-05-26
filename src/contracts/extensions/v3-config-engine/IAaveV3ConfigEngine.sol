@@ -316,7 +316,7 @@ interface IAaveV3ConfigEngine {
   function updateBorrowSide(BorrowUpdate[] memory updates) external;
 
   /**
-   * @notice Performs an update of the e-mode categories, in the Aave pool configured in this engine instance
+   * @notice Performs creation of new e-mode categories, in the Aave pool configured in this engine instance
    * @param creations `EModeCategoryCreation[]` list of declarative creations containing the new parameters
    *   More information on the documentation of the struct.
    */
