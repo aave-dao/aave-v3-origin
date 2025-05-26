@@ -19,7 +19,7 @@ library EModeEngine {
   ) external {
     require(updates.length != 0, 'AT_LEAST_ONE_UPDATE_REQUIRED');
 
-    _configAssetsEMode(engineConstants.poolConfigurator, updates);
+    _configAssetsEMode(engineConstants.poolConfigurator, engineConstants.pool, updates);
   }
 
   function executeEModeCategoriesCreate(
@@ -27,6 +27,11 @@ library EModeEngine {
     IEngine.EModeCategoryCreation[] memory creations
   ) external {
     for (uint256 i; i < creations.length; i++) {
+      require(
+        keccak256(abi.encode(creations[i].label)) !=
+          keccak256(abi.encode(EngineFlags.KEEP_CURRENT_STRING)),
+        'INVALID_LABEL'
+      );
       uint8 categoryId = _findFirstUnusedEmodeCategory(engineConstants.pool);
       engineConstants.poolConfigurator.setEModeCategory(
         categoryId,
@@ -65,9 +70,14 @@ library EModeEngine {
 
   function _configAssetsEMode(
     IPoolConfigurator poolConfigurator,
+    IPool pool,
     IEngine.AssetEModeUpdate[] memory updates
   ) internal {
     for (uint256 i = 0; i < updates.length; i++) {
+      DataTypes.CollateralConfig memory cfg = pool.getEModeCategoryCollateralConfig(
+        updates[i].eModeCategory
+      );
+      require(cfg.liquidationThreshold != 0, 'INVALID_UPDATE');
       if (updates[i].collateral != EngineFlags.KEEP_CURRENT) {
         poolConfigurator.setAssetCollateralInEMode(
           updates[i].asset,
