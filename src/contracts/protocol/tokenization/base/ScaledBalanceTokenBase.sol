@@ -63,7 +63,7 @@ abstract contract ScaledBalanceTokenBase is MintableIncentivizedERC20, IScaledBa
    * @param onBehalfOf The address of the user that will receive the scaled tokens
    * @param amount The amount of tokens getting minted
    * @param index The next liquidity index of the reserve
-   * @param rounding The rounding on the burn
+   * @param rounding The rounding direction on the mint operation
    * @return `true` if the the previous balance of the user was 0
    */
   function _mintScaled(
@@ -99,7 +99,7 @@ abstract contract ScaledBalanceTokenBase is MintableIncentivizedERC20, IScaledBa
    * @param target The address that will receive the underlying, if any
    * @param amount The amount getting burned
    * @param index The variable debt index of the reserve
-   * @param rounding The rounding on the burn
+   * @param rounding The rounding direction on the burn operation
    * @return `true` if the the new balance of the user is 0
    */
   function _burnScaled(
