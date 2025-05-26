@@ -224,8 +224,8 @@ interface IAaveV3ConfigEngine {
    * EModeCategoryUpdate({
    *   ltv: 60_00,
    *   liqThreshold: 70_00,
-   *   liqBonus: EngineFlags.KEEP_CURRENT,
-   *   label: EngineFlags.KEEP_CURRENT_STRING,
+   *   liqBonus: 3_00,
+   *   label: 'WETH USDC',
    *   borrowables:[USDC],
    *   collaterals:[ETH]
    * })
