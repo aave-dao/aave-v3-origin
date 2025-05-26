@@ -76,10 +76,12 @@ library ValidationLogic {
     require(onBehalfOf != reserveCache.aTokenAddress, Errors.SupplyToAToken());
 
     uint256 supplyCap = reserveCache.reserveConfiguration.getSupplyCap();
+    // Replicate aToken.totalSupply (round down), to always underestimate the collateral.
     require(
       supplyCap == 0 ||
         ((IAToken(reserveCache.aTokenAddress).scaledTotalSupply() +
-          uint256(reserve.accruedToTreasury)).rayMul(reserveCache.nextLiquidityIndex) + amount) <=
+          uint256(reserve.accruedToTreasury)).rayMulFloor(reserveCache.nextLiquidityIndex) +
+          amount) <=
         supplyCap * (10 ** reserveCache.reserveConfiguration.getDecimals()),
       Errors.SupplyCapExceeded()
     );
@@ -175,7 +177,8 @@ library ValidationLogic {
     }
 
     if (vars.borrowCap != 0) {
-      vars.totalSupplyVariableDebt = params.reserveCache.currScaledVariableDebt.rayMul(
+      // Replicate vDebt.totalSupply (round up), to always overestimate the debt.
+      vars.totalSupplyVariableDebt = params.reserveCache.currScaledVariableDebt.rayMulCeil(
         params.reserveCache.nextVariableBorrowIndex
       );
 

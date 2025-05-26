@@ -129,7 +129,7 @@ contract PoolRepayTests is TestnetProcedures {
     uint256 debtBalanceAfter = varDebtUSDX.scaledBalanceOf(alice);
 
     assertEq(debtBalanceAfter, 0);
-    assertEq(IERC20(aUSDX).balanceOf(alice), tokenBalanceBefore - debtBalanceBefore);
+    assertLe(IERC20(aUSDX).balanceOf(alice), tokenBalanceBefore - debtBalanceBefore);
     assertEq(
       contracts.poolProxy.getUserConfiguration(alice).isBorrowing(
         contracts.poolProxy.getReserveData(tokenList.usdx).id
@@ -181,7 +181,7 @@ contract PoolRepayTests is TestnetProcedures {
     uint32 timeDelta
   ) public {
     uint256 amount = 2000e6;
-    vm.assume(repayAmount <= amount && repayAmount > 0);
+    vm.assume(repayAmount <= amount && repayAmount > 1);
     uint256 borrowAmount = 2000e6;
     vm.startPrank(alice);
     // supply enough collateral to borrow out everything
@@ -201,7 +201,7 @@ contract PoolRepayTests is TestnetProcedures {
     uint256 debtBalanceAfter = IERC20(address(varDebtUSDX)).balanceOf(alice);
     uint256 collateralBalanceAfter = IERC20(aUSDX).balanceOf(alice);
 
-    assertApproxEqAbs(debtBalanceAfter, debtBalanceBefore - repayAmount, 1);
+    assertApproxEqAbs(debtBalanceAfter, debtBalanceBefore - repayAmount, 2);
     assertEq(
       contracts.poolProxy.getUserConfiguration(alice).isBorrowing(
         contracts.poolProxy.getReserveData(tokenList.usdx).id
@@ -224,10 +224,10 @@ contract PoolRepayTests is TestnetProcedures {
     uint128 repayAmount
   ) public {
     vm.assume(userPk != 0);
-    underlyingBalance = uint128(bound(underlyingBalance, 2, type(uint120).max));
-    supplyAmount = uint128(bound(supplyAmount, 2, underlyingBalance));
-    borrowAmount = uint128(bound(borrowAmount, 1, supplyAmount / 2));
-    repayAmount = uint128(bound(repayAmount, 1, borrowAmount));
+    underlyingBalance = uint128(bound(underlyingBalance, 4, type(uint120).max));
+    supplyAmount = uint128(bound(supplyAmount, 4, underlyingBalance));
+    borrowAmount = uint128(bound(borrowAmount, 2, supplyAmount / 2));
+    repayAmount = uint128(bound(repayAmount, 2, borrowAmount));
     address user = vm.addr(userPk);
     deal(tokenList.usdx, user, underlyingBalance);
     vm.startPrank(user);
@@ -287,10 +287,10 @@ contract PoolRepayTests is TestnetProcedures {
     uint128 repayAmount
   ) public {
     vm.assume(userPk != 0);
-    underlyingBalance = uint128(bound(underlyingBalance, 2, type(uint120).max));
-    supplyAmount = uint128(bound(supplyAmount, 2, underlyingBalance));
-    borrowAmount = uint128(bound(borrowAmount, 1, supplyAmount / 2));
-    repayAmount = uint128(bound(repayAmount, 1, borrowAmount));
+    underlyingBalance = uint128(bound(underlyingBalance, 4, type(uint120).max));
+    supplyAmount = uint128(bound(supplyAmount, 4, underlyingBalance));
+    borrowAmount = uint128(bound(borrowAmount, 2, supplyAmount / 2));
+    repayAmount = uint128(bound(repayAmount, 2, borrowAmount));
     address user = vm.addr(userPk);
     deal(tokenList.usdx, user, underlyingBalance);
     vm.startPrank(user);
@@ -352,10 +352,10 @@ contract PoolRepayTests is TestnetProcedures {
     uint128 repayAmount
   ) public {
     vm.assume(userPk != 0);
-    underlyingBalance = uint128(bound(underlyingBalance, 2, type(uint120).max));
-    supplyAmount = uint128(bound(supplyAmount, 2, underlyingBalance));
-    borrowAmount = uint128(bound(borrowAmount, 1, supplyAmount / 2));
-    repayAmount = uint128(bound(repayAmount, 1, borrowAmount));
+    underlyingBalance = uint128(bound(underlyingBalance, 4, type(uint120).max));
+    supplyAmount = uint128(bound(supplyAmount, 4, underlyingBalance));
+    borrowAmount = uint128(bound(borrowAmount, 2, supplyAmount / 2));
+    repayAmount = uint128(bound(repayAmount, 2, borrowAmount));
     address user = vm.addr(userPk);
     deal(tokenList.usdx, user, underlyingBalance);
     vm.startPrank(user);

@@ -63,20 +63,22 @@ abstract contract ScaledBalanceTokenBase is MintableIncentivizedERC20, IScaledBa
    * @param onBehalfOf The address of the user that will receive the scaled tokens
    * @param amount The amount of tokens getting minted
    * @param index The next liquidity index of the reserve
+   * @param rounding The rounding on the burn
    * @return `true` if the the previous balance of the user was 0
    */
   function _mintScaled(
     address caller,
     address onBehalfOf,
     uint256 amount,
-    uint256 index
+    uint256 index,
+    WadRayMath.Rounding rounding
   ) internal returns (bool) {
-    uint256 amountScaled = amount.rayDiv(index);
+    uint256 amountScaled = amount.rayDiv(index, rounding);
     require(amountScaled != 0, Errors.InvalidMintAmount());
 
     uint256 scaledBalance = super.balanceOf(onBehalfOf);
-    uint256 balanceIncrease = scaledBalance.rayMul(index) -
-      scaledBalance.rayMul(_userState[onBehalfOf].additionalData);
+    uint256 balanceIncrease = scaledBalance.rayMul(index, rounding) -
+      scaledBalance.rayMul(_userState[onBehalfOf].additionalData, rounding);
 
     _userState[onBehalfOf].additionalData = index.toUint128();
 
@@ -97,20 +99,22 @@ abstract contract ScaledBalanceTokenBase is MintableIncentivizedERC20, IScaledBa
    * @param target The address that will receive the underlying, if any
    * @param amount The amount getting burned
    * @param index The variable debt index of the reserve
+   * @param rounding The rounding on the burn
    * @return `true` if the the new balance of the user is 0
    */
   function _burnScaled(
     address user,
     address target,
     uint256 amount,
-    uint256 index
+    uint256 index,
+    WadRayMath.Rounding rounding
   ) internal returns (bool) {
-    uint256 amountScaled = amount.rayDiv(index);
+    uint256 amountScaled = amount.rayDiv(index, rounding);
     require(amountScaled != 0, Errors.InvalidBurnAmount());
 
     uint256 scaledBalance = super.balanceOf(user);
-    uint256 balanceIncrease = scaledBalance.rayMul(index) -
-      scaledBalance.rayMul(_userState[user].additionalData);
+    uint256 balanceIncrease = scaledBalance.rayMul(index, WadRayMath.reverseRounding(rounding)) -
+      scaledBalance.rayMul(_userState[user].additionalData, WadRayMath.reverseRounding(rounding));
 
     _userState[user].additionalData = index.toUint128();
 

@@ -61,6 +61,7 @@ library SupplyLogic {
 
     IERC20(params.asset).safeTransferFrom(params.user, reserveCache.aTokenAddress, params.amount);
 
+    // As aToken.mint rounds down the minted shares, we ensure an equivalent of <= params.amount shares is minted.
     bool isFirstSupply = IAToken(reserveCache.aTokenAddress).mint(
       params.user,
       params.onBehalfOf,
@@ -118,9 +119,10 @@ library SupplyLogic {
 
     reserve.updateState(reserveCache);
 
-    uint256 userBalance = IAToken(reserveCache.aTokenAddress).scaledBalanceOf(params.user).rayMul(
-      reserveCache.nextLiquidityIndex
-    );
+    // Replicate aToken.balanceOf (round down), to always underestimate the collateral.
+    uint256 userBalance = IAToken(reserveCache.aTokenAddress)
+      .scaledBalanceOf(params.user)
+      .rayMulFloor(reserveCache.nextLiquidityIndex);
 
     uint256 amountToWithdraw = params.amount;
 
@@ -144,6 +146,7 @@ library SupplyLogic {
       userConfig.setUsingAsCollateral(reserve.id, params.asset, params.user, false);
     }
 
+    // As aToken.burn rounds up the burned shares, we ensure at least an equivalent of >= amountToWithdraw is burned.
     IAToken(reserveCache.aTokenAddress).burn(
       params.user,
       params.to,
@@ -193,7 +196,8 @@ library SupplyLogic {
     ValidationLogic.validateTransfer(reserve);
 
     uint256 reserveId = reserve.id;
-    uint256 scaledAmount = params.amount.rayDiv(reserve.getNormalizedIncome());
+    // The transfer amount is always ceiled, to ensure the receiver, receives at least the intended amoutn of shares.
+    uint256 scaledAmount = params.amount.rayDivCeil(reserve.getNormalizedIncome());
 
     if (params.from != params.to && scaledAmount != 0) {
       DataTypes.UserConfigurationMap storage fromConfig = usersConfig[params.from];

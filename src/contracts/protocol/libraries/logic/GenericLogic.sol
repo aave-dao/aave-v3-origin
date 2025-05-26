@@ -220,7 +220,8 @@ library GenericLogic {
       return 0;
     }
 
-    userTotalDebt = userTotalDebt.rayMul(reserve.getNormalizedDebt()) * assetPrice;
+    // Replicate vDebt.balanceOf (round up), to always overestimate the debt.
+    userTotalDebt = userTotalDebt.rayMulCeil(reserve.getNormalizedDebt()) * assetPrice;
     unchecked {
       return userTotalDebt / assetUnit;
     }
@@ -243,8 +244,9 @@ library GenericLogic {
     uint256 assetUnit
   ) private view returns (uint256) {
     uint256 normalizedIncome = reserve.getNormalizedIncome();
+    // Replicate aToken.balanceOf (round down), to always underestimate the collateral.
     uint256 balance = (
-      IScaledBalanceToken(reserve.aTokenAddress).scaledBalanceOf(user).rayMul(normalizedIncome)
+      IScaledBalanceToken(reserve.aTokenAddress).scaledBalanceOf(user).rayMulFloor(normalizedIncome)
     ) * assetPrice;
 
     unchecked {

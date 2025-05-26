@@ -38,6 +38,29 @@ library PercentageMath {
     }
   }
 
+  function percentMulCeil(
+    uint256 value,
+    uint256 percentage
+  ) internal pure returns (uint256 result) {
+    // to avoid overflow, value <= (type(uint256).max - HALF_PERCENTAGE_FACTOR) / percentage
+    assembly {
+      if iszero(
+        or(
+          iszero(percentage),
+          iszero(gt(value, div(sub(not(0), HALF_PERCENTAGE_FACTOR), percentage)))
+        )
+      ) {
+        revert(0, 0)
+      }
+
+      let product := mul(value, percentage)
+      result := add(
+        div(product, PERCENTAGE_FACTOR),
+        iszero(iszero(mod(product, PERCENTAGE_FACTOR)))
+      )
+    }
+  }
+
   /**
    * @notice Executes a percentage division
    * @dev assembly optimized for improved gas savings, see https://twitter.com/transmissions11/status/1451131036377571328

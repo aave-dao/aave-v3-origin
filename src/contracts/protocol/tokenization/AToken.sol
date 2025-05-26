@@ -67,7 +67,7 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
     uint256 amount,
     uint256 index
   ) external virtual override onlyPool returns (bool) {
-    return _mintScaled(caller, onBehalfOf, amount, index);
+    return _mintScaled(caller, onBehalfOf, amount, index, WadRayMath.Rounding.Floor);
   }
 
   /// @inheritdoc IAToken
@@ -77,7 +77,7 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
     uint256 amount,
     uint256 index
   ) external virtual override onlyPool {
-    _burnScaled(from, receiverOfUnderlying, amount, index);
+    _burnScaled(from, receiverOfUnderlying, amount, index, WadRayMath.Rounding.Ceil);
     if (receiverOfUnderlying != address(this)) {
       IERC20(_underlyingAsset).safeTransfer(receiverOfUnderlying, amount);
     }
@@ -88,7 +88,7 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
     if (amount == 0) {
       return;
     }
-    _mintScaled(address(POOL), TREASURY, amount, index);
+    _mintScaled(address(POOL), TREASURY, amount, index, WadRayMath.Rounding.Floor);
   }
 
   /// @inheritdoc IAToken
@@ -105,7 +105,7 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
   function balanceOf(
     address user
   ) public view virtual override(IncentivizedERC20, IERC20) returns (uint256) {
-    return super.balanceOf(user).rayMul(POOL.getReserveNormalizedIncome(_underlyingAsset));
+    return super.balanceOf(user).rayMulFloor(POOL.getReserveNormalizedIncome(_underlyingAsset));
   }
 
   /// @inheritdoc IERC20
@@ -116,7 +116,7 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
       return 0;
     }
 
-    return currentSupplyScaled.rayMul(POOL.getReserveNormalizedIncome(_underlyingAsset));
+    return super.totalSupply().rayMulFloor(POOL.getReserveNormalizedIncome(_underlyingAsset));
   }
 
   /// @inheritdoc IAToken
@@ -171,8 +171,8 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
 
     uint256 index = POOL.getReserveNormalizedIncome(underlyingAsset);
 
-    uint256 fromBalanceBefore = super.balanceOf(from).rayMul(index);
-    uint256 toBalanceBefore = super.balanceOf(to).rayMul(index);
+    uint256 fromBalanceBefore = super.balanceOf(from).rayMulFloor(index);
+    uint256 toBalanceBefore = super.balanceOf(to).rayMulFloor(index);
 
     _transfer(from, to, amount, index);
 
@@ -194,16 +194,16 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
     uint256 index
   ) internal virtual {
     uint256 senderScaledBalance = super.balanceOf(sender);
-    uint256 senderBalanceIncrease = senderScaledBalance.rayMul(index) -
-      senderScaledBalance.rayMul(_userState[sender].additionalData);
+    uint256 senderBalanceIncrease = senderScaledBalance.rayMulFloor(index) -
+      senderScaledBalance.rayMulFloor(_userState[sender].additionalData);
 
     uint256 recipientScaledBalance = super.balanceOf(recipient);
-    uint256 recipientBalanceIncrease = recipientScaledBalance.rayMul(index) -
-      recipientScaledBalance.rayMul(_userState[recipient].additionalData);
+    uint256 recipientBalanceIncrease = recipientScaledBalance.rayMulFloor(index) -
+      recipientScaledBalance.rayMulFloor(_userState[recipient].additionalData);
 
     _userState[sender].additionalData = index.toUint128();
     _userState[recipient].additionalData = index.toUint128();
-    uint120 scaledAmount = amount.rayDiv(index).toUint120();
+    uint120 scaledAmount = amount.rayDivCeil(index).toUint120();
 
     super._transfer(sender, recipient, scaledAmount);
 

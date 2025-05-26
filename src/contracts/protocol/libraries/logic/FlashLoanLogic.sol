@@ -78,7 +78,7 @@ library FlashLoanLogic {
       vars.currentAmount = params.amounts[i];
       vars.totalPremiums[i] = DataTypes.InterestRateMode(params.interestRateModes[i]) ==
         DataTypes.InterestRateMode.NONE
-        ? vars.currentAmount.percentMul(vars.flashloanPremium)
+        ? vars.currentAmount.percentMulCeil(vars.flashloanPremium)
         : 0;
 
       reservesData[params.assets[i]].virtualUnderlyingBalance -= vars.currentAmount.toUint128();
@@ -177,7 +177,7 @@ library FlashLoanLogic {
     ValidationLogic.validateFlashloanSimple(reserve, params.amount);
 
     IFlashLoanSimpleReceiver receiver = IFlashLoanSimpleReceiver(params.receiverAddress);
-    uint256 totalPremium = params.amount.percentMul(params.flashLoanPremium);
+    uint256 totalPremium = params.amount.percentMulCeil(params.flashLoanPremium);
 
     reserve.virtualUnderlyingBalance -= params.amount.toUint128();
 

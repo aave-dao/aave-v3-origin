@@ -174,9 +174,9 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     uint256 amount = 1200 * 10 ** decimals;
     uint256 repayment = amount / 2;
     uint256 supplyIndex = 1.001e27;
-    uint256 balanceScaled = amount.rayDiv(supplyIndex);
+    uint256 balanceScaled = amount.rayDiv(supplyIndex, WadRayMath.Rounding.Ceil);
     uint256 newIndex = 1.003e27;
-    uint256 repaymentScaled = repayment.rayDiv(newIndex);
+    uint256 repaymentScaled = repayment.rayDiv(newIndex, WadRayMath.Rounding.Floor);
 
     vm.expectEmit(address(debtToken));
     emit IScaledBalanceToken.Mint(alice, alice, amount, 0, supplyIndex);
@@ -184,7 +184,8 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     vm.prank(report.poolProxy);
     debtToken.mint(alice, alice, amount, supplyIndex);
 
-    uint256 balanceIncrease = balanceScaled.rayMul(newIndex) - balanceScaled.rayMul(supplyIndex);
+    uint256 balanceIncrease = balanceScaled.rayMul(newIndex, WadRayMath.Rounding.Ceil) -
+      balanceScaled.rayMul(supplyIndex, WadRayMath.Rounding.Ceil);
     vm.expectEmit(address(debtToken));
     emit IScaledBalanceToken.Burn(
       alice,
@@ -206,9 +207,9 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     uint256 amount = 1200 * 10 ** decimals;
     uint256 supplyIndex = 1.001e27;
     uint256 newIndex = 1.003e27;
-    uint256 balanceScaled = amount.rayDiv(supplyIndex);
+    uint256 balanceScaled = amount.rayDiv(supplyIndex, WadRayMath.Rounding.Ceil);
     uint256 repayment = amount;
-    uint256 repaymentScaled = repayment.rayDiv(newIndex);
+    uint256 repaymentScaled = repayment.rayDiv(newIndex, WadRayMath.Rounding.Floor);
 
     vm.expectEmit(address(debtToken));
     emit IScaledBalanceToken.Mint(alice, alice, amount, 0, supplyIndex);
@@ -216,7 +217,8 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     vm.prank(report.poolProxy);
     debtToken.mint(alice, alice, amount, supplyIndex);
 
-    uint256 balanceIncrease = balanceScaled.rayMul(newIndex) - balanceScaled.rayMul(supplyIndex);
+    uint256 balanceIncrease = balanceScaled.rayMul(newIndex, WadRayMath.Rounding.Ceil) -
+      balanceScaled.rayMul(supplyIndex, WadRayMath.Rounding.Ceil);
     vm.expectEmit(address(debtToken));
     emit IScaledBalanceToken.Burn(
       alice,
@@ -262,7 +264,8 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     uint256 previousIndex = contracts.poolProxy.getReserveNormalizedVariableDebt(tokenList.usdx);
     vm.warp(vm.getBlockTimestamp() + 30 days);
     uint256 newIndex = contracts.poolProxy.getReserveNormalizedVariableDebt(tokenList.usdx);
-    uint256 balanceIncrease = amount.rayMul(newIndex) - amount.rayMul(previousIndex);
+    uint256 balanceIncrease = amount.rayMul(newIndex, WadRayMath.Rounding.Ceil) -
+      amount.rayMul(previousIndex, WadRayMath.Rounding.Ceil);
 
     assertEq(variableDebtToken.balanceOf(alice), amount + balanceIncrease);
   }
@@ -321,7 +324,8 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
 
     assertEq(
       variableDebtToken.scaledBalanceOf(alice),
-      aliceAmount1.rayDiv(index1) + aliceAmount2.rayDiv(index2)
+      aliceAmount1.rayDiv(index1, WadRayMath.Rounding.Ceil) +
+        aliceAmount2.rayDiv(index2, WadRayMath.Rounding.Ceil)
     );
   }
 

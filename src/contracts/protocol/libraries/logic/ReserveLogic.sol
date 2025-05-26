@@ -133,7 +133,7 @@ library ReserveLogic {
     uint256 liquidityTaken,
     address interestRateStrategyAddress
   ) internal {
-    uint256 totalVariableDebt = reserveCache.nextScaledVariableDebt.rayMul(
+    uint256 totalVariableDebt = reserveCache.nextScaledVariableDebt.rayMulCeil(
       reserveCache.nextVariableBorrowIndex
     );
 
@@ -186,23 +186,19 @@ library ReserveLogic {
       return;
     }
 
-    //calculate the total variable debt at moment of the last interaction
-    uint256 prevTotalVariableDebt = reserveCache.currScaledVariableDebt.rayMul(
-      reserveCache.currVariableBorrowIndex
-    );
-
-    //calculate the new total variable debt after accumulation of the interest on the index
-    uint256 currTotalVariableDebt = reserveCache.currScaledVariableDebt.rayMul(
-      reserveCache.nextVariableBorrowIndex
-    );
-
     //debt accrued is the sum of the current debt minus the sum of the debt at the last update
-    uint256 totalDebtAccrued = currTotalVariableDebt - prevTotalVariableDebt;
+    // Replicate vDebt.totalSupply (round up), to always overestimate the debt.
+    uint256 totalDebtAccrued = reserveCache.currScaledVariableDebt.rayMulCeil(
+      reserveCache.nextVariableBorrowIndex - reserveCache.currVariableBorrowIndex
+    );
 
     uint256 amountToMint = totalDebtAccrued.percentMul(reserveCache.reserveFactor);
 
     if (amountToMint != 0) {
-      reserve.accruedToTreasury += amountToMint.rayDiv(reserveCache.nextLiquidityIndex).toUint128();
+      // Replicate aToken.balanceOf (round down), to always underestimate the fee.
+      reserve.accruedToTreasury += amountToMint
+        .rayDivFloor(reserveCache.nextLiquidityIndex)
+        .toUint128();
     }
   }
 

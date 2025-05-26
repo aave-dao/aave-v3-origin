@@ -355,6 +355,66 @@ contract PoolFlashLoansTests is TestnetProcedures {
     );
   }
 
+  function test_flashloan_simple_rounding() public {
+    vm.prank(poolAdmin);
+    TestnetERC20(tokenList.usdx).transferOwnership(address(mockFlashSimpleReceiver));
+
+    vm.expectEmit(address(contracts.poolProxy));
+    emit IPool.FlashLoan(
+      address(mockFlashSimpleReceiver),
+      alice,
+      tokenList.usdx,
+      1,
+      DataTypes.InterestRateMode(0),
+      1, // should be 1 although
+      0
+    );
+
+    vm.prank(alice);
+    contracts.poolProxy.flashLoanSimple(
+      address(mockFlashSimpleReceiver),
+      tokenList.usdx,
+      1,
+      '0x',
+      0
+    );
+  }
+
+  function test_flashloan_rounding() public {
+    vm.prank(poolAdmin);
+    TestnetERC20(tokenList.usdx).transferOwnership(address(mockFlashReceiver));
+
+    address[] memory assets = new address[](1);
+    uint256[] memory amounts = new uint256[](1);
+    uint256[] memory modes = new uint256[](1);
+
+    assets[0] = tokenList.usdx;
+    amounts[0] = 1;
+    modes[0] = 0;
+
+    vm.expectEmit(address(contracts.poolProxy));
+    emit IPool.FlashLoan(
+      address(mockFlashReceiver),
+      alice,
+      tokenList.usdx,
+      1,
+      DataTypes.InterestRateMode(0),
+      1, // should be 1 although
+      0
+    );
+
+    vm.prank(alice);
+    contracts.poolProxy.flashLoan(
+      address(mockFlashReceiver),
+      assets,
+      amounts,
+      modes,
+      alice,
+      '0x',
+      0
+    );
+  }
+
   function test_flashloan_simple_2() public {
     uint256 virtualUnderlyingBalanceBefore = contracts.poolProxy.getVirtualUnderlyingBalance(
       tokenList.usdx
@@ -725,7 +785,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
         assets[x],
         amounts[x],
         DataTypes.InterestRateMode(modes[x]),
-        modes[x] > 0 ? 0 : amounts[x].percentMul(totalFee),
+        modes[x] > 0 ? 0 : amounts[x].percentMulCeil(totalFee),
         0
       );
     }

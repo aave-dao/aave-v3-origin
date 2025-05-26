@@ -60,7 +60,7 @@ contract MathUtilsTests is Test {
     );
   }
 
-  function test_calculateCompoundInterest_shouldNotOverflow() public {
+  function test_calculateCompoundInterest_shouldNotOverflow() public view {
     uint40 currentTimestamp = uint40(vm.getBlockTimestamp());
     uint40 calculationTimestamp = currentTimestamp + 365 days * 10_000;
 

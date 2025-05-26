@@ -96,9 +96,10 @@ library LiquidationLogic {
       balanceWriteOff = currentDeficit;
     }
 
-    uint256 userBalance = IAToken(reserveCache.aTokenAddress).scaledBalanceOf(params.user).rayMul(
-      reserveCache.nextLiquidityIndex
-    );
+    // Replicate aToken.balanceOf (round down), to always underestimate the collateral.
+    uint256 userBalance = IAToken(reserveCache.aTokenAddress)
+      .scaledBalanceOf(params.user)
+      .rayMulFloor(reserveCache.nextLiquidityIndex);
     require(balanceWriteOff <= userBalance, Errors.NotEnoughAvailableUserBalance());
 
     bool isCollateral = userConfig.isUsingAsCollateral(reserve.id);
@@ -106,6 +107,7 @@ library LiquidationLogic {
       userConfig.setUsingAsCollateral(reserve.id, params.asset, params.user, false);
     }
 
+    // As aToken.burn rounds up the burned shares, we ensure at least an equivalent of >= balanceWriteOff is burned.
     IAToken(reserveCache.aTokenAddress).burn(
       params.user,
       reserveCache.aTokenAddress,
@@ -194,12 +196,14 @@ library LiquidationLogic {
       })
     );
 
+    // Replicate aToken.balanceOf (round down), to always underestimate the collateral.
     vars.borrowerCollateralBalance = IAToken(vars.collateralReserveCache.aTokenAddress)
       .scaledBalanceOf(params.borrower)
-      .rayMul(vars.collateralReserveCache.nextLiquidityIndex);
+      .rayMulFloor(vars.collateralReserveCache.nextLiquidityIndex);
+    // Replicate vDebt.balanceOf (round up), to always overestimate the debt.
     vars.borrowerReserveDebt = IVariableDebtToken(vars.debtReserveCache.variableDebtTokenAddress)
       .scaledBalanceOf(params.borrower)
-      .rayMul(vars.debtReserveCache.nextVariableBorrowIndex);
+      .rayMulCeil(vars.debtReserveCache.nextVariableBorrowIndex);
 
     ValidationLogic.validateLiquidationCall(
       borrowerConfig,
@@ -363,14 +367,14 @@ library LiquidationLogic {
 
     // Transfer fee to treasury if it is non-zero
     if (vars.liquidationProtocolFeeAmount != 0) {
-      uint256 scaledDownLiquidationProtocolFee = vars.liquidationProtocolFeeAmount.rayDiv(
+      uint256 scaledDownLiquidationProtocolFee = vars.liquidationProtocolFeeAmount.rayDivFloor(
         vars.collateralReserveCache.nextLiquidityIndex
       );
       uint256 scaledDownBorrowerBalance = IAToken(vars.collateralReserveCache.aTokenAddress)
         .scaledBalanceOf(params.borrower);
       // To avoid trying to send more aTokens than available on balance, due to 1 wei imprecision
       if (scaledDownLiquidationProtocolFee > scaledDownBorrowerBalance) {
-        vars.liquidationProtocolFeeAmount = scaledDownBorrowerBalance.rayMul(
+        vars.liquidationProtocolFeeAmount = scaledDownBorrowerBalance.rayMulFloor(
           vars.collateralReserveCache.nextLiquidityIndex
         );
       }
@@ -514,6 +518,7 @@ library LiquidationLogic {
     // even after the user debt was fully repaid, so to avoid this function reverting in the `_burnScaled`
     // (see ScaledBalanceTokenBase contract), we check for any debt remaining.
     if (borrowerReserveDebt != 0) {
+      // As vDebt.burn rounds down, we ensure an equivalent of <= amount debt is burned.
       (noMoreDebt, debtReserveCache.nextScaledVariableDebt) = IVariableDebtToken(
         debtReserveCache.variableDebtTokenAddress
       ).burn(
@@ -660,7 +665,7 @@ library LiquidationLogic {
               reserveAddress,
               IVariableDebtToken(reserveCache.variableDebtTokenAddress)
                 .scaledBalanceOf(params.borrower)
-                .rayMul(reserveCache.nextVariableBorrowIndex),
+                .rayMulCeil(reserveCache.nextVariableBorrowIndex),
               0,
               true,
               params.interestRateStrategyAddress

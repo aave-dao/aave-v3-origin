@@ -90,6 +90,6 @@ contract ATokenRepayTests is TestnetProcedures {
     contracts.poolProxy.repayWithATokens(tokenList.usdx, UINT256_MAX, 2);
 
     assertEq(variableDebtToken.balanceOf(alice), 0, 'All debt should have been repaid');
-    assertEq(aToken.balanceOf(alice), aTokenBalance - debt, 'AToken balance should be lower');
+    assertLe(aToken.balanceOf(alice), aTokenBalance - debt, 'AToken balance should be lower');
   }
 }

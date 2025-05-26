@@ -457,7 +457,7 @@ contract PoolTests is TestnetProcedures {
     assets[0] = tokenList.usdx;
 
     uint256 accruedToTreasury = uint256(pool.getReserveData(tokenList.usdx).accruedToTreasury)
-      .rayMul(pool.getReserveNormalizedIncome(tokenList.usdx));
+      .rayMul(pool.getReserveNormalizedIncome(tokenList.usdx), WadRayMath.Rounding.Floor);
 
     vm.expectEmit(address(contracts.poolProxy));
     emit IPool.MintedToTreasury(tokenList.usdx, accruedToTreasury);
@@ -487,7 +487,7 @@ contract PoolTests is TestnetProcedures {
     assets[1] = tokenList.usdx;
 
     uint256 accruedToTreasury = uint256(pool.getReserveData(tokenList.usdx).accruedToTreasury)
-      .rayMul(pool.getReserveNormalizedIncome(tokenList.usdx));
+      .rayMul(pool.getReserveNormalizedIncome(tokenList.usdx), WadRayMath.Rounding.Floor);
 
     vm.expectEmit(address(contracts.poolProxy));
     emit IPool.MintedToTreasury(tokenList.usdx, accruedToTreasury);

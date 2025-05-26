@@ -69,6 +69,7 @@ library BorrowLogic {
       })
     );
 
+    // As vDebt.mint rounds up, we ensure an equivalent of >= params.amount debt is created.
     reserveCache.nextScaledVariableDebt = IVariableDebtToken(reserveCache.variableDebtTokenAddress)
       .mint(params.user, params.onBehalfOf, params.amount, reserveCache.nextVariableBorrowIndex);
 
@@ -129,9 +130,10 @@ library BorrowLogic {
     DataTypes.ReserveCache memory reserveCache = reserve.cache();
     reserve.updateState(reserveCache);
 
+    // Replicate vDebt.balanceOf (round up), to always overestimate the debt.
     uint256 userDebt = IVariableDebtToken(reserveCache.variableDebtTokenAddress)
       .scaledBalanceOf(params.onBehalfOf)
-      .rayMul(reserveCache.nextVariableBorrowIndex);
+      .rayMulCeil(reserveCache.nextVariableBorrowIndex);
 
     ValidationLogic.validateRepay(
       params.user,
@@ -146,7 +148,10 @@ library BorrowLogic {
 
     // Allows a user to repay with aTokens without leaving dust from interest.
     if (params.useATokens && paybackAmount == type(uint256).max) {
-      paybackAmount = IAToken(reserveCache.aTokenAddress).balanceOf(params.user);
+      // Replicate aToken.balanceOf (round down), to always underestimate the collateral.
+      paybackAmount = IAToken(reserveCache.aTokenAddress)
+        .scaledBalanceOf(params.onBehalfOf)
+        .rayMulFloor(reserveCache.nextLiquidityIndex);
     }
 
     if (paybackAmount > userDebt) {
@@ -180,6 +185,7 @@ library BorrowLogic {
 
     // in case of aToken repayment the sender must always repay on behalf of itself
     if (params.useATokens) {
+      // As aToken.burn rounds up the burned shares, we ensure at least an equivalent of >= paybackAmount is burned.
       IAToken(reserveCache.aTokenAddress).burn(
         params.user,
         reserveCache.aTokenAddress,

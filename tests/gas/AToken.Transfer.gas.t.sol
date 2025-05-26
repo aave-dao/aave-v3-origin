@@ -14,7 +14,6 @@ import {Testhelpers, IERC20} from './Testhelpers.sol';
 contract ATokenTransfer_gas_Tests is Testhelpers {
   address token;
   IAToken aToken;
-  address variableDebtToken;
 
   address sender = makeAddr('sender');
   address receiver = makeAddr('receiver');
@@ -22,20 +21,17 @@ contract ATokenTransfer_gas_Tests is Testhelpers {
   function setUp() public override {
     super.setUp();
     token = tokenList.usdx;
-    (address aTokenAddress, , address variableDebtTokenAddress) = contracts
-      .protocolDataProvider
-      .getReserveTokensAddresses(tokenList.usdx);
+    address aTokenAddress = contracts.poolProxy.getReserveAToken(tokenList.usdx);
     aToken = IAToken(aTokenAddress);
-    variableDebtToken = variableDebtTokenAddress;
   }
 
   function test_transfer_fullAmount() external {
     _supplyOnReserve(sender, 1 ether);
-    vm.prank(sender);
+    vm.startPrank(sender);
 
     _skip(100);
 
-    aToken.transfer(receiver, 1 ether);
+    aToken.transfer(receiver, aToken.balanceOf(sender));
     vm.snapshotGasLastCall(
       'AToken.transfer',
       'full amount; sender: ->disableCollateral; receiver: ->enableCollateral'
@@ -45,11 +41,11 @@ contract ATokenTransfer_gas_Tests is Testhelpers {
   function test_transfer_fullAmount_dirtyReceiver() external {
     _supplyOnReserve(receiver, 1 ether, tokenList.weth);
     _supplyOnReserve(sender, 1 ether);
-    vm.prank(sender);
+    vm.startPrank(sender);
 
     _skip(100);
 
-    aToken.transfer(receiver, 1 ether);
+    aToken.transfer(receiver, aToken.balanceOf(sender));
     vm.snapshotGasLastCall(
       'AToken.transfer',
       'full amount; sender: ->disableCollateral; receiver: dirty, ->enableCollateral'
@@ -63,7 +59,7 @@ contract ATokenTransfer_gas_Tests is Testhelpers {
 
     _skip(100);
 
-    aToken.transfer(receiver, 1 ether);
+    aToken.transfer(receiver, aToken.balanceOf(sender));
     vm.snapshotGasLastCall('AToken.transfer', 'full amount; receiver: ->enableCollateral');
   }
 
@@ -74,7 +70,7 @@ contract ATokenTransfer_gas_Tests is Testhelpers {
 
     _skip(100);
 
-    aToken.transfer(receiver, 1 ether);
+    aToken.transfer(receiver, aToken.balanceOf(sender));
     vm.snapshotGasLastCall('AToken.transfer', 'full amount; sender: ->disableCollateral;');
   }
 
@@ -86,7 +82,7 @@ contract ATokenTransfer_gas_Tests is Testhelpers {
 
     _skip(100);
 
-    aToken.transfer(receiver, 1 ether);
+    aToken.transfer(receiver, aToken.balanceOf(sender));
     vm.snapshotGasLastCall('AToken.transfer', 'full amount; sender: collateralDisabled');
   }
 

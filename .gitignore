@@ -37,3 +37,4 @@ resource_errors.json
 # invariants
 _corpus/
 crytic-export/
+slither_results.json

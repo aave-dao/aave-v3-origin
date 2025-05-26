@@ -42,8 +42,11 @@ contract ATokenEventsTests is TestnetProcedures {
     );
     uint256 index = cumulatedLiquidityInterest.rayMul(reserveData.liquidityIndex);
     uint256 scaledBalance = IAToken(aTokenAddress).scaledBalanceOf(onBehalfOf);
-    uint256 balanceIncrease = scaledBalance.rayMul(index) -
-      scaledBalance.rayMul(IAToken(aTokenAddress).getPreviousIndex(onBehalfOf));
+    uint256 balanceIncrease = scaledBalance.rayMul(index, WadRayMath.Rounding.Floor) -
+      scaledBalance.rayMul(
+        IAToken(aTokenAddress).getPreviousIndex(onBehalfOf),
+        WadRayMath.Rounding.Floor
+      );
 
     if (checkInterestsNonZero) {
       assertTrue(
@@ -85,8 +88,11 @@ contract ATokenEventsTests is TestnetProcedures {
     );
     uint256 index = cumulatedLiquidityInterest.rayMul(reserveData.liquidityIndex);
     uint256 scaledBalance = IAToken(aTokenAddress).scaledBalanceOf(user);
-    uint256 balanceIncrease = scaledBalance.rayMul(index) -
-      scaledBalance.rayMul(IAToken(aTokenAddress).getPreviousIndex(user));
+    uint256 balanceIncrease = scaledBalance.rayMul(index, WadRayMath.Rounding.Floor) -
+      scaledBalance.rayMul(
+        IAToken(aTokenAddress).getPreviousIndex(user),
+        WadRayMath.Rounding.Floor
+      );
     // Ensure test intention via bool to determine if withdrawal amount should be less than interests
     if (checkAmountLessThanInterests) {
       assertTrue(

@@ -94,7 +94,7 @@ abstract contract ATokenWithDelegation is AToken, BaseDelegation {
       to: to,
       fromBalanceBefore: _userState[from].balance,
       toBalanceBefore: _userState[to].balance,
-      amount: uint256(amount).rayDiv(index)
+      amount: uint256(amount).rayDivCeil(index)
     });
 
     super._transfer(from, to, amount, index);

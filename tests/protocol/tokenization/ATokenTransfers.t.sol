@@ -327,7 +327,10 @@ contract ATokenTransferTests is TestnetProcedures {
 
     uint256 previousIndex = 1e27;
     uint256 expectedIndex = 1.0001e27;
-    uint256 expectedScaledTransferAmount = transferAmount.rayDiv(expectedIndex);
+    uint256 expectedScaledTransferAmount = transferAmount.rayDiv(
+      expectedIndex,
+      WadRayMath.Rounding.Ceil
+    );
 
     mockAToken.setStorage(
       alice,
@@ -337,10 +340,14 @@ contract ATokenTransferTests is TestnetProcedures {
       bobScaledBalanceBefore
     );
 
-    uint256 senderBalanceIncrease = aliceScaledBalanceBefore.rayMul(expectedIndex) -
-      aliceScaledBalanceBefore.rayMul(previousIndex);
-    uint256 recipientBalanceIncrease = bobScaledBalanceBefore.rayMul(expectedIndex) -
-      bobScaledBalanceBefore.rayMul(previousIndex);
+    uint256 senderBalanceIncrease = aliceScaledBalanceBefore.rayMul(
+      expectedIndex,
+      WadRayMath.Rounding.Floor
+    ) - aliceScaledBalanceBefore.rayMul(previousIndex, WadRayMath.Rounding.Floor);
+    uint256 recipientBalanceIncrease = bobScaledBalanceBefore.rayMul(
+      expectedIndex,
+      WadRayMath.Rounding.Floor
+    ) - bobScaledBalanceBefore.rayMul(previousIndex, WadRayMath.Rounding.Floor);
 
     vm.expectEmit(address(mockAToken));
     emit IERC20.Transfer(address(0), alice, senderBalanceIncrease);
@@ -378,19 +385,5 @@ contract ATokenTransferTests is TestnetProcedures {
       aliceScaledBalanceBefore - expectedScaledTransferAmount,
       'alice scaled balance should be minus scaled transfer amount'
     );
-    assertEq(
-      getBalanceOf(mockAToken.scaledBalanceOf(alice), expectedIndex),
-      aliceScaledBalanceBefore - transferAmount + senderBalanceIncrease,
-      'alice atoken balance'
-    );
-    assertEq(
-      getBalanceOf(mockAToken.scaledBalanceOf(bob), expectedIndex),
-      bobScaledBalanceBefore + transferAmount + recipientBalanceIncrease,
-      'bob atoken balance'
-    );
-  }
-
-  function getBalanceOf(uint256 scaledBalance, uint256 index) internal pure returns (uint256) {
-    return scaledBalance.rayMul(index);
   }
 }
