@@ -757,12 +757,12 @@ contract ProtocolV3TestBase is DiffUtils {
     require(
       IPool(poolAddress).getEModeCategoryCollateralBitmap(uint8(category)) ==
         expectedCategoryData.collateralBitmap,
-      '_validateEmodeCategory(): INVALID_LB'
+      '_validateEmodeCategory(): INVALID_COLLATERALS'
     );
     require(
       IPool(poolAddress).getEModeCategoryBorrowableBitmap(uint8(category)) ==
         expectedCategoryData.borrowableBitmap,
-      '_validateEmodeCategory(): INVALID_LB'
+      '_validateEmodeCategory(): INVALID_BORROWABLES'
     );
   }
 

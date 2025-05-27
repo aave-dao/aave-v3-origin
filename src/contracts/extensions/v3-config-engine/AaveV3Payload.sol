@@ -42,6 +42,7 @@ abstract contract AaveV3Payload {
   function execute() external {
     _preExecute();
 
+    IEngine.EModeCategoryCreation[] memory newEmodes = eModeCategoryCreations();
     IEngine.EModeCategoryUpdate[] memory eModeCategories = eModeCategoriesUpdates();
     IEngine.Listing[] memory listings = newListings();
     IEngine.ListingWithCustomImpl[] memory listingsCustom = newListingsCustom();
@@ -51,6 +52,12 @@ abstract contract AaveV3Payload {
     IEngine.PriceFeedUpdate[] memory priceFeeds = priceFeedsUpdates();
     IEngine.AssetEModeUpdate[] memory assetsEModes = assetsEModeUpdates();
     IEngine.CapsUpdate[] memory caps = capsUpdates();
+
+    if (newEmodes.length != 0) {
+      address(CONFIG_ENGINE).functionDelegateCall(
+        abi.encodeWithSelector(CONFIG_ENGINE.createEModeCategories.selector, newEmodes)
+      );
+    }
 
     if (eModeCategories.length != 0) {
       address(CONFIG_ENGINE).functionDelegateCall(
@@ -142,6 +149,14 @@ abstract contract AaveV3Payload {
 
   /// @dev to be defined in the child with a list of priceFeeds to update
   function priceFeedsUpdates() public view virtual returns (IEngine.PriceFeedUpdate[] memory) {}
+
+  /// @dev to be defined in the child with a list of eMode categories to create
+  function eModeCategoryCreations()
+    public
+    view
+    virtual
+    returns (IEngine.EModeCategoryCreation[] memory)
+  {}
 
   /// @dev to be defined in the child with a list of eMode categories to update
   function eModeCategoriesUpdates()

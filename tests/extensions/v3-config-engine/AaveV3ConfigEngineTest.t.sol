@@ -17,6 +17,7 @@ import {AaveV3MockPriceFeedUpdate} from './mocks/AaveV3MockPriceFeedUpdate.sol';
 import {AaveV3MockEModeCategoryUpdate, AaveV3MockEModeCategoryUpdateEdgeBonus} from './mocks/AaveV3MockEModeCategoryUpdate.sol';
 import {AaveV3MockEModeCategoryUpdateNoChange} from './mocks/AaveV3MockEModeCategoryUpdateNoChange.sol';
 import {AaveV3MockAssetEModeUpdate} from './mocks/AaveV3MockAssetEModeUpdate.sol';
+import {AaveV3MockEModeCategoryCreation} from './mocks/AaveV3MockEModeCategoryCreation.sol';
 
 import {ATokenInstance} from '../../../src/contracts/instances/ATokenInstance.sol';
 import {EModeConfiguration} from '../../../src/contracts/protocol/libraries/configuration/EModeConfiguration.sol';
@@ -507,13 +508,58 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
     );
   }
 
-  function testEModeCategoryUpdates() public {
-    AaveV3MockEModeCategoryUpdate payload = new AaveV3MockEModeCategoryUpdate(configEngine);
+  function testEModeCategoryCreation() public {
+    AaveV3MockEModeCategoryCreation payload = new AaveV3MockEModeCategoryCreation(
+      tokenList.weth,
+      tokenList.usdx,
+      tokenList.wbtc,
+      tokenList.weth,
+      configEngine
+    );
 
     vm.prank(roleList.marketOwner);
     contracts.aclManager.addPoolAdmin(address(payload));
 
-    contracts.poolProxy.getEModeCategoryData(1);
+    payload.execute();
+
+    DataTypes.EModeCategory memory prevEmodeCategoryData;
+    prevEmodeCategoryData.ltv = 50_00;
+    prevEmodeCategoryData.liquidationThreshold = 60_00;
+    prevEmodeCategoryData.liquidationBonus = 101_00; // 100_00 + 1_00
+    prevEmodeCategoryData.label = 'No assets';
+
+    uint256 bitmap = contracts.poolProxy.getEModeCategoryBorrowableBitmap(1);
+    assertEq(bitmap, 0);
+    bitmap = contracts.poolProxy.getEModeCategoryCollateralBitmap(1);
+    assertEq(bitmap, 0);
+    _validateEmodeCategory(
+      IPoolAddressesProvider(address(contracts.poolAddressesProvider)),
+      1,
+      prevEmodeCategoryData
+    );
+
+    prevEmodeCategoryData.ltv = 97_40;
+    prevEmodeCategoryData.liquidationThreshold = 97_60;
+    prevEmodeCategoryData.liquidationBonus = 101_50; // 100_00 + 1_50
+    prevEmodeCategoryData.label = 'Test';
+    prevEmodeCategoryData.collateralBitmap = 10; // 1010
+    prevEmodeCategoryData.borrowableBitmap = 12; // 1100
+    _validateEmodeCategory(
+      IPoolAddressesProvider(address(contracts.poolAddressesProvider)),
+      2,
+      prevEmodeCategoryData
+    );
+  }
+
+  function testEModeCategoryUpdates() public {
+    EModeCategoryInput memory ct = _genCategoryOne();
+    vm.prank(poolAdmin);
+    contracts.poolConfiguratorProxy.setEModeCategory(ct.id, ct.ltv, ct.lt, ct.lb, ct.label);
+
+    AaveV3MockEModeCategoryUpdate payload = new AaveV3MockEModeCategoryUpdate(configEngine);
+
+    vm.prank(roleList.marketOwner);
+    contracts.aclManager.addPoolAdmin(address(payload));
 
     createConfigurationSnapshot(
       'preTestEngineEModeCategoryUpdate',
@@ -543,6 +589,10 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
   }
 
   function testEModeCategoryUpdatesWrongBonus() public {
+    EModeCategoryInput memory ct = _genCategoryOne();
+    vm.prank(poolAdmin);
+    contracts.poolConfiguratorProxy.setEModeCategory(ct.id, ct.ltv, ct.lt, ct.lb, ct.label);
+
     AaveV3MockEModeCategoryUpdateEdgeBonus payload = new AaveV3MockEModeCategoryUpdateEdgeBonus(
       configEngine
     );
@@ -556,6 +606,10 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
 
   // TODO manage this after testFail* deprecation.
   function testEModeCategoryUpdatesNoChangeShouldNotEmit() public {
+    EModeCategoryInput memory ct = _genCategoryOne();
+    vm.prank(poolAdmin);
+    contracts.poolConfiguratorProxy.setEModeCategory(ct.id, ct.ltv, ct.lt, ct.lb, ct.label);
+
     AaveV3MockEModeCategoryUpdateNoChange payload = new AaveV3MockEModeCategoryUpdateNoChange(
       configEngine
     );
@@ -571,6 +625,9 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
 
   // Same as testEModeCategoryUpdatesNoChangeShouldNotEmit, but this time should work, as we are not expecting any event emitted
   function testEModeCategoryUpdatesNoChange() public {
+    EModeCategoryInput memory ct = _genCategoryOne();
+    vm.prank(poolAdmin);
+    contracts.poolConfiguratorProxy.setEModeCategory(ct.id, ct.ltv, ct.lt, ct.lb, ct.label);
     AaveV3MockEModeCategoryUpdateNoChange payload = new AaveV3MockEModeCategoryUpdateNoChange(
       configEngine
     );
@@ -610,12 +667,12 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
   }
 
   function testAssetEModeUpdates() public {
+    vm.prank(poolAdmin);
+    contracts.poolConfiguratorProxy.setEModeCategory(1, 97_40, 97_60, 101_50, 'ETH Correlated');
+
     address asset = tokenList.usdx;
     address asset2 = tokenList.wbtc;
 
-    AaveV3MockEModeCategoryUpdate payloadToAddEMode = new AaveV3MockEModeCategoryUpdate(
-      configEngine
-    );
     AaveV3MockAssetEModeUpdate payload = new AaveV3MockAssetEModeUpdate(
       asset,
       asset2,
@@ -624,10 +681,7 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
 
     vm.startPrank(roleList.marketOwner);
     contracts.aclManager.addPoolAdmin(address(payload));
-    contracts.aclManager.addPoolAdmin(address(payloadToAddEMode));
     vm.stopPrank();
-
-    payloadToAddEMode.execute();
 
     createConfigurationSnapshot(
       'preTestEngineAssetEModeUpdate',
