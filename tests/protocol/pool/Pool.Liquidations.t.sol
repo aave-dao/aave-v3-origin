@@ -43,7 +43,7 @@ contract PoolLiquidationTests is TestnetProcedures {
 
   event IsolationModeTotalDebtUpdated(address indexed asset, uint256 totalDebt);
 
-  function setUp() public {
+  function setUp() public virtual {
     initTestEnvironment();
 
     (address atoken, , address variableDebtUSDX) = contracts
@@ -144,7 +144,7 @@ contract PoolLiquidationTests is TestnetProcedures {
     );
   }
 
-  function test_liquidate_variable_borrow_repro() public {
+  function test_liquidate_variable_borrow_repro() public virtual {
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setLiquidationProtocolFee(tokenList.usdx, 23_33);
     uint256 amount = 1.00999999e8;
@@ -317,7 +317,7 @@ contract PoolLiquidationTests is TestnetProcedures {
     _afterLiquidationChecksVariable(params, bob, liquidatorBalanceBefore, userDebtBefore);
   }
 
-  function test_partial_liquidate_atokens_variable_borrow() public {
+  function test_partial_liquidate_atokens_variable_borrow() public virtual {
     uint256 amount = 1e8;
     uint256 borrowAmount = 20500e6;
     vm.startPrank(alice);
@@ -424,7 +424,7 @@ contract PoolLiquidationTests is TestnetProcedures {
     );
   }
 
-  function test_full_liquidate_multiple_variable_borrows() public {
+  function test_full_liquidate_multiple_variable_borrows() public virtual {
     uint256 amount = 1e8;
     uint256 borrowAmountUsdx = 200e6;
     uint256 borrowAmountWeth = 10e18;
@@ -624,7 +624,7 @@ contract PoolLiquidationTests is TestnetProcedures {
     _afterLiquidationChecksVariable(params, bob, liquidatorBalanceBefore, userDebtBefore);
   }
 
-  function test_self_liquidate_position_shoulKeepCollateralEnabled() public {
+  function test_self_liquidate_position_shoulKeepCollateralEnabled() public virtual {
     uint256 borrowAmount = 11000e6;
 
     vm.startPrank(alice);
@@ -656,7 +656,7 @@ contract PoolLiquidationTests is TestnetProcedures {
     assertEq(contracts.poolProxy.getUserConfiguration(alice).isUsingAsCollateral(id), true);
   }
 
-  function test_self_liquidate_isolated_position_shoulDisableCollateral() public {
+  function test_self_liquidate_isolated_position_shoulDisableCollateral() public virtual {
     uint256 borrowAmount = 11000e6;
     vm.startPrank(poolAdmin);
     contracts.poolConfiguratorProxy.setDebtCeiling(tokenList.wbtc, 12_000_00);
@@ -698,7 +698,10 @@ contract PoolLiquidationTests is TestnetProcedures {
     assertEq(contracts.poolProxy.getUserConfiguration(alice).isUsingAsCollateral(id), false);
   }
 
-  function test_self_liquidate_isolated_position_shoulEnableCollateralIfIsolatedSupplier() public {
+  function test_self_liquidate_isolated_position_shoulEnableCollateralIfIsolatedSupplier()
+    public
+    virtual
+  {
     uint256 borrowAmount = 11000e6;
     vm.startPrank(poolAdmin);
     IAccessControl(address(contracts.aclManager)).grantRole(
@@ -854,7 +857,7 @@ contract PoolLiquidationTests is TestnetProcedures {
     _afterLiquidationChecksVariable(params, bob, liquidatorBalanceBefore, userDebtBefore);
   }
 
-  function test_liquidate_borrow_burn_multiple_assets_bad_debt() public {
+  function test_liquidate_borrow_burn_multiple_assets_bad_debt() public virtual {
     uint256 amount = 1.00999999e8;
     uint256 borrowAmount = 20500.999999e6;
     uint256 secondBorrowAmount = 0.002e8;

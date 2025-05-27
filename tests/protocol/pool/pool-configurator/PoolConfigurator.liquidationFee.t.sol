@@ -11,7 +11,7 @@ contract PoolConfiguratorLiquidationFeeTests is TestnetProcedures {
 
   event LiquidationProtocolFeeChanged(address indexed asset, uint256 oldFee, uint256 newFee);
 
-  function setUp() public {
+  function setUp() public virtual {
     initTestEnvironment();
 
     (aUSDX, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(tokenList.usdx);

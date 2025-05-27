@@ -15,7 +15,7 @@ contract PoolConfiguratorBorrowCapTests is TestnetProcedures {
 
   uint256 public constant MAX_BORROW_CAP = 68719476735;
 
-  function setUp() public {
+  function setUp() public virtual {
     initTestEnvironment();
 
     (aUSDX, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(tokenList.usdx);
@@ -61,7 +61,7 @@ contract PoolConfiguratorBorrowCapTests is TestnetProcedures {
     _setBorrowCapAction(poolAdmin, tokenList.usdx, 10);
   }
 
-  function test_borrow_lt_cap() public {
+  function test_borrow_lt_cap() public virtual {
     _setBorrowCapAction(poolAdmin, tokenList.usdx, 3240);
 
     vm.prank(alice);
@@ -74,7 +74,7 @@ contract PoolConfiguratorBorrowCapTests is TestnetProcedures {
     );
   }
 
-  function test_borrow_eq_cap() public {
+  function test_borrow_eq_cap() public virtual {
     _setBorrowCapAction(poolAdmin, tokenList.usdx, 5000);
 
     vm.prank(alice);
@@ -98,7 +98,7 @@ contract PoolConfiguratorBorrowCapTests is TestnetProcedures {
     );
   }
 
-  function test_borrow_interests_reach_cap() public {
+  function test_borrow_interests_reach_cap() public virtual {
     _setBorrowCapAction(poolAdmin, tokenList.usdx, 5000);
 
     vm.prank(alice);
@@ -119,7 +119,7 @@ contract PoolConfiguratorBorrowCapTests is TestnetProcedures {
     assertGt(variableDebt, borrowCapUsdx * 10 ** 6, 'Total debt should be greater than cap');
   }
 
-  function test_setBorrowCap_them_setBorrowCap_zero() public {
+  function test_setBorrowCap_them_setBorrowCap_zero() public virtual {
     _setBorrowCapAction(poolAdmin, tokenList.usdx, 100);
     _setBorrowCapAction(poolAdmin, tokenList.usdx, 0);
 

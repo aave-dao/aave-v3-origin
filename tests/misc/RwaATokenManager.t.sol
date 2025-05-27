@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import {IAccessControl} from 'src/contracts/dependencies/openzeppelin/contracts/IAccessControl.sol';
 import {IERC20} from 'src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
-import {TestnetRWAERC20} from 'src/contracts/mocks/testnet-helpers/TestnetRWAERC20.sol';
+import {TestnetRwaERC20} from 'src/contracts/mocks/testnet-helpers/TestnetRwaERC20.sol';
 import {Errors} from 'src/contracts/protocol/libraries/helpers/Errors.sol';
 import {IPool} from 'src/contracts/interfaces/IPool.sol';
 import {IRwaAToken} from 'src/contracts/interfaces/IRwaAToken.sol';
@@ -14,7 +14,7 @@ import {TestnetProcedures} from 'tests/utils/TestnetProcedures.sol';
 
 contract RwaATokenManagerTest is TestnetProcedures {
   struct RwaATokenInfo {
-    TestnetRWAERC20 rwaToken;
+    TestnetRwaERC20 rwaToken;
     address rwaAToken;
     address rwaATokenAdmin;
   }
@@ -38,21 +38,21 @@ contract RwaATokenManagerTest is TestnetProcedures {
 
     rwaATokenInfos.push(
       RwaATokenInfo({
-        rwaToken: TestnetRWAERC20(tokenList.buidl),
+        rwaToken: TestnetRwaERC20(tokenList.buidl),
         rwaAToken: rwaATokenList.aBuidl,
         rwaATokenAdmin: aBuidlAdmin
       })
     );
     rwaATokenInfos.push(
       RwaATokenInfo({
-        rwaToken: TestnetRWAERC20(tokenList.ustb),
+        rwaToken: TestnetRwaERC20(tokenList.ustb),
         rwaAToken: rwaATokenList.aUstb,
         rwaATokenAdmin: aUstbAdmin
       })
     );
     rwaATokenInfos.push(
       RwaATokenInfo({
-        rwaToken: TestnetRWAERC20(tokenList.wtgxx),
+        rwaToken: TestnetRwaERC20(tokenList.wtgxx),
         rwaAToken: rwaATokenList.aWtgxx,
         rwaATokenAdmin: aWtgxxAdmin
       })

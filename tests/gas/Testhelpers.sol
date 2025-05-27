@@ -19,6 +19,9 @@ contract Testhelpers is TestnetProcedures {
     _supplyOnReserve(rando, 100 ether, tokenList.weth);
     _supplyOnReserve(rando, 1_000_000e6, tokenList.usdx);
     _supplyOnReserve(rando, 100e8, tokenList.wbtc);
+    vm.prank(poolAdmin);
+    buidl.authorize(rando, true);
+    _supplyOnReserve(rando, 100e6, tokenList.buidl);
     vm.startPrank(rando);
     contracts.poolProxy.borrow(tokenList.weth, 1 ether, 2, 0, rando);
     contracts.poolProxy.borrow(tokenList.usdx, 1000e6, 2, 0, rando);

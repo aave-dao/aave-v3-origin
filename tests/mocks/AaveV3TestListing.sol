@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import 'src/contracts/extensions/v3-config-engine/AaveV3Payload.sol';
-import {TestnetRWAERC20} from 'src/contracts/mocks/testnet-helpers/TestnetRWAERC20.sol';
+import {TestnetRwaERC20} from 'src/contracts/mocks/testnet-helpers/TestnetRwaERC20.sol';
 import {TestnetERC20} from 'src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
 import {MockAggregator} from 'src/contracts/mocks/oracle/CLAggregators/MockAggregator.sol';
 import {ACLManager} from 'src/contracts/protocol/configuration/ACLManager.sol';
@@ -61,13 +61,13 @@ contract AaveV3TestListing is AaveV3Payload {
     WETH_ADDRESS = weth9;
     WETH_MOCK_PRICE_FEED = address(new MockAggregator(1800e8));
 
-    BUIDL_ADDRESS = address(new TestnetRWAERC20('BUIDL', 'BUIDL', 6, erc20Owner));
+    BUIDL_ADDRESS = address(new TestnetRwaERC20('BUIDL', 'BUIDL', 6, erc20Owner));
     BUIDL_MOCK_PRICE_FEED = address(new MockAggregator(1e8));
 
-    USTB_ADDRESS = address(new TestnetRWAERC20('USTB', 'USTB', 6, erc20Owner));
+    USTB_ADDRESS = address(new TestnetRwaERC20('USTB', 'USTB', 6, erc20Owner));
     USTB_MOCK_PRICE_FEED = address(new MockAggregator(10e8));
 
-    WTGXX_ADDRESS = address(new TestnetRWAERC20('WTGXX', 'WTGXX', 18, erc20Owner));
+    WTGXX_ADDRESS = address(new TestnetRwaERC20('WTGXX', 'WTGXX', 18, erc20Owner));
     WTGXX_MOCK_PRICE_FEED = address(new MockAggregator(1e8));
 
     GHO_ADDRESS = address(new TestnetERC20('GHO', 'GHO', 18, erc20Owner));

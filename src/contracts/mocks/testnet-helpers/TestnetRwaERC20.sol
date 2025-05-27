@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import {TestnetERC20} from 'src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
 
-contract TestnetRWAERC20 is TestnetERC20 {
+contract TestnetRwaERC20 is TestnetERC20 {
   mapping(address => bool) public authorized;
 
   modifier onlyAuthorized(address account) {

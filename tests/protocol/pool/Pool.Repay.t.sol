@@ -27,7 +27,7 @@ contract PoolRepayTests is TestnetProcedures {
 
   event IsolationModeTotalDebtUpdated(address indexed asset, uint256 totalDebt);
 
-  function setUp() public {
+  function setUp() public virtual {
     initTestEnvironment();
 
     (address atoken, , address variableDebtUSDX) = contracts
@@ -506,14 +506,14 @@ contract PoolRepayTests is TestnetProcedures {
     );
   }
 
-  function test_reverts_borrow_invalidAmount() public {
+  function test_reverts_borrow_invalidAmount() public virtual {
     vm.expectRevert(bytes(Errors.INVALID_AMOUNT));
 
     vm.prank(alice);
     contracts.poolProxy.repay(tokenList.usdx, 0, 2, alice);
   }
 
-  function test_reverts_borrow_reserveInactive() public {
+  function test_reverts_borrow_reserveInactive() public virtual {
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setReserveActive(tokenList.wbtc, false);
 
@@ -523,7 +523,7 @@ contract PoolRepayTests is TestnetProcedures {
     contracts.poolProxy.repay(tokenList.wbtc, UINT256_MAX, 2, alice);
   }
 
-  function test_reverts_borrow_reservePaused() public {
+  function test_reverts_borrow_reservePaused() public virtual {
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setReservePause(tokenList.wbtc, true, 0);
 
@@ -533,7 +533,7 @@ contract PoolRepayTests is TestnetProcedures {
     contracts.poolProxy.repay(tokenList.wbtc, UINT256_MAX, 2, alice);
   }
 
-  function test_reverts_repay_no_debt() public {
+  function test_reverts_repay_no_debt() public virtual {
     vm.expectRevert(bytes(Errors.NO_DEBT_OF_SELECTED_TYPE));
 
     vm.prank(alice);

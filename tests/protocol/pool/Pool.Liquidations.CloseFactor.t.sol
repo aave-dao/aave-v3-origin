@@ -43,7 +43,7 @@ contract PoolLiquidationCloseFactorTests is TestnetProcedures {
 
   event IsolationModeTotalDebtUpdated(address indexed asset, uint256 totalDebt);
 
-  function setUp() public {
+  function setUp() public virtual {
     initTestEnvironment(false);
 
     _addBorrowableLiquidity();
@@ -56,7 +56,7 @@ contract PoolLiquidationCloseFactorTests is TestnetProcedures {
   }
 
   // ## Fuzzing suite ##
-  function test_hf_helper(uint256 desiredHf) public {
+  function test_hf_helper(uint256 desiredHf) public virtual {
     // bounding to 0.01 as otherwise required amount spiral out of control
     desiredHf = bound(desiredHf, 0.01 ether, 1 ether);
     _supplyToPool(tokenList.weth, bob, 10 ether);
@@ -155,7 +155,7 @@ contract PoolLiquidationCloseFactorTests is TestnetProcedures {
     _liquidateAndValidateCloseFactor(tokenList.weth, tokenList.usdx, type(uint256).max, 1e4);
   }
 
-  function test_shouldRevertIfCloseFactorIs100ButCollateralIsBelowThreshold() external {
+  function test_shouldRevertIfCloseFactorIs100ButCollateralIsBelowThreshold() public virtual {
     uint256 usdxSupply = LiquidationLogic.MIN_BASE_MAX_CLOSE_FACTOR_THRESHOLD / 1e2;
     // supply collateral below threshold
     _supplyToPool(tokenList.usdx, bob, usdxSupply);
@@ -214,7 +214,7 @@ contract PoolLiquidationCloseFactorTests is TestnetProcedures {
 
   // on aave v3.3 in certain edge scenarios, liquidation uint.max reverts on cf 50%
   // the liquidationprovider should always return valid values
-  function test_liquidationdataprovider_edge_range_reverse() external {
+  function test_liquidationdataprovider_edge_range_reverse() public virtual {
     // borrow supply 4k
     _supplyToPool(tokenList.usdx, bob, 4200e6);
     uint256 amount = (4000e8 * (10 ** IERC20Detailed(tokenList.weth).decimals())) /

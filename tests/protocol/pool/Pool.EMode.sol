@@ -112,7 +112,7 @@ contract PoolEModeTests is TestnetProcedures {
     assertLt(realLTV, ct1.ltv);
   }
 
-  function test_setUserEMode_shouldAllowSwitchingIfNoBorrows(uint8 eMode) public {
+  function test_setUserEMode_shouldAllowSwitchingIfNoBorrows(uint8 eMode) public virtual {
     uint256 AVAILABLE_EMODES = 2;
     EModeCategoryInput memory ct1 = _genCategoryOne();
     EModeCategoryInput memory ct2 = _genCategoryTwo();
@@ -227,7 +227,7 @@ contract PoolEModeTests is TestnetProcedures {
     contracts.poolProxy.borrow(tokenList.wbtc, 1, 2, 0, alice);
   }
 
-  function test_liquidations_shouldApplyEModeLBForEmodeAssets(uint256 amount) public {
+  function test_liquidations_shouldApplyEModeLBForEmodeAssets(uint256 amount) public virtual {
     amount = bound(amount, 1 ether, type(uint104).max);
     vm.startPrank(poolAdmin);
     uint16 liquidationBonus = 10050;

@@ -52,7 +52,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
    */
   event ReserveActive(address indexed asset, bool active);
 
-  function setUp() public {
+  function setUp() public virtual {
     initTestEnvironment();
 
     vm.startPrank(poolAdmin);
@@ -409,7 +409,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     contracts.poolConfiguratorProxy.setReserveFactor(tokenList.usdx, 101_00);
   }
 
-  function test_setReserveFactor() public {
+  function test_setReserveFactor() public virtual {
     vm.prank(carol);
     contracts.poolProxy.supply(tokenList.usdx, 100_000e6, carol, 0);
 
@@ -510,7 +510,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     assertEq(contracts.protocolDataProvider.getSiloedBorrowing(tokenList.usdx), true);
   }
 
-  function test_reverts_setSiloedBorrowing_borrowers() public {
+  function test_reverts_setSiloedBorrowing_borrowers() public virtual {
     vm.startPrank(alice);
 
     contracts.poolProxy.supply(tokenList.usdx, 100e6, alice, 0);
@@ -687,7 +687,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     contracts.poolConfiguratorProxy.dropReserve(address(0));
   }
 
-  function test_reverts_dropReserve_variableDebtNotZero() public {
+  function test_reverts_dropReserve_variableDebtNotZero() public virtual {
     vm.startPrank(alice);
     contracts.poolProxy.supply(tokenList.usdx, 100e6, alice, 0);
     contracts.poolProxy.borrow(tokenList.wbtc, 0.001e8, 2, 0, alice);

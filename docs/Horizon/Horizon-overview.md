@@ -1,11 +1,13 @@
 # Horizon RWA Instance
 
 ## Context
+
 - Horizon is an initiative by Aave Labs focused on creating Real-World Asset (RWA) products tailored for institutions.
 - Horizon will launch a licensed, separate instance of the Aave Protocol (initially a fork of v3.3) to accommodate regulatory compliance requirements associated with RWA products.
 - Horizon will have a dual role setup with responsibilities split between Aave DAO (Operational role) and Aave Labs (Executive role).
- 
+
 ## Overview
+
 The Horizon Instance will introduce permissioned (RWA) assets. The Aave Pool will remain the same, except that RWA assets can be used as collateral in order to borrow stablecoins. Permissioning occurs at the asset level, with each RWA token issuer enforcing asset-specific restrictions directly into their ERC-20 token. The Aave Pool is agnostic to each specific RWA implementation and its asset-level permissioning.
 
 From an Issuer perspective, aTokens are an extension of the RWA tokens, which are securities. The aTokens will signify ownership of the supplied underlying RWA Token. To accommodate edge cases, a protocol-wide aToken Transfer Admin is also added, allowing Issuers the ability to forcibly transfer aTokens on behalf of end users (without needing approval). These transfers will still enforce collateralization and health factor requirements as in existing Aave peer-to-peer aToken transfers.
@@ -15,6 +17,7 @@ As with the standard Aave instance, an asset can be listed in Horizon through th
 ## Implementation Overview
 
 ### RWA Asset (Collateral Asset)
+
 RWA assets can be listed by utilizing a newly developed aToken contract, `RwaAToken`, which restricts the functionality of the underlying asset within the Aave Pool. These RWA assets are aimed to be used as collateral only, which is achieved through proper Pool configuration.
 
 - aToken transfers
@@ -37,14 +40,16 @@ RWA assets can be listed by utilizing a newly developed aToken contract, `RwaATo
     - technically any user allowlisted to hold RWA token asset can liquidate; any further permissioning to a smaller subset of liquidators will be governed off-chain.
 
 #### Configuration
+
 - `enabledToBorrow` set to `false` to prevent borrowing.
 - Liquidation Protocol Fee set to `0`.
-- aToken Manager contract address granted the RWA aToken admin role. 
+- aToken Manager contract address granted the RWA aToken admin role.
   - further granular aToken admin permissions will be configured in the aToken Manager contract itself.
   - Token Issuers or relevant admin will be granted aToken admin permissions on the RWA aToken corresponding to their specific RWA asset.
 
 #### Edge Cases of Note
-- User has a borrow position but loses private keys to wallet. This position will need to be migrated to a new wallet. Issuers can resolve using: 
+
+- User has a borrow position but loses private keys to wallet. This position will need to be migrated to a new wallet. Issuers can resolve using:
   - authorized flashborrow to borrow enough stablecoin to repay a user's debt.
   - repay `onBehalfOf` to repay debt on behalf of user.
   - `ATOKEN_ADMIN` to move RWA aToken collateral to new wallet.
@@ -54,11 +59,14 @@ RWA assets can be listed by utilizing a newly developed aToken contract, `RwaATo
   - prevent the liquidation of the sanctioned user's position through off-chain coordination.
 
 ### Stablecoins (Borrowable Asset)
-Stablecoins can be supplied permissionlessly to earn yield. However, they will only be able to be borrowed, but disabled as collateral assets (via asset configuration, by setting LTV to 0). Borrowing will be implicitly permissioned because only users that have supplied RWA assets can borrow stablecoins. Other existing functionality remains the same as in v3.3. Stablecoin assets will be listed as usual, also working in a standard way. 
+
+Stablecoins can be supplied permissionlessly to earn yield. However, they will only be able to be borrowed, but disabled as collateral assets (via asset configuration, by setting LTV to 0). Borrowing will be implicitly permissioned because only users that have supplied RWA assets can borrow stablecoins. Other existing functionality remains the same as in v3.3. Stablecoin assets will be listed as usual, also working in a standard way.
 
 #### Configuration
+
 - LTV set to `0` to prevent their utilization as collateral assets.
 - authorized flashborrowers to be configured.
 
 ## References
+
 - https://governance.aave.com/t/arfc-horizon-s-rwa-instance/21898

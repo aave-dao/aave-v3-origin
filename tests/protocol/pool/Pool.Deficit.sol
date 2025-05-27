@@ -190,7 +190,7 @@ contract PoolDeficitTests is TestnetProcedures {
 
   function test_reverts_eliminateReserveDeficit_reserve_not_in_deficit(
     address coverageAdmin
-  ) public {
+  ) public virtual {
     _filterAddresses(coverageAdmin);
 
     vm.prank(poolAdmin);

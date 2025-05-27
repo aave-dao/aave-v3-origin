@@ -14,7 +14,7 @@ contract ATokenEdgeCasesTests is TestnetProcedures {
 
   event Transfer(address indexed from, address indexed to, uint256 amount);
 
-  function setUp() public {
+  function setUp() public virtual {
     initTestEnvironment();
 
     (address aUSDX, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(tokenList.usdx);
@@ -51,29 +51,29 @@ contract ATokenEdgeCasesTests is TestnetProcedures {
     assertEq(supplyAfter, expectedBalance, 'Supply mismatch after deposit');
   }
 
-  function testApproveMax() public {
+  function testApproveMax() public virtual {
     vm.prank(alice);
     aToken.approve(bob, UINT256_MAX);
     assertEq(aToken.allowance(alice, bob), UINT256_MAX, 'Max allowance mismatch after approve');
   }
 
-  function testApprove() public {
+  function testApprove() public virtual {
     vm.prank(alice);
     aToken.approve(bob, 9999);
     assertEq(aToken.allowance(alice, bob), 9999, 'Allowance mismatch after approve');
   }
 
-  function testApproveWithZeroAddressSpender() public {
+  function testApproveWithZeroAddressSpender() public virtual {
     vm.prank(alice);
     aToken.approve(ZERO_ADDRESS, UINT256_MAX);
   }
 
-  function testTransferFromZeroAmount() public {
+  function testTransferFromZeroAmount() public virtual {
     vm.prank(alice);
     aToken.transferFrom(alice, bob, 0);
   }
 
-  function testIncreaseAllowanceFromZero() public {
+  function testIncreaseAllowanceFromZero() public virtual {
     assertEq(aToken.allowance(bob, alice), 0, 'Initial allowance should be zero');
 
     vm.prank(bob);
@@ -82,7 +82,7 @@ contract ATokenEdgeCasesTests is TestnetProcedures {
     assertEq(aToken.allowance(bob, alice), 1e6, 'Allowance mismatch after increaseAllowance');
   }
 
-  function testIncreaseAllowance() public {
+  function testIncreaseAllowance() public virtual {
     assertEq(aToken.allowance(bob, alice), 0, 'Initial allowance should be zero');
 
     vm.startPrank(bob);
@@ -93,7 +93,7 @@ contract ATokenEdgeCasesTests is TestnetProcedures {
     assertEq(aToken.allowance(bob, alice), 2e6, 'Allowance mismatch after increaseAllowance');
   }
 
-  function testDecreaseAllowance() public {
+  function testDecreaseAllowance() public virtual {
     assertEq(aToken.allowance(bob, alice), 0, 'Initial allowance should be zero');
     vm.startPrank(bob);
 
@@ -104,7 +104,7 @@ contract ATokenEdgeCasesTests is TestnetProcedures {
     assertEq(aToken.allowance(bob, alice), 9e6, 'Allowance mismatch after decreaseAllowance');
   }
 
-  function test_transferFrom_zeroAddress_origin() public {
+  function test_transferFrom_zeroAddress_origin() public virtual {
     vm.expectEmit(address(aToken));
 
     emit Transfer(address(0), alice, 0);
@@ -112,7 +112,7 @@ contract ATokenEdgeCasesTests is TestnetProcedures {
     aToken.transferFrom(address(0), alice, 0);
   }
 
-  function test_reverts_mintAmountScaledZero() public {
+  function test_reverts_mintAmountScaledZero() public virtual {
     vm.expectRevert(bytes(Errors.INVALID_MINT_AMOUNT));
     vm.prank(address(contracts.poolProxy));
     aToken.mint(alice, alice, 0, 1e27);
@@ -150,7 +150,7 @@ contract ATokenEdgeCasesTests is TestnetProcedures {
     vm.stopPrank();
   }
 
-  function testMintToTreasury_amount_zero() public {
+  function testMintToTreasury_amount_zero() public virtual {
     vm.prank(address(contracts.poolProxy));
 
     aToken.mintToTreasury(0, 1e27);
@@ -176,7 +176,7 @@ contract ATokenEdgeCasesTests is TestnetProcedures {
     assertEq(address(aToken.getIncentivesController()), report.rewardsControllerProxy);
   }
 
-  function test_transfer_amount_MAX_UINT_128() public {
+  function test_transfer_amount_MAX_UINT_128() public virtual {
     vm.expectRevert(bytes("SafeCast: value doesn't fit in 128 bits"));
     aToken.transfer(alice, UINT256_MAX);
   }

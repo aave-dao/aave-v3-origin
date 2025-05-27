@@ -8,7 +8,7 @@ import {TestnetERC20} from 'src/contracts/mocks/testnet-helpers/TestnetERC20.sol
 import {EIP712SigUtils} from 'tests/utils/EIP712SigUtils.sol';
 import {IPool} from 'src/contracts/interfaces/IPool.sol';
 
-contract PoolSupplyRwaTests is TestnetProcedures {
+contract PoolSupplyHorizonTests is TestnetProcedures {
   IAToken internal aBuidl;
 
   function setUp() public {
@@ -64,7 +64,7 @@ contract PoolSupplyRwaTests is TestnetProcedures {
     contracts.poolProxy.supply(tokenList.buidl, supplyAmount, onBehalfOf, 0);
   }
 
-  // supply fails because user is no longer authrized to hold RWA
+  // supply fails because user is no longer authorized to hold RWA
   function test_fuzz_reverts_supply_UnauthorizedRwaAccount(uint256 supplyAmount) public {
     supplyAmount = bound(supplyAmount, 1, IERC20(tokenList.buidl).balanceOf(alice));
 
@@ -157,7 +157,7 @@ contract PoolSupplyRwaTests is TestnetProcedures {
     vm.assume(supplyAmount != 0 && supplyAmount <= underlyingBalance);
     address user = vm.addr(userPk);
     vm.assume(user != alice); // user is not alice so that they can be authorized to hold buidl first
-    vm.assume(onBehalfOf != user);
+    vm.assume(onBehalfOf != user && onBehalfOf != rwaATokenList.aBuidl);
 
     vm.startPrank(poolAdmin);
     buidl.authorize(user, true);
@@ -273,7 +273,13 @@ contract PoolSupplyRwaTests is TestnetProcedures {
     vm.assume(supplyAmount != 0 && supplyAmount <= underlyingBalance);
     address user = vm.addr(userPk);
     vm.assume(user != alice); // user is not alice so that they can be authorized to hold buidl first
-    vm.assume(relayer != user && relayer != report.poolAddressesProvider && relayer != address(0));
+    vm.assume(
+      relayer != user &&
+        relayer != alice &&
+        relayer != report.poolAddressesProvider &&
+        relayer != address(0)
+    );
+    vm.assume(onBehalfOf != rwaATokenList.aBuidl);
 
     vm.startPrank(poolAdmin);
     buidl.authorize(user, true);
@@ -326,7 +332,13 @@ contract PoolSupplyRwaTests is TestnetProcedures {
     vm.assume(supplyAmount != 0 && supplyAmount <= underlyingBalance);
     address user = vm.addr(userPk);
     vm.assume(user != alice); // user is not alice so that they can be authorized to hold buidl first
-    vm.assume(relayer != user && relayer != report.poolAddressesProvider && relayer != address(0));
+    vm.assume(
+      relayer != user &&
+        relayer != alice &&
+        relayer != report.poolAddressesProvider &&
+        relayer != rwaATokenList.aBuidl &&
+        relayer != address(0)
+    );
 
     vm.startPrank(poolAdmin);
     buidl.authorize(user, true);
@@ -513,6 +525,8 @@ contract PoolSupplyRwaTests is TestnetProcedures {
   }
 
   function test_fuzz_reverts_supply_to_aToken(address caller) public {
+    vm.assume(caller != report.poolAddressesProvider); // otherwise the pool proxy will not fallback
+
     uint256 supplyAmount = 0.2e6;
 
     vm.expectRevert(bytes(Errors.SUPPLY_TO_ATOKEN));
