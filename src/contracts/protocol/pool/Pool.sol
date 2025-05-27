@@ -148,6 +148,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool {
     address onBehalfOf,
     uint16 referralCode
   ) public virtual override {
+    require(onBehalfOf != address(0), Errors.ZERO_ADDRESS_NOT_VALID);
     SupplyLogic.executeSupply(
       _reserves,
       _reservesList,
