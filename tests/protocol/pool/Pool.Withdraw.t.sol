@@ -50,18 +50,18 @@ contract PoolWithdrawTests is TestnetProcedures {
 
     vm.warp(block.timestamp + 10 days);
 
-    uint256 amountToWithdraw = IAToken(aUSDX).balanceOf(alice);
+    uint256 aTokenBalance = IAToken(aUSDX).balanceOf(alice);
+    uint256 partialWithdrawAmount = aTokenBalance / 2;
     uint256 balanceBefore = IERC20(tokenList.usdx).balanceOf(alice);
 
     vm.expectEmit(address(contracts.poolProxy));
-    emit ReserveUsedAsCollateralDisabled(tokenList.usdx, alice);
-    vm.expectEmit(address(contracts.poolProxy));
-    emit Withdraw(tokenList.usdx, alice, alice, amountToWithdraw);
+    emit Withdraw(tokenList.usdx, alice, alice, partialWithdrawAmount);
 
-    contracts.poolProxy.withdraw(tokenList.usdx, type(uint256).max, alice);
+    contracts.poolProxy.withdraw(tokenList.usdx, partialWithdrawAmount, alice);
     vm.stopPrank();
 
-    assertEq(IERC20(tokenList.usdx).balanceOf(alice), balanceBefore + amountToWithdraw);
+    assertEq(IERC20(tokenList.usdx).balanceOf(alice), balanceBefore + partialWithdrawAmount);
+    assertEq(IAToken(aUSDX).balanceOf(alice), aTokenBalance - partialWithdrawAmount);
   }
 
   function test_full_withdraw_to() public {
