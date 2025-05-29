@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.10;
 
-import {AccessControl} from 'src/contracts/dependencies/openzeppelin/contracts/AccessControl.sol';
-import {IRwaAToken} from 'src/contracts/interfaces/IRwaAToken.sol';
-import {IRwaATokenManager} from 'src/contracts/interfaces/IRwaATokenManager.sol';
+import {AccessControl} from '../dependencies/openzeppelin/contracts/AccessControl.sol';
+import {IRwaAToken} from '../interfaces/IRwaAToken.sol';
+import {IRwaATokenManager} from '../interfaces/IRwaATokenManager.sol';
 
 /**
  * @title RwaATokenManager

@@ -14,7 +14,7 @@ contract PoolConfiguratorSupplyCapTests is TestnetProcedures {
 
   event SupplyCapChanged(address indexed asset, uint256 oldSupplyCap, uint256 newSupplyCap);
 
-  function setUp() public {
+  function setUp() public virtual {
     initTestEnvironment();
 
     (aUSDX, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(tokenList.usdx);
@@ -66,7 +66,7 @@ contract PoolConfiguratorSupplyCapTests is TestnetProcedures {
     assertEq(IERC20(aUSDX).balanceOf(alice), 6000e6, 'Alice balance should match supply amount');
   }
 
-  function test_supply_interests_reach_cap() public {
+  function test_supply_interests_reach_cap() public virtual {
     _setSupplyCapAction(poolAdmin, tokenList.usdx, 5000);
 
     vm.prank(alice);

@@ -8,7 +8,7 @@ import {ConfiguratorInputTypes} from '../../../../src/contracts/protocol/pool/Po
 import {TestnetProcedures, TestVars} from '../../../utils/TestnetProcedures.sol';
 
 contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
-  function setUp() public {
+  function setUp() public virtual {
     initTestEnvironment();
   }
 

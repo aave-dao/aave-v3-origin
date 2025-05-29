@@ -1,21 +1,21 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {ReserveConfiguration} from 'src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
-import {UserConfiguration} from 'src/contracts/protocol/libraries/configuration/UserConfiguration.sol';
-import {LiquidationLogic} from 'src/contracts/protocol/libraries/logic/LiquidationLogic.sol';
-import {IERC20Detailed} from 'src/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
-import {PercentageMath} from 'src/contracts/protocol/libraries/math/PercentageMath.sol';
-import {WadRayMath} from 'src/contracts/protocol/libraries/math/WadRayMath.sol';
-import {DataTypes} from 'src/contracts/protocol/libraries/types/DataTypes.sol';
-import {Errors} from 'src/contracts/protocol/libraries/helpers/Errors.sol';
-import {AggregatorInterface} from 'src/contracts/dependencies/chainlink/AggregatorInterface.sol';
-import {TestnetRWAERC20} from 'src/contracts/mocks/testnet-helpers/TestnetRWAERC20.sol';
-import {RwaAToken} from 'src/contracts/protocol/tokenization/RwaAToken.sol';
-import {LiquidationDataProvider} from 'src/contracts/helpers/LiquidationDataProvider.sol';
-import {TestnetProcedures} from 'tests/utils/TestnetProcedures.sol';
+import {ReserveConfiguration} from '../../src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
+import {UserConfiguration} from '../../src/contracts/protocol/libraries/configuration/UserConfiguration.sol';
+import {LiquidationLogic} from '../../src/contracts/protocol/libraries/logic/LiquidationLogic.sol';
+import {IERC20Detailed} from '../../src/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
+import {PercentageMath} from '../../src/contracts/protocol/libraries/math/PercentageMath.sol';
+import {WadRayMath} from '../../src/contracts/protocol/libraries/math/WadRayMath.sol';
+import {DataTypes} from '../../src/contracts/protocol/libraries/types/DataTypes.sol';
+import {Errors} from '../../src/contracts/protocol/libraries/helpers/Errors.sol';
+import {AggregatorInterface} from '../../src/contracts/dependencies/chainlink/AggregatorInterface.sol';
+import {TestnetRwaERC20} from '../../src/contracts/mocks/testnet-helpers/TestnetRwaERC20.sol';
+import {RwaAToken} from '../../src/contracts/protocol/tokenization/RwaAToken.sol';
+import {LiquidationDataProvider} from '../../src/contracts/helpers/LiquidationDataProvider.sol';
+import {TestnetProcedures} from '../utils/TestnetProcedures.sol';
 
-contract PoolLiquidationsRwaTests is TestnetProcedures {
+contract PoolLiquidationsHorizonTests is TestnetProcedures {
   using UserConfiguration for DataTypes.UserConfigurationMap;
 
   struct RwaTokenInfo {
@@ -757,7 +757,7 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
 
   function removeRwaAccountAuthorization(address rwaToken, address account) public {
     vm.prank(poolAdmin);
-    TestnetRWAERC20(rwaToken).authorize(account, false);
+    TestnetRwaERC20(rwaToken).authorize(account, false);
   }
 
   function _mockPrice(address token, int256 priceImpactPercent) internal {

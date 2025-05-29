@@ -3,28 +3,32 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 
-import 'src/deployments/interfaces/IMarketReportTypes.sol';
-import {DeployUtils} from 'src/deployments/contracts/utilities/DeployUtils.sol';
-import {FfiUtils} from 'src/deployments/contracts/utilities/FfiUtils.sol';
-import {DefaultMarketInput} from 'src/deployments/inputs/DefaultMarketInput.sol';
-import {AaveV3BatchOrchestration} from 'src/deployments/projects/aave-v3-batched/AaveV3BatchOrchestration.sol';
-import {IPoolAddressesProvider} from 'src/contracts/interfaces/IPoolAddressesProvider.sol';
-import {AaveV3TestListing} from 'tests/mocks/AaveV3TestListing.sol';
-import {ACLManager, Errors} from 'src/contracts/protocol/configuration/ACLManager.sol';
-import {AccessControl} from 'src/contracts/dependencies/openzeppelin/contracts/AccessControl.sol';
-import {WETH9} from 'src/contracts/dependencies/weth/WETH9.sol';
-import {TestnetRWAERC20} from 'src/contracts/mocks/testnet-helpers/TestnetRWAERC20.sol';
-import {TestnetERC20} from 'src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
-import {PoolConfigurator} from 'src/contracts/protocol/pool/PoolConfigurator.sol';
-import {DefaultReserveInterestRateStrategyV2} from 'src/contracts/misc/DefaultReserveInterestRateStrategyV2.sol';
-import {RwaATokenManager} from 'src/contracts/misc/RwaATokenManager.sol';
-import {ReserveConfiguration} from 'src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
-import {PercentageMath} from 'src/contracts/protocol/libraries/math/PercentageMath.sol';
-import {AaveProtocolDataProvider} from 'src/contracts/helpers/AaveProtocolDataProvider.sol';
-import {MarketReportUtils} from 'src/deployments/contracts/utilities/MarketReportUtils.sol';
-import {AaveV3ConfigEngine, IAaveV3ConfigEngine} from 'src/contracts/extensions/v3-config-engine/AaveV3ConfigEngine.sol';
-
-import {IRwaAToken} from 'src/contracts/interfaces/IRwaAToken.sol';
+import '../../src/deployments/interfaces/IMarketReportTypes.sol';
+import {DeployUtils} from '../../src/deployments/contracts/utilities/DeployUtils.sol';
+import {FfiUtils} from '../../src/deployments/contracts/utilities/FfiUtils.sol';
+import {DefaultMarketInput} from '../../src/deployments/inputs/DefaultMarketInput.sol';
+import {AaveV3BatchOrchestration} from '../../src/deployments/projects/aave-v3-batched/AaveV3BatchOrchestration.sol';
+import {IPoolAddressesProvider} from '../../src/contracts/interfaces/IPoolAddressesProvider.sol';
+import {AaveV3TestListing} from '../mocks/AaveV3TestListing.sol';
+import {ACLManager, Errors} from '../../src/contracts/protocol/configuration/ACLManager.sol';
+import {AccessControl} from '../../src/contracts/dependencies/openzeppelin/contracts/AccessControl.sol';
+import {WETH9} from '../../src/contracts/dependencies/weth/WETH9.sol';
+import {TestnetRwaERC20} from '../../src/contracts/mocks/testnet-helpers/TestnetRwaERC20.sol';
+import {TestnetERC20} from '../../src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
+import {RwaATokenInstance} from '../../src/contracts/instances/RwaATokenInstance.sol';
+import {ATokenInstance} from '../../src/contracts/instances/ATokenInstance.sol';
+import {PoolConfigurator} from '../../src/contracts/protocol/pool/PoolConfigurator.sol';
+import {VersionedInitializable} from '../../src/contracts/misc/aave-upgradeability/VersionedInitializable.sol';
+import {DefaultReserveInterestRateStrategyV2} from '../../src/contracts/misc/DefaultReserveInterestRateStrategyV2.sol';
+import {RwaATokenManager} from '../../src/contracts/misc/RwaATokenManager.sol';
+import {IRwaAToken} from '../../src/contracts/interfaces/IRwaAToken.sol';
+import {ReserveConfiguration} from '../../src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
+import {PercentageMath} from '../../src/contracts/protocol/libraries/math/PercentageMath.sol';
+import {AaveProtocolDataProvider} from '../../src/contracts/helpers/AaveProtocolDataProvider.sol';
+import {MarketReportUtils} from '../../src/deployments/contracts/utilities/MarketReportUtils.sol';
+import {AaveV3ConfigEngine, IAaveV3ConfigEngine} from '../../src/contracts/extensions/v3-config-engine/AaveV3ConfigEngine.sol';
+import {MockRwaATokenInstance} from '../mocks/MockRwaATokenInstance.sol';
+import {MockATokenInstance} from '../mocks/MockATokenInstance.sol';
 
 struct TestVars {
   uint8 underlyingDecimals;
@@ -78,9 +82,9 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
 
   TestnetERC20 internal usdx;
   TestnetERC20 internal wbtc;
-  TestnetRWAERC20 internal buidl;
-  TestnetRWAERC20 internal ustb;
-  TestnetRWAERC20 internal wtgxx;
+  TestnetRwaERC20 internal buidl;
+  TestnetRwaERC20 internal ustb;
+  TestnetRwaERC20 internal wtgxx;
   WETH9 internal weth;
 
   address internal rwaATokenManagerOwner;
@@ -145,9 +149,9 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
 
     usdx = TestnetERC20(tokenList.usdx);
     wbtc = TestnetERC20(tokenList.wbtc);
-    buidl = TestnetRWAERC20(tokenList.buidl);
-    ustb = TestnetRWAERC20(tokenList.ustb);
-    wtgxx = TestnetRWAERC20(tokenList.wtgxx);
+    buidl = TestnetRwaERC20(tokenList.buidl);
+    ustb = TestnetRwaERC20(tokenList.ustb);
+    wtgxx = TestnetRwaERC20(tokenList.wtgxx);
     weth = WETH9(payable(tokenList.weth));
 
     vm.label(tokenList.usdx, 'USDX');
@@ -231,7 +235,7 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
   function _seedLiquidity(address token, uint256 amount, bool isRwa) internal {
     if (isRwa) {
       vm.prank(poolAdmin);
-      TestnetRWAERC20(token).authorize(liquidityProvider, true);
+      TestnetRwaERC20(token).authorize(liquidityProvider, true);
     }
 
     vm.prank(poolAdmin);
@@ -489,5 +493,53 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
           variableRateSlope2: 60_00
         })
       );
+  }
+
+  function _upgradeToStandardAToken(address asset, string memory symbol) internal {
+    (address aToken, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(asset);
+    uint256 currentRevision = ATokenInstance(aToken).ATOKEN_REVISION();
+
+    MockATokenInstance mockAToken = new MockATokenInstance(
+      IPool(report.poolProxy),
+      currentRevision + 1
+    );
+
+    vm.prank(poolAdmin);
+    contracts.poolConfiguratorProxy.updateAToken(
+      ConfiguratorInputTypes.UpdateATokenInput({
+        asset: asset,
+        treasury: report.treasury,
+        incentivesController: report.rewardsControllerProxy,
+        name: symbol,
+        symbol: symbol,
+        implementation: address(mockAToken),
+        params: abi.encode()
+      })
+    );
+    vm.stopPrank();
+  }
+
+  function _upgradeToRwaAToken(address asset, string memory symbol) internal {
+    (address aToken, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(asset);
+    uint256 currentRevision = RwaATokenInstance(aToken).ATOKEN_REVISION();
+
+    MockRwaATokenInstance mockAToken = new MockRwaATokenInstance(
+      IPool(report.poolProxy),
+      currentRevision + 1
+    );
+
+    vm.startPrank(poolAdmin);
+    contracts.poolConfiguratorProxy.updateAToken(
+      ConfiguratorInputTypes.UpdateATokenInput({
+        asset: asset,
+        treasury: report.treasury,
+        incentivesController: report.rewardsControllerProxy,
+        name: symbol,
+        symbol: symbol,
+        implementation: address(mockAToken),
+        params: abi.encode()
+      })
+    );
+    vm.stopPrank();
   }
 }

@@ -89,7 +89,7 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
     address from,
     address to,
     uint256 value
-  ) public virtual override onlyPool {
+  ) external virtual override onlyPool {
     // Being a normal transfer, the Transfer() and BalanceTransfer() are emitted
     // so no need to emit a specific event here
     _transfer(from, to, value, false);

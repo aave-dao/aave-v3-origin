@@ -14,7 +14,7 @@ contract PoolWithdrawTests is TestnetProcedures {
   event Withdraw(address indexed reserve, address indexed user, address indexed to, uint256 amount);
   event ReserveUsedAsCollateralDisabled(address indexed reserve, address indexed user);
 
-  function setUp() public {
+  function setUp() public virtual {
     initTestEnvironment();
 
     (aUSDX, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(tokenList.usdx);
@@ -132,7 +132,7 @@ contract PoolWithdrawTests is TestnetProcedures {
     vm.stopPrank();
   }
 
-  function test_Reverts_withdraw_transferred_funds() public {
+  function test_Reverts_withdraw_transferred_funds() public virtual {
     uint256 wethSupplyAmount = 2e18;
     uint256 amount = 142e6;
 
@@ -188,7 +188,7 @@ contract PoolWithdrawTests is TestnetProcedures {
     contracts.poolProxy.withdraw(tokenList.usdx, 122, alice);
   }
 
-  function test_reverts_withdraw_hf_lt_lqt() public {
+  function test_reverts_withdraw_hf_lt_lqt() public virtual {
     vm.prank(bob);
     contracts.poolProxy.supply(tokenList.usdx, 50_000e6, bob, 0);
     uint256 amount = 1e8;

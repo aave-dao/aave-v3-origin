@@ -532,7 +532,7 @@ contract PoolTests is TestnetProcedures {
     pool.setUserEMode(ct2.id);
   }
 
-  function test_setUserEmode_twice_inconsistent_category() public {
+  function test_setUserEmode_twice_inconsistent_category() public virtual {
     vm.prank(carol);
     pool.supply(tokenList.wbtc, 10e8, carol, 0);
     vm.prank(carol);
@@ -569,7 +569,7 @@ contract PoolTests is TestnetProcedures {
     vm.stopPrank();
   }
 
-  function test_reverts_setUserEmode_0_bad_hf() public {
+  function test_reverts_setUserEmode_0_bad_hf() public virtual {
     vm.prank(carol);
     pool.supply(tokenList.wbtc, 10e8, carol, 0);
     vm.prank(carol);

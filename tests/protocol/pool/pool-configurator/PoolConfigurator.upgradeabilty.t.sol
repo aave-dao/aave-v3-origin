@@ -44,7 +44,7 @@ contract PoolConfiguratorUpgradeabilityTests is TestnetProcedures {
     address indexed implementation
   );
 
-  function setUp() public {
+  function setUp() public virtual {
     initTestEnvironment();
   }
 
@@ -106,7 +106,7 @@ contract PoolConfiguratorUpgradeabilityTests is TestnetProcedures {
     assertEq(currentInterestRateStrategy, newInterestRateStrategy);
   }
 
-  function test_interestRateStrategy_update() public {
+  function test_interestRateStrategy_update() public virtual {
     vm.prank(carol);
     contracts.poolProxy.supply(tokenList.usdx, 100_000e6, carol, 0);
 
@@ -153,7 +153,7 @@ contract PoolConfiguratorUpgradeabilityTests is TestnetProcedures {
   }
 
   // TODO: deduplicate, reuse in vTokenUpdate too
-  function test_updateAToken() public {
+  function test_updateAToken() public virtual {
     ConfiguratorInputTypes.UpdateATokenInput memory input = ConfiguratorInputTypes
       .UpdateATokenInput({
         asset: tokenList.usdx,

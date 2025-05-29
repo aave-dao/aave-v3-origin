@@ -1,0 +1,9 @@
+{
+  "authorizedTransfer: RwaAToken": "153316",
+  "supply: collateralDisabled": "150701",
+  "supply: collateralEnabled": "150701",
+  "supply: first supply->collateralEnabled": "192216",
+  "transferRwaAToken: RwaATokenManager": "159789",
+  "withdraw: full withdraw": "159349",
+  "withdraw: partial withdraw": "176039"
+}

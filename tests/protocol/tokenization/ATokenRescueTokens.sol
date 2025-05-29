@@ -13,7 +13,7 @@ contract ATokenRescueTokensTests is TestnetProcedures {
 
   event Transfer(address indexed from, address indexed to, uint256 amount);
 
-  function setUp() public {
+  function setUp() public virtual {
     initTestEnvironment();
 
     (address aUSDX, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(tokenList.usdx);

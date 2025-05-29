@@ -25,7 +25,7 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
   event AssetCollateralInEModeChanged(address indexed asset, uint8 categoryId, bool allowed);
   event AssetBorrowableInEModeChanged(address indexed asset, uint8 categoryId, bool borrowable);
 
-  function setUp() public {
+  function setUp() public virtual {
     initTestEnvironment();
   }
 

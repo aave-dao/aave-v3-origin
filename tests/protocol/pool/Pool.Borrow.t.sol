@@ -39,7 +39,7 @@ contract PoolBorrowTests is TestnetProcedures {
   );
   event IsolationModeTotalDebtUpdated(address indexed asset, uint256 totalDebt);
 
-  function setUp() public {
+  function setUp() public virtual {
     initTestEnvironment();
 
     (address atoken, , address variableDebtUSDX) = contracts
@@ -63,7 +63,7 @@ contract PoolBorrowTests is TestnetProcedures {
     sequencerOracleMock.setAnswer(false, 0);
   }
 
-  function test_variable_borrow() public {
+  function test_variable_borrow() public virtual {
     uint256 amount = 2000e6;
     uint256 borrowAmount = 800e6;
     vm.startPrank(alice);
@@ -117,7 +117,7 @@ contract PoolBorrowTests is TestnetProcedures {
     assertEq(contracts.poolProxy.getUserConfiguration(alice).isBorrowing(reserveData.id), true);
   }
 
-  function test_borrow_variable_in_isolation() public {
+  function test_borrow_variable_in_isolation() public virtual {
     uint256 borrowAmount = 100e6;
     vm.startPrank(poolAdmin);
     contracts.poolConfiguratorProxy.setDebtCeiling(tokenList.wbtc, 10_000_00);
@@ -199,7 +199,7 @@ contract PoolBorrowTests is TestnetProcedures {
     contracts.poolProxy.borrow(tokenList.usdx, borrowAmount, 2, 0, alice);
   }
 
-  function test_reverts_deprecated_stable_borrow() public {
+  function test_reverts_deprecated_stable_borrow() public virtual {
     uint256 amount = 2000e6;
     uint256 borrowAmount = 100;
     vm.startPrank(alice);
@@ -349,7 +349,7 @@ contract PoolBorrowTests is TestnetProcedures {
     vm.stopPrank();
   }
 
-  function test_reverts_borrow_hf_lt_1() public {
+  function test_reverts_borrow_hf_lt_1() public virtual {
     address[] memory assets = new address[](1);
     address[] memory sources = new address[](1);
     assets[0] = tokenList.wbtc;
@@ -373,7 +373,7 @@ contract PoolBorrowTests is TestnetProcedures {
     contracts.poolProxy.borrow(tokenList.usdx, 10001e6, 2, 0, alice);
   }
 
-  function test_reverts_borrow_sioled_borrowing_violation() public {
+  function test_reverts_borrow_sioled_borrowing_violation() public virtual {
     vm.startPrank(carol);
     contracts.poolProxy.supply(tokenList.wbtc, 100e8, carol, 0);
     contracts.poolProxy.supply(tokenList.weth, 100e18, carol, 0);

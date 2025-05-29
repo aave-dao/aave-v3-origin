@@ -26,7 +26,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
   MockFlashLoanReceiver internal mockFlashReceiver;
   MockFlashLoanSimpleReceiver internal mockFlashSimpleReceiver;
 
-  function setUp() public {
+  function setUp() public virtual {
     initTestEnvironment();
 
     vm.prank(carol);
@@ -42,7 +42,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
     );
   }
 
-  function test_reverts_flashLoan_invalid_return() public {
+  function test_reverts_flashLoan_invalid_return() public virtual {
     (
       address[] memory assets,
       uint256[] memory amounts,
@@ -168,7 +168,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
     );
   }
 
-  function test_reverts_flashLoan_simple_invalid_return() public {
+  function test_reverts_flashLoan_simple_invalid_return() public virtual {
     bytes memory emptyParams;
 
     mockFlashSimpleReceiver.setFailExecutionTransfer(true);
@@ -253,7 +253,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
     );
   }
 
-  function test_reverts_supply_flashloan_transfer_withdraw() public {
+  function test_reverts_supply_flashloan_transfer_withdraw() public virtual {
     (address aUSDX, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(tokenList.usdx);
 
     vm.startPrank(carol);
@@ -292,7 +292,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
     );
   }
 
-  function test_reverts_supply_flashloan_simple_transfer_withdraw() public {
+  function test_reverts_supply_flashloan_simple_transfer_withdraw() public virtual {
     (address aUSDX, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(tokenList.usdx);
 
     vm.startPrank(carol);
@@ -324,7 +324,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
     );
   }
 
-  function test_flashloan_simple() public {
+  function test_flashloan_simple() public virtual {
     bytes memory emptyParams;
 
     vm.prank(poolAdmin);
@@ -340,7 +340,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
     );
   }
 
-  function test_flashloan_simple_2() public {
+  function test_flashloan_simple_2() public virtual {
     bytes memory emptyParams;
 
     vm.prank(poolAdmin);
@@ -356,7 +356,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
     );
   }
 
-  function test_flashloan() public {
+  function test_flashloan() public virtual {
     (
       address[] memory assets,
       uint256[] memory amounts,
@@ -376,7 +376,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
     );
   }
 
-  function test_flashloan_multiple() public {
+  function test_flashloan_multiple() public virtual {
     (
       address[] memory assets,
       uint256[] memory amounts,
@@ -396,7 +396,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
     );
   }
 
-  function test_flashloan_borrow() public {
+  function test_flashloan_borrow() public virtual {
     vm.prank(alice);
     contracts.poolProxy.supply(tokenList.wbtc, 0.5e8, alice, 0);
 
@@ -419,7 +419,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
     );
   }
 
-  function test_revert_flashloan_borrow_stable() public {
+  function test_revert_flashloan_borrow_stable() public virtual {
     (
       address[] memory assets,
       uint256[] memory amounts,

@@ -28,7 +28,7 @@ contract PoolSupplyTests is TestnetProcedures {
 
   event ReserveUsedAsCollateralDisabled(address indexed reserve, address indexed user);
 
-  function setUp() public {
+  function setUp() public virtual {
     initTestEnvironment();
 
     (aUSDX, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(tokenList.usdx);
@@ -51,7 +51,7 @@ contract PoolSupplyTests is TestnetProcedures {
     assertEq(IAToken(aWBTC).scaledBalanceOf(alice), supplyAmount);
   }
 
-  function test_first_supply_on_behalf() public {
+  function test_first_supply_on_behalf() public virtual {
     uint256 supplyAmount = 0.2e8;
     uint256 underlyingBalanceBefore = IERC20(tokenList.wbtc).balanceOf(alice);
 
