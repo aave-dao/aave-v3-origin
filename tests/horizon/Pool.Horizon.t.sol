@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {MockFlashLoanSimpleReceiver} from 'src/contracts/mocks/flashloan/MockSimpleFlashLoanReceiver.sol';
-import {MockFlashLoanReceiver} from 'src/contracts/mocks/flashloan/MockFlashLoanReceiver.sol';
-import {Errors} from 'src/contracts/protocol/libraries/helpers/Errors.sol';
-import {IERC20} from 'src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
-import {IPoolAddressesProvider} from 'src/contracts/interfaces/IPoolAddressesProvider.sol';
-import {IRwaAToken} from 'src/contracts/interfaces/IRwaAToken.sol';
-import {TestnetProcedures} from 'tests/utils/TestnetProcedures.sol';
+import {MockFlashLoanSimpleReceiver} from '../../src/contracts/mocks/flashloan/MockSimpleFlashLoanReceiver.sol';
+import {MockFlashLoanReceiver} from '../../src/contracts/mocks/flashloan/MockFlashLoanReceiver.sol';
+import {Errors} from '../../src/contracts/protocol/libraries/helpers/Errors.sol';
+import {IERC20} from '../../src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {IPoolAddressesProvider} from '../../src/contracts/interfaces/IPoolAddressesProvider.sol';
+import {IRwaAToken} from '../../src/contracts/interfaces/IRwaAToken.sol';
+import {TestnetProcedures} from '../utils/TestnetProcedures.sol';
 
 contract PoolHorizonTests is TestnetProcedures {
   MockFlashLoanReceiver internal mockFlashReceiver;

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {ATokenModifiersTests} from 'tests/protocol/tokenization/ATokenModifiers.t.sol';
+import {ATokenModifiersTests} from '../tokenization/ATokenModifiers.t.sol';
 
 contract ATokenModifiersRwaTests is ATokenModifiersTests {
   function setUp() public override {

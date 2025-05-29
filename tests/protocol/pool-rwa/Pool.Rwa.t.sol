@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {PoolTests} from 'tests/protocol/pool/Pool.t.sol';
+import {PoolTests} from '../pool/Pool.t.sol';
 
 contract PoolRwaTests is PoolTests {
   function setUp() public override {

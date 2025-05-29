@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {PoolRepayTests} from 'tests/protocol/pool/Pool.Repay.t.sol';
+import {PoolRepayTests} from '../pool/Pool.Repay.t.sol';
 
 contract PoolRepayRwaTests is PoolRepayTests {
   function setUp() public override {

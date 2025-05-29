@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {ATokenRescueTokensTests} from 'tests/protocol/tokenization/ATokenRescueTokens.sol';
+import {ATokenRescueTokensTests} from '../tokenization/ATokenRescueTokens.sol';
 
 contract ATokenRescueTokensRwaTests is ATokenRescueTokensTests {
   function setUp() public override {

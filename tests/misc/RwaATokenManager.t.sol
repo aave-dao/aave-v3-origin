@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {IAccessControl} from 'src/contracts/dependencies/openzeppelin/contracts/IAccessControl.sol';
-import {IERC20} from 'src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
-import {TestnetRwaERC20} from 'src/contracts/mocks/testnet-helpers/TestnetRwaERC20.sol';
-import {Errors} from 'src/contracts/protocol/libraries/helpers/Errors.sol';
-import {IPool} from 'src/contracts/interfaces/IPool.sol';
-import {IRwaAToken} from 'src/contracts/interfaces/IRwaAToken.sol';
+import {IAccessControl} from '../../src/contracts/dependencies/openzeppelin/contracts/IAccessControl.sol';
+import {IERC20} from '../../src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {TestnetRwaERC20} from '../../src/contracts/mocks/testnet-helpers/TestnetRwaERC20.sol';
+import {Errors} from '../../src/contracts/protocol/libraries/helpers/Errors.sol';
+import {IPool} from '../../src/contracts/interfaces/IPool.sol';
+import {IRwaAToken} from '../../src/contracts/interfaces/IRwaAToken.sol';
 import {stdError} from 'forge-std/Test.sol';
 import {Vm} from 'forge-std/Vm.sol';
-import {RwaATokenManager} from 'src/contracts/misc/RwaATokenManager.sol';
-import {TestnetProcedures} from 'tests/utils/TestnetProcedures.sol';
+import {RwaATokenManager} from '../../src/contracts/misc/RwaATokenManager.sol';
+import {TestnetProcedures} from '../utils/TestnetProcedures.sol';
 
 contract RwaATokenManagerTest is TestnetProcedures {
   struct RwaATokenInfo {

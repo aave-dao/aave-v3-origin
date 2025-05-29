@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {RwaATokenManager} from 'src/contracts/misc/RwaATokenManager.sol';
-import {IRwaAToken} from 'src/contracts/interfaces/IRwaAToken.sol';
-import {Testhelpers} from 'tests/gas/Testhelpers.sol';
+import {RwaATokenManager} from '../../src/contracts/misc/RwaATokenManager.sol';
+import {IRwaAToken} from '../../src/contracts/interfaces/IRwaAToken.sol';
+import {Testhelpers} from './Testhelpers.sol';
 
 /**
  * Scenario suite for common RWA operations.

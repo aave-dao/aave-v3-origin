@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {VariableDebtTokenEventsTests} from 'tests/protocol/tokenization/VariableDebtToken.t.sol';
+import {VariableDebtTokenEventsTests} from '../tokenization/VariableDebtToken.t.sol';
 
 contract VariableDebtTokenEventsRwaTests is VariableDebtTokenEventsTests {
   function setUp() public override {

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {IERC20} from 'src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
-import {IPool} from 'src/contracts/interfaces/IPool.sol';
-import {Errors} from 'src/contracts/protocol/libraries/helpers/Errors.sol';
-import {RwaAToken} from 'src/contracts/protocol/tokenization/RwaAToken.sol';
-import {TestnetProcedures} from 'tests/utils/TestnetProcedures.sol';
+import {IERC20} from '../../src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {IPool} from '../../src/contracts/interfaces/IPool.sol';
+import {Errors} from '../../src/contracts/protocol/libraries/helpers/Errors.sol';
+import {RwaAToken} from '../../src/contracts/protocol/tokenization/RwaAToken.sol';
+import {TestnetProcedures} from '../utils/TestnetProcedures.sol';
 
 import {stdError} from 'forge-std/Test.sol';
 

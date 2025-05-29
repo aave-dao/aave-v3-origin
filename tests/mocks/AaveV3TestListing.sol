@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import 'src/contracts/extensions/v3-config-engine/AaveV3Payload.sol';
-import {TestnetRwaERC20} from 'src/contracts/mocks/testnet-helpers/TestnetRwaERC20.sol';
-import {TestnetERC20} from 'src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
-import {MockAggregator} from 'src/contracts/mocks/oracle/CLAggregators/MockAggregator.sol';
-import {ACLManager} from 'src/contracts/protocol/configuration/ACLManager.sol';
-import {MarketReport} from 'src/deployments/interfaces/IMarketReportTypes.sol';
-import {IPoolConfigurator, ConfiguratorInputTypes} from 'src/contracts/interfaces/IPoolConfigurator.sol';
+import '../../src/contracts/extensions/v3-config-engine/AaveV3Payload.sol';
+import {TestnetRwaERC20} from '../../src/contracts/mocks/testnet-helpers/TestnetRwaERC20.sol';
+import {TestnetERC20} from '../../src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
+import {MockAggregator} from '../../src/contracts/mocks/oracle/CLAggregators/MockAggregator.sol';
+import {ACLManager} from '../../src/contracts/protocol/configuration/ACLManager.sol';
+import {MarketReport} from '../../src/deployments/interfaces/IMarketReportTypes.sol';
+import {IPoolConfigurator, ConfiguratorInputTypes} from '../../src/contracts/interfaces/IPoolConfigurator.sol';
 
 /**
  * @dev Smart contract for token listing, for testing purposes

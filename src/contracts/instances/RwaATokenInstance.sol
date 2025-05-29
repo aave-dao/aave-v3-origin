@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {RwaAToken} from 'src/contracts/protocol/tokenization/RwaAToken.sol';
-import {IPool, IAaveIncentivesController, IInitializableAToken, Errors, VersionedInitializable} from 'src/contracts/protocol/tokenization/AToken.sol';
+import {RwaAToken} from '../protocol/tokenization/RwaAToken.sol';
+import {IPool, IAaveIncentivesController, IInitializableAToken, Errors, VersionedInitializable} from '../protocol/tokenization/AToken.sol';
 
 contract RwaATokenInstance is RwaAToken {
   uint256 public constant ATOKEN_REVISION = 1;
