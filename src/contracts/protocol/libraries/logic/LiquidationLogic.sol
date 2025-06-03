@@ -594,7 +594,7 @@ library LiquidationLogic {
 
     // This is the base collateral to liquidate based on the given debt to cover
     vars.baseCollateral =
-      ((debtAssetPrice * debtToCover * collateralAssetUnit)) /
+      (debtAssetPrice * debtToCover * collateralAssetUnit) /
       (vars.collateralAssetPrice * debtAssetUnit);
 
     vars.maxCollateralToLiquidate = vars.baseCollateral.percentMul(liquidationBonus);
