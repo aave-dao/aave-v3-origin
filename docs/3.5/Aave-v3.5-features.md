@@ -46,3 +46,8 @@ This is done to ensure correct behavior in regards to user operations, so that e
 
 On transfers, the scaled amount is rounded `up`.
 While for other methods the rational is obvious(and well specified on ERC4626), on transfers the "correct" path is more debatable. We think that currently the more "problematic" code-path is, if you pull x funds, but you get x-1. Therefore by rounding up the scaled amount, we ensure that the contract pulling receives at least the amount it requested.
+
+### Misc changes
+
+- smaller refactoring in `LiquidationLogic` making the code more consistent
+- `repayWithAToken` is only allowed when the user is still healthy **after** the repayment. This is done in order to prevent some edge cases where the user would have debt, but no collateral or now with the adjustments on rounding, bringing himself into liquidation area through selfRepayment.

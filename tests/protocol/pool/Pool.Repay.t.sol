@@ -176,6 +176,21 @@ contract PoolRepayTests is TestnetProcedures {
     );
   }
 
+  function test_repayWithATokens_shouldRevertIfUnhealthyAfterRepayment() external {
+    uint256 amount = 2000e6;
+    uint256 borrowAmount = 1600e6;
+    vm.startPrank(alice);
+    // supply enough collateral to borrow out everything
+    contracts.poolProxy.supply(tokenList.usdx, amount, alice, 0);
+    contracts.poolProxy.borrow(tokenList.usdx, borrowAmount, 2, 0, alice);
+    vm.warp(vm.getBlockTimestamp() + 365 days * 100);
+
+    vm.expectRevert(
+      abi.encodeWithSelector(Errors.HealthFactorLowerThanLiquidationThreshold.selector)
+    );
+    contracts.poolProxy.repayWithATokens(tokenList.usdx, 2, 2);
+  }
+
   function test_repayWithATokens_fuzz_collateral_variable_borrow(
     uint256 repayAmount,
     uint32 timeDelta

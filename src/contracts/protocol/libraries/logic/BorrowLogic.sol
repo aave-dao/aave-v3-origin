@@ -123,6 +123,7 @@ library BorrowLogic {
   function executeRepay(
     mapping(address => DataTypes.ReserveData) storage reservesData,
     mapping(uint256 => address) storage reservesList,
+    mapping(uint8 => DataTypes.EModeCategory) storage eModeCategories,
     DataTypes.UserConfigurationMap storage onBehalfOfConfig,
     DataTypes.ExecuteRepayParams memory params
   ) external returns (uint256) {
@@ -149,9 +150,9 @@ library BorrowLogic {
     // Allows a user to repay with aTokens without leaving dust from interest.
     if (params.useATokens && paybackAmount == type(uint256).max) {
       // Replicate aToken.balanceOf (round down), to always underestimate the collateral.
-      paybackAmount = IAToken(reserveCache.aTokenAddress)
-        .scaledBalanceOf(params.onBehalfOf)
-        .rayMulFloor(reserveCache.nextLiquidityIndex);
+      paybackAmount = IAToken(reserveCache.aTokenAddress).scaledBalanceOf(params.user).rayMulFloor(
+        reserveCache.nextLiquidityIndex
+      );
     }
 
     if (paybackAmount > userDebt) {
@@ -196,6 +197,15 @@ library BorrowLogic {
       if (isCollateral && IAToken(reserveCache.aTokenAddress).scaledBalanceOf(params.user) == 0) {
         onBehalfOfConfig.setUsingAsCollateral(reserve.id, params.asset, params.user, false);
       }
+      ValidationLogic.validateHealthFactor(
+        reservesData,
+        reservesList,
+        eModeCategories,
+        onBehalfOfConfig,
+        params.user,
+        params.userEModeCategory,
+        params.oracle
+      );
     } else {
       IERC20(params.asset).safeTransferFrom(params.user, reserveCache.aTokenAddress, paybackAmount);
     }
