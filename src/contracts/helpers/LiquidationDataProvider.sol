@@ -241,7 +241,7 @@ contract LiquidationDataProvider is ILiquidationDataProvider {
 
           debtAmountToLiquidate = ((collateralInfo.price *
             collateralAmountToLiquidate *
-            debtInfo.assetUnit) / (debtInfo.price * collateralInfo.assetUnit)).percentDiv(
+            debtInfo.assetUnit) / (debtInfo.price * collateralInfo.assetUnit)).percentDivCeil(
               liquidationBonus
             );
         } else {
@@ -299,7 +299,7 @@ contract LiquidationDataProvider is ILiquidationDataProvider {
 
       debtAmountToLiquidate = ((collateralInfo.price *
         collateralAmountToLiquidate *
-        debtInfo.assetUnit) / (debtInfo.price * collateralInfo.assetUnit)).percentDiv(
+        debtInfo.assetUnit) / (debtInfo.price * collateralInfo.assetUnit)).percentDivCeil(
           liquidationBonus
         );
     } else {
