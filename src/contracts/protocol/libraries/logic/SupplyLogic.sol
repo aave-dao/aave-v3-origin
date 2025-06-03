@@ -196,7 +196,7 @@ library SupplyLogic {
     ValidationLogic.validateTransfer(reserve);
 
     uint256 reserveId = reserve.id;
-    // The transfer amount is always ceiled, to ensure the receiver, receives at least the intended amoutn of shares.
+    // The transfer amount is always ceiled, to ensure the receiver, receives at least the intended amount of shares.
     uint256 scaledAmount = params.amount.rayDivCeil(reserve.getNormalizedIncome());
 
     if (params.from != params.to && scaledAmount != 0) {
