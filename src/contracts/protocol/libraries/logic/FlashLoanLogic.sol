@@ -225,7 +225,7 @@ library FlashLoanLogic {
 
     reserve.accruedToTreasury += params
       .totalPremium
-      .rayDiv(reserveCache.nextLiquidityIndex)
+      .rayDivFloor(reserveCache.nextLiquidityIndex)
       .toUint128();
 
     reserve.updateInterestRatesAndVirtualBalance(
