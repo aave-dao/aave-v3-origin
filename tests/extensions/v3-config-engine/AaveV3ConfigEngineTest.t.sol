@@ -529,8 +529,8 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
     prevEmodeCategoryData.liquidationThreshold = 97_60;
     prevEmodeCategoryData.liquidationBonus = 101_50; // 100_00 + 1_50
     prevEmodeCategoryData.label = 'Test';
-    prevEmodeCategoryData.collateralBitmap = 10; // 1010
-    prevEmodeCategoryData.borrowableBitmap = 12; // 1100
+    prevEmodeCategoryData.collateralBitmap = 5; // 101
+    prevEmodeCategoryData.borrowableBitmap = 6; // 110
     _validateEmodeCategory(
       IPoolAddressesProvider(address(contracts.poolAddressesProvider)),
       2,
