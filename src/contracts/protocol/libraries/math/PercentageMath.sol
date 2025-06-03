@@ -42,14 +42,9 @@ library PercentageMath {
     uint256 value,
     uint256 percentage
   ) internal pure returns (uint256 result) {
-    // to avoid overflow, value <= (type(uint256).max - HALF_PERCENTAGE_FACTOR) / percentage
+     // to avoid overflow, value <= type(uint256).max / percentage
     assembly {
-      if iszero(
-        or(
-          iszero(percentage),
-          iszero(gt(value, div(sub(not(0), HALF_PERCENTAGE_FACTOR), percentage)))
-        )
-      ) {
+      if iszero(or(iszero(percentage), iszero(gt(value, div(not(0), percentage))))) {
         revert(0, 0)
       }
 

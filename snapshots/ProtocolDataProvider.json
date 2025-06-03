@@ -1,5 +1,5 @@
 {
-  "getATokenTotalSupply": "30180",
+  "getATokenTotalSupply": "30176",
   "getFlashLoanEnabled": "11346",
   "getInterestRateStrategyAddress": "8811",
   "getIsVirtualAccActive": "463",
@@ -9,8 +9,8 @@
   "getReserveConfigurationData": "11819",
   "getReserveTokensAddresses": "14934",
   "getSiloedBorrowing": "11399",
-  "getTotalDebt": "30180",
+  "getTotalDebt": "30176",
   "getUnbackedMintCap": "413",
-  "getUserReserveData": "66380",
+  "getUserReserveData": "66376",
   "getVirtualUnderlyingBalance": "11144"
 }
