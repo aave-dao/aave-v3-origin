@@ -1,11 +1,8 @@
 // SPDX-License-Identifier: agpl-3
 pragma solidity ^0.8.19;
 
-import 'openzeppelin-contracts/contracts/token/ERC20/extensions/ERC4626.sol';
-import {IERC20Permit} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol';
-import {ECDSA} from 'openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol';
-import {EIP712} from 'openzeppelin-contracts/contracts/utils/cryptography/EIP712.sol';
-import {Nonces} from 'openzeppelin-contracts/contracts/utils/Nonces.sol';
+import {ERC4626, ERC20, IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/ERC4626.sol';
+import {ERC20Permit, EIP712} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/ERC20Permit.sol';
 import {IYieldMaestro} from './interfaces/IYieldMaestro.sol';
 import {IStakedToken} from '../../../contracts/rewards/interfaces/IStakedToken.sol';
 
@@ -13,7 +10,7 @@ interface IERC1271 {
   function isValidSignature(bytes32, bytes memory) external view returns (bytes4);
 }
 
-contract sGHO is ERC4626, IERC20Permit, EIP712, Nonces, IStakedToken {
+contract sGHO is ERC4626, ERC20Permit, IStakedToken {
   address public immutable gho;
   address public YIELD_MAESTRO;
   uint256 internal internalTotalAssets;
@@ -30,19 +27,14 @@ contract sGHO is ERC4626, IERC20Permit, EIP712, Nonces, IStakedToken {
   string public constant VERSION = '1';
 
   /**
-   * @dev Permit deadline has expired.
+   * @dev Invalid signature.
    */
-  error ERC2612ExpiredSignature(uint256 deadline);
+  error InvalidSignature();
 
   /**
-   * @dev Mismatched signature.
+   * @dev Thrown when a direct ETH transfer is attempted.
    */
-  error ERC2612InvalidSigner(address signer, address owner);
-
-      /**
-     * @dev Thrown when a direct ETH transfer is attempted.
-     */
-    error NoEthAllowed();
+  error NoEthAllowed();
 
   /**
    * @dev Set the underlying asset contract. This must be an ERC20-compatible contract (ERC20 or ERC777).
@@ -52,7 +44,7 @@ contract sGHO is ERC4626, IERC20Permit, EIP712, Nonces, IStakedToken {
   constructor(
     address _gho,
     address _yieldMaestro
-  ) ERC20('sGHO', 'sGHO') ERC4626(IERC20(_gho)) EIP712('sGHO', '1') {
+  ) ERC20('sGHO', 'sGHO') ERC4626(IERC20(_gho)) ERC20Permit('sGHO') {
     deploymentChainId = block.chainid;
     _DOMAIN_SEPARATOR = _calculateDomainSeparator(block.chainid);
     gho = _gho;
@@ -84,7 +76,7 @@ contract sGHO is ERC4626, IERC20Permit, EIP712, Nonces, IStakedToken {
     _claimSavings();
   }
 
-    /// @inheritdoc IStakedToken
+  /// @inheritdoc IStakedToken
   function cooldown() external {}
 
   // --- Approve by signature ---
@@ -123,8 +115,13 @@ contract sGHO is ERC4626, IERC20Permit, EIP712, Nonces, IStakedToken {
     uint256 deadline,
     bytes memory signature
   ) public {
-    require(block.timestamp <= deadline, 'SavingsXDai/permit-expired');
-    require(owner != address(0), 'SavingsXDai/invalid-owner');
+    if (block.timestamp > deadline) {
+      revert ERC2612ExpiredSignature(deadline);
+    }
+
+    if (owner == address(0)) {
+      revert ERC2612InvalidSigner(owner, spender);
+    }
 
     uint256 nonce = _useNonce(owner);
 
@@ -138,7 +135,9 @@ contract sGHO is ERC4626, IERC20Permit, EIP712, Nonces, IStakedToken {
       )
     );
 
-    require(_isValidSignature(owner, digest, signature), 'SavingsXDai/invalid-permit');
+    if (!_isValidSignature(owner, digest, signature)) {
+      revert InvalidSignature();
+    }
 
     _approve(owner, spender, value);
     emit Approval(owner, spender, value);
@@ -152,22 +151,20 @@ contract sGHO is ERC4626, IERC20Permit, EIP712, Nonces, IStakedToken {
     uint8 v,
     bytes32 r,
     bytes32 s
-  ) external {
+  ) public virtual override {
     permit(owner, spender, value, deadline, abi.encodePacked(r, s, v));
   }
   /**
    * @dev See {IERC20Permit-nonces}.
    */
-  function nonces(
-    address owner
-  ) public view virtual override(IERC20Permit, Nonces) returns (uint256) {
+  function nonces(address owner) public view virtual override(ERC20Permit) returns (uint256) {
     return super.nonces(owner);
   }
 
   /**
    * @dev See {IERC20Permit-DOMAIN_SEPARATOR}.
    */
-  function DOMAIN_SEPARATOR() external view virtual returns (bytes32) {
+  function DOMAIN_SEPARATOR() external view virtual override returns (bytes32) {
     return _domainSeparatorV4();
   }
 
@@ -184,6 +181,10 @@ contract sGHO is ERC4626, IERC20Permit, EIP712, Nonces, IStakedToken {
           address(this)
         )
       );
+  }
+
+  function decimals() public view virtual override(ERC20, ERC4626) returns (uint8) {
+    return super.decimals();
   }
 
   // --- ERC4626 Logic ---
@@ -264,7 +265,6 @@ contract sGHO is ERC4626, IERC20Permit, EIP712, Nonces, IStakedToken {
    */
   function _updateVault(uint256 assets, bool assetIncrease) internal {
     uint256 currentTime = block.timestamp;
-    uint256 claimed;
 
     if (currentTime > lastupdate + 600) {
       _claimSavings();
