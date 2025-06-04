@@ -246,7 +246,7 @@ contract YieldMaestroTest is TestnetProcedures {
 
   // --- Receive Tests ---
   function test_revert_receive() external {
-    vm.expectRevert('No ETH allowed');
+    vm.expectRevert(abi.encodeWithSelector(sGHO.NoEthAllowed.selector));
     payable(address(yieldMaestro)).transfer(1 ether);
   }
 
