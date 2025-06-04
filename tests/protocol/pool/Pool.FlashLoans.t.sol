@@ -355,7 +355,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
     );
   }
 
-  function test_flashloan_simple_rounding() public {
+  function test_flashloan_simple_rounding_premium() public {
     vm.prank(poolAdmin);
     TestnetERC20(tokenList.usdx).transferOwnership(address(mockFlashSimpleReceiver));
 
@@ -380,7 +380,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
     );
   }
 
-  function test_flashloan_rounding() public {
+  function test_flashloan_rounding_premium() public {
     vm.prank(poolAdmin);
     TestnetERC20(tokenList.usdx).transferOwnership(address(mockFlashReceiver));
 
@@ -413,6 +413,140 @@ contract PoolFlashLoansTests is TestnetProcedures {
       '0x',
       0
     );
+  }
+
+  function test_flashloan_rounding_accruedToTreasury() public {
+    vm.prank(poolAdmin);
+    TestnetERC20(tokenList.usdx).transferOwnership(address(mockFlashReceiver));
+
+    // increase liquidity index
+
+    vm.startPrank(alice);
+
+    uint256 supplyAmount = 50_000e6;
+
+    contracts.poolProxy.supply({
+      asset: tokenList.usdx,
+      amount: supplyAmount,
+      onBehalfOf: alice,
+      referralCode: 0
+    });
+
+    contracts.poolProxy.borrow({
+      asset: tokenList.usdx,
+      amount: supplyAmount / 5,
+      interestRateMode: 2,
+      referralCode: 0,
+      onBehalfOf: alice
+    });
+
+    vm.warp(block.timestamp + 4500000 days);
+
+    contracts.poolProxy.repay({
+      asset: tokenList.usdx,
+      amount: supplyAmount / 5,
+      interestRateMode: 2,
+      onBehalfOf: alice
+    });
+
+    vm.stopPrank();
+
+    // check liquidity index
+
+    DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
+      tokenList.usdx
+    );
+    assertNotEq(reserveData.liquidityIndex, 1e27);
+    assertGt(reserveData.liquidityIndex, 10e27);
+    assertLt(reserveData.liquidityIndex, 11e27);
+
+    // accruedToTreasury += 18.rayDivFloor(10e27) = 18 * 1e27 / 10e27 = 1.8
+    // accruedToTreasury += 18.rayDivFloor(10e27) = 18 * 1e27 / 10e27 = 1.63636363636
+
+    uint256 flashLoanFeeAmount = 18;
+    uint256 flashLoanFeePercentageTotal = contracts.poolProxy.FLASHLOAN_PREMIUM_TOTAL();
+    uint256 flashLoanAmount = (flashLoanFeeAmount * 100_00) / flashLoanFeePercentageTotal;
+
+    address[] memory assets = new address[](1);
+    uint256[] memory amounts = new uint256[](1);
+    uint256[] memory modes = new uint256[](1);
+
+    assets[0] = tokenList.usdx;
+    amounts[0] = flashLoanAmount;
+    modes[0] = 0;
+
+    vm.prank(alice);
+    contracts.poolProxy.flashLoan(address(mockFlashReceiver), assets, amounts, modes, alice, '', 0);
+
+    uint256 oldAccruedToTreasury = reserveData.accruedToTreasury;
+    reserveData = contracts.poolProxy.getReserveData(tokenList.usdx);
+    assertEq(reserveData.accruedToTreasury, oldAccruedToTreasury + 1);
+  }
+
+  function test_flashloan_simple_rounding_accruedToTreasury() public {
+    vm.prank(poolAdmin);
+    TestnetERC20(tokenList.usdx).transferOwnership(address(mockFlashSimpleReceiver));
+
+    // increase liquidity index
+
+    vm.startPrank(alice);
+
+    uint256 supplyAmount = 50_000e6;
+
+    contracts.poolProxy.supply({
+      asset: tokenList.usdx,
+      amount: supplyAmount,
+      onBehalfOf: alice,
+      referralCode: 0
+    });
+
+    contracts.poolProxy.borrow({
+      asset: tokenList.usdx,
+      amount: supplyAmount / 5,
+      interestRateMode: 2,
+      referralCode: 0,
+      onBehalfOf: alice
+    });
+
+    vm.warp(block.timestamp + 4500000 days);
+
+    contracts.poolProxy.repay({
+      asset: tokenList.usdx,
+      amount: supplyAmount / 5,
+      interestRateMode: 2,
+      onBehalfOf: alice
+    });
+
+    vm.stopPrank();
+
+    // check liquidity index
+
+    DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
+      tokenList.usdx
+    );
+    assertNotEq(reserveData.liquidityIndex, 1e27);
+    assertGt(reserveData.liquidityIndex, 10e27);
+    assertLt(reserveData.liquidityIndex, 11e27);
+
+    // accruedToTreasury += 18.rayDivFloor(10e27) = 18 * 1e27 / 10e27 = 1.8
+    // accruedToTreasury += 18.rayDivFloor(10e27) = 18 * 1e27 / 10e27 = 1.63636363636
+
+    uint256 flashLoanFeeAmount = 18;
+    uint256 flashLoanFeePercentageTotal = contracts.poolProxy.FLASHLOAN_PREMIUM_TOTAL();
+    uint256 flashLoanAmount = (flashLoanFeeAmount * 100_00) / flashLoanFeePercentageTotal;
+
+    vm.prank(alice);
+    contracts.poolProxy.flashLoanSimple({
+      receiverAddress: address(mockFlashSimpleReceiver),
+      asset: tokenList.usdx,
+      amount: flashLoanAmount,
+      params: '',
+      referralCode: 0
+    });
+
+    uint256 oldAccruedToTreasury = reserveData.accruedToTreasury;
+    reserveData = contracts.poolProxy.getReserveData(tokenList.usdx);
+    assertEq(reserveData.accruedToTreasury, oldAccruedToTreasury + 1);
   }
 
   function test_flashloan_simple_2() public {
