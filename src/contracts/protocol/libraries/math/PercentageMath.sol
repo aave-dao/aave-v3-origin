@@ -86,7 +86,7 @@ library PercentageMath {
     uint256 value,
     uint256 percentage
   ) internal pure returns (uint256 result) {
-    // to avoid overflow, value <= (type(uint256).max - halfPercentage) / PERCENTAGE_FACTOR
+    // to avoid overflow, value <= type(uint256).max / PERCENTAGE_FACTOR
     assembly {
       if or(iszero(percentage), iszero(iszero(gt(value, div(not(0), PERCENTAGE_FACTOR))))) {
         revert(0, 0)
