@@ -602,7 +602,7 @@ library LiquidationLogic {
     if (vars.maxCollateralToLiquidate > borrowerCollateralBalance) {
       vars.collateralAmount = borrowerCollateralBalance;
       vars.debtAmountNeeded = ((vars.collateralAssetPrice * vars.collateralAmount * debtAssetUnit) /
-        (debtAssetPrice * collateralAssetUnit)).percentDiv(liquidationBonus);
+        (debtAssetPrice * collateralAssetUnit)).percentDivCeil(liquidationBonus);
     } else {
       vars.collateralAmount = vars.maxCollateralToLiquidate;
       vars.debtAmountNeeded = debtToCover;
