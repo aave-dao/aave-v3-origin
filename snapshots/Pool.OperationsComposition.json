@@ -1,5 +1,5 @@
 {
-  "batchLiquidate: liquidate 2 users": "485773",
-  "repayAndWithdraw: borrow disabled, collateral disabled": "291116",
-  "supplyAndBorrow: first supply->collateralEnabled, first borrow": "371572"
+  "batchLiquidate: liquidate 2 users": "485412",
+  "repayAndWithdraw: borrow disabled, collateral disabled": "290217",
+  "supplyAndBorrow: first supply->collateralEnabled, first borrow": "371417"
 }

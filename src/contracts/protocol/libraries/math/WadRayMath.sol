@@ -86,7 +86,7 @@ library WadRayMath {
   function rayMulFloor(uint256 a, uint256 b) internal pure returns (uint256 c) {
     assembly {
       // Overflow check: Ensure a * b does not exceed uint256 max
-      if iszero(or(iszero(b), iszero(gt(a, div(sub(not(0), HALF_RAY), b))))) {
+      if iszero(or(iszero(b), iszero(gt(a, div(not(0), b))))) {
         revert(0, 0)
       }
 
@@ -97,7 +97,7 @@ library WadRayMath {
   function rayMulCeil(uint256 a, uint256 b) internal pure returns (uint256 c) {
     assembly {
       // Overflow check: Ensure a * b does not exceed uint256 max
-      if iszero(or(iszero(b), iszero(gt(a, div(sub(not(0), HALF_RAY), b))))) {
+      if iszero(or(iszero(b), iszero(gt(a, div(not(0), b))))) {
         revert(0, 0)
       }
 
@@ -131,7 +131,7 @@ library WadRayMath {
   function rayDivCeil(uint256 a, uint256 b) internal pure returns (uint256 c) {
     assembly {
       // Overflow check: Ensure a * RAY does not exceed uint256 max
-      if or(iszero(b), iszero(iszero(gt(a, div(sub(not(0), div(b, 2)), RAY))))) {
+      if or(iszero(b), iszero(iszero(gt(a, div(not(0), RAY))))) {
         revert(0, 0)
       }
       let scaled := mul(a, RAY)
@@ -142,7 +142,7 @@ library WadRayMath {
   function rayDivFloor(uint256 a, uint256 b) internal pure returns (uint256 c) {
     assembly {
       // Overflow check: Ensure a * RAY does not exceed uint256 max
-      if or(iszero(b), iszero(iszero(gt(a, div(sub(not(0), div(b, 2)), RAY))))) {
+      if or(iszero(b), iszero(iszero(gt(a, div(not(0), RAY))))) {
         revert(0, 0)
       }
       c := div(mul(a, RAY), b)
