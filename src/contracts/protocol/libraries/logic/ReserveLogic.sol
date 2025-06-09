@@ -186,9 +186,9 @@ library ReserveLogic {
       return;
     }
 
-    //debt accrued is the sum of the current debt minus the sum of the debt at the last update
-    // Replicate vDebt.totalSupply (round up), to always overestimate the debt.
-    uint256 totalDebtAccrued = reserveCache.currScaledVariableDebt.rayMulCeil(
+    // debt accrued is the sum of the current debt minus the sum of the debt at the last update
+    // Rounding down to undermint to the treasury and keep the invariant healthy.
+    uint256 totalDebtAccrued = reserveCache.currScaledVariableDebt.rayMulFloor(
       reserveCache.nextVariableBorrowIndex - reserveCache.currVariableBorrowIndex
     );
 
