@@ -18,7 +18,7 @@ contract PoolConfiguratorPendingLtvTests is TestnetProcedures {
     uint256 liquidationBonus
   );
 
-  function setUp() public {
+  function setUp() public virtual {
     initTestEnvironment();
   }
 

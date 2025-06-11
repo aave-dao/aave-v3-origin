@@ -11,15 +11,24 @@ import {AaveV3BatchOrchestration} from '../../src/deployments/projects/aave-v3-b
 import {IPoolAddressesProvider} from '../../src/contracts/interfaces/IPoolAddressesProvider.sol';
 import {AaveV3TestListing} from '../mocks/AaveV3TestListing.sol';
 import {ACLManager, Errors} from '../../src/contracts/protocol/configuration/ACLManager.sol';
+import {AccessControl} from '../../src/contracts/dependencies/openzeppelin/contracts/AccessControl.sol';
 import {WETH9} from '../../src/contracts/dependencies/weth/WETH9.sol';
+import {TestnetRwaERC20} from '../../src/contracts/mocks/testnet-helpers/TestnetRwaERC20.sol';
 import {TestnetERC20} from '../../src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
+import {RwaATokenInstance} from '../../src/contracts/instances/RwaATokenInstance.sol';
+import {ATokenInstance} from '../../src/contracts/instances/ATokenInstance.sol';
 import {PoolConfigurator} from '../../src/contracts/protocol/pool/PoolConfigurator.sol';
+import {VersionedInitializable} from '../../src/contracts/misc/aave-upgradeability/VersionedInitializable.sol';
 import {DefaultReserveInterestRateStrategyV2} from '../../src/contracts/misc/DefaultReserveInterestRateStrategyV2.sol';
+import {RwaATokenManager} from '../../src/contracts/misc/RwaATokenManager.sol';
+import {IRwaAToken} from '../../src/contracts/interfaces/IRwaAToken.sol';
 import {ReserveConfiguration} from '../../src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
 import {PercentageMath} from '../../src/contracts/protocol/libraries/math/PercentageMath.sol';
 import {AaveProtocolDataProvider} from '../../src/contracts/helpers/AaveProtocolDataProvider.sol';
 import {MarketReportUtils} from '../../src/deployments/contracts/utilities/MarketReportUtils.sol';
 import {AaveV3ConfigEngine, IAaveV3ConfigEngine} from '../../src/contracts/extensions/v3-config-engine/AaveV3ConfigEngine.sol';
+import {MockRwaATokenInstance} from '../mocks/MockRwaATokenInstance.sol';
+import {MockATokenInstance} from '../mocks/MockATokenInstance.sol';
 
 struct TestVars {
   uint8 underlyingDecimals;
@@ -57,26 +66,44 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
   address internal alice;
   address internal bob;
   address internal carol;
+  address internal liquidityProvider;
 
   uint256 internal alicePrivateKey;
   uint256 internal bobPrivateKey;
   uint256 internal carolPrivateKey;
+  uint256 internal liquidityProviderPrivateKey;
 
   MarketReport internal report;
   ContractsReport internal contracts;
   TokenList internal tokenList;
+  RwaATokenList internal rwaATokenList;
 
   Roles internal roleList;
 
   TestnetERC20 internal usdx;
   TestnetERC20 internal wbtc;
+  TestnetRwaERC20 internal buidl;
+  TestnetRwaERC20 internal ustb;
+  TestnetRwaERC20 internal wtgxx;
   WETH9 internal weth;
+
+  address internal rwaATokenManagerOwner;
+  address internal rwaATokenTransferAdmin;
 
   struct TokenList {
     address wbtc;
     address weth;
     address usdx;
+    address buidl;
+    address ustb;
+    address wtgxx;
     address gho;
+  }
+
+  struct RwaATokenList {
+    address aBuidl;
+    address aUstb;
+    address aWtgxx;
   }
 
   struct EModeCategoryInput {
@@ -90,17 +117,10 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
   function _initTestEnvironment(bool mintUserTokens, bool l2) internal {
     poolAdmin = makeAddr('POOL_ADMIN');
 
-    alicePrivateKey = 0xA11CE;
-    bobPrivateKey = 0xB0B;
-    carolPrivateKey = 0xCA801;
-
-    alice = vm.addr(alicePrivateKey);
-    bob = vm.addr(bobPrivateKey);
-    carol = vm.addr(carolPrivateKey);
-
-    vm.label(alice, 'alice');
-    vm.label(bob, 'bob');
-    vm.label(carol, 'carol');
+    (alice, alicePrivateKey) = makeAddrAndKey('alice');
+    (bob, bobPrivateKey) = makeAddrAndKey('bob');
+    (carol, carolPrivateKey) = makeAddrAndKey('carol');
+    (liquidityProvider, liquidityProviderPrivateKey) = makeAddrAndKey('liquidityProvider');
 
     (
       Roles memory roles,
@@ -129,16 +149,25 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
 
     usdx = TestnetERC20(tokenList.usdx);
     wbtc = TestnetERC20(tokenList.wbtc);
+    buidl = TestnetRwaERC20(tokenList.buidl);
+    ustb = TestnetRwaERC20(tokenList.ustb);
+    wtgxx = TestnetRwaERC20(tokenList.wtgxx);
     weth = WETH9(payable(tokenList.weth));
 
     vm.label(tokenList.usdx, 'USDX');
     vm.label(tokenList.wbtc, 'WBTC');
     vm.label(tokenList.weth, 'WETH');
+    vm.label(tokenList.buidl, 'BUIDL');
+    vm.label(tokenList.ustb, 'USTB');
+    vm.label(tokenList.wtgxx, 'WTGXX');
 
     if (mintUserTokens) {
       // Perform setup of user positions
       uint256 mintAmount_USDX = 100_000e6;
       uint256 mintAmount_WBTC = 100e8;
+      uint256 mintAmount_BUIDL = 100_000e6;
+      uint256 mintAmount_USTB = 10_000e6;
+      uint256 mintAmount_WTGXX = 100_000e18;
       address[] memory users = new address[](3);
       users[0] = alice;
       users[1] = bob;
@@ -149,15 +178,74 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
         usdx.mint(users[x], mintAmount_USDX);
         wbtc.mint(users[x], mintAmount_WBTC);
         deal(address(weth), users[x], 100e18);
+        buidl.authorize(users[x], true);
+        buidl.mint(users[x], mintAmount_BUIDL);
+        ustb.authorize(users[x], true);
+        ustb.mint(users[x], mintAmount_USTB);
+        wtgxx.authorize(users[x], true);
+        wtgxx.mint(users[x], mintAmount_WTGXX);
         vm.stopPrank();
 
         vm.startPrank(users[x]);
         usdx.approve(report.poolProxy, UINT256_MAX);
         wbtc.approve(report.poolProxy, UINT256_MAX);
         weth.approve(report.poolProxy, UINT256_MAX);
+        buidl.approve(report.poolProxy, UINT256_MAX);
+        ustb.approve(report.poolProxy, UINT256_MAX);
+        wtgxx.approve(report.poolProxy, UINT256_MAX);
         vm.stopPrank();
       }
     }
+
+    _rwaInit();
+  }
+
+  function _rwaInit() internal {
+    rwaATokenManagerOwner = makeAddr('RWA_ATOKEN_MANAGER_OWNER');
+    rwaATokenTransferAdmin = address(new RwaATokenManager(rwaATokenManagerOwner));
+
+    (rwaATokenList.aBuidl, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(
+      tokenList.buidl
+    );
+
+    (rwaATokenList.aUstb, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(
+      tokenList.ustb
+    );
+
+    (rwaATokenList.aWtgxx, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(
+      tokenList.wtgxx
+    );
+
+    vm.startPrank(poolAdmin);
+    // authorize aBUIDL to hold BUIDL
+    buidl.authorize(rwaATokenList.aBuidl, true);
+    // authorize aUSTB to hold USTB
+    ustb.authorize(rwaATokenList.aUstb, true);
+    // authorize aWTGXX to hold WTGXX
+    wtgxx.authorize(rwaATokenList.aWtgxx, true);
+    // grant Authorized Transfer Role to the aToken Transfer Admin
+    AccessControl(report.aclManager).grantRole(
+      // fetch role from aBuidl (it is the same for all RwaATokens)
+      IRwaAToken(rwaATokenList.aBuidl).ATOKEN_ADMIN_ROLE(),
+      rwaATokenTransferAdmin
+    );
+    vm.stopPrank();
+  }
+
+  function _seedLiquidity(address token, uint256 amount, bool isRwa) internal {
+    if (isRwa) {
+      vm.prank(poolAdmin);
+      TestnetRwaERC20(token).authorize(liquidityProvider, true);
+    }
+
+    vm.prank(poolAdmin);
+    TestnetERC20(token).mint(liquidityProvider, amount);
+
+    // supply liquidity through liquidityProvider
+    vm.startPrank(liquidityProvider);
+    IERC20(token).approve(report.poolProxy, UINT256_MAX);
+    contracts.poolProxy.supply(token, amount, liquidityProvider, 0);
+    vm.stopPrank();
   }
 
   function initTestEnvironment() public {
@@ -230,6 +318,9 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
 
     assetsList.wbtc = testnetListingPayload.WBTC_ADDRESS();
     assetsList.usdx = testnetListingPayload.USDX_ADDRESS();
+    assetsList.buidl = testnetListingPayload.BUIDL_ADDRESS();
+    assetsList.ustb = testnetListingPayload.USTB_ADDRESS();
+    assetsList.wtgxx = testnetListingPayload.WTGXX_ADDRESS();
     assetsList.gho = testnetListingPayload.GHO_ADDRESS();
 
     ACLManager manager = ACLManager(r.aclManager);
@@ -402,5 +493,53 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
           variableRateSlope2: 60_00
         })
       );
+  }
+
+  function _upgradeToStandardAToken(address asset, string memory symbol) internal {
+    (address aToken, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(asset);
+    uint256 currentRevision = ATokenInstance(aToken).ATOKEN_REVISION();
+
+    MockATokenInstance mockAToken = new MockATokenInstance(
+      IPool(report.poolProxy),
+      currentRevision + 1
+    );
+
+    vm.prank(poolAdmin);
+    contracts.poolConfiguratorProxy.updateAToken(
+      ConfiguratorInputTypes.UpdateATokenInput({
+        asset: asset,
+        treasury: report.treasury,
+        incentivesController: report.rewardsControllerProxy,
+        name: symbol,
+        symbol: symbol,
+        implementation: address(mockAToken),
+        params: abi.encode()
+      })
+    );
+    vm.stopPrank();
+  }
+
+  function _upgradeToRwaAToken(address asset, string memory symbol) internal {
+    (address aToken, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(asset);
+    uint256 currentRevision = RwaATokenInstance(aToken).ATOKEN_REVISION();
+
+    MockRwaATokenInstance mockAToken = new MockRwaATokenInstance(
+      IPool(report.poolProxy),
+      currentRevision + 1
+    );
+
+    vm.startPrank(poolAdmin);
+    contracts.poolConfiguratorProxy.updateAToken(
+      ConfiguratorInputTypes.UpdateATokenInput({
+        asset: asset,
+        treasury: report.treasury,
+        incentivesController: report.rewardsControllerProxy,
+        name: symbol,
+        symbol: symbol,
+        implementation: address(mockAToken),
+        params: abi.encode()
+      })
+    );
+    vm.stopPrank();
   }
 }

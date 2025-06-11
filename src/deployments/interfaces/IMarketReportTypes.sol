@@ -74,6 +74,7 @@ struct MarketReport {
   address paraSwapWithdrawSwapAdapter;
   address l2Encoder;
   address aToken;
+  address rwaAToken;
   address variableDebtToken;
   address emissionManager;
   address rewardsControllerImplementation;

@@ -53,7 +53,7 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     uint256 amount
   );
 
-  function setUp() public {
+  function setUp() public virtual {
     initTestEnvironment();
 
     (, , address variableDebtUsdx) = contracts.protocolDataProvider.getReserveTokensAddresses(
@@ -63,9 +63,9 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     variableDebtToken = VariableDebtTokenInstance(variableDebtUsdx);
 
     vm.prank(alice);
-    contracts.poolProxy.supply(tokenList.usdx, 10000e6, alice, 0);
+    contracts.poolProxy.supply(tokenList.usdx, 10_000e6, alice, 0);
     vm.prank(bob);
-    contracts.poolProxy.supply(tokenList.usdx, 10000e6, bob, 0);
+    contracts.poolProxy.supply(tokenList.usdx, 10_000e6, bob, 0);
   }
 
   function test_new_VariableDebtToken_implementation() public returns (VariableDebtTokenInstance) {
@@ -283,7 +283,7 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     varDebtToken.decreaseAllowance(address(0), 0);
   }
 
-  function test_balanceOf() public {
+  function test_balanceOf() public virtual {
     uint256 amount = 142e6;
     vm.prank(alice);
     contracts.poolProxy.borrow(tokenList.usdx, amount, 2, 0, alice);
@@ -297,7 +297,7 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     assertEq(variableDebtToken.balanceOf(alice), amount + balanceIncrease);
   }
 
-  function test_totalSupply() public {
+  function test_totalSupply() public virtual {
     uint256 aliceAmount = 142e6;
     uint256 bobAmount = 342e6;
 
@@ -316,7 +316,7 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     );
   }
 
-  function test_totalScaledSupply() public {
+  function test_totalScaledSupply() public virtual {
     uint256 aliceAmount = 142e6;
     uint256 bobAmount = 342e6;
 
@@ -334,7 +334,7 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     );
   }
 
-  function test_scaledBalanceOf() public {
+  function test_scaledBalanceOf() public virtual {
     uint256 aliceAmount1 = 142e6;
     uint256 aliceAmount2 = 342e6;
     uint256 index1 = contracts.poolProxy.getReserveNormalizedVariableDebt(tokenList.usdx);

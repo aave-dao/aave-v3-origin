@@ -59,7 +59,7 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
     address onBehalfOf,
     uint256 amount,
     uint256 index
-  ) external virtual override onlyPool returns (bool) {
+  ) public virtual override onlyPool returns (bool) {
     return _mintScaled(caller, onBehalfOf, amount, index);
   }
 
@@ -146,7 +146,7 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
     uint8 v,
     bytes32 r,
     bytes32 s
-  ) external override {
+  ) external virtual override {
     require(owner != address(0), Errors.ZERO_ADDRESS_NOT_VALID);
     //solium-disable-next-line
     require(block.timestamp <= deadline, Errors.INVALID_EXPIRATION);

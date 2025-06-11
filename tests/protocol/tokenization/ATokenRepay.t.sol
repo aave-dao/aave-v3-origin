@@ -22,7 +22,7 @@ contract ATokenRepayTests is TestnetProcedures {
     bool useATokens
   );
 
-  function setUp() public {
+  function setUp() public virtual {
     initTestEnvironment(false);
 
     (address aUSDX, , address variableDebtUSDX) = contracts

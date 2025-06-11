@@ -19,7 +19,7 @@ contract PoolConfiguratorInitReservesTest is TestnetProcedures {
     address interestRateStrategyAddress
   );
 
-  function setUp() public {
+  function setUp() public virtual {
     initTestEnvironment(false);
   }
 

@@ -35,7 +35,7 @@ contract ATokenEventsTests is TestnetProcedures {
     uint256 index
   );
 
-  function setUp() public {
+  function setUp() public virtual {
     initTestEnvironment();
 
     (address aUSDX, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(tokenList.usdx);
@@ -146,7 +146,7 @@ contract ATokenEventsTests is TestnetProcedures {
     vm.stopPrank();
   }
 
-  function test_atoken_mintEvents_firstSupply() public {
+  function test_atoken_mintEvents_firstSupply() public virtual {
     uint256 supplyAmount = 1200e6;
     _expectATokenSupplyEvents(tokenList.usdx, address(aToken), alice, alice, supplyAmount, false);
     vm.prank(alice);
@@ -172,7 +172,7 @@ contract ATokenEventsTests is TestnetProcedures {
     vm.stopPrank();
   }
 
-  function test_atoken_burnEvents_singleWithdraw_noInterests() public {
+  function test_atoken_burnEvents_singleWithdraw_noInterests() public virtual {
     uint256 supplyAmount = 1200e6;
     _expectATokenSupplyEvents(tokenList.usdx, address(aToken), alice, alice, supplyAmount, false);
     vm.prank(alice);

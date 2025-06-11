@@ -10,7 +10,7 @@ import {Errors} from '../../../src/contracts/protocol/libraries/helpers/Errors.s
 contract ATokenModifiersTests is TestnetProcedures {
   IAToken public aToken;
 
-  function setUp() public {
+  function setUp() public virtual {
     initTestEnvironment();
 
     (address aUSDX, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(tokenList.usdx);
@@ -33,7 +33,7 @@ contract ATokenModifiersTests is TestnetProcedures {
     aToken.burn(alice, alice, 1, 1);
   }
 
-  function test_revert_notAdmin_transferOnLiquidation() public {
+  function test_revert_notAdmin_transferOnLiquidation() public virtual {
     vm.expectRevert(bytes(Errors.CALLER_MUST_BE_POOL));
 
     vm.prank(alice);
@@ -41,7 +41,7 @@ contract ATokenModifiersTests is TestnetProcedures {
     aToken.transferOnLiquidation(alice, alice, 1);
   }
 
-  function test_revert_notAdmin_transferUnderlyingTo() public {
+  function test_revert_notAdmin_transferUnderlyingTo() public virtual {
     vm.expectRevert(bytes(Errors.CALLER_MUST_BE_POOL));
 
     vm.prank(alice);
