@@ -48,7 +48,7 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     assertEq(address(varDebtToken.POOL()), address(report.poolProxy));
     assertEq(address(varDebtToken.getIncentivesController()), report.rewardsControllerProxy);
     assertEq(varDebtToken.UNDERLYING_ASSET_ADDRESS(), address(0));
-    assertEq(varDebtToken.DEBT_TOKEN_REVISION(), 0x3);
+    assertEq(varDebtToken.DEBT_TOKEN_REVISION(), 0x4);
 
     return varDebtToken;
   }
@@ -99,7 +99,7 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     assertEq(address(varDebtToken.POOL()), address(report.poolProxy));
     assertEq(address(varDebtToken.getIncentivesController()), report.rewardsControllerProxy);
     assertEq(varDebtToken.UNDERLYING_ASSET_ADDRESS(), listing.underlyingAsset);
-    assertEq(varDebtToken.DEBT_TOKEN_REVISION(), 0x3);
+    assertEq(varDebtToken.DEBT_TOKEN_REVISION(), 0x4);
 
     return varDebtToken;
   }
