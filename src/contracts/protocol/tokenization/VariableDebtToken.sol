@@ -23,6 +23,16 @@ abstract contract VariableDebtToken is DebtTokenBase, ScaledBalanceTokenBase, IV
   using WadRayMath for uint256;
   using SafeCast for uint256;
 
+  // @note This gap is made only to add the `__deprecated_ghoUserState` variable
+  // The length of this gap can be decreased in order to add new variables
+  uint[3] private __unusedGap;
+
+  // @note deprecated in v3.4.0 upgrade in the GHO vToken.
+  // This storage slot can't be used in all vTokens, because the GHO vToken
+  // had a mapping here (before v3.4.0) and right now has some non-zero mapping values in this slot.
+  // old version: mapping(address => GhoUserState) internal _ghoUserState
+  bytes32 private __deprecated_ghoUserState;
+
   /**
    * @dev Constructor.
    * @param pool The address of the Pool contract
