@@ -1270,7 +1270,7 @@ contract PoolLiquidationTests is TestnetProcedures {
     LiquidationInput memory params,
     address liquidator,
     uint256 liquidatorBalanceBefore,
-    uint256 userBalanceBefore
+    uint256
   ) internal view {
     (address collateralBalance, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(
       params.collateralAsset

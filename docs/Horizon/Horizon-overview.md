@@ -49,7 +49,7 @@ RWA assets can be listed by utilizing a newly developed aToken contract, `RwaATo
 - RwaATokenManager contract address granted the RwaAToken admin role in the ACL Manager.
   - further granular RwaAToken admin permissions will be configured in the RwaATokenManager contract itself.
   - Token Issuers or relevant admin will be granted admin permissions on the RwaAToken corresponding to their specific RWA asset.
-- No bridges/portals will be configured, hence no unbacked RwaATokens can be minted. 
+- No bridges/portals will be configured, hence no unbacked RwaATokens can be minted.
 
 #### Edge Cases of Note
 
