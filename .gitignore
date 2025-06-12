@@ -1,6 +1,7 @@
 # build and cache
 cache/
 out/
+zkout/
 
 # general
 .env
@@ -37,3 +38,4 @@ resource_errors.json
 # invariants
 _corpus/
 crytic-export/
+slither_results.json

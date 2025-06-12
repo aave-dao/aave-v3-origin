@@ -25,6 +25,24 @@ max_test_rejects = 20000
 [profile.linea]
 evm_version = 'london'
 
+[profile.zksync]
+src = 'zksync'
+test = 'zksync'
+libs = ['lib']
+solc = '0.8.27'
+optimizer = true
+optimizer_runs = 200
+fs_permissions = [{ access = "write", path = "./reports" }]
+ffi = true
+evm_version = 'cancun'
+
+[profile.zksync.zksync]
+bytecode_hash = 'none'
+compile = true
+fallback_oz = true
+mode = '3'
+zksolc = '1.5.13'
+
 [rpc_endpoints]
 mainnet = "${RPC_MAINNET}"
 optimism = "${RPC_OPTIMISM}"
@@ -45,6 +63,9 @@ gnosis = "${RPC_GNOSIS}"
 base = "${RPC_BASE}"
 metis = "${RPC_METIS}"
 linea = "${RPC_LINEA}"
+sonic = "${RPC_SONIC}"
+soneium = "${RPC_SONEIUM}"
+zksync = "${RPC_ZKSYNC}"
 
 [etherscan]
 mainnet = { key = "${ETHERSCAN_API_KEY_MAINNET}", chainId = 1 }
@@ -63,4 +84,5 @@ bnb = { key = "${ETHERSCAN_API_KEY_BNB}", chainId = 56, url = 'https://api.bscsc
 base = { key = "${ETHERSCAN_API_KEY_BASE}", chain = 8453 }
 gnosis = { key = "${ETHERSCAN_API_KEY_GNOSIS}", chainId = 100 }
 metis = { key = "", chainId = 1088, url = 'https://api.routescan.io/v2/network/mainnet/evm/1088/etherscan/api' }
+
 # See more config options https://github.com/gakonst/foundry/tree/master/config
