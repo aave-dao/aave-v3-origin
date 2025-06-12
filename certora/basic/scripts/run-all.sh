@@ -37,6 +37,11 @@ echo "******** Running:  7 EModeConfiguration ***************"
 certoraRun $CMN certora/basic/conf/EModeConfiguration.conf \
            --msg "7: EModeConfiguration"
 
+echo
+echo "******** Running:  8 RwaAToken.conf ***************"
+certoraRun $CMN certora/basic/conf/RwaAToken.conf \
+           --msg "8: RwaAToken.conf"
+
 
 echo
 echo "******** Running:  simple:1 ***************"
