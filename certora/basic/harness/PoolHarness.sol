@@ -55,14 +55,6 @@ contract PoolHarness is PoolInstance {
     return true;
   }
 
-  function cumulateToLiquidityIndex(
-    address asset,
-    uint256 totalLiquidity,
-    uint256 amount
-  ) public returns (uint256) {
-    return ReserveLogic.cumulateToLiquidityIndex(_reserves[asset], totalLiquidity, amount);
-  }
-
   function getActive(DataTypes.ReserveConfigurationMap memory self) external pure returns (bool) {
     return ReserveConfiguration.getActive(self);
   }

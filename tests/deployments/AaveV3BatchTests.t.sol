@@ -30,6 +30,8 @@ contract AaveV3BatchTests is BatchTestProcedures {
   MarketReport deployedContracts;
 
   InitialReport marketReportOne;
+  InitialReport marketReportTwo;
+
   PoolReport poolReportOne;
 
   AaveV3GettersBatchOne.GettersReportBatchOne gettersReportOne;
@@ -65,7 +67,6 @@ contract AaveV3BatchTests is BatchTestProcedures {
       emptySalt,
       address(new WETH9()),
       0.0005e4,
-      0.0004e4,
       address(0),
       address(0),
       address(0),
@@ -88,18 +89,19 @@ contract AaveV3BatchTests is BatchTestProcedures {
       aaveV3SetupOne
     ) = deployCoreAndPeriphery(roles, config, flags, deployedContracts);
 
-    (
-      ,
-      ,
-      gettersReportTwo,
-      ,
-      setupReportTwo,
-      ,
-      miscReport,
-      tokensReport,
-      paraswapReportOne,
+    BatchTestProcedures.DeployAndSetupVariables memory deployAndSetupVariables = deployAndSetup(
+      roles,
+      config,
+      flags,
+      deployedContracts
+    );
 
-    ) = deployAndSetup(roles, config, flags, deployedContracts);
+    marketReportTwo = deployAndSetupVariables.initialReport;
+    gettersReportTwo = deployAndSetupVariables.gettersReport2;
+    setupReportTwo = deployAndSetupVariables.setupReport;
+    miscReport = deployAndSetupVariables.miscReport;
+    tokensReport = deployAndSetupVariables.tokensReport;
+    paraswapReportOne = deployAndSetupVariables.paraswapReport;
   }
 
   function testAaveV3FullBatchOrchestration() public {
@@ -121,7 +123,6 @@ contract AaveV3BatchTests is BatchTestProcedures {
 
   function test1AaveV3GettersDeployment() public {
     new AaveV3GettersBatchOne(
-      marketReportOne.poolAddressesProvider,
       config.networkBaseTokenPriceInUsdProxyAggregator,
       config.marketReferenceCurrencyPriceInUsdProxyAggregator
     );
@@ -130,16 +131,23 @@ contract AaveV3BatchTests is BatchTestProcedures {
       setupReportTwo.poolProxy,
       roles.poolAdmin,
       config.wrappedNativeToken,
+      marketReportTwo.poolAddressesProvider,
       flags.l2
     );
   }
 
   function test2AaveV3PoolDeployment() public {
-    new AaveV3PoolBatch(marketReportOne.poolAddressesProvider);
+    new AaveV3PoolBatch(
+      marketReportOne.poolAddressesProvider,
+      marketReportOne.interestRateStrategy
+    );
   }
 
   function test3AaveV3L2PoolDeployment() public {
-    new AaveV3L2PoolBatch(marketReportOne.poolAddressesProvider);
+    new AaveV3L2PoolBatch(
+      marketReportOne.poolAddressesProvider,
+      marketReportOne.interestRateStrategy
+    );
   }
 
   function test4PeripheralsRelease() public {
@@ -171,7 +179,6 @@ contract AaveV3BatchTests is BatchTestProcedures {
       config,
       poolReportOne.poolImplementation,
       poolReportOne.poolConfiguratorImplementation,
-      gettersReportOne.protocolDataProvider,
       peripheryReportOne.aaveOracle,
       peripheryReportOne.rewardsControllerImplementation,
       miscReport.priceOracleSentinel
@@ -179,7 +186,11 @@ contract AaveV3BatchTests is BatchTestProcedures {
   }
 
   function test8TokensMarket() public {
-    new AaveV3TokensBatch(setupReportTwo.poolProxy);
+    new AaveV3TokensBatch(
+      setupReportTwo.poolProxy,
+      setupReportTwo.rewardsControllerProxy,
+      peripheryReportOne.treasury
+    );
   }
 
   function test9ConfigEngineDeployment() public {

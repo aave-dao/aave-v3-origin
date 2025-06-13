@@ -2,10 +2,12 @@
 pragma solidity ^0.8.0;
 
 import {MockAggregator} from '../../src/contracts/mocks/oracle/CLAggregators/MockAggregator.sol';
-import {RewardsController, RewardsDistributor} from '../../src/contracts/rewards/RewardsController.sol';
+import {RewardsController, IRewardsController} from '../../src/contracts/rewards/RewardsController.sol';
+import {RewardsDistributor, IRewardsDistributor} from '../../src/contracts/rewards/RewardsDistributor.sol';
 import {EmissionManager} from '../../src/contracts/rewards/EmissionManager.sol';
 import {DataTypes} from '../../src/contracts/protocol/libraries/types/DataTypes.sol';
-import {IAToken, IERC20} from '../../src/contracts/protocol/tokenization/AToken.sol';
+import {IAToken} from '../../src/contracts/interfaces/IAToken.sol';
+import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
 import {ITransferStrategyBase} from '../../src/contracts/rewards/interfaces/ITransferStrategyBase.sol';
 import {AggregatorInterface} from '../../src/contracts/dependencies/chainlink/AggregatorInterface.sol';
 import {RewardsDataTypes} from '../../src/contracts/rewards/libraries/RewardsDataTypes.sol';
@@ -13,34 +15,6 @@ import {PullRewardsTransferStrategy} from '../../src/contracts/rewards/transfer-
 import {TestnetProcedures} from '../utils/TestnetProcedures.sol';
 
 contract RewardsControllerTest is TestnetProcedures {
-  event ClaimerSet(address indexed user, address indexed claimer);
-  event RewardsClaimed(
-    address indexed user,
-    address indexed reward,
-    address indexed to,
-    address claimer,
-    uint256 amount
-  );
-  event TransferStrategyInstalled(address indexed reward, address indexed transferStrategy);
-  event RewardOracleUpdated(address indexed reward, address indexed rewardOracle);
-  event AssetConfigUpdated(
-    address indexed asset,
-    address indexed reward,
-    uint256 oldEmission,
-    uint256 newEmission,
-    uint256 oldDistributionEnd,
-    uint256 newDistributionEnd,
-    uint256 assetIndex
-  );
-  event Accrued(
-    address indexed asset,
-    address indexed reward,
-    address indexed user,
-    uint256 assetIndex,
-    uint256 userIndex,
-    uint256 rewardsAccrued
-  );
-
   EmissionManager internal manager;
   RewardsController internal rewardsController;
   address internal usdxAToken;
@@ -68,14 +42,7 @@ contract RewardsControllerTest is TestnetProcedures {
 
   function test_initialize_no_op() public {
     RewardsController controller = test_new_RewardsController();
-    controller.initialize(address(0));
-  }
-
-  function test_reverts_initialize_twice() public {
-    RewardsController controller = test_new_RewardsController();
-    controller.initialize(address(0));
-
-    vm.expectRevert();
+    vm.expectRevert(bytes('Contract instance has already been initialized'));
     controller.initialize(address(0));
   }
 
@@ -87,7 +54,7 @@ contract RewardsControllerTest is TestnetProcedures {
     );
 
     vm.expectEmit(address(rewardsController));
-    emit TransferStrategyInstalled(tokenList.usdx, address(transferStrategy));
+    emit IRewardsController.TransferStrategyInstalled(tokenList.usdx, address(transferStrategy));
 
     vm.prank(alice);
     manager.setTransferStrategy(tokenList.usdx, transferStrategy);
@@ -101,7 +68,7 @@ contract RewardsControllerTest is TestnetProcedures {
     test_configureAssets();
 
     vm.expectEmit(address(rewardsController));
-    emit RewardOracleUpdated(tokenList.usdx, address(mock));
+    emit IRewardsController.RewardOracleUpdated(tokenList.usdx, address(mock));
 
     vm.prank(alice);
     manager.setRewardOracle(tokenList.usdx, AggregatorInterface(address(mock)));
@@ -116,7 +83,7 @@ contract RewardsControllerTest is TestnetProcedures {
       .getRewardsData(usdxAToken, tokenList.usdx);
 
     vm.expectEmit(address(rewardsController));
-    emit AssetConfigUpdated(
+    emit IRewardsDistributor.AssetConfigUpdated(
       usdxAToken,
       tokenList.usdx,
       emissionPerSecond,
@@ -144,7 +111,7 @@ contract RewardsControllerTest is TestnetProcedures {
       .getRewardsData(usdxAToken, tokenList.usdx);
 
     vm.expectEmit(address(rewardsController));
-    emit AssetConfigUpdated(
+    emit IRewardsDistributor.AssetConfigUpdated(
       usdxAToken,
       tokenList.usdx,
       emissionPerSecond,
@@ -174,7 +141,7 @@ contract RewardsControllerTest is TestnetProcedures {
     config[0] = RewardsDataTypes.RewardsConfigInput(
       0.05e6,
       0,
-      uint32(block.timestamp + 30 days),
+      uint32(vm.getBlockTimestamp() + 30 days),
       usdxAToken,
       tokenList.usdx,
       ITransferStrategyBase(strat),
@@ -182,7 +149,7 @@ contract RewardsControllerTest is TestnetProcedures {
     );
 
     vm.expectEmit(address(rewardsController));
-    emit AssetConfigUpdated(
+    emit IRewardsDistributor.AssetConfigUpdated(
       usdxAToken,
       tokenList.usdx,
       0,
@@ -203,7 +170,7 @@ contract RewardsControllerTest is TestnetProcedures {
 
   function test_setClaimer() public {
     vm.expectEmit(address(rewardsController));
-    emit ClaimerSet(alice, bob);
+    emit IRewardsController.ClaimerSet(alice, bob);
 
     vm.prank(poolAdmin);
     manager.setClaimer(alice, bob);
@@ -215,7 +182,7 @@ contract RewardsControllerTest is TestnetProcedures {
     test_configureAssets();
     vm.prank(alice);
     contracts.poolProxy.supply(tokenList.usdx, 100e6, alice, 0);
-    vm.warp(block.timestamp + 1 days);
+    vm.warp(vm.getBlockTimestamp() + 1 days);
     address[] memory assets = new address[](1);
     assets[0] = usdxAToken;
     uint256 totalRewards = rewardsController.getUserRewards(assets, alice, tokenList.usdx);
@@ -224,7 +191,7 @@ contract RewardsControllerTest is TestnetProcedures {
     uint256 aliceBalance = IERC20(tokenList.usdx).balanceOf(alice);
 
     vm.expectEmit(address(rewardsController));
-    emit RewardsClaimed(alice, tokenList.usdx, alice, alice, totalRewards);
+    emit IRewardsController.RewardsClaimed(alice, tokenList.usdx, alice, alice, totalRewards);
 
     vm.prank(alice);
     rewardsController.claimRewards(assets, totalRewards, alice, tokenList.usdx);
@@ -235,7 +202,7 @@ contract RewardsControllerTest is TestnetProcedures {
     test_configureAssets();
     vm.prank(alice);
     contracts.poolProxy.supply(tokenList.usdx, 100e6, alice, 0);
-    vm.warp(block.timestamp + 1 days);
+    vm.warp(vm.getBlockTimestamp() + 1 days);
     address[] memory assets = new address[](1);
     assets[0] = usdxAToken;
     uint256 totalRewards = rewardsController.getUserRewards(assets, alice, tokenList.usdx);
@@ -246,7 +213,7 @@ contract RewardsControllerTest is TestnetProcedures {
     uint256 aliceBalance = IERC20(tokenList.usdx).balanceOf(alice);
 
     vm.expectEmit(address(rewardsController));
-    emit RewardsClaimed(alice, tokenList.usdx, alice, alice, claimAmount);
+    emit IRewardsController.RewardsClaimed(alice, tokenList.usdx, alice, alice, claimAmount);
 
     vm.prank(alice);
     rewardsController.claimRewards(assets, claimAmount, alice, tokenList.usdx);
@@ -287,7 +254,7 @@ contract RewardsControllerTest is TestnetProcedures {
     test_configureAssets();
     vm.prank(alice);
     contracts.poolProxy.supply(tokenList.usdx, 100e6, alice, 0);
-    vm.warp(block.timestamp + 1 days);
+    vm.warp(vm.getBlockTimestamp() + 1 days);
     address[] memory assets = new address[](1);
     assets[0] = usdxAToken;
     uint256 totalRewards = rewardsController.getUserRewards(assets, alice, tokenList.usdx);
@@ -296,7 +263,7 @@ contract RewardsControllerTest is TestnetProcedures {
     uint256 aliceBalance = IERC20(tokenList.usdx).balanceOf(alice);
 
     vm.expectEmit(address(rewardsController));
-    emit RewardsClaimed(alice, tokenList.usdx, alice, alice, totalRewards);
+    emit IRewardsController.RewardsClaimed(alice, tokenList.usdx, alice, alice, totalRewards);
 
     vm.prank(alice);
     rewardsController.claimRewardsToSelf(assets, totalRewards, tokenList.usdx);
@@ -307,7 +274,7 @@ contract RewardsControllerTest is TestnetProcedures {
     test_configureAssets();
     vm.prank(alice);
     contracts.poolProxy.supply(tokenList.usdx, 100e6, alice, 0);
-    vm.warp(block.timestamp + 1 days);
+    vm.warp(vm.getBlockTimestamp() + 1 days);
     address[] memory assets = new address[](1);
     assets[0] = usdxAToken;
     uint256 totalRewards = rewardsController.getUserRewards(assets, alice, tokenList.usdx);
@@ -316,7 +283,7 @@ contract RewardsControllerTest is TestnetProcedures {
     uint256 aliceBalance = IERC20(tokenList.usdx).balanceOf(alice);
 
     vm.expectEmit(address(rewardsController));
-    emit RewardsClaimed(alice, tokenList.usdx, alice, alice, totalRewards);
+    emit IRewardsController.RewardsClaimed(alice, tokenList.usdx, alice, alice, totalRewards);
 
     vm.prank(alice);
     rewardsController.claimAllRewards(assets, alice);
@@ -327,7 +294,7 @@ contract RewardsControllerTest is TestnetProcedures {
     test_configureAssets();
     vm.prank(alice);
     contracts.poolProxy.supply(tokenList.usdx, 100e6, alice, 0);
-    vm.warp(block.timestamp + 1 days);
+    vm.warp(vm.getBlockTimestamp() + 1 days);
     address[] memory assets = new address[](1);
     assets[0] = usdxAToken;
     uint256 totalRewards = rewardsController.getUserRewards(assets, alice, tokenList.usdx);
@@ -336,7 +303,7 @@ contract RewardsControllerTest is TestnetProcedures {
     uint256 aliceBalance = IERC20(tokenList.usdx).balanceOf(alice);
 
     vm.expectEmit(address(rewardsController));
-    emit RewardsClaimed(alice, tokenList.usdx, alice, alice, totalRewards);
+    emit IRewardsController.RewardsClaimed(alice, tokenList.usdx, alice, alice, totalRewards);
 
     vm.prank(alice);
     rewardsController.claimAllRewardsToSelf(assets);
@@ -350,7 +317,7 @@ contract RewardsControllerTest is TestnetProcedures {
     test_configureAssets();
     vm.prank(alice);
     contracts.poolProxy.supply(tokenList.usdx, 100e6, alice, 0);
-    vm.warp(block.timestamp + 1 days);
+    vm.warp(vm.getBlockTimestamp() + 1 days);
     address[] memory assets = new address[](1);
     assets[0] = usdxAToken;
     uint256 totalRewards = rewardsController.getUserRewards(assets, alice, tokenList.usdx);
@@ -359,7 +326,7 @@ contract RewardsControllerTest is TestnetProcedures {
     uint256 aliceBalance = IERC20(tokenList.usdx).balanceOf(alice);
 
     vm.expectEmit(address(rewardsController));
-    emit RewardsClaimed(alice, tokenList.usdx, alice, bob, totalRewards);
+    emit IRewardsController.RewardsClaimed(alice, tokenList.usdx, alice, bob, totalRewards);
 
     vm.prank(bob);
     rewardsController.claimAllRewardsOnBehalf(assets, alice, alice);
@@ -372,7 +339,7 @@ contract RewardsControllerTest is TestnetProcedures {
 
     vm.prank(alice);
     contracts.poolProxy.supply(tokenList.usdx, 100e6, alice, 0);
-    vm.warp(block.timestamp + 1 days);
+    vm.warp(vm.getBlockTimestamp() + 1 days);
     address[] memory assets = new address[](1);
     assets[0] = usdxAToken;
     uint256 totalRewards = rewardsController.getUserRewards(assets, alice, tokenList.usdx);
@@ -381,7 +348,7 @@ contract RewardsControllerTest is TestnetProcedures {
     uint256 aliceBalance = IERC20(tokenList.usdx).balanceOf(alice);
 
     vm.expectEmit(address(rewardsController));
-    emit RewardsClaimed(alice, tokenList.usdx, alice, bob, totalRewards);
+    emit IRewardsController.RewardsClaimed(alice, tokenList.usdx, alice, bob, totalRewards);
 
     vm.prank(bob);
     rewardsController.claimRewardsOnBehalf(assets, totalRewards, alice, alice, tokenList.usdx);
@@ -395,7 +362,7 @@ contract RewardsControllerTest is TestnetProcedures {
 
     vm.prank(alice);
     contracts.poolProxy.supply(tokenList.usdx, 100e6, alice, 0);
-    vm.warp(block.timestamp + 1 days);
+    vm.warp(vm.getBlockTimestamp() + 1 days);
 
     (uint256 newAssetIndex, uint256 expectedRewardsAccrued) = _calculateRewardsAccrued(
       usdxAToken,
@@ -407,7 +374,7 @@ contract RewardsControllerTest is TestnetProcedures {
     uint256 userUnclaimedRewards = rewardsController.getUserRewards(assets, alice, tokenList.usdx);
 
     vm.expectEmit(address(rewardsController));
-    emit Accrued(
+    emit IRewardsDistributor.Accrued(
       usdxAToken,
       tokenList.usdx,
       alice,
@@ -479,15 +446,15 @@ contract RewardsControllerTest is TestnetProcedures {
     if (
       emissionPerSecond == 0 ||
       totalSupply == 0 ||
-      lastUpdateTimestamp == block.timestamp ||
+      lastUpdateTimestamp == vm.getBlockTimestamp() ||
       lastUpdateTimestamp >= distributionEnd
     ) {
       return (oldIndex, oldIndex);
     }
 
-    uint256 currentTimestamp = block.timestamp > distributionEnd
+    uint256 currentTimestamp = vm.getBlockTimestamp() > distributionEnd
       ? distributionEnd
-      : block.timestamp;
+      : vm.getBlockTimestamp();
     uint256 timeDelta = currentTimestamp - lastUpdateTimestamp;
     uint256 firstTerm = emissionPerSecond * timeDelta * assetUnit;
     assembly {

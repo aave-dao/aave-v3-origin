@@ -25,14 +25,13 @@ contract PoolLogicInitReservesTests is TestnetProcedures {
       address(new Mock()),
       report.aToken,
       report.variableDebtToken,
-      address(2),
       0,
       10
     );
 
     assertTrue(PoolLogic.executeInitReserve(reservesData, reservesList, params));
 
-    vm.expectRevert(bytes(Errors.RESERVE_ALREADY_INITIALIZED));
+    vm.expectRevert(abi.encodeWithSelector(Errors.ReserveAlreadyInitialized.selector));
     PoolLogic.executeInitReserve(reservesData, reservesList, params);
   }
 
@@ -41,7 +40,6 @@ contract PoolLogicInitReservesTests is TestnetProcedures {
       address(new Mock()),
       report.aToken,
       report.variableDebtToken,
-      address(2),
       0,
       10
     );
@@ -50,7 +48,6 @@ contract PoolLogicInitReservesTests is TestnetProcedures {
       address(new Mock()),
       report.aToken,
       report.variableDebtToken,
-      address(2),
       1,
       10
     );
@@ -59,7 +56,6 @@ contract PoolLogicInitReservesTests is TestnetProcedures {
       address(new Mock()),
       report.aToken,
       report.variableDebtToken,
-      address(2),
       2,
       10
     );
@@ -79,12 +75,11 @@ contract PoolLogicInitReservesTests is TestnetProcedures {
       address(new Mock()),
       report.aToken,
       report.variableDebtToken,
-      address(2),
       0,
       0
     );
 
-    vm.expectRevert(bytes(Errors.NO_MORE_RESERVES_ALLOWED));
+    vm.expectRevert(bytes(abi.encodeWithSelector(Errors.NoMoreReservesAllowed.selector)));
     PoolLogic.executeInitReserve(reservesData, reservesList, params1);
   }
 }

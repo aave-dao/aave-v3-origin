@@ -138,18 +138,6 @@ interface IPoolConfigurator {
   event LiquidationGracePeriodDisabled(address indexed asset);
 
   /**
-   * @dev Emitted when the unbacked mint cap of a reserve is updated.
-   * @param asset The address of the underlying asset of the reserve
-   * @param oldUnbackedMintCap The old unbacked mint cap
-   * @param newUnbackedMintCap The new unbacked mint cap
-   */
-  event UnbackedMintCapChanged(
-    address indexed asset,
-    uint256 oldUnbackedMintCap,
-    uint256 newUnbackedMintCap
-  );
-
-  /**
    * @dev Emitted when an collateral configuration of an asset in an eMode is changed.
    * @param asset The address of the underlying asset of the reserve
    * @param categoryId The eMode category
@@ -261,6 +249,8 @@ interface IPoolConfigurator {
 
   /**
    * @dev Emitted when the part of the premium that goes to protocol is updated.
+          Deprecated, from the v3.4 version the `flashloanPremiumToProtocol` value
+          is always 100%.
    * @param oldFlashloanPremiumToProtocol The old premium, expressed in bps
    * @param newFlashloanPremiumToProtocol The new premium, expressed in bps
    */
@@ -278,8 +268,6 @@ interface IPoolConfigurator {
 
   /**
    * @notice Initializes multiple reserves.
-   * @dev param useVirtualBalance of the input struct should be true for all normal assets and should be false
-   *  only in special cases (ex. GHO) where an asset is minted instead of supplied.
    * @param input The array of initialization parameters
    */
   function initReserves(ConfiguratorInputTypes.InitReserveInput[] calldata input) external;
@@ -390,19 +378,6 @@ interface IPoolConfigurator {
   function setReserveFactor(address asset, uint256 newReserveFactor) external;
 
   /**
-   * @notice Sets the interest rate strategy of a reserve.
-   * @param asset The address of the underlying asset of the reserve
-   * @param newRateStrategyAddress The address of the new interest strategy contract
-   * @param rateData bytes-encoded rate data. In this format in order to allow the rate strategy contract
-   *  to de-structure custom data
-   */
-  function setReserveInterestRateStrategyAddress(
-    address asset,
-    address newRateStrategyAddress,
-    bytes calldata rateData
-  ) external;
-
-  /**
    * @notice Sets interest rate data for a reserve
    * @param asset The address of the underlying asset of the reserve
    * @param rateData bytes-encoded rate data. In this format in order to allow the rate strategy contract
@@ -451,13 +426,6 @@ interface IPoolConfigurator {
   function setLiquidationProtocolFee(address asset, uint256 newFee) external;
 
   /**
-   * @notice Updates the unbacked mint cap of reserve.
-   * @param asset The address of the underlying asset of the reserve
-   * @param newUnbackedMintCap The new unbacked mint cap of the reserve
-   */
-  function setUnbackedMintCap(address asset, uint256 newUnbackedMintCap) external;
-
-  /**
    * @notice Enables/disables an asset to be borrowable in a selected eMode.
    * - eMode.borrowable always has less priority then reserve.borrowable
    * @param asset The address of the underlying asset of the reserve
@@ -497,29 +465,13 @@ interface IPoolConfigurator {
   function dropReserve(address asset) external;
 
   /**
-   * @notice Updates the bridge fee collected by the protocol reserves.
-   * @param newBridgeProtocolFee The part of the fee sent to the protocol treasury, expressed in bps
-   */
-  function updateBridgeProtocolFee(uint256 newBridgeProtocolFee) external;
-
-  /**
-   * @notice Updates the total flash loan premium.
-   * Total flash loan premium consists of two parts:
-   * - A part is sent to aToken holders as extra balance
-   * - A part is collected by the protocol reserves
+   * @notice Updates the flash loan premium. All this premium
+   *         will be collected by the treasury.
    * @dev Expressed in bps
    * @dev The premium is calculated on the total amount borrowed
-   * @param newFlashloanPremiumTotal The total flashloan premium
+   * @param newFlashloanPremium The flashloan premium
    */
-  function updateFlashloanPremiumTotal(uint128 newFlashloanPremiumTotal) external;
-
-  /**
-   * @notice Updates the flash loan premium collected by protocol reserves
-   * @dev Expressed in bps
-   * @dev The premium to protocol is calculated on the total flashloan premium
-   * @param newFlashloanPremiumToProtocol The part of the flashloan premium sent to the protocol treasury
-   */
-  function updateFlashloanPremiumToProtocol(uint128 newFlashloanPremiumToProtocol) external;
+  function updateFlashloanPremium(uint128 newFlashloanPremium) external;
 
   /**
    * @notice Sets the debt ceiling for an asset.

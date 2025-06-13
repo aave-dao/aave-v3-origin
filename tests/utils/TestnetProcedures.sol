@@ -3,6 +3,8 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 
+import {Multicall} from 'openzeppelin-contracts/contracts/utils/Multicall.sol';
+
 import '../../src/deployments/interfaces/IMarketReportTypes.sol';
 import {DeployUtils} from '../../src/deployments/contracts/utilities/DeployUtils.sol';
 import {FfiUtils} from '../../src/deployments/contracts/utilities/FfiUtils.sol';
@@ -76,7 +78,6 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     address wbtc;
     address weth;
     address usdx;
-    address gho;
   }
 
   struct EModeCategoryInput {
@@ -230,7 +231,6 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
 
     assetsList.wbtc = testnetListingPayload.WBTC_ADDRESS();
     assetsList.usdx = testnetListingPayload.USDX_ADDRESS();
-    assetsList.gho = testnetListingPayload.GHO_ADDRESS();
 
     ACLManager manager = ACLManager(r.aclManager);
 
@@ -320,10 +320,6 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
       new TestnetERC20('Misc Token', 'MISC', t.underlyingDecimals, poolAdminUser)
     );
     input.variableDebtTokenImpl = r.variableDebtToken;
-    input.useVirtualBalance = t.useVirtualBalance;
-    input.interestRateStrategyAddress = r.defaultInterestRateStrategy;
-    input.treasury = t.treasury;
-    input.incentivesController = r.rewardsControllerProxy;
     input.aTokenName = t.aTokenName;
     input.aTokenSymbol = t.aTokenSymbol;
     input.variableDebtTokenName = t.variableDebtName;
@@ -376,7 +372,7 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
       totalDebt: borrowAmount,
       reserveFactor: reserveConfig.reserveFactor,
       reserve: token,
-      usingVirtualBalance: IPool(report.poolProxy).getConfiguration(token).getIsVirtualAccActive(),
+      usingVirtualBalance: true,
       virtualUnderlyingBalance: IPool(report.poolProxy).getVirtualUnderlyingBalance(token)
     });
 
@@ -402,5 +398,20 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
           variableRateSlope2: 60_00
         })
       );
+  }
+
+  /**
+   * In is not ensures the a supply will automatically enable as collateral as there are multiple edge cases preventing that.
+   * This helper function ensures it is enabled by performing the explicit action.
+   */
+  function _supplyAndEnableAsCollateral(address user, uint256 amount, address asset) internal {
+    vm.startPrank(user);
+    deal(asset, user, amount);
+    IERC20(asset).approve(report.poolProxy, amount);
+    bytes[] memory calls = new bytes[](2);
+    calls[0] = abi.encodeWithSelector(IPool.supply.selector, asset, amount, user, 0);
+    calls[1] = abi.encodeWithSelector(IPool.setUserUseReserveAsCollateral.selector, asset, true);
+    Multicall(address(contracts.poolProxy)).multicall(calls);
+    vm.stopPrank();
   }
 }

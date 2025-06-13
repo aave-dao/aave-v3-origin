@@ -3,6 +3,7 @@ pragma solidity ^0.8.10;
 
 import {GPv2SafeERC20} from '../../../dependencies/gnosis/contracts/GPv2SafeERC20.sol';
 import {IERC20} from '../../../dependencies/openzeppelin/contracts/IERC20.sol';
+import {IPool} from '../../../interfaces/IPool.sol';
 import {UserConfiguration} from '../configuration/UserConfiguration.sol';
 import {WadRayMath} from '../math/WadRayMath.sol';
 import {PercentageMath} from '../math/PercentageMath.sol';
@@ -23,9 +24,6 @@ library EModeLogic {
   using WadRayMath for uint256;
   using PercentageMath for uint256;
 
-  // See `IPool` for descriptions
-  event UserEModeSet(address indexed user, uint8 categoryId);
-
   /**
    * @notice Updates the user efficiency mode category
    * @dev Will revert if user is borrowing non-compatible asset or change will drop HF < HEALTH_FACTOR_LIQUIDATION_THRESHOLD
@@ -35,7 +33,9 @@ library EModeLogic {
    * @param eModeCategories The configuration of all the efficiency mode categories
    * @param usersEModeCategory The state of all users efficiency mode category
    * @param userConfig The user configuration mapping that tracks the supplied/borrowed assets
-   * @param params The additional parameters needed to execute the setUserEMode function
+   * @param user The selected user
+   * @param oracle The address of the oracle
+   * @param categoryId The selected eMode categoryId
    */
   function executeSetUserEMode(
     mapping(address => DataTypes.ReserveData) storage reservesData,
@@ -43,29 +43,25 @@ library EModeLogic {
     mapping(uint8 => DataTypes.EModeCategory) storage eModeCategories,
     mapping(address => uint8) storage usersEModeCategory,
     DataTypes.UserConfigurationMap storage userConfig,
-    DataTypes.ExecuteSetUserEModeParams memory params
+    address user,
+    address oracle,
+    uint8 categoryId
   ) external {
-    if (usersEModeCategory[msg.sender] == params.categoryId) return;
+    if (usersEModeCategory[user] == categoryId) return;
 
-    ValidationLogic.validateSetUserEMode(
-      eModeCategories,
-      userConfig,
-      params.reservesCount,
-      params.categoryId
-    );
+    ValidationLogic.validateSetUserEMode(eModeCategories, userConfig, categoryId);
 
-    usersEModeCategory[msg.sender] = params.categoryId;
+    usersEModeCategory[user] = categoryId;
 
     ValidationLogic.validateHealthFactor(
       reservesData,
       reservesList,
       eModeCategories,
       userConfig,
-      msg.sender,
-      params.categoryId,
-      params.reservesCount,
-      params.oracle
+      user,
+      categoryId,
+      oracle
     );
-    emit UserEModeSet(msg.sender, params.categoryId);
+    emit IPool.UserEModeSet(user, categoryId);
   }
 }

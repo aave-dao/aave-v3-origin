@@ -23,15 +23,6 @@ contract PoolPermissionedHandler is BaseHandler {
   ///////////////////////////////////////////////////////////////////////////////////////////////
   //                                          ACTIONS                                          //
   ///////////////////////////////////////////////////////////////////////////////////////////////
-
-  function updateBridgeProtocolFee(uint256 newBridgeProtocolFee) external {
-    _before();
-    contracts.poolConfiguratorProxy.updateBridgeProtocolFee(newBridgeProtocolFee);
-    _after();
-
-    assert(true);
-  }
-
   function setDebtCeiling(uint256 debtCeiling, uint8 i) external {
     address asset = _getRandomBaseAsset(i);
 
@@ -171,16 +162,6 @@ contract PoolPermissionedHandler is BaseHandler {
 
     _before();
     contracts.poolConfiguratorProxy.setLiquidationProtocolFee(asset, newLiquidationProtocolFee);
-    _after();
-
-    assert(true);
-  }
-
-  function setUnbackedMintCap(uint256 newUnbackedMintCap, uint8 i) external {
-    address asset = _getRandomBaseAsset(i);
-
-    _before();
-    contracts.poolConfiguratorProxy.setUnbackedMintCap(asset, newUnbackedMintCap);
     _after();
 
     assert(true);

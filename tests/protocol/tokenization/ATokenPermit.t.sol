@@ -20,7 +20,7 @@ contract ATokenPermitTests is TestnetProcedures {
 
   function setUp() public {
     initTestEnvironment();
-    (address aUSDX, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(tokenList.usdx);
+    address aUSDX = contracts.poolProxy.getReserveAToken(tokenList.usdx);
     aToken = IATokenWithMetadata(aUSDX);
   }
 
@@ -48,7 +48,7 @@ contract ATokenPermitTests is TestnetProcedures {
       spender: bob,
       value: 1e6,
       nonce: 0,
-      deadline: block.timestamp + 1 days
+      deadline: vm.getBlockTimestamp() + 1 days
     });
     bytes32 digest = EIP712SigUtils.getTypedDataHash(
       permit,
@@ -84,7 +84,7 @@ contract ATokenPermitTests is TestnetProcedures {
       spender: bob,
       value: 0,
       nonce: 1,
-      deadline: block.timestamp + 1 days
+      deadline: vm.getBlockTimestamp() + 1 days
     });
     bytes32 digest = EIP712SigUtils.getTypedDataHash(
       permit,
@@ -130,7 +130,7 @@ contract ATokenPermitTests is TestnetProcedures {
       'Alice allowance to bob should be zero before permit'
     );
 
-    vm.expectRevert(bytes(Errors.INVALID_EXPIRATION));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidExpiration.selector));
     vm.prank(bob);
     aToken.permit(alice, bob, permit.value, permit.deadline, v, r, s);
     assertEq(aToken.allowance(alice, bob), 0, 'Alice allowance should still be zero');
@@ -143,7 +143,7 @@ contract ATokenPermitTests is TestnetProcedures {
       spender: bob,
       value: 1e6,
       nonce: 10,
-      deadline: block.timestamp + 1 days
+      deadline: vm.getBlockTimestamp() + 1 days
     });
     bytes32 digest = EIP712SigUtils.getTypedDataHash(
       permit,
@@ -160,14 +160,14 @@ contract ATokenPermitTests is TestnetProcedures {
       'Alice allowance to bob should be zero before permit'
     );
 
-    vm.expectRevert(bytes(Errors.INVALID_SIGNATURE));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidSignature.selector));
     vm.prank(bob);
     aToken.permit(alice, bob, permit.value, permit.deadline, v, r, s);
     assertEq(aToken.allowance(alice, bob), 0, 'Alice allowance should still be zero');
     assertEq(aToken.nonces(alice), 0, 'Alice nonce does not match expected nonce');
   }
 
-  function test_revert_submitPermit_invalid_expiration_previosCurrentBlock() public {
+  function test_revert_submitPermit_InvalidExpiration_previosCurrentBlock() public {
     EIP712SigUtils.Permit memory permit = EIP712SigUtils.Permit({
       owner: alice,
       spender: bob,
@@ -189,16 +189,16 @@ contract ATokenPermitTests is TestnetProcedures {
       0,
       'Alice allowance to bob should be zero before permit'
     );
-    vm.warp(block.timestamp + 4080);
+    vm.warp(vm.getBlockTimestamp() + 4080);
 
-    vm.expectRevert(bytes(Errors.INVALID_EXPIRATION));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidExpiration.selector));
     vm.prank(bob);
     aToken.permit(alice, bob, permit.value, permit.deadline, v, r, s);
     assertEq(aToken.allowance(alice, bob), 0, 'Alice allowance should still be zero');
     assertEq(aToken.nonces(alice), 0, 'Alice nonce does not match expected nonce');
   }
 
-  function test_revert_submitPermit_invalid_signature() public {
+  function test_revert_submitPermit_InvalidSignature() public {
     EIP712SigUtils.Permit memory permit = EIP712SigUtils.Permit({
       owner: alice,
       spender: bob,
@@ -221,7 +221,7 @@ contract ATokenPermitTests is TestnetProcedures {
       'Alice allowance to bob should be zero before permit'
     );
 
-    vm.expectRevert(bytes(Errors.INVALID_SIGNATURE));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidSignature.selector));
     vm.prank(bob);
     aToken.permit(alice, address(0), permit.value, permit.deadline, v, r, s);
     assertEq(aToken.allowance(alice, bob), 0, 'Alice allowance should still be zero');
@@ -251,7 +251,7 @@ contract ATokenPermitTests is TestnetProcedures {
       'Alice allowance to bob should be zero before permit'
     );
 
-    vm.expectRevert(bytes(Errors.ZERO_ADDRESS_NOT_VALID));
+    vm.expectRevert(abi.encodeWithSelector(Errors.ZeroAddressNotValid.selector));
     vm.prank(bob);
     aToken.permit(address(0), bob, permit.value, permit.deadline, v, r, s);
     assertEq(aToken.allowance(alice, bob), 0, 'Alice allowance should still be zero');

@@ -51,7 +51,6 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
       emptySalt,
       weth9,
       0.0005e4,
-      0.0004e4,
       address(0),
       address(0),
       address(0),
@@ -83,8 +82,7 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
 
     testnetListingPayload.execute();
 
-    (address aToken, , ) = IPoolDataProvider(fullReport.protocolDataProvider)
-      .getReserveTokensAddresses(weth9);
+    address aToken = IPool(fullReport.poolProxy).getReserveAToken(weth9);
 
     assertEq(IAToken(aToken).RESERVE_TREASURY_ADDRESS(), fullReport.treasury);
   }
@@ -168,8 +166,7 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
 
     testnetListingPayload.execute();
 
-    (address aToken, , ) = IPoolDataProvider(fullReport.protocolDataProvider)
-      .getReserveTokensAddresses(weth9);
+    address aToken = IPool(fullReport.poolProxy).getReserveAToken(weth9);
 
     assertEq(IAToken(aToken).RESERVE_TREASURY_ADDRESS(), fullReport.revenueSplitter);
   }

@@ -19,8 +19,6 @@ contract PoolDeficitTests is TestnetProcedures {
   using stdStorage for StdStorage;
   using UserConfiguration for DataTypes.UserConfigurationMap;
 
-  event DeficitCovered(address indexed reserve, address caller, uint256 amountDecreased);
-
   function setUp() public virtual {
     initTestEnvironment(false);
   }
@@ -40,7 +38,7 @@ contract PoolDeficitTests is TestnetProcedures {
     );
 
     // +1 to account for imprecision on supply
-    _mintATokens(tokenList.usdx, coverageAdmin, currentDeficit + 1);
+    _mintATokens(tokenList.usdx, coverageAdmin, currentDeficit);
 
     vm.startPrank(coverageAdmin);
     IERC20(tokenList.usdx).approve(report.poolProxy, UINT256_MAX);
@@ -51,7 +49,7 @@ contract PoolDeficitTests is TestnetProcedures {
 
     // eliminate deficit
     vm.expectEmit(address(contracts.poolProxy));
-    emit DeficitCovered(tokenList.usdx, coverageAdmin, currentDeficit);
+    emit IPool.DeficitCovered(tokenList.usdx, coverageAdmin, currentDeficit);
     contracts.poolProxy.eliminateReserveDeficit(tokenList.usdx, currentDeficit);
 
     assertEq(contracts.poolProxy.getReserveDeficit(tokenList.usdx), 0);
@@ -105,7 +103,7 @@ contract PoolDeficitTests is TestnetProcedures {
     vm.startPrank(coverageAdmin);
     IERC20(tokenList.usdx).approve(report.poolProxy, UINT256_MAX);
     vm.expectEmit(address(contracts.poolProxy));
-    emit DeficitCovered(tokenList.usdx, coverageAdmin, currentDeficit);
+    emit IPool.DeficitCovered(tokenList.usdx, coverageAdmin, currentDeficit);
     contracts.poolProxy.eliminateReserveDeficit(tokenList.usdx, currentDeficit + 1000);
 
     DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
@@ -135,7 +133,7 @@ contract PoolDeficitTests is TestnetProcedures {
     vm.startPrank(coverageAdmin);
     IERC20(tokenList.usdx).approve(report.poolProxy, UINT256_MAX);
     vm.expectEmit(address(contracts.poolProxy));
-    emit DeficitCovered(tokenList.usdx, coverageAdmin, amountToCover);
+    emit IPool.DeficitCovered(tokenList.usdx, coverageAdmin, amountToCover);
     contracts.poolProxy.eliminateReserveDeficit(tokenList.usdx, amountToCover);
   }
 
@@ -156,7 +154,7 @@ contract PoolDeficitTests is TestnetProcedures {
     IERC20(tokenList.usdx).approve(report.poolProxy, UINT256_MAX);
     contracts.poolProxy.borrow(tokenList.usdx, cAdminBorrowAmount, 2, 0, coverageAdmin);
 
-    vm.expectRevert(bytes(Errors.USER_CANNOT_HAVE_DEBT));
+    vm.expectRevert(abi.encodeWithSelector(Errors.UserCannotHaveDebt.selector));
     contracts.poolProxy.eliminateReserveDeficit(tokenList.usdx, currentDeficit);
   }
 
@@ -167,7 +165,7 @@ contract PoolDeficitTests is TestnetProcedures {
     _filterAddresses(caller);
     uint256 currentDeficit = _createReserveDeficit(borrowAmount, tokenList.usdx);
 
-    vm.expectRevert(bytes(Errors.CALLER_NOT_UMBRELLA));
+    vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotUmbrella.selector));
     vm.prank(caller);
     contracts.poolProxy.eliminateReserveDeficit(tokenList.usdx, currentDeficit);
   }
@@ -184,13 +182,11 @@ contract PoolDeficitTests is TestnetProcedures {
     contracts.poolAddressesProvider.setAddress(bytes32('UMBRELLA'), coverageAdmin);
 
     vm.startPrank(coverageAdmin);
-    vm.expectRevert(bytes(Errors.INVALID_AMOUNT));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidAmount.selector));
     contracts.poolProxy.eliminateReserveDeficit(tokenList.usdx, 0);
   }
 
-  function test_reverts_eliminateReserveDeficit_reserve_not_in_deficit(
-    address coverageAdmin
-  ) public {
+  function test_reverts_eliminateReserveDeficit_ReserveNotInDeficit(address coverageAdmin) public {
     _filterAddresses(coverageAdmin);
 
     vm.prank(poolAdmin);
@@ -198,7 +194,7 @@ contract PoolDeficitTests is TestnetProcedures {
 
     vm.startPrank(coverageAdmin);
 
-    vm.expectRevert(bytes(Errors.RESERVE_NOT_IN_DEFICIT));
+    vm.expectRevert(abi.encodeWithSelector(Errors.ReserveNotInDeficit.selector));
     contracts.poolProxy.eliminateReserveDeficit(tokenList.usdx, 1);
   }
 
@@ -237,7 +233,7 @@ contract PoolDeficitTests is TestnetProcedures {
     bool mintBorrowableAssets
   ) internal returns (uint256) {
     borrowAmount = bound(borrowAmount, 1e18, type(uint120).max);
-    _mintATokens(tokenList.wbtc, alice, 1);
+    _mintATokens(tokenList.wbtc, alice, 10);
 
     if (mintBorrowableAssets) {
       // setup available amount to borrow
@@ -268,6 +264,7 @@ contract PoolDeficitTests is TestnetProcedures {
 
   function _filterAddresses(address user) internal view {
     vm.assume(user != address(0));
+    vm.assume(user != report.poolProxy);
     vm.assume(user != report.poolAddressesProvider);
     vm.assume(user != alice);
     vm.assume(user != bob);
@@ -276,6 +273,9 @@ contract PoolDeficitTests is TestnetProcedures {
     vm.assume(user != tokenList.wbtc);
     vm.assume(user != tokenList.weth);
     vm.assume(user != 0xcF63D4456FCF098EF4012F6dbd2FA3a30f122D43);
+    vm.assume(user != report.aToken);
+    vm.assume(user != report.variableDebtToken);
+    vm.assume(user != contracts.poolProxy.getReserveVariableDebtToken(tokenList.usdx));
     vm.assume(user != contracts.poolProxy.getReserveAToken(tokenList.usdx));
     vm.assume(user != contracts.poolProxy.getReserveAToken(tokenList.wbtc));
     vm.assume(user != contracts.poolProxy.getReserveAToken(tokenList.weth));

@@ -3,7 +3,7 @@ pragma solidity ^0.8.10;
 
 import {IScaledBalanceToken} from '../interfaces/IScaledBalanceToken.sol';
 import {IERC20Detailed} from '../dependencies/openzeppelin/contracts/IERC20Detailed.sol';
-import {SafeCast} from '../dependencies/openzeppelin/contracts/SafeCast.sol';
+import {SafeCast} from 'openzeppelin-contracts/contracts/utils/math/SafeCast.sol';
 import {IRewardsDistributor} from './interfaces/IRewardsDistributor.sol';
 import {RewardsDataTypes} from './libraries/RewardsDataTypes.sol';
 

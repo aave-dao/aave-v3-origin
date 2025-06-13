@@ -19,7 +19,7 @@ abstract contract L2Pool is Pool, IL2Pool {
       args
     );
 
-    supply(asset, amount, msg.sender, referralCode);
+    supply(asset, amount, _msgSender(), referralCode);
   }
 
   /// @inheritdoc IL2Pool
@@ -27,14 +27,14 @@ abstract contract L2Pool is Pool, IL2Pool {
     (address asset, uint256 amount, uint16 referralCode, uint256 deadline, uint8 v) = CalldataLogic
       .decodeSupplyWithPermitParams(_reservesList, args);
 
-    supplyWithPermit(asset, amount, msg.sender, referralCode, deadline, v, r, s);
+    supplyWithPermit(asset, amount, _msgSender(), referralCode, deadline, v, r, s);
   }
 
   /// @inheritdoc IL2Pool
   function withdraw(bytes32 args) external override returns (uint256) {
     (address asset, uint256 amount) = CalldataLogic.decodeWithdrawParams(_reservesList, args);
 
-    return withdraw(asset, amount, msg.sender);
+    return withdraw(asset, amount, _msgSender());
   }
 
   /// @inheritdoc IL2Pool
@@ -42,7 +42,7 @@ abstract contract L2Pool is Pool, IL2Pool {
     (address asset, uint256 amount, uint256 interestRateMode, uint16 referralCode) = CalldataLogic
       .decodeBorrowParams(_reservesList, args);
 
-    borrow(asset, amount, interestRateMode, referralCode, msg.sender);
+    borrow(asset, amount, interestRateMode, referralCode, _msgSender());
   }
 
   /// @inheritdoc IL2Pool
@@ -52,7 +52,7 @@ abstract contract L2Pool is Pool, IL2Pool {
       args
     );
 
-    return repay(asset, amount, interestRateMode, msg.sender);
+    return repay(asset, amount, interestRateMode, _msgSender());
   }
 
   /// @inheritdoc IL2Pool
@@ -65,7 +65,7 @@ abstract contract L2Pool is Pool, IL2Pool {
       uint8 v
     ) = CalldataLogic.decodeRepayWithPermitParams(_reservesList, args);
 
-    return repayWithPermit(asset, amount, interestRateMode, msg.sender, deadline, v, r, s);
+    return repayWithPermit(asset, amount, interestRateMode, _msgSender(), deadline, v, r, s);
   }
 
   /// @inheritdoc IL2Pool

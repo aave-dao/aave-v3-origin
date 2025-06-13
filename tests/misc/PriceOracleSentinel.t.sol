@@ -6,6 +6,7 @@ import 'forge-std/Test.sol';
 import {Errors} from '../../src/contracts/protocol/libraries/helpers/Errors.sol';
 import {PriceOracleSentinel} from '../../src/contracts/misc/PriceOracleSentinel.sol';
 import {IPoolAddressesProvider} from '../../src/contracts/interfaces/IPoolAddressesProvider.sol';
+import {IPriceOracleSentinel} from '../../src/contracts/interfaces/IPriceOracleSentinel.sol';
 import {ACLManager} from '../../src/contracts/protocol/configuration/ACLManager.sol';
 import {SequencerOracle, ISequencerOracle} from '../../src/contracts/mocks/oracle/SequencerOracle.sol';
 import {TestnetProcedures} from '../utils/TestnetProcedures.sol';
@@ -18,9 +19,6 @@ contract PriceOracleSentinelTest is TestnetProcedures {
   SequencerOracle internal sequencerOracleMock;
 
   uint256 gracePeriod = 1 days;
-
-  event SequencerOracleUpdated(address newSequencerOracle);
-  event GracePeriodUpdated(uint256 newGracePeriod);
 
   function setUp() public {
     initTestEnvironment();
@@ -57,14 +55,14 @@ contract PriceOracleSentinelTest is TestnetProcedures {
   }
 
   function test_reverts_setSequencerOracle_not_poolAdmin() public {
-    vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
+    vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotPoolAdmin.selector));
 
     vm.prank(stranger);
     priceOracleSentinel.setSequencerOracle(address(0));
   }
 
   function test_reverts_setGracePeriod_not_poolAdmin() public {
-    vm.expectRevert(bytes(Errors.CALLER_NOT_RISK_OR_POOL_ADMIN));
+    vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotRiskOrPoolAdmin.selector));
 
     vm.prank(stranger);
     priceOracleSentinel.setGracePeriod(1000 days);
@@ -72,7 +70,7 @@ contract PriceOracleSentinelTest is TestnetProcedures {
 
   function test_setSequencerOracle() public {
     vm.expectEmit(address(priceOracleSentinel));
-    emit SequencerOracleUpdated(address(0));
+    emit IPriceOracleSentinel.SequencerOracleUpdated(address(0));
 
     vm.prank(poolAdmin);
     priceOracleSentinel.setSequencerOracle(address(0));
@@ -80,14 +78,14 @@ contract PriceOracleSentinelTest is TestnetProcedures {
 
   function test_setGracePeriod() public {
     vm.expectEmit(address(priceOracleSentinel));
-    emit GracePeriodUpdated(1000 days);
+    emit IPriceOracleSentinel.GracePeriodUpdated(1000 days);
 
     vm.prank(poolAdmin);
     priceOracleSentinel.setGracePeriod(1000 days);
   }
 
   function test_isLiquidationAllowed_true_network_up_grace_period_pass() public {
-    uint256 timestamp = block.timestamp;
+    uint256 timestamp = vm.getBlockTimestamp();
     uint256 gracePeriodEnded = timestamp + 1 days + 1;
 
     vm.warp(gracePeriodEnded);
@@ -99,7 +97,7 @@ contract PriceOracleSentinelTest is TestnetProcedures {
   }
 
   function test_isLiquidationAllowed_network_up_not_grace_period() public {
-    uint256 timestamp = block.timestamp;
+    uint256 timestamp = vm.getBlockTimestamp();
     uint256 exactGracePeriod = timestamp + 1 days;
 
     vm.warp(exactGracePeriod);
@@ -125,7 +123,7 @@ contract PriceOracleSentinelTest is TestnetProcedures {
   }
 
   function test_isBorrowAllowed_network_up_not_grace_period() public {
-    uint256 timestamp = block.timestamp;
+    uint256 timestamp = vm.getBlockTimestamp();
     uint256 exactGracePeriod = timestamp + 1 days;
 
     vm.warp(exactGracePeriod);
@@ -137,7 +135,7 @@ contract PriceOracleSentinelTest is TestnetProcedures {
   }
 
   function test_isBorrowAllowed_true_network_up_grace_period_pass() public {
-    uint256 timestamp = block.timestamp;
+    uint256 timestamp = vm.getBlockTimestamp();
     uint256 gracePeriodEnded = timestamp + 1 days + 1;
 
     vm.warp(gracePeriodEnded);

@@ -5,9 +5,12 @@ import {VariableDebtTokenInstance} from '../../instances/VariableDebtTokenInstan
 import {IPool} from '../../interfaces/IPool.sol';
 
 contract MockVariableDebtToken is VariableDebtTokenInstance {
-  constructor(IPool pool) VariableDebtTokenInstance(pool) {}
+  constructor(
+    IPool pool,
+    address rewardsController
+  ) VariableDebtTokenInstance(pool, rewardsController) {}
 
   function getRevision() internal pure override returns (uint256) {
-    return 0x2;
+    return DEBT_TOKEN_REVISION + 1;
   }
 }

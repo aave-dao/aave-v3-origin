@@ -20,7 +20,7 @@ contract PriceOracleSentinel is IPriceOracleSentinel {
    */
   modifier onlyPoolAdmin() {
     IACLManager aclManager = IACLManager(ADDRESSES_PROVIDER.getACLManager());
-    require(aclManager.isPoolAdmin(msg.sender), Errors.CALLER_NOT_POOL_ADMIN);
+    require(aclManager.isPoolAdmin(msg.sender), Errors.CallerNotPoolAdmin());
     _;
   }
 
@@ -31,7 +31,7 @@ contract PriceOracleSentinel is IPriceOracleSentinel {
     IACLManager aclManager = IACLManager(ADDRESSES_PROVIDER.getACLManager());
     require(
       aclManager.isRiskAdmin(msg.sender) || aclManager.isPoolAdmin(msg.sender),
-      Errors.CALLER_NOT_RISK_OR_POOL_ADMIN
+      Errors.CallerNotRiskOrPoolAdmin()
     );
     _;
   }

@@ -41,8 +41,6 @@ contract PoolLiquidationCloseFactorTests is TestnetProcedures {
   SequencerOracle internal sequencerOracleMock;
   LiquidationDataProvider internal liquidationDataProvider;
 
-  event IsolationModeTotalDebtUpdated(address indexed asset, uint256 totalDebt);
-
   function setUp() public {
     initTestEnvironment(false);
 
@@ -169,7 +167,7 @@ contract PoolLiquidationCloseFactorTests is TestnetProcedures {
     vm.prank(liquidator);
     IERC20Detailed(tokenList.usdx).approve(address(contracts.poolProxy), type(uint256).max);
     vm.prank(liquidator);
-    vm.expectRevert(bytes(Errors.MUST_NOT_LEAVE_DUST));
+    vm.expectRevert(abi.encodeWithSelector(Errors.MustNotLeaveDust.selector));
     contracts.poolProxy.liquidationCall(
       tokenList.usdx,
       tokenList.usdx,
@@ -191,7 +189,7 @@ contract PoolLiquidationCloseFactorTests is TestnetProcedures {
     vm.startPrank(liquidator);
     IERC20Detailed(tokenList.usdx).approve(address(contracts.poolProxy), type(uint256).max);
 
-    vm.expectRevert(bytes(Errors.MUST_NOT_LEAVE_DUST));
+    vm.expectRevert(abi.encodeWithSelector(Errors.MustNotLeaveDust.selector));
     contracts.poolProxy.liquidationCall(
       tokenList.usdx,
       tokenList.usdx,
@@ -226,7 +224,7 @@ contract PoolLiquidationCloseFactorTests is TestnetProcedures {
     vm.startPrank(liquidator);
     IERC20Detailed(tokenList.usdx).approve(address(contracts.poolProxy), type(uint256).max);
 
-    vm.expectRevert(bytes(Errors.MUST_NOT_LEAVE_DUST));
+    vm.expectRevert(abi.encodeWithSelector(Errors.MustNotLeaveDust.selector));
     contracts.poolProxy.liquidationCall(
       tokenList.usdx,
       tokenList.usdx,

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import {SafeCast} from '../../../dependencies/openzeppelin/contracts/SafeCast.sol';
+import {SafeCast} from 'openzeppelin-contracts/contracts/utils/math/SafeCast.sol';
 import {Errors} from '../../libraries/helpers/Errors.sol';
 import {WadRayMath} from '../../libraries/math/WadRayMath.sol';
 import {IPool} from '../../../interfaces/IPool.sol';
@@ -23,13 +23,15 @@ abstract contract ScaledBalanceTokenBase is MintableIncentivizedERC20, IScaledBa
    * @param name The name of the token
    * @param symbol The symbol of the token
    * @param decimals The number of decimals of the token
+   * @param rewardsController The address of the rewards controller contract
    */
   constructor(
     IPool pool,
     string memory name,
     string memory symbol,
-    uint8 decimals
-  ) MintableIncentivizedERC20(pool, name, symbol, decimals) {
+    uint8 decimals,
+    address rewardsController
+  ) MintableIncentivizedERC20(pool, name, symbol, decimals, rewardsController) {
     // Intentionally left blank
   }
 
@@ -70,7 +72,7 @@ abstract contract ScaledBalanceTokenBase is MintableIncentivizedERC20, IScaledBa
     uint256 index
   ) internal returns (bool) {
     uint256 amountScaled = amount.rayDiv(index);
-    require(amountScaled != 0, Errors.INVALID_MINT_AMOUNT);
+    require(amountScaled != 0, Errors.InvalidMintAmount());
 
     uint256 scaledBalance = super.balanceOf(onBehalfOf);
     uint256 balanceIncrease = scaledBalance.rayMul(index) -
@@ -78,7 +80,7 @@ abstract contract ScaledBalanceTokenBase is MintableIncentivizedERC20, IScaledBa
 
     _userState[onBehalfOf].additionalData = index.toUint128();
 
-    _mint(onBehalfOf, amountScaled.toUint128());
+    _mint(onBehalfOf, amountScaled.toUint120());
 
     uint256 amountToMint = amount + balanceIncrease;
     emit Transfer(address(0), onBehalfOf, amountToMint);
@@ -95,10 +97,16 @@ abstract contract ScaledBalanceTokenBase is MintableIncentivizedERC20, IScaledBa
    * @param target The address that will receive the underlying, if any
    * @param amount The amount getting burned
    * @param index The variable debt index of the reserve
+   * @return `true` if the the new balance of the user is 0
    */
-  function _burnScaled(address user, address target, uint256 amount, uint256 index) internal {
+  function _burnScaled(
+    address user,
+    address target,
+    uint256 amount,
+    uint256 index
+  ) internal returns (bool) {
     uint256 amountScaled = amount.rayDiv(index);
-    require(amountScaled != 0, Errors.INVALID_BURN_AMOUNT);
+    require(amountScaled != 0, Errors.InvalidBurnAmount());
 
     uint256 scaledBalance = super.balanceOf(user);
     uint256 balanceIncrease = scaledBalance.rayMul(index) -
@@ -106,7 +114,7 @@ abstract contract ScaledBalanceTokenBase is MintableIncentivizedERC20, IScaledBa
 
     _userState[user].additionalData = index.toUint128();
 
-    _burn(user, amountScaled.toUint128());
+    _burn(user, amountScaled.toUint120());
 
     if (balanceIncrease > amount) {
       uint256 amountToMint = balanceIncrease - amount;
@@ -117,40 +125,6 @@ abstract contract ScaledBalanceTokenBase is MintableIncentivizedERC20, IScaledBa
       emit Transfer(user, address(0), amountToBurn);
       emit Burn(user, target, amountToBurn, balanceIncrease, index);
     }
-  }
-
-  /**
-   * @notice Implements the basic logic to transfer scaled balance tokens between two users
-   * @dev It emits a mint event with the interest accrued per user
-   * @param sender The source address
-   * @param recipient The destination address
-   * @param amount The amount getting transferred
-   * @param index The next liquidity index of the reserve
-   */
-  function _transfer(address sender, address recipient, uint256 amount, uint256 index) internal {
-    uint256 senderScaledBalance = super.balanceOf(sender);
-    uint256 senderBalanceIncrease = senderScaledBalance.rayMul(index) -
-      senderScaledBalance.rayMul(_userState[sender].additionalData);
-
-    uint256 recipientScaledBalance = super.balanceOf(recipient);
-    uint256 recipientBalanceIncrease = recipientScaledBalance.rayMul(index) -
-      recipientScaledBalance.rayMul(_userState[recipient].additionalData);
-
-    _userState[sender].additionalData = index.toUint128();
-    _userState[recipient].additionalData = index.toUint128();
-
-    super._transfer(sender, recipient, amount.rayDiv(index).toUint128());
-
-    if (senderBalanceIncrease > 0) {
-      emit Transfer(address(0), sender, senderBalanceIncrease);
-      emit Mint(_msgSender(), sender, senderBalanceIncrease, senderBalanceIncrease, index);
-    }
-
-    if (sender != recipient && recipientBalanceIncrease > 0) {
-      emit Transfer(address(0), recipient, recipientBalanceIncrease);
-      emit Mint(_msgSender(), recipient, recipientBalanceIncrease, recipientBalanceIncrease, index);
-    }
-
-    emit Transfer(sender, recipient, amount);
+    return scaledBalance - amountScaled == 0;
   }
 }

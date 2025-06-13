@@ -191,18 +191,6 @@ contract ReserveConfigurationHarness {
     return ReserveConfiguration.getLiquidationProtocolFee(reservesConfig);
   }
 
-  // Sets the unbacked mint cap of the reserve
-  function setUnbackedMintCap(uint256 unbackedMintCap) public {
-    DataTypes.ReserveConfigurationMap memory configNew = reservesConfig;
-    ReserveConfiguration.setUnbackedMintCap(configNew, unbackedMintCap);
-    reservesConfig.data = configNew.data;
-  }
-
-  // Gets the unbacked mint cap of the reserve
-  function getUnbackedMintCap() public view returns (uint256) {
-    return ReserveConfiguration.getUnbackedMintCap(reservesConfig);
-  }
-
   // Sets the eMode asset category
   //  function setEModeCategory(uint256 category) public {
   //  DataTypes.ReserveConfigurationMap memory configNew = reservesConfig;

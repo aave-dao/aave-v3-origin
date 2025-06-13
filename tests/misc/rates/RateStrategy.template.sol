@@ -25,14 +25,6 @@ contract RateStrategyBase is TestnetProcedures {
   Params public params;
   uint256 public borrowUsageRatio;
 
-  event RateDataUpdate(
-    address indexed reserve,
-    uint256 optimalUsageRatio,
-    uint256 baseVariableBorrowRate,
-    uint256 variableRateSlope1,
-    uint256 variableRateSlope2
-  );
-
   // sets limits for the fuzzing parameters and sets them on the interest rate strategy
   modifier setRateParams(
     IDefaultInterestRateStrategyV2.InterestRateData memory rateData,
@@ -77,16 +69,18 @@ contract RateStrategyBase is TestnetProcedures {
   function setUp() public {
     initTestEnvironment();
 
-    (aToken, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(tokenList.usdx);
-    rateStrategy = new DefaultReserveInterestRateStrategyV2(report.poolAddressesProvider);
+    aToken = contracts.poolProxy.getReserveAToken(tokenList.usdx);
+
+    rateStrategy = DefaultReserveInterestRateStrategyV2(
+      address(contracts.defaultInterestRateStrategy)
+    );
     (, , , , reserveFactor, , , , , ) = contracts.protocolDataProvider.getReserveConfigurationData(
       tokenList.usdx
     );
 
     vm.startPrank(poolAdmin);
-    IPoolConfigurator(report.poolConfiguratorProxy).setReserveInterestRateStrategyAddress(
+    IPoolConfigurator(report.poolConfiguratorProxy).setReserveInterestRateData(
       tokenList.usdx,
-      address(rateStrategy),
       _getDefaultInterestRatesStrategyData()
     );
     vm.stopPrank();

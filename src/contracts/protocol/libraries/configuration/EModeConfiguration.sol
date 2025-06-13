@@ -24,7 +24,7 @@ library EModeConfiguration {
     bool enabled
   ) internal pure returns (uint128) {
     unchecked {
-      require(reserveIndex < ReserveConfiguration.MAX_RESERVES_COUNT, Errors.INVALID_RESERVE_INDEX);
+      require(reserveIndex < ReserveConfiguration.MAX_RESERVES_COUNT, Errors.InvalidReserveIndex());
       uint128 bit = uint128(1 << reserveIndex);
       if (enabled) {
         return bitmap | bit;
@@ -45,7 +45,7 @@ library EModeConfiguration {
     uint256 reserveIndex
   ) internal pure returns (bool) {
     unchecked {
-      require(reserveIndex < ReserveConfiguration.MAX_RESERVES_COUNT, Errors.INVALID_RESERVE_INDEX);
+      require(reserveIndex < ReserveConfiguration.MAX_RESERVES_COUNT, Errors.InvalidReserveIndex());
       return (bitmap >> reserveIndex) & 1 != 0;
     }
   }

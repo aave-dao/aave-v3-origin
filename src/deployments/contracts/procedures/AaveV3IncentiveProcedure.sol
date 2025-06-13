@@ -8,7 +8,6 @@ contract AaveV3IncentiveProcedure {
   function _deployIncentives(address tempOwner) internal returns (address, address) {
     address emissionManager = address(new EmissionManager(tempOwner));
     address rewardsControllerImplementation = address(new RewardsController(emissionManager));
-    RewardsController(rewardsControllerImplementation).initialize(address(0));
 
     return (emissionManager, rewardsControllerImplementation);
   }

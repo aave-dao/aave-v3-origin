@@ -4,7 +4,9 @@ pragma solidity ^0.8.0;
 import 'forge-std/Test.sol';
 
 import {PoolAddressesProvider, IPoolAddressesProvider} from '../../../src/contracts/protocol/configuration/PoolAddressesProvider.sol';
+import {Ownable} from '../../../src/contracts/dependencies/openzeppelin/contracts/Ownable.sol';
 import {PoolInstance} from '../../../src/contracts/instances/PoolInstance.sol';
+import {DefaultReserveInterestRateStrategyV2, IReserveInterestRateStrategy} from '../../../src/contracts/misc/DefaultReserveInterestRateStrategyV2.sol';
 import {MockInitializableV1, MockInitializableV2} from '../../../src/contracts/mocks/upgradeability/MockInitializableImplementation.sol';
 import {PoolConfiguratorInstance} from '../../../src/contracts/instances/PoolConfiguratorInstance.sol';
 import {MockPoolInherited} from '../../../src/contracts/mocks/helpers/MockPool.sol';
@@ -19,38 +21,6 @@ contract PoolAddressesProviderTests is TestnetProcedures {
 
   string constant CALLER_NOT_OWNER = 'Ownable: caller is not the owner';
 
-  event MarketIdSet(string indexed oldMarketId, string indexed newMarketId);
-
-  event PoolUpdated(address indexed oldAddress, address indexed newAddress);
-
-  event PoolConfiguratorUpdated(address indexed oldAddress, address indexed newAddress);
-
-  event PriceOracleUpdated(address indexed oldAddress, address indexed newAddress);
-
-  event ACLManagerUpdated(address indexed oldAddress, address indexed newAddress);
-
-  event ACLAdminUpdated(address indexed oldAddress, address indexed newAddress);
-
-  event PriceOracleSentinelUpdated(address indexed oldAddress, address indexed newAddress);
-
-  event PoolDataProviderUpdated(address indexed oldAddress, address indexed newAddress);
-
-  event ProxyCreated(
-    bytes32 indexed id,
-    address indexed proxyAddress,
-    address indexed implementationAddress
-  );
-
-  event AddressSet(bytes32 indexed id, address indexed oldAddress, address indexed newAddress);
-
-  event AddressSetAsProxy(
-    bytes32 indexed id,
-    address indexed proxyAddress,
-    address oldImplementationAddress,
-    address indexed newImplementationAddress
-  );
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
   function setUp() public {
     stranger = makeAddr('STRANGER');
 
@@ -62,13 +32,13 @@ contract PoolAddressesProviderTests is TestnetProcedures {
     address expectedAddress = vm.computeCreateAddress(alice, vm.getNonce(alice));
 
     vm.expectEmit(expectedAddress);
-    emit OwnershipTransferred(address(0), alice);
+    emit Ownable.OwnershipTransferred(address(0), alice);
 
     vm.expectEmit(expectedAddress);
-    emit MarketIdSet('', id);
+    emit IPoolAddressesProvider.MarketIdSet('', id);
 
     vm.expectEmit(expectedAddress);
-    emit OwnershipTransferred(alice, alice);
+    emit Ownable.OwnershipTransferred(alice, alice);
 
     vm.prank(alice);
     PoolAddressesProvider provider = new PoolAddressesProvider(id, alice);
@@ -94,7 +64,7 @@ contract PoolAddressesProviderTests is TestnetProcedures {
     assertEq(provider.getMarketId(), deploymentId);
 
     vm.expectEmit(address(provider));
-    emit MarketIdSet(deploymentId, updatedId);
+    emit IPoolAddressesProvider.MarketIdSet(deploymentId, updatedId);
 
     vm.prank(alice);
     provider.setMarketId(updatedId);
@@ -147,9 +117,9 @@ contract PoolAddressesProviderTests is TestnetProcedures {
     address implementation = address(new MockInitializableV1());
 
     vm.expectEmit(true, false, true, true, address(provider));
-    emit ProxyCreated(id, address(0), implementation);
+    emit IPoolAddressesProvider.ProxyCreated(id, address(0), implementation);
     vm.expectEmit(true, true, true, true, address(provider));
-    emit AddressSetAsProxy(id, address(0), address(0), implementation);
+    emit IPoolAddressesProvider.AddressSetAsProxy(id, address(0), address(0), implementation);
 
     vm.prank(alice);
     provider.setAddressAsProxy(id, implementation);
@@ -174,7 +144,12 @@ contract PoolAddressesProviderTests is TestnetProcedures {
     address newImplementationAddress = address(new MockInitializableV2());
 
     vm.expectEmit(true, true, true, true, address(provider));
-    emit AddressSetAsProxy(id, proxyAddress, previousImplementation, newImplementationAddress);
+    emit IPoolAddressesProvider.AddressSetAsProxy(
+      id,
+      proxyAddress,
+      previousImplementation,
+      newImplementationAddress
+    );
 
     vm.prank(alice);
     provider.setAddressAsProxy(id, newImplementationAddress);
@@ -203,7 +178,7 @@ contract PoolAddressesProviderTests is TestnetProcedures {
     address contractAddress = makeAddr('MOCK_CONTRACT');
 
     vm.expectEmit();
-    emit AddressSet(id, address(0), contractAddress);
+    emit IPoolAddressesProvider.AddressSet(id, address(0), contractAddress);
 
     vm.prank(alice);
     provider.setAddress(id, contractAddress);
@@ -219,7 +194,7 @@ contract PoolAddressesProviderTests is TestnetProcedures {
     address secondContract = makeAddr('SECOND_CONTRACT');
 
     vm.expectEmit(address(provider));
-    emit AddressSet(id, address(0), firstContract);
+    emit IPoolAddressesProvider.AddressSet(id, address(0), firstContract);
 
     vm.prank(alice);
     provider.setAddress(id, firstContract);
@@ -227,7 +202,7 @@ contract PoolAddressesProviderTests is TestnetProcedures {
     assertEq(provider.getAddress(id), firstContract);
 
     vm.expectEmit(address(provider));
-    emit AddressSet(id, firstContract, secondContract);
+    emit IPoolAddressesProvider.AddressSet(id, firstContract, secondContract);
 
     vm.prank(alice);
     provider.setAddress(id, secondContract);
@@ -243,16 +218,20 @@ contract PoolAddressesProviderTests is TestnetProcedures {
     assertEq(provider.getAddress(keccak256('0')), address(0));
   }
 
-  function test_setPoolImpl() public returns (PoolAddressesProvider, address) {
+  function test_setPoolImpl()
+    public
+    returns (PoolAddressesProvider, DefaultReserveInterestRateStrategyV2, address)
+  {
     PoolAddressesProvider provider = new PoolAddressesProvider('test', alice);
+    DefaultReserveInterestRateStrategyV2 interestRateStrategy = new DefaultReserveInterestRateStrategyV2(
+        address(provider)
+      );
 
-    address poolImplementation = address(
-      new PoolInstance(IPoolAddressesProvider(address(provider)))
-    );
+    address poolImplementation = address(new PoolInstance(provider, interestRateStrategy));
     assertEq(provider.getPool(), address(0));
 
     vm.expectEmit(address(provider));
-    emit PoolUpdated(address(0), poolImplementation);
+    emit IPoolAddressesProvider.PoolUpdated(address(0), poolImplementation);
 
     vm.prank(alice);
     provider.setPoolImpl(poolImplementation);
@@ -266,18 +245,20 @@ contract PoolAddressesProviderTests is TestnetProcedures {
       poolImplementation
     );
 
-    return (provider, poolImplementation);
+    return (provider, interestRateStrategy, poolImplementation);
   }
 
   function test_setPoolImpl_upgrade() public {
-    (PoolAddressesProvider provider, address currentImplementation) = test_setPoolImpl();
-    address poolImplementation = address(
-      new MockPoolInherited(IPoolAddressesProvider(address(provider)))
-    );
+    (
+      PoolAddressesProvider provider,
+      DefaultReserveInterestRateStrategyV2 interestRateStrategy,
+      address currentImplementation
+    ) = test_setPoolImpl();
+    address poolImplementation = address(new MockPoolInherited(provider, interestRateStrategy));
     assertTrue(currentImplementation != address(0));
 
     vm.expectEmit(address(provider));
-    emit PoolUpdated(currentImplementation, poolImplementation);
+    emit IPoolAddressesProvider.PoolUpdated(currentImplementation, poolImplementation);
 
     vm.prank(alice);
     provider.setPoolImpl(poolImplementation);
@@ -291,12 +272,18 @@ contract PoolAddressesProviderTests is TestnetProcedures {
     );
   }
 
-  function test_setPoolConfiguratorImpl() public returns (PoolAddressesProvider, address) {
+  function test_setPoolConfiguratorImpl()
+    public
+    returns (PoolAddressesProvider, DefaultReserveInterestRateStrategyV2, address)
+  {
     PoolAddressesProvider provider = new PoolAddressesProvider('test', alice);
+    DefaultReserveInterestRateStrategyV2 interestRateStrategy = new DefaultReserveInterestRateStrategyV2(
+        address(provider)
+      );
 
     address implementation = address(new PoolConfiguratorInstance());
     vm.expectEmit(address(provider));
-    emit PoolConfiguratorUpdated(address(0), implementation);
+    emit IPoolAddressesProvider.PoolConfiguratorUpdated(address(0), implementation);
 
     assertEq(provider.getPoolConfigurator(), address(0));
 
@@ -312,21 +299,21 @@ contract PoolAddressesProviderTests is TestnetProcedures {
       implementation
     );
 
-    return (provider, implementation);
+    return (provider, interestRateStrategy, implementation);
   }
 
   function test_setPoolConfiguratorImpl_upgrade() public {
     (
       PoolAddressesProvider provider,
+      DefaultReserveInterestRateStrategyV2 interestRateStrategy,
       address currentImplementation
     ) = test_setPoolConfiguratorImpl();
-    address implementation = address(
-      new MockPoolInherited(IPoolAddressesProvider(address(provider)))
-    );
+
+    address implementation = address(new MockPoolInherited(provider, interestRateStrategy));
     assertTrue(implementation != address(0));
 
     vm.expectEmit(address(provider));
-    emit PoolConfiguratorUpdated(currentImplementation, implementation);
+    emit IPoolAddressesProvider.PoolConfiguratorUpdated(currentImplementation, implementation);
 
     vm.prank(alice);
     provider.setPoolConfiguratorImpl(implementation);
@@ -345,7 +332,7 @@ contract PoolAddressesProviderTests is TestnetProcedures {
 
     address contractAddress = makeAddr('PriceOracle');
     vm.expectEmit(address(provider));
-    emit PriceOracleUpdated(address(0), contractAddress);
+    emit IPoolAddressesProvider.PriceOracleUpdated(address(0), contractAddress);
 
     assertEq(provider.getPriceOracle(), address(0));
 
@@ -361,7 +348,7 @@ contract PoolAddressesProviderTests is TestnetProcedures {
     (PoolAddressesProvider provider, address previousAddress) = test_setPriceOracle();
     address contractAddress = makeAddr('PriceOracle_V2');
     vm.expectEmit(address(provider));
-    emit PriceOracleUpdated(previousAddress, contractAddress);
+    emit IPoolAddressesProvider.PriceOracleUpdated(previousAddress, contractAddress);
 
     assertEq(provider.getPriceOracle(), previousAddress);
 
@@ -377,7 +364,7 @@ contract PoolAddressesProviderTests is TestnetProcedures {
     PoolAddressesProvider provider = new PoolAddressesProvider('test', alice);
 
     vm.expectEmit(address(provider));
-    emit ACLAdminUpdated(address(0), alice);
+    emit IPoolAddressesProvider.ACLAdminUpdated(address(0), alice);
 
     vm.prank(alice);
     provider.setACLAdmin(alice);
@@ -386,7 +373,7 @@ contract PoolAddressesProviderTests is TestnetProcedures {
 
     address contractAddress = address(new ACLManager(IPoolAddressesProvider(address(provider))));
     vm.expectEmit(address(provider));
-    emit ACLManagerUpdated(address(0), contractAddress);
+    emit IPoolAddressesProvider.ACLManagerUpdated(address(0), contractAddress);
 
     assertEq(provider.getACLManager(), address(0));
 
@@ -402,7 +389,7 @@ contract PoolAddressesProviderTests is TestnetProcedures {
     (PoolAddressesProvider provider, address previousAddress) = test_setACLManager_setACLAdmin();
     address contractAddress = address(new ACLManager(IPoolAddressesProvider(address(provider))));
     vm.expectEmit(address(provider));
-    emit ACLManagerUpdated(previousAddress, contractAddress);
+    emit IPoolAddressesProvider.ACLManagerUpdated(previousAddress, contractAddress);
 
     assertEq(provider.getACLManager(), previousAddress);
 
@@ -419,7 +406,7 @@ contract PoolAddressesProviderTests is TestnetProcedures {
 
     address contractAddress = makeAddr('PriceOracleSentinel');
     vm.expectEmit(address(provider));
-    emit PriceOracleSentinelUpdated(address(0), contractAddress);
+    emit IPoolAddressesProvider.PriceOracleSentinelUpdated(address(0), contractAddress);
 
     assertEq(provider.getPriceOracleSentinel(), address(0));
 
@@ -438,7 +425,7 @@ contract PoolAddressesProviderTests is TestnetProcedures {
     (PoolAddressesProvider provider, address previousAddress) = test_setPriceOracleSentinel();
     address contractAddress = makeAddr('PriceOracleSentinel_V2');
     vm.expectEmit(address(provider));
-    emit PriceOracleSentinelUpdated(previousAddress, contractAddress);
+    emit IPoolAddressesProvider.PriceOracleSentinelUpdated(previousAddress, contractAddress);
 
     assertEq(provider.getPriceOracleSentinel(), previousAddress);
 
@@ -458,7 +445,7 @@ contract PoolAddressesProviderTests is TestnetProcedures {
     assertEq(provider.getPoolDataProvider(), address(0));
 
     vm.expectEmit(address(provider));
-    emit PoolDataProviderUpdated(address(0), contractAddress);
+    emit IPoolAddressesProvider.PoolDataProviderUpdated(address(0), contractAddress);
 
     vm.prank(alice);
     provider.setPoolDataProvider(contractAddress);
@@ -475,7 +462,7 @@ contract PoolAddressesProviderTests is TestnetProcedures {
     assertEq(provider.getPoolDataProvider(), previousAddress);
 
     vm.expectEmit(address(provider));
-    emit PoolDataProviderUpdated(previousAddress, contractAddress);
+    emit IPoolAddressesProvider.PoolDataProviderUpdated(previousAddress, contractAddress);
 
     vm.prank(alice);
     provider.setPoolDataProvider(contractAddress);

@@ -5,6 +5,7 @@ import 'forge-std/Test.sol';
 
 import {IVariableDebtToken} from '../../../src/contracts/interfaces/IVariableDebtToken.sol';
 import {IPoolAddressesProvider} from '../../../src/contracts/interfaces/IPoolAddressesProvider.sol';
+import {IPool} from '../../../src/contracts/interfaces/IPool.sol';
 import {ISequencerOracle} from '../../../src/contracts/interfaces/ISequencerOracle.sol';
 import {Errors} from '../../../src/contracts/protocol/libraries/helpers/Errors.sol';
 import {TestnetERC20} from '../../../src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
@@ -24,8 +25,6 @@ contract PoolRepayTests is TestnetProcedures {
 
   PriceOracleSentinel internal priceOracleSentinel;
   SequencerOracle internal sequencerOracleMock;
-
-  event IsolationModeTotalDebtUpdated(address indexed asset, uint256 totalDebt);
 
   function setUp() public {
     initTestEnvironment();
@@ -58,14 +57,14 @@ contract PoolRepayTests is TestnetProcedures {
 
     contracts.poolProxy.supply(tokenList.usdx, amount, alice, 0);
     contracts.poolProxy.borrow(tokenList.usdx, borrowAmount, 2, 0, alice);
-    vm.warp(block.timestamp + 10 days);
+    vm.warp(vm.getBlockTimestamp() + 10 days);
 
     uint256 tokenBalanceBefore = usdx.balanceOf(alice);
     uint256 debtBalanceBefore = IERC20(address(varDebtUSDX)).balanceOf(alice);
     assertGt(debtBalanceBefore, 0);
 
     vm.expectEmit(report.poolProxy);
-    emit BorrowLogic.Repay(
+    emit IPool.Repay(
       tokenList.usdx,
       alice,
       alice,
@@ -95,9 +94,9 @@ contract PoolRepayTests is TestnetProcedures {
 
     contracts.poolProxy.supply(tokenList.usdx, amount, alice, 0);
     contracts.poolProxy.borrow(tokenList.usdx, borrowAmount, 2, 0, alice);
-    vm.warp(block.timestamp + 10 days);
+    vm.warp(vm.getBlockTimestamp() + 10 days);
 
-    vm.expectRevert(bytes(Errors.INVALID_INTEREST_RATE_MODE_SELECTED));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidInterestRateModeSelected.selector));
     contracts.poolProxy.repay(tokenList.usdx, UINT256_MAX, 1, alice);
     vm.stopPrank();
   }
@@ -109,14 +108,14 @@ contract PoolRepayTests is TestnetProcedures {
 
     contracts.poolProxy.supply(tokenList.usdx, amount, alice, 0);
     contracts.poolProxy.borrow(tokenList.usdx, borrowAmount, 2, 0, alice);
-    vm.warp(block.timestamp + 10 days);
+    vm.warp(vm.getBlockTimestamp() + 10 days);
 
     uint256 tokenBalanceBefore = IERC20(aUSDX).balanceOf(alice);
     uint256 debtBalanceBefore = IERC20(address(varDebtUSDX)).balanceOf(alice);
     assertGt(debtBalanceBefore, borrowAmount);
 
     vm.expectEmit(report.poolProxy);
-    emit BorrowLogic.Repay(
+    emit IPool.Repay(
       tokenList.usdx,
       alice,
       alice,
@@ -147,20 +146,14 @@ contract PoolRepayTests is TestnetProcedures {
     contracts.poolProxy.supply(tokenList.weth, IERC20(tokenList.weth).balanceOf(alice), alice, 0);
     contracts.poolProxy.supply(tokenList.usdx, amount, alice, 0);
     contracts.poolProxy.borrow(tokenList.usdx, borrowAmount, 2, 0, alice);
-    vm.warp(block.timestamp + 10 days);
+    vm.warp(vm.getBlockTimestamp() + 10 days);
 
     uint256 tokenBalanceBefore = IERC20(aUSDX).balanceOf(alice);
     uint256 debtBalanceBefore = IERC20(address(varDebtUSDX)).balanceOf(alice);
     assertGt(debtBalanceBefore, borrowAmount);
 
     vm.expectEmit(report.poolProxy);
-    emit BorrowLogic.Repay(
-      tokenList.usdx,
-      alice,
-      alice,
-      IERC20(address(aUSDX)).balanceOf(alice),
-      true
-    );
+    emit IPool.Repay(tokenList.usdx, alice, alice, IERC20(address(aUSDX)).balanceOf(alice), true);
 
     contracts.poolProxy.repayWithATokens(tokenList.usdx, UINT256_MAX, 2);
     vm.stopPrank();
@@ -195,12 +188,12 @@ contract PoolRepayTests is TestnetProcedures {
     contracts.poolProxy.supply(tokenList.weth, IERC20(tokenList.weth).balanceOf(alice), alice, 0);
     contracts.poolProxy.supply(tokenList.usdx, amount, alice, 0);
     contracts.poolProxy.borrow(tokenList.usdx, borrowAmount, 2, 0, alice);
-    vm.warp(block.timestamp + timeDelta);
+    vm.warp(vm.getBlockTimestamp() + timeDelta);
 
     uint256 debtBalanceBefore = IERC20(address(varDebtUSDX)).balanceOf(alice);
 
     vm.expectEmit(report.poolProxy);
-    emit BorrowLogic.Repay(tokenList.usdx, alice, alice, repayAmount, true);
+    emit IPool.Repay(tokenList.usdx, alice, alice, repayAmount, true);
 
     contracts.poolProxy.repayWithATokens(tokenList.usdx, repayAmount, 2);
     vm.stopPrank();
@@ -242,7 +235,7 @@ contract PoolRepayTests is TestnetProcedures {
     usdx.approve(address(contracts.poolProxy), supplyAmount);
     contracts.poolProxy.supply(tokenList.usdx, supplyAmount, user, 0);
     contracts.poolProxy.borrow(tokenList.usdx, borrowAmount, 2, 0, user);
-    vm.warp(block.timestamp + 10 days);
+    vm.warp(vm.getBlockTimestamp() + 10 days);
 
     uint256 underlyingBalanceBeforeRepayment = IERC20(tokenList.usdx).balanceOf(user);
     uint256 debtBalanceBefore = IERC20(address(varDebtUSDX)).balanceOf(user);
@@ -252,7 +245,7 @@ contract PoolRepayTests is TestnetProcedures {
       spender: address(contracts.poolProxy),
       value: repayAmount,
       nonce: 0,
-      deadline: block.timestamp + 1 days
+      deadline: vm.getBlockTimestamp() + 1 days
     });
     bytes32 digest = EIP712SigUtils.getTypedDataHash(
       permit,
@@ -264,7 +257,7 @@ contract PoolRepayTests is TestnetProcedures {
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(userPk, digest);
 
     vm.expectEmit(report.poolProxy);
-    emit BorrowLogic.Repay(tokenList.usdx, user, user, repayAmount, false);
+    emit IPool.Repay(tokenList.usdx, user, user, repayAmount, false);
 
     contracts.poolProxy.repayWithPermit(
       tokenList.usdx,
@@ -305,7 +298,7 @@ contract PoolRepayTests is TestnetProcedures {
     usdx.approve(address(contracts.poolProxy), supplyAmount);
     contracts.poolProxy.supply(tokenList.usdx, supplyAmount, user, 0);
     contracts.poolProxy.borrow(tokenList.usdx, borrowAmount, 2, 0, user);
-    vm.warp(block.timestamp + 10 days);
+    vm.warp(vm.getBlockTimestamp() + 10 days);
 
     uint256 underlyingBalanceBeforeRepayment = IERC20(tokenList.usdx).balanceOf(user);
     uint256 debtBalanceBefore = IERC20(address(varDebtUSDX)).balanceOf(user);
@@ -315,7 +308,7 @@ contract PoolRepayTests is TestnetProcedures {
       spender: address(contracts.poolProxy),
       value: repayAmount,
       nonce: 0,
-      deadline: block.timestamp + 1 days
+      deadline: vm.getBlockTimestamp() + 1 days
     });
     bytes32 digest = EIP712SigUtils.getTypedDataHash(
       permit,
@@ -329,7 +322,7 @@ contract PoolRepayTests is TestnetProcedures {
     usdx.permit(permit.owner, permit.spender, permit.value, permit.deadline, v, r, s);
 
     vm.expectEmit(report.poolProxy);
-    emit BorrowLogic.Repay(tokenList.usdx, user, user, repayAmount, false);
+    emit IPool.Repay(tokenList.usdx, user, user, repayAmount, false);
 
     contracts.poolProxy.repayWithPermit(
       tokenList.usdx,
@@ -370,14 +363,14 @@ contract PoolRepayTests is TestnetProcedures {
     usdx.approve(address(contracts.poolProxy), supplyAmount);
     contracts.poolProxy.supply(tokenList.usdx, supplyAmount, user, 0);
     contracts.poolProxy.borrow(tokenList.usdx, borrowAmount, 2, 0, user);
-    vm.warp(block.timestamp + 10 days);
+    vm.warp(vm.getBlockTimestamp() + 10 days);
 
     EIP712SigUtils.Permit memory permit = EIP712SigUtils.Permit({
       owner: user,
       spender: address(contracts.poolProxy),
       value: repayAmount - 1,
       nonce: 0,
-      deadline: block.timestamp + 1 days
+      deadline: vm.getBlockTimestamp() + 1 days
     });
     bytes32 digest = EIP712SigUtils.getTypedDataHash(
       permit,
@@ -415,7 +408,7 @@ contract PoolRepayTests is TestnetProcedures {
     contracts.poolProxy.setUserUseReserveAsCollateral(tokenList.wbtc, true);
 
     vm.expectEmit(address(contracts.poolProxy));
-    emit IsolationModeTotalDebtUpdated(tokenList.wbtc, 100_00);
+    emit IPool.IsolationModeTotalDebtUpdated(tokenList.wbtc, 100_00);
 
     // Perform borrow in isolated position
     contracts.poolProxy.borrow(tokenList.usdx, borrowAmount, 2, 0, alice);
@@ -424,10 +417,10 @@ contract PoolRepayTests is TestnetProcedures {
     uint256 debtBalanceBefore = varDebtUSDX.scaledBalanceOf(alice);
 
     vm.expectEmit(report.poolProxy);
-    emit IsolationModeTotalDebtUpdated(tokenList.wbtc, 0);
+    emit IPool.IsolationModeTotalDebtUpdated(tokenList.wbtc, 0);
 
     vm.expectEmit(report.poolProxy);
-    emit BorrowLogic.Repay(
+    emit IPool.Repay(
       tokenList.usdx,
       alice,
       alice,
@@ -463,7 +456,7 @@ contract PoolRepayTests is TestnetProcedures {
     contracts.poolProxy.setUserUseReserveAsCollateral(tokenList.wbtc, true);
 
     vm.expectEmit(address(contracts.poolProxy));
-    emit IsolationModeTotalDebtUpdated(tokenList.wbtc, 100_00);
+    emit IPool.IsolationModeTotalDebtUpdated(tokenList.wbtc, 100_00);
 
     // Perform borrow in isolated position
     contracts.poolProxy.borrow(tokenList.usdx, borrowAmount, 2, 0, alice);
@@ -479,13 +472,13 @@ contract PoolRepayTests is TestnetProcedures {
       .isolationModeTotalDebt;
 
     vm.expectEmit(report.poolProxy);
-    emit IsolationModeTotalDebtUpdated(
+    emit IPool.IsolationModeTotalDebtUpdated(
       tokenList.wbtc,
       isolationModeTotalDebt - isolationDebtRepaid
     );
 
     vm.expectEmit(report.poolProxy);
-    emit BorrowLogic.Repay(tokenList.usdx, alice, alice, repayAmount, false);
+    emit IPool.Repay(tokenList.usdx, alice, alice, repayAmount, false);
 
     contracts.poolProxy.repay(tokenList.usdx, repayAmount, 2, alice);
     vm.stopPrank();
@@ -507,7 +500,7 @@ contract PoolRepayTests is TestnetProcedures {
   }
 
   function test_reverts_borrow_invalidAmount() public {
-    vm.expectRevert(bytes(Errors.INVALID_AMOUNT));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidAmount.selector));
 
     vm.prank(alice);
     contracts.poolProxy.repay(tokenList.usdx, 0, 2, alice);
@@ -517,7 +510,7 @@ contract PoolRepayTests is TestnetProcedures {
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setReserveActive(tokenList.wbtc, false);
 
-    vm.expectRevert(bytes(Errors.RESERVE_INACTIVE));
+    vm.expectRevert(abi.encodeWithSelector(Errors.ReserveInactive.selector));
 
     vm.prank(alice);
     contracts.poolProxy.repay(tokenList.wbtc, UINT256_MAX, 2, alice);
@@ -527,14 +520,14 @@ contract PoolRepayTests is TestnetProcedures {
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setReservePause(tokenList.wbtc, true, 0);
 
-    vm.expectRevert(bytes(Errors.RESERVE_PAUSED));
+    vm.expectRevert(abi.encodeWithSelector(Errors.ReservePaused.selector));
 
     vm.prank(alice);
     contracts.poolProxy.repay(tokenList.wbtc, UINT256_MAX, 2, alice);
   }
 
   function test_reverts_repay_no_debt() public {
-    vm.expectRevert(bytes(Errors.NO_DEBT_OF_SELECTED_TYPE));
+    vm.expectRevert(abi.encodeWithSelector(Errors.NoDebtOfSelectedType.selector));
 
     vm.prank(alice);
     contracts.poolProxy.repay(tokenList.wbtc, UINT256_MAX, 2, alice);
@@ -546,7 +539,7 @@ contract PoolRepayTests is TestnetProcedures {
     contracts.poolProxy.borrow(tokenList.usdx, 100e6, 2, 0, alice);
     vm.stopPrank();
 
-    vm.expectRevert(bytes(Errors.NO_EXPLICIT_AMOUNT_TO_REPAY_ON_BEHALF));
+    vm.expectRevert(abi.encodeWithSelector(Errors.NoExplicitAmountToRepayOnBehalf.selector));
 
     vm.prank(bob);
     contracts.poolProxy.repay(tokenList.usdx, UINT256_MAX, 2, alice);

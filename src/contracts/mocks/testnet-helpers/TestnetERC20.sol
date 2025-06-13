@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import {ECDSA} from 'openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol';
+
 import {Ownable} from '../../dependencies/openzeppelin/contracts/Ownable.sol';
 import {ERC20} from '../../dependencies/openzeppelin/contracts/ERC20.sol';
 import {IERC20WithPermit} from '../../interfaces/IERC20WithPermit.sol';
@@ -64,7 +66,7 @@ contract TestnetERC20 is IERC20WithPermit, ERC20, Ownable {
         keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, value, currentValidNonce, deadline))
       )
     );
-    require(owner == ecrecover(digest, v, r, s), 'INVALID_SIGNATURE');
+    require(owner == ECDSA.recover(digest, v, r, s), 'INVALID_SIGNATURE');
     _nonces[owner] = currentValidNonce + 1;
     _approve(owner, spender, value);
   }

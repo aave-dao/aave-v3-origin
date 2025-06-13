@@ -17,13 +17,15 @@ abstract contract MintableIncentivizedERC20 is IncentivizedERC20 {
    * @param name The name of the token
    * @param symbol The symbol of the token
    * @param decimals The number of decimals of the token
+   * @param rewardsController The address of the rewards controller contract
    */
   constructor(
     IPool pool,
     string memory name,
     string memory symbol,
-    uint8 decimals
-  ) IncentivizedERC20(pool, name, symbol, decimals) {
+    uint8 decimals,
+    address rewardsController
+  ) IncentivizedERC20(pool, name, symbol, decimals, rewardsController) {
     // Intentionally left blank
   }
 
@@ -32,16 +34,15 @@ abstract contract MintableIncentivizedERC20 is IncentivizedERC20 {
    * @param account The address receiving tokens
    * @param amount The amount of tokens to mint
    */
-  function _mint(address account, uint128 amount) internal virtual {
+  function _mint(address account, uint120 amount) internal virtual {
     uint256 oldTotalSupply = _totalSupply;
     _totalSupply = oldTotalSupply + amount;
 
-    uint128 oldAccountBalance = _userState[account].balance;
+    uint120 oldAccountBalance = _userState[account].balance;
     _userState[account].balance = oldAccountBalance + amount;
 
-    IAaveIncentivesController incentivesControllerLocal = _incentivesController;
-    if (address(incentivesControllerLocal) != address(0)) {
-      incentivesControllerLocal.handleAction(account, oldTotalSupply, oldAccountBalance);
+    if (address(REWARDS_CONTROLLER) != address(0)) {
+      REWARDS_CONTROLLER.handleAction(account, oldTotalSupply, oldAccountBalance);
     }
   }
 
@@ -50,17 +51,15 @@ abstract contract MintableIncentivizedERC20 is IncentivizedERC20 {
    * @param account The account whose tokens are burnt
    * @param amount The amount of tokens to burn
    */
-  function _burn(address account, uint128 amount) internal virtual {
+  function _burn(address account, uint120 amount) internal virtual {
     uint256 oldTotalSupply = _totalSupply;
     _totalSupply = oldTotalSupply - amount;
 
-    uint128 oldAccountBalance = _userState[account].balance;
+    uint120 oldAccountBalance = _userState[account].balance;
     _userState[account].balance = oldAccountBalance - amount;
 
-    IAaveIncentivesController incentivesControllerLocal = _incentivesController;
-
-    if (address(incentivesControllerLocal) != address(0)) {
-      incentivesControllerLocal.handleAction(account, oldTotalSupply, oldAccountBalance);
+    if (address(REWARDS_CONTROLLER) != address(0)) {
+      REWARDS_CONTROLLER.handleAction(account, oldTotalSupply, oldAccountBalance);
     }
   }
 }

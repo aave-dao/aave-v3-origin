@@ -55,7 +55,6 @@ struct ReserveConfig {
   uint256 supplyCap;
   uint256 borrowCap;
   uint256 debtCeiling;
-  bool virtualAccActive;
   uint256 virtualBalance;
   uint256 aTokenUnderlyingBalance;
 }
@@ -266,7 +265,6 @@ contract ProtocolV3TestBase is DiffUtils {
         }
       }
 
-      vm.serializeBool(key, 'virtualAccountingActive', config.virtualAccActive);
       vm.serializeString(key, 'virtualBalance', vm.toString(config.virtualBalance));
       vm.serializeString(
         key,
@@ -369,12 +367,7 @@ contract ProtocolV3TestBase is DiffUtils {
 
     localConfig.isFlashloanable = configuration.getFlashLoanEnabled();
 
-    // 3.1 configurations
-    localConfig.virtualAccActive = configuration.getIsVirtualAccActive();
-
-    if (localConfig.virtualAccActive) {
-      localConfig.virtualBalance = pool.getVirtualUnderlyingBalance(reserve);
-    }
+    localConfig.virtualBalance = pool.getVirtualUnderlyingBalance(reserve);
     localConfig.aTokenUnderlyingBalance = IERC20Detailed(reserve).balanceOf(localConfig.aToken);
 
     return localConfig;
@@ -384,34 +377,34 @@ contract ProtocolV3TestBase is DiffUtils {
   function _clone(
     ReserveConfig memory config
   ) internal pure virtual returns (ReserveConfig memory) {
-    return
-      ReserveConfig({
-        symbol: config.symbol,
-        underlying: config.underlying,
-        aToken: config.aToken,
-        variableDebtToken: config.variableDebtToken,
-        decimals: config.decimals,
-        ltv: config.ltv,
-        liquidationThreshold: config.liquidationThreshold,
-        liquidationBonus: config.liquidationBonus,
-        liquidationProtocolFee: config.liquidationProtocolFee,
-        reserveFactor: config.reserveFactor,
-        usageAsCollateralEnabled: config.usageAsCollateralEnabled,
-        borrowingEnabled: config.borrowingEnabled,
-        interestRateStrategy: config.interestRateStrategy,
-        isPaused: config.isPaused,
-        isActive: config.isActive,
-        isFrozen: config.isFrozen,
-        isSiloed: config.isSiloed,
-        isBorrowableInIsolation: config.isBorrowableInIsolation,
-        isFlashloanable: config.isFlashloanable,
-        supplyCap: config.supplyCap,
-        borrowCap: config.borrowCap,
-        debtCeiling: config.debtCeiling,
-        virtualAccActive: config.virtualAccActive,
-        virtualBalance: config.virtualBalance,
-        aTokenUnderlyingBalance: config.aTokenUnderlyingBalance
-      });
+    ReserveConfig memory configCopy;
+
+    configCopy.symbol = config.symbol;
+    configCopy.underlying = config.underlying;
+    configCopy.aToken = config.aToken;
+    configCopy.variableDebtToken = config.variableDebtToken;
+    configCopy.decimals = config.decimals;
+    configCopy.ltv = config.ltv;
+    configCopy.liquidationThreshold = config.liquidationThreshold;
+    configCopy.liquidationBonus = config.liquidationBonus;
+    configCopy.liquidationProtocolFee = config.liquidationProtocolFee;
+    configCopy.reserveFactor = config.reserveFactor;
+    configCopy.usageAsCollateralEnabled = config.usageAsCollateralEnabled;
+    configCopy.borrowingEnabled = config.borrowingEnabled;
+    configCopy.interestRateStrategy = config.interestRateStrategy;
+    configCopy.isPaused = config.isPaused;
+    configCopy.isActive = config.isActive;
+    configCopy.isFrozen = config.isFrozen;
+    configCopy.isSiloed = config.isSiloed;
+    configCopy.isBorrowableInIsolation = config.isBorrowableInIsolation;
+    configCopy.isFlashloanable = config.isFlashloanable;
+    configCopy.supplyCap = config.supplyCap;
+    configCopy.borrowCap = config.borrowCap;
+    configCopy.debtCeiling = config.debtCeiling;
+    configCopy.virtualBalance = config.virtualBalance;
+    configCopy.aTokenUnderlyingBalance = config.aTokenUnderlyingBalance;
+
+    return configCopy;
   }
 
   function _findReserveConfig(
@@ -455,23 +448,26 @@ contract ProtocolV3TestBase is DiffUtils {
       config.underlying == expectedConfig.underlying,
       '_validateReserveConfig() : INVALID_UNDERLYING'
     );
-    require(config.decimals == expectedConfig.decimals, '_validateReserveConfig: INVALID_DECIMALS');
-    require(config.ltv == expectedConfig.ltv, '_validateReserveConfig: INVALID_LTV');
+    require(
+      config.decimals == expectedConfig.decimals,
+      '_validateReserveConfig: InvalidDecimals()'
+    );
+    require(config.ltv == expectedConfig.ltv, '_validateReserveConfig: InvalidLtv()');
     require(
       config.liquidationThreshold == expectedConfig.liquidationThreshold,
-      '_validateReserveConfig: INVALID_LIQ_THRESHOLD'
+      '_validateReserveConfig: InvalidLiquidationThreshold()'
     );
     require(
       config.liquidationBonus == expectedConfig.liquidationBonus,
-      '_validateReserveConfig: INVALID_LIQ_BONUS'
+      '_validateReserveConfig: InvalidLiquidationBonus()'
     );
     require(
       config.liquidationProtocolFee == expectedConfig.liquidationProtocolFee,
-      '_validateReserveConfig: INVALID_LIQUIDATION_PROTOCOL_FEE'
+      '_validateReserveConfig: InvalidLiquidationProtocolFee()'
     );
     require(
       config.reserveFactor == expectedConfig.reserveFactor,
-      '_validateReserveConfig: INVALID_RESERVE_FACTOR'
+      '_validateReserveConfig: InvalidReserveFactor()'
     );
 
     require(
@@ -504,15 +500,15 @@ contract ProtocolV3TestBase is DiffUtils {
     );
     require(
       config.supplyCap == expectedConfig.supplyCap,
-      '_validateReserveConfig: INVALID_SUPPLY_CAP'
+      '_validateReserveConfig: InvalidSupplyCap()'
     );
     require(
       config.borrowCap == expectedConfig.borrowCap,
-      '_validateReserveConfig: INVALID_BORROW_CAP'
+      '_validateReserveConfig: InvalidBorrowCap()'
     );
     require(
       config.debtCeiling == expectedConfig.debtCeiling,
-      '_validateReserveConfig: INVALID_DEBT_CEILING'
+      '_validateReserveConfig: InvalidDebtCeiling()'
     );
     require(
       config.interestRateStrategy == expectedConfig.interestRateStrategy,
@@ -745,7 +741,7 @@ contract ProtocolV3TestBase is DiffUtils {
         keccak256(bytes(expectedCategoryData.label)),
       '_validateEmodeCategory(): INVALID_LABEL'
     );
-    require(cfg.ltv == expectedCategoryData.ltv, '_validateEmodeCategory(): INVALID_LTV');
+    require(cfg.ltv == expectedCategoryData.ltv, '_validateEmodeCategory(): InvalidLtv()');
     require(
       cfg.liquidationThreshold == expectedCategoryData.liquidationThreshold,
       '_validateEmodeCategory(): INVALID_LT'
@@ -770,8 +766,8 @@ contract ProtocolV3TestBase is DiffUtils {
    * @dev forwards time by x blocks
    */
   function _skipBlocks(uint128 blocks) internal {
-    vm.roll(block.number + blocks);
-    vm.warp(block.timestamp + blocks * 12); // assuming a block is around 12seconds
+    vm.roll(vm.getBlockNumber() + blocks);
+    vm.warp(vm.getBlockTimestamp() + blocks * 12); // assuming a block is around 12seconds
   }
 
   function _isInUint256Array(

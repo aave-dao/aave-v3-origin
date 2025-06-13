@@ -40,7 +40,6 @@ interface IUiPoolDataProviderV3 {
     bool isPaused;
     bool isSiloedBorrowing;
     uint128 accruedToTreasury;
-    uint128 unbacked;
     uint128 isolationModeTotalDebt;
     bool flashLoanEnabled;
     //
@@ -50,7 +49,6 @@ interface IUiPoolDataProviderV3 {
     uint256 supplyCap;
     bool borrowableInIsolation;
     // v3.1
-    bool virtualAccActive;
     uint128 virtualUnderlyingBalance;
     // v3.3
     uint128 deficit;

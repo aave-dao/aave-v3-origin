@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+import {SafeCast} from 'openzeppelin-contracts/contracts/utils/math/SafeCast.sol';
 import './RateStrategy.template.sol';
 
 contract RateStrategyBaseTests is RateStrategyBase {
@@ -10,21 +11,22 @@ contract RateStrategyBaseTests is RateStrategyBase {
   //----------------------------------------------------------------------------------------------------
   //                                      INITIALIZATION TESTS
   //----------------------------------------------------------------------------------------------------
-  function test_initialization() public view {
+  function test_initialization() public {
     assertEq(rateStrategy.MAX_OPTIMAL_POINT(), 99_00);
     assertEq(rateStrategy.MIN_OPTIMAL_POINT(), 1_00);
     assertEq(rateStrategy.MAX_BORROW_RATE(), 1000_00);
     assertEq(address(rateStrategy.ADDRESSES_PROVIDER()), address(report.poolAddressesProvider));
 
-    assertEq(rateStrategy.getOptimalUsageRatio(tokenList.wbtc), 0);
-    assertEq(rateStrategy.getVariableRateSlope1(tokenList.wbtc), 0);
-    assertEq(rateStrategy.getVariableRateSlope2(tokenList.wbtc), 0);
-    assertEq(rateStrategy.getBaseVariableBorrowRate(tokenList.wbtc), 0);
-    assertEq(rateStrategy.getMaxVariableBorrowRate(tokenList.wbtc), 0);
+    address newToken = makeAddr('newToken');
+    assertEq(rateStrategy.getOptimalUsageRatio(newToken), 0);
+    assertEq(rateStrategy.getVariableRateSlope1(newToken), 0);
+    assertEq(rateStrategy.getVariableRateSlope2(newToken), 0);
+    assertEq(rateStrategy.getBaseVariableBorrowRate(newToken), 0);
+    assertEq(rateStrategy.getMaxVariableBorrowRate(newToken), 0);
   }
 
   function test_new_DefaultReserveInterestRateStrategy_wrong_provider() public {
-    vm.expectRevert(bytes(Errors.INVALID_ADDRESSES_PROVIDER));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidAddressesProvider.selector));
     rateStrategy = new DefaultReserveInterestRateStrategyV2(address(0));
   }
 
@@ -73,7 +75,9 @@ contract RateStrategyBaseTests is RateStrategyBase {
       abi.encodeWithSelector(rateStrategy.calculateInterestRates.selector),
       abi.encode(UINT256_MAX, 0)
     );
-    vm.expectRevert(bytes("SafeCast: value doesn't fit in 128 bits"));
+    vm.expectRevert(
+      abi.encodeWithSelector(SafeCast.SafeCastOverflowedUintDowncast.selector, 128, UINT256_MAX)
+    );
     vm.prank(alice);
     contracts.poolProxy.supply(tokenList.usdx, 1000e6, alice, 0);
   }
@@ -82,15 +86,17 @@ contract RateStrategyBaseTests is RateStrategyBase {
     vm.prank(carol);
     contracts.poolProxy.supply(tokenList.usdx, 100_000e6, carol, 0);
 
-    vm.startPrank(alice);
-    contracts.poolProxy.supply(tokenList.wbtc, 1e8, alice, 0);
+    _supplyAndEnableAsCollateral(alice, 1e8, tokenList.wbtc);
 
     vm.mockCall(
       address(rateStrategy),
       abi.encodeWithSelector(rateStrategy.calculateInterestRates.selector),
       abi.encode(0, UINT256_MAX)
     );
-    vm.expectRevert(bytes("SafeCast: value doesn't fit in 128 bits"));
+    vm.expectRevert(
+      abi.encodeWithSelector(SafeCast.SafeCastOverflowedUintDowncast.selector, 128, UINT256_MAX)
+    );
+    vm.startPrank(alice);
     contracts.poolProxy.borrow(tokenList.usdx, 10e6, 2, 0, alice);
     vm.stopPrank();
   }
@@ -100,7 +106,7 @@ contract RateStrategyBaseTests is RateStrategyBase {
   ) public {
     _validateSetRateParams(rateDataToSet);
 
-    vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_CONFIGURATOR));
+    vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotPoolConfigurator.selector));
     rateStrategy.setInterestRateParams(tokenList.usdx, abi.encode(rateDataToSet));
   }
 
@@ -141,7 +147,7 @@ contract RateStrategyBaseTests is RateStrategyBase {
 
     vm.prank(report.poolConfiguratorProxy);
     vm.expectEmit(true, false, false, true);
-    emit RateDataUpdate(
+    emit IDefaultInterestRateStrategyV2.RateDataUpdate(
       tokenList.usdx,
       uint256(rateDataToSet.optimalUsageRatio),
       uint256(rateDataToSet.baseVariableBorrowRate),
@@ -181,11 +187,11 @@ contract RateStrategyBaseTests is RateStrategyBase {
     IDefaultInterestRateStrategyV2.InterestRateData memory rateDataToSet
   ) public {
     vm.prank(report.poolConfiguratorProxy);
-    vm.expectRevert(bytes(Errors.ZERO_ADDRESS_NOT_VALID));
+    vm.expectRevert(abi.encodeWithSelector(Errors.ZeroAddressNotValid.selector));
     rateStrategy.setInterestRateParams(address(0), abi.encode(rateDataToSet));
     // Override
     vm.prank(report.poolConfiguratorProxy);
-    vm.expectRevert(bytes(Errors.ZERO_ADDRESS_NOT_VALID));
+    vm.expectRevert(abi.encodeWithSelector(Errors.ZeroAddressNotValid.selector));
     rateStrategy.setInterestRateParams(address(0), rateDataToSet);
   }
 
@@ -195,12 +201,12 @@ contract RateStrategyBaseTests is RateStrategyBase {
     vm.assume(rateDataToSet.optimalUsageRatio > rateStrategy.MAX_OPTIMAL_POINT());
 
     vm.prank(report.poolConfiguratorProxy);
-    vm.expectRevert(bytes(Errors.INVALID_OPTIMAL_USAGE_RATIO));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidOptimalUsageRatio.selector));
     rateStrategy.setInterestRateParams(tokenList.usdx, abi.encode(rateDataToSet));
 
     // Override
     vm.prank(report.poolConfiguratorProxy);
-    vm.expectRevert(bytes(Errors.INVALID_OPTIMAL_USAGE_RATIO));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidOptimalUsageRatio.selector));
     rateStrategy.setInterestRateParams(tokenList.usdx, rateDataToSet);
   }
 
@@ -210,12 +216,12 @@ contract RateStrategyBaseTests is RateStrategyBase {
     vm.assume(rateDataToSet.optimalUsageRatio < rateStrategy.MIN_OPTIMAL_POINT());
 
     vm.prank(report.poolConfiguratorProxy);
-    vm.expectRevert(bytes(Errors.INVALID_OPTIMAL_USAGE_RATIO));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidOptimalUsageRatio.selector));
     rateStrategy.setInterestRateParams(tokenList.usdx, abi.encode(rateDataToSet));
 
     // Override
     vm.prank(report.poolConfiguratorProxy);
-    vm.expectRevert(bytes(Errors.INVALID_OPTIMAL_USAGE_RATIO));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidOptimalUsageRatio.selector));
     rateStrategy.setInterestRateParams(tokenList.usdx, rateDataToSet);
   }
 
@@ -236,12 +242,12 @@ contract RateStrategyBaseTests is RateStrategyBase {
     );
 
     vm.prank(report.poolConfiguratorProxy);
-    vm.expectRevert(bytes(Errors.INVALID_MAX_RATE));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidMaxRate.selector));
     rateStrategy.setInterestRateParams(tokenList.usdx, abi.encode(rateDataToSet));
 
     // Override
     vm.prank(report.poolConfiguratorProxy);
-    vm.expectRevert(bytes(Errors.INVALID_MAX_RATE));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidMaxRate.selector));
     rateStrategy.setInterestRateParams(tokenList.usdx, rateDataToSet);
   }
 
@@ -267,12 +273,12 @@ contract RateStrategyBaseTests is RateStrategyBase {
       });
 
     vm.prank(report.poolConfiguratorProxy);
-    vm.expectRevert(bytes(Errors.SLOPE_2_MUST_BE_GTE_SLOPE_1));
+    vm.expectRevert(abi.encodeWithSelector(Errors.Slope2MustBeGteSlope1.selector));
     rateStrategy.setInterestRateParams(tokenList.usdx, abi.encode(rateData));
 
     // Override
     vm.prank(report.poolConfiguratorProxy);
-    vm.expectRevert(bytes(Errors.SLOPE_2_MUST_BE_GTE_SLOPE_1));
+    vm.expectRevert(abi.encodeWithSelector(Errors.Slope2MustBeGteSlope1.selector));
     rateStrategy.setInterestRateParams(tokenList.usdx, abi.encode(rateData));
   }
 }

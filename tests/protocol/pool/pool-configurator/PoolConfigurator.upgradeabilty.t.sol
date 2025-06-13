@@ -6,8 +6,8 @@ import 'forge-std/Test.sol';
 import {AToken} from '../../../../src/contracts/protocol/tokenization/AToken.sol';
 import {VariableDebtToken} from '../../../../src/contracts/protocol/tokenization/VariableDebtToken.sol';
 import {Errors} from '../../../../src/contracts/protocol/libraries/helpers/Errors.sol';
-import {ConfiguratorInputTypes, IPool, IPoolAddressesProvider} from '../../../../src/contracts/protocol/pool/PoolConfigurator.sol';
-import {MockATokenRepayment} from '../../../../src/contracts/mocks/tokens/MockATokenRepayment.sol';
+import {ConfiguratorInputTypes, IPool, IPoolAddressesProvider, IPoolConfigurator} from '../../../../src/contracts/protocol/pool/PoolConfigurator.sol';
+import {MockAToken} from '../../../../src/contracts/mocks/tokens/MockAToken.sol';
 import {MockVariableDebtToken} from '../../../../src/contracts/mocks/tokens/MockDebtTokens.sol';
 import {DataTypes} from '../../../../src/contracts/protocol/libraries/types/DataTypes.sol';
 import {ReserveLogic} from '../../../../src/contracts/protocol/libraries/logic/ReserveLogic.sol';
@@ -24,26 +24,6 @@ contract PoolConfiguratorUpgradeabilityTests is TestnetProcedures {
   DataTypes.ReserveData internal reserveData;
   DataTypes.ReserveData internal updatedReserveData;
 
-  event ReserveInterestRateStrategyChanged(
-    address indexed asset,
-    address oldStrategy,
-    address newStrategy
-  );
-
-  event ReserveInterestRateDataChanged(address indexed asset, address indexed strategy, bytes data);
-
-  event ATokenUpgraded(
-    address indexed asset,
-    address indexed proxy,
-    address indexed implementation
-  );
-
-  event VariableDebtTokenUpgraded(
-    address indexed asset,
-    address indexed proxy,
-    address indexed implementation
-  );
-
   function setUp() public {
     initTestEnvironment();
   }
@@ -52,43 +32,16 @@ contract PoolConfiguratorUpgradeabilityTests is TestnetProcedures {
     assertNotEq(contracts.poolConfiguratorProxy.getConfiguratorLogic(), address(0));
   }
 
-  function test_setReserveInterestRateStrategyAddress() public {
-    address currentInterestRateStrategy = contracts
-      .protocolDataProvider
-      .getInterestRateStrategyAddress(tokenList.usdx);
-    address updatedInterestsRateStrategy = _deployInterestRateStrategy();
-
-    vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit ReserveInterestRateStrategyChanged(
-      tokenList.usdx,
-      currentInterestRateStrategy,
-      updatedInterestsRateStrategy
-    );
-
-    // Perform change
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setReserveInterestRateStrategyAddress(
-      tokenList.usdx,
-      updatedInterestsRateStrategy,
-      _getDefaultInterestRatesStrategyData()
-    );
-
-    address newInterestRateStrategy = contracts.protocolDataProvider.getInterestRateStrategyAddress(
-      tokenList.usdx
-    );
-
-    assertEq(newInterestRateStrategy, updatedInterestsRateStrategy);
-  }
-
   function test_setReserveInterestRateData() public {
     address currentInterestRateStrategy = contracts
       .protocolDataProvider
       .getInterestRateStrategyAddress(tokenList.usdx);
+    assertEq(currentInterestRateStrategy, report.defaultInterestRateStrategy);
 
     bytes memory newInterestRateData = _getDefaultInterestRatesStrategyData();
 
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit ReserveInterestRateDataChanged(
+    emit IPoolConfigurator.ReserveInterestRateDataChanged(
       tokenList.usdx,
       currentInterestRateStrategy,
       newInterestRateData
@@ -103,53 +56,13 @@ contract PoolConfiguratorUpgradeabilityTests is TestnetProcedures {
     address newInterestRateStrategy = contracts.protocolDataProvider.getInterestRateStrategyAddress(
       tokenList.usdx
     );
+    address newInterestRateStrategyFromGetReserveData = contracts
+      .poolProxy
+      .getReserveData(tokenList.usdx)
+      .interestRateStrategyAddress;
+
     assertEq(currentInterestRateStrategy, newInterestRateStrategy);
-  }
-
-  function test_interestRateStrategy_update() public {
-    vm.prank(carol);
-    contracts.poolProxy.supply(tokenList.usdx, 100_000e6, carol, 0);
-
-    uint256 amount = 100_000e6;
-    uint256 borrowAmount = 30_000e6;
-
-    vm.startPrank(alice);
-
-    contracts.poolProxy.supply(tokenList.usdx, amount, alice, 0);
-
-    contracts.poolProxy.borrow(tokenList.usdx, borrowAmount, 2, 0, alice);
-
-    vm.stopPrank();
-
-    reserveData = _getFullReserveData(tokenList.usdx);
-    DataTypes.ReserveCache memory cache = reserveData.cache();
-
-    assertEq(cache.currVariableBorrowIndex, 1e27);
-    assertEq(cache.currVariableBorrowRate, 13333333333333333333333333);
-
-    vm.warp(block.timestamp + 365 days);
-
-    // check that index is not changed after 1 year
-    updatedReserveData = _getFullReserveData(tokenList.usdx);
-    DataTypes.ReserveCache memory cacheAfterYear = updatedReserveData.cache();
-
-    assertEq(cacheAfterYear.currVariableBorrowIndex, 1e27);
-
-    address updatedInterestsRateStrategy = _deployInterestRateStrategy();
-
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setReserveInterestRateStrategyAddress(
-      tokenList.usdx,
-      updatedInterestsRateStrategy,
-      _getDefaultInterestRatesStrategyData()
-    );
-
-    // index and borrow rate have changed after IRS update
-    updatedReserveData = _getFullReserveData(tokenList.usdx);
-    DataTypes.ReserveCache memory updatedCache = updatedReserveData.cache();
-
-    assertGt(updatedCache.currVariableBorrowIndex, 1e27);
-    assertEq(updatedCache.currVariableBorrowRate, 107585394738663515131637198);
+    assertEq(currentInterestRateStrategy, newInterestRateStrategyFromGetReserveData);
   }
 
   // TODO: deduplicate, reuse in vTokenUpdate too
@@ -157,16 +70,14 @@ contract PoolConfiguratorUpgradeabilityTests is TestnetProcedures {
     ConfiguratorInputTypes.UpdateATokenInput memory input = ConfiguratorInputTypes
       .UpdateATokenInput({
         asset: tokenList.usdx,
-        treasury: report.treasury,
-        incentivesController: address(2),
         name: 'New USDX Test AToken',
         symbol: 'aTestUSDX',
-        implementation: address(new MockATokenRepayment(IPool(report.poolProxy))),
+        implementation: address(
+          new MockAToken(IPool(report.poolProxy), report.rewardsControllerProxy, report.treasury)
+        ),
         params: bytes('')
       });
-    (address aTokenProxy, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(
-      tokenList.usdx
-    );
+    address aTokenProxy = contracts.poolProxy.getReserveAToken(tokenList.usdx);
 
     address previousImplementation = SlotParser.loadAddressFromSlot(
       aTokenProxy,
@@ -177,7 +88,7 @@ contract PoolConfiguratorUpgradeabilityTests is TestnetProcedures {
     vm.startPrank(poolAdmin);
 
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit ATokenUpgraded(tokenList.usdx, aTokenProxy, input.implementation);
+    emit IPoolConfigurator.ATokenUpgraded(tokenList.usdx, aTokenProxy, input.implementation);
 
     contracts.poolConfiguratorProxy.updateAToken(input);
     vm.stopPrank();
@@ -191,21 +102,20 @@ contract PoolConfiguratorUpgradeabilityTests is TestnetProcedures {
     assertEq(upgradedImplementation, input.implementation);
     assertEq(AToken(aTokenProxy).name(), input.name);
     assertEq(AToken(aTokenProxy).symbol(), input.symbol);
-    assertEq(address(AToken(aTokenProxy).getIncentivesController()), input.incentivesController);
-    assertEq(AToken(aTokenProxy).RESERVE_TREASURY_ADDRESS(), input.treasury);
+    assertEq(address(AToken(aTokenProxy).getIncentivesController()), report.rewardsControllerProxy);
+    assertEq(AToken(aTokenProxy).RESERVE_TREASURY_ADDRESS(), report.treasury);
   }
 
   function test_updateVariableDebtToken() public {
-    (, , address variableDebtProxy) = contracts.protocolDataProvider.getReserveTokensAddresses(
-      tokenList.usdx
-    );
+    address variableDebtProxy = contracts.poolProxy.getReserveVariableDebtToken(tokenList.usdx);
     ConfiguratorInputTypes.UpdateDebtTokenInput memory input = ConfiguratorInputTypes
       .UpdateDebtTokenInput({
         asset: tokenList.usdx,
-        incentivesController: report.rewardsControllerProxy,
         name: 'New Variable Debt Test USDX',
         symbol: 'newTestVarDebtUSDX',
-        implementation: address(new MockVariableDebtToken(IPool(report.poolProxy))),
+        implementation: address(
+          new MockVariableDebtToken(IPool(report.poolProxy), report.rewardsControllerProxy)
+        ),
         params: bytes('')
       });
 
@@ -218,7 +128,11 @@ contract PoolConfiguratorUpgradeabilityTests is TestnetProcedures {
     vm.startPrank(poolAdmin);
 
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit VariableDebtTokenUpgraded(tokenList.usdx, variableDebtProxy, input.implementation);
+    emit IPoolConfigurator.VariableDebtTokenUpgraded(
+      tokenList.usdx,
+      variableDebtProxy,
+      input.implementation
+    );
 
     contracts.poolConfiguratorProxy.updateVariableDebtToken(input);
     vm.stopPrank();
@@ -234,7 +148,7 @@ contract PoolConfiguratorUpgradeabilityTests is TestnetProcedures {
     assertEq(VariableDebtToken(variableDebtProxy).symbol(), input.symbol);
     assertEq(
       address(VariableDebtToken(variableDebtProxy).getIncentivesController()),
-      input.incentivesController
+      report.rewardsControllerProxy
     );
   }
 
@@ -252,9 +166,9 @@ contract PoolConfiguratorUpgradeabilityTests is TestnetProcedures {
     tempReserveData.id = reserveDataLegacy.id;
     tempReserveData.aTokenAddress = reserveDataLegacy.aTokenAddress;
     tempReserveData.variableDebtTokenAddress = reserveDataLegacy.variableDebtTokenAddress;
-    tempReserveData.interestRateStrategyAddress = reserveDataLegacy.interestRateStrategyAddress;
+    tempReserveData.__deprecatedInterestRateStrategyAddress = reserveDataLegacy
+      .interestRateStrategyAddress;
     tempReserveData.accruedToTreasury = reserveDataLegacy.accruedToTreasury;
-    tempReserveData.unbacked = reserveDataLegacy.unbacked;
     tempReserveData.isolationModeTotalDebt = reserveDataLegacy.isolationModeTotalDebt;
     tempReserveData.virtualUnderlyingBalance = uint128(
       contracts.poolProxy.getVirtualUnderlyingBalance(asset)

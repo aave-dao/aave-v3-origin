@@ -6,18 +6,10 @@ import 'forge-std/Test.sol';
 import {Errors} from '../../../../src/contracts/protocol/libraries/helpers/Errors.sol';
 import {IERC20} from '../../../../src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
 import {DataTypes} from '../../../../src/contracts/protocol/libraries/types/DataTypes.sol';
+import {IPoolConfigurator} from '../../../../src/contracts/interfaces/IPoolConfigurator.sol';
 import {TestnetProcedures} from '../../../utils/TestnetProcedures.sol';
 
 contract PoolConfiguratorPendingLtvTests is TestnetProcedures {
-  event PendingLtvChanged(address indexed asset, uint256 ltv);
-
-  event CollateralConfigurationChanged(
-    address indexed asset,
-    uint256 ltv,
-    uint256 liquidationThreshold,
-    uint256 liquidationBonus
-  );
-
   function setUp() public {
     initTestEnvironment();
   }
@@ -109,10 +101,15 @@ contract PoolConfiguratorPendingLtvTests is TestnetProcedures {
 
     // expect events to be emitted
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit PendingLtvChanged(tokenList.usdx, ltvToSet);
+    emit IPoolConfigurator.PendingLtvChanged(tokenList.usdx, ltvToSet);
 
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit CollateralConfigurationChanged(tokenList.usdx, 0, liquidationThreshold, liquidationBonus);
+    emit IPoolConfigurator.CollateralConfigurationChanged(
+      tokenList.usdx,
+      0,
+      liquidationThreshold,
+      liquidationBonus
+    );
 
     // setLtv
     contracts.poolConfiguratorProxy.configureReserveAsCollateral(

@@ -30,7 +30,6 @@ contract AaveV3SetupBatch is MarketReportStorage, AaveV3SetupProcedure, Ownable 
     MarketConfig memory config,
     address poolImplementation,
     address poolConfiguratorImplementation,
-    address protocolDataProvider,
     address aaveOracle,
     address rewardsControllerImplementation,
     address priceOracleSentinel
@@ -41,7 +40,6 @@ contract AaveV3SetupBatch is MarketReportStorage, AaveV3SetupProcedure, Ownable 
       _initialReport,
       poolImplementation,
       poolConfiguratorImplementation,
-      protocolDataProvider,
       aaveOracle,
       rewardsControllerImplementation,
       priceOracleSentinel
@@ -52,6 +50,14 @@ contract AaveV3SetupBatch is MarketReportStorage, AaveV3SetupProcedure, Ownable 
 
   function setMarketReport(MarketReport memory marketReport) external onlyOwner {
     _marketReport = marketReport;
+  }
+
+  function setProtocolDataProvider(address protocolDataProvider) external onlyOwner {
+    _setProtocolDataProvider(_initialReport, protocolDataProvider);
+  }
+
+  function transferMarketOwnership(Roles memory roles) external onlyOwner {
+    _transferMarketOwnership(roles, _initialReport);
   }
 
   function getInitialReport() external view returns (InitialReport memory) {

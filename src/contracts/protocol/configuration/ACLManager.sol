@@ -29,7 +29,7 @@ contract ACLManager is AccessControl, IACLManager {
   constructor(IPoolAddressesProvider provider) {
     ADDRESSES_PROVIDER = provider;
     address aclAdmin = provider.getACLAdmin();
-    require(aclAdmin != address(0), Errors.ACL_ADMIN_CANNOT_BE_ZERO);
+    require(aclAdmin != address(0), Errors.AclAdminCannotBeZero());
     _setupRole(DEFAULT_ADMIN_ROLE, aclAdmin);
   }
 

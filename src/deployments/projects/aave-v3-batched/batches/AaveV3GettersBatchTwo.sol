@@ -6,8 +6,20 @@ import {AaveV3GettersProcedureTwo} from '../../../contracts/procedures/AaveV3Get
 contract AaveV3GettersBatchTwo is AaveV3GettersProcedureTwo {
   GettersReportBatchTwo internal _gettersReport;
 
-  constructor(address poolProxy, address poolAdmin, address wrappedNativeToken, bool l2Flag) {
-    _gettersReport = _deployAaveV3GettersBatchTwo(poolProxy, poolAdmin, wrappedNativeToken, l2Flag);
+  constructor(
+    address poolProxy,
+    address poolAdmin,
+    address wrappedNativeToken,
+    address poolAddressesProvider,
+    bool l2Flag
+  ) {
+    _gettersReport = _deployAaveV3GettersBatchTwo(
+      poolProxy,
+      poolAdmin,
+      wrappedNativeToken,
+      poolAddressesProvider,
+      l2Flag
+    );
   }
 
   function getGettersReportTwo() external view returns (GettersReportBatchTwo memory) {

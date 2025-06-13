@@ -26,14 +26,6 @@ contract WalletBalanceProvider {
   address constant MOCK_ETH_ADDRESS = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
   /**
-    @dev Fallback function, don't accept any ETH
-    **/
-  receive() external payable {
-    //only contracts can send ETH to the core
-    require(msg.sender.isContract(), '22');
-  }
-
-  /**
     @dev Check the token balance of a wallet in a token contract
 
     Returns the balance of the token for user. Avoids possible errors:

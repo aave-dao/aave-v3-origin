@@ -25,7 +25,7 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
         caller != address(contracts.poolAddressesProvider)
     );
 
-    vm.expectRevert(bytes(Errors.CALLER_NOT_ASSET_LISTING_OR_POOL_ADMIN));
+    vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotAssetListingOrPoolAdmin.selector));
 
     vm.prank(caller);
     contracts.poolConfiguratorProxy.initReserves(input);
@@ -37,7 +37,7 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
         caller != address(contracts.poolAddressesProvider)
     );
 
-    vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
+    vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotPoolAdmin.selector));
 
     vm.prank(caller);
     contracts.poolConfiguratorProxy.dropReserve(tokenList.usdx);
@@ -50,7 +50,7 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
         caller != address(contracts.poolAddressesProvider)
     );
 
-    vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
+    vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotPoolAdmin.selector));
 
     vm.prank(caller);
     contracts.poolConfiguratorProxy.updateAToken(input);
@@ -63,7 +63,7 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
         caller != address(contracts.poolAddressesProvider)
     );
 
-    vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
+    vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotPoolAdmin.selector));
 
     vm.prank(caller);
     contracts.poolConfiguratorProxy.updateVariableDebtToken(input);
@@ -75,7 +75,7 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
         caller != address(contracts.poolAddressesProvider)
     );
 
-    vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
+    vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotPoolAdmin.selector));
 
     vm.prank(caller);
     contracts.poolConfiguratorProxy.setReserveActive(tokenList.usdx, true);
@@ -87,22 +87,10 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
         caller != address(contracts.poolAddressesProvider)
     );
 
-    vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
+    vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotPoolAdmin.selector));
 
     vm.prank(caller);
-    contracts.poolConfiguratorProxy.updateFlashloanPremiumTotal(1);
-  }
-
-  function test_reverts_notAdmin_updateFlashLoanPremiumProtocol(address caller) public {
-    vm.assume(
-      !contracts.aclManager.isPoolAdmin(caller) &&
-        caller != address(contracts.poolAddressesProvider)
-    );
-
-    vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
-
-    vm.prank(caller);
-    contracts.poolConfiguratorProxy.updateFlashloanPremiumToProtocol(1);
+    contracts.poolConfiguratorProxy.updateFlashloanPremium(1);
   }
 
   function test_reverts_notRiskAdmin_setReserveBorrowing(address caller) public {
@@ -112,7 +100,7 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
         caller != address(contracts.poolAddressesProvider)
     );
 
-    vm.expectRevert(bytes(Errors.CALLER_NOT_RISK_OR_POOL_ADMIN));
+    vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotRiskOrPoolAdmin.selector));
 
     vm.prank(caller);
     contracts.poolConfiguratorProxy.setReserveBorrowing(address(0), true);
@@ -125,7 +113,7 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
         caller != address(contracts.poolAddressesProvider)
     );
 
-    vm.expectRevert(bytes(Errors.CALLER_NOT_RISK_OR_POOL_ADMIN));
+    vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotRiskOrPoolAdmin.selector));
 
     vm.prank(caller);
     contracts.poolConfiguratorProxy.configureReserveAsCollateral(address(0), 1, 1, 1);
@@ -139,7 +127,7 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
         caller != address(contracts.poolAddressesProvider)
     );
 
-    vm.expectRevert(bytes(Errors.CALLER_NOT_RISK_OR_POOL_OR_EMERGENCY_ADMIN));
+    vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotRiskOrPoolOrEmergencyAdmin.selector));
 
     vm.prank(caller);
     contracts.poolConfiguratorProxy.setReserveFreeze(address(0), true);
@@ -152,7 +140,7 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
         caller != address(contracts.poolAddressesProvider)
     );
 
-    vm.expectRevert(bytes(Errors.CALLER_NOT_RISK_OR_POOL_ADMIN));
+    vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotRiskOrPoolAdmin.selector));
 
     vm.prank(caller);
     contracts.poolConfiguratorProxy.setReserveFactor(address(0), 10);
@@ -165,7 +153,7 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
         caller != address(contracts.poolAddressesProvider)
     );
 
-    vm.expectRevert(bytes(Errors.CALLER_NOT_RISK_OR_POOL_ADMIN));
+    vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotRiskOrPoolAdmin.selector));
 
     vm.prank(caller);
     contracts.poolConfiguratorProxy.setBorrowCap(address(0), 10);
@@ -178,27 +166,10 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
         caller != address(contracts.poolAddressesProvider)
     );
 
-    vm.expectRevert(bytes(Errors.CALLER_NOT_RISK_OR_POOL_ADMIN));
+    vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotRiskOrPoolAdmin.selector));
 
     vm.prank(caller);
     contracts.poolConfiguratorProxy.setSupplyCap(address(0), 10);
-  }
-
-  function test_reverts_notRiskAdmin_setReserveInterestRateStrategyAddress(address caller) public {
-    vm.assume(
-      !contracts.aclManager.isPoolAdmin(caller) &&
-        !contracts.aclManager.isRiskAdmin(caller) &&
-        caller != address(contracts.poolAddressesProvider)
-    );
-
-    vm.expectRevert(bytes(Errors.CALLER_NOT_RISK_OR_POOL_ADMIN));
-
-    vm.prank(caller);
-    contracts.poolConfiguratorProxy.setReserveInterestRateStrategyAddress(
-      address(0),
-      address(0),
-      bytes('0')
-    );
   }
 
   function test_reverts_notRiskAdmin_setReserveInterestRateData(
@@ -211,7 +182,7 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
         caller != address(contracts.poolAddressesProvider)
     );
 
-    vm.expectRevert(bytes(Errors.CALLER_NOT_RISK_OR_POOL_ADMIN));
+    vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotRiskOrPoolAdmin.selector));
 
     vm.prank(caller);
     contracts.poolConfiguratorProxy.setReserveInterestRateData(asset, bytes('0'));
@@ -223,7 +194,7 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
         !contracts.aclManager.isRiskAdmin(caller) &&
         caller != address(contracts.poolAddressesProvider)
     );
-    vm.expectRevert(bytes(Errors.CALLER_NOT_RISK_OR_POOL_ADMIN));
+    vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotRiskOrPoolAdmin.selector));
 
     vm.prank(caller);
     contracts.poolConfiguratorProxy.setEModeCategory(1, 1, 1, 1, '');
@@ -236,7 +207,7 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
         caller != address(contracts.poolAddressesProvider)
     );
 
-    vm.expectRevert(bytes(Errors.CALLER_NOT_RISK_OR_POOL_ADMIN));
+    vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotRiskOrPoolAdmin.selector));
 
     vm.prank(caller);
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(address(0), 1, true);
@@ -249,7 +220,7 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
         caller != address(contracts.poolAddressesProvider)
     );
 
-    vm.expectRevert(bytes(Errors.CALLER_NOT_RISK_OR_POOL_ADMIN));
+    vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotRiskOrPoolAdmin.selector));
 
     vm.prank(caller);
     contracts.poolConfiguratorProxy.setDebtCeiling(address(0), 1);
@@ -268,7 +239,7 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
     );
 
     vm.prank(caller);
-    vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_OR_EMERGENCY_ADMIN));
+    vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotPoolOrEmergencyAdmin.selector));
     contracts.poolConfiguratorProxy.setReservePause(asset, paused, gracePeriod);
   }
 
@@ -285,7 +256,7 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
     );
 
     vm.prank(caller);
-    vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_OR_EMERGENCY_ADMIN));
+    vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotPoolOrEmergencyAdmin.selector));
     contracts.poolConfiguratorProxy.setReservePause(asset, paused, gracePeriod);
   }
 
@@ -301,7 +272,7 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
     );
 
     vm.prank(caller);
-    vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_OR_EMERGENCY_ADMIN));
+    vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotPoolOrEmergencyAdmin.selector));
     contracts.poolConfiguratorProxy.setReservePause(asset, paused);
   }
 
@@ -317,7 +288,7 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
 
     vm.prank(caller);
 
-    vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_OR_EMERGENCY_ADMIN));
+    vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotPoolOrEmergencyAdmin.selector));
     contracts.poolConfiguratorProxy.disableLiquidationGracePeriod(asset);
   }
 
@@ -333,11 +304,11 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
     );
 
     vm.prank(caller);
-    vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_OR_EMERGENCY_ADMIN));
+    vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotPoolOrEmergencyAdmin.selector));
     contracts.poolConfiguratorProxy.setPoolPause(paused, gracePeriod);
 
     vm.prank(caller);
-    vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_OR_EMERGENCY_ADMIN));
+    vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotPoolOrEmergencyAdmin.selector));
     contracts.poolConfiguratorProxy.setPoolPause(paused);
   }
 
@@ -349,7 +320,7 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
     );
 
     vm.prank(caller);
-    vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_OR_EMERGENCY_ADMIN));
+    vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotPoolOrEmergencyAdmin.selector));
     contracts.poolConfiguratorProxy.setPoolPause(paused);
   }
 }

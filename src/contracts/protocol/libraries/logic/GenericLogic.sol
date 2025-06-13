@@ -40,6 +40,7 @@ library GenericLogic {
     uint256 avgLiquidationThreshold;
     uint256 eModeLtv;
     uint256 eModeLiqThreshold;
+    uint128 eModeCollateralBitmap;
     address currentReserveAddress;
     bool hasZeroLtvCollateral;
     bool isInEModeCategory;
@@ -75,81 +76,70 @@ library GenericLogic {
     if (params.userEModeCategory != 0) {
       vars.eModeLtv = eModeCategories[params.userEModeCategory].ltv;
       vars.eModeLiqThreshold = eModeCategories[params.userEModeCategory].liquidationThreshold;
+      vars.eModeCollateralBitmap = eModeCategories[params.userEModeCategory].collateralBitmap;
     }
 
-    while (vars.i < params.reservesCount) {
-      if (!params.userConfig.isUsingAsCollateralOrBorrowing(vars.i)) {
-        unchecked {
-          ++vars.i;
-        }
-        continue;
-      }
+    uint256 userConfigCache = params.userConfig.data;
+    bool isBorrowed = false;
+    bool isEnabledAsCollateral = false;
 
-      vars.currentReserveAddress = reservesList[vars.i];
+    while (userConfigCache != 0) {
+      (userConfigCache, isBorrowed, isEnabledAsCollateral) = UserConfiguration.getNextFlags(
+        userConfigCache
+      );
+      if (isEnabledAsCollateral || isBorrowed) {
+        vars.currentReserveAddress = reservesList[vars.i];
 
-      if (vars.currentReserveAddress == address(0)) {
-        unchecked {
-          ++vars.i;
-        }
-        continue;
-      }
+        if (vars.currentReserveAddress != address(0)) {
+          DataTypes.ReserveData storage currentReserve = reservesData[vars.currentReserveAddress];
 
-      DataTypes.ReserveData storage currentReserve = reservesData[vars.currentReserveAddress];
+          (vars.ltv, vars.liquidationThreshold, , vars.decimals, ) = currentReserve
+            .configuration
+            .getParams();
 
-      (vars.ltv, vars.liquidationThreshold, , vars.decimals, ) = currentReserve
-        .configuration
-        .getParams();
+          unchecked {
+            vars.assetUnit = 10 ** vars.decimals;
+          }
 
-      unchecked {
-        vars.assetUnit = 10 ** vars.decimals;
-      }
-
-      vars.assetPrice = IPriceOracleGetter(params.oracle).getAssetPrice(vars.currentReserveAddress);
-
-      if (vars.liquidationThreshold != 0 && params.userConfig.isUsingAsCollateral(vars.i)) {
-        vars.userBalanceInBaseCurrency = _getUserBalanceInBaseCurrency(
-          params.user,
-          currentReserve,
-          vars.assetPrice,
-          vars.assetUnit
-        );
-
-        vars.totalCollateralInBaseCurrency += vars.userBalanceInBaseCurrency;
-
-        vars.isInEModeCategory =
-          params.userEModeCategory != 0 &&
-          EModeConfiguration.isReserveEnabledOnBitmap(
-            eModeCategories[params.userEModeCategory].collateralBitmap,
-            vars.i
+          vars.assetPrice = IPriceOracleGetter(params.oracle).getAssetPrice(
+            vars.currentReserveAddress
           );
 
-        if (vars.ltv != 0) {
-          vars.avgLtv +=
-            vars.userBalanceInBaseCurrency *
-            (vars.isInEModeCategory ? vars.eModeLtv : vars.ltv);
-        } else {
-          vars.hasZeroLtvCollateral = true;
-        }
+          if (vars.liquidationThreshold != 0 && isEnabledAsCollateral) {
+            vars.userBalanceInBaseCurrency = _getUserBalanceInBaseCurrency(
+              params.user,
+              currentReserve,
+              vars.assetPrice,
+              vars.assetUnit
+            );
 
-        vars.avgLiquidationThreshold +=
-          vars.userBalanceInBaseCurrency *
-          (vars.isInEModeCategory ? vars.eModeLiqThreshold : vars.liquidationThreshold);
-      }
+            vars.totalCollateralInBaseCurrency += vars.userBalanceInBaseCurrency;
 
-      if (params.userConfig.isBorrowing(vars.i)) {
-        if (currentReserve.configuration.getIsVirtualAccActive()) {
-          vars.totalDebtInBaseCurrency += _getUserDebtInBaseCurrency(
-            params.user,
-            currentReserve,
-            vars.assetPrice,
-            vars.assetUnit
-          );
-        } else {
-          // custom case for GHO, which applies the GHO discount on balanceOf
-          vars.totalDebtInBaseCurrency +=
-            (IERC20(currentReserve.variableDebtTokenAddress).balanceOf(params.user) *
-              vars.assetPrice) /
-            vars.assetUnit;
+            vars.isInEModeCategory =
+              params.userEModeCategory != 0 &&
+              EModeConfiguration.isReserveEnabledOnBitmap(vars.eModeCollateralBitmap, vars.i);
+
+            if (vars.ltv != 0) {
+              vars.avgLtv +=
+                vars.userBalanceInBaseCurrency *
+                (vars.isInEModeCategory ? vars.eModeLtv : vars.ltv);
+            } else {
+              vars.hasZeroLtvCollateral = true;
+            }
+
+            vars.avgLiquidationThreshold +=
+              vars.userBalanceInBaseCurrency *
+              (vars.isInEModeCategory ? vars.eModeLiqThreshold : vars.liquidationThreshold);
+          }
+
+          if (isBorrowed) {
+            vars.totalDebtInBaseCurrency += _getUserDebtInBaseCurrency(
+              params.user,
+              currentReserve,
+              vars.assetPrice,
+              vars.assetUnit
+            );
+          }
         }
       }
 

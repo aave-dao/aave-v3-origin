@@ -45,6 +45,8 @@ contract LiquidationHandler is BaseHandler {
 
     address user = _getRandomActor(i);
     _setReceiverActor(user);
+    // users cannot liquidate themselfes
+    require(user != address(actor));
 
     // Set the storage helper variable to the collateral asset
     targetAsset = _getRandomBaseAsset(j);
@@ -126,29 +128,21 @@ contract LiquidationHandler is BaseHandler {
         uint256 collateralAssetUnit = 10 ** IERC20Detailed(_getRandomBaseAsset(k)).decimals();
         uint256 debtAssetUnit = 10 ** IERC20Detailed(_getRandomBaseAsset(j)).decimals();
 
-        // to prevent accumulation of dust on the protocol, it is enforced that you either
-        // 1. liquidate all debt
-        // 2. liquidate all collateral
-        // 3. leave more than MIN_LEFTOVER_BASE of collateral & debt
-        if (address(actor) != user) {
-          assertTrue(
-            (userDebtBalance == 0 || userCollateralBalance == 0) ||
-              ((userDebtBalance * helper_debtAssetPrice) / debtAssetUnit > MIN_LEFTOVER_BASE &&
-                (userCollateralBalance * helper_collateralAssetPrice) / collateralAssetUnit >
-                MIN_LEFTOVER_BASE),
-            LIQUIDATION_HSPOST_H
-          );
-        }
+        assertTrue(
+          (userDebtBalance == 0 || userCollateralBalance == 0) ||
+            ((userDebtBalance * helper_debtAssetPrice) / debtAssetUnit > MIN_LEFTOVER_BASE &&
+              (userCollateralBalance * helper_collateralAssetPrice) / collateralAssetUnit >
+              MIN_LEFTOVER_BASE),
+          LIQUIDATION_HSPOST_H
+        );
       }
 
       uint256 deficitDelta = pool.getReserveDeficit(_getRandomBaseAsset(k)) -
         helper_debtAssetDeficitBefore;
 
-      if (address(actor) != user) {
-        if (deficitDelta != 0) {
-          assertEq(defaultVarsAfter.users[user].totalCollateralBase, 0, LIQUIDATION_HSPOST_L);
-          assertEq(userDebtBalance, 0, LIQUIDATION_HSPOST_M);
-        }
+      if (deficitDelta != 0) {
+        assertEq(defaultVarsAfter.users[user].totalCollateralBase, 0, LIQUIDATION_HSPOST_L);
+        assertEq(userDebtBalance, 0, LIQUIDATION_HSPOST_M);
       }
 
       assertLe(deficitDelta, helper_violatorDebtBalanceBefore, LIQUIDATION_HSPOST_N);

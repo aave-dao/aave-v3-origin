@@ -7,7 +7,10 @@ import '../../protocol/libraries/math/WadRayMath.sol';
 contract MockScaledToken is ScaledBalanceTokenBase {
   using WadRayMath for uint256;
 
-  constructor(IPool pool) ScaledBalanceTokenBase(pool, 'A', 'A', 6) {
+  constructor(
+    IPool pool,
+    address rewardsController
+  ) ScaledBalanceTokenBase(pool, 'A', 'A', 6, rewardsController) {
     // Intentionally left blank
   }
 
@@ -20,17 +23,8 @@ contract MockScaledToken is ScaledBalanceTokenBase {
   ) public {
     _userState[alice].additionalData = uint128(previousIndex);
     _userState[bob].additionalData = uint128(previousIndex);
-    _userState[alice].balance = uint128(aliceScaledBalance);
-    _userState[bob].balance = uint128(bobScaledBalance);
-  }
-
-  function transferWithIndex(
-    address sender,
-    address recipient,
-    uint256 amount,
-    uint256 newIndex
-  ) public {
-    _transfer(sender, recipient, amount, newIndex);
+    _userState[alice].balance = uint120(aliceScaledBalance);
+    _userState[bob].balance = uint120(bobScaledBalance);
   }
 
   function getBalanceOf(uint256 scaledBalance, uint256 newIndex) internal pure returns (uint256) {

@@ -7,23 +7,12 @@ import {Errors} from '../../../../src/contracts/protocol/libraries/helpers/Error
 import {PercentageMath} from '../../../../src/contracts/protocol/libraries/math/PercentageMath.sol';
 import {ReserveConfiguration, DataTypes} from '../../../../src/contracts/protocol/pool/PoolConfigurator.sol';
 import {EModeConfiguration} from '../../../../src/contracts/protocol/libraries/configuration/EModeConfiguration.sol';
+import {IPoolConfigurator} from '../../../../src/contracts/interfaces/IPoolConfigurator.sol';
 import {TestnetProcedures} from '../../../utils/TestnetProcedures.sol';
 
 contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
   using PercentageMath for uint256;
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
-
-  event EModeCategoryAdded(
-    uint8 indexed categoryId,
-    uint256 ltv,
-    uint256 liquidationThreshold,
-    uint256 liquidationBonus,
-    address oracle,
-    string label
-  );
-
-  event AssetCollateralInEModeChanged(address indexed asset, uint8 categoryId, bool allowed);
-  event AssetBorrowableInEModeChanged(address indexed asset, uint8 categoryId, bool borrowable);
 
   function setUp() public {
     initTestEnvironment();
@@ -32,7 +21,7 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
   function test_configureEmodeCategory() public {
     EModeCategoryInput memory ct = _genCategoryOne();
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit EModeCategoryAdded(ct.id, ct.ltv, ct.lt, ct.lb, address(0), ct.label);
+    emit IPoolConfigurator.EModeCategoryAdded(ct.id, ct.ltv, ct.lt, ct.lb, address(0), ct.label);
 
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setEModeCategory(ct.id, ct.ltv, ct.lt, ct.lb, ct.label);
@@ -62,7 +51,7 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
 
     vm.prank(poolAdmin);
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit EModeCategoryAdded(
+    emit IPoolConfigurator.EModeCategoryAdded(
       ct.id,
       updatedCategory.ltv,
       updatedCategory.lt,
@@ -89,33 +78,33 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
   }
 
   function test_reverts_setEmodeCategory_zero_ltv() public {
-    vm.expectRevert(bytes(Errors.INVALID_EMODE_CATEGORY_PARAMS));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidEmodeCategoryParams.selector));
 
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setEModeCategory(1, 0, 80_00, 105_00, 'LABEL');
   }
 
   function test_reverts_setEmodeCategory_zero_liqThreshold() public {
-    vm.expectRevert(bytes(Errors.INVALID_EMODE_CATEGORY_PARAMS));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidEmodeCategoryParams.selector));
 
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setEModeCategory(1, 80_00, 0, 105_00, 'LABEL');
   }
 
   function test_reverts_setEmodeCategory_ltv_gt_liqThreshold() public {
-    vm.expectRevert(bytes(Errors.INVALID_EMODE_CATEGORY_PARAMS));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidEmodeCategoryParams.selector));
 
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setEModeCategory(1, 80_00, 79_00, 105_00, 'LABEL');
   }
 
   function test_reverts_setEmodeCategory_lb_lte_percentageFactor() public {
-    vm.expectRevert(bytes(Errors.INVALID_EMODE_CATEGORY_PARAMS));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidEmodeCategoryParams.selector));
 
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setEModeCategory(1, 80_00, 81_00, 100_00, 'LABEL');
 
-    vm.expectRevert(bytes(Errors.INVALID_EMODE_CATEGORY_PARAMS));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidEmodeCategoryParams.selector));
 
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setEModeCategory(1, 80_00, 81_00, 99_00, 'LABEL');
@@ -130,7 +119,7 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
       PercentageMath.PERCENTAGE_FACTOR,
       'Input should be gt than percentage factor to revert at "threshold * bonus is required to be less than PERCENTAGE_FACTOR"'
     );
-    vm.expectRevert(bytes(Errors.INVALID_EMODE_CATEGORY_PARAMS));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidEmodeCategoryParams.selector));
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setEModeCategory(
       1,
@@ -145,7 +134,7 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
     EModeCategoryInput memory input = _genCategoryOne();
     test_configureEmodeCategory();
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit AssetCollateralInEModeChanged(tokenList.usdx, input.id, true);
+    emit IPoolConfigurator.AssetCollateralInEModeChanged(tokenList.usdx, input.id, true);
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, input.id, true);
     DataTypes.EModeCategory memory config = _getFullEMode(input.id);
@@ -185,7 +174,7 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
     EModeCategoryInput memory prevCt = _genCategoryOne();
     test_setAssetCollateralInEMode();
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit AssetCollateralInEModeChanged(tokenList.usdx, prevCt.id, false);
+    emit IPoolConfigurator.AssetCollateralInEModeChanged(tokenList.usdx, prevCt.id, false);
 
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, prevCt.id, false);
@@ -204,7 +193,7 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
     EModeCategoryInput memory input = _genCategoryOne();
     test_configureEmodeCategory();
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit AssetBorrowableInEModeChanged(tokenList.usdx, input.id, true);
+    emit IPoolConfigurator.AssetBorrowableInEModeChanged(tokenList.usdx, input.id, true);
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setAssetBorrowableInEMode(tokenList.usdx, input.id, true);
     DataTypes.EModeCategory memory config = _getFullEMode(input.id);
@@ -244,7 +233,7 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
     EModeCategoryInput memory input = _genCategoryOne();
     test_configureEmodeCategory();
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit AssetBorrowableInEModeChanged(tokenList.usdx, input.id, false);
+    emit IPoolConfigurator.AssetBorrowableInEModeChanged(tokenList.usdx, input.id, false);
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setAssetBorrowableInEMode(tokenList.usdx, input.id, false);
     DataTypes.EModeCategory memory config = _getFullEMode(input.id);

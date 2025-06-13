@@ -22,7 +22,6 @@
       "PoolLogic": "0xf05",
       "LiquidationLogic": "0xf06",
       "FlashLoanLogic": "0xf07",
-      "BridgeLogic": "0xf08",
       "EModeLogic": "0xf09",
       "BorrowLogic": "0xf10",
       "ConfiguratorLogic": "0xf11"
@@ -83,7 +82,7 @@
       "args": [
         "--solc-remaps",
         "@crytic/properties/=../../../lib/properties/ forge-std/=../../../lib/forge-std/src/ ds-test/=../../../lib/forge-std/lib/ds-test/src/",
-        "--compile-libraries=(Pretty,0xf01), (Strings,0xf02), (AaveV3BatchOrchestration,0xf03), (SupplyLogic,0xf04), (PoolLogic,0xf05), (LiquidationLogic,0xf06), (FlashLoanLogic,0xf07), (BridgeLogic,0xf08), (EModeLogic,0xf09), (BorrowLogic,0xf10), (ConfiguratorLogic,0xf11)"
+        "--compile-libraries=(Pretty,0xf01), (Strings,0xf02), (AaveV3BatchOrchestration,0xf03), (SupplyLogic,0xf04), (PoolLogic,0xf05), (LiquidationLogic,0xf06), (FlashLoanLogic,0xf07), (EModeLogic,0xf09), (BorrowLogic,0xf10), (ConfiguratorLogic,0xf11)"
       ]
     }
   },

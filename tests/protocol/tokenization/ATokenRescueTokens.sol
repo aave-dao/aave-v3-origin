@@ -11,13 +11,11 @@ contract ATokenRescueTokensTests is TestnetProcedures {
   IAToken public aTokenUSDX;
   IAToken public aTokenWBTC;
 
-  event Transfer(address indexed from, address indexed to, uint256 amount);
-
   function setUp() public {
     initTestEnvironment();
 
-    (address aUSDX, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(tokenList.usdx);
-    (address aWBTC, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(tokenList.wbtc);
+    address aUSDX = contracts.poolProxy.getReserveAToken(tokenList.usdx);
+    address aWBTC = contracts.poolProxy.getReserveAToken(tokenList.wbtc);
     aTokenUSDX = IAToken(aUSDX);
     aTokenWBTC = IAToken(aWBTC);
   }
@@ -35,13 +33,13 @@ contract ATokenRescueTokensTests is TestnetProcedures {
     assertEq(usdx.balanceOf(poolAdmin), 100e6);
   }
 
-  function test_reverts_rescueTokens_UNDERLYING_CANNOT_BE_RESCUED() public {
+  function test_reverts_rescueTokens_UnderlyingCannotBeRescued() public {
     vm.prank(poolAdmin);
     usdx.mint(address(aTokenUSDX), 100e6);
 
     assertEq(usdx.balanceOf(address(aTokenUSDX)), 100e6);
 
-    vm.expectRevert(bytes(Errors.UNDERLYING_CANNOT_BE_RESCUED));
+    vm.expectRevert(abi.encodeWithSelector(Errors.UnderlyingCannotBeRescued.selector));
 
     vm.prank(poolAdmin);
     aTokenUSDX.rescueTokens(address(usdx), poolAdmin, 100e6);
@@ -55,7 +53,7 @@ contract ATokenRescueTokensTests is TestnetProcedures {
 
     assertEq(usdx.balanceOf(address(aTokenUSDX)), 100e6);
 
-    vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
+    vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotPoolAdmin.selector));
 
     vm.prank(makeAddr('OTHER'));
     aTokenUSDX.rescueTokens(address(usdx), poolAdmin, 100e6);

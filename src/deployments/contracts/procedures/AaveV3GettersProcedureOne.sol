@@ -12,12 +12,10 @@ contract AaveV3GettersProcedureOne {
   struct GettersReportBatchOne {
     address walletBalanceProvider;
     address uiIncentiveDataProvider;
-    address protocolDataProvider;
     address uiPoolDataProvider;
   }
 
   function _deployAaveV3GettersBatchOne(
-    address poolAddressesProvider,
     address networkBaseTokenPriceInUsdProxyAggregator,
     address marketReferenceCurrencyPriceInUsdProxyAggregator
   ) internal returns (GettersReportBatchOne memory) {
@@ -25,9 +23,7 @@ contract AaveV3GettersProcedureOne {
 
     report.walletBalanceProvider = address(new WalletBalanceProvider());
     report.uiIncentiveDataProvider = address(new UiIncentiveDataProviderV3());
-    report.protocolDataProvider = address(
-      new AaveProtocolDataProvider(IPoolAddressesProvider(poolAddressesProvider))
-    );
+
     if (
       networkBaseTokenPriceInUsdProxyAggregator != address(0) &&
       marketReferenceCurrencyPriceInUsdProxyAggregator != address(0)

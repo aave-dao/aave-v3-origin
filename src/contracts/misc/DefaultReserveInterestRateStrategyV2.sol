@@ -49,7 +49,7 @@ contract DefaultReserveInterestRateStrategyV2 is IDefaultInterestRateStrategyV2 
   modifier onlyPoolConfigurator() {
     require(
       msg.sender == ADDRESSES_PROVIDER.getPoolConfigurator(),
-      Errors.CALLER_NOT_POOL_CONFIGURATOR
+      Errors.CallerNotPoolConfigurator()
     );
     _;
   }
@@ -59,7 +59,7 @@ contract DefaultReserveInterestRateStrategyV2 is IDefaultInterestRateStrategyV2 
    * @param provider The address of the PoolAddressesProvider of the associated Aave pool
    */
   constructor(address provider) {
-    require(provider != address(0), Errors.INVALID_ADDRESSES_PROVIDER);
+    require(provider != address(0), Errors.InvalidAddressesProvider());
     ADDRESSES_PROVIDER = IPoolAddressesProvider(provider);
   }
 
@@ -123,15 +123,9 @@ contract DefaultReserveInterestRateStrategyV2 is IDefaultInterestRateStrategyV2 
 
   /// @inheritdoc IReserveInterestRateStrategy
   function calculateInterestRates(
-    DataTypes.CalculateInterestRatesParams memory params
+    DataTypes.CalculateInterestRatesParams calldata params
   ) external view virtual override returns (uint256, uint256) {
     InterestRateDataRay memory rateData = _rayifyRateData(_interestRateData[params.reserve]);
-
-    // @note This is a short circuit to allow mintable assets (ex. GHO), which by definition cannot be supplied
-    // and thus do not use virtual underlying balances.
-    if (!params.usingVirtualBalance) {
-      return (0, rateData.baseVariableBorrowRate);
-    }
 
     CalcInterestRatesLocalVars memory vars;
 
@@ -182,17 +176,17 @@ contract DefaultReserveInterestRateStrategyV2 is IDefaultInterestRateStrategyV2 
    * @param rateData Encoded reserve interest rate data to apply
    */
   function _setInterestRateParams(address reserve, InterestRateData memory rateData) internal {
-    require(reserve != address(0), Errors.ZERO_ADDRESS_NOT_VALID);
+    require(reserve != address(0), Errors.ZeroAddressNotValid());
 
     require(
       rateData.optimalUsageRatio <= MAX_OPTIMAL_POINT &&
         rateData.optimalUsageRatio >= MIN_OPTIMAL_POINT,
-      Errors.INVALID_OPTIMAL_USAGE_RATIO
+      Errors.InvalidOptimalUsageRatio()
     );
 
     require(
       rateData.variableRateSlope1 <= rateData.variableRateSlope2,
-      Errors.SLOPE_2_MUST_BE_GTE_SLOPE_1
+      Errors.Slope2MustBeGteSlope1()
     );
 
     // The maximum rate should not be above certain threshold
@@ -201,7 +195,7 @@ contract DefaultReserveInterestRateStrategyV2 is IDefaultInterestRateStrategyV2 
         uint256(rateData.variableRateSlope1) +
         uint256(rateData.variableRateSlope2) <=
         MAX_BORROW_RATE,
-      Errors.INVALID_MAX_RATE
+      Errors.InvalidMaxRate()
     );
 
     _interestRateData[reserve] = rateData;
