@@ -22,6 +22,7 @@ import {DataTypes} from '../../../src/contracts/protocol/libraries/types/DataTyp
 import {PercentageMath} from '../../../src/contracts/protocol/libraries/math/PercentageMath.sol';
 import {WadRayMath} from '../../../src/contracts/protocol/libraries/math/WadRayMath.sol';
 import {TestnetProcedures} from '../../utils/TestnetProcedures.sol';
+import {AaveSetters} from '../../utils/AaveSetters.sol';
 import {LiquidationDataProvider} from '../../../src/contracts/helpers/LiquidationDataProvider.sol';
 
 contract PoolLiquidationTests is TestnetProcedures {
@@ -398,6 +399,30 @@ contract PoolLiquidationTests is TestnetProcedures {
       params.liquidationAmountInput,
       params.receiveAToken
     );
+  }
+
+  function test_full_liquidate_atokens_edgecase_collateral_not_enough_to_cover_fee() public {
+    vm.startPrank(alice);
+
+    contracts.poolProxy.supply(tokenList.usdx, 49, alice, 0);
+    contracts.poolProxy.borrow(tokenList.usdx, 30, 2, 0, alice);
+    vm.stopPrank();
+
+    AaveSetters.setLiquidityIndex(address(contracts.poolProxy), tokenList.usdx, 2.05e27);
+    AaveSetters.setVariableBorrowIndex(address(contracts.poolProxy), tokenList.usdx, 4.05e27);
+
+    // Liquidate
+    vm.prank(bob);
+    contracts.poolProxy.liquidationCall(
+      tokenList.usdx,
+      tokenList.usdx,
+      alice,
+      type(uint256).max,
+      true
+    );
+
+    address atoken = contracts.poolProxy.getReserveAToken(tokenList.usdx);
+    assertEq(IERC20(atoken).balanceOf(alice), 0);
   }
 
   function test_full_liquidate_multiple_variable_borrows() public {

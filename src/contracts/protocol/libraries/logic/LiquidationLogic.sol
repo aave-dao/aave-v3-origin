@@ -367,7 +367,8 @@ library LiquidationLogic {
 
     // Transfer fee to treasury if it is non-zero
     if (vars.liquidationProtocolFeeAmount != 0) {
-      uint256 scaledDownLiquidationProtocolFee = vars.liquidationProtocolFeeAmount.rayDivFloor(
+      // rayDivCeil has been used because during the AToken.transfer (executed by AToken.transferOnLiquidation internally) the amount of shares transferred to the receiver will be calculated following the rounding UP direction.
+      uint256 scaledDownLiquidationProtocolFee = vars.liquidationProtocolFeeAmount.rayDivCeil(
         vars.collateralReserveCache.nextLiquidityIndex
       );
       uint256 scaledDownBorrowerBalance = IAToken(vars.collateralReserveCache.aTokenAddress)
