@@ -9,6 +9,7 @@ import {UserConfiguration} from '../configuration/UserConfiguration.sol';
 import {EModeConfiguration} from '../configuration/EModeConfiguration.sol';
 import {PercentageMath} from '../math/PercentageMath.sol';
 import {WadRayMath} from '../math/WadRayMath.sol';
+import {MathUtils} from '../math/MathUtils.sol';
 import {DataTypes} from '../types/DataTypes.sol';
 import {ReserveLogic} from './ReserveLogic.sol';
 import {EModeLogic} from './EModeLogic.sol';
@@ -213,14 +214,11 @@ library GenericLogic {
     uint256 assetUnit
   ) private view returns (uint256) {
     // Replicate vDebt.balanceOf (round up), to always overestimate the debt.
-    uint256 userTotalDebt = (
-      IScaledBalanceToken(reserve.variableDebtTokenAddress).scaledBalanceOf(user).rayMulCeil(
-        reserve.getNormalizedDebt()
-      )
-    ) * assetPrice;
-    unchecked {
-      return userTotalDebt / assetUnit;
-    }
+    uint256 userTotalDebt = IScaledBalanceToken(reserve.variableDebtTokenAddress)
+      .scaledBalanceOf(user)
+      .rayMulCeil(reserve.getNormalizedDebt());
+
+    return MathUtils.mulDivCeil(userTotalDebt, assetPrice, assetUnit);
   }
 
   /**

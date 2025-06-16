@@ -47,6 +47,15 @@ This is done to ensure correct behavior in regards to user operations, so that e
 On transfers, the scaled amount is rounded `up`.
 While for other methods the rational is obvious(and well specified on ERC4626), on transfers the "correct" path is more debatable. We think that currently the more "problematic" code-path is, if you pull x funds, but you get x-1. Therefore by rounding up the scaled amount, we ensure that the contract pulling receives at least the amount it requested.
 
+#### Rounding for User Position Valuation in Base Currency
+
+When calculating a user's health factor, the protocol must convert their asset and debt balances into a common base currency (e.g., USD). To ensure the protocol's safety, these conversions are rounded pessimistically.
+
+- **Collateral (aToken) Value:** The value of a user's supplied assets in the base currency is always rounded **down**. This ensures the protocol never overestimates the value of a user's collateral.
+- **Debt (vToken) Value:** The value of a user's borrowed assets in the base currency is always rounded **up**. This ensures the protocol never underestimates a user's debt. A key consequence of this is that any non-zero debt, no matter how small, will be valued as at least 1 wei in the base currency. This prevents situations where tiny "dust" debts could round down to zero after conversion, making them invisible to Health Factor calculations.
+
+This approach of always rounding in favor of the protocol during health factor calculations is a critical security measure that protects it from potential insolvencies arising from rounding discrepancies.
+
 ### Misc changes
 
 - smaller refactoring in `LiquidationLogic` making the code more consistent

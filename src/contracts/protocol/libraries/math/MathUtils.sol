@@ -96,4 +96,16 @@ library MathUtils {
   ) internal view returns (uint256) {
     return calculateCompoundedInterest(rate, lastUpdateTimestamp, block.timestamp);
   }
+
+  function mulDivCeil(uint256 a, uint256 b, uint256 c) internal pure returns (uint256 d) {
+    assembly {
+      // Overflow check: Ensure a * b does not exceed uint256 max
+      if iszero(or(iszero(b), iszero(gt(a, div(not(0), b))))) {
+        revert(0, 0)
+      }
+
+      let product := mul(a, b)
+      d := add(div(product, c), iszero(iszero(mod(product, c))))
+    }
+  }
 }

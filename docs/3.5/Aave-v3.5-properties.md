@@ -16,6 +16,8 @@ In the following properties `shares` refers to the `scaled balance`, while `asse
 - when evaluating the vToken balance of a user, the balance should be calculated as `balance = ceil(shares * index)`
 - when calculating the liquidationProtocolFee and the fee distributed to the treasury, the received shares should be rounded down
 - the flashLoanPremium is always rounded up, meaning that even when flashing just 1 wei of an asset, you will pay 1 wei of fee (where in previous versions of the protocol, the fee would be rounded to zero)
+- when calculating the value of a user's collateral (aTokens) in the base currency, the result of `(balanceInAssetUnits * assetPrice) / assetUnit` is rounded down.
+- when calculating the value of a user's total debt (vTokens) in the base currency, the result of `(debtInAssetUnits * assetPrice) / assetUnit` is rounded up.
 
 ```mermaid
 ---

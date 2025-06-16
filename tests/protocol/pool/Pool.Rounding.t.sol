@@ -39,6 +39,28 @@ contract PoolRoundingTests is TestnetProcedures {
     user = alice;
   }
 
+  function test_debtBalanceInBaseCurrencyShouldRoundUp() external {
+    _supplyAndEnableAsCollateral({user: user, amount: 100 ether, asset: asset});
+
+    vm.prank(user);
+    contracts.poolProxy.borrow({
+      asset: asset,
+      amount: 1,
+      interestRateMode: 2,
+      referralCode: 0,
+      onBehalfOf: user
+    });
+
+    (, uint256 totalDebtBase, , , , uint256 healthFactor) = contracts.poolProxy.getUserAccountData(
+      user
+    );
+
+    // in previous versions rounding was performed in another way, which resulted in zero debt
+    // from v3.5 it should result in 1 debt in base currency
+    assertEq(totalDebtBase, 1);
+    assertNotEq(healthFactor, type(uint256).max);
+  }
+
   function test_reverts_withdrawShouldRoundDownUserBalance() external {
     AaveSetters.setLiquidityIndex(report.poolProxy, asset, 2e27 + 1);
 
