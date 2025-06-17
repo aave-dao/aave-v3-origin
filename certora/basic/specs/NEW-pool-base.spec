@@ -40,7 +40,7 @@ methods {
   //function _.mint(address user, uint256 amount, uint256 index) external => DISPATCHER(true);
   function _.burn(address user, address receiverOfUnderlying, uint256 amount, uint256 index) external => DISPATCHER(true);
   function _.mintToTreasury(uint256 amount, uint256 index) external => DISPATCHER(true);
-  function _.transferOnLiquidation(address from, address to, uint256 value) external => DISPATCHER(true);
+  //  function _.transferOnLiquidation(address from, address to, uint256 value) external => DISPATCHER(true);
   function _.transferUnderlyingTo(address user, uint256 amount) external => DISPATCHER(true);
   //function _.handleRepayment(address user, uint256 amount) external => DISPATCHER(true);
   function _.permit(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external => DISPATCHER(true);

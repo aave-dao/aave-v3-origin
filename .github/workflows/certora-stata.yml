@@ -1,10 +1,15 @@
 name: certora-stata
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 on:
-  push:
+  pull_request:
     branches:
       - main
-  pull_request:
+      - certora
+  push:
     branches:
       - main
 
@@ -16,65 +21,55 @@ jobs:
     if:
       github.event.pull_request.head.repo.full_name == github.repository || (github.event_name == 'push' &&
       github.ref == format('refs/heads/{0}', github.event.repository.default_branch))
-
+    permissions:
+      contents: read
+      statuses: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      - name: Install python
-        uses: actions/setup-python@v5
-        with: { python-version: 3.9 }
-
-      - name: Install java
-        uses: actions/setup-java@v4
-        with: { distribution: "zulu", java-version: "11", java-package: jre }
-
-      - name: Install certora cli
-        run: pip install certora-cli==7.20.3
-      - name: Install solc
-        run: |
-          wget https://github.com/ethereum/solidity/releases/download/v0.8.20/solc-static-linux
-          chmod +x solc-static-linux
-          sudo mv solc-static-linux /usr/local/bin/solc8.20
-
-      - name: Verify rule ${{ matrix.rule }}
+      - name: Munged
         run: |
           cd certora/stata
           touch applyHarness.patch
           make munged
-          cd ../..
-          certoraRun certora/stata/conf/${{ matrix.rule }}
+    
+      - uses: Certora/certora-run-action@v1
+        with:
+          cli-version: 7.28.0
+          configurations: |-
+            certora/stata/conf/verifyERC4626.conf --rule previewRedeemIndependentOfBalance previewMintAmountCheck previewDepositIndependentOfAllowanceApprove previewWithdrawAmountCheck previewWithdrawIndependentOfBalance2 previewWithdrawIndependentOfBalance1 previewRedeemIndependentOfMaxRedeem1 previewRedeemAmountCheck previewRedeemIndependentOfMaxRedeem2 amountConversionRoundedDown withdrawCheck redeemCheck redeemATokensCheck convertToAssetsCheck convertToSharesCheck toAssetsDoesNotRevert sharesConversionRoundedDown toSharesDoesNotRevert previewDepositAmountCheck maxRedeemCompliance maxWithdrawConversionCompliance previewMintIndependentOfAllowance
+            certora/stata/conf/verifyERC4626.conf --rule maxMintMustntRevert maxDepositMustntRevert maxRedeemMustntRevert maxWithdrawMustntRevert totalAssetsMustntRevert
+            certora/stata/conf/verifyERC4626MintDepositSummarization.conf --rule depositCheckIndexGRayAssert2 depositATokensCheckIndexGRayAssert2 depositWithPermitCheckIndexGRayAssert2 depositCheckIndexERayAssert2 depositATokensCheckIndexERayAssert2 depositWithPermitCheckIndexERayAssert2 mintCheckIndexGRayUpperBound mintCheckIndexGRayLowerBound mintCheckIndexEqualsRay
+            certora/stata/conf/verifyERC4626DepositSummarization.conf --rule depositCheckIndexGRayAssert1 depositATokensCheckIndexGRayAssert1 depositWithPermitCheckIndexGRayAssert1 depositCheckIndexERayAssert1 depositATokensCheckIndexERayAssert1 depositWithPermitCheckIndexERayAssert1
+            certora/stata/conf/verifyERC4626Extended.conf --rule previewWithdrawRoundingRange previewRedeemRoundingRange amountConversionPreserved sharesConversionPreserved accountsJoiningSplittingIsLimited convertSumOfAssetsPreserved previewDepositSameAsDeposit previewMintSameAsMint maxDepositConstant
+            certora/stata/conf/verifyERC4626Extended.conf --rule redeemSum
+            certora/stata/conf/verifyERC4626Extended.conf --rule redeemATokensSum
+            certora/stata/conf/verifyAToken.conf --rule aTokenBalanceIsFixed_for_collectAndUpdateRewards aTokenBalanceIsFixed_for_claimRewards aTokenBalanceIsFixed_for_claimRewardsOnBehalf
+            certora/stata/conf/verifyAToken.conf --rule aTokenBalanceIsFixed_for_claimSingleRewardOnBehalf aTokenBalanceIsFixed_for_claimRewardsToSelf
+            certora/stata/conf/verifyStataToken.conf --rule rewardsConsistencyWhenSufficientRewardsExist
+            certora/stata/conf/verifyStataToken.conf --rule rewardsConsistencyWhenInsufficientRewards
+            certora/stata/conf/verifyStataToken.conf --rule totalClaimableRewards_stable
+            certora/stata/conf/verifyStataToken.conf --rule solvency_positive_total_supply_only_if_positive_asset
+            certora/stata/conf/verifyStataToken.conf --rule solvency_total_asset_geq_total_supply
+            certora/stata/conf/verifyStataToken.conf --rule singleAssetAccruedRewards
+            certora/stata/conf/verifyStataToken.conf --rule totalAssets_stable
+            certora/stata/conf/verifyStataToken.conf --rule getClaimableRewards_stable
+            certora/stata/conf/verifyStataToken.conf --rule getClaimableRewards_stable_after_deposit
+            certora/stata/conf/verifyStataToken.conf --rule getClaimableRewards_stable_after_refreshRewardTokens
+            certora/stata/conf/verifyStataToken.conf --rule getClaimableRewardsBefore_leq_claimed_claimRewardsOnBehalf
+            certora/stata/conf/verifyStataToken.conf --rule rewardsTotalDeclinesOnlyByClaim
+            certora/stata/conf/verifyDoubleClaim.conf --rule prevent_duplicate_reward_claiming_single_reward_sufficient
+            certora/stata/conf/verifyDoubleClaim.conf --rule prevent_duplicate_reward_claiming_single_reward_insufficient
+          solc-versions: 0.8.27
+          comment-fail-only: false
+          solc-remove-version-prefix: "0."
+          job-name: "Certora Prover Run"
+          certora-key: ${{ secrets.CERTORAKEY }}
+          install-java: true
         env:
-          CERTORAKEY: ${{ secrets.CERTORAKEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    strategy:
-      fail-fast: false
-      max-parallel: 16
-      matrix:
-        rule:
-          - verifyERC4626.conf --rule previewRedeemIndependentOfBalance previewMintAmountCheck previewDepositIndependentOfAllowanceApprove previewWithdrawAmountCheck previewWithdrawIndependentOfBalance2 previewWithdrawIndependentOfBalance1 previewRedeemIndependentOfMaxRedeem1 previewRedeemAmountCheck previewRedeemIndependentOfMaxRedeem2 amountConversionRoundedDown withdrawCheck redeemCheck redeemATokensCheck convertToAssetsCheck convertToSharesCheck toAssetsDoesNotRevert sharesConversionRoundedDown toSharesDoesNotRevert previewDepositAmountCheck maxRedeemCompliance maxWithdrawConversionCompliance previewMintIndependentOfAllowance
-          - verifyERC4626.conf --rule maxMintMustntRevert maxDepositMustntRevert maxRedeemMustntRevert maxWithdrawMustntRevert totalAssetsMustntRevert
-          # Timeout
-          # - verifyERC4626.conf --rule previewWithdrawIndependentOfMaxWithdraw
-          - verifyERC4626MintDepositSummarization.conf --rule depositCheckIndexGRayAssert2 depositATokensCheckIndexGRayAssert2 depositWithPermitCheckIndexGRayAssert2 depositCheckIndexERayAssert2 depositATokensCheckIndexERayAssert2 depositWithPermitCheckIndexERayAssert2 mintCheckIndexGRayUpperBound mintCheckIndexGRayLowerBound mintCheckIndexEqualsRay
-          - verifyERC4626DepositSummarization.conf --rule depositCheckIndexGRayAssert1 depositATokensCheckIndexGRayAssert1 depositWithPermitCheckIndexGRayAssert1 depositCheckIndexERayAssert1 depositATokensCheckIndexERayAssert1 depositWithPermitCheckIndexERayAssert1
-          - verifyERC4626Extended.conf --rule previewWithdrawRoundingRange previewRedeemRoundingRange amountConversionPreserved sharesConversionPreserved accountsJoiningSplittingIsLimited convertSumOfAssetsPreserved previewDepositSameAsDeposit previewMintSameAsMint maxDepositConstant
-          - verifyERC4626Extended.conf --rule redeemSum
-          - verifyERC4626Extended.conf --rule redeemATokensSum
-          - verifyAToken.conf --rule aTokenBalanceIsFixed_for_collectAndUpdateRewards aTokenBalanceIsFixed_for_claimRewards aTokenBalanceIsFixed_for_claimRewardsOnBehalf
-          - verifyAToken.conf --rule aTokenBalanceIsFixed_for_claimSingleRewardOnBehalf aTokenBalanceIsFixed_for_claimRewardsToSelf
-          - verifyStataToken.conf --rule rewardsConsistencyWhenSufficientRewardsExist
-          - verifyStataToken.conf --rule rewardsConsistencyWhenInsufficientRewards
-          - verifyStataToken.conf --rule totalClaimableRewards_stable
-          - verifyStataToken.conf --rule solvency_positive_total_supply_only_if_positive_asset
-          - verifyStataToken.conf --rule solvency_total_asset_geq_total_supply
-          - verifyStataToken.conf --rule singleAssetAccruedRewards
-          - verifyStataToken.conf --rule totalAssets_stable
-          - verifyStataToken.conf --rule getClaimableRewards_stable
-          - verifyStataToken.conf --rule getClaimableRewards_stable_after_deposit
-          - verifyStataToken.conf --rule getClaimableRewards_stable_after_refreshRewardTokens
-          - verifyStataToken.conf --rule getClaimableRewardsBefore_leq_claimed_claimRewardsOnBehalf
-          - verifyStataToken.conf --rule rewardsTotalDeclinesOnlyByClaim
-          - verifyDoubleClaim.conf --rule prevent_duplicate_reward_claiming_single_reward_sufficient
-          - verifyDoubleClaim.conf --rule prevent_duplicate_reward_claiming_single_reward_insufficient
+

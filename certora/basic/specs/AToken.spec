@@ -43,7 +43,7 @@ ghost gRNI() returns uint256 {
   axiom to_mathint(gRNI()) == 7 * ray();
 }
 
-hook Sstore _userState[KEY address a].balance uint128 balance (uint128 old_balance) {
+hook Sstore _userState[KEY address a].balance uint120 balance (uint120 old_balance) {
   havoc sumAllBalance assuming sumAllBalance@new() == sumAllBalance@old() + balance - old_balance;
 }
 

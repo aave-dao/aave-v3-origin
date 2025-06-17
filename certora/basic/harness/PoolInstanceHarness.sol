@@ -7,13 +7,17 @@ import {PoolInstance} from '../munged/contracts/instances/PoolInstance.sol';
 import {DataTypes} from '../munged/contracts/protocol/libraries/types/DataTypes.sol';
 import {ReserveLogic} from '../munged/contracts/protocol/libraries/logic/ReserveLogic.sol';
 import {WadRayMath} from '../munged/contracts/protocol/libraries/math/WadRayMath.sol';
+import {IReserveInterestRateStrategy} from '../munged/contracts/interfaces/IReserveInterestRateStrategy.sol';
 
 import {DummyContract} from './DummyContract.sol';
 
 contract PoolInstanceHarness is PoolInstance {
   DummyContract DUMMY;
 
-  constructor(IPoolAddressesProvider provider) PoolInstance(provider) {}
+  //  constructor(IPoolAddressesProvider provider) PoolInstance(provider) {}
+  constructor(IPoolAddressesProvider provider,
+              IReserveInterestRateStrategy interestRateStrategy_) public PoolInstance(provider,interestRateStrategy_) {}
+
 
   function getNormalizedIncome(address asset) external returns (uint256) {
     return ReserveLogic.getNormalizedIncome(_reserves[asset]);

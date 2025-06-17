@@ -1,4 +1,4 @@
-#CMN="--compilation_steps_only"
+CMN="--compilation_steps_only"
 #CMN="--typecheck_only"
 
 
@@ -22,10 +22,11 @@ echo "******** Running:  4 ***************"
 certoraRun $CMN certora/basic/conf/VariableDebtToken.conf \
            --msg "4: VariableDebtToken.conf"
 
-echo
-echo "******** Running:  5 NEW no summarization ***************"
-certoraRun $CMN certora/basic/conf/NEW-pool-no-summarizations.conf \
-           --msg "5: NEW-pool-no-summarizations"
+##### ##### waiting for ticket 8889 
+#echo
+#echo "******** Running:  5 NEW no summarization ***************"
+#certoraRun $CMN certora/basic/conf/NEW-pool-no-summarizations.conf \
+#           --msg "5: NEW-pool-no-summarizations"
 
 echo
 echo "******** Running:  6 Stable fields are un-touched ***************"

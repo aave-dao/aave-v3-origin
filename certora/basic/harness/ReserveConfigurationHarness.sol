@@ -222,7 +222,7 @@ contract ReserveConfigurationHarness {
 
   // Executes a setter of an int parameter according to the given id
   function executeIntSetterById(uint256 id, uint256 val) public {
-    require(id >= 0 && id <= 10);
+    require(id >= 0 && id <= 8);
     if (id == 0) {
       setLtv(val);
     } else if (id == 1) {
@@ -240,9 +240,7 @@ contract ReserveConfigurationHarness {
     } else if (id == 7) {
       setLiquidationProtocolFee(val);
       //    } else if (id == 8) {
-      //setEModeCategory(val);
-    } else if (id == 8) {
-      setUnbackedMintCap(val);
+      // setUnbackedMintCap(val);
     } else {
       setDebtCeiling(val);
     }
@@ -250,7 +248,7 @@ contract ReserveConfigurationHarness {
 
   // Executes a getter of an int parameter according to the given id
   function executeIntGetterById(uint256 id) public view returns (uint256) {
-    require(id >= 0 && id <= 10);
+    require(id >= 0 && id <= 8);
     if (id == 0) {
       return getLtv();
     } else if (id == 1) {
@@ -268,9 +266,7 @@ contract ReserveConfigurationHarness {
     } else if (id == 7) {
       return getLiquidationProtocolFee();
       //    } else if (id == 8) {
-      //return getEModeCategory();
-    } else if (id == 8) {
-      return getUnbackedMintCap();
+      //return getUnbackedMintCap();
     } else {
       return getDebtCeiling();
     }
