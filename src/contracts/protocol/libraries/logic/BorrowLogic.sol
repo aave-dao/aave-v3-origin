@@ -193,19 +193,23 @@ library BorrowLogic {
         paybackAmount,
         reserveCache.nextLiquidityIndex
       );
-      bool isCollateral = onBehalfOfConfig.isUsingAsCollateral(reserve.id);
-      if (isCollateral && IAToken(reserveCache.aTokenAddress).scaledBalanceOf(params.user) == 0) {
-        onBehalfOfConfig.setUsingAsCollateral(reserve.id, params.asset, params.user, false);
+      if (onBehalfOfConfig.isUsingAsCollateral(reserve.id)) {
+        if (IAToken(reserveCache.aTokenAddress).scaledBalanceOf(params.user) == 0) {
+          onBehalfOfConfig.setUsingAsCollateral(reserve.id, params.asset, params.user, false);
+        }
+
+        if (onBehalfOfConfig.isBorrowingAny()) {
+          ValidationLogic.validateHealthFactor(
+            reservesData,
+            reservesList,
+            eModeCategories,
+            onBehalfOfConfig,
+            params.user,
+            params.userEModeCategory,
+            params.oracle
+          );
+        }
       }
-      ValidationLogic.validateHealthFactor(
-        reservesData,
-        reservesList,
-        eModeCategories,
-        onBehalfOfConfig,
-        params.user,
-        params.userEModeCategory,
-        params.oracle
-      );
     } else {
       IERC20(params.asset).safeTransferFrom(params.user, reserveCache.aTokenAddress, paybackAmount);
     }
