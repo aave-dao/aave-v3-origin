@@ -711,24 +711,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
       referralCode: 0
     });
 
-    reserveData = contracts.poolProxy.getReserveData(asset);
-
-    (uint256 nextLiquidityRate, uint256 nextVariableRate) = contracts
-      .defaultInterestRateStrategy
-      .calculateInterestRates(
-        DataTypes.CalculateInterestRatesParams({
-          unbacked: contracts.poolProxy.getReserveDeficit(asset),
-          liquidityAdded: 0,
-          liquidityTaken: 0,
-          totalDebt: IERC20(contracts.poolProxy.getReserveVariableDebtToken(asset)).totalSupply(),
-          reserveFactor: reserveData.configuration.getReserveFactor(),
-          reserve: asset,
-          usingVirtualBalance: true,
-          virtualUnderlyingBalance: contracts.poolProxy.getVirtualUnderlyingBalance(asset)
-        })
-      );
-    assertEq(reserveData.currentLiquidityRate, nextLiquidityRate);
-    assertEq(reserveData.currentVariableBorrowRate, nextVariableRate);
+    _checkInterestRates(asset);
   }
 
   function test_flashloan_borrow_inside_flashloan_and_check_rate_after() public {
@@ -790,27 +773,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
     });
 
     for (uint256 i = 0; i < assets.length; ++i) {
-      DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
-        assets[i]
-      );
-
-      (uint256 nextLiquidityRate, uint256 nextVariableRate) = contracts
-        .defaultInterestRateStrategy
-        .calculateInterestRates(
-          DataTypes.CalculateInterestRatesParams({
-            unbacked: contracts.poolProxy.getReserveDeficit(assets[0]),
-            liquidityAdded: 0,
-            liquidityTaken: 0,
-            totalDebt: IERC20(contracts.poolProxy.getReserveVariableDebtToken(assets[0]))
-              .totalSupply(),
-            reserveFactor: reserveData.configuration.getReserveFactor(),
-            reserve: assets[0],
-            usingVirtualBalance: true,
-            virtualUnderlyingBalance: contracts.poolProxy.getVirtualUnderlyingBalance(assets[0])
-          })
-        );
-      assertEq(reserveData.currentLiquidityRate, nextLiquidityRate);
-      assertEq(reserveData.currentVariableBorrowRate, nextVariableRate);
+      _checkInterestRates(assets[i]);
     }
   }
 

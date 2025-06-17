@@ -362,6 +362,15 @@ library LiquidationLogic {
     if (params.receiveAToken) {
       _liquidateATokens(reservesData, reservesList, usersConfig, collateralReserve, params, vars);
     } else {
+      // @note Manually updating the cache in case the debt and collateral are the same asset.
+      // This ensures the rates are updated correctly, considering the burning of debt
+      // in the `_burnDebtTokens` function.
+      if (params.collateralAsset == params.debtAsset) {
+        vars.collateralReserveCache.nextScaledVariableDebt = vars
+          .debtReserveCache
+          .nextScaledVariableDebt;
+      }
+
       _burnCollateralATokens(collateralReserve, params, vars);
     }
 

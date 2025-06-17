@@ -85,6 +85,8 @@ contract PoolRepayTests is TestnetProcedures {
       ),
       false
     );
+
+    _checkInterestRates(tokenList.usdx);
   }
 
   function test_revert_repay_full_stable_borrow() public {
@@ -136,6 +138,8 @@ contract PoolRepayTests is TestnetProcedures {
       ),
       false
     );
+
+    _checkInterestRates(tokenList.usdx);
   }
 
   function test_repayWithATokens_full_collateral_variable_borrow() public {
@@ -174,6 +178,8 @@ contract PoolRepayTests is TestnetProcedures {
       ),
       false
     );
+
+    _checkInterestRates(tokenList.usdx);
   }
 
   function test_repayWithATokens_shouldRevertIfUnhealthyAfterRepayment() external {
@@ -229,6 +235,8 @@ contract PoolRepayTests is TestnetProcedures {
       ),
       collateralBalanceAfter == 0 ? false : true
     );
+
+    _checkInterestRates(tokenList.usdx);
   }
 
   function test_repayWithPermit(
@@ -292,6 +300,8 @@ contract PoolRepayTests is TestnetProcedures {
       debtBalanceBefore - repayAmount,
       1
     );
+
+    _checkInterestRates(tokenList.usdx);
   }
 
   function test_repayWithPermit_not_failing_if_permit_was_used(
@@ -357,6 +367,8 @@ contract PoolRepayTests is TestnetProcedures {
       debtBalanceBefore - repayAmount,
       1
     );
+
+    _checkInterestRates(tokenList.usdx);
   }
 
   function test_repayWithPermit_should_revert_if_permit_is_less_then_repay_amount(
@@ -456,6 +468,8 @@ contract PoolRepayTests is TestnetProcedures {
       ),
       false
     );
+
+    _checkInterestRates(tokenList.usdx);
   }
 
   function test_partial_repay_borrow_variable_in_isolation() public {
@@ -512,6 +526,8 @@ contract PoolRepayTests is TestnetProcedures {
       contracts.poolProxy.getReserveData(tokenList.wbtc).isolationModeTotalDebt,
       isolationModeTotalDebt - isolationDebtRepaid
     );
+
+    _checkInterestRates(tokenList.usdx);
   }
 
   function test_reverts_borrow_invalidAmount() public {

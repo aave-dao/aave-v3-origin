@@ -269,6 +269,9 @@ contract PoolEModeTests is TestnetProcedures {
     uint256 bonus = amount - amount.percentDiv(liquidationBonus);
     uint256 protocolFee = bonus.percentMul(reserveConfig.getLiquidationProtocolFee());
     assertEq(IERC20(tokenList.usdx).balanceOf(liquidator), amount - protocolFee);
+
+    _checkInterestRates(tokenList.usdx);
+    _checkInterestRates(tokenList.wbtc);
   }
 
   function _mintTestnetToken(address erc20, address user, uint256 amount) internal {

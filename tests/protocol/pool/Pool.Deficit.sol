@@ -53,6 +53,8 @@ contract PoolDeficitTests is TestnetProcedures {
     contracts.poolProxy.eliminateReserveDeficit(tokenList.usdx, currentDeficit);
 
     assertEq(contracts.poolProxy.getReserveDeficit(tokenList.usdx), 0);
+
+    _checkInterestRates(tokenList.usdx);
   }
 
   function test_eliminateReserveDeficit_fullUserBalance(
@@ -85,6 +87,8 @@ contract PoolDeficitTests is TestnetProcedures {
       .poolProxy
       .getUserConfiguration(coverageAdmin);
     assertEq(userConfigAfter.isUsingAsCollateral(reserveData.id), false);
+
+    _checkInterestRates(tokenList.usdx);
   }
 
   function test_eliminateReserveDeficit_surplus(
@@ -113,9 +117,11 @@ contract PoolDeficitTests is TestnetProcedures {
       coverageAdmin
     );
     assertEq(userConfig.isUsingAsCollateral(reserveData.id), true);
+
+    _checkInterestRates(tokenList.usdx);
   }
 
-  function test_eliminateReserveDeficit_parcial(
+  function test_eliminateReserveDeficit_partial(
     address coverageAdmin,
     uint120 borrowAmount,
     uint120 amountToCover
@@ -135,6 +141,8 @@ contract PoolDeficitTests is TestnetProcedures {
     vm.expectEmit(address(contracts.poolProxy));
     emit IPool.DeficitCovered(tokenList.usdx, coverageAdmin, amountToCover);
     contracts.poolProxy.eliminateReserveDeficit(tokenList.usdx, amountToCover);
+
+    _checkInterestRates(tokenList.usdx);
   }
 
   function test_reverts_eliminateReserveDeficit_has_borrows(
@@ -216,6 +224,8 @@ contract PoolDeficitTests is TestnetProcedures {
     IERC20(tokenList.usdx).approve(report.poolProxy, deficit);
     contracts.poolProxy.eliminateReserveDeficit(tokenList.usdx, deficit);
     _checkIrInvariant(tokenList.usdx);
+
+    _checkInterestRates(tokenList.usdx);
   }
 
   function _checkIrInvariant(address asset) internal view {

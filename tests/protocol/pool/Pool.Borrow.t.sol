@@ -102,6 +102,8 @@ contract PoolBorrowTests is TestnetProcedures {
     assertEq(balanceAfter, balanceBefore + borrowAmount);
     assertEq(debtBalanceAfter, debtBalanceBefore + borrowAmount);
     assertEq(contracts.poolProxy.getUserConfiguration(alice).isBorrowing(reserveData.id), true);
+
+    _checkInterestRates(tokenList.usdx);
   }
 
   function test_borrow_variable_in_isolation() public {
@@ -160,6 +162,8 @@ contract PoolBorrowTests is TestnetProcedures {
     assertEq(balanceAfter, balanceBefore + borrowAmount);
     assertEq(debtBalanceAfter, borrowAmount);
     assertEq(contracts.poolProxy.getUserConfiguration(alice).isBorrowing(reserveData.id), true);
+
+    _checkInterestRates(tokenList.usdx);
   }
 
   function test_reverts_variable_borrow_transferred_funds() public {
