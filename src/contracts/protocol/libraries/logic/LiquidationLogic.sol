@@ -76,7 +76,7 @@ library LiquidationLogic {
     mapping(address => DataTypes.ReserveData) storage reservesData,
     DataTypes.UserConfigurationMap storage userConfig,
     DataTypes.ExecuteEliminateDeficitParams memory params
-  ) external {
+  ) external returns (uint256) {
     require(params.amount != 0, Errors.InvalidAmount());
 
     DataTypes.ReserveData storage reserve = reservesData[params.asset];
@@ -96,14 +96,12 @@ library LiquidationLogic {
       balanceWriteOff = currentDeficit;
     }
 
-    // Replicate aToken.balanceOf (round down), to always underestimate the collateral.
-    uint256 userBalance = IAToken(reserveCache.aTokenAddress)
-      .scaledBalanceOf(params.user)
-      .rayMulFloor(reserveCache.nextLiquidityIndex);
-    require(balanceWriteOff <= userBalance, Errors.NotEnoughAvailableUserBalance());
+    uint256 userScaledBalance = IAToken(reserveCache.aTokenAddress).scaledBalanceOf(params.user);
+    uint256 scaledBalanceWriteOff = balanceWriteOff.rayDivCeil(reserveCache.nextLiquidityIndex);
+    require(scaledBalanceWriteOff <= userScaledBalance, Errors.NotEnoughAvailableUserBalance());
 
     bool isCollateral = userConfig.isUsingAsCollateral(reserve.id);
-    if (isCollateral && balanceWriteOff == userBalance) {
+    if (isCollateral && scaledBalanceWriteOff == userScaledBalance) {
       userConfig.setUsingAsCollateral(reserve.id, params.asset, params.user, false);
     }
 
@@ -126,6 +124,8 @@ library LiquidationLogic {
     );
 
     emit IPool.DeficitCovered(params.asset, params.user, balanceWriteOff);
+
+    return balanceWriteOff;
   }
 
   struct LiquidationCallLocalVars {

@@ -745,8 +745,9 @@ interface IPool {
    * @dev The deficit of a reserve can occur due to situations where borrowed assets are not repaid, leading to bad debt.
    * @param asset The address of the underlying asset to cover the deficit.
    * @param amount The amount to be covered, in aToken
+   * @return The amount of tokens burned
    */
-  function eliminateReserveDeficit(address asset, uint256 amount) external;
+  function eliminateReserveDeficit(address asset, uint256 amount) external returns (uint256);
 
   /**
    * @notice Approves or disapproves a position manager. This position manager will be able

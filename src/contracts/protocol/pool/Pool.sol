@@ -802,17 +802,21 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
   }
 
   /// @inheritdoc IPool
-  function eliminateReserveDeficit(address asset, uint256 amount) external override onlyUmbrella {
-    LiquidationLogic.executeEliminateDeficit(
-      _reserves,
-      _usersConfig[_msgSender()],
-      DataTypes.ExecuteEliminateDeficitParams({
-        user: _msgSender(),
-        asset: asset,
-        amount: amount,
-        interestRateStrategyAddress: RESERVE_INTEREST_RATE_STRATEGY
-      })
-    );
+  function eliminateReserveDeficit(
+    address asset,
+    uint256 amount
+  ) external override onlyUmbrella returns (uint256) {
+    return
+      LiquidationLogic.executeEliminateDeficit(
+        _reserves,
+        _usersConfig[_msgSender()],
+        DataTypes.ExecuteEliminateDeficitParams({
+          user: _msgSender(),
+          asset: asset,
+          amount: amount,
+          interestRateStrategyAddress: RESERVE_INTEREST_RATE_STRATEGY
+        })
+      );
   }
 
   /// @inheritdoc IPool
