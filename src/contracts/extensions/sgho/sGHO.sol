@@ -3,21 +3,29 @@ pragma solidity ^0.8.19;
 
 import {ERC4626, ERC20, IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/ERC4626.sol';
 import {ERC20Permit, EIP712} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/ERC20Permit.sol';
-import {IYieldMaestro} from './interfaces/IYieldMaestro.sol';
-import {IStakedToken} from '../../../contracts/rewards/interfaces/IStakedToken.sol';
+import {WadRayMath} from '../../../contracts/protocol/libraries/math/WadRayMath.sol';
+import {Initializable} from 'openzeppelin-contracts/contracts/proxy/utils/Initializable.sol';
+import {IAccessControl} from 'openzeppelin-contracts/contracts/access/IAccessControl.sol';  
+import {IsGHO} from './interfaces/IsGHO.sol';
 
 interface IERC1271 {
   function isValidSignature(bytes32, bytes memory) external view returns (bytes4);
 }
 
-contract sGHO is ERC4626, ERC20Permit, IStakedToken {
-  address public immutable gho;
-  address public YIELD_MAESTRO;
-  uint256 internal internalTotalAssets;
-  uint256 internal lastupdate;
+contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
+  using WadRayMath for uint256;
 
-  /// @inheritdoc IStakedToken
-  address public STAKED_TOKEN = gho;
+  address public immutable gho;
+  IAccessControl internal aclManager;
+
+
+  uint256 public targetRate;
+  uint256 public yieldIndex;
+  uint256 internal constant RATE_PRECISION = 1e10;
+  uint256 internal constant ONE_YEAR = 365 days;
+
+  bytes32 public constant FUNDS_ADMIN_ROLE = 'FUNDS_ADMIN';
+  bytes32 public constant YIELD_MANAGER_ROLE = 'YIELD_MANAGER';
 
   // --- EIP712 niceties ---
   uint256 public immutable deploymentChainId;
@@ -26,58 +34,61 @@ contract sGHO is ERC4626, ERC20Permit, IStakedToken {
     keccak256('Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)');
   string public constant VERSION = '1';
 
-  /**
-   * @dev Invalid signature.
-   */
-  error InvalidSignature();
-
-  /**
-   * @dev Thrown when a direct ETH transfer is attempted.
-   */
-  error NoEthAllowed();
 
   /**
    * @dev Set the underlying asset contract. This must be an ERC20-compatible contract (ERC20 or ERC777).
    * @param _gho The address of the GHO token contract.
-   * @param _yieldMaestro The address of the Yield Maestro contract.
    */
   constructor(
     address _gho,
-    address _yieldMaestro
+    address _aclmanager
   ) ERC20('sGHO', 'sGHO') ERC4626(IERC20(_gho)) ERC20Permit('sGHO') {
-    deploymentChainId = block.chainid;
-    _DOMAIN_SEPARATOR = _calculateDomainSeparator(block.chainid);
     gho = _gho;
-    STAKED_TOKEN = gho;
-    YIELD_MAESTRO = _yieldMaestro;
-    internalTotalAssets = 0;
-    lastupdate = block.timestamp;
+        aclManager = IAccessControl(_aclmanager);
   }
 
   receive() external payable {
     revert NoEthAllowed();
   }
 
-  // --- IStakedToken Implementation ---
-  // @dev This is intended for backwards compatibility with the stkGHO contract and easy integration with the User Interface.
-
-  /// @inheritdoc IStakedToken
-  function stake(address to, uint256 amount) external {
-    deposit(amount, to);
+  /**
+   * @dev Throws if the contract is not initialized.
+   */
+  modifier isInitialized() {
+    if (_getInitializedVersion() == 0) {
+      revert NotInitialized();
+    }
+    _;
   }
 
-  /// @inheritdoc IStakedToken
-  function redeem(address to, uint256 amount) external {
-    withdraw(amount, to, msg.sender);
+  /**
+   * @dev Throws if the caller does not have the YIELD_MANAGER role
+   */
+  modifier onlyYieldManager() {
+    if (_onlyYieldManager() == false) {
+      revert OnlyYieldManager();
+    }
+    _;
   }
 
-  /// @inheritdoc IStakedToken
-  function claimRewards(address to, uint256 amount) external {
-    _claimSavings();
+  /**
+   * @dev Throws if the caller does not have the FUNDS_ADMIN role
+   */
+  modifier onlyFundsAdmin() {
+    if (_onlyFundsAdmin() == false) {
+      revert OnlyFundsAdmin();
+    }
+    _;
   }
 
-  /// @inheritdoc IStakedToken
-  function cooldown() external {}
+  /**
+   * @dev Initialize receiver, require minimum balance to not set a dripRate of 0
+   */
+  function initialize() public payable initializer {
+    deploymentChainId = block.chainid;
+    _DOMAIN_SEPARATOR = _calculateDomainSeparator(block.chainid);
+    yieldIndex = WadRayMath.RAY;
+  }
 
   // --- Approve by signature ---
 
@@ -151,7 +162,7 @@ contract sGHO is ERC4626, ERC20Permit, IStakedToken {
     uint8 v,
     bytes32 r,
     bytes32 s
-  ) public virtual override {
+  ) public virtual  override(IsGHO, ERC20Permit) {
     permit(owner, spender, value, deadline, abi.encodePacked(r, s, v));
   }
   /**
@@ -189,7 +200,7 @@ contract sGHO is ERC4626, ERC20Permit, IStakedToken {
 
   // --- ERC4626 Logic ---
 
-  function deposit(uint256 assets, address receiver) public override returns (uint256) {
+  function deposit(uint256 assets, address receiver) public override(ERC4626) returns (uint256) {
     uint256 maxAssets = maxDeposit(receiver);
     if (assets > maxAssets) {
       revert ERC4626ExceededMaxDeposit(receiver, assets, maxAssets);
@@ -202,7 +213,7 @@ contract sGHO is ERC4626, ERC20Permit, IStakedToken {
     return shares;
   }
 
-  function mint(uint256 shares, address receiver) public override returns (uint256) {
+  function mint(uint256 shares, address receiver) public override(ERC4626) returns (uint256) {
     uint256 maxShares = maxMint(receiver);
     if (shares > maxShares) {
       revert ERC4626ExceededMaxMint(receiver, shares, maxShares);
@@ -220,7 +231,7 @@ contract sGHO is ERC4626, ERC20Permit, IStakedToken {
     uint256 assets,
     address receiver,
     address owner
-  ) public override returns (uint256) {
+  ) public override(ERC4626) returns (uint256) {
     uint256 maxAssets = maxWithdraw(owner);
     if (assets > maxAssets) {
       revert ERC4626ExceededMaxWithdraw(owner, assets, maxAssets);
@@ -238,7 +249,7 @@ contract sGHO is ERC4626, ERC20Permit, IStakedToken {
     uint256 shares,
     address receiver,
     address owner
-  ) public override returns (uint256) {
+  ) public override(ERC4626) returns (uint256) {
     uint256 maxShares = maxRedeem(owner);
     if (shares > maxShares) {
       revert ERC4626ExceededMaxRedeem(owner, shares, maxShares);
@@ -252,10 +263,6 @@ contract sGHO is ERC4626, ERC20Permit, IStakedToken {
     return assets;
   }
 
-  function totalAssets() public view override returns (uint256) {
-    return internalTotalAssets;
-  }
-
   /**
    * @dev Update the internal total assets of the vault.
    * This function is called when assets are deposited or withdrawn.
@@ -264,32 +271,38 @@ contract sGHO is ERC4626, ERC20Permit, IStakedToken {
    * @param assetIncrease A boolean indicating whether the assets are being increased or decreased.
    */
   function _updateVault(uint256 assets, bool assetIncrease) internal {
-    uint256 currentTime = block.timestamp;
 
-    if (currentTime > lastupdate + 600) {
-      _claimSavings();
-    }
-
-    if (assetIncrease) {
-      internalTotalAssets += assets;
-    } else {
-      internalTotalAssets -= assets;
-    }
   }
 
-  function _claimSavings() internal {
-    uint256 claimed = IYieldMaestro(YIELD_MAESTRO).claimSavings();
-    internalTotalAssets += claimed;
-    lastupdate = block.timestamp;
+
+  /**
+   * @dev Informs about approximate sDAI vault APR based on incoming bridged interest and vault deposits
+   * @return amount of interest collected per year divided by amount of current deposits in vault
+   */
+  function vaultAPR() external view returns (uint256) {
+    return WadRayMath.rayDiv(targetRate, WadRayMath.RAY);
   }
 
   /**
-   * @dev Transfer any excess GHO tokens to the Yield Maestro.
+   * @dev set new target rate in APR, such that a target rate of 10% should have input 1000
+   * @param newRate New APR to be set
    */
-  function takeDonated() external {
-    uint256 balance = IERC20(gho).balanceOf(address(this));
-    if (balance > internalTotalAssets) {
-      IERC20(gho).transfer(YIELD_MAESTRO, balance - internalTotalAssets);
-    }
+  function setTargetRate(uint256 newRate) public onlyYieldManager {
+    targetRate = WadRayMath.rayMul(newRate, WadRayMath.RAY);
+  }
+
+  function rescueERC20(address erc20Token, address to, uint256 amount) external onlyFundsAdmin {
+    uint256 max = IERC20(erc20Token).balanceOf(address(this));
+    amount = max > amount ? amount : max;
+    IERC20(erc20Token).transfer(to, amount);
+    emit ERC20Rescued(msg.sender, erc20Token, to, amount);
+  }
+
+  function _onlyFundsAdmin() internal view returns (bool) {
+    return aclManager.hasRole(FUNDS_ADMIN_ROLE, msg.sender);
+  }
+
+  function _onlyYieldManager() internal view returns (bool) {
+    return aclManager.hasRole(YIELD_MANAGER_ROLE, msg.sender);
   }
 }

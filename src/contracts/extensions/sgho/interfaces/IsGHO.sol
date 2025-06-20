@@ -1,27 +1,13 @@
 // SPDX-License-Identifier: agpl-3
 pragma solidity ^0.8.19;
 
-import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
-import {IERC4626} from 'openzeppelin-contracts/contracts/interfaces/IERC4626.sol';
-import {IERC20Permit} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol';
-import {IYieldMaestro} from './IYieldMaestro.sol';
-
 /**
  * @title IsGHO Interface
  * @dev Interface for the sGHO contract, combining ERC4626, ERC20Permit, and custom logic.
  */
-interface IsGHO is IERC4626, IERC20Permit {
+interface IsGHO {
   // --- Custom Errors ---
 
-  /**
-   * @dev Permit deadline has expired.
-   */
-  error ERC2612ExpiredSignature(uint256 deadline);
-
-  /**
-   * @dev Mismatched signature.
-   */
-  error ERC2612InvalidSigner(address signer, address owner);
 
   /**
    * @dev Invalid signature.
@@ -32,6 +18,22 @@ interface IsGHO is IERC4626, IERC20Permit {
    * @dev Thrown when a direct ETH transfer is attempted.
    */
   error NoEthAllowed();
+
+    /**
+   * @dev Only caller with FUNDS_ADMIN role can call
+   */
+  error OnlyFundsAdmin();
+
+  /**
+   * @dev Only YieldManager can call
+   */
+  error OnlyYieldManager();
+
+  /**
+   * @dev Throws if the contract is not initialized.
+   */
+  error NotInitialized();
+
 
   // --- State Variables (as view functions) ---
 
@@ -89,6 +91,21 @@ interface IsGHO is IERC4626, IERC20Permit {
    * to the YIELD_MAESTRO contract. This handles donated or unexpectedly received GHO.
    */
   function takeDonated() external;
+
+
+    /**
+   * @dev Emitted when ERC20 tokens are rescued from the contract.
+   * @param caller The address initiating the rescue.
+   * @param token The address of the ERC20 token rescued.
+   * @param to The recipient address of the rescued tokens.
+   * @param amount The amount of tokens rescued.
+   */
+  event ERC20Rescued(
+    address indexed caller,
+    address indexed token,
+    address indexed to,
+    uint256 amount
+  );
 
   /**
    * @dev Receive function to reject direct Ether transfers.
