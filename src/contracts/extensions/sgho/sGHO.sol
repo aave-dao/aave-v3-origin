@@ -20,7 +20,9 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
 
 
   uint256 public targetRate;
+  uint256 public internalTotalAssets;
   uint256 public yieldIndex;
+  uint256 public lastUpdate;
   uint256 internal constant RATE_PRECISION = 1e10;
   uint256 internal constant ONE_YEAR = 365 days;
 
@@ -44,7 +46,7 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
     address _aclmanager
   ) ERC20('sGHO', 'sGHO') ERC4626(IERC20(_gho)) ERC20Permit('sGHO') {
     gho = _gho;
-        aclManager = IAccessControl(_aclmanager);
+    aclManager = IAccessControl(_aclmanager);
   }
 
   receive() external payable {
@@ -88,6 +90,8 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
     deploymentChainId = block.chainid;
     _DOMAIN_SEPARATOR = _calculateDomainSeparator(block.chainid);
     yieldIndex = WadRayMath.RAY;
+    lastUpdate = block.timestamp;
+    internalTotalAssets = 0;
   }
 
   // --- Approve by signature ---
@@ -263,14 +267,26 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
     return assets;
   }
 
+
+  function totalAssets() public view override(ERC4626) returns (uint256) {
+    return internalTotalAssets;
+  }
+
   /**
    * @dev Update the internal total assets of the vault.
    * This function is called when assets are deposited or withdrawn.
-   * It also claims the savings from the Yield Maestro if the last update was more than 10 minutes ago.
    * @param assets The amount of assets to update.
    * @param assetIncrease A boolean indicating whether the assets are being increased or decreased.
    */
   function _updateVault(uint256 assets, bool assetIncrease) internal {
+    uint256 ratePerSecond = internalTotalAssets.wadMul(targetRate).wadDiv(ONE_YEAR);
+    uint256 timeSinceLastUpdate = block.timestamp - lastUpdate;
+
+    if (assetIncrease) {
+      internalTotalAssets = timeSinceLastUpdate.wadMul(ratePerSecond) + assets;
+    } else {
+      internalTotalAssets = timeSinceLastUpdate.wadMul(ratePerSecond) - assets;
+    }
 
   }
 
@@ -280,7 +296,7 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
    * @return amount of interest collected per year divided by amount of current deposits in vault
    */
   function vaultAPR() external view returns (uint256) {
-    return WadRayMath.rayDiv(targetRate, WadRayMath.RAY);
+    return targetRate.rayDiv(WadRayMath.RAY);
   }
 
   /**
@@ -288,7 +304,7 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
    * @param newRate New APR to be set
    */
   function setTargetRate(uint256 newRate) public onlyYieldManager {
-    targetRate = WadRayMath.rayMul(newRate, WadRayMath.RAY);
+    targetRate = newRate.rayMul(WadRayMath.RAY);
   }
 
   function rescueERC20(address erc20Token, address to, uint256 amount) external onlyFundsAdmin {

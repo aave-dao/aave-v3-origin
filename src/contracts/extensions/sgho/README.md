@@ -2,73 +2,72 @@
 
 ## About
 
-sGHO is an [EIP-4626](https://eips.ethereum.org/EIPS/eip-4626) vault that allows users to earn yield on their GHO tokens. The vault is managed by the YieldMaestro contract, which handles yield distribution and rate management. Additionally, sGHO implements the IStakedToken interface for compatibility with Aave's staking ecosystem.
+sGHO is an [EIP-4626](https://eips.ethereum.org/EIPS/eip-4626) vault that allows users to earn yield on their GHO tokens. The vault automatically distributes yield to depositors through internal accounting, with a soft requirement for a buffer of GHO tokens to be maintained for yield distribution during full withdrawals.
 
 ## Features
 
 - **Full [EIP-4626](https://eips.ethereum.org/EIPS/eip-4626) compatibility.** sGHO implements all standard ERC4626 functions for deposits, withdrawals, and share calculations.
-- **IStakedToken compatibility.** Implements Aave's IStakedToken interface for seamless integration with staking systems:
-  - `stake()`: Maps to deposit functionality
-  - `redeem()`: Maps to withdraw functionality
-  - `claimRewards()`: Claims accumulated yield
-  - `cooldown()`: No-op implementation (no cooldown period required)
-- **Automated yield distribution.** The YieldMaestro contract automatically calculates and distributes yield based on a configurable target rate.
+- **Automatic yield distribution.** Yield is calculated and distributed internally during vault operations, eliminating the need for external yield claiming.
+
 - **Role-based access control.** The system uses Aave's ACLManager for managing permissions:
   - YIELD_MANAGER: Can set target rates and manage yield parameters
   - FUNDS_ADMIN: Can rescue tokens in case of emergencies
 - **Permit support.** Users can approve sGHO to spend their GHO tokens using EIP-2612 permits, enabling gasless approvals.
-- **Donation handling.** The vault can handle external GHO donations and transfer them to the YieldMaestro for yield distribution.
+- **Donation handling.** The vault can handle external GHO donations and automatically incorporate them into the yield distribution system.
 
 ## Architecture
 
-The system consists of two main contracts:
+The system consists of a single main contract:
 
-1. **sGHO.sol**: The main vault contract that:
-   - Implements ERC4626 for standard vault operations
-   - Implements IStakedToken for staking compatibility
-   - Handles deposits and withdrawals
-   - Manages internal asset accounting
-   - Integrates with YieldMaestro for yield distribution
-
-2. **YieldMaestro.sol**: The yield management contract that:
-   - Calculates and distributes yield based on target rates
-   - Manages yield parameters and configurations
-   - Handles emergency token rescues
-   - Integrates with Aave's ACLManager for role management
+**sGHO.sol**: The main vault contract that:
+- Implements ERC4626 for standard vault operations
+- Handles deposits and withdrawals with automatic yield distribution
+- Manages internal asset accounting with yield accrual
+- Integrates with Aave's ACLManager for role management
 
 ## Inheritance and Dependencies
 
 ### sGHO.sol
 - Inherits from:
   - `ERC4626` (OpenZeppelin) - For vault functionality
-  - `IERC20Permit` (OpenZeppelin) - For permit functionality
-  - `IERC20` (OpenZeppelin) - For token operations
-  - `IStakedToken` (Aave) - For staking compatibility
-  - `EIP712` (OpenZeppelin) - For EIP-712 signature support
-  - `Nonces` (OpenZeppelin) - For nonce management
-
-### YieldMaestro.sol
-- Inherits from:
+  - `ERC20Permit` (OpenZeppelin) - For permit functionality
   - `Initializable` (OpenZeppelin) - For initialization pattern
-  - `IYieldMaestro` (Custom interface) - Contract interface
+  - `IsGHO` (Custom interface) - Contract interface
 - Uses OpenZeppelin interfaces:
-  - `IERC4626` - For vault operations
-  - `IERC20Permit` - For permit functionality
+  - `IERC20` - For token operations
   - `IAccessControl` - For role management
+- Uses Aave libraries:
+  - `WadRayMath` - For precise mathematical calculations
 
-## Yield Calculation
+## Yield Calculation and Distribution
 
-The yield is calculated using the following formula:
+The yield is calculated and distributed automatically during vault operations:
+
 ```solidity
-unclaimedRewards = (vaultAssets * targetRate * elapsedTime) / (RATE_PRECISION * ONE_YEAR)
+function _updateVault(uint256 assets, bool assetIncrease) internal {
+  uint256 ratePerSecond = internalTotalAssets.wadMul(targetRate).wadDiv(ONE_YEAR);
+  uint256 timeSinceLastUpdate = block.timestamp - lastUpdate;
+
+  if (assetIncrease) {
+    internalTotalAssets = timeSinceLastUpdate.wadMul(ratePerSecond) + assets;
+  } else {
+    internalTotalAssets = timeSinceLastUpdate.wadMul(ratePerSecond) - assets;
+  }
+}
 ```
 
-Where:
-- `vaultAssets`: Total assets in the vault
-- `targetRate`: Annual percentage rate in basis points (e.g., 1000 = 10%)
-- `elapsedTime`: Time since last yield claim
-- `RATE_PRECISION`: 1e10 for precise calculations
-- `ONE_YEAR`: 365 days in seconds
+### Key Components:
+- **Target Rate**: Annual percentage rate in basis points (e.g., 1000 = 10%)
+- **Internal Total Assets**: Tracks the vault's total assets including accrued yield
+- **Yield Index**: Tracks the cumulative yield multiplier
+- **Last Update**: Timestamp of the last vault update
+- **GHO Buffer**: Optional GHO balance for smooth yield distribution
+
+### Yield Distribution Process:
+1. When deposits or withdrawals occur, `_updateVault()` is called
+2. Yield is calculated based on elapsed time and current total assets
+3. The internal total assets are updated to include accrued yield
+4. A GHO buffer can be maintained to ensure smooth yield distribution during full withdrawals
 
 ## Security Considerations
 
@@ -76,18 +75,18 @@ The system implements several security measures:
 
 - **Role-based access control** through Aave's ACLManager
 - **Token rescue mechanism** for handling stuck tokens
-- **Rate limiting** on yield claims (minimum 10 minutes between claims)
 - **No ETH acceptance** to prevent accidental ETH deposits
-- **Self-claim restriction** on reward claims to prevent unauthorized access
+- **Optional GHO buffer** can be maintained for optimal yield distribution
+- **Initialization pattern** prevents re-initialization attacks
 
 ## Limitations
 
-- Yield claims are limited to once every 10 minutes to prevent excessive gas usage
 - Target rates can only be modified by accounts with the YIELD_MANAGER role
 - The system requires GHO tokens to be properly configured and accessible
-- No cooldown period is implemented for staking operations
+- A GHO buffer is recommended but not required for optimal operation
+- Yield is distributed automatically during vault operations, not on-demand
 
-## Security procedures
+## Security Procedures
 
 For this project, the security procedures applied/being finished are:
 
@@ -95,7 +94,7 @@ For this project, the security procedures applied/being finished are:
 - Fuzzing tests for yield calculations and share conversions
 - Integration tests with Aave's ACLManager
 - Property-based testing for ERC4626 compliance
-- Compatibility tests for IStakedToken interface
+- Buffer requirement validation tests
 
 ---
 
@@ -110,8 +109,8 @@ sgho.deposit(amount, receiver);
 sgho.permit(owner, spender, value, deadline, signature);
 sgho.deposit(amount, receiver);
 
-// Stake GHO (IStakedToken interface)
-sgho.stake(to, amount);
+// Mint shares for a specific amount of GHO
+sgho.mint(shares, receiver);
 ```
 
 ### Withdrawing GHO
@@ -121,22 +120,33 @@ sgho.withdraw(assets, receiver, owner);
 
 // Redeem shares for GHO
 sgho.redeem(shares, receiver, owner);
-
-// Redeem staked GHO (IStakedToken interface)
-sgho.redeem(to, amount);
 ```
 
-### Managing Yield
+### Managing Yield and Configuration
 ```solidity
 // Set target rate (YIELD_MANAGER only)
-yieldMaestro.setTargetRate(1000); // 10% APR
+sgho.setTargetRate(1000); // 10% APR
 
-// Preview claimable yield
-uint256 claimable = yieldMaestro.previewClaimable();
+// View current vault APR
+uint256 apr = sgho.vaultAPR();
 
-// Claim yield (sGHO vault only)
-yieldMaestro.claimSavings();
-
-// Claim rewards (IStakedToken interface)
-sgho.claimRewards(to, amount);
+// Rescue tokens in emergency (FUNDS_ADMIN only)
+sgho.rescueERC20(tokenAddress, recipient, amount);
 ```
+
+### Permit Usage (Gasless Approvals)
+```solidity
+// Standard permit
+sgho.permit(owner, spender, value, deadline, v, r, s);
+
+// Custom permit with signature bytes
+sgho.permit(owner, spender, value, deadline, signature);
+```
+
+## Important Notes
+
+- **GHO Buffer**: A GHO buffer can be maintained to maintain full redeemability, but not mandatory for operations
+- **Automatic Yield**: Yield is distributed automatically during deposit/withdrawal operations
+- **No External Yield Management**: Unlike the previous version, there is no separate YieldMaestro contract
+- **Simplified Architecture**: The system is now self-contained within the sGHO contract
+- **Backwards Compatibility**: Previous IStakedToken compatibility has been removed for a cleaner implementation
