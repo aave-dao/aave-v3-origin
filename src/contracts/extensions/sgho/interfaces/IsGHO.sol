@@ -34,6 +34,11 @@ interface IsGHO {
    */
   error NotInitialized();
 
+  /**
+   * @dev Throws if the GHO token is being rescued.
+   */
+  error CannotRescueGHO();  
+
 
   // --- State Variables (as view functions) ---
 

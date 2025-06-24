@@ -5,7 +5,7 @@ import {ERC4626, ERC20, IERC20} from 'openzeppelin-contracts/contracts/token/ERC
 import {ERC20Permit, EIP712} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/ERC20Permit.sol';
 import {WadRayMath} from '../../../contracts/protocol/libraries/math/WadRayMath.sol';
 import {Initializable} from 'openzeppelin-contracts/contracts/proxy/utils/Initializable.sol';
-import {IAccessControl} from 'openzeppelin-contracts/contracts/access/IAccessControl.sol';  
+import {IAccessControl} from 'openzeppelin-contracts/contracts/access/IAccessControl.sol';
 import {IsGHO} from './interfaces/IsGHO.sol';
 
 interface IERC1271 {
@@ -17,7 +17,6 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
 
   address public immutable gho;
   IAccessControl internal aclManager;
-
 
   uint256 public targetRate;
   uint256 public internalTotalAssets;
@@ -35,7 +34,6 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
   bytes32 public constant PERMIT_TYPEHASH =
     keccak256('Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)');
   string public constant VERSION = '1';
-
 
   /**
    * @dev Set the underlying asset contract. This must be an ERC20-compatible contract (ERC20 or ERC777).
@@ -166,7 +164,7 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
     uint8 v,
     bytes32 r,
     bytes32 s
-  ) public virtual  override(IsGHO, ERC20Permit) {
+  ) public virtual override(IsGHO, ERC20Permit) {
     permit(owner, spender, value, deadline, abi.encodePacked(r, s, v));
   }
   /**
@@ -267,7 +265,6 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
     return assets;
   }
 
-
   function totalAssets() public view override(ERC4626) returns (uint256) {
     return internalTotalAssets;
   }
@@ -281,15 +278,27 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
   function _updateVault(uint256 assets, bool assetIncrease) internal {
     uint256 ratePerSecond = internalTotalAssets.wadMul(targetRate).wadDiv(ONE_YEAR);
     uint256 timeSinceLastUpdate = block.timestamp - lastUpdate;
-
-    if (assetIncrease) {
-      internalTotalAssets = timeSinceLastUpdate.wadMul(ratePerSecond) + assets;
-    } else {
-      internalTotalAssets = timeSinceLastUpdate.wadMul(ratePerSecond) - assets;
+    if (assets > 0 || (timeSinceLastUpdate > 0 && ratePerSecond > 0)) {
+      if (assetIncrease) {
+        internalTotalAssets = timeSinceLastUpdate.wadMul(ratePerSecond) + assets;
+      } else {
+        internalTotalAssets = timeSinceLastUpdate.wadMul(ratePerSecond) - assets;
+      }
     }
-
   }
 
+  function _updateVaultIndex() internal {
+    if (targetRate > 0){
+
+    }
+    uint256 ratePerSecond = wadMul(targetRate).wadDiv(ONE_YEAR);
+    uint256 indexChangePerSecond = yieldIndex.rayMul(ratePerSecond).rayDiv(WadRayMath.RAY);
+    uint256 timeSinceLastUpdate = block.timestamp - lastUpdate;
+
+    if ((timeSinceLastUpdate > 0)) {
+      yieldIndex = yieldIndex + indexChangePerSecond.rayMul(timeSinceLastUpdate);
+    }
+  }
 
   /**
    * @dev Informs about approximate sDAI vault APR based on incoming bridged interest and vault deposits
@@ -308,6 +317,9 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
   }
 
   function rescueERC20(address erc20Token, address to, uint256 amount) external onlyFundsAdmin {
+    if (erc20Token == gho) {
+      revert CannotRescueGHO();
+    }
     uint256 max = IERC20(erc20Token).balanceOf(address(this));
     amount = max > amount ? amount : max;
     IERC20(erc20Token).transfer(to, amount);
