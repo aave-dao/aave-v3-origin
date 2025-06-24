@@ -135,7 +135,7 @@ contract PoolRoundingTests is TestnetProcedures {
     assertEq(IAToken(aToken).balanceOf(user), supplyAmount - 2);
     assertEq(IAToken(aToken).totalSupply(), supplyAmount - 2);
 
-    supplyAmount = 3;
+    supplyAmount = 5;
 
     deal(asset, user, supplyAmount);
     IERC20(asset).approve(report.poolProxy, supplyAmount);

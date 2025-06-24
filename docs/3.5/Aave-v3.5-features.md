@@ -56,7 +56,28 @@ When calculating a user's health factor, the protocol must convert their asset a
 
 This approach of always rounding in favor of the protocol during health factor calculations is a critical security measure that protects it from potential insolvencies arising from rounding discrepancies.
 
+### Internal scaledAccounting
+
+A lot of the precision loss is caused by having multiple conversions from unscaled to scaled and back.
+To name a few examples:
+
+- when validating caps, for the validation the `scaledAmount * index` + `input.amount` were considered to be the total supply - this is not accurate though as the conversion from `input.amount` to `scaledAmount` will always have a precision loss.
+- when minting tokens to the treasury, the protocol stores the `scaledAmount` in `accruedToTreasury`. When he protocol mints to the treasury, the `accruedToTreasury` is scaled up and then scaled down again, which can lead to precision loss.
+
+While these problems are not critical, for the most part, they can be mitigated by consistently working with the scaled values throughout the protocol. Therefore, `mint` and `burn` now accept `scaledAmount` as an additional input, which allows avoiding repeated roundings. As a side effect, this also slightly reduces gas consumption across the board.
+
+### Improved flag logic
+
+In v3.4 we increased the robustness of the flag logic for borrow operations, by switching validations from `scaledBalance to scaled` comparisons to checks against the actual balance (e.g. `balanceZeroAfterBurn`).
+
+In v3.5 we decided to double down on these robustness improvements:
+
+- on `repayWithAToken` and `withdraw`, the collateral flag is now properly set to `false` when burning all aTokens in the process. In previous versions of the protocol, there were edge cases in which the collateral flag was not properly updated.
+
 ### Misc changes
 
 - smaller refactoring in `LiquidationLogic` making the code more consistent
 - `repayWithAToken` is only allowed when the user is still healthy **after** the repayment. This is done in order to prevent some edge cases where the user would have debt, but no collateral or now with the adjustments on rounding, bringing himself into liquidation area through selfRepayment.
+- `eliminateReserveDeficit` return value: The `eliminateReserveDeficit` function has been updated to return the `uint256` amount of deficit that was actually covered. This returned value represents the lesser of the input `amount` and the actual `deficit` of the reserve at the time of the call. This provides clarity to the caller on the exact amount that was successfully written off.
+  - Note: This is a non-breaking change. The migration from no return value to a `uint256` return value is not expected to break any existing integrations.
+- In previous versions of the protocol, `Mint` and `Burn` events did not always perfectly reflect the amount minted and burned due to imprecision in the calculation of the `amountToMint` and `amountToBurn` variables. In v3.5, the amount emitted now always accurately reflects the difference between the previous upscaled balance and the new upscaled balance.

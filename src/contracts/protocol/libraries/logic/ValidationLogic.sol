@@ -13,7 +13,7 @@ import {ReserveConfiguration} from '../configuration/ReserveConfiguration.sol';
 import {UserConfiguration} from '../configuration/UserConfiguration.sol';
 import {EModeConfiguration} from '../configuration/EModeConfiguration.sol';
 import {Errors} from '../helpers/Errors.sol';
-import {WadRayMath} from '../math/WadRayMath.sol';
+import {TokenMath} from '../helpers/TokenMath.sol';
 import {PercentageMath} from '../math/PercentageMath.sol';
 import {DataTypes} from '../types/DataTypes.sol';
 import {ReserveLogic} from './ReserveLogic.sol';
@@ -28,7 +28,7 @@ import {IncentivizedERC20} from '../../tokenization/base/IncentivizedERC20.sol';
  */
 library ValidationLogic {
   using ReserveLogic for DataTypes.ReserveData;
-  using WadRayMath for uint256;
+  using TokenMath for uint256;
   using PercentageMath for uint256;
   using SafeCast for uint256;
   using GPv2SafeERC20 for IERC20;
@@ -59,15 +59,15 @@ library ValidationLogic {
   /**
    * @notice Validates a supply action.
    * @param reserveCache The cached data of the reserve
-   * @param amount The amount to be supplied
+   * @param scaledAmount The scaledAmount to be supplied
    */
   function validateSupply(
     DataTypes.ReserveCache memory reserveCache,
     DataTypes.ReserveData storage reserve,
-    uint256 amount,
+    uint256 scaledAmount,
     address onBehalfOf
   ) internal view {
-    require(amount != 0, Errors.InvalidAmount());
+    require(scaledAmount != 0, Errors.InvalidAmount());
 
     (bool isActive, bool isFrozen, , bool isPaused) = reserveCache.reserveConfiguration.getFlags();
     require(isActive, Errors.ReserveInactive());
@@ -79,9 +79,11 @@ library ValidationLogic {
     // Replicate aToken.totalSupply (round down), to always underestimate the collateral.
     require(
       supplyCap == 0 ||
-        ((IAToken(reserveCache.aTokenAddress).scaledTotalSupply() +
-          uint256(reserve.accruedToTreasury)).rayMulFloor(reserveCache.nextLiquidityIndex) +
-          amount) <=
+        (
+          (IAToken(reserveCache.aTokenAddress).scaledTotalSupply() +
+            scaledAmount +
+            uint256(reserve.accruedToTreasury)).getATokenBalance(reserveCache.nextLiquidityIndex)
+        ) <=
         supplyCap * (10 ** reserveCache.reserveConfiguration.getDecimals()),
       Errors.SupplyCapExceeded()
     );
@@ -90,16 +92,16 @@ library ValidationLogic {
   /**
    * @notice Validates a withdraw action.
    * @param reserveCache The cached data of the reserve
-   * @param amount The amount to be withdrawn
-   * @param userBalance The balance of the user
+   * @param scaledAmount The scaled amount to be withdrawn
+   * @param scaledUserBalance The scaled balance of the user
    */
   function validateWithdraw(
     DataTypes.ReserveCache memory reserveCache,
-    uint256 amount,
-    uint256 userBalance
+    uint256 scaledAmount,
+    uint256 scaledUserBalance
   ) internal pure {
-    require(amount != 0, Errors.InvalidAmount());
-    require(amount <= userBalance, Errors.NotEnoughAvailableUserBalance());
+    require(scaledAmount != 0, Errors.InvalidAmount());
+    require(scaledAmount <= scaledUserBalance, Errors.NotEnoughAvailableUserBalance());
 
     (bool isActive, , , bool isPaused) = reserveCache.reserveConfiguration.getFlags();
     require(isActive, Errors.ReserveInactive());
@@ -107,6 +109,7 @@ library ValidationLogic {
   }
 
   struct ValidateBorrowLocalVars {
+    uint256 amount;
     uint256 currentLtv;
     uint256 collateralNeededInBaseCurrency;
     uint256 userCollateralInBaseCurrency;
@@ -114,7 +117,6 @@ library ValidationLogic {
     uint256 availableLiquidity;
     uint256 healthFactor;
     uint256 totalDebt;
-    uint256 totalSupplyVariableDebt;
     uint256 reserveDecimals;
     uint256 borrowCap;
     uint256 amountInBaseCurrency;
@@ -140,9 +142,10 @@ library ValidationLogic {
     mapping(uint8 => DataTypes.EModeCategory) storage eModeCategories,
     DataTypes.ValidateBorrowParams memory params
   ) internal view {
-    require(params.amount != 0, Errors.InvalidAmount());
+    require(params.amountScaled != 0, Errors.InvalidAmount());
 
     ValidateBorrowLocalVars memory vars;
+    vars.amount = params.amountScaled.getVTokenBalance(params.reserveCache.nextVariableBorrowIndex);
 
     (vars.isActive, vars.isFrozen, vars.borrowingEnabled, vars.isPaused) = params
       .reserveCache
@@ -154,7 +157,7 @@ library ValidationLogic {
     require(!vars.isFrozen, Errors.ReserveFrozen());
     require(vars.borrowingEnabled, Errors.BorrowingNotEnabled());
     require(
-      IERC20(params.reserveCache.aTokenAddress).totalSupply() >= params.amount,
+      IERC20(params.reserveCache.aTokenAddress).totalSupply() >= vars.amount,
       Errors.InvalidAmount()
     );
 
@@ -178,11 +181,8 @@ library ValidationLogic {
 
     if (vars.borrowCap != 0) {
       // Replicate vDebt.totalSupply (round up), to always overestimate the debt.
-      vars.totalSupplyVariableDebt = params.reserveCache.currScaledVariableDebt.rayMulCeil(
-        params.reserveCache.nextVariableBorrowIndex
-      );
-
-      vars.totalDebt = vars.totalSupplyVariableDebt + params.amount;
+      vars.totalDebt = (params.reserveCache.currScaledVariableDebt + params.amountScaled)
+        .getVTokenBalance(params.reserveCache.nextVariableBorrowIndex);
 
       unchecked {
         require(vars.totalDebt <= vars.borrowCap * vars.assetUnit, Errors.BorrowCapExceeded());
@@ -228,7 +228,7 @@ library ValidationLogic {
 
     vars.amountInBaseCurrency =
       IPriceOracleGetter(params.oracle).getAssetPrice(params.asset) *
-      params.amount;
+      vars.amount;
     unchecked {
       vars.amountInBaseCurrency /= vars.assetUnit;
     }
@@ -264,7 +264,7 @@ library ValidationLogic {
    * @param reserveCache The cached data of the reserve
    * @param amountSent The amount sent for the repayment. Can be an actual value or type(uint256).max
    * @param onBehalfOf The address of the user sender is repaying for
-   * @param debt The borrow balance of the user
+   * @param debtScaled The borrow scaled balance of the user
    */
   function validateRepay(
     address user,
@@ -272,7 +272,7 @@ library ValidationLogic {
     uint256 amountSent,
     DataTypes.InterestRateMode interestRateMode,
     address onBehalfOf,
-    uint256 debt
+    uint256 debtScaled
   ) internal pure {
     require(amountSent != 0, Errors.InvalidAmount());
     require(
@@ -288,7 +288,7 @@ library ValidationLogic {
     require(isActive, Errors.ReserveInactive());
     require(!isPaused, Errors.ReservePaused());
 
-    require(debt != 0, Errors.NoDebtOfSelectedType());
+    require(debtScaled != 0, Errors.NoDebtOfSelectedType());
   }
 
   /**

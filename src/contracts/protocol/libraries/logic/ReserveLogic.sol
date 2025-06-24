@@ -11,6 +11,7 @@ import {MathUtils} from '../math/MathUtils.sol';
 import {WadRayMath} from '../math/WadRayMath.sol';
 import {PercentageMath} from '../math/PercentageMath.sol';
 import {Errors} from '../helpers/Errors.sol';
+import {TokenMath} from '../helpers/TokenMath.sol';
 import {DataTypes} from '../types/DataTypes.sol';
 import {SafeCast} from 'openzeppelin-contracts/contracts/utils/math/SafeCast.sol';
 
@@ -21,6 +22,7 @@ import {SafeCast} from 'openzeppelin-contracts/contracts/utils/math/SafeCast.sol
  */
 library ReserveLogic {
   using WadRayMath for uint256;
+  using TokenMath for uint256;
   using PercentageMath for uint256;
   using SafeCast for uint256;
   using GPv2SafeERC20 for IERC20;
@@ -133,7 +135,7 @@ library ReserveLogic {
     uint256 liquidityTaken,
     address interestRateStrategyAddress
   ) internal {
-    uint256 totalVariableDebt = reserveCache.nextScaledVariableDebt.rayMulCeil(
+    uint256 totalVariableDebt = reserveCache.nextScaledVariableDebt.getVTokenBalance(
       reserveCache.nextVariableBorrowIndex
     );
 
@@ -195,9 +197,8 @@ library ReserveLogic {
     uint256 amountToMint = totalDebtAccrued.percentMul(reserveCache.reserveFactor);
 
     if (amountToMint != 0) {
-      // Replicate aToken.balanceOf (round down), to always underestimate the fee.
       reserve.accruedToTreasury += amountToMint
-        .rayDivFloor(reserveCache.nextLiquidityIndex)
+        .getATokenMintScaledAmount(reserveCache.nextLiquidityIndex)
         .toUint128();
     }
   }

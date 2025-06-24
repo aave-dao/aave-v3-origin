@@ -89,7 +89,7 @@ contract ATokenRoundingTest is TestnetProcedures {
     // user scaled balance should be rounded down
     // 1 * 1e27 / (1e27 + 1) = 0.9999999999999999999999999990...
 
-    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidMintAmount.selector));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidAmount.selector));
     contracts.poolProxy.supply({
       asset: asset,
       amount: supplyAmount,

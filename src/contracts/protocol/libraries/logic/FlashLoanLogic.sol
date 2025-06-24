@@ -11,7 +11,7 @@ import {IFlashLoanSimpleReceiver} from '../../../misc/flashloan/interfaces/IFlas
 import {IPoolAddressesProvider} from '../../../interfaces/IPoolAddressesProvider.sol';
 import {ReserveConfiguration} from '../configuration/ReserveConfiguration.sol';
 import {Errors} from '../helpers/Errors.sol';
-import {WadRayMath} from '../math/WadRayMath.sol';
+import {TokenMath} from '../helpers/TokenMath.sol';
 import {PercentageMath} from '../math/PercentageMath.sol';
 import {DataTypes} from '../types/DataTypes.sol';
 import {ValidationLogic} from './ValidationLogic.sol';
@@ -28,7 +28,7 @@ library FlashLoanLogic {
   using ReserveLogic for DataTypes.ReserveData;
   using GPv2SafeERC20 for IERC20;
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
-  using WadRayMath for uint256;
+  using TokenMath for uint256;
   using PercentageMath for uint256;
   using SafeCast for uint256;
 
@@ -225,7 +225,7 @@ library FlashLoanLogic {
 
     reserve.accruedToTreasury += params
       .totalPremium
-      .rayDivFloor(reserveCache.nextLiquidityIndex)
+      .getATokenMintScaledAmount(reserveCache.nextLiquidityIndex)
       .toUint128();
 
     reserve.updateInterestRatesAndVirtualBalance(

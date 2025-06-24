@@ -9,6 +9,7 @@ import {UserConfiguration} from '../configuration/UserConfiguration.sol';
 import {EModeConfiguration} from '../configuration/EModeConfiguration.sol';
 import {PercentageMath} from '../math/PercentageMath.sol';
 import {WadRayMath} from '../math/WadRayMath.sol';
+import {TokenMath} from '../helpers/TokenMath.sol';
 import {MathUtils} from '../math/MathUtils.sol';
 import {DataTypes} from '../types/DataTypes.sol';
 import {ReserveLogic} from './ReserveLogic.sol';
@@ -21,6 +22,7 @@ import {EModeLogic} from './EModeLogic.sol';
  */
 library GenericLogic {
   using ReserveLogic for DataTypes.ReserveData;
+  using TokenMath for uint256;
   using WadRayMath for uint256;
   using PercentageMath for uint256;
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
@@ -216,7 +218,7 @@ library GenericLogic {
     // Replicate vDebt.balanceOf (round up), to always overestimate the debt.
     uint256 userTotalDebt = IScaledBalanceToken(reserve.variableDebtTokenAddress)
       .scaledBalanceOf(user)
-      .rayMulCeil(reserve.getNormalizedDebt());
+      .getVTokenBalance(reserve.getNormalizedDebt());
 
     return MathUtils.mulDivCeil(userTotalDebt, assetPrice, assetUnit);
   }
@@ -239,7 +241,7 @@ library GenericLogic {
   ) private view returns (uint256) {
     // Replicate aToken.balanceOf (round down), to always underestimate the collateral.
     uint256 balance = (
-      IScaledBalanceToken(reserve.aTokenAddress).scaledBalanceOf(user).rayMulFloor(
+      IScaledBalanceToken(reserve.aTokenAddress).scaledBalanceOf(user).getATokenBalance(
         reserve.getNormalizedIncome()
       )
     ) * assetPrice;

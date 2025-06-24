@@ -535,17 +535,17 @@ interface IPool {
    * @param asset The address of the underlying asset of the aToken
    * @param from The user from which the aTokens are transferred
    * @param to The user receiving the aTokens
-   * @param amount The amount being transferred/withdrawn
-   * @param balanceFromBefore The aToken balance of the `from` user before the transfer
-   * @param balanceToBefore The aToken balance of the `to` user before the transfer
+   * @param scaledAmount The scaled amount being transferred/withdrawn
+   * @param scaledBalanceFromBefore The aToken scaled balance of the `from` user before the transfer
+   * @param scaledBalanceToBefore The aToken scaled balance of the `to` user before the transfer
    */
   function finalizeTransfer(
     address asset,
     address from,
     address to,
-    uint256 amount,
-    uint256 balanceFromBefore,
-    uint256 balanceToBefore
+    uint256 scaledAmount,
+    uint256 scaledBalanceFromBefore,
+    uint256 scaledBalanceToBefore
   ) external;
 
   /**

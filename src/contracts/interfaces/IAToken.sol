@@ -24,14 +24,14 @@ interface IAToken is IERC20, IScaledBalanceToken, IInitializableAToken {
    * @notice Mints `amount` aTokens to `user`
    * @param caller The address performing the mint
    * @param onBehalfOf The address of the user that will receive the minted aTokens
-   * @param amount The amount of tokens getting minted
+   * @param scaledAmount The scaled amount of tokens getting minted
    * @param index The next liquidity index of the reserve
    * @return `true` if the the previous balance of the user was 0
    */
   function mint(
     address caller,
     address onBehalfOf,
-    uint256 amount,
+    uint256 scaledAmount,
     uint256 index
   ) external returns (bool);
 
@@ -42,25 +42,40 @@ interface IAToken is IERC20, IScaledBalanceToken, IInitializableAToken {
    * @param from The address from which the aTokens will be burned
    * @param receiverOfUnderlying The address that will receive the underlying
    * @param amount The amount being burned
+   * @param scaledAmount The scaled amount being burned
    * @param index The next liquidity index of the reserve
+   * @return `true` if the the new balance of the user is 0
    */
-  function burn(address from, address receiverOfUnderlying, uint256 amount, uint256 index) external;
+  function burn(
+    address from,
+    address receiverOfUnderlying,
+    uint256 amount,
+    uint256 scaledAmount,
+    uint256 index
+  ) external returns (bool);
 
   /**
    * @notice Mints aTokens to the reserve treasury
-   * @param amount The amount of tokens getting minted
+   * @param scaledAmount The scaled amount of tokens getting minted
    * @param index The next liquidity index of the reserve
    */
-  function mintToTreasury(uint256 amount, uint256 index) external;
+  function mintToTreasury(uint256 scaledAmount, uint256 index) external;
 
   /**
    * @notice Transfers aTokens in the event of a borrow being liquidated, in case the liquidators reclaims the aToken
    * @param from The address getting liquidated, current owner of the aTokens
    * @param to The recipient
-   * @param value The amount of tokens getting transferred
+   * @param amount The amount of tokens getting transferred
+   * @param scaledAmount The scaled amount of tokens getting transferred
    * @param index The next liquidity index of the reserve
    */
-  function transferOnLiquidation(address from, address to, uint256 value, uint256 index) external;
+  function transferOnLiquidation(
+    address from,
+    address to,
+    uint256 amount,
+    uint256 scaledAmount,
+    uint256 index
+  ) external;
 
   /**
    * @notice Transfers the underlying asset to `target`.

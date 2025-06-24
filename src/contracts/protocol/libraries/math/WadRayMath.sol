@@ -24,14 +24,6 @@ library WadRayMath {
 
   uint256 internal constant WAD_RAY_RATIO = 1e9;
 
-  function reverseRounding(Rounding r) internal pure returns (Rounding) {
-    if (r == Rounding.Floor) {
-      return Rounding.Ceil;
-    } else {
-      return Rounding.Floor;
-    }
-  }
-
   /**
    * @dev Multiplies two wad, rounding half up to the nearest wad
    * @dev assembly optimized for improved gas savings, see https://twitter.com/transmissions11/status/1451131036377571328

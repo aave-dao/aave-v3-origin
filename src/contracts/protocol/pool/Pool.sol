@@ -577,9 +577,9 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
     address asset,
     address from,
     address to,
-    uint256 amount,
-    uint256 balanceFromBefore,
-    uint256 balanceToBefore
+    uint256 scaledAmount,
+    uint256 scaledBalanceFromBefore,
+    uint256 scaledBalanceToBefore
   ) external virtual override {
     require(_msgSender() == _reserves[asset].aTokenAddress, Errors.CallerNotAToken());
     SupplyLogic.executeFinalizeTransfer(
@@ -591,9 +591,9 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
         asset: asset,
         from: from,
         to: to,
-        amount: amount,
-        balanceFromBefore: balanceFromBefore,
-        balanceToBefore: balanceToBefore,
+        scaledAmount: scaledAmount,
+        scaledBalanceFromBefore: scaledBalanceFromBefore,
+        scaledBalanceToBefore: scaledBalanceToBefore,
         oracle: ADDRESSES_PROVIDER.getPriceOracle(),
         fromEModeCategory: _usersEModeCategory[from]
       })
