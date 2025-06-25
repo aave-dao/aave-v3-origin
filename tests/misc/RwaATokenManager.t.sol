@@ -9,7 +9,7 @@ import {IPool} from '../../src/contracts/interfaces/IPool.sol';
 import {IRwaAToken} from '../../src/contracts/interfaces/IRwaAToken.sol';
 import {stdError} from 'forge-std/Test.sol';
 import {Vm} from 'forge-std/Vm.sol';
-import {RwaATokenManager} from '../../src/contracts/misc/RwaATokenManager.sol';
+import {RwaATokenManager, IRwaATokenManager} from '../../src/contracts/misc/RwaATokenManager.sol';
 import {TestnetProcedures} from '../utils/TestnetProcedures.sol';
 
 contract RwaATokenManagerTest is TestnetProcedures {
@@ -63,10 +63,10 @@ contract RwaATokenManagerTest is TestnetProcedures {
     assertEq(rwaATokenManager.AUTHORIZED_TRANSFER_ROLE(), keccak256('AUTHORIZED_TRANSFER'));
   }
 
-  function test_fuzz_getAuthorizedTransferRole(address aTokenAddress) public view {
+  function test_fuzz_getAuthorizedTransferRole(address aToken) public view {
     assertEq(
-      rwaATokenManager.getAuthorizedTransferRole(aTokenAddress),
-      keccak256(abi.encode(rwaATokenManager.AUTHORIZED_TRANSFER_ROLE(), aTokenAddress))
+      rwaATokenManager.getAuthorizedTransferRole(aToken),
+      keccak256(abi.encode(rwaATokenManager.AUTHORIZED_TRANSFER_ROLE(), aToken))
     );
   }
 
@@ -218,25 +218,22 @@ contract RwaATokenManagerTest is TestnetProcedures {
     );
   }
 
-  function test_fuzz_hasAuthorizedTransferRole_False(
-    address aTokenAddress,
-    address account
-  ) public view {
-    assertFalse(rwaATokenManager.hasAuthorizedTransferRole(aTokenAddress, account));
+  function test_fuzz_hasAuthorizedTransferRole_False(address aToken, address account) public view {
+    assertFalse(rwaATokenManager.hasAuthorizedTransferRole(aToken, account));
   }
 
   /// @dev Grant role to aBuidl admin, then revoke role
   function test_fuzz_hasAuthorizedTransfer_False_Scenario() public {
-    address aTokenAddress = rwaATokenInfos[0].rwaAToken;
+    address aToken = rwaATokenInfos[0].rwaAToken;
 
     test_fuzz_hasAuthorizedTransferRole_true(0);
-    test_fuzz_hasAuthorizedTransferRole_False(aTokenAddress, poolAdmin);
-    test_fuzz_hasAuthorizedTransferRole_False(aTokenAddress, rwaATokenInfos[1].rwaATokenAdmin);
-    test_fuzz_hasAuthorizedTransferRole_False(aTokenAddress, rwaATokenInfos[2].rwaATokenAdmin);
+    test_fuzz_hasAuthorizedTransferRole_False(aToken, poolAdmin);
+    test_fuzz_hasAuthorizedTransferRole_False(aToken, rwaATokenInfos[1].rwaATokenAdmin);
+    test_fuzz_hasAuthorizedTransferRole_False(aToken, rwaATokenInfos[2].rwaATokenAdmin);
 
     vm.prank(rwaATokenManagerOwner);
     rwaATokenManager.revokeAuthorizedTransferRole(rwaATokenList.aBuidl, aBuidlAdmin);
-    test_fuzz_hasAuthorizedTransferRole_False(aTokenAddress, rwaATokenInfos[1].rwaATokenAdmin);
+    test_fuzz_hasAuthorizedTransferRole_False(aToken, rwaATokenInfos[1].rwaATokenAdmin);
   }
 
   function test_fuzz_reverts_transferRwaAToken_NotATokenTransferRole(
@@ -380,6 +377,15 @@ contract RwaATokenManagerTest is TestnetProcedures {
         IPool.finalizeTransfer,
         (address(rwaATokenInfo.rwaToken), from, to, amount, fromBalanceBefore, toBalanceBefore)
       )
+    );
+
+    vm.expectEmit(address(rwaATokenManager));
+    emit IRwaATokenManager.TransferRwaAToken(
+      rwaATokenInfo.rwaATokenAdmin,
+      address(rwaATokenInfo.rwaAToken),
+      from,
+      to,
+      amount
     );
 
     vm.prank(rwaATokenInfo.rwaATokenAdmin);

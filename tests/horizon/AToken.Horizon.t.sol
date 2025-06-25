@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import {IERC20} from '../../src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
 import {IPool} from '../../src/contracts/interfaces/IPool.sol';
 import {Errors} from '../../src/contracts/protocol/libraries/helpers/Errors.sol';
-import {RwaAToken} from '../../src/contracts/protocol/tokenization/RwaAToken.sol';
+import {RwaAToken, IRwaAToken} from '../../src/contracts/protocol/tokenization/RwaAToken.sol';
 import {TestnetProcedures} from '../utils/TestnetProcedures.sol';
 
 import {stdError} from 'forge-std/Test.sol';
@@ -178,6 +178,9 @@ contract ATokenHorizonTests is TestnetProcedures {
 
     vm.expectEmit(address(aBuidl));
     emit IERC20.Transfer(from, to, amount);
+
+    vm.expectEmit(address(aBuidl));
+    emit IRwaAToken.AuthorizedTransfer(rwaATokenTransferAdmin, from, to, amount);
 
     vm.prank(rwaATokenTransferAdmin);
     bool success = aBuidl.authorizedTransfer(from, to, amount);

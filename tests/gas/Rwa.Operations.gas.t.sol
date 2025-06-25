@@ -50,7 +50,7 @@ contract RwaOperations_gas_Tests is Testhelpers {
 
     vm.prank(carol);
     rwaATokenManager.transferRwaAToken({
-      aTokenAddress: rwaATokenList.aBuidl,
+      aToken: rwaATokenList.aBuidl,
       from: alice,
       to: bob,
       amount: 100e6

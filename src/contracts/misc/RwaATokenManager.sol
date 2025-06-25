@@ -24,35 +24,37 @@ contract RwaATokenManager is AccessControl, IRwaATokenManager {
   }
 
   /// @inheritdoc IRwaATokenManager
-  function grantAuthorizedTransferRole(address aTokenAddress, address account) external override {
-    grantRole(getAuthorizedTransferRole(aTokenAddress), account);
+  function grantAuthorizedTransferRole(address aToken, address account) external override {
+    grantRole(getAuthorizedTransferRole(aToken), account);
   }
 
   /// @inheritdoc IRwaATokenManager
-  function revokeAuthorizedTransferRole(address aTokenAddress, address account) external override {
-    revokeRole(getAuthorizedTransferRole(aTokenAddress), account);
+  function revokeAuthorizedTransferRole(address aToken, address account) external override {
+    revokeRole(getAuthorizedTransferRole(aToken), account);
   }
 
   /// @inheritdoc IRwaATokenManager
   function transferRwaAToken(
-    address aTokenAddress,
+    address aToken,
     address from,
     address to,
     uint256 amount
-  ) external override onlyRole(getAuthorizedTransferRole(aTokenAddress)) returns (bool) {
-    return IRwaAToken(aTokenAddress).authorizedTransfer(from, to, amount);
+  ) external override onlyRole(getAuthorizedTransferRole(aToken)) returns (bool) {
+    bool result = IRwaAToken(aToken).authorizedTransfer(from, to, amount);
+    emit TransferRwaAToken(msg.sender, aToken, from, to, amount);
+    return result;
   }
 
   /// @inheritdoc IRwaATokenManager
   function hasAuthorizedTransferRole(
-    address aTokenAddress,
+    address aToken,
     address account
   ) external view override returns (bool) {
-    return hasRole(getAuthorizedTransferRole(aTokenAddress), account);
+    return hasRole(getAuthorizedTransferRole(aToken), account);
   }
 
   /// @inheritdoc IRwaATokenManager
-  function getAuthorizedTransferRole(address aTokenAddress) public pure override returns (bytes32) {
-    return keccak256(abi.encode(AUTHORIZED_TRANSFER_ROLE, aTokenAddress));
+  function getAuthorizedTransferRole(address aToken) public pure override returns (bytes32) {
+    return keccak256(abi.encode(AUTHORIZED_TRANSFER_ROLE, aToken));
   }
 }
