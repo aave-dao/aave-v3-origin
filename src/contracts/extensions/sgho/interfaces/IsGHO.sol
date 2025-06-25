@@ -8,7 +8,6 @@ pragma solidity ^0.8.19;
 interface IsGHO {
   // --- Custom Errors ---
 
-
   /**
    * @dev Invalid signature.
    */
@@ -19,7 +18,7 @@ interface IsGHO {
    */
   error NoEthAllowed();
 
-    /**
+  /**
    * @dev Only caller with FUNDS_ADMIN role can call
    */
   error OnlyFundsAdmin();
@@ -37,30 +36,54 @@ interface IsGHO {
   /**
    * @dev Throws if the GHO token is being rescued.
    */
-  error CannotRescueGHO();  
-
-
+  error CannotRescueGHO();
+  
   // --- State Variables (as view functions) ---
 
   /**
    * @dev Returns the address of the underlying GHO token used by the vault.
    */
-  function gho() external view returns (address); // Corresponds to public immutable gho
-
-  /**
-   * @dev Returns the address of the Yield Maestro contract managing savings claims.
-   */
-  function YIELD_MAESTRO() external view returns (address); // Corresponds to public YIELD_MAESTRO
+  function gho() external view returns (address);
 
   /**
    * @dev Returns the chain ID where the contract was deployed. Used for EIP-712 signature validation.
    */
-  function deploymentChainId() external view returns (uint256); // Corresponds to public immutable deploymentChainId
+  function deploymentChainId() external view returns (uint256);
 
   /**
    * @dev Returns the EIP-712 version string.
    */
-  function VERSION() external view returns (string memory); // Corresponds to public constant VERSION
+  function VERSION() external view returns (string memory);
+
+  /**
+   * @dev Returns the current yield index.
+   */
+  function yieldIndex() external view returns (uint256);
+
+  /**
+   * @dev Returns the current target rate.
+   */
+  function targetRate() external view returns (uint256);
+
+  /**
+   * @dev Returns the last update timestamp.
+   */
+  function lastUpdate() external view returns (uint256);
+
+  /**
+   * @dev Returns the FUNDS_ADMIN role identifier.
+   */
+  function FUNDS_ADMIN_ROLE() external view returns (bytes32);
+
+  /**
+   * @dev Returns the YIELD_MANAGER role identifier.
+   */
+  function YIELD_MANAGER_ROLE() external view returns (bytes32);
+
+  /**
+   * @dev Returns the permit typehash.
+   */
+  function PERMIT_TYPEHASH() external view returns (bytes32);
 
   // --- Functions ---
 
@@ -70,6 +93,11 @@ interface IsGHO {
   // totalSupply, balanceOf, transfer, allowance, approve, transferFrom) are inherited via IERC4626.
 
   // Note: Standard ERC20Permit functions (permit, nonces, DOMAIN_SEPARATOR) are inherited via IERC20Permit.
+
+  /**
+   * @dev Initialize the contract.
+   */
+  function initialize() external payable;
 
   /**
    * @dev Overload of the standard permit function to accept v, r, s signature components directly.
@@ -92,13 +120,28 @@ interface IsGHO {
   ) external;
 
   /**
-   * @dev Transfers any GHO balance held by this contract in excess of the reported `totalAssets()`
-   * to the YIELD_MAESTRO contract. This handles donated or unexpectedly received GHO.
+   * @dev Set the target rate for yield generation.
+   * @param newRate The new target rate in basis points (e.g., 1000 = 10%).
    */
-  function takeDonated() external;
+  function setTargetRate(uint256 newRate) external;
 
+  /**
+   * @dev Get the vault APR.
+   * @return The current vault APR.
+   */
+  function vaultAPR() external view returns (uint256);
 
-    /**
+  /**
+   * @dev Rescue ERC20 tokens from the contract.
+   * @param erc20Token The address of the ERC20 token to rescue.
+   * @param to The recipient address.
+   * @param amount The amount to rescue.
+   */
+  function rescueERC20(address erc20Token, address to, uint256 amount) external;
+
+  // --- Events ---
+
+  /**
    * @dev Emitted when ERC20 tokens are rescued from the contract.
    * @param caller The address initiating the rescue.
    * @param token The address of the ERC20 token rescued.
