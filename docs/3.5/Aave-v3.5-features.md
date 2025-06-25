@@ -74,6 +74,14 @@ In v3.5 we decided to double down on these robustness improvements:
 
 - on `repayWithAToken` and `withdraw`, the collateral flag is now properly set to `false` when burning all aTokens in the process. In previous versions of the protocol, there were edge cases in which the collateral flag was not properly updated.
 
+### Improved allowance
+
+Aave historically has never accurately tracked allowance. The reason for this is that in practice most operations are performed with the desired amount of `assets`, but the a/v token converting these amounts to `shares`.
+For allowance / approval, this means that the consumed allowance is not always equal to the amount transferred. While this problem is not perfectly solvable without breaking changes, in v3.5 the protocol ensures that the exact consumed allowance is burned if available.
+
+Example: When a user calls `transferFrom(sender, recipient, 100)` in most cases the transfer will transfer slightly more than `100` tokens (e.g `101`). This is due to precision loss between assets/shares conversion.
+In Aave versions `< 3.5` this action would always result in burning `100` allowance. On Aave v3.5, the transfer will either burn `101` allowance or burn `100` allowance dependent on the users available allowance. This prevents undesired double spending of allowance, while maintaining backwards compatibility.
+
 ### Misc changes
 
 - smaller refactoring in `LiquidationLogic` making the code more consistent

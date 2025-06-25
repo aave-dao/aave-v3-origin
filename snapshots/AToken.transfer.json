@@ -1,11 +1,11 @@
 {
-  "full amount; receiver: ->enableCollateral": "138978",
-  "full amount; sender: ->disableCollateral;": "97383",
-  "full amount; sender: ->disableCollateral; receiver: ->enableCollateral": "139095",
-  "full amount; sender: ->disableCollateral; receiver: dirty, ->enableCollateral": "127143",
-  "full amount; sender: collateralDisabled": "97266",
-  "partial amount; sender: collateralDisabled;": "97242",
-  "partial amount; sender: collateralDisabled; receiver: ->enableCollateral": "138954",
-  "partial amount; sender: collateralEnabled;": "97450",
-  "partial amount; sender: collateralEnabled; receiver: ->enableCollateral": "139162"
+  "full amount; receiver: ->enableCollateral": "138977",
+  "full amount; sender: ->disableCollateral;": "97382",
+  "full amount; sender: ->disableCollateral; receiver: ->enableCollateral": "139094",
+  "full amount; sender: ->disableCollateral; receiver: dirty, ->enableCollateral": "127142",
+  "full amount; sender: collateralDisabled": "97265",
+  "partial amount; sender: collateralDisabled;": "97241",
+  "partial amount; sender: collateralDisabled; receiver: ->enableCollateral": "138953",
+  "partial amount; sender: collateralEnabled;": "97449",
+  "partial amount; sender: collateralEnabled; receiver: ->enableCollateral": "139161"
 }

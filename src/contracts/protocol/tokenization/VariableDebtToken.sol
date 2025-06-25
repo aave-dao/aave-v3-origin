@@ -84,7 +84,23 @@ abstract contract VariableDebtToken is DebtTokenBase, ScaledBalanceTokenBase, IV
     uint256 index
   ) external virtual override onlyPool returns (uint256) {
     if (user != onBehalfOf) {
-      _decreaseBorrowAllowance(onBehalfOf, user, amount);
+      uint256 borrowAllowance = _borrowAllowances[onBehalfOf][user];
+      if (borrowAllowance < amount) {
+        revert InsufficientBorrowAllowance(user, borrowAllowance, amount);
+      }
+      // When borrowing on behalf of a user, the borrower specified an "amount", which is measured in the underlying the user wants to receive.
+      // The protocol internally works, with a "scaled down" representation of the amount, which in most cases loses precision.
+      // In practice this means that when borrowing `n`, the user might receive `n+m` debt.
+      // Similar to the aToken `transferFrom` function, handling this scenario exactly is impossible.
+      // While this problem is not solvable without introducing breaking changes, on Aave v3.5 the situation is improved in the following way:
+      // - The `correct` amount to be deducted is considered to be `scaledUpCeil(scaledAmount)`. This replicates the behavior on borrow followed by a balanceOf.
+      // - In order to not introduce a breaking change for existing integrations, the deducted allowance is based on the available allowance as `Max(availableAllowance, (amount, correctAmount))`
+      uint256 scaledUp = scaledAmount.getVTokenBalance(index);
+      _decreaseBorrowAllowance(
+        onBehalfOf,
+        user,
+        borrowAllowance >= scaledUp ? scaledUp : borrowAllowance
+      );
     }
     _mintScaled({
       caller: user,

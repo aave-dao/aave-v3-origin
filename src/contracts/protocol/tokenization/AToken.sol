@@ -190,6 +190,32 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
     _approve(owner, spender, value);
   }
 
+  /// @inheritdoc IERC20
+  function transferFrom(
+    address sender,
+    address recipient,
+    uint256 amount
+  ) external virtual override(IERC20, IncentivizedERC20) returns (bool) {
+    uint256 index = POOL.getReserveNormalizedIncome(_underlyingAsset);
+    _spendAllowance(
+      sender,
+      _msgSender(),
+      amount,
+      // According to the ERC20 specification, the spent allowance should reflect the amount transferred.
+      // Following the spec exactly is impossible though, as the allowance references the "scaled up" amount while the transfer operates with "scaled down" amount.
+      // Because of this different handling of amounts, there are amounts that are impossible to accurately reflect on the balance.
+      // As an example: transferFrom(..., 1) at a liquidity index of 2e27, can never transfer exactly `1` as the smallest unit that can be accounted for would be 2.
+      // In addition to that the existing balance has an effect on the final "scaled up" balance after transfer.
+      // As an example: transferFrom(..., 1) at a liquidity index of 1.1 where the recipient has a "scaled up" balance of `9 * 1.1 = 9.9 = 9` before the transfer, will have a balance of `10 * 1.1. = 11` after the Transfer.
+      // While this problem is not solvable without introducing breaking changes, on Aave v3.5 the situation is improved in the following way:
+      // - The `correct` amount to be deducted is considered to be `scaledUpFloor(scaledDownCeil(input.amount))`. This replicates the behavior on transfer, followed by a balanceOf.
+      // - In order to not introduce a breaking change for existing integrations, the deducted allowance is based on the available allowance as `Max(availableAllowance, (amount, correctAmount))`
+      amount.getATokenTransferScaledAmount(index).getATokenBalance(index)
+    );
+    _transfer(sender, recipient, amount.toUint120());
+    return true;
+  }
+
   /**
    * @notice Overrides the parent _transfer to force validated transfer() and transferFrom()
    * @param from The source address
