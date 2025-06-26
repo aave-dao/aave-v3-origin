@@ -6,8 +6,9 @@ pragma solidity ^0.8.0;
  * @author Aave
  * @notice Provides functions to perform calculations with Wad and Ray units
  * @dev Provides mul and div function for wads (decimal numbers with 18 digits of precision) and rays (decimal numbers
- * with 27 digits of precision)
- * @dev Operations are rounded. If a value is >=.5, will be rounded up, otherwise rounded down.
+ * with 27 digits of precision).
+ * @dev Default operations round half up (if a value is >= .5, it will be rounded up, otherwise rounded down).
+ * @dev For specific rounding behaviors, functions with `Floor` and `Ceil` suffixes or a `Rounding` parameter are available.
  */
 library WadRayMath {
   enum Rounding {
@@ -62,7 +63,7 @@ library WadRayMath {
 
   function rayMul(uint256 a, uint256 b) internal pure returns (uint256 c) {
     assembly {
-      // Overflow check: Ensure a * b does not exceed uint256 max
+      // to avoid overflow, a <= (type(uint256).max - HALF_RAY) / b
       if iszero(or(iszero(b), iszero(gt(a, div(sub(not(0), HALF_RAY), b))))) {
         revert(0, 0)
       }
@@ -107,7 +108,7 @@ library WadRayMath {
    */
   function rayDiv(uint256 a, uint256 b) internal pure returns (uint256 c) {
     assembly {
-      // Overflow check: Ensure a * RAY does not exceed uint256 max
+      // to avoid overflow, a <= (type(uint256).max - b / 2) / RAY
       if or(iszero(b), iszero(iszero(gt(a, div(sub(not(0), div(b, 2)), RAY))))) {
         revert(0, 0)
       }
