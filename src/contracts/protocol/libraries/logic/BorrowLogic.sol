@@ -108,6 +108,16 @@ library BorrowLogic {
       IAToken(reserveCache.aTokenAddress).transferUnderlyingTo(params.user, params.amount);
     }
 
+    ValidationLogic.validateHFAndLtv(
+      reservesData,
+      reservesList,
+      eModeCategories,
+      userConfig,
+      params.onBehalfOf,
+      params.userEModeCategory,
+      params.oracle
+    );
+
     emit IPool.Borrow(
       params.asset,
       params.user,

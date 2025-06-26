@@ -20,6 +20,7 @@ import {ReserveLogic} from './ReserveLogic.sol';
 import {GenericLogic} from './GenericLogic.sol';
 import {SafeCast} from 'openzeppelin-contracts/contracts/utils/math/SafeCast.sol';
 import {IncentivizedERC20} from '../../tokenization/base/IncentivizedERC20.sol';
+import {MathUtils} from '../math/MathUtils.sol';
 
 /**
  * @title ValidationLogic library
@@ -110,12 +111,8 @@ library ValidationLogic {
 
   struct ValidateBorrowLocalVars {
     uint256 amount;
-    uint256 currentLtv;
-    uint256 collateralNeededInBaseCurrency;
-    uint256 userCollateralInBaseCurrency;
     uint256 userDebtInBaseCurrency;
     uint256 availableLiquidity;
-    uint256 healthFactor;
     uint256 totalDebt;
     uint256 reserveDecimals;
     uint256 borrowCap;
@@ -198,49 +195,6 @@ library ValidationLogic {
         Errors.NotBorrowableInEMode()
       );
     }
-
-    (
-      vars.userCollateralInBaseCurrency,
-      vars.userDebtInBaseCurrency,
-      vars.currentLtv,
-      ,
-      vars.healthFactor,
-
-    ) = GenericLogic.calculateUserAccountData(
-      reservesData,
-      reservesList,
-      eModeCategories,
-      DataTypes.CalculateUserAccountDataParams({
-        userConfig: params.userConfig,
-        user: params.userAddress,
-        oracle: params.oracle,
-        userEModeCategory: params.userEModeCategory
-      })
-    );
-
-    require(vars.userCollateralInBaseCurrency != 0, Errors.CollateralBalanceIsZero());
-    require(vars.currentLtv != 0, Errors.LtvValidationFailed());
-
-    require(
-      vars.healthFactor > HEALTH_FACTOR_LIQUIDATION_THRESHOLD,
-      Errors.HealthFactorLowerThanLiquidationThreshold()
-    );
-
-    vars.amountInBaseCurrency =
-      IPriceOracleGetter(params.oracle).getAssetPrice(params.asset) *
-      vars.amount;
-    unchecked {
-      vars.amountInBaseCurrency /= vars.assetUnit;
-    }
-
-    //add the current already borrowed amount to the amount requested to calculate the total collateral needed.
-    vars.collateralNeededInBaseCurrency = (vars.userDebtInBaseCurrency + vars.amountInBaseCurrency)
-      .percentDiv(vars.currentLtv); //LTV is calculated in percentage
-
-    require(
-      vars.collateralNeededInBaseCurrency <= vars.userCollateralInBaseCurrency,
-      Errors.CollateralCannotCoverNewBorrow()
-    );
 
     if (params.userConfig.isBorrowingAny()) {
       (vars.siloedBorrowingEnabled, vars.siloedBorrowingAddress) = params
@@ -443,17 +397,68 @@ library ValidationLogic {
   }
 
   /**
-   * @notice Validates the health factor of a user and the ltv of the asset being withdrawn.
+   * @notice Validates the health factor of a user and the ltv of the asset being borrowed.
+   *         The ltv validation is a measure to prevent accidental borrowing close to liquidations.
+   *         Sophisticated users can work around this validation in various ways.
+   * @param reservesData The state of all the reserves
+   * @param reservesList The addresses of all the active reserves
+   * @param eModeCategories The configuration of all the efficiency mode categories
+   * @param userConfig The state of the user for the specific reserve
+   * @param user The user from which the aTokens are being transferred
+   * @param userEModeCategory The users active efficiency mode category
+   * @param oracle The price oracle
+   */
+  function validateHFAndLtv(
+    mapping(address => DataTypes.ReserveData) storage reservesData,
+    mapping(uint256 => address) storage reservesList,
+    mapping(uint8 => DataTypes.EModeCategory) storage eModeCategories,
+    DataTypes.UserConfigurationMap memory userConfig,
+    address user,
+    uint8 userEModeCategory,
+    address oracle
+  ) internal view {
+    (
+      uint256 userCollateralInBaseCurrency,
+      uint256 userDebtInBaseCurrency,
+      uint256 currentLtv,
+      ,
+      uint256 healthFactor,
+
+    ) = GenericLogic.calculateUserAccountData(
+        reservesData,
+        reservesList,
+        eModeCategories,
+        DataTypes.CalculateUserAccountDataParams({
+          userConfig: userConfig,
+          user: user,
+          oracle: oracle,
+          userEModeCategory: userEModeCategory
+        })
+      );
+
+    require(
+      healthFactor >= HEALTH_FACTOR_LIQUIDATION_THRESHOLD,
+      Errors.HealthFactorLowerThanLiquidationThreshold()
+    );
+
+    require(
+      userCollateralInBaseCurrency >= userDebtInBaseCurrency.percentDivCeil(currentLtv),
+      Errors.CollateralCannotCoverNewBorrow()
+    );
+  }
+
+  /**
+   * @notice Validates the health factor of a user and the ltvzero configuration for the asset being withdrawn/transferred or disabled as collateral.
    * @param reservesData The state of all the reserves
    * @param reservesList The addresses of all the active reserves
    * @param eModeCategories The configuration of all the efficiency mode categories
    * @param userConfig The state of the user for the specific reserve
    * @param asset The asset for which the ltv will be validated
    * @param from The user from which the aTokens are being transferred
-   * @param oracle The price oracle
    * @param userEModeCategory The users active efficiency mode category
+   * @param oracle The price oracle
    */
-  function validateHFAndLtv(
+  function validateHFAndLtvzero(
     mapping(address => DataTypes.ReserveData) storage reservesData,
     mapping(uint256 => address) storage reservesList,
     mapping(uint8 => DataTypes.EModeCategory) storage eModeCategories,

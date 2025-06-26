@@ -322,7 +322,9 @@ contract PoolBorrowTests is TestnetProcedures {
   }
 
   function test_reverts_borrow_collateral_balance_zero() public {
-    vm.expectRevert(abi.encodeWithSelector(Errors.CollateralBalanceIsZero.selector));
+    vm.expectRevert(
+      abi.encodeWithSelector(Errors.HealthFactorLowerThanLiquidationThreshold.selector)
+    );
 
     vm.prank(alice);
     contracts.poolProxy.borrow(tokenList.usdx, 0.2e8, 2, 0, alice);
@@ -333,7 +335,7 @@ contract PoolBorrowTests is TestnetProcedures {
     contracts.poolProxy.supply(tokenList.wbtc, 1e8, alice, 0);
 
     vm.expectRevert(abi.encodeWithSelector(Errors.CollateralCannotCoverNewBorrow.selector));
-    contracts.poolProxy.borrow(tokenList.usdx, 29001e6, 2, 0, alice);
+    contracts.poolProxy.borrow(tokenList.usdx, 23000e6, 2, 0, alice);
     vm.stopPrank();
   }
 

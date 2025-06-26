@@ -160,7 +160,7 @@ library SupplyLogic {
         userConfig.setUsingAsCollateral(reserve.id, params.asset, params.user, false);
       }
       if (userConfig.isBorrowingAny()) {
-        ValidationLogic.validateHFAndLtv(
+        ValidationLogic.validateHFAndLtvzero(
           reservesData,
           reservesList,
           eModeCategories,
@@ -208,7 +208,7 @@ library SupplyLogic {
 
       if (fromConfig.isUsingAsCollateral(reserveId)) {
         if (fromConfig.isBorrowingAny()) {
-          ValidationLogic.validateHFAndLtv(
+          ValidationLogic.validateHFAndLtvzero(
             reservesData,
             reservesList,
             eModeCategories,
@@ -296,7 +296,7 @@ library SupplyLogic {
       userConfig.setUsingAsCollateral(reserve.id, asset, user, true);
     } else {
       userConfig.setUsingAsCollateral(reserve.id, asset, user, false);
-      ValidationLogic.validateHFAndLtv(
+      ValidationLogic.validateHFAndLtvzero(
         reservesData,
         reservesList,
         eModeCategories,

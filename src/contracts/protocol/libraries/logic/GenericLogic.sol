@@ -151,6 +151,16 @@ library GenericLogic {
       }
     }
 
+    // @note At this point, `avgLiquidationThreshold` represents
+    // `SUM(collateral_base_value_i * liquidation_threshold_i)` for all collateral assets.
+    // It has 8 decimals (base currency) + 4 decimals (percentage) = 12 decimals.
+    // healthFactor has 18 decimals
+    // healthFactor = (avgLiquidationThreshold * WAD / totalDebtInBaseCurrency) / 100_00
+    // 18 decimals = (12 decimals * 18 decimals / 8 decimals) / 4 decimals = 18 decimals
+    vars.healthFactor = (vars.totalDebtInBaseCurrency == 0)
+      ? type(uint256).max
+      : vars.avgLiquidationThreshold.wadDiv(vars.totalDebtInBaseCurrency) / 100_00;
+
     unchecked {
       vars.avgLtv = vars.totalCollateralInBaseCurrency != 0
         ? vars.avgLtv / vars.totalCollateralInBaseCurrency
@@ -160,11 +170,6 @@ library GenericLogic {
         : 0;
     }
 
-    vars.healthFactor = (vars.totalDebtInBaseCurrency == 0)
-      ? type(uint256).max
-      : (vars.totalCollateralInBaseCurrency.percentMul(vars.avgLiquidationThreshold)).wadDiv(
-        vars.totalDebtInBaseCurrency
-      );
     return (
       vars.totalCollateralInBaseCurrency,
       vars.totalDebtInBaseCurrency,
