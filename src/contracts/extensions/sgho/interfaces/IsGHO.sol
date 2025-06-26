@@ -37,7 +37,12 @@ interface IsGHO {
    * @dev Throws if the GHO token is being rescued.
    */
   error CannotRescueGHO();
-  
+
+  /**
+   * @dev Throws if the rate is greater than 50%.
+   */
+  error RateMustBeLessThan50Percent();
+
   // --- State Variables (as view functions) ---
 
   /**

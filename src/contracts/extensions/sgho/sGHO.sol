@@ -282,7 +282,7 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
   ) internal view virtual override returns (uint256) {
     uint256 currentYieldIndex = _getCurrentYieldIndex();
     if (currentYieldIndex == 0) return 0;
-    return Math.mulDiv(assets, WadRayMath.RAY, currentYieldIndex, rounding);
+    return assets.mulDiv(WadRayMath.RAY, currentYieldIndex, rounding);
   }
 
   function _convertToAssets(
@@ -290,7 +290,7 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
     Math.Rounding rounding
   ) internal view virtual override returns (uint256) {
     uint256 currentYieldIndex = _getCurrentYieldIndex();
-    return Math.mulDiv(shares, currentYieldIndex, WadRayMath.RAY, rounding);
+    return shares.mulDiv(currentYieldIndex, WadRayMath.RAY, rounding);
   }
 
   /**
@@ -304,11 +304,11 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
 
 
     // Calculate the rate per second based on the target rate
-    uint256 annualRateRay = targetRate.rayMul(WadRayMath.RAY).rayDiv(10000);
+    uint256 annualRateRay = targetRate.rayMul(WadRayMath.RAY);
     uint256 currentRatePerSecond = annualRateRay.rayDiv(ONE_YEAR);
 
     // Calculate the index change per second
-    uint256 currentIndexChangePerSecond = yieldIndex.rayMul(currentRatePerSecond);
+    uint256 currentIndexChangePerSecond = yieldIndex.rayMul(currentRatePerSecond).rayDiv(10000);
 
     uint256 yieldIndexChange = currentIndexChangePerSecond.rayMul(timeSinceLastUpdate);
 
@@ -325,12 +325,12 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
     if (timeSinceLastUpdate == 0) return;
 
     // Calculate the rate per second based on the target rate
-    uint256 annualRateRay = targetRate.rayMul(WadRayMath.RAY).rayDiv(10000);
+    uint256 annualRateRay = targetRate.rayMul(WadRayMath.RAY);
 
     uint256 currentRatePerSecond = annualRateRay.rayDiv(ONE_YEAR);
 
     // Calculate the index change per second
-    uint256 currentIndexChangePerSecond = yieldIndex.rayMul(currentRatePerSecond);
+    uint256 currentIndexChangePerSecond = yieldIndex.rayMul(currentRatePerSecond).rayDiv(10000);
 
     uint256 yieldIndexChange = currentIndexChangePerSecond.rayMul(timeSinceLastUpdate);
     // Update the yield index
@@ -354,6 +354,7 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
    */
   function setTargetRate(uint256 newRate) public onlyYieldManager {
     // Update the yield index before changing the rate to ensure proper accrual
+    if(newRate > 5000) revert RateMustBeLessThan50Percent();
     _updateYieldIndex();
     targetRate = newRate;
   }
