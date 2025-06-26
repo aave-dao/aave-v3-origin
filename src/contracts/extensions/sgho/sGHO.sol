@@ -13,6 +13,13 @@ interface IERC1271 {
   function isValidSignature(bytes32, bytes memory) external view returns (bytes4);
 }
 
+/**
+ * @title sGHO Token
+ * @author Luigy-Lemon @kpk
+ * @notice sGHO is an ERC4626 vault that allows users to deposit GHO and earn yield.
+ * @dev This contract implements the ERC4626 standard for tokenized vaults, where the underlying asset is GHO.
+ * It also includes functionalities for yield generation based on a target rate, and administrative roles for managing the contract.
+ */
 contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
   using WadRayMath for uint256;
   using Math for uint256;
@@ -37,8 +44,9 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
   string public constant VERSION = '1';
 
   /**
-   * @dev Set the underlying asset contract. This must be an ERC20-compatible contract (ERC20 or ERC777).
-   * @param _gho The address of the GHO token contract.
+   * @notice Constructs the sGHO contract.
+   * @param _gho The address of the GHO token contract, which is the underlying asset for this vault.
+   * @param _aclmanager The address of the Aave ACL Manager, used to control access to restricted functions.
    */
   constructor(
     address _gho,
@@ -48,12 +56,17 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
     aclManager = IAccessControl(_aclmanager);
   }
 
+  /**
+   * @notice The receive function is implemented to reject direct Ether transfers to the contract.
+   * @dev sGHO does not handle ETH directly. All deposits must be made in the GHO token.
+   */
   receive() external payable {
     revert NoEthAllowed();
   }
 
   /**
-   * @dev Throws if the contract is not initialized.
+   * @notice Modifier to check if the contract has been initialized.
+   * @dev Throws if the `initialize` function has not been called.
    */
   modifier isInitialized() {
     if (_getInitializedVersion() == 0) {
@@ -63,7 +76,8 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
   }
 
   /**
-   * @dev Throws if the caller does not have the YIELD_MANAGER role
+   * @notice Modifier that restricts a function to be called only by an address with the YIELD_MANAGER role.
+   * @dev See {_onlyYieldManager}.
    */
   modifier onlyYieldManager() {
     if (_onlyYieldManager() == false) {
@@ -73,7 +87,8 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
   }
 
   /**
-   * @dev Throws if the caller does not have the FUNDS_ADMIN role
+   * @notice Modifier that restricts a function to be called only by an address with the FUNDS_ADMIN role.
+   * @dev See {_onlyFundsAdmin}.
    */
   modifier onlyFundsAdmin() {
     if (_onlyFundsAdmin() == false) {
@@ -83,7 +98,7 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
   }
 
   /**
-   * @dev Initialize receiver, require minimum balance to not set a dripRate of 0
+   * @inheritdoc IsGHO
    */
   function initialize() public payable initializer {
     deploymentChainId = block.chainid;
@@ -94,6 +109,14 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
 
   // --- Approve by signature ---
 
+  /**
+   * @notice Internal function to validate a signature.
+   * @dev It supports both standard EOA signatures (ecrecover) and contract signatures (EIP-1271).
+   * @param signer The address of the signer.
+   * @param digest The hash of the message that was signed.
+   * @param signature The signature to validate.
+   * @return A boolean indicating whether the signature is valid.
+   */
   function _isValidSignature(
     address signer,
     bytes32 digest,
@@ -121,6 +144,16 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
       abi.decode(result, (bytes4)) == IERC1271.isValidSignature.selector);
   }
 
+  /**
+   * @notice Grants approval to a spender by signature.
+   * @dev This function allows a user to approve a spender for a certain amount of tokens
+   * by providing a signature, as per EIP-2612. It accepts a combined signature.
+   * @param owner The address of the token owner.
+   * @param spender The address of the spender.
+   * @param value The amount of tokens to approve.
+   * @param deadline The deadline for the signature's validity.
+   * @param signature The EIP-2612 signature.
+   */
   function permit(
     address owner,
     address spender,
@@ -154,6 +187,17 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
     emit Approval(owner, spender, value);
   }
 
+  /**
+   * @notice Overload of the `permit` function that accepts v, r, and s as separate arguments.
+   * @dev This is a convenience function for platforms that do not handle the single `bytes` signature format.
+   * @param owner The address of the user who owns the tokens.
+   * @param spender The address of the spender to be approved.
+   * @param value The amount of tokens to approve.
+   * @param deadline The deadline after which the signature is no longer valid.
+   * @param v The v component of the signature.
+   * @param r The r component of the signature.
+   * @param s The s component of the signature.
+   */
   function permit(
     address owner,
     address spender,
@@ -179,6 +223,12 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
     return _domainSeparatorV4();
   }
 
+  /**
+   * @notice Calculates the EIP-712 domain separator.
+   * @dev The domain separator is unique to the contract and chain to prevent replay attacks.
+   * @param chainId The chain ID of the network.
+   * @return The domain separator.
+   */
   function _calculateDomainSeparator(uint256 chainId) private view returns (bytes32) {
     return
       keccak256(
@@ -200,14 +250,33 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
 
   // --- ERC4626 Logic ---
 
+  /**
+   * @notice Returns the maximum amount of GHO that can be withdrawn by an owner.
+   * @dev This is the minimum of the amount of shares the owner has and the total GHO balance of the contract.
+   * @param owner The address of the user who owns the shares.
+   * @return The maximum amount of GHO that can be withdrawn.
+   */
   function maxWithdraw(address owner) public view override(ERC4626) returns (uint256) {
     return Math.min(super.maxWithdraw(owner), IERC20(gho).balanceOf(address(this)));
   }
 
+  /**
+   * @notice Returns the maximum amount of sGHO shares that can be redeemed by an owner.
+   * @dev This is the minimum of the owner's share balance and the number of shares corresponding to the contract's total GHO balance.
+   * @param owner The address of the user who owns the shares.
+   * @return The maximum amount of sGHO shares that can be redeemed.
+   */
   function maxRedeem(address owner) public view override(ERC4626) returns (uint256) {
     return Math.min(super.maxRedeem(owner), convertToShares(IERC20(gho).balanceOf(address(this))));
   }
 
+  /**
+   * @notice Deposits GHO into the vault and mints sGHO shares to the receiver.
+   * @dev The yield index is updated before the deposit to ensure correct share calculation.
+   * @param assets The amount of GHO to deposit.
+   * @param receiver The address that will receive the sGHO shares.
+   * @return The amount of sGHO shares minted.
+   */
   function deposit(uint256 assets, address receiver) public override(ERC4626) returns (uint256) {
     uint256 maxAssets = maxDeposit(receiver);
     if (assets > maxAssets) {
@@ -221,6 +290,13 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
     return shares;
   }
 
+  /**
+   * @notice Mints sGHO shares to the receiver by depositing a corresponding amount of GHO.
+   * @dev The yield index is updated before the mint to ensure correct asset calculation.
+   * @param shares The amount of sGHO shares to mint.
+   * @param receiver The address that will receive the sGHO shares.
+   * @return The amount of GHO deposited.
+   */
   function mint(uint256 shares, address receiver) public override(ERC4626) returns (uint256) {
     uint256 maxShares = maxMint(receiver);
     if (shares > maxShares) {
@@ -235,6 +311,14 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
     return assets;
   }
 
+  /**
+   * @notice Withdraws GHO from the vault by burning sGHO shares from the owner.
+   * @dev The yield index is updated before the withdrawal.
+   * @param assets The amount of GHO to withdraw.
+   * @param receiver The address that will receive the GHO.
+   * @param owner The address from which to burn sGHO shares.
+   * @return The amount of sGHO shares burned.
+   */
   function withdraw(
     uint256 assets,
     address receiver,
@@ -252,6 +336,14 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
     return shares;
   }
 
+  /**
+   * @notice Redeems a specific amount of sGHO shares for GHO.
+   * @dev The yield index is updated before the redemption.
+   * @param shares The amount of sGHO shares to redeem.
+   * @param receiver The address that will receive the GHO.
+   * @param owner The address from which to burn sGHO shares.
+   * @return The amount of GHO received.
+   */
   function redeem(
     uint256 shares,
     address receiver,
@@ -269,12 +361,21 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
     return assets;
   }
 
+  /**
+   * @notice Returns the total amount of GHO managed by the vault.
+   * @dev This is calculated based on the total supply of sGHO and the current yield index.
+   * @return The total amount of GHO assets.
+   */
   function totalAssets() public view override(ERC4626) returns (uint256) {
     return _convertToAssets(totalSupply(), Math.Rounding.Floor);
   }
 
   /**
-   * @dev Override the conversion functions to use the yield index
+   * @notice Converts a GHO asset amount to a sGHO share amount based on the current yield index.
+   * @dev Overrides the standard ERC4626 implementation to use the custom yield-based conversion.
+   * @param assets The amount of GHO assets.
+   * @param rounding The rounding direction to use.
+   * @return The corresponding amount of sGHO shares.
    */
   function _convertToShares(
     uint256 assets,
@@ -285,6 +386,13 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
     return assets.mulDiv(WadRayMath.RAY, currentYieldIndex, rounding);
   }
 
+  /**
+   * @notice Converts a sGHO share amount to a GHO asset amount based on the current yield index.
+   * @dev Overrides the standard ERC4626 implementation to use the custom yield-based conversion.
+   * @param shares The amount of sGHO shares.
+   * @param rounding The rounding direction to use.
+   * @return The corresponding amount of GHO assets.
+   */
   function _convertToAssets(
     uint256 shares,
     Math.Rounding rounding
@@ -294,14 +402,15 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
   }
 
   /**
-   * @dev Get the current yield index including accrued interest
+   * @notice Calculates the current yield index, including yield accrued since the last update.
+   * @dev This is a view function and does not modify state. It's used for previews.
+   * @return The current yield index.
    */
   function _getCurrentYieldIndex() internal view returns (uint256) {
     if (targetRate == 0) return yieldIndex;
 
     uint256 timeSinceLastUpdate = block.timestamp - lastUpdate;
     if (timeSinceLastUpdate == 0) return yieldIndex;
-
 
     // Calculate the rate per second based on the target rate
     uint256 annualRateRay = targetRate.rayMul(WadRayMath.RAY);
@@ -316,7 +425,8 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
   }
 
   /**
-   * @dev Update the yield index to accrue interest up to the current timestamp
+   * @notice Updates the yield index to accrue yield up to the current timestamp.
+   * @dev This function modifies state and is called before any operation that depends on the yield index.
    */
   function _updateYieldIndex() internal {
     if (targetRate == 0) return;
@@ -341,24 +451,25 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
   }
 
   /**
-   * @dev Informs about approximate sGHO vault APR based on target rate
-   * @return amount of interest collected per year divided by amount of current deposits in vault
+   * @inheritdoc IsGHO
    */
   function vaultAPR() external view returns (uint256) {
     return targetRate;
   }
 
   /**
-   * @dev set new target rate in APR, such that a target rate of 10% should have input 1000
-   * @param newRate New APR to be set (in basis points, e.g., 1000 = 10%)
+   * @inheritdoc IsGHO
    */
   function setTargetRate(uint256 newRate) public onlyYieldManager {
     // Update the yield index before changing the rate to ensure proper accrual
-    if(newRate > 5000) revert RateMustBeLessThan50Percent();
+    if (newRate > 5000) revert RateMustBeLessThan50Percent();
     _updateYieldIndex();
     targetRate = newRate;
   }
 
+  /**
+   * @inheritdoc IsGHO
+   */
   function rescueERC20(address erc20Token, address to, uint256 amount) external onlyFundsAdmin {
     if (erc20Token == gho) {
       revert CannotRescueGHO();
@@ -369,10 +480,18 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
     emit ERC20Rescued(msg.sender, erc20Token, to, amount);
   }
 
+  /**
+   * @notice Internal view function to check if the caller has the FUNDS_ADMIN role.
+   * @return A boolean indicating if the caller is a Funds Admin.
+   */
   function _onlyFundsAdmin() internal view returns (bool) {
     return aclManager.hasRole(FUNDS_ADMIN_ROLE, msg.sender);
   }
 
+  /**
+   * @notice Internal view function to check if the caller has the YIELD_MANAGER role.
+   * @return A boolean indicating if the caller is a Yield Manager.
+   */
   function _onlyYieldManager() internal view returns (bool) {
     return aclManager.hasRole(YIELD_MANAGER_ROLE, msg.sender);
   }

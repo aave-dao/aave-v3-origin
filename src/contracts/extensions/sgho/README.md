@@ -41,7 +41,7 @@ The system consists of a single main contract:
 
 ## Yield Calculation and Distribution
 
-The yield is calculated and distributed automatically during vault operations:
+The yield is calculated and distributed automatically during vault operations. The yield compounds upon every vault state update, such as deposits or withdrawals.
 
 ```solidity
 function _updateVault(uint256 assets, bool assetIncrease) internal {
