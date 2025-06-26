@@ -21,11 +21,8 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
   IAccessControl internal aclManager;
 
   uint256 public targetRate;
-  uint256 public internalTotalAssets;
   uint256 public yieldIndex;
   uint256 public lastUpdate;
-  uint256 internal ratePerSecond;
-  uint256 internal indexChangePerSecond;
   uint256 internal constant RATE_PRECISION = 1e10;
   uint256 internal constant ONE_YEAR = 365 days;
 
@@ -93,7 +90,6 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
     _DOMAIN_SEPARATOR = _calculateDomainSeparator(block.chainid);
     yieldIndex = WadRayMath.RAY;
     lastUpdate = block.timestamp;
-    internalTotalAssets = 0;
   }
 
   // --- Approve by signature ---
@@ -145,9 +141,7 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
     bytes32 digest = keccak256(
       abi.encodePacked(
         '\x19\x01',
-        block.chainid == deploymentChainId
-          ? _DOMAIN_SEPARATOR
-          : _calculateDomainSeparator(block.chainid),
+        _domainSeparatorV4(),
         keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, value, nonce, deadline))
       )
     );
@@ -206,14 +200,22 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
 
   // --- ERC4626 Logic ---
 
+  function maxWithdraw(address owner) public view override(ERC4626) returns (uint256) {
+    return Math.min(super.maxWithdraw(owner), IERC20(gho).balanceOf(address(this)));
+  }
+
+  function maxRedeem(address owner) public view override(ERC4626) returns (uint256) {
+    return Math.min(super.maxRedeem(owner), convertToShares(IERC20(gho).balanceOf(address(this))));
+  }
+
   function deposit(uint256 assets, address receiver) public override(ERC4626) returns (uint256) {
     uint256 maxAssets = maxDeposit(receiver);
     if (assets > maxAssets) {
       revert ERC4626ExceededMaxDeposit(receiver, assets, maxAssets);
     }
 
+    _updateYieldIndex();
     uint256 shares = previewDeposit(assets);
-    _updateVaultState(assets, true);
     _deposit(_msgSender(), receiver, assets, shares);
 
     return shares;
@@ -225,8 +227,8 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
       revert ERC4626ExceededMaxMint(receiver, shares, maxShares);
     }
 
+    _updateYieldIndex();
     uint256 assets = previewMint(shares);
-    _updateVaultState(assets, true);
 
     _deposit(_msgSender(), receiver, assets, shares);
 
@@ -243,10 +245,9 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
       revert ERC4626ExceededMaxWithdraw(owner, assets, maxAssets);
     }
 
+    _updateYieldIndex();
     uint256 shares = previewWithdraw(assets);
     _withdraw(_msgSender(), receiver, owner, assets, shares);
-
-    _updateVaultState(assets, false);
 
     return shares;
   }
@@ -261,16 +262,15 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
       revert ERC4626ExceededMaxRedeem(owner, shares, maxShares);
     }
 
+    _updateYieldIndex();
     uint256 assets = previewRedeem(shares);
     _withdraw(_msgSender(), receiver, owner, assets, shares);
-
-    _updateVaultState(assets, false);
 
     return assets;
   }
 
   function totalAssets() public view override(ERC4626) returns (uint256) {
-    return internalTotalAssets;
+    return _convertToAssets(totalSupply(), Math.Rounding.Floor);
   }
 
   /**
@@ -302,54 +302,37 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
     uint256 timeSinceLastUpdate = block.timestamp - lastUpdate;
     if (timeSinceLastUpdate == 0) return yieldIndex;
 
+
     // Calculate the rate per second based on the target rate
-    uint256 currentRatePerSecond = targetRate.wadDiv(ONE_YEAR);
+    uint256 annualRateRay = targetRate.rayMul(WadRayMath.RAY).rayDiv(10000);
+    uint256 currentRatePerSecond = annualRateRay.rayDiv(ONE_YEAR);
 
     // Calculate the index change per second
-    uint256 currentIndexChangePerSecond = yieldIndex.rayMul(currentRatePerSecond).rayDiv(
-      WadRayMath.RAY
-    );
+    uint256 currentIndexChangePerSecond = yieldIndex.rayMul(currentRatePerSecond);
 
-    // Calculate the total index change over the time period
-    uint256 totalIndexChange = currentIndexChangePerSecond.rayMul(timeSinceLastUpdate);
+    uint256 yieldIndexChange = currentIndexChangePerSecond.rayMul(timeSinceLastUpdate);
 
-    return yieldIndex + totalIndexChange;
-  }
-
-  /**
-   * @dev Update the vault state when assets are deposited or withdrawn.
-   * This function updates both the yield index and internal total assets.
-   * @param assets The amount of assets being deposited or withdrawn.
-   * @param assetIncrease A boolean indicating whether the assets are being increased or decreased.
-   */
-  function _updateVaultState(uint256 assets, bool assetIncrease) internal {
-    // First, update the yield index to accrue interest up to current time
-    uint256 yieldIndexChange = _updateYieldIndex();
-  
-    // Then update the internal total assets
-    if (assetIncrease) {
-      internalTotalAssets += assets + yieldIndexChange;
-    } else {
-      internalTotalAssets = internalTotalAssets - assets + yieldIndexChange;
-    }
+    return yieldIndex + yieldIndexChange;
   }
 
   /**
    * @dev Update the yield index to accrue interest up to the current timestamp
    */
-  function _updateYieldIndex() internal returns (uint256 yieldIndexChange) {
-    if (targetRate == 0) return 0;
+  function _updateYieldIndex() internal {
+    if (targetRate == 0) return;
 
     uint256 timeSinceLastUpdate = block.timestamp - lastUpdate;
-    if (timeSinceLastUpdate == 0) return 0;
+    if (timeSinceLastUpdate == 0) return;
 
     // Calculate the rate per second based on the target rate
-    ratePerSecond = targetRate.wadDiv(ONE_YEAR);
+    uint256 annualRateRay = targetRate.rayMul(WadRayMath.RAY).rayDiv(10000);
+
+    uint256 currentRatePerSecond = annualRateRay.rayDiv(ONE_YEAR);
 
     // Calculate the index change per second
-    indexChangePerSecond = yieldIndex.rayMul(ratePerSecond).rayDiv(WadRayMath.RAY);
+    uint256 currentIndexChangePerSecond = yieldIndex.rayMul(currentRatePerSecond);
 
-    yieldIndexChange = indexChangePerSecond.rayMul(timeSinceLastUpdate);
+    uint256 yieldIndexChange = currentIndexChangePerSecond.rayMul(timeSinceLastUpdate);
     // Update the yield index
     yieldIndex += yieldIndexChange;
 
@@ -362,7 +345,7 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
    * @return amount of interest collected per year divided by amount of current deposits in vault
    */
   function vaultAPR() external view returns (uint256) {
-    return targetRate.wadDiv(WadRayMath.RAY);
+    return targetRate;
   }
 
   /**
@@ -372,7 +355,7 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
   function setTargetRate(uint256 newRate) public onlyYieldManager {
     // Update the yield index before changing the rate to ensure proper accrual
     _updateYieldIndex();
-    targetRate = newRate.wadMul(WadRayMath.RAY);
+    targetRate = newRate;
   }
 
   function rescueERC20(address erc20Token, address to, uint256 amount) external onlyFundsAdmin {

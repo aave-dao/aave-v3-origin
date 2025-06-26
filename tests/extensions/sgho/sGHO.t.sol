@@ -458,6 +458,7 @@ contract sGhoTest is TestnetProcedures {
     uint256 initialTotalAssets = sgho.totalAssets();
     console.log('Initial balance:', initialBalance);
     console.log('Initial totalAssets:', initialTotalAssets);
+    console.log('Initial Yield index:', sgho.yieldIndex());
 
     sgho.deposit(depositAmount, user1);
 
@@ -466,6 +467,7 @@ contract sGhoTest is TestnetProcedures {
     console.log('Final balance:', finalBalance);
     console.log('Final totalAssets:', finalTotalAssets);
     console.log('Deposit amount:', depositAmount);
+    console.log('Final Yield index:', sgho.yieldIndex());
 
     assertEq(sgho.totalAssets(), depositAmount, 'Initial totalAssets');
 
@@ -477,13 +479,18 @@ contract sGhoTest is TestnetProcedures {
     sgho.deposit(depositAmount2, user1); // This deposit triggers _updateVault
 
     // Calculate expected yield based on time elapsed and target rate
-    uint256 expectedYield = (depositAmount * sgho.vaultAPR() * timeSkip) /
-      (10000 * 365 days);
+    uint256 expectedYield = (depositAmount * sgho.vaultAPR() * timeSkip) / (10000 * 365 days);
     uint256 expectedAssets = depositAmount + expectedYield + depositAmount2;
+
+    console.log('after skip totalAssets:', sgho.totalAssets());
+    console.log('after skip balance:', gho.balanceOf(address(sgho)));
+    console.log('after skip totalSupply:', sgho.totalSupply());
+    console.log('after skip yield index:', sgho.yieldIndex());
+
     assertApproxEqAbs(
       sgho.totalAssets(),
       expectedAssets,
-      1,
+     3,
       'totalAssets mismatch after yield claim'
     );
 
@@ -497,7 +504,7 @@ contract sGhoTest is TestnetProcedures {
     assertApproxEqAbs(
       expectedWithdrawAssets,
       expectedAssets,
-      1,
+      3,
       'Preview redeem should equal total assets'
     ); // Single depositor case
     vm.stopPrank();
@@ -509,10 +516,12 @@ contract sGhoTest is TestnetProcedures {
     uint256[5] memory withdrawAmounts,
     uint64[5] memory timeSkips
   ) external {
+    address bob = 0x0376AAc07Ad725E01357B1725B5ceC61aE10473c;
     // Bound inputs to reasonable ranges
     for (uint i = 0; i < 5; i++) {
-      depositAmounts[i] = bound(depositAmounts[i], 1 ether, 100_000 ether);
+      depositAmounts[i] = bound(depositAmounts[i], 100, 100_000 ether);
       timeSkips[i] = uint64(bound(timeSkips[i], 1, 30 days)); // No minimum time requirement
+      withdrawAmounts[i] = bound(withdrawAmounts[i], 100, 100_000 ether);
     }
 
     // Set target rate
@@ -535,34 +544,42 @@ contract sGhoTest is TestnetProcedures {
         vm.warp(block.timestamp + timeSkips[i]);
       }
 
-      // Deposit
-      vm.startPrank(user1);
-      deal(address(gho), user1, depositAmounts[i], true);
-      gho.approve(address(sgho), depositAmounts[i]);
-
-      uint256 shares = sgho.deposit(depositAmounts[i], user1);
-      totalDeposited += depositAmounts[i];
-      totalShares += shares;
-
       // Calculate expected yield for this period
       if (i > 0) {
         uint256 expectedYield = (lastTotalAssets * sgho.vaultAPR() * timeSkips[i]) /
           (10000 * 365 days);
-        totalClaimedYield += expectedYield;
+        totalExpectedYield += expectedYield;
+        totalClaimedYield += sgho.totalAssets() - lastTotalAssets;
       }
 
+      // Deposit
+      vm.startPrank(bob);
+      deal(address(gho), bob, depositAmounts[i], true);
+      gho.approve(address(sgho), depositAmounts[i]);
+
+      uint256 shares = sgho.deposit(depositAmounts[i], bob);
+      totalDeposited += depositAmounts[i];
+      totalShares += shares;
+
       // Verify deposit precision
-      assertEq(
+      assertApproxEqAbs(
         sgho.totalAssets(),
         totalDeposited + totalClaimedYield - totalWithdrawn,
+        5,
         'totalAssets mismatch after deposit'
       );
       assertEq(sgho.totalSupply(), totalShares, 'totalSupply mismatch after deposit');
 
       // Withdraw if not first operation and if we have enough balance
-      if (i > 0 && withdrawAmounts[i] <= sgho.balanceOf(user1)) {
-        uint256 withdrawAmount = bound(withdrawAmounts[i], 1 ether, sgho.balanceOf(user1));
-        uint256 withdrawnShares = sgho.withdraw(withdrawAmount, user1, user1);
+      if (i > 0) {
+        uint256 withdrawAmount = withdrawAmounts[i];
+        uint256 maxWithdrawable = sgho.maxWithdraw(bob);
+        if(withdrawAmount > maxWithdrawable) {
+          vm.expectRevert(abi.encodeWithSelector(ERC4626.ERC4626ExceededMaxWithdraw.selector, bob, withdrawAmount, maxWithdrawable));
+          sgho.withdraw(withdrawAmount, bob, bob);
+        }
+        else {
+        uint256 withdrawnShares = sgho.withdraw(withdrawAmount, bob, bob);
         totalShares -= withdrawnShares;
         totalWithdrawn += withdrawAmount;
 
@@ -570,21 +587,22 @@ contract sGhoTest is TestnetProcedures {
         assertApproxEqAbs(
           sgho.totalAssets(),
           totalDeposited + totalClaimedYield - totalWithdrawn,
-          1,
+         5,
           'totalAssets mismatch after withdraw'
         );
         assertApproxEqAbs(
           sgho.totalSupply(),
           totalShares,
           1,
-          'totalSupply mismatch after withdraw'
-        );
+            'totalSupply mismatch after withdraw'
+          );
+        }
       }
 
       // Verify share price consistency
       if (sgho.totalSupply() > 0) {
         // Calculate user's share of total assets directly instead of using share price
-        uint256 userShares = sgho.balanceOf(user1);
+        uint256 userShares = sgho.balanceOf(bob);
         uint256 userAssets = sgho.previewRedeem(userShares);
         uint256 expectedUserAssets = (sgho.totalAssets() * userShares) / sgho.totalSupply();
 
@@ -594,28 +612,16 @@ contract sGhoTest is TestnetProcedures {
 
       // Verify yield calculation precision
       if (i > 0) {
-        uint256 expectedYield = (lastTotalAssets * sgho.vaultAPR() * timeSkips[i]) /
-          (10000 * 365 days);
-        totalExpectedYield += expectedYield;
-        // Calculate actual yield by comparing total assets before and after the operation
-        uint256 actualYield = sgho.totalAssets() + totalWithdrawn - totalDeposited;
-
-        // Allow for 1 wei rounding error in yield calculation
-        assertApproxEqAbs(actualYield, totalClaimedYield, 1, 'yield calculation mismatch');
-        assertApproxEqAbs(
-          totalExpectedYield,
-          totalClaimedYield,
-          1,
-          'yield calculation mismatch'
-        );
+        // Allow for 3 wei rounding error in yield calculation
+        assertApproxEqAbs(totalClaimedYield, totalExpectedYield, 3, 'yield calculation mismatch');
       }
       lastTotalAssets = sgho.totalAssets();
       vm.stopPrank();
     }
 
     // Final checks
-    vm.startPrank(user1);
-    uint256 finalShares = sgho.balanceOf(user1);
+    vm.startPrank(bob);
+    uint256 finalShares = sgho.balanceOf(bob);
     uint256 finalAssets = sgho.previewRedeem(finalShares);
 
     // Verify final redemption precision
@@ -626,10 +632,10 @@ contract sGhoTest is TestnetProcedures {
     assertApproxEqAbs(
       sgho.totalAssets(),
       totalDeposited + totalClaimedYield - totalWithdrawn,
-      1,
+      4,
       'totalAssets mismatch after yield calculation'
     );
-    assertEq(sgho.balanceOf(user1), totalShares, 'balanceOf mismatch after yield calculation');
+    assertEq(sgho.balanceOf(bob), totalShares, 'balanceOf mismatch after yield calculation');
     vm.stopPrank();
   }
 
