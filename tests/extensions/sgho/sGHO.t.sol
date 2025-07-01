@@ -16,6 +16,7 @@ import {IERC20Metadata as IERC20} from 'openzeppelin-contracts/contracts/token/E
 import {IsGHO} from '../../../src/contracts/extensions/sgho/interfaces/IsGHO.sol';
 import {ERC4626} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/ERC4626.sol';
 import {Math} from 'openzeppelin-contracts/contracts/utils/math/Math.sol';
+import {TransparentUpgradeableProxy} from 'openzeppelin-contracts/contracts/proxy/transparent/TransparentUpgradeableProxy.sol';
 
 // --- Test Contract ---
 
@@ -53,11 +54,23 @@ contract sGhoTest is TestnetProcedures {
     // Deploy Mocks & sGHO
     gho = new TestnetERC20('Mock GHO', 'GHO', 18, poolAdmin);
 
-    // Deploy sGHO with ACLManager address
-    sgho = new sGHO(address(gho), address(contracts.aclManager));
-
-    // Initialize sGHO
-    sgho.initialize();
+    // Deploy sGHO implementation and proxy
+    address sghoImpl = address(new sGHO());
+    sgho = sGHO(
+      payable(
+        address(
+          new TransparentUpgradeableProxy(
+            sghoImpl,
+            address(this),
+            abi.encodeWithSelector(
+              sGHO.initialize.selector,
+              address(gho),
+              address(contracts.aclManager)
+            )
+          )
+        )
+      )
+    );
 
     deal(address(gho), address(sgho), 1 ether, true);
 
@@ -615,7 +628,7 @@ contract sGhoTest is TestnetProcedures {
   function test_yield_is_compounded_with_intermediate_update(uint256 rate) external {
     rate = uint256(bound(rate, 100, 5000));
     vm.startPrank(yManager);
-    sgho.setTargetRate(rate);   
+    sgho.setTargetRate(rate);
     vm.stopPrank();
 
     // User1 deposits 100 GHO
@@ -925,10 +938,18 @@ contract sGhoTest is TestnetProcedures {
   // --- Initialization Tests ---
   function test_initialization() external {
     // Deploy a new sGHO instance
-    sGHO newSgho = new sGHO(address(gho), address(contracts.aclManager));
-
-    // Initialize
-    newSgho.initialize();
+    address impl = address(new sGHO());
+    sGHO newSgho = sGHO(
+      payable(
+        address(
+          new TransparentUpgradeableProxy(
+            impl,
+            address(this),
+            abi.encodeWithSelector(sGHO.initialize.selector, address(gho), address(contracts.aclManager))
+          )
+        )
+      )
+    );
 
     // Should work after initialization
     assertEq(newSgho.totalAssets(), 0, 'Should be initialized');
@@ -936,14 +957,18 @@ contract sGhoTest is TestnetProcedures {
 
   function test_revert_initialize_twice() external {
     // Deploy a new sGHO instance
-    sGHO newSgho = new sGHO(address(gho), address(contracts.aclManager));
+    address impl = address(new sGHO());
+    TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
+      impl,
+      address(this),
+      abi.encodeWithSelector(sGHO.initialize.selector, address(gho), address(contracts.aclManager))
+    );
 
-    // Initialize first time
-    newSgho.initialize();
+    sGHO newSgho = sGHO(payable(address(proxy)));
 
-    // Should revert on second initialization
+    // Should revert on second initialization via proxy
     vm.expectRevert();
-    newSgho.initialize();
+    newSgho.initialize(address(gho), address(contracts.aclManager));
   }
 
   function _wadPow(uint256 base, uint256 exp) internal pure returns (uint256) {
