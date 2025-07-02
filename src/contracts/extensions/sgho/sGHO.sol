@@ -330,25 +330,11 @@ contract sGHO is Initializable, ERC4626Upgradeable, ERC20PermitUpgradeable, IsGH
    * @dev This function modifies state and is called before any operation that depends on the yield index.
    */
   function _updateYieldIndex() internal {
-    if (targetRate == 0) return;
-
-    uint256 timeSinceLastUpdate = block.timestamp - lastUpdate;
-    if (timeSinceLastUpdate == 0) return;
-
-    // Calculate the rate per second based on the target rate
-    uint256 annualRateRay = targetRate.rayMul(WadRayMath.RAY);
-
-    uint256 currentRatePerSecond = annualRateRay.rayDiv(ONE_YEAR);
-
-    // Calculate the index change per second
-    uint256 currentIndexChangePerSecond = yieldIndex.rayMul(currentRatePerSecond).rayDiv(10000);
-
-    uint256 yieldIndexChange = currentIndexChangePerSecond.rayMul(timeSinceLastUpdate);
-    // Update the yield index
-    yieldIndex += yieldIndexChange;
-
-    // Update the last update timestamp
-    lastUpdate = block.timestamp;
+    uint256 newYieldIndex = _getCurrentYieldIndex();
+    if (newYieldIndex != yieldIndex) {
+      yieldIndex = newYieldIndex;
+      lastUpdate = block.timestamp;
+    }
   }
 
   /**
