@@ -26,6 +26,7 @@ contract sGHO is Initializable, ERC4626Upgradeable, ERC20PermitUpgradeable, IsGH
   IAccessControl internal aclManager;
 
   uint256 public targetRate;
+  uint256 public maxTargetRate;
   uint256 public yieldIndex;
   uint256 public lastUpdate;
   uint256 internal constant RATE_PRECISION = 1e10;
@@ -49,14 +50,20 @@ contract sGHO is Initializable, ERC4626Upgradeable, ERC20PermitUpgradeable, IsGH
    * @notice Initializer for the sGHO vault.
    * @param _gho       Address of the underlying GHO token.
    * @param _aclmanager Address of the Aave ACL Manager.
+   * @param _maxTargetRate The maximum allowable target rate.
    */
-  function initialize(address _gho, address _aclmanager) public payable initializer {
+  function initialize(
+    address _gho,
+    address _aclmanager,
+    uint256 _maxTargetRate
+  ) public payable initializer {
     __ERC20_init('sGHO', 'sGHO');
     __ERC4626_init(IERC20(_gho));
     __ERC20Permit_init('sGHO');
 
     gho = _gho;
     aclManager = IAccessControl(_aclmanager);
+    maxTargetRate = _maxTargetRate;
 
     deploymentChainId = block.chainid;
     yieldIndex = WadRayMath.RAY;
@@ -349,7 +356,9 @@ contract sGHO is Initializable, ERC4626Upgradeable, ERC20PermitUpgradeable, IsGH
    */
   function setTargetRate(uint256 newRate) public onlyYieldManager {
     // Update the yield index before changing the rate to ensure proper accrual
-    if (newRate > 5000) revert RateMustBeLessThan50Percent();
+    if (newRate > maxTargetRate) {
+      revert RateMustBeLessThanMaxRate();
+    }
     _updateYieldIndex();
     targetRate = newRate;
     emit TargetRateUpdated(newRate);

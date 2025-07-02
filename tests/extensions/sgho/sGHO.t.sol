@@ -35,6 +35,8 @@ contract sGhoTest is TestnetProcedures {
   address internal Admin;
   address internal yManager; // Yield manager user
 
+  uint256 internal constant MAX_TARGET_RATE = 5000; // 50%
+
   // Permit constants
   string internal constant VERSION = '1'; // Matches sGHO constructor
   bytes32 internal DOMAIN_SEPARATOR_sGHO;
@@ -63,7 +65,8 @@ contract sGhoTest is TestnetProcedures {
             abi.encodeWithSelector(
               sGHO.initialize.selector,
               address(gho),
-              address(contracts.aclManager)
+              address(contracts.aclManager),
+              MAX_TARGET_RATE
             )
           )
         )
@@ -101,7 +104,7 @@ contract sGhoTest is TestnetProcedures {
 
   // --- Constructor Tests ---
 
-  function test_constructor() external {
+  function test_constructor() external view {
     assertEq(sgho.gho(), address(gho), 'GHO address mismatch');
     assertEq(sgho.deploymentChainId(), block.chainid, 'Chain ID mismatch');
     assertEq(sgho.VERSION(), VERSION, 'Version mismatch');
@@ -130,6 +133,21 @@ contract sGhoTest is TestnetProcedures {
     sgho.setTargetRate(newRate);
     vm.stopPrank();
     assertEq(sgho.targetRate(), newRate, 'Target rate should be updated');
+  }
+
+  function test_revert_setTargetRate_exceedsMaxRate() external {
+    vm.startPrank(yManager);
+    uint256 newRate = MAX_TARGET_RATE + 1;
+    vm.expectRevert(IsGHO.RateMustBeLessThanMaxRate.selector);
+    sgho.setTargetRate(newRate);
+    vm.stopPrank();
+  }
+
+  function test_setTargetRate_atMaxRate() external {
+    vm.startPrank(yManager);
+    sgho.setTargetRate(MAX_TARGET_RATE);
+    vm.stopPrank();
+    assertEq(sgho.targetRate(), MAX_TARGET_RATE, 'Target rate should be updated to max rate');
   }
 
   // --- ERC4626 Tests ---
@@ -674,10 +692,10 @@ contract sGhoTest is TestnetProcedures {
     sgho.setTargetRate(newRate);
   }
 
-  function test_revert_setTargetRate_rateGreaterThan50Percent() external {
+  function test_revert_setTargetRate_rateGreaterThanMaxRate() external {
     uint256 newRate = 5001; // 50.01% APR
     vm.startPrank(yManager);
-    vm.expectRevert(abi.encodeWithSelector(IsGHO.RateMustBeLessThan50Percent.selector));
+    vm.expectRevert(abi.encodeWithSelector(IsGHO.RateMustBeLessThanMaxRate.selector));
     sgho.setTargetRate(newRate);
     vm.stopPrank();
   }
@@ -768,7 +786,12 @@ contract sGhoTest is TestnetProcedures {
           new TransparentUpgradeableProxy(
             impl,
             address(this),
-            abi.encodeWithSelector(sGHO.initialize.selector, address(gho), address(contracts.aclManager))
+            abi.encodeWithSelector(
+              sGHO.initialize.selector,
+              address(gho),
+              address(contracts.aclManager),
+              MAX_TARGET_RATE
+            )
           )
         )
       )
@@ -784,14 +807,19 @@ contract sGhoTest is TestnetProcedures {
     TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
       impl,
       address(this),
-      abi.encodeWithSelector(sGHO.initialize.selector, address(gho), address(contracts.aclManager))
+      abi.encodeWithSelector(
+        sGHO.initialize.selector,
+        address(gho),
+        address(contracts.aclManager),
+        MAX_TARGET_RATE
+      )
     );
 
     sGHO newSgho = sGHO(payable(address(proxy)));
 
     // Should revert on second initialization via proxy
     vm.expectRevert();
-    newSgho.initialize(address(gho), address(contracts.aclManager));
+    newSgho.initialize(address(gho), address(contracts.aclManager), MAX_TARGET_RATE);
   }
 
   function _wadPow(uint256 base, uint256 exp) internal pure returns (uint256) {

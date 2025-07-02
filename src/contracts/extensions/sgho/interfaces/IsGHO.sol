@@ -41,9 +41,9 @@ interface IsGHO {
   error CannotRescueGHO();
 
   /**
-   * @notice Thrown if the target rate is set to a value greater than 50%.
+   * @notice Thrown if the target rate is set to a value greater than the max rate.
    */
-  error RateMustBeLessThan50Percent();
+  error RateMustBeLessThanMaxRate();
 
   // --- Events ---
 
@@ -116,7 +116,7 @@ interface IsGHO {
    * @dev This function can only be called once. It sets up initial roles and configurations.
    * While the function is marked as `payable`, it is designed to reject any attached Ether value.
    */
-  function initialize(address gho_, address aclManager_) external payable;
+  function initialize(address gho_, address aclManager_, uint256 maxTargetRate_) external payable;
 
   /**
    * @notice Overload of the standard ERC20Permit `permit` function.
