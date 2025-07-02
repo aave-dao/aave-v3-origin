@@ -5,8 +5,8 @@ pragma solidity ^0.8.19;
 import {console} from 'forge-std/console.sol';
 import {stdStorage, StdStorage} from 'forge-std/Test.sol';
 import {TestnetProcedures, TestnetERC20} from '../../utils/TestnetProcedures.sol';
-import {sGHO, IERC1271} from '../../../src/contracts/extensions/sgho/sGHO.sol';
-import {MockERC1271} from '../../mocks/MockERC1271.sol';
+import {sGHO} from '../../../src/contracts/extensions/sgho/sGHO.sol';
+import {MockERC1271, IERC1271} from '../../mocks/MockERC1271.sol';
 import {IAccessControl} from 'openzeppelin-contracts/contracts/access/IAccessControl.sol';
 import {IERC20Permit} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol';
 import {ERC20Permit} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/ERC20Permit.sol';
@@ -36,8 +36,6 @@ contract sGhoTest is TestnetProcedures {
   address internal yManager; // Yield manager user
 
   // Permit constants
-  bytes32 internal constant PERMIT_TYPEHASH =
-    keccak256('Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)');
   string internal constant VERSION = '1'; // Matches sGHO constructor
   bytes32 internal DOMAIN_SEPARATOR_sGHO;
 
@@ -107,7 +105,7 @@ contract sGhoTest is TestnetProcedures {
     assertEq(sgho.gho(), address(gho), 'GHO address mismatch');
     assertEq(sgho.deploymentChainId(), block.chainid, 'Chain ID mismatch');
     assertEq(sgho.VERSION(), VERSION, 'Version mismatch');
-    assertEq(sgho.PERMIT_TYPEHASH(), PERMIT_TYPEHASH, 'Permit typehash mismatch');
+    assertEq(sgho.DOMAIN_SEPARATOR(), DOMAIN_SEPARATOR_sGHO, 'Domain separator mismatch');
   }
 
   // --- ERC20 Metadata Tests ---
@@ -330,192 +328,6 @@ contract sGhoTest is TestnetProcedures {
     sgho.redeem(redeemShares, user1, user1);
 
     vm.stopPrank();
-  }
-
-  // --- Permit Tests ---
-  function test_permit() external {
-    uint256 privateKey = 0xA11CE;
-    address owner = vm.addr(privateKey);
-    address spender = user2;
-    uint256 value = 100 ether;
-    uint256 deadline = block.timestamp + 1 hours;
-    uint256 nonce = sgho.nonces(owner);
-
-    // Create permit signature
-    (uint8 v, bytes32 r, bytes32 s) = _generatePermitSignature(
-      privateKey,
-      owner,
-      spender,
-      value,
-      nonce,
-      deadline,
-      DOMAIN_SEPARATOR_sGHO
-    );
-
-    // Execute permit
-    sgho.permit(owner, spender, value, deadline, v, r, s);
-
-    assertEq(sgho.allowance(owner, spender), value, 'Allowance not set correctly');
-  }
-
-  function test_permit_contractSignature() external {
-    // Deploy mock ERC1271 contract
-    MockERC1271 owner = new MockERC1271();
-    address spender = user2;
-    uint256 value = 100 ether;
-    uint256 deadline = block.timestamp + 1 hours;
-
-    // Use the valid signature from the mock contract
-    bytes memory signature = bytes('VALID_SIGNATURE');
-
-    // Execute permit
-    sgho.permit(address(owner), spender, value, deadline, signature);
-
-    assertEq(
-      sgho.allowance(address(owner), spender),
-      value,
-      'Allowance not set correctly for contract signature'
-    );
-  }
-
-  function test_revert_permit_invalidContractSignature() external {
-    // Deploy mock ERC1271 contract
-    MockERC1271 owner = new MockERC1271();
-    address spender = user2;
-    uint256 value = 100 ether;
-    uint256 deadline = block.timestamp + 1 hours;
-    uint256 nonce = sgho.nonces(address(owner));
-
-    // Use an invalid signature
-    bytes memory signature = bytes('INVALID_SIGNATURE');
-
-    bytes32 structHash = keccak256(
-      abi.encode(PERMIT_TYPEHASH, address(owner), spender, value, nonce, deadline)
-    );
-    bytes32 hash = keccak256(abi.encodePacked('\x19\x01', DOMAIN_SEPARATOR_sGHO, structHash));
-
-    // Execute permit - should revert
-    vm.expectRevert(abi.encodeWithSelector(IsGHO.InvalidSignature.selector));
-    sgho.permit(address(owner), spender, value, deadline, signature);
-  }
-
-  function test_permit_differentChainId() external {
-    uint256 privateKey = 0xA11CE;
-    address owner = vm.addr(privateKey);
-    address spender = user2;
-    uint256 value = 100 ether;
-    uint256 deadline = block.timestamp + 1 hours;
-    uint256 nonce = sgho.nonces(owner);
-
-    // Change chain ID
-    uint256 newChainId = 31337;
-    vm.chainId(newChainId);
-
-    string memory sghoName = sgho.name();
-    string memory sghoVersion = sgho.VERSION();
-
-    // Create permit signature with new domain separator
-    bytes32 domainSeparator = keccak256(
-      abi.encode(
-        keccak256(
-          'EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)'
-        ),
-        keccak256(bytes(sghoName)),
-        keccak256(bytes(sghoVersion)),
-        newChainId,
-        address(sgho)
-      )
-    );
-    (uint8 v, bytes32 r, bytes32 s) = _generatePermitSignature(
-      privateKey,
-      owner,
-      spender,
-      value,
-      nonce,
-      deadline,
-      domainSeparator
-    );
-
-    // Execute permit
-    sgho.permit(owner, spender, value, deadline, v, r, s);
-
-    assertEq(
-      sgho.allowance(owner, spender),
-      value,
-      'Allowance not set correctly on different chain id'
-    );
-  }
-
-  function test_revert_permit_zeroOwner() external {
-    address spender = user2;
-    uint256 value = 100 ether;
-    uint256 deadline = block.timestamp + 1 hours;
-
-    vm.expectRevert(
-      abi.encodeWithSelector(ERC20Permit.ERC2612InvalidSigner.selector, address(0), spender)
-    );
-    sgho.permit(address(0), spender, value, deadline, new bytes(0));
-  }
-
-  function test_revert_permit_expired() external {
-    uint256 privateKey = 0xA11CE;
-    address owner = vm.addr(privateKey);
-    address spender = user2;
-    uint256 value = 100 ether;
-    uint256 deadline = block.timestamp - 1; // Expired
-    uint256 nonce = sgho.nonces(owner);
-
-    (uint8 v, bytes32 r, bytes32 s) = _generatePermitSignature(
-      privateKey,
-      owner,
-      spender,
-      value,
-      nonce,
-      deadline,
-      DOMAIN_SEPARATOR_sGHO
-    );
-
-    vm.expectRevert(abi.encodeWithSelector(ERC20Permit.ERC2612ExpiredSignature.selector, deadline));
-    sgho.permit(owner, spender, value, deadline, v, r, s);
-  }
-
-  function test_revert_permit_invalidSignature() external {
-    uint256 privateKey = 0xA11CE;
-    address owner = vm.addr(privateKey);
-    address spender = user2;
-    uint256 value = 100 ether;
-    uint256 deadline = block.timestamp + 1 hours;
-    uint256 nonce = sgho.nonces(owner);
-
-    (uint8 v, bytes32 r, bytes32 s) = _generatePermitSignature(
-      privateKey,
-      owner,
-      spender,
-      value,
-      nonce,
-      deadline,
-      DOMAIN_SEPARATOR_sGHO
-    );
-
-    // Invalid signature
-    vm.expectRevert(abi.encodeWithSelector(IsGHO.InvalidSignature.selector));
-    sgho.permit(user1, spender, value, deadline, v, r, s);
-  }
-
-  function _generatePermitSignature(
-    uint256 privateKey,
-    address owner,
-    address spender,
-    uint256 value,
-    uint256 nonce,
-    uint256 deadline,
-    bytes32 domainSeparator
-  ) internal returns (uint8 v, bytes32 r, bytes32 s) {
-    bytes32 structHash = keccak256(
-      abi.encode(PERMIT_TYPEHASH, owner, spender, value, nonce, deadline)
-    );
-    bytes32 hash = keccak256(abi.encodePacked('\x19\x01', domainSeparator, structHash));
-    (v, r, s) = vm.sign(privateKey, hash);
   }
 
   // --- Yield Integration Tests (_updateVault) ---

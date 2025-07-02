@@ -61,12 +61,6 @@ interface IsGHO {
   function deploymentChainId() external view returns (uint256);
 
   /**
-   * @notice Returns the EIP-712 version for the permit signature.
-   * @return The version string.
-   */
-  function VERSION() external view returns (string memory);
-
-  /**
    * @notice Returns the current yield index, representing the accumulated yield.
    * @dev This index is used to calculate the value of sGHO in terms of GHO.
    * @return The current yield index.
@@ -99,13 +93,6 @@ interface IsGHO {
    * @return The keccak256 hash of "YIELD_MANAGER_ROLE".
    */
   function YIELD_MANAGER_ROLE() external view returns (bytes32);
-
-  /**
-   * @notice Returns the EIP-712 type hash for the permit signature.
-   * @dev This is used to construct the domain separator for EIP-712 signatures.
-   * @return The EIP-712 type hash for the permit.
-   */
-  function PERMIT_TYPEHASH() external view returns (bytes32);
 
   // --- Functions ---
 

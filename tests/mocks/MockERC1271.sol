@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: agpl-3
 pragma solidity ^0.8.19;
 
-import {IERC1271} from '../../src/contracts/extensions/sgho/sGHO.sol';
+interface IERC1271 {
+  function isValidSignature(bytes32, bytes memory) external view returns (bytes4);
+}
 
 contract MockERC1271 is IERC1271 {
     bytes32 public constant MOCK_VALID_SIGNATURE_HASH = keccak256("VALID_SIGNATURE");
@@ -17,4 +19,4 @@ contract MockERC1271 is IERC1271 {
         }
         return bytes4(0);
     }
-} 
+}

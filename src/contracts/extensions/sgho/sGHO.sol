@@ -11,10 +11,6 @@ import {Math} from 'openzeppelin-contracts/contracts/utils/math/Math.sol';
 import {IsGHO} from './interfaces/IsGHO.sol';
 import {ERC20Upgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol';
 
-interface IERC1271 {
-  function isValidSignature(bytes32, bytes memory) external view returns (bytes4);
-}
-
 /**
  * @title sGHO Token
  * @author Luigy-Lemon @kpk
@@ -40,9 +36,6 @@ contract sGHO is Initializable, ERC4626Upgradeable, ERC20PermitUpgradeable, IsGH
 
   // --- EIP712 niceties ---
   uint256 public deploymentChainId;
-  bytes32 private _DOMAIN_SEPARATOR;
-  bytes32 public constant PERMIT_TYPEHASH =
-    keccak256('Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)');
   string public constant VERSION = '1';
 
   /**
@@ -66,7 +59,6 @@ contract sGHO is Initializable, ERC4626Upgradeable, ERC20PermitUpgradeable, IsGH
     aclManager = IAccessControl(_aclmanager);
 
     deploymentChainId = block.chainid;
-    _DOMAIN_SEPARATOR = _calculateDomainSeparator(block.chainid);
     yieldIndex = WadRayMath.RAY;
     lastUpdate = block.timestamp;
   }
@@ -113,85 +105,6 @@ contract sGHO is Initializable, ERC4626Upgradeable, ERC20PermitUpgradeable, IsGH
   }
 
   // --- Approve by signature ---
-
-  /**
-   * @notice Internal function to validate a signature.
-   * @dev It supports both standard EOA signatures (ecrecover) and contract signatures (EIP-1271).
-   * @param signer The address of the signer.
-   * @param digest The hash of the message that was signed.
-   * @param signature The signature to validate.
-   * @return A boolean indicating whether the signature is valid.
-   */
-  function _isValidSignature(
-    address signer,
-    bytes32 digest,
-    bytes memory signature
-  ) internal view returns (bool) {
-    if (signature.length == 65) {
-      bytes32 r;
-      bytes32 s;
-      uint8 v;
-      assembly {
-        r := mload(add(signature, 0x20))
-        s := mload(add(signature, 0x40))
-        v := byte(0, mload(add(signature, 0x60)))
-      }
-      if (signer == ecrecover(digest, v, r, s)) {
-        return true;
-      }
-    }
-
-    (bool success, bytes memory result) = signer.staticcall(
-      abi.encodeWithSelector(IERC1271.isValidSignature.selector, digest, signature)
-    );
-    return (success &&
-      result.length == 32 &&
-      abi.decode(result, (bytes4)) == IERC1271.isValidSignature.selector);
-  }
-
-  /**
-   * @notice Grants approval to a spender by signature.
-   * @dev This function allows a user to approve a spender for a certain amount of tokens
-   * by providing a signature, as per EIP-2612. It accepts a combined signature.
-   * @param owner The address of the token owner.
-   * @param spender The address of the spender.
-   * @param value The amount of tokens to approve.
-   * @param deadline The deadline for the signature's validity.
-   * @param signature The EIP-2612 signature.
-   */
-  function permit(
-    address owner,
-    address spender,
-    uint256 value,
-    uint256 deadline,
-    bytes memory signature
-  ) public {
-    if (block.timestamp > deadline) {
-      revert ERC2612ExpiredSignature(deadline);
-    }
-
-    if (owner == address(0)) {
-      revert ERC2612InvalidSigner(owner, spender);
-    }
-
-    uint256 nonce = _useNonce(owner);
-
-    bytes32 digest = keccak256(
-      abi.encodePacked(
-        '\x19\x01',
-        _domainSeparatorV4(),
-        keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, value, nonce, deadline))
-      )
-    );
-
-    if (!_isValidSignature(owner, digest, signature)) {
-      revert InvalidSignature();
-    }
-
-    _approve(owner, spender, value);
-    emit Approval(owner, spender, value);
-  }
-
   /**
    * @notice Overload of the `permit` function that accepts v, r, and s as separate arguments.
    * @dev This is a convenience function for platforms that do not handle the single `bytes` signature format.
@@ -212,8 +125,9 @@ contract sGHO is Initializable, ERC4626Upgradeable, ERC20PermitUpgradeable, IsGH
     bytes32 r,
     bytes32 s
   ) public virtual override(IsGHO, ERC20PermitUpgradeable) {
-    permit(owner, spender, value, deadline, abi.encodePacked(r, s, v));
+    super.permit(owner, spender, value, deadline, v, r, s);
   }
+
   /**
    * @dev See {IERC20Permit-nonces}.
    */
@@ -226,27 +140,6 @@ contract sGHO is Initializable, ERC4626Upgradeable, ERC20PermitUpgradeable, IsGH
    */
   function DOMAIN_SEPARATOR() external view virtual override returns (bytes32) {
     return _domainSeparatorV4();
-  }
-
-  /**
-   * @notice Calculates the EIP-712 domain separator.
-   * @dev The domain separator is unique to the contract and chain to prevent replay attacks.
-   * @param chainId The chain ID of the network.
-   * @return The domain separator.
-   */
-  function _calculateDomainSeparator(uint256 chainId) private view returns (bytes32) {
-    return
-      keccak256(
-        abi.encode(
-          keccak256(
-            'EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)'
-          ),
-          keccak256(bytes(name())),
-          keccak256(bytes(VERSION)),
-          chainId,
-          address(this)
-        )
-      );
   }
 
   function decimals() public view virtual override(ERC20Upgradeable, ERC4626Upgradeable) returns (uint8) {
