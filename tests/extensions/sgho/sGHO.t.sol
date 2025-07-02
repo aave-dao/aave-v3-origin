@@ -121,6 +121,17 @@ contract sGhoTest is TestnetProcedures {
     payable(address(sgho)).transfer(1 ether);
   }
 
+  // --- Admin functions ---
+  function test_setTargetRate_event() external {
+    vm.startPrank(yManager);
+    uint256 newRate = 2000; // 20% APR
+    vm.expectEmit(true, true, true, true, address(sgho));
+    emit IsGHO.TargetRateUpdated(newRate);
+    sgho.setTargetRate(newRate);
+    vm.stopPrank();
+    assertEq(sgho.targetRate(), newRate, 'Target rate should be updated');
+  }
+
   // --- ERC4626 Tests ---
 
   function test_4626_initialState() external view {

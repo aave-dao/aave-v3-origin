@@ -45,6 +45,14 @@ interface IsGHO {
    */
   error RateMustBeLessThan50Percent();
 
+  // --- Events ---
+
+  /**
+   * @notice Emitted when the target rate is updated.
+   * @param newRate The new target rate.
+   */
+  event TargetRateUpdated(uint256 newRate);
+
   // --- State Variables (as view functions) ---
 
   /**

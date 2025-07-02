@@ -366,6 +366,7 @@ contract sGHO is Initializable, ERC4626Upgradeable, ERC20PermitUpgradeable, IsGH
     if (newRate > 5000) revert RateMustBeLessThan50Percent();
     _updateYieldIndex();
     targetRate = newRate;
+    emit TargetRateUpdated(newRate);
   }
 
   /**
