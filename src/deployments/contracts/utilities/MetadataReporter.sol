@@ -107,7 +107,6 @@ contract MetadataReporter is IMetadataReporter {
     string memory jsonReport = 'lib-report-1';
 
     vm.serializeAddress(jsonReport, 'borrowLogic', libraries.borrowLogic);
-    vm.serializeAddress(jsonReport, 'bridgeLogic', libraries.bridgeLogic);
     vm.serializeAddress(jsonReport, 'configuratorLogic', libraries.configuratorLogic);
 
     string memory output = vm.serializeAddress(jsonReport, 'eModeLogic', libraries.eModeLogic);

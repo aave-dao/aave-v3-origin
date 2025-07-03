@@ -13,12 +13,12 @@ contract ATokenModifiersTests is TestnetProcedures {
   function setUp() public {
     initTestEnvironment();
 
-    (address aUSDX, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(tokenList.usdx);
+    address aUSDX = contracts.poolProxy.getReserveAToken(tokenList.usdx);
     aToken = IAToken(aUSDX);
   }
 
   function test_revert_notAdmin_mint() public {
-    vm.expectRevert(bytes(Errors.CALLER_MUST_BE_POOL));
+    vm.expectRevert(abi.encodeWithSelector(Errors.CallerMustBePool.selector));
 
     vm.prank(alice);
 
@@ -26,7 +26,7 @@ contract ATokenModifiersTests is TestnetProcedures {
   }
 
   function test_revert_notAdmin_burn() public {
-    vm.expectRevert(bytes(Errors.CALLER_MUST_BE_POOL));
+    vm.expectRevert(abi.encodeWithSelector(Errors.CallerMustBePool.selector));
 
     vm.prank(alice);
 
@@ -34,15 +34,15 @@ contract ATokenModifiersTests is TestnetProcedures {
   }
 
   function test_revert_notAdmin_transferOnLiquidation() public {
-    vm.expectRevert(bytes(Errors.CALLER_MUST_BE_POOL));
+    vm.expectRevert(abi.encodeWithSelector(Errors.CallerMustBePool.selector));
 
     vm.prank(alice);
 
-    aToken.transferOnLiquidation(alice, alice, 1);
+    aToken.transferOnLiquidation(alice, alice, 1, 1);
   }
 
   function test_revert_notAdmin_transferUnderlyingTo() public {
-    vm.expectRevert(bytes(Errors.CALLER_MUST_BE_POOL));
+    vm.expectRevert(abi.encodeWithSelector(Errors.CallerMustBePool.selector));
 
     vm.prank(alice);
 

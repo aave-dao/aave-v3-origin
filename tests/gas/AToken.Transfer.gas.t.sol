@@ -42,6 +42,22 @@ contract ATokenTransfer_gas_Tests is Testhelpers {
     );
   }
 
+  function test_transferFrom_fullAmount() external {
+    _supplyOnReserve(sender, 1 ether);
+    vm.prank(sender);
+
+    aToken.approve(receiver, 1 ether);
+
+    _skip(100);
+
+    vm.startPrank(receiver);
+    aToken.transferFrom(sender, receiver, 1 ether);
+    vm.snapshotGasLastCall(
+      'AToken.transfer',
+      'full amount; sender: ->disableCollateral; receiver: ->enableCollateral; transferFrom'
+    );
+  }
+
   function test_transfer_fullAmount_dirtyReceiver() external {
     _supplyOnReserve(receiver, 1 ether, tokenList.weth);
     _supplyOnReserve(sender, 1 ether);
@@ -56,6 +72,23 @@ contract ATokenTransfer_gas_Tests is Testhelpers {
     );
   }
 
+  function test_transferFrom_fullAmount_dirtyReceiver() external {
+    _supplyOnReserve(receiver, 1 ether, tokenList.weth);
+    _supplyOnReserve(sender, 1 ether);
+    vm.prank(sender);
+
+    aToken.approve(receiver, 1 ether);
+
+    _skip(100);
+
+    vm.startPrank(receiver);
+    aToken.transferFrom(sender, receiver, 1 ether);
+    vm.snapshotGasLastCall(
+      'AToken.transfer',
+      'full amount; sender: ->disableCollateral; receiver: dirty, ->enableCollateral; transferFrom'
+    );
+  }
+
   function test_transfer_fullAmount_senderCollateralDisabled() external {
     _supplyOnReserve(sender, 1 ether);
     vm.startPrank(sender);
@@ -65,6 +98,23 @@ contract ATokenTransfer_gas_Tests is Testhelpers {
 
     aToken.transfer(receiver, 1 ether);
     vm.snapshotGasLastCall('AToken.transfer', 'full amount; receiver: ->enableCollateral');
+  }
+
+  function test_transferFrom_fullAmount_senderCollateralDisabled() external {
+    _supplyOnReserve(sender, 1 ether);
+    vm.startPrank(sender);
+    contracts.poolProxy.setUserUseReserveAsCollateral(token, false);
+
+    aToken.approve(receiver, 1 ether);
+
+    _skip(100);
+
+    vm.startPrank(receiver);
+    aToken.transferFrom(sender, receiver, 1 ether);
+    vm.snapshotGasLastCall(
+      'AToken.transfer',
+      'full amount; receiver: ->enableCollateral; transferFrom'
+    );
   }
 
   function test_transfer_fullAmount_senderCollateralDisabled_receiverNonZeroFunds2() external {
@@ -78,6 +128,23 @@ contract ATokenTransfer_gas_Tests is Testhelpers {
     vm.snapshotGasLastCall('AToken.transfer', 'full amount; sender: ->disableCollateral;');
   }
 
+  function test_transferFrom_fullAmount_senderCollateralDisabled_receiverNonZeroFunds2() external {
+    _supplyOnReserve(sender, 1 ether);
+    _supplyOnReserve(receiver, 1 ether);
+    vm.startPrank(sender);
+
+    aToken.approve(receiver, 1 ether);
+
+    _skip(100);
+
+    vm.startPrank(receiver);
+    aToken.transferFrom(sender, receiver, 1 ether);
+    vm.snapshotGasLastCall(
+      'AToken.transfer',
+      'full amount; sender: ->disableCollateral; transferFrom'
+    );
+  }
+
   function test_transfer_fullAmount_senderCollateralDisabled_receiverNonZeroFunds() external {
     _supplyOnReserve(sender, 1 ether);
     _supplyOnReserve(receiver, 1 ether);
@@ -88,6 +155,24 @@ contract ATokenTransfer_gas_Tests is Testhelpers {
 
     aToken.transfer(receiver, 1 ether);
     vm.snapshotGasLastCall('AToken.transfer', 'full amount; sender: collateralDisabled');
+  }
+
+  function test_transferFrom_fullAmount_senderCollateralDisabled_receiverNonZeroFunds() external {
+    _supplyOnReserve(sender, 1 ether);
+    _supplyOnReserve(receiver, 1 ether);
+    vm.startPrank(sender);
+    contracts.poolProxy.setUserUseReserveAsCollateral(token, false);
+
+    aToken.approve(receiver, 1 ether);
+
+    _skip(100);
+
+    vm.startPrank(receiver);
+    aToken.transferFrom(sender, receiver, 1 ether);
+    vm.snapshotGasLastCall(
+      'AToken.transfer',
+      'full amount; sender: collateralDisabled; transferFrom'
+    );
   }
 
   function test_transfer_partialAmount_senderCollateralEnabled() external {
@@ -103,6 +188,22 @@ contract ATokenTransfer_gas_Tests is Testhelpers {
     );
   }
 
+  function test_transferFrom_partialAmount_senderCollateralEnabled() external {
+    _supplyOnReserve(sender, 1 ether);
+    vm.startPrank(sender);
+
+    aToken.approve(receiver, 0.5 ether);
+
+    _skip(100);
+
+    vm.startPrank(receiver);
+    aToken.transferFrom(sender, receiver, 0.5 ether);
+    vm.snapshotGasLastCall(
+      'AToken.transfer',
+      'partial amount; sender: collateralEnabled; receiver: ->enableCollateral; transferFrom'
+    );
+  }
+
   function test_transfer_partialAmount_senderCollateralEnabled_receiverNonZeroFunds() external {
     _supplyOnReserve(sender, 1 ether);
     _supplyOnReserve(receiver, 1 ether);
@@ -112,6 +213,23 @@ contract ATokenTransfer_gas_Tests is Testhelpers {
 
     aToken.transfer(receiver, 0.5 ether);
     vm.snapshotGasLastCall('AToken.transfer', 'partial amount; sender: collateralEnabled;');
+  }
+
+  function test_transferFrom_partialAmount_senderCollateralEnabled_receiverNonZeroFunds() external {
+    _supplyOnReserve(sender, 1 ether);
+    _supplyOnReserve(receiver, 1 ether);
+    vm.startPrank(sender);
+
+    aToken.approve(receiver, 0.5 ether);
+
+    _skip(100);
+
+    vm.startPrank(receiver);
+    aToken.transferFrom(sender, receiver, 0.5 ether);
+    vm.snapshotGasLastCall(
+      'AToken.transfer',
+      'partial amount; sender: collateralEnabled; transferFrom'
+    );
   }
 
   function test_transfer_partialAmount_receiverNonZeroFunds() external {
@@ -126,6 +244,24 @@ contract ATokenTransfer_gas_Tests is Testhelpers {
     vm.snapshotGasLastCall('AToken.transfer', 'partial amount; sender: collateralDisabled;');
   }
 
+  function test_transferFrom_partialAmount_receiverNonZeroFunds() external {
+    _supplyOnReserve(sender, 1 ether);
+    _supplyOnReserve(receiver, 1 ether);
+    vm.startPrank(sender);
+    contracts.poolProxy.setUserUseReserveAsCollateral(token, false);
+
+    aToken.approve(receiver, 0.5 ether);
+
+    _skip(100);
+
+    vm.startPrank(receiver);
+    aToken.transferFrom(sender, receiver, 0.5 ether);
+    vm.snapshotGasLastCall(
+      'AToken.transfer',
+      'partial amount; sender: collateralDisabled; transferFrom'
+    );
+  }
+
   function test_transfer_partialAmount() external {
     _supplyOnReserve(sender, 1 ether);
     vm.startPrank(sender);
@@ -137,6 +273,23 @@ contract ATokenTransfer_gas_Tests is Testhelpers {
     vm.snapshotGasLastCall(
       'AToken.transfer',
       'partial amount; sender: collateralDisabled; receiver: ->enableCollateral'
+    );
+  }
+
+  function test_transferFrom_partialAmount() external {
+    _supplyOnReserve(sender, 1 ether);
+    vm.startPrank(sender);
+    contracts.poolProxy.setUserUseReserveAsCollateral(token, false);
+
+    aToken.approve(receiver, 0.5 ether);
+
+    _skip(100);
+
+    vm.startPrank(receiver);
+    aToken.transferFrom(sender, receiver, 0.5 ether);
+    vm.snapshotGasLastCall(
+      'AToken.transfer',
+      'partial amount; sender: collateralDisabled; receiver: ->enableCollateral; transferFrom'
     );
   }
 

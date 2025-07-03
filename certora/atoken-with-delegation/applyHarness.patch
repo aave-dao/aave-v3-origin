@@ -1,0 +1,54 @@
+diff -ruN .gitignore .gitignore
+--- .gitignore	1970-01-01 02:00:00.000000000 +0200
++++ .gitignore	2025-05-06 12:33:28.661863071 +0300
+@@ -0,0 +1,2 @@
++*
++!.gitignore
+\ No newline at end of file
+diff -ruN src/contracts/protocol/tokenization/delegation/BaseDelegation.sol src/contracts/protocol/tokenization/delegation/BaseDelegation.sol
+--- src/contracts/protocol/tokenization/delegation/BaseDelegation.sol	2025-05-06 14:24:55.470399241 +0300
++++ src/contracts/protocol/tokenization/delegation/BaseDelegation.sol	2025-05-06 14:23:52.129864847 +0300
+@@ -377,6 +377,7 @@
+     GovernancePowerType delegationType,
+     bool willDelegate
+   ) internal pure returns (DelegationState memory) {
++    /*
+     if (willDelegate) {
+       // Because GovernancePowerType starts from 0, we should add 1 first, then we apply bitwise OR
+       userState.delegationMode = DelegationMode(
+@@ -389,7 +390,35 @@
+         uint8(userState.delegationMode) &
+           ((uint8(delegationType) + 1) ^ uint8(DelegationMode.FULL_POWER_DELEGATED))
+       );
++      }*/
++    if (willDelegate) {
++      if (delegationType == GovernancePowerType.VOTING) {
++        if (userState.delegationMode==DelegationMode.NO_DELEGATION)
++          userState.delegationMode = DelegationMode.VOTING_DELEGATED;
++        else if (userState.delegationMode==DelegationMode.PROPOSITION_DELEGATED)
++          userState.delegationMode = DelegationMode.FULL_POWER_DELEGATED;
++      }
++      else if (delegationType == GovernancePowerType.PROPOSITION) {
++        if (userState.delegationMode==DelegationMode.NO_DELEGATION)
++          userState.delegationMode = DelegationMode.PROPOSITION_DELEGATED;
++        else if (userState.delegationMode==DelegationMode.VOTING_DELEGATED)
++          userState.delegationMode = DelegationMode.FULL_POWER_DELEGATED;
++      }
++    } else {
++      if (delegationType == GovernancePowerType.VOTING) {
++        if (userState.delegationMode==DelegationMode.VOTING_DELEGATED)
++          userState.delegationMode = DelegationMode.NO_DELEGATION;
++        else if (userState.delegationMode==DelegationMode.FULL_POWER_DELEGATED)
++          userState.delegationMode = DelegationMode.PROPOSITION_DELEGATED;
++      }
++      else if (delegationType == GovernancePowerType.PROPOSITION) {
++        if (userState.delegationMode==DelegationMode.PROPOSITION_DELEGATED)
++          userState.delegationMode = DelegationMode.NO_DELEGATION;
++        else if (userState.delegationMode==DelegationMode.FULL_POWER_DELEGATED)
++          userState.delegationMode = DelegationMode.VOTING_DELEGATED;
++      }
+     }
++        
+     return userState;
+   }
+ 

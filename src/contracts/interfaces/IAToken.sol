@@ -58,8 +58,9 @@ interface IAToken is IERC20, IScaledBalanceToken, IInitializableAToken {
    * @param from The address getting liquidated, current owner of the aTokens
    * @param to The recipient
    * @param value The amount of tokens getting transferred
+   * @param index The next liquidity index of the reserve
    */
-  function transferOnLiquidation(address from, address to, uint256 value) external;
+  function transferOnLiquidation(address from, address to, uint256 value, uint256 index) external;
 
   /**
    * @notice Transfers the underlying asset to `target`.
@@ -68,17 +69,6 @@ interface IAToken is IERC20, IScaledBalanceToken, IInitializableAToken {
    * @param amount The amount getting transferred
    */
   function transferUnderlyingTo(address target, uint256 amount) external;
-
-  /**
-   * @notice Handles the underlying received by the aToken after the transfer has been completed.
-   * @dev The default implementation is empty as with standard ERC20 tokens, nothing needs to be done after the
-   * transfer is concluded. However in the future there may be aTokens that allow for example to stake the underlying
-   * to receive LM rewards. In that case, `handleRepayment()` would perform the staking of the underlying asset.
-   * @param user The user executing the repayment
-   * @param onBehalfOf The address of the user who will get his debt reduced/removed
-   * @param amount The amount getting repaid
-   */
-  function handleRepayment(address user, address onBehalfOf, uint256 amount) external;
 
   /**
    * @notice Allow passing a signed message to approve spending

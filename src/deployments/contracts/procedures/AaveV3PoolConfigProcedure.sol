@@ -7,9 +7,8 @@ import {IPool} from '../../../contracts/interfaces/IPool.sol';
 import {AaveOracle} from '../../../contracts/misc/AaveOracle.sol';
 
 contract AaveV3PoolConfigProcedure {
-  function _deployPoolConfigurator(address poolAddressesProvider) internal returns (address) {
+  function _deployPoolConfigurator() internal returns (address) {
     PoolConfiguratorInstance poolConfiguratorImplementation = new PoolConfiguratorInstance();
-    poolConfiguratorImplementation.initialize(IPoolAddressesProvider(poolAddressesProvider));
 
     return address(poolConfiguratorImplementation);
   }

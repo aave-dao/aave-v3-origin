@@ -64,8 +64,8 @@ abstract contract BaseTest is TestnetProcedures {
   }
 
   function _skipBlocks(uint128 blocks) internal {
-    vm.roll(block.number + blocks);
-    vm.warp(block.timestamp + blocks * 12); // assuming a block is around 12seconds
+    vm.roll(vm.getBlockNumber() + blocks);
+    vm.warp(vm.getBlockTimestamp() + blocks * 12); // assuming a block is around 12seconds
   }
 
   function _fundUnderlying(uint256 assets, address receiver) internal {

@@ -1,0 +1,62 @@
+name: certora-ATokenWithDelegation
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    branches:
+      - main
+      - certora
+  push:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    if:
+      github.event.pull_request.head.repo.full_name == github.repository || (github.event_name == 'push' &&
+      github.ref == format('refs/heads/{0}', github.event.repository.default_branch))
+    permissions:
+      contents: read
+      statuses: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Munged
+        run: |
+          cd certora/atoken-with-delegation
+          touch applyHarness.patch
+          make munged
+
+      - uses: Certora/certora-run-action@v1
+        with:
+          cli-version: 7.28.0
+          configurations: |-
+            certora/atoken-with-delegation/conf/AToken.conf 
+            certora/atoken-with-delegation/conf/AToken-problematic-rules.conf --rule totalSupplyEqualsSumAllBalance additiveBurn additiveTransfer 
+            certora/atoken-with-delegation/conf/token-v3-general.conf 
+            certora/atoken-with-delegation/conf/token-v3-erc20.conf 
+            certora/atoken-with-delegation/conf/token-v3-delegate-basic.conf 
+            certora/atoken-with-delegation/conf/token-v3-delegate-invariants.conf --rule mirror_votingDelegatee_correct mirror_propositionDelegatee_correct mirror_delegationMode_correct mirror_balance_correct --rule_sanity "none" 
+            certora/atoken-with-delegation/conf/token-v3-delegate-invariants.conf --exclude_rule mirror_votingDelegatee_correct mirror_propositionDelegatee_correct mirror_delegationMode_correct mirror_balance_correct 
+            certora/atoken-with-delegation/conf/token-v3-delegate-HL-rules.conf --rule vp_change_in_balance_affect_power_DELEGATEE 
+            certora/atoken-with-delegation/conf/token-v3-delegate-HL-rules.conf --rule vp_change_of_balance_affect_power_NON_DELEGATEE 
+            certora/atoken-with-delegation/conf/token-v3-delegate-HL-rules.conf --rule pp_change_in_balance_affect_power_DELEGATEE 
+            certora/atoken-with-delegation/conf/token-v3-delegate-HL-rules.conf --rule pp_change_of_balance_affect_power_NON_DELEGATEE 
+            certora/atoken-with-delegation/conf/token-v3-delegate-HL-rules.conf --rule no_function_changes_both_balance_and_delegation_state
+          solc-versions: 0.8.27
+          comment-fail-only: false
+          solc-remove-version-prefix: "0."
+          job-name: "Certora Prover Run"
+          certora-key: ${{ secrets.CERTORAKEY }}
+          install-java: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

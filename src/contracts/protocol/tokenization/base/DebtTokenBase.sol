@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
+import {ECDSA} from 'openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol';
+
 import {Context} from '../../../dependencies/openzeppelin/contracts/Context.sol';
 import {Errors} from '../../libraries/helpers/Errors.sol';
 import {VersionedInitializable} from '../../../misc/aave-upgradeability/VersionedInitializable.sol';
@@ -49,9 +51,9 @@ abstract contract DebtTokenBase is
     bytes32 r,
     bytes32 s
   ) external {
-    require(delegator != address(0), Errors.ZERO_ADDRESS_NOT_VALID);
+    require(delegator != address(0), Errors.ZeroAddressNotValid());
     //solium-disable-next-line
-    require(block.timestamp <= deadline, Errors.INVALID_EXPIRATION);
+    require(block.timestamp <= deadline, Errors.InvalidExpiration());
     uint256 currentValidNonce = _nonces[delegator];
     bytes32 digest = keccak256(
       abi.encodePacked(
@@ -62,7 +64,7 @@ abstract contract DebtTokenBase is
         )
       )
     );
-    require(delegator == ecrecover(digest, v, r, s), Errors.INVALID_SIGNATURE);
+    require(delegator == ECDSA.recover(digest, v, r, s), Errors.InvalidSignature());
     _nonces[delegator] = currentValidNonce + 1;
     _approveDelegation(delegator, delegatee, value);
   }

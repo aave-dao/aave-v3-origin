@@ -8,6 +8,7 @@ import {IAaveOracle} from '../../../src/contracts/interfaces/IAaveOracle.sol';
 import {Errors} from '../../../src/contracts/protocol/libraries/helpers/Errors.sol';
 import {IReserveInterestRateStrategy} from '../../../src/contracts/interfaces/IReserveInterestRateStrategy.sol';
 import {IPoolAddressesProvider} from '../../../src/contracts/interfaces/IPoolAddressesProvider.sol';
+import {IPool} from '../../../src/contracts/interfaces/IPool.sol';
 import {ISequencerOracle} from '../../../src/contracts/interfaces/ISequencerOracle.sol';
 import {UserConfiguration} from '../../../src/contracts/protocol/libraries/configuration/UserConfiguration.sol';
 import {PriceOracleSentinel} from '../../../src/contracts/misc/PriceOracleSentinel.sol';
@@ -27,17 +28,6 @@ contract PoolBorrowTests is TestnetProcedures {
 
   PriceOracleSentinel internal priceOracleSentinel;
   SequencerOracle internal sequencerOracleMock;
-
-  event Borrow(
-    address indexed reserve,
-    address user,
-    address indexed onBehalfOf,
-    uint256 amount,
-    DataTypes.InterestRateMode interestRateMode,
-    uint256 borrowRate,
-    uint16 indexed referralCode
-  );
-  event IsolationModeTotalDebtUpdated(address indexed asset, uint256 totalDebt);
 
   function setUp() public {
     initTestEnvironment();
@@ -86,17 +76,14 @@ contract PoolBorrowTests is TestnetProcedures {
       totalDebt: 800e6,
       reserveFactor: 1000,
       reserve: tokenList.usdx,
-      usingVirtualBalance: contracts
-        .poolProxy
-        .getConfiguration(tokenList.usdx)
-        .getIsVirtualAccActive(),
+      usingVirtualBalance: true,
       virtualUnderlyingBalance: contracts.poolProxy.getVirtualUnderlyingBalance(tokenList.usdx)
     });
 
     (, uint256 expectedVariableBorrowRate) = rateStrategy.calculateInterestRates(input);
 
     vm.expectEmit(true, true, true, true, address(contracts.poolProxy));
-    emit Borrow(
+    emit IPool.Borrow(
       tokenList.usdx,
       alice,
       alice,
@@ -144,19 +131,16 @@ contract PoolBorrowTests is TestnetProcedures {
       totalDebt: borrowAmount,
       reserveFactor: 1000,
       reserve: tokenList.usdx,
-      usingVirtualBalance: contracts
-        .poolProxy
-        .getConfiguration(tokenList.usdx)
-        .getIsVirtualAccActive(),
+      usingVirtualBalance: true,
       virtualUnderlyingBalance: contracts.poolProxy.getVirtualUnderlyingBalance(tokenList.usdx)
     });
 
     (, uint256 expectedVariableBorrowRate) = rateStrategy.calculateInterestRates(input);
 
     vm.expectEmit(address(contracts.poolProxy));
-    emit IsolationModeTotalDebtUpdated(tokenList.wbtc, 100_00);
+    emit IPool.IsolationModeTotalDebtUpdated(tokenList.wbtc, 100_00);
     vm.expectEmit(true, true, true, true, address(contracts.poolProxy));
-    emit Borrow(
+    emit IPool.Borrow(
       tokenList.usdx,
       alice,
       alice,
@@ -195,7 +179,7 @@ contract PoolBorrowTests is TestnetProcedures {
     // Supply
     contracts.poolProxy.supply(tokenList.weth, collateralAmount, alice, 0);
 
-    vm.expectRevert(bytes(Errors.INVALID_AMOUNT));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidAmount.selector));
     contracts.poolProxy.borrow(tokenList.usdx, borrowAmount, 2, 0, alice);
   }
 
@@ -206,13 +190,13 @@ contract PoolBorrowTests is TestnetProcedures {
     contracts.poolProxy.supply(tokenList.usdx, amount, alice, 0);
     contracts.poolProxy.supply(tokenList.wbtc, borrowAmount, bob, 0);
 
-    vm.expectRevert(bytes(Errors.INVALID_INTEREST_RATE_MODE_SELECTED));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidInterestRateModeSelected.selector));
 
     contracts.poolProxy.borrow(tokenList.wbtc, borrowAmount, 1, 0, alice);
   }
 
   function test_reverts_borrow_invalidAmount() public {
-    vm.expectRevert(bytes(Errors.INVALID_AMOUNT));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidAmount.selector));
 
     vm.prank(alice);
     contracts.poolProxy.borrow(tokenList.wbtc, 0, 2, 0, alice);
@@ -222,7 +206,7 @@ contract PoolBorrowTests is TestnetProcedures {
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setReserveActive(tokenList.wbtc, false);
 
-    vm.expectRevert(bytes(Errors.RESERVE_INACTIVE));
+    vm.expectRevert(abi.encodeWithSelector(Errors.ReserveInactive.selector));
 
     vm.prank(alice);
     contracts.poolProxy.borrow(tokenList.wbtc, 0.2e8, 2, 0, alice);
@@ -232,7 +216,7 @@ contract PoolBorrowTests is TestnetProcedures {
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setReservePause(tokenList.wbtc, true, 0);
 
-    vm.expectRevert(bytes(Errors.RESERVE_PAUSED));
+    vm.expectRevert(abi.encodeWithSelector(Errors.ReservePaused.selector));
 
     vm.prank(alice);
     contracts.poolProxy.borrow(tokenList.wbtc, 0.2e8, 2, 0, alice);
@@ -242,7 +226,7 @@ contract PoolBorrowTests is TestnetProcedures {
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setReserveFreeze(tokenList.wbtc, true);
 
-    vm.expectRevert(bytes(Errors.RESERVE_FROZEN));
+    vm.expectRevert(abi.encodeWithSelector(Errors.ReserveFrozen.selector));
 
     vm.prank(alice);
     contracts.poolProxy.borrow(tokenList.wbtc, 0.2e8, 2, 0, alice);
@@ -256,7 +240,7 @@ contract PoolBorrowTests is TestnetProcedures {
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setBorrowCap(tokenList.wbtc, 1);
 
-    vm.expectRevert(bytes(Errors.BORROW_CAP_EXCEEDED));
+    vm.expectRevert(abi.encodeWithSelector(Errors.BorrowCapExceeded.selector));
 
     contracts.poolProxy.borrow(tokenList.wbtc, 10e8, 2, 0, alice);
   }
@@ -274,7 +258,7 @@ contract PoolBorrowTests is TestnetProcedures {
     sequencerOracleMock.setAnswer(true, 0);
 
     assertEq(priceOracleSentinel.isBorrowAllowed(), false);
-    vm.expectRevert(bytes(Errors.PRICE_ORACLE_SENTINEL_CHECK_FAILED));
+    vm.expectRevert(abi.encodeWithSelector(Errors.PriceOracleSentinelCheckFailed.selector));
 
     vm.prank(alice);
     contracts.poolProxy.borrow(tokenList.wbtc, 100, 2, 0, alice);
@@ -292,12 +276,12 @@ contract PoolBorrowTests is TestnetProcedures {
     contracts.poolProxy.setUserUseReserveAsCollateral(tokenList.wbtc, true);
 
     // Perform borrow in isolated position
-    vm.expectRevert(bytes(Errors.ASSET_NOT_BORROWABLE_IN_ISOLATION));
+    vm.expectRevert(abi.encodeWithSelector(Errors.AssetNotBorrowableInIsolation.selector));
     contracts.poolProxy.borrow(tokenList.usdx, borrowAmount, 2, 0, alice);
     vm.stopPrank();
   }
 
-  function test_reverts_borrow_debt_ceiling_exceeded() public {
+  function test_reverts_borrow_DebtCeilingExceeded() public {
     vm.startPrank(poolAdmin);
     contracts.poolConfiguratorProxy.setDebtCeiling(tokenList.wbtc, 10_000_00);
     contracts.poolConfiguratorProxy.setBorrowableInIsolation(tokenList.usdx, true);
@@ -309,12 +293,12 @@ contract PoolBorrowTests is TestnetProcedures {
     contracts.poolProxy.setUserUseReserveAsCollateral(tokenList.wbtc, true);
 
     // Perform borrow in isolated position
-    vm.expectRevert(bytes(Errors.DEBT_CEILING_EXCEEDED));
+    vm.expectRevert(abi.encodeWithSelector(Errors.DebtCeilingExceeded.selector));
     contracts.poolProxy.borrow(tokenList.usdx, 10001e6, 2, 0, alice);
     vm.stopPrank();
   }
 
-  function test_reverts_borrow_inconsistent_emode_category() public {
+  function test_reverts_borrow_InconsistentEModeCategory() public {
     EModeCategoryInput memory ct = _genCategoryOne();
 
     vm.startPrank(poolAdmin);
@@ -328,13 +312,13 @@ contract PoolBorrowTests is TestnetProcedures {
 
     contracts.poolProxy.supply(tokenList.wbtc, 0.5e8, alice, 0);
 
-    vm.expectRevert(bytes(Errors.NOT_BORROWABLE_IN_EMODE));
+    vm.expectRevert(abi.encodeWithSelector(Errors.NotBorrowableInEMode.selector));
     contracts.poolProxy.borrow(tokenList.usdx, 10001e6, 2, 0, alice);
     vm.stopPrank();
   }
 
   function test_reverts_borrow_collateral_balance_zero() public {
-    vm.expectRevert(bytes(Errors.COLLATERAL_BALANCE_IS_ZERO));
+    vm.expectRevert(abi.encodeWithSelector(Errors.CollateralBalanceIsZero.selector));
 
     vm.prank(alice);
     contracts.poolProxy.borrow(tokenList.usdx, 0.2e8, 2, 0, alice);
@@ -344,7 +328,7 @@ contract PoolBorrowTests is TestnetProcedures {
     vm.startPrank(alice);
     contracts.poolProxy.supply(tokenList.wbtc, 1e8, alice, 0);
 
-    vm.expectRevert(bytes(Errors.COLLATERAL_CANNOT_COVER_NEW_BORROW));
+    vm.expectRevert(abi.encodeWithSelector(Errors.CollateralCannotCoverNewBorrow.selector));
     contracts.poolProxy.borrow(tokenList.usdx, 29001e6, 2, 0, alice);
     vm.stopPrank();
   }
@@ -367,7 +351,9 @@ contract PoolBorrowTests is TestnetProcedures {
     vm.prank(poolAdmin);
     IAaveOracle(report.aaveOracle).setAssetSources(assets, sources);
 
-    vm.expectRevert(bytes(Errors.HEALTH_FACTOR_LOWER_THAN_LIQUIDATION_THRESHOLD));
+    vm.expectRevert(
+      abi.encodeWithSelector(Errors.HealthFactorLowerThanLiquidationThreshold.selector)
+    );
 
     vm.prank(alice);
     contracts.poolProxy.borrow(tokenList.usdx, 10001e6, 2, 0, alice);
@@ -389,7 +375,7 @@ contract PoolBorrowTests is TestnetProcedures {
     // Perform siloed borrow
     contracts.poolProxy.borrow(tokenList.wbtc, 0.01e8, 2, 0, alice);
 
-    vm.expectRevert(bytes(Errors.SILOED_BORROWING_VIOLATION));
+    vm.expectRevert(abi.encodeWithSelector(Errors.SiloedBorrowingViolation.selector));
     contracts.poolProxy.borrow(tokenList.weth, 1e18, 2, 0, alice);
     vm.stopPrank();
   }
@@ -415,7 +401,7 @@ contract PoolBorrowTests is TestnetProcedures {
     contracts.poolProxy.setUserUseReserveAsCollateral(tokenList.wbtc, true);
 
     // Perform borrow in isolated position
-    vm.expectRevert(bytes(Errors.DEBT_CEILING_EXCEEDED));
+    vm.expectRevert(abi.encodeWithSelector(Errors.DebtCeilingExceeded.selector));
     contracts.poolProxy.borrow(tokenList.usdx, 10001e6, 2, 0, alice);
     vm.stopPrank();
   }

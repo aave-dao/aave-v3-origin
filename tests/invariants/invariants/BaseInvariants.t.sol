@@ -149,4 +149,18 @@ abstract contract BaseInvariants is HandlerAggregator {
       assertEq(price1, price2, ORACLE_INVARIANT_B);
     }
   }
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////
+  //                                         Interest rate strategy                                            //
+  ///////////////////////////////////////////////////////////////////////////////////////////////
+
+  function assert_IR_INVARIANT_A(address asset) internal {
+    DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(asset);
+    assertLe(
+      reserveData.currentLiquidityRate * IERC20(reserveData.aTokenAddress).totalSupply(),
+      reserveData.currentVariableBorrowRate *
+        IERC20(reserveData.variableDebtTokenAddress).totalSupply(),
+      IR_INVARIANT_A
+    );
+  }
 }

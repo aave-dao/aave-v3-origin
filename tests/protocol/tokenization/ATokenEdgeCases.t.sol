@@ -3,8 +3,10 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 
+import {SafeCast} from 'openzeppelin-contracts/contracts/utils/math/SafeCast.sol';
 import {ATokenInstance} from '../../../src/contracts/instances/ATokenInstance.sol';
 import {IAaveIncentivesController} from '../../../src/contracts/interfaces/IAaveIncentivesController.sol';
+import {IAToken, IERC20} from '../../../src/contracts/interfaces/IAToken.sol';
 import {TestnetProcedures} from '../../utils/TestnetProcedures.sol';
 import {Errors} from '../../../src/contracts/protocol/libraries/helpers/Errors.sol';
 
@@ -12,12 +14,10 @@ contract ATokenEdgeCasesTests is TestnetProcedures {
   ATokenInstance public aToken;
   address public ZERO_ADDRESS = address(0);
 
-  event Transfer(address indexed from, address indexed to, uint256 amount);
-
   function setUp() public {
     initTestEnvironment();
 
-    (address aUSDX, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(tokenList.usdx);
+    address aUSDX = contracts.poolProxy.getReserveAToken(tokenList.usdx);
     aToken = ATokenInstance(aUSDX);
   }
 
@@ -30,6 +30,7 @@ contract ATokenEdgeCasesTests is TestnetProcedures {
       address(contracts.rewardsControllerProxy),
       'Incentives controller is not zero address'
     );
+    assertEq(address(aToken.REWARDS_CONTROLLER()), address(aToken.getIncentivesController()));
 
     (uint256 userBalanceBefore, uint256 supplyBefore) = aToken.getScaledUserBalanceAndSupply(alice);
     assertEq(userBalanceBefore, 0, 'Initial user balance is non-zero');
@@ -107,13 +108,13 @@ contract ATokenEdgeCasesTests is TestnetProcedures {
   function test_transferFrom_zeroAddress_origin() public {
     vm.expectEmit(address(aToken));
 
-    emit Transfer(address(0), alice, 0);
+    emit IERC20.Transfer(address(0), alice, 0);
 
     aToken.transferFrom(address(0), alice, 0);
   }
 
   function test_reverts_mintAmountScaledZero() public {
-    vm.expectRevert(bytes(Errors.INVALID_MINT_AMOUNT));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidMintAmount.selector));
     vm.prank(address(contracts.poolProxy));
     aToken.mint(alice, alice, 0, 1e27);
   }
@@ -123,14 +124,14 @@ contract ATokenEdgeCasesTests is TestnetProcedures {
 
     vm.expectEmit(address(aToken));
 
-    emit Transfer(address(0), address(0), mintAmount);
+    emit IERC20.Transfer(address(0), address(0), mintAmount);
 
     vm.prank(address(contracts.poolProxy));
     aToken.mint(address(0), address(0), mintAmount, 1e27);
   }
 
   function test_reverts_burnAmountScaledZero() public {
-    vm.expectRevert(bytes(Errors.INVALID_BURN_AMOUNT));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidBurnAmount.selector));
     vm.prank(address(contracts.poolProxy));
     aToken.burn(alice, alice, 0, 1e27);
   }
@@ -139,7 +140,7 @@ contract ATokenEdgeCasesTests is TestnetProcedures {
     uint256 burnAmount = 100e6;
     vm.expectEmit(address(aToken));
 
-    emit Transfer(address(0), address(0), burnAmount);
+    emit IERC20.Transfer(address(0), address(0), burnAmount);
 
     vm.startPrank(address(contracts.poolProxy));
 
@@ -156,28 +157,10 @@ contract ATokenEdgeCasesTests is TestnetProcedures {
     aToken.mintToTreasury(0, 1e27);
   }
 
-  function test_poolAdmin_setIncentivesController() public {
-    address incentivesContract = makeAddr('incentives');
-
-    vm.prank(poolAdmin);
-
-    aToken.setIncentivesController(IAaveIncentivesController(incentivesContract));
-
-    assertEq(address(aToken.getIncentivesController()), incentivesContract);
-  }
-
-  function test_revert_notAdmin_setIncentivesController() public {
-    address incentivesContract = makeAddr('incentives');
-
-    vm.prank(alice);
-    vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
-    aToken.setIncentivesController(IAaveIncentivesController(incentivesContract));
-
-    assertEq(address(aToken.getIncentivesController()), report.rewardsControllerProxy);
-  }
-
-  function test_transfer_amount_MAX_UINT_128() public {
-    vm.expectRevert(bytes("SafeCast: value doesn't fit in 128 bits"));
+  function test_transfer_amount_MAX_UINT_120() public {
+    vm.expectRevert(
+      abi.encodeWithSelector(SafeCast.SafeCastOverflowedUintDowncast.selector, 120, UINT256_MAX)
+    );
     aToken.transfer(alice, UINT256_MAX);
   }
 }

@@ -6,41 +6,13 @@ import {AaveOracle} from '../../src/contracts/misc/AaveOracle.sol';
 import {WrappedTokenGatewayV3} from '../../src/contracts/helpers/WrappedTokenGatewayV3.sol';
 import {AaveProtocolDataProvider} from '../../src/contracts/helpers/AaveProtocolDataProvider.sol';
 import {AToken} from '../../src/contracts/protocol/tokenization/AToken.sol';
+import {IPool} from '../../src/contracts/interfaces/IPool.sol';
 import {VariableDebtToken} from '../../src/contracts/protocol/tokenization/VariableDebtToken.sol';
 import {DataTypes} from '../../src/contracts/protocol/libraries/types/DataTypes.sol';
 import {EIP712SigUtils} from '../utils/EIP712SigUtils.sol';
 import {TestnetProcedures} from '../utils/TestnetProcedures.sol';
 
 contract WrappedTokenGatewayTests is TestnetProcedures {
-  event Supply(
-    address indexed reserve,
-    address user,
-    address indexed onBehalfOf,
-    uint256 amount,
-    uint16 indexed referralCode
-  );
-  event Withdraw(address indexed reserve, address indexed user, address indexed to, uint256 amount);
-
-  event ReserveUsedAsCollateralEnabled(address indexed reserve, address indexed user);
-
-  event Borrow(
-    address indexed reserve,
-    address user,
-    address indexed onBehalfOf,
-    uint256 amount,
-    DataTypes.InterestRateMode interestRateMode,
-    uint256 borrowRate,
-    uint16 indexed referralCode
-  );
-
-  event Repay(
-    address indexed reserve,
-    address indexed user,
-    address indexed repayer,
-    uint256 amount,
-    bool useATokens
-  );
-
   AaveOracle internal aaveOracle;
   WrappedTokenGatewayV3 internal wrappedTokenGatewayV3;
 
@@ -84,9 +56,9 @@ contract WrappedTokenGatewayTests is TestnetProcedures {
   function test_depositNativeEthInPool() public {
     vm.startPrank(alice);
     vm.expectEmit();
-    emit ReserveUsedAsCollateralEnabled(tokenList.weth, alice);
+    emit IPool.ReserveUsedAsCollateralEnabled(tokenList.weth, alice);
     vm.expectEmit();
-    emit Supply(tokenList.weth, address(wrappedTokenGatewayV3), alice, depositSize, 0);
+    emit IPool.Supply(tokenList.weth, address(wrappedTokenGatewayV3), alice, depositSize, 0);
     wrappedTokenGatewayV3.depositETH{value: depositSize}(report.poolProxy, alice, 0);
     vm.stopPrank();
 
@@ -114,7 +86,7 @@ contract WrappedTokenGatewayTests is TestnetProcedures {
 
     uint256 userEthBalanceBefore = alice.balance;
     vm.expectEmit();
-    emit Withdraw(
+    emit IPool.Withdraw(
       tokenList.weth,
       report.wrappedTokenGateway,
       report.wrappedTokenGateway,
@@ -147,7 +119,7 @@ contract WrappedTokenGatewayTests is TestnetProcedures {
       spender: address(wrappedTokenGatewayV3),
       value: withdrawAmount,
       nonce: 0,
-      deadline: block.timestamp + 1 days
+      deadline: vm.getBlockTimestamp() + 1 days
     });
     bytes32 digest = EIP712SigUtils.getTypedDataHash(
       permit,
@@ -161,7 +133,7 @@ contract WrappedTokenGatewayTests is TestnetProcedures {
     uint256 userEthBalanceBefore = alice.balance;
 
     vm.expectEmit();
-    emit Withdraw(
+    emit IPool.Withdraw(
       tokenList.weth,
       report.wrappedTokenGateway,
       report.wrappedTokenGateway,
@@ -192,7 +164,7 @@ contract WrappedTokenGatewayTests is TestnetProcedures {
       spender: address(wrappedTokenGatewayV3),
       value: withdrawAmount,
       nonce: 0,
-      deadline: block.timestamp + 1 days
+      deadline: vm.getBlockTimestamp() + 1 days
     });
     bytes32 digest = EIP712SigUtils.getTypedDataHash(
       permit,
@@ -206,7 +178,7 @@ contract WrappedTokenGatewayTests is TestnetProcedures {
     uint256 userEthBalanceBefore = alice.balance;
     uint256 userATokenBalance = aWEth.balanceOf(alice);
     vm.expectEmit();
-    emit Withdraw(
+    emit IPool.Withdraw(
       tokenList.weth,
       report.wrappedTokenGateway,
       report.wrappedTokenGateway,
@@ -248,8 +220,6 @@ contract WrappedTokenGatewayTests is TestnetProcedures {
 
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(alicePrivateKey, digest);
 
-    uint256 userEthBalanceBefore = alice.balance;
-
     vm.prank(alice);
     aWEth.permit(permit.owner, permit.spender, permit.value, permit.deadline, v, r, s);
 
@@ -283,7 +253,7 @@ contract WrappedTokenGatewayTests is TestnetProcedures {
 
     uint256 userEthBalanceBefore = alice.balance;
     vm.expectEmit();
-    emit Withdraw(
+    emit IPool.Withdraw(
       tokenList.weth,
       report.wrappedTokenGateway,
       report.wrappedTokenGateway,
@@ -317,9 +287,10 @@ contract WrappedTokenGatewayTests is TestnetProcedures {
     usdx.approve(address(contracts.poolProxy), usdxSize);
 
     vm.expectEmit();
-    emit ReserveUsedAsCollateralEnabled(tokenList.usdx, bob);
+    emit IPool.ReserveUsedAsCollateralEnabled(tokenList.usdx, bob);
     vm.expectEmit();
-    emit Supply(tokenList.usdx, bob, bob, usdxSize, 0);
+    emit IPool.Supply(tokenList.usdx, bob, bob, usdxSize, 0);
+
     contracts.poolProxy.deposit(address(usdx), usdxSize, bob, 0);
 
     assertEq(
@@ -336,7 +307,7 @@ contract WrappedTokenGatewayTests is TestnetProcedures {
     );
 
     vm.expectEmit(address(contracts.poolProxy));
-    emit Repay(tokenList.weth, bob, address(wrappedTokenGatewayV3), partialRepayment, false);
+    emit IPool.Repay(tokenList.weth, bob, address(wrappedTokenGatewayV3), partialRepayment, false);
     // Partial repayment
     wrappedTokenGatewayV3.repayETH{value: partialRepayment}(
       report.poolProxy,
@@ -351,7 +322,7 @@ contract WrappedTokenGatewayTests is TestnetProcedures {
     );
 
     vm.expectEmit(address(contracts.poolProxy));
-    emit Repay(tokenList.weth, bob, address(wrappedTokenGatewayV3), partialRepayment, false);
+    emit IPool.Repay(tokenList.weth, bob, address(wrappedTokenGatewayV3), partialRepayment, false);
     // Full repayment
     wrappedTokenGatewayV3.repayETH{value: partialRepayment}(report.poolProxy, type(uint).max, bob);
 
@@ -361,7 +332,7 @@ contract WrappedTokenGatewayTests is TestnetProcedures {
     usdx.approve(address(contracts.poolProxy), usdxSize);
 
     vm.expectEmit();
-    emit Withdraw(address(usdx), bob, bob, usdxSize);
+    emit IPool.Withdraw(address(usdx), bob, bob, usdxSize);
     contracts.poolProxy.withdraw(address(usdx), usdxSize, bob);
     vm.stopPrank();
 
@@ -387,9 +358,10 @@ contract WrappedTokenGatewayTests is TestnetProcedures {
     usdx.approve(address(contracts.poolProxy), usdxSize);
 
     vm.expectEmit();
-    emit ReserveUsedAsCollateralEnabled(tokenList.usdx, bob);
+    emit IPool.ReserveUsedAsCollateralEnabled(tokenList.usdx, bob);
     vm.expectEmit();
-    emit Supply(tokenList.usdx, bob, bob, usdxSize, 0);
+    emit IPool.Supply(tokenList.usdx, bob, bob, usdxSize, 0);
+
     contracts.poolProxy.deposit(address(usdx), usdxSize, bob, 0);
 
     assertEq(
@@ -406,7 +378,7 @@ contract WrappedTokenGatewayTests is TestnetProcedures {
     );
 
     vm.expectEmit(address(contracts.poolProxy));
-    emit Repay(tokenList.weth, bob, address(wrappedTokenGatewayV3), partialRepayment, false);
+    emit IPool.Repay(tokenList.weth, bob, address(wrappedTokenGatewayV3), partialRepayment, false);
     // Partial repayment with surplus on msg.value
     wrappedTokenGatewayV3.repayETH{value: partialRepayment + 1}(
       report.poolProxy,
@@ -421,7 +393,7 @@ contract WrappedTokenGatewayTests is TestnetProcedures {
     );
 
     vm.expectEmit(address(contracts.poolProxy));
-    emit Repay(tokenList.weth, bob, address(wrappedTokenGatewayV3), partialRepayment, false);
+    emit IPool.Repay(tokenList.weth, bob, address(wrappedTokenGatewayV3), partialRepayment, false);
     // Full repayment
     wrappedTokenGatewayV3.repayETH{value: partialRepayment}(report.poolProxy, type(uint).max, bob);
   }

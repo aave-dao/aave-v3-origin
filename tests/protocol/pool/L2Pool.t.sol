@@ -34,13 +34,13 @@ contract L2PoolTests is PoolTests {
     bytes32 encodedInput = l2Encoder.encodeSupplyParams(tokenList.usdx, 1e6, 0);
 
     vm.expectEmit(report.poolProxy);
-    emit SupplyLogic.Supply(tokenList.usdx, alice, alice, 1e6, 0);
+    emit IPool.Supply(tokenList.usdx, alice, alice, 1e6, 0);
 
     vm.prank(alice);
     l2Pool.supply(encodedInput);
   }
 
-  function test_l2_supply_permit(uint128 userPk, uint128 supplyAmount) public {
+  function test_l2_supply_permit(uint128 userPk, uint120 supplyAmount) public {
     vm.assume(userPk != 0);
     vm.assume(supplyAmount != 0);
     address user = vm.addr(userPk);
@@ -51,7 +51,7 @@ contract L2PoolTests is PoolTests {
       spender: address(contracts.poolProxy),
       value: supplyAmount,
       nonce: 0,
-      deadline: block.timestamp + 1 days
+      deadline: vm.getBlockTimestamp() + 1 days
     });
     bytes32 digest = EIP712SigUtils.getTypedDataHash(
       permit,
@@ -63,9 +63,9 @@ contract L2PoolTests is PoolTests {
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(userPk, digest);
 
     vm.expectEmit(report.poolProxy);
-    emit SupplyLogic.ReserveUsedAsCollateralEnabled(tokenList.usdx, user);
+    emit IPool.ReserveUsedAsCollateralEnabled(tokenList.usdx, user);
     vm.expectEmit(report.poolProxy);
-    emit SupplyLogic.Supply(tokenList.usdx, user, user, supplyAmount, 0);
+    emit IPool.Supply(tokenList.usdx, user, user, supplyAmount, 0);
 
     (bytes32 encodedInput1, bytes32 encodedInput2, bytes32 encodedInput3) = l2Encoder
       .encodeSupplyWithPermitParams(tokenList.usdx, permit.value, 0, permit.deadline, v, r, s);
@@ -79,7 +79,7 @@ contract L2PoolTests is PoolTests {
 
     bytes32 encodedInput = l2Encoder.encodeWithdrawParams(tokenList.usdx, UINT256_MAX);
     vm.expectEmit(report.poolProxy);
-    emit Withdraw(tokenList.usdx, alice, alice, 1e6);
+    emit IPool.Withdraw(tokenList.usdx, alice, alice, 1e6);
 
     vm.prank(alice);
     l2Pool.withdraw(encodedInput);
@@ -90,7 +90,7 @@ contract L2PoolTests is PoolTests {
 
     bytes32 encodedInput = l2Encoder.encodeWithdrawParams(tokenList.usdx, 0.5e6);
     vm.expectEmit(report.poolProxy);
-    emit Withdraw(tokenList.usdx, alice, alice, 0.5e6);
+    emit IPool.Withdraw(tokenList.usdx, alice, alice, 0.5e6);
 
     vm.prank(alice);
     l2Pool.withdraw(encodedInput);
@@ -102,7 +102,7 @@ contract L2PoolTests is PoolTests {
     bytes32 encodedInput = l2Encoder.encodeBorrowParams(tokenList.usdx, 0.2e6, 2, 0);
 
     vm.expectEmit(address(contracts.poolProxy));
-    emit BorrowLogic.Borrow(
+    emit IPool.Borrow(
       tokenList.usdx,
       alice,
       alice,
@@ -145,14 +145,14 @@ contract L2PoolTests is PoolTests {
     usdx.approve(address(contracts.poolProxy), supplyAmount);
     pool.supply(tokenList.usdx, supplyAmount, user, 0);
     pool.borrow(tokenList.usdx, borrowAmount, 2, 0, user);
-    vm.warp(block.timestamp + 10 days);
+    vm.warp(vm.getBlockTimestamp() + 10 days);
 
     EIP712SigUtils.Permit memory permit = EIP712SigUtils.Permit({
       owner: user,
       spender: address(contracts.poolProxy),
       value: repayAmount,
       nonce: 0,
-      deadline: block.timestamp + 1 days
+      deadline: vm.getBlockTimestamp() + 1 days
     });
     bytes32 digest = EIP712SigUtils.getTypedDataHash(
       permit,
@@ -164,7 +164,7 @@ contract L2PoolTests is PoolTests {
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(userPk, digest);
 
     vm.expectEmit(report.poolProxy);
-    emit BorrowLogic.Repay(tokenList.usdx, user, user, permit.value, false);
+    emit IPool.Repay(tokenList.usdx, user, user, permit.value, false);
 
     (bytes32 encodedInput1, bytes32 encodedInput2, bytes32 encodedInput3) = l2Encoder
       .encodeRepayWithPermitParams(tokenList.usdx, permit.value, 2, permit.deadline, v, r, s);
@@ -200,9 +200,9 @@ contract L2PoolTests is PoolTests {
 
     pool.supply(tokenList.wbtc, 1e8, alice, 0);
     pool.borrow(tokenList.usdx, 20500e6, 2, 0, alice);
-    vm.warp(block.timestamp + 30 days);
+    vm.warp(vm.getBlockTimestamp() + 30 days);
     pool.borrow(tokenList.wbtc, 0.002e8, 2, 0, alice);
-    vm.warp(block.timestamp + 30 days);
+    vm.warp(vm.getBlockTimestamp() + 30 days);
 
     vm.stopPrank();
 
@@ -214,7 +214,7 @@ contract L2PoolTests is PoolTests {
       );
 
     vm.expectEmit(true, true, true, false, address(contracts.poolProxy));
-    emit LiquidationLogic.LiquidationCall(tokenList.wbtc, tokenList.usdx, alice, 0, 0, bob, false);
+    emit IPool.LiquidationCall(tokenList.wbtc, tokenList.usdx, alice, 0, 0, bob, false);
 
     (bytes32 encodedInput1, bytes32 encodedInput2) = l2Encoder.encodeLiquidationCall(
       tokenList.wbtc,

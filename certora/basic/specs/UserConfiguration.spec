@@ -1,6 +1,6 @@
 methods {
   function setBorrowing(uint256, bool) external envfree;
-  function setUsingAsCollateral(uint256, bool) external envfree;
+  function setUsingAsCollateral(uint256, address, address, bool) external envfree;
   function isUsingAsCollateralOrBorrowing(uint256) external returns bool envfree;
   function isBorrowing(uint256) external returns bool envfree;
   function isUsingAsCollateral(uint256) external returns bool envfree;
@@ -40,18 +40,19 @@ rule setBorrowingNoChangeToOther(uint256 reserveIndex, uint256 reserveIndexOther
 }
 
 // checks the integrity of set UsingAsCollateral function and correct retrieval of the corresponding getter
-rule  setUsingAsCollateral(uint256 reserveIndex, bool usingAsCollateral) {
-  setUsingAsCollateral(reserveIndex, usingAsCollateral);
+rule  setUsingAsCollateral(uint256 reserveIndex, address asset, address user, bool usingAsCollateral) {
+  setUsingAsCollateral(reserveIndex, asset, user, usingAsCollateral);
   assert isUsingAsCollateral(reserveIndex) == usingAsCollateral;
 }
 
 // checks that changes made to a specific borrowing asset doesnt effect the other assets
-rule setCollateralNoChangeToOther(uint256 reserveIndex, uint256 reserveIndexOther, bool usingAsCollateral) {
+rule setCollateralNoChangeToOther(uint256 reserveIndex, address asset, address user,
+                                  uint256 reserveIndexOther, bool usingAsCollateral) {
   // reserveIndexOther info
   bool otherReserveBorrowingBefore =  isBorrowing(reserveIndexOther);
   bool otherReserveCollateralBefore = isUsingAsCollateral(reserveIndexOther);
 
-  setUsingAsCollateral(reserveIndex, usingAsCollateral);
+  setUsingAsCollateral(reserveIndex, asset, user, usingAsCollateral);
 
   // reserveIndex info
   bool ReserveBorrowingAfter =  isBorrowing(reserveIndex);

@@ -14,14 +14,11 @@ import {UserConfiguration} from '../../libraries/configuration/UserConfiguration
 import {ReserveConfiguration} from '../../libraries/configuration/ReserveConfiguration.sol';
 import {EModeConfiguration} from '../../libraries/configuration/EModeConfiguration.sol';
 import {IAToken} from '../../../interfaces/IAToken.sol';
+import {IPool} from '../../../interfaces/IPool.sol';
 import {IVariableDebtToken} from '../../../interfaces/IVariableDebtToken.sol';
 import {IPriceOracleGetter} from '../../../interfaces/IPriceOracleGetter.sol';
-import {SafeCast} from '../../../dependencies/openzeppelin/contracts/SafeCast.sol';
+import {SafeCast} from 'openzeppelin-contracts/contracts/utils/math/SafeCast.sol';
 import {Errors} from '../helpers/Errors.sol';
-
-interface IGhoVariableDebtToken {
-  function getBalanceFromInterest(address user) external view returns (uint256);
-}
 
 /**
  * @title LiquidationLogic library
@@ -37,21 +34,6 @@ library LiquidationLogic {
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
   using GPv2SafeERC20 for IERC20;
   using SafeCast for uint256;
-
-  // See `IPool` for descriptions
-  event ReserveUsedAsCollateralEnabled(address indexed reserve, address indexed user);
-  event ReserveUsedAsCollateralDisabled(address indexed reserve, address indexed user);
-  event DeficitCreated(address indexed user, address indexed debtAsset, uint256 amountCreated);
-  event DeficitCovered(address indexed reserve, address caller, uint256 amountCovered);
-  event LiquidationCall(
-    address indexed collateralAsset,
-    address indexed debtAsset,
-    address indexed user,
-    uint256 debtToCover,
-    uint256 liquidatedCollateralAmount,
-    address liquidator,
-    bool receiveAToken
-  );
 
   /**
    * @dev Default percentage of borrower's debt to be repaid in a liquidation.
@@ -82,9 +64,7 @@ library LiquidationLogic {
   uint256 public constant MIN_LEFTOVER_BASE = MIN_BASE_MAX_CLOSE_FACTOR_THRESHOLD / 2;
 
   /**
-   * @notice Reduces a portion or all of the deficit of a specified reserve by burning:
-   * - the equivalent aToken `amount` for assets with virtual accounting enabled
-   * - the equivalent `amount` of underlying for assets with virtual accounting disabled (e.g. GHO)
+   * @notice Reduces a portion or all of the deficit of a specified reserve by burning the equivalent aToken `amount`
    * The caller of this method MUST always be the Umbrella contract and the Umbrella contract is assumed to never have debt.
    * @dev Emits the `DeficitCovered() event`.
    * @dev If the coverage admin covers its entire balance, `ReserveUsedAsCollateralDisabled()` is emitted.
@@ -97,18 +77,18 @@ library LiquidationLogic {
     DataTypes.UserConfigurationMap storage userConfig,
     DataTypes.ExecuteEliminateDeficitParams memory params
   ) external {
-    require(params.amount != 0, Errors.INVALID_AMOUNT);
+    require(params.amount != 0, Errors.InvalidAmount());
 
     DataTypes.ReserveData storage reserve = reservesData[params.asset];
     uint256 currentDeficit = reserve.deficit;
 
-    require(currentDeficit != 0, Errors.RESERVE_NOT_IN_DEFICIT);
-    require(!userConfig.isBorrowingAny(), Errors.USER_CANNOT_HAVE_DEBT);
+    require(currentDeficit != 0, Errors.ReserveNotInDeficit());
+    require(!userConfig.isBorrowingAny(), Errors.UserCannotHaveDebt());
 
     DataTypes.ReserveCache memory reserveCache = reserve.cache();
     reserve.updateState(reserveCache);
     bool isActive = reserveCache.reserveConfiguration.getActive();
-    require(isActive, Errors.RESERVE_INACTIVE);
+    require(isActive, Errors.ReserveInactive());
 
     uint256 balanceWriteOff = params.amount;
 
@@ -116,57 +96,39 @@ library LiquidationLogic {
       balanceWriteOff = currentDeficit;
     }
 
-    uint256 userBalance = reserveCache.reserveConfiguration.getIsVirtualAccActive()
-      ? IAToken(reserveCache.aTokenAddress).scaledBalanceOf(msg.sender).rayMul(
-        reserveCache.nextLiquidityIndex
-      )
-      : IERC20(params.asset).balanceOf(msg.sender);
-    require(balanceWriteOff <= userBalance, Errors.NOT_ENOUGH_AVAILABLE_USER_BALANCE);
+    uint256 userBalance = IAToken(reserveCache.aTokenAddress).scaledBalanceOf(params.user).rayMul(
+      reserveCache.nextLiquidityIndex
+    );
+    require(balanceWriteOff <= userBalance, Errors.NotEnoughAvailableUserBalance());
 
-    if (reserveCache.reserveConfiguration.getIsVirtualAccActive()) {
-      // assets without virtual accounting can never be a collateral
-      bool isCollateral = userConfig.isUsingAsCollateral(reserve.id);
-      if (isCollateral && balanceWriteOff == userBalance) {
-        userConfig.setUsingAsCollateral(reserve.id, false);
-        emit ReserveUsedAsCollateralDisabled(params.asset, msg.sender);
-      }
-
-      IAToken(reserveCache.aTokenAddress).burn(
-        msg.sender,
-        reserveCache.aTokenAddress,
-        balanceWriteOff,
-        reserveCache.nextLiquidityIndex
-      );
-    } else {
-      // This is a special case to allow mintable assets (ex. GHO), which by definition cannot be supplied
-      // and thus do not use virtual underlying balances.
-      // In that case, the procedure is 1) sending the underlying asset to the aToken and
-      // 2) trigger the handleRepayment() for the aToken to dispose of those assets
-      IERC20(params.asset).safeTransferFrom(
-        msg.sender,
-        reserveCache.aTokenAddress,
-        balanceWriteOff
-      );
-      // it is assumed that handleRepayment does not touch the variable debt balance
-      IAToken(reserveCache.aTokenAddress).handleRepayment(
-        msg.sender,
-        // In the context of GHO it's only relevant that the address has no debt.
-        // Passing the pool is fitting as it's handling the repayment on behalf of the protocol.
-        address(this),
-        balanceWriteOff
-      );
+    bool isCollateral = userConfig.isUsingAsCollateral(reserve.id);
+    if (isCollateral && balanceWriteOff == userBalance) {
+      userConfig.setUsingAsCollateral(reserve.id, params.asset, params.user, false);
     }
+
+    IAToken(reserveCache.aTokenAddress).burn(
+      params.user,
+      reserveCache.aTokenAddress,
+      balanceWriteOff,
+      reserveCache.nextLiquidityIndex
+    );
 
     reserve.deficit -= balanceWriteOff.toUint128();
 
-    reserve.updateInterestRatesAndVirtualBalance(reserveCache, params.asset, 0, 0);
+    reserve.updateInterestRatesAndVirtualBalance(
+      reserveCache,
+      params.asset,
+      0,
+      0,
+      params.interestRateStrategyAddress
+    );
 
-    emit DeficitCovered(params.asset, msg.sender, balanceWriteOff);
+    emit IPool.DeficitCovered(params.asset, params.user, balanceWriteOff);
   }
 
   struct LiquidationCallLocalVars {
-    uint256 userCollateralBalance;
-    uint256 userReserveDebt;
+    uint256 borrowerCollateralBalance;
+    uint256 borrowerReserveDebt;
     uint256 actualDebtToLiquidate;
     uint256 actualCollateralToLiquidate;
     uint256 liquidationBonus;
@@ -175,8 +137,8 @@ library LiquidationLogic {
     uint256 totalCollateralInBaseCurrency;
     uint256 totalDebtInBaseCurrency;
     uint256 collateralToLiquidateInBaseCurrency;
-    uint256 userReserveDebtInBaseCurrency;
-    uint256 userReserveCollateralInBaseCurrency;
+    uint256 borrowerReserveDebtInBaseCurrency;
+    uint256 borrowerReserveCollateralInBaseCurrency;
     uint256 collateralAssetPrice;
     uint256 debtAssetPrice;
     uint256 collateralAssetUnit;
@@ -207,7 +169,7 @@ library LiquidationLogic {
 
     DataTypes.ReserveData storage collateralReserve = reservesData[params.collateralAsset];
     DataTypes.ReserveData storage debtReserve = reservesData[params.debtAsset];
-    DataTypes.UserConfigurationMap storage userConfig = usersConfig[params.user];
+    DataTypes.UserConfigurationMap storage borrowerConfig = usersConfig[params.borrower];
     vars.debtReserveCache = debtReserve.cache();
     debtReserve.updateState(vars.debtReserveCache);
 
@@ -223,40 +185,41 @@ library LiquidationLogic {
       reservesList,
       eModeCategories,
       DataTypes.CalculateUserAccountDataParams({
-        userConfig: userConfig,
-        reservesCount: params.reservesCount,
-        user: params.user,
+        userConfig: borrowerConfig,
+        user: params.borrower,
         oracle: params.priceOracle,
-        userEModeCategory: params.userEModeCategory
+        userEModeCategory: params.borrowerEModeCategory
       })
     );
 
     vars.collateralAToken = IAToken(collateralReserve.aTokenAddress);
-    vars.userCollateralBalance = vars.collateralAToken.balanceOf(params.user);
-    vars.userReserveDebt = IERC20(vars.debtReserveCache.variableDebtTokenAddress).balanceOf(
-      params.user
-    );
+    vars.borrowerCollateralBalance = vars.collateralAToken.balanceOf(params.borrower);
+    vars.borrowerReserveDebt = IVariableDebtToken(vars.debtReserveCache.variableDebtTokenAddress)
+      .scaledBalanceOf(params.borrower)
+      .rayMul(vars.debtReserveCache.nextVariableBorrowIndex);
 
     ValidationLogic.validateLiquidationCall(
-      userConfig,
+      borrowerConfig,
       collateralReserve,
       debtReserve,
       DataTypes.ValidateLiquidationCallParams({
         debtReserveCache: vars.debtReserveCache,
-        totalDebt: vars.userReserveDebt,
+        totalDebt: vars.borrowerReserveDebt,
         healthFactor: vars.healthFactor,
-        priceOracleSentinel: params.priceOracleSentinel
+        priceOracleSentinel: params.priceOracleSentinel,
+        borrower: params.borrower,
+        liquidator: params.liquidator
       })
     );
 
     if (
-      params.userEModeCategory != 0 &&
+      params.borrowerEModeCategory != 0 &&
       EModeConfiguration.isReserveEnabledOnBitmap(
-        eModeCategories[params.userEModeCategory].collateralBitmap,
+        eModeCategories[params.borrowerEModeCategory].collateralBitmap,
         collateralReserve.id
       )
     ) {
-      vars.liquidationBonus = eModeCategories[params.userEModeCategory].liquidationBonus;
+      vars.liquidationBonus = eModeCategories[params.borrowerEModeCategory].liquidationBonus;
     } else {
       vars.liquidationBonus = collateralReserve.configuration.getLiquidationBonus();
     }
@@ -267,21 +230,21 @@ library LiquidationLogic {
     vars.collateralAssetUnit = 10 ** collateralReserve.configuration.getDecimals();
     vars.debtAssetUnit = 10 ** vars.debtReserveCache.reserveConfiguration.getDecimals();
 
-    vars.userReserveDebtInBaseCurrency =
-      (vars.userReserveDebt * vars.debtAssetPrice) /
+    vars.borrowerReserveDebtInBaseCurrency =
+      (vars.borrowerReserveDebt * vars.debtAssetPrice) /
       vars.debtAssetUnit;
 
-    vars.userReserveCollateralInBaseCurrency =
-      (vars.userCollateralBalance * vars.collateralAssetPrice) /
+    vars.borrowerReserveCollateralInBaseCurrency =
+      (vars.borrowerCollateralBalance * vars.collateralAssetPrice) /
       vars.collateralAssetUnit;
 
     // by default whole debt in the reserve could be liquidated
-    uint256 maxLiquidatableDebt = vars.userReserveDebt;
+    uint256 maxLiquidatableDebt = vars.borrowerReserveDebt;
     // but if debt and collateral is above or equal MIN_BASE_MAX_CLOSE_FACTOR_THRESHOLD
     // and health factor is above CLOSE_FACTOR_HF_THRESHOLD this amount may be adjusted
     if (
-      vars.userReserveCollateralInBaseCurrency >= MIN_BASE_MAX_CLOSE_FACTOR_THRESHOLD &&
-      vars.userReserveDebtInBaseCurrency >= MIN_BASE_MAX_CLOSE_FACTOR_THRESHOLD &&
+      vars.borrowerReserveCollateralInBaseCurrency >= MIN_BASE_MAX_CLOSE_FACTOR_THRESHOLD &&
+      vars.borrowerReserveDebtInBaseCurrency >= MIN_BASE_MAX_CLOSE_FACTOR_THRESHOLD &&
       vars.healthFactor > CLOSE_FACTOR_HF_THRESHOLD
     ) {
       uint256 totalDefaultLiquidatableDebtInBaseCurrency = vars.totalDebtInBaseCurrency.percentMul(
@@ -290,7 +253,7 @@ library LiquidationLogic {
 
       // if the debt is more then DEFAULT_LIQUIDATION_CLOSE_FACTOR % of the whole,
       // then we CAN liquidate only up to DEFAULT_LIQUIDATION_CLOSE_FACTOR %
-      if (vars.userReserveDebtInBaseCurrency > totalDefaultLiquidatableDebtInBaseCurrency) {
+      if (vars.borrowerReserveDebtInBaseCurrency > totalDefaultLiquidatableDebtInBaseCurrency) {
         maxLiquidatableDebt =
           (totalDefaultLiquidatableDebtInBaseCurrency * vars.debtAssetUnit) /
           vars.debtAssetPrice;
@@ -313,7 +276,7 @@ library LiquidationLogic {
       vars.debtAssetPrice,
       vars.debtAssetUnit,
       vars.actualDebtToLiquidate,
-      vars.userCollateralBalance,
+      vars.borrowerCollateralBalance,
       vars.liquidationBonus
     );
 
@@ -322,16 +285,16 @@ library LiquidationLogic {
     // 2. liquidate all collateral
     // 3. leave more than MIN_LEFTOVER_BASE of collateral & debt
     if (
-      vars.actualDebtToLiquidate < vars.userReserveDebt &&
+      vars.actualDebtToLiquidate < vars.borrowerReserveDebt &&
       vars.actualCollateralToLiquidate + vars.liquidationProtocolFeeAmount <
-      vars.userCollateralBalance
+      vars.borrowerCollateralBalance
     ) {
-      bool isDebtMoreThanLeftoverThreshold = ((vars.userReserveDebt - vars.actualDebtToLiquidate) *
-        vars.debtAssetPrice) /
+      bool isDebtMoreThanLeftoverThreshold = ((vars.borrowerReserveDebt -
+        vars.actualDebtToLiquidate) * vars.debtAssetPrice) /
         vars.debtAssetUnit >=
         MIN_LEFTOVER_BASE;
 
-      bool isCollateralMoreThanLeftoverThreshold = ((vars.userCollateralBalance -
+      bool isCollateralMoreThanLeftoverThreshold = ((vars.borrowerCollateralBalance -
         vars.actualCollateralToLiquidate -
         vars.liquidationProtocolFeeAmount) * vars.collateralAssetPrice) /
         vars.collateralAssetUnit >=
@@ -339,7 +302,7 @@ library LiquidationLogic {
 
       require(
         isDebtMoreThanLeftoverThreshold && isCollateralMoreThanLeftoverThreshold,
-        Errors.MUST_NOT_LEAVE_DUST
+        Errors.MustNotLeaveDust()
       );
     }
 
@@ -347,10 +310,14 @@ library LiquidationLogic {
     // we set the currency as not being used as collateral anymore
     if (
       vars.actualCollateralToLiquidate + vars.liquidationProtocolFeeAmount ==
-      vars.userCollateralBalance
+      vars.borrowerCollateralBalance
     ) {
-      userConfig.setUsingAsCollateral(collateralReserve.id, false);
-      emit ReserveUsedAsCollateralDisabled(params.collateralAsset, params.user);
+      borrowerConfig.setUsingAsCollateral(
+        collateralReserve.id,
+        params.collateralAsset,
+        params.borrower,
+        false
+      );
     }
 
     bool hasNoCollateralLeft = vars.totalCollateralInBaseCurrency ==
@@ -358,12 +325,13 @@ library LiquidationLogic {
     _burnDebtTokens(
       vars.debtReserveCache,
       debtReserve,
-      userConfig,
-      params.user,
+      borrowerConfig,
+      params.borrower,
       params.debtAsset,
-      vars.userReserveDebt,
+      vars.borrowerReserveDebt,
       vars.actualDebtToLiquidate,
-      hasNoCollateralLeft
+      hasNoCollateralLeft,
+      params.interestRateStrategyAddress
     );
 
     // An asset can only be ceiled if it has no supply or if it was not a collateral previously.
@@ -393,45 +361,46 @@ library LiquidationLogic {
       uint256 scaledDownLiquidationProtocolFee = vars.liquidationProtocolFeeAmount.rayDiv(
         liquidityIndex
       );
-      uint256 scaledDownUserBalance = vars.collateralAToken.scaledBalanceOf(params.user);
+      uint256 scaledDownBorrowerBalance = vars.collateralAToken.scaledBalanceOf(params.borrower);
       // To avoid trying to send more aTokens than available on balance, due to 1 wei imprecision
-      if (scaledDownLiquidationProtocolFee > scaledDownUserBalance) {
-        vars.liquidationProtocolFeeAmount = scaledDownUserBalance.rayMul(liquidityIndex);
+      if (scaledDownLiquidationProtocolFee > scaledDownBorrowerBalance) {
+        vars.liquidationProtocolFeeAmount = scaledDownBorrowerBalance.rayMul(liquidityIndex);
       }
       vars.collateralAToken.transferOnLiquidation(
-        params.user,
+        params.borrower,
         vars.collateralAToken.RESERVE_TREASURY_ADDRESS(),
-        vars.liquidationProtocolFeeAmount
+        vars.liquidationProtocolFeeAmount,
+        liquidityIndex
       );
     }
 
     // burn bad debt if necessary
     // Each additional debt asset already adds around ~75k gas to the liquidation.
     // To keep the liquidation gas under control, 0 usd collateral positions are not touched, as there is no immediate benefit in burning or transferring to treasury.
-    if (hasNoCollateralLeft && userConfig.isBorrowingAny()) {
-      _burnBadDebt(reservesData, reservesList, userConfig, params.reservesCount, params.user);
+    if (hasNoCollateralLeft && borrowerConfig.isBorrowingAny()) {
+      _burnBadDebt(
+        reservesData,
+        reservesList,
+        borrowerConfig,
+        params.borrower,
+        params.interestRateStrategyAddress
+      );
     }
 
     // Transfers the debt asset being repaid to the aToken, where the liquidity is kept
     IERC20(params.debtAsset).safeTransferFrom(
-      msg.sender,
+      params.liquidator,
       vars.debtReserveCache.aTokenAddress,
       vars.actualDebtToLiquidate
     );
 
-    IAToken(vars.debtReserveCache.aTokenAddress).handleRepayment(
-      msg.sender,
-      params.user,
-      vars.actualDebtToLiquidate
-    );
-
-    emit LiquidationCall(
+    emit IPool.LiquidationCall(
       params.collateralAsset,
       params.debtAsset,
-      params.user,
+      params.borrower,
       vars.actualDebtToLiquidate,
       vars.actualCollateralToLiquidate,
-      msg.sender,
+      params.liquidator,
       params.receiveAToken
     );
   }
@@ -454,13 +423,14 @@ library LiquidationLogic {
       collateralReserveCache,
       params.collateralAsset,
       0,
-      vars.actualCollateralToLiquidate
+      vars.actualCollateralToLiquidate,
+      params.interestRateStrategyAddress
     );
 
     // Burn the equivalent amount of aToken, sending the underlying to the liquidator
     vars.collateralAToken.burn(
-      params.user,
-      msg.sender,
+      params.borrower,
+      params.liquidator,
       vars.actualCollateralToLiquidate,
       collateralReserveCache.nextLiquidityIndex
     );
@@ -485,24 +455,21 @@ library LiquidationLogic {
     DataTypes.ExecuteLiquidationCallParams memory params,
     LiquidationCallLocalVars memory vars
   ) internal {
-    uint256 liquidatorPreviousATokenBalance = IERC20(vars.collateralAToken).balanceOf(msg.sender);
+    uint256 liquidatorPreviousATokenBalance = IAToken(vars.collateralAToken).scaledBalanceOf(
+      params.liquidator
+    );
     vars.collateralAToken.transferOnLiquidation(
-      params.user,
-      msg.sender,
-      vars.actualCollateralToLiquidate
+      params.borrower,
+      params.liquidator,
+      vars.actualCollateralToLiquidate,
+      collateralReserve.getNormalizedIncome()
     );
 
-    if (
-      liquidatorPreviousATokenBalance == 0 ||
-      // For the special case of msg.sender == params.user (self-liquidation) the liquidatorPreviousATokenBalance
-      // will not yet be 0, but the liquidation will result in collateral being fully liquidated and then resupplied.
-      (msg.sender == params.user &&
-        vars.actualCollateralToLiquidate + vars.liquidationProtocolFeeAmount ==
-        vars.userCollateralBalance)
-    ) {
-      DataTypes.UserConfigurationMap storage liquidatorConfig = usersConfig[msg.sender];
+    if (liquidatorPreviousATokenBalance == 0) {
+      DataTypes.UserConfigurationMap storage liquidatorConfig = usersConfig[params.liquidator];
       if (
         ValidationLogic.validateAutomaticUseAsCollateral(
+          params.liquidator,
           reservesData,
           reservesList,
           liquidatorConfig,
@@ -510,8 +477,12 @@ library LiquidationLogic {
           collateralReserve.aTokenAddress
         )
       ) {
-        liquidatorConfig.setUsingAsCollateral(collateralReserve.id, true);
-        emit ReserveUsedAsCollateralEnabled(params.collateralAsset, msg.sender);
+        liquidatorConfig.setUsingAsCollateral(
+          collateralReserve.id,
+          params.collateralAsset,
+          params.liquidator,
+          true
+        );
       }
     }
   }
@@ -522,8 +493,8 @@ library LiquidationLogic {
    * @dev The function alters the `debtReserveCache` state in `vars` to update the debt related data.
    * @param debtReserveCache The cached debt reserve parameters
    * @param debtReserve The storage pointer of the debt reserve parameters
-   * @param userConfig The pointer of the user configuration
-   * @param user The user address
+   * @param borrowerConfig The pointer of the user configuration
+   * @param borrower The user address
    * @param debtAsset The debt asset address
    * @param actualDebtToLiquidate The actual debt to liquidate
    * @param hasNoCollateralLeft The flag representing, will user will have no collateral left after liquidation
@@ -531,72 +502,44 @@ library LiquidationLogic {
   function _burnDebtTokens(
     DataTypes.ReserveCache memory debtReserveCache,
     DataTypes.ReserveData storage debtReserve,
-    DataTypes.UserConfigurationMap storage userConfig,
-    address user,
+    DataTypes.UserConfigurationMap storage borrowerConfig,
+    address borrower,
     address debtAsset,
-    uint256 userReserveDebt,
+    uint256 borrowerReserveDebt,
     uint256 actualDebtToLiquidate,
-    bool hasNoCollateralLeft
+    bool hasNoCollateralLeft,
+    address interestRateStrategyAddress
   ) internal {
+    bool noMoreDebt = true;
     // Prior v3.1, there were cases where, after liquidation, the `isBorrowing` flag was left on
     // even after the user debt was fully repaid, so to avoid this function reverting in the `_burnScaled`
     // (see ScaledBalanceTokenBase contract), we check for any debt remaining.
-    if (userReserveDebt != 0) {
-      debtReserveCache.nextScaledVariableDebt = IVariableDebtToken(
+    if (borrowerReserveDebt != 0) {
+      (noMoreDebt, debtReserveCache.nextScaledVariableDebt) = IVariableDebtToken(
         debtReserveCache.variableDebtTokenAddress
       ).burn(
-          user,
-          hasNoCollateralLeft ? userReserveDebt : actualDebtToLiquidate,
+          borrower,
+          hasNoCollateralLeft ? borrowerReserveDebt : actualDebtToLiquidate,
           debtReserveCache.nextVariableBorrowIndex
         );
     }
 
-    uint256 outstandingDebt = userReserveDebt - actualDebtToLiquidate;
+    uint256 outstandingDebt = borrowerReserveDebt - actualDebtToLiquidate;
     if (hasNoCollateralLeft && outstandingDebt != 0) {
-      /**
-       * Special handling of GHO. Implicitly assuming that virtual acc !active == GHO, which is true.
-       * Scenario 1: The amount of GHO debt being liquidated is greater or equal to the GHO accrued interest.
-       *             In this case, the outer handleRepayment will clear the storage and all additional operations can be skipped.
-       * Scenario 2: The amount of debt being liquidated is lower than the GHO accrued interest.
-       *             In this case handleRepayment will be called with the difference required to clear the storage.
-       *             If we assume a liquidation of n debt, and m accrued interest, the difference is k = m-n.
-       *             Therefore we call handleRepayment(k).
-       *             Additionally, as the dao (GHO issuer) accepts the loss on interest on the bad debt,
-       *             we need to discount k from the deficit (via reducing outstandingDebt).
-       * Note: If a non GHO asset is liquidated and GHO bad debt is created in the process, Scenario 2 applies with n = 0.
-       */
-      if (!debtReserveCache.reserveConfiguration.getIsVirtualAccActive()) {
-        uint256 accruedInterest = IGhoVariableDebtToken(debtReserveCache.variableDebtTokenAddress)
-          .getBalanceFromInterest(user);
-        // handleRepayment() will first discount the protocol fee from an internal `accumulatedDebtInterest` variable
-        // and then burn the excess GHO
-        if (accruedInterest != 0 && accruedInterest > actualDebtToLiquidate) {
-          // in order to clean the `accumulatedDebtInterest` storage the function will need to be called with the accruedInterest
-          // discounted by the actualDebtToLiquidate, as in the main flow `handleRepayment` will be called with actualDebtToLiquidate already
-          uint256 amountToBurn = accruedInterest - actualDebtToLiquidate;
-          // In the case of GHO, all obligations are to the protocol
-          // therefore the protocol assumes the losses on interest and only tracks the pure deficit by discounting the not-collected & burned debt
-          outstandingDebt -= amountToBurn;
-          // IMPORTANT: address(0) is used here to indicate that the accrued fee is discounted and not actually repayed.
-          // The value passed has no relevance as it is unused on the aGHO.handleRepayment, therefore the value is purely esthetical.
-          IAToken(debtReserveCache.aTokenAddress).handleRepayment(address(0), user, amountToBurn);
-        }
-      }
       debtReserve.deficit += outstandingDebt.toUint128();
-      emit DeficitCreated(user, debtAsset, outstandingDebt);
-
-      outstandingDebt = 0;
+      emit IPool.DeficitCreated(borrower, debtAsset, outstandingDebt);
     }
 
-    if (outstandingDebt == 0) {
-      userConfig.setBorrowing(debtReserve.id, false);
+    if (noMoreDebt) {
+      borrowerConfig.setBorrowing(debtReserve.id, false);
     }
 
     debtReserve.updateInterestRatesAndVirtualBalance(
       debtReserveCache,
       debtAsset,
       actualDebtToLiquidate,
-      0
+      0,
+      interestRateStrategyAddress
     );
   }
 
@@ -623,7 +566,7 @@ library LiquidationLogic {
    * @param debtAssetPrice The price of the underlying borrowed asset to be repaid with the liquidation
    * @param debtAssetUnit The asset units of the debt
    * @param debtToCover The debt amount of borrowed `asset` the liquidator wants to cover
-   * @param userCollateralBalance The collateral balance for the specific `collateralAsset` of the user being liquidated
+   * @param borrowerCollateralBalance The collateral balance for the specific `collateralAsset` of the user being liquidated
    * @param liquidationBonus The collateral bonus percentage to receive as result of the liquidation
    * @return The maximum amount that is possible to liquidate given all the liquidation constraints (user balance, close factor)
    * @return The amount to repay with the liquidation
@@ -637,7 +580,7 @@ library LiquidationLogic {
     uint256 debtAssetPrice,
     uint256 debtAssetUnit,
     uint256 debtToCover,
-    uint256 userCollateralBalance,
+    uint256 borrowerCollateralBalance,
     uint256 liquidationBonus
   ) internal pure returns (uint256, uint256, uint256, uint256) {
     AvailableCollateralToLiquidateLocalVars memory vars;
@@ -652,8 +595,8 @@ library LiquidationLogic {
 
     vars.maxCollateralToLiquidate = vars.baseCollateral.percentMul(liquidationBonus);
 
-    if (vars.maxCollateralToLiquidate > userCollateralBalance) {
-      vars.collateralAmount = userCollateralBalance;
+    if (vars.maxCollateralToLiquidate > borrowerCollateralBalance) {
+      vars.collateralAmount = borrowerCollateralBalance;
       vars.debtAmountNeeded = ((vars.collateralAssetPrice * vars.collateralAmount * debtAssetUnit) /
         (debtAssetPrice * collateralAssetUnit)).percentDiv(liquidationBonus);
     } else {
@@ -689,43 +632,46 @@ library LiquidationLogic {
    * updates their state, and performs the necessary burn.
    * @param reservesData The state of all the reserves
    * @param reservesList The addresses of all the active reserves
-   * @param userConfig The user configuration
-   * @param reservesCount The total number of valid reserves
-   * @param user The user from which the debt will be burned.
+   * @param borrowerConfig The user configuration
+   * @param borrower The user from which the debt will be burned.
    */
   function _burnBadDebt(
     mapping(address => DataTypes.ReserveData) storage reservesData,
     mapping(uint256 => address) storage reservesList,
-    DataTypes.UserConfigurationMap storage userConfig,
-    uint256 reservesCount,
-    address user
+    DataTypes.UserConfigurationMap storage borrowerConfig,
+    address borrower,
+    address interestRateStrategyAddress
   ) internal {
-    for (uint256 i; i < reservesCount; i++) {
-      if (!userConfig.isBorrowing(i)) {
-        continue;
+    uint256 cachedBorrowerConfig = borrowerConfig.data;
+    uint256 i = 0;
+    bool isBorrowed = false;
+    while (cachedBorrowerConfig != 0) {
+      (cachedBorrowerConfig, isBorrowed, ) = UserConfiguration.getNextFlags(cachedBorrowerConfig);
+      if (isBorrowed) {
+        address reserveAddress = reservesList[i];
+        if (reserveAddress != address(0)) {
+          DataTypes.ReserveData storage currentReserve = reservesData[reserveAddress];
+          DataTypes.ReserveCache memory reserveCache = currentReserve.cache();
+          if (reserveCache.reserveConfiguration.getActive()) {
+            currentReserve.updateState(reserveCache);
+
+            _burnDebtTokens(
+              reserveCache,
+              currentReserve,
+              borrowerConfig,
+              borrower,
+              reserveAddress,
+              IERC20(reserveCache.variableDebtTokenAddress).balanceOf(borrower),
+              0,
+              true,
+              interestRateStrategyAddress
+            );
+          }
+        }
       }
-
-      address reserveAddress = reservesList[i];
-      if (reserveAddress == address(0)) {
-        continue;
+      unchecked {
+        ++i;
       }
-
-      DataTypes.ReserveData storage currentReserve = reservesData[reserveAddress];
-      DataTypes.ReserveCache memory reserveCache = currentReserve.cache();
-      if (!reserveCache.reserveConfiguration.getActive()) continue;
-
-      currentReserve.updateState(reserveCache);
-
-      _burnDebtTokens(
-        reserveCache,
-        currentReserve,
-        userConfig,
-        user,
-        reserveAddress,
-        IERC20(reserveCache.variableDebtTokenAddress).balanceOf(user),
-        0,
-        true
-      );
     }
   }
 }

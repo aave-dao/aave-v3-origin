@@ -1,0 +1,8 @@
+{
+  "full amount; sender: with delegations, ->disableCollateral; receiver: without delegations, ->enableCollateral": "159429",
+  "full amount; sender: with delegations, delegatee, ->disableCollateral; receiver: with delegations, delegatee, ->enableCollateral": "155367",
+  "full amount; sender: with delegations, not delegatee, ->disableCollateral; receiver: with delegations, not delegatee, ->enableCollateral": "155367",
+  "full amount; sender: without delegations, ->disableCollateral; receiver: with delegations, ->enableCollateral": "142329",
+  "full amount; sender: without delegations, delegatee, ->disableCollateral; receiver: without delegations, delegatee, ->enableCollateral": "146392",
+  "full amount; sender: without delegations, not delegatee, ->disableCollateral; receiver: without delegations, not delegatee, ->enableCollateral": "146392"
+}

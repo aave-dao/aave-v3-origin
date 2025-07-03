@@ -107,7 +107,7 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
     erc4626Upgradeable.depositWithPermit(
       env.underlyingBalance,
       user,
-      block.timestamp + 1000,
+      vm.getBlockTimestamp() + 1000,
       sig,
       false
     );
@@ -128,7 +128,7 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
     uint256 shares = erc4626Upgradeable.depositWithPermit(
       env.amountToDeposit,
       receiver,
-      block.timestamp + 1000,
+      vm.getBlockTimestamp() + 1000,
       sig,
       true
     );
@@ -154,7 +154,7 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
     uint256 shares = erc4626Upgradeable.depositWithPermit(
       env.amountToDeposit,
       receiver,
-      block.timestamp + 1000,
+      vm.getBlockTimestamp() + 1000,
       sig,
       false
     );
@@ -178,7 +178,7 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
       spender: address(erc4626Upgradeable),
       value: env.amountToDeposit,
       nonce: IERC20Permit(underlying).nonces(user),
-      deadline: block.timestamp + 100
+      deadline: vm.getBlockTimestamp() + 100
     });
 
     bytes32 permitDigest = SigUtils.getTypedDataHash(
@@ -216,7 +216,7 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
       spender: address(erc4626Upgradeable),
       value: env.amountToDeposit,
       nonce: IERC20Permit(aToken).nonces(user),
-      deadline: block.timestamp + 100
+      deadline: vm.getBlockTimestamp() + 100
     });
 
     bytes32 permitDigest = SigUtils.getTypedDataHash(
