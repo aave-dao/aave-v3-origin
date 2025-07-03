@@ -104,7 +104,6 @@ In addition, Enigma Dark has adapted the Foundry-based fuzzing [invariant suite]
 - [Blackthorn](./audits/2025-06-12_Blackthorn-v3.4_Report.pdf)
 - [Enigma](./audits/2025-05-13_Enigma_Aave-v3.4.pdf)
 
-
 <br>
 
 ### Bug bounty

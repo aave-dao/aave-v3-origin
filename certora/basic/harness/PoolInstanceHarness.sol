@@ -15,9 +15,10 @@ contract PoolInstanceHarness is PoolInstance {
   DummyContract DUMMY;
 
   //  constructor(IPoolAddressesProvider provider) PoolInstance(provider) {}
-  constructor(IPoolAddressesProvider provider,
-              IReserveInterestRateStrategy interestRateStrategy_) public PoolInstance(provider,interestRateStrategy_) {}
-
+  constructor(
+    IPoolAddressesProvider provider,
+    IReserveInterestRateStrategy interestRateStrategy_
+  ) public PoolInstance(provider, interestRateStrategy_) {}
 
   function getNormalizedIncome(address asset) external returns (uint256) {
     return ReserveLogic.getNormalizedIncome(_reserves[asset]);
