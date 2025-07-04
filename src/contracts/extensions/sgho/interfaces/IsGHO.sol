@@ -45,6 +45,11 @@ interface IsGHO {
    */
   error RateMustBeLessThanMaxRate();
 
+  /**
+   * @notice Thrown when a deposit or mint would exceed the total supply cap.
+   */
+  error SupplyCapExceeded();
+
   // --- Events ---
 
   /**
@@ -53,6 +58,20 @@ interface IsGHO {
    */
   event TargetRateUpdated(uint256 newRate);
 
+  /**
+   * @notice Emitted when ERC20 tokens are rescued from the contract.
+   * @param caller The address that initiated the rescue operation.
+   * @param token The address of the rescued ERC20 token.
+   * @param to The recipient address of the rescued tokens.
+   * @param amount The amount of tokens rescued.
+   */
+  event ERC20Rescued(
+    address indexed caller,
+    address indexed token,
+    address indexed to,
+    uint256 amount
+  );
+
   // --- State Variables (as view functions) ---
 
   /**
@@ -60,6 +79,12 @@ interface IsGHO {
    * @return The address of the GHO token.
    */
   function gho() external view returns (address);
+
+  /**
+   * @notice Returns the total supply cap of the vault.
+   * @return The total supply cap.
+   */
+  function supplyCap() external view returns (uint256);
 
   /**
    * @notice Returns the chain ID of the network where the contract is deployed.
@@ -116,7 +141,12 @@ interface IsGHO {
    * @dev This function can only be called once. It sets up initial roles and configurations.
    * While the function is marked as `payable`, it is designed to reject any attached Ether value.
    */
-  function initialize(address gho_, address aclManager_, uint256 maxTargetRate_) external payable;
+  function initialize(
+    address gho_,
+    address aclManager_,
+    uint256 maxTargetRate_,
+    uint256 supplyCap_
+  ) external payable;
 
   /**
    * @notice Overload of the standard ERC20Permit `permit` function.
@@ -165,20 +195,6 @@ interface IsGHO {
   function rescueERC20(address erc20Token, address to, uint256 amount) external;
 
   // --- Events ---
-
-  /**
-   * @notice Emitted when ERC20 tokens are rescued from the contract.
-   * @param caller The address that initiated the rescue operation.
-   * @param token The address of the rescued ERC20 token.
-   * @param to The recipient address of the rescued tokens.
-   * @param amount The amount of tokens rescued.
-   */
-  event ERC20Rescued(
-    address indexed caller,
-    address indexed token,
-    address indexed to,
-    uint256 amount
-  );
 
   /**
    * @notice The receive function is implemented to reject direct Ether transfers to the contract.

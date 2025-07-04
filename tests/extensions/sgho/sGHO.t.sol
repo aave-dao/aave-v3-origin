@@ -36,6 +36,7 @@ contract sGhoTest is TestnetProcedures {
   address internal yManager; // Yield manager user
 
   uint256 internal constant MAX_TARGET_RATE = 5000; // 50%
+  uint256 internal constant SUPPLY_CAP = 1_000_000 ether; // 1M GHO
 
   // Permit constants
   string internal constant VERSION = '1'; // Matches sGHO constructor
@@ -66,7 +67,8 @@ contract sGhoTest is TestnetProcedures {
               sGHO.initialize.selector,
               address(gho),
               address(contracts.aclManager),
-              MAX_TARGET_RATE
+              MAX_TARGET_RATE,
+              SUPPLY_CAP
             )
           )
         )
@@ -302,11 +304,14 @@ contract sGhoTest is TestnetProcedures {
   }
 
   function test_4626_maxMethods() external {
-    // Deposit max checks (no limits implemented in this sGHO version)
-    assertEq(sgho.maxDeposit(user1), type(uint256).max, 'maxDeposit should be max');
-    assertEq(sgho.maxMint(user1), type(uint256).max, 'maxMint should be max');
+    // Max deposit should be the supply cap initially
+    assertEq(sgho.maxDeposit(user1), SUPPLY_CAP, 'maxDeposit should be supply cap');
 
-    // Withdraw max checks
+    // Max mint should correspond to the supply cap
+    uint256 expectedMaxMint = sgho.convertToShares(SUPPLY_CAP);
+    assertEq(sgho.maxMint(user1), expectedMaxMint, 'maxMint should be supply cap in shares');
+
+    // Deposit some amount and check max withdraw/redeem
     vm.startPrank(user1);
     uint256 depositAmount = 100 ether;
     sgho.deposit(depositAmount, user1);
@@ -314,6 +319,13 @@ contract sGhoTest is TestnetProcedures {
 
     assertEq(sgho.maxWithdraw(user1), depositAmount, 'maxWithdraw mismatch');
     assertEq(sgho.maxRedeem(user1), shares, 'maxRedeem mismatch');
+
+    // Max deposit should be reduced by the deposited amount
+    assertEq(
+      sgho.maxDeposit(user1),
+      SUPPLY_CAP - depositAmount,
+      'maxDeposit should be reduced'
+    );
     vm.stopPrank();
   }
 
@@ -356,6 +368,51 @@ contract sGhoTest is TestnetProcedures {
     );
     sgho.redeem(redeemShares, user1, user1);
 
+    vm.stopPrank();
+  }
+
+  // --- Supply Cap Tests ---
+  function test_revert_deposit_exceedsCap() external {
+    vm.startPrank(user1);
+    uint256 amount = SUPPLY_CAP + 1;
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        ERC4626.ERC4626ExceededMaxDeposit.selector,
+        user1,
+        amount,
+        SUPPLY_CAP
+      )
+    );
+    sgho.deposit(amount, user1);
+    vm.stopPrank();
+  }
+
+  function test_revert_mint_exceedsCap() external {
+    vm.startPrank(user1);
+    uint256 shares = sgho.convertToShares(SUPPLY_CAP) + 1;
+    uint256 maxShares = sgho.maxMint(user1);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        ERC4626.ERC4626ExceededMaxMint.selector,
+        user1,
+        shares,
+        maxShares
+      )
+    );
+    sgho.mint(shares, user1);
+    vm.stopPrank();
+  }
+
+  function test_deposit_atCap() external {
+    vm.startPrank(user1);
+    sgho.deposit(SUPPLY_CAP, user1);
+    assertEq(sgho.totalAssets(), SUPPLY_CAP, 'Total assets should equal supply cap');
+    // The contract balance will be the supply cap plus the 1 GHO donated in setUp
+    assertEq(
+      gho.balanceOf(address(sgho)),
+      SUPPLY_CAP + 1 ether,
+      'Contract balance should be supply cap + initial donation'
+    );
     vm.stopPrank();
   }
 
@@ -790,7 +847,8 @@ contract sGhoTest is TestnetProcedures {
               sGHO.initialize.selector,
               address(gho),
               address(contracts.aclManager),
-              MAX_TARGET_RATE
+              MAX_TARGET_RATE,
+              SUPPLY_CAP
             )
           )
         )
@@ -811,7 +869,8 @@ contract sGhoTest is TestnetProcedures {
         sGHO.initialize.selector,
         address(gho),
         address(contracts.aclManager),
-        MAX_TARGET_RATE
+        MAX_TARGET_RATE,
+        SUPPLY_CAP
       )
     );
 
@@ -819,7 +878,12 @@ contract sGhoTest is TestnetProcedures {
 
     // Should revert on second initialization via proxy
     vm.expectRevert();
-    newSgho.initialize(address(gho), address(contracts.aclManager), MAX_TARGET_RATE);
+    newSgho.initialize(
+      address(gho),
+      address(contracts.aclManager),
+      MAX_TARGET_RATE,
+      SUPPLY_CAP
+    );
   }
 
   function _wadPow(uint256 base, uint256 exp) internal pure returns (uint256) {

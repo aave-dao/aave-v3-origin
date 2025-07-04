@@ -27,6 +27,7 @@ contract sGHO is Initializable, ERC4626Upgradeable, ERC20PermitUpgradeable, IsGH
 
   uint256 public targetRate;
   uint256 public maxTargetRate;
+  uint256 public supplyCap;
   uint256 public yieldIndex;
   uint256 public lastUpdate;
   uint256 internal constant RATE_PRECISION = 1e10;
@@ -51,11 +52,13 @@ contract sGHO is Initializable, ERC4626Upgradeable, ERC20PermitUpgradeable, IsGH
    * @param _gho       Address of the underlying GHO token.
    * @param _aclmanager Address of the Aave ACL Manager.
    * @param _maxTargetRate The maximum allowable target rate.
+   * @param _supplyCap The total supply cap for the vault.
    */
   function initialize(
     address _gho,
     address _aclmanager,
-    uint256 _maxTargetRate
+    uint256 _maxTargetRate,
+    uint256 _supplyCap
   ) public payable initializer {
     __ERC20_init('sGHO', 'sGHO');
     __ERC4626_init(IERC20(_gho));
@@ -64,6 +67,7 @@ contract sGHO is Initializable, ERC4626Upgradeable, ERC20PermitUpgradeable, IsGH
     gho = _gho;
     aclManager = IAccessControl(_aclmanager);
     maxTargetRate = _maxTargetRate;
+    supplyCap = _supplyCap;
 
     deploymentChainId = block.chainid;
     yieldIndex = WadRayMath.RAY;
@@ -176,6 +180,22 @@ contract sGHO is Initializable, ERC4626Upgradeable, ERC20PermitUpgradeable, IsGH
       super.maxRedeem(owner),
       convertToShares(IERC20(gho).balanceOf(address(this)))
     );
+  }
+
+  function maxDeposit(address) public view override(ERC4626Upgradeable) returns (uint256) {
+    uint256 currentAssets = totalAssets();
+    if (currentAssets >= supplyCap) {
+      return 0;
+    }
+    return supplyCap - currentAssets;
+  }
+
+  function maxMint(address) public view override(ERC4626Upgradeable) returns (uint256) {
+    uint256 currentAssets = totalAssets();
+    if (currentAssets >= supplyCap) {
+      return 0;
+    }
+    return convertToShares(supplyCap - currentAssets);
   }
 
   /**
