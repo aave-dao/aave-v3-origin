@@ -140,12 +140,6 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
 
   /// @inheritdoc IERC20
   function totalSupply() public view virtual override(IncentivizedERC20, IERC20) returns (uint256) {
-    uint256 currentSupplyScaled = super.totalSupply();
-
-    if (currentSupplyScaled == 0) {
-      return 0;
-    }
-
     return super.totalSupply().getATokenBalance(POOL.getReserveNormalizedIncome(_underlyingAsset));
   }
 

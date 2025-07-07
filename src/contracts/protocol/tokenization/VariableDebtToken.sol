@@ -66,13 +66,7 @@ abstract contract VariableDebtToken is DebtTokenBase, ScaledBalanceTokenBase, IV
 
   /// @inheritdoc IERC20
   function balanceOf(address user) public view virtual override returns (uint256) {
-    uint256 scaledBalance = super.balanceOf(user);
-
-    if (scaledBalance == 0) {
-      return 0;
-    }
-
-    return scaledBalance.getVTokenBalance(POOL.getReserveNormalizedVariableDebt(_underlyingAsset));
+    return super.balanceOf(user).getVTokenBalance(POOL.getReserveNormalizedVariableDebt(_underlyingAsset));
   }
 
   /// @inheritdoc IVariableDebtToken
