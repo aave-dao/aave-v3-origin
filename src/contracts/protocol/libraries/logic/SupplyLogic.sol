@@ -207,6 +207,9 @@ library SupplyLogic {
       DataTypes.UserConfigurationMap storage fromConfig = usersConfig[params.from];
 
       if (fromConfig.isUsingAsCollateral(reserveId)) {
+        if (params.scaledBalanceFromBefore == params.scaledAmount) {
+          fromConfig.setUsingAsCollateral(reserveId, params.asset, params.from, false);
+        }
         if (fromConfig.isBorrowingAny()) {
           ValidationLogic.validateHFAndLtvzero(
             reservesData,
@@ -218,9 +221,6 @@ library SupplyLogic {
             params.oracle,
             params.fromEModeCategory
           );
-        }
-        if (params.scaledBalanceFromBefore == params.scaledAmount) {
-          fromConfig.setUsingAsCollateral(reserveId, params.asset, params.from, false);
         }
       }
 
