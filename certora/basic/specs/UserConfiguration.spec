@@ -20,7 +20,7 @@ rule setBorrowing(uint256 reserveIndex, bool borrowing) {
   assert isBorrowing(reserveIndex) == borrowing, "unexpected result";
 }
 
-// checks that changes made to a specific borrowing asset doesnt effect the other assets
+// checks that changes made to a specific borrowing asset doesn't effect the other assets
 rule setBorrowingNoChangeToOther(uint256 reserveIndex, uint256 reserveIndexOther, bool borrowing) {
   // reserveIndexOther info
   bool otherReserveBorrowingBefore =  isBorrowing(reserveIndexOther);

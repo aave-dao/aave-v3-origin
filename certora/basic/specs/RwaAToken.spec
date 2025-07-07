@@ -28,7 +28,7 @@ definition ray() returns uint = 1000000000000000000000000000;
 definition bound() returns mathint = ((gRNI() / ray()) + 1 ) / 2;
 
 /*
-  Due to rayDiv and RayMul Rounding (+ 0.5) - balance could increase by (gRNI() / Ray() + 1) / 2.
+  Due to rayDiv and RayMul Rounding (+ 0.5) - blance could increase by (gRNI() / Ray() + 1) / 2.
 */
 definition bounded_error_eq(uint x, uint y, uint scale) returns bool =
   to_mathint(x) <= to_mathint(y) + (bound() * scale) &&
@@ -38,7 +38,7 @@ persistent ghost sumAllBalance() returns mathint {
   init_state axiom sumAllBalance() == 0;
 }
 
-// summarization for scaledBalanceOf -> regularBalanceOf + 0.5 (canceling the rayMul)
+// summerization for scaledBlanaceOf -> regularBalanceOf + 0.5 (canceling the rayMul)
 ghost gRNI() returns uint256 {
   axiom to_mathint(gRNI()) == 7 * ray();
 }
@@ -92,7 +92,7 @@ rule balanceOfChange(address a, address b, address c, method f )
 
 /**
   Mint to user u amount of x tokens, increases his balanceOf the underlying asset by x and
-  AToken total supply should increase.
+  AToken total suplly should increase.
 */
 rule integrityMint(address a, address b, uint256 x) {
   env e;
@@ -238,7 +238,7 @@ rule integrityBurn(address user, address to, uint256 amount) {
   }
 
   assert bounded_error_eq(totalSupplyAfter, MINUS256(totalSupplyBefore,amount), 1), "total supply integrity"; // total supply reduced
-  assert bounded_error_eq(balanceAfterUser, MINUS256(balanceBeforeUser,amount), 1), "integrity break";  // user burns ATokens to receive underlying
+  assert bounded_error_eq(balanceAfterUser, MINUS256(balanceBeforeUser,amount), 1), "integrity break";  // user burns ATokens to recieve underlying
 }
 
 /*

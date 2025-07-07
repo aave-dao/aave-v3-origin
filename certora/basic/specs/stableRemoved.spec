@@ -87,7 +87,7 @@ hook Sstore _reserves[KEY address a].__deprecatedStableDebtTokenAddress address 
 
 /*=====================================================================================
   Rule: stableFieldsUntouched:
-  We check that the values in the depricated fields:
+  We check that the values in the deprecated fields:
   __deprecatedStableBorrowRate, __deprecatedStableDebtTokenAddress (of the struct DataTypes.ReserveData)
   are not changed. Moreover we also check that these fields are not accessed for writing -
   see the above hooks.
@@ -105,17 +105,17 @@ rule stableFieldsUntouched(method f, env e, address _asset)
     aTokenToUnderlying[currentContract._reserves[asset].variableDebtTokenAddress]==asset;
 
   
-  DataTypes.ReserveDataLegacy reserveLegasy = getReserveData(_asset);
+  DataTypes.ReserveDataLegacy reserveLegacy = getReserveData(_asset);
 
-  uint128 currentStableBorrowRate_BEFORE = reserveLegasy.currentStableBorrowRate;
+  uint128 currentStableBorrowRate_BEFORE = reserveLegacy.currentStableBorrowRate;
   
   calldataarg args;
   f(e,args);
   
-  DataTypes.ReserveDataLegacy reserveLegasy2 = getReserveData(_asset);
+  DataTypes.ReserveDataLegacy reserveLegacy2 = getReserveData(_asset);
 
-  uint128 currentStableBorrowRate_AFTER = reserveLegasy2.currentStableBorrowRate;
-  address stableDebtTokenAddress_AFTER = reserveLegasy2.stableDebtTokenAddress;
+  uint128 currentStableBorrowRate_AFTER = reserveLegacy2.currentStableBorrowRate;
+  address stableDebtTokenAddress_AFTER = reserveLegacy2.stableDebtTokenAddress;
 
   assert currentStableBorrowRate_BEFORE == currentStableBorrowRate_AFTER;
 }

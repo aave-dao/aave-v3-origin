@@ -192,7 +192,7 @@ function aTokenTransferFromCVL(address token, address from, address to, uint256 
     return true;
 }
 
-// mint in AToken: scaled erc20 minut + update user index.
+// mint in AToken: scaled erc20 mint + update user index.
 // xxx mint in VariableDebtToken: decrease borrow allowance + same as AToken
 // xxx mint in StableDebtToken: found no implementation?
 function aTokenMintCVL(address token, address from, address to, uint amount, uint index) returns (bool, uint, uint) {
@@ -246,7 +246,7 @@ function aTokenRescueTokensCVL(address tokenCalled, address tokenToRescue, addre
     // if the tokenToRescue is an AToken, we should make sure to call the variant that checks
     // if it's an AToken, and if it is, runs the right transfer function. This is okay since in 
     // the code of `rescueTokens`, we cast the specified token to an IERC20, so there are no
-    // internal-call shenaningans
+    // internal-call shenanigans
     // the env with which the transfer is called is where tokenCalled (our atoken) is the sender, but I'm not sure it matters
     aTokenTransferCVLInternal(tokenToRescue, tokenCalled /* from */, to, amount, e);
 }

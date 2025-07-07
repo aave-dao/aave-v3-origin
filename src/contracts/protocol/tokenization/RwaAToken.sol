@@ -115,6 +115,8 @@ abstract contract RwaAToken is AToken, IRwaAToken {
     );
 
     _transfer(from, to, amount.toUint128());
+
+    emit AuthorizedTransfer(msg.sender, from, to, amount);
     return true;
   }
 

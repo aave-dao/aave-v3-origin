@@ -7,10 +7,10 @@ methods {
   function _.rayDiv(uint256 a, uint256 b) internal => mulDivDownAbstractPlus(a, 10^27, b) expect uint256 ALL;
 }
 
-ghost mapping(uint256 => mapping(uint256 => uint256)) rayMulSummariztionValues;
-ghost mapping(uint256 => mapping(uint256 => uint256)) rayDivSummariztionValues;
+ghost mapping(uint256 => mapping(uint256 => uint256)) rayMulSummarizationValues;
+ghost mapping(uint256 => mapping(uint256 => uint256)) rayDivSummarizationValues;
 
-function rayMulSummariztion(uint256 x, uint256 y) returns uint256 {
+function rayMulSummarization(uint256 x, uint256 y) returns uint256 {
   if ((x == 0) || (y == 0)) {
     return 0;
   }
@@ -23,25 +23,25 @@ function rayMulSummariztion(uint256 x, uint256 y) returns uint256 {
 
   if (y > x) {
     if (y > RAY()) {
-      require rayMulSummariztionValues[y][x] >= x;
+      require rayMulSummarizationValues[y][x] >= x;
     }
     if (x > RAY()) {
-      require rayMulSummariztionValues[y][x] >= y;
+      require rayMulSummarizationValues[y][x] >= y;
     }
-    return rayMulSummariztionValues[y][x];
+    return rayMulSummarizationValues[y][x];
   }
   else {
     if (x > RAY()) {
-      require rayMulSummariztionValues[x][y] >= y;
+      require rayMulSummarizationValues[x][y] >= y;
     }
     if (y > RAY()) {
-      require rayMulSummariztionValues[x][y] >= x;
+      require rayMulSummarizationValues[x][y] >= x;
     }
-    return rayMulSummariztionValues[x][y];
+    return rayMulSummarizationValues[x][y];
   }
 }
 
-function rayDivSummariztion(uint256 x, uint256 y) returns uint256 {
+function rayDivSummarization(uint256 x, uint256 y) returns uint256 {
   if (x == 0) {
     return 0;
   }
@@ -51,9 +51,9 @@ function rayDivSummariztion(uint256 x, uint256 y) returns uint256 {
   if (y == x) {
     return RAY();
   }
-  require y > RAY() => rayDivSummariztionValues[x][y] <= x;
-  require y < RAY() => x <= rayDivSummariztionValues[x][y];
-  return rayDivSummariztionValues[x][y];
+  require y > RAY() => rayDivSummarizationValues[x][y] <= x;
+  require y < RAY() => x <= rayDivSummarizationValues[x][y];
+  return rayDivSummarizationValues[x][y];
 }
 
 // Passing for PoolHarness:

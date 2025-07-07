@@ -38,7 +38,7 @@ persistent ghost sumAllBalance() returns mathint {
   init_state axiom sumAllBalance() == 0;
 }
 
-// summerization for scaledBlanaceOf -> regularBalanceOf + 0.5 (canceling the rayMul)
+// summarization for scaledBalanceOf -> regularBalanceOf + 0.5 (canceling the rayMul)
 ghost gRNI() returns uint256 {
   axiom to_mathint(gRNI()) == 7 * ray();
 }
@@ -100,23 +100,23 @@ rule balanceOfChange(address a, address b, address c, method f )
 
 /**
   Mint to user u amount of x tokens, increases his balanceOf the underlying asset by x and
-  AToken total suplly should increase.
+  AToken total supply should increase.
 */
 rule integrityMint(address a, address b, uint256 x) {
   env e;
   uint256 indexRay = gRNI();
 
   uint256 underlyingBalanceBefore = balanceOf(a);
-  uint256 atokenBlanceBefore = scaledBalanceOf(e, a);
+  uint256 atokenBalanceBefore = scaledBalanceOf(e, a);
   uint256 totalATokenSupplyBefore = scaledTotalSupply(e);
 
   mint(e,b,a,x,indexRay);
 
   uint256 underlyingBalanceAfter = balanceOf(a);
-  uint256 atokenBlanceAfter = scaledBalanceOf(e, a);
+  uint256 atokenBalanceAfter = scaledBalanceOf(e, a);
   uint256 totalATokenSupplyAfter = scaledTotalSupply(e);
 
-  assert atokenBlanceAfter - atokenBlanceBefore == totalATokenSupplyAfter - totalATokenSupplyBefore;
+  assert atokenBalanceAfter - atokenBalanceBefore == totalATokenSupplyAfter - totalATokenSupplyBefore;
   assert totalATokenSupplyAfter > totalATokenSupplyBefore;
   assert bounded_error_eq(underlyingBalanceAfter, PLUS256(underlyingBalanceBefore,x), 1);
 }
@@ -153,7 +153,7 @@ rule integrityTransfer(address from, address to, uint256 amount) {
   uint256 balanceBeforeTo = balanceOf(to);
   uint256 underlyingBeforeOther = _underlyingAsset.balanceOf(e, other);
 
-  require(amount <= balanceBeforeFrom); // Add this require inorder to move to CVL2
+  require(amount <= balanceBeforeFrom); // Add this require in order to move to CVL2
 
   transfer(e, to, amount);
 
@@ -219,9 +219,9 @@ rule integrityBurn(address user, address to, uint256 amount) {
   uint256 underlyingBeforeSystem =  _underlyingAsset.balanceOf(e, currentContract);
   uint256 totalSupplyBefore = totalSupply(e);
 
-  require(amount <= underlyingBeforeSystem); // Add this require inorder to move to CVL2
-  require(amount <= balanceBeforeUser); // Add this require inorder to move to CVL2
-  require(amount <= totalSupplyBefore); // Add this require inorder to move to CVL2
+  require(amount <= underlyingBeforeSystem); // Add this require in order to move to CVL2
+  require(amount <= balanceBeforeUser); // Add this require in order to move to CVL2
+  require(amount <= totalSupplyBefore); // Add this require in order to move to CVL2
 
   burn(e, user, to, amount, indexRay);
 
@@ -245,7 +245,7 @@ rule integrityBurn(address user, address to, uint256 amount) {
   }
 
   assert bounded_error_eq(totalSupplyAfter, MINUS256(totalSupplyBefore,amount), 1), "total supply integrity"; // total supply reduced
-  assert bounded_error_eq(balanceAfterUser, MINUS256(balanceBeforeUser,amount), 1), "integrity break";  // user burns ATokens to recieve underlying
+  assert bounded_error_eq(balanceAfterUser, MINUS256(balanceBeforeUser,amount), 1), "integrity break";  // user burns ATokens to receiver underlying
 }
 
 /*
@@ -275,13 +275,13 @@ rule additiveBurn(address user1, address user2, address to1, address to2, uint25
 /*
   Burning one user atokens should have no effect on other users that are not involved in the action.
 */
-rule burnNoChangeToOther(address user, address recieverOfUnderlying, uint256 amount, uint256 index, address other) {
-  require other != user && other != recieverOfUnderlying;
+rule burnNoChangeToOther(address user, address receiverOfUnderlying, uint256 amount, uint256 index, address other) {
+  require other != user && other != receiverOfUnderlying;
   env e;
   uint256 otherDataBefore = additionalData(other);
   uint256 otherBalanceBefore = balanceOf(other);
 
-  burn(e, user, recieverOfUnderlying, amount, index);
+  burn(e, user, receiverOfUnderlying, amount, index);
 
   uint256 otherDataAfter = additionalData(other);
   uint256 otherBalanceAfter = balanceOf(other);

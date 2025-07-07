@@ -14,7 +14,7 @@ using AaveProtocolDataProvider as _dataProvider;
 using SimpleERC20 as _underlyingAsset;
 
 /*
-  Methods Summerizations and Enviroment-Free (e.g relative to e.msg variables) Declarations
+  Methods Summarizations and Environment-Free (e.g relative to e.msg variables) Declarations
 */
 
 methods {

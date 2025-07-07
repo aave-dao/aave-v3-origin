@@ -65,7 +65,7 @@ rule _updateIndexesWrapperReachable(env e, method f) {
 // This rule is part of a check, that the liquidity index cannot decrease.
 // Proved here:
 // https://prover.certora.com/output/40577/bb018f9a52b64b27a0ac364e0c22cd79/?anonymousKey=21613bfbfc0f479ed2c99ce5fa2dd16e581baf5e
-rule liquidityIndexNonDecresingFor_cumulateToLiquidityIndex() {
+rule liquidityIndexNonDecreasingFor_cumulateToLiquidityIndex() {
   address asset;
   uint256 totalLiquidity;
   uint256 amount;

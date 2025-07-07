@@ -8,7 +8,7 @@ import {DataTypes} from '../munged/contracts/protocol/libraries/types/DataTypes.
 contract ReserveConfigurationHarness {
   DataTypes.ReserveConfigurationMap public reservesConfig;
   mapping(uint256 => uint256) public intSettersUpperBounds;
-  mapping(uint256 => uint256) public intSetterslowerBounds;
+  mapping(uint256 => uint256) public intSettersLowerBounds;
   mapping(uint256 => uint256) public boolSettersCompare;
 
   // Sets the Loan to Value of the reserve
