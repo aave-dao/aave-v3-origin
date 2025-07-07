@@ -436,6 +436,8 @@ library ValidationLogic {
         })
       );
 
+    require(currentLtv != 0, Errors.LtvValidationFailed());
+
     require(
       healthFactor >= HEALTH_FACTOR_LIQUIDATION_THRESHOLD,
       Errors.HealthFactorLowerThanLiquidationThreshold()
