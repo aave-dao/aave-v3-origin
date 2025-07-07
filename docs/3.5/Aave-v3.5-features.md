@@ -62,7 +62,7 @@ A lot of the precision loss is caused by having multiple conversions from unscal
 To name a few examples:
 
 - when validating caps, for the validation the `scaledAmount * index` + `input.amount` were considered to be the total supply - this is not accurate though as the conversion from `input.amount` to `scaledAmount` will always have a precision loss.
-- when minting tokens to the treasury, the protocol stores the `scaledAmount` in `accruedToTreasury`. When he protocol mints to the treasury, the `accruedToTreasury` is scaled up and then scaled down again, which can lead to precision loss.
+- when minting tokens to the treasury, the protocol stores the `scaledAmount` in `accruedToTreasury`. When the protocol mints to the treasury, the `accruedToTreasury` is scaled up and then scaled down again, which can lead to precision loss.
 
 While these problems are not critical, for the most part, they can be mitigated by consistently working with the scaled values throughout the protocol. Therefore, `mint` and `burn` now accept `scaledAmount` as an additional input, which allows avoiding repeated roundings. As a side effect, this also slightly reduces gas consumption across the board.
 

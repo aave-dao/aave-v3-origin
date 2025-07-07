@@ -194,7 +194,6 @@ abstract contract IncentivizedERC20 is Context, IERC20Detailed {
   /**
    * @dev Updates `owner`'s allowance for `spender` based on spent `value`.
    *
-   * Does not update the allowance value in case of infinite allowance.
    * Revert if not enough allowance is available.
    *
    * @param owner The owner of the tokens
