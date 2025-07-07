@@ -99,6 +99,11 @@ library MathUtils {
 
   function mulDivCeil(uint256 a, uint256 b, uint256 c) internal pure returns (uint256 d) {
     assembly {
+      // Revert if c == 0 to avoid division by zero
+      if iszero(c) {
+        revert(0, 0)
+      }
+
       // Overflow check: Ensure a * b does not exceed uint256 max
       if iszero(or(iszero(b), iszero(gt(a, div(not(0), b))))) {
         revert(0, 0)
