@@ -27,24 +27,10 @@ diff -ruN ../contracts/instances/ATokenInstance.sol contracts/instances/ATokenIn
 +    //);
    }
  }
-diff -ruN ../contracts/instances/RwaATokenInstance.sol contracts/instances/RwaATokenInstance.sol
---- ../contracts/instances/RwaATokenInstance.sol	2025-05-22 10:37:46.407985290 +0300
-+++ contracts/instances/RwaATokenInstance.sol	2025-05-22 13:05:47.825640088 +0300
-@@ -1,8 +1,8 @@
- // SPDX-License-Identifier: BUSL-1.1
- pragma solidity ^0.8.0;
- 
--import {RwaAToken} from 'src/contracts/protocol/tokenization/RwaAToken.sol';
--import {IPool, IAaveIncentivesController, IInitializableAToken, Errors, VersionedInitializable} from 'src/contracts/protocol/tokenization/AToken.sol';
-+import {RwaAToken} from '../protocol/tokenization/RwaAToken.sol';
-+import {IPool, IAaveIncentivesController, IInitializableAToken, Errors, VersionedInitializable} from '../protocol/tokenization/AToken.sol';
- 
- contract RwaATokenInstance is RwaAToken {
-   uint256 public constant ATOKEN_REVISION = 1;
 diff -ruN ../contracts/protocol/tokenization/base/ScaledBalanceTokenBase.sol contracts/protocol/tokenization/base/ScaledBalanceTokenBase.sol
 --- ../contracts/protocol/tokenization/base/ScaledBalanceTokenBase.sol	2025-05-22 12:57:50.864359258 +0300
 +++ contracts/protocol/tokenization/base/ScaledBalanceTokenBase.sol	2025-05-22 10:38:43.910375361 +0300
-@@ -34,7 +34,7 @@
+@@ -34,9 +34,9 @@
    }
  
    /// @inheritdoc IScaledBalanceToken
@@ -52,30 +38,6 @@ diff -ruN ../contracts/protocol/tokenization/base/ScaledBalanceTokenBase.sol con
 +  function scaledBalanceOf(address user) public view override returns (uint256) {
      return super.balanceOf(user);
    }
- 
-diff -ruN ../contracts/protocol/tokenization/RwaAToken.sol contracts/protocol/tokenization/RwaAToken.sol
---- ../contracts/protocol/tokenization/RwaAToken.sol	2025-05-22 10:37:46.407985290 +0300
-+++ contracts/protocol/tokenization/RwaAToken.sol	2025-05-22 13:07:53.696364729 +0300
-@@ -1,14 +1,14 @@
- // SPDX-License-Identifier: BUSL-1.1
- pragma solidity ^0.8.10;
- 
--import {SafeCast} from 'src/contracts/dependencies/openzeppelin/contracts/SafeCast.sol';
--import {IERC20} from 'src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
--import {IAccessControl} from 'src/contracts/dependencies/openzeppelin/contracts/IAccessControl.sol';
--import {Errors} from 'src/contracts/protocol/libraries/helpers/Errors.sol';
--import {AToken} from 'src/contracts/protocol/tokenization/AToken.sol';
--import {IncentivizedERC20} from 'src/contracts/protocol/tokenization/base/IncentivizedERC20.sol';
--import {IRwaAToken} from 'src/contracts/interfaces/IRwaAToken.sol';
--import {IPool} from 'src/contracts/interfaces/IPool.sol';
-+import {SafeCast} from '../../../contracts/dependencies/openzeppelin/contracts/SafeCast.sol';
-+import {IERC20} from '../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol';
-+import {IAccessControl} from '../../../contracts/dependencies/openzeppelin/contracts/IAccessControl.sol';
-+import {Errors} from '../../../contracts/protocol/libraries/helpers/Errors.sol';
-+import {AToken} from '../../../contracts/protocol/tokenization/AToken.sol';
-+import {IncentivizedERC20} from '../../../contracts/protocol/tokenization/base/IncentivizedERC20.sol';
-+import {IRwaAToken} from '../../../contracts/interfaces/IRwaAToken.sol';
-+import {IPool} from '../../../contracts/interfaces/IPool.sol';
  
  /**
   * @title RwaAToken

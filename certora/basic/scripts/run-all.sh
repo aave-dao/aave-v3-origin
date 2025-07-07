@@ -1,4 +1,4 @@
-#CMN="--compilation_steps_only"
+CMN="--compilation_steps_only"
 #CMN="--typecheck_only"
 
 

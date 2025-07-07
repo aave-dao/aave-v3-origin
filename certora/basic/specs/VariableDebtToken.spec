@@ -13,13 +13,13 @@ function PLUS256(uint256 x, uint256 y) returns uint256 {
 definition ray() returns uint = 1000000000000000000000000000;
 definition bound() returns mathint = ((gRNVB() / ray()) + 1 ) / 2;
 
-// summerization for scaledBlanaceOf -> regularBalanceOf + 0.5 (canceling the rayMul)
+// summarization for scaledBalanceOf -> regularBalanceOf + 0.5 (canceling the rayMul)
 ghost gRNVB() returns uint256 {
   axiom to_mathint(gRNVB()) == 7 * ray();
 }
 
 /*
-  Due to rayDiv and RayMul Rounding (+ 0.5) - blance could increase by (gRNI() / Ray() + 1) / 2.
+  Due to rayDiv and RayMul Rounding (+ 0.5) - balance could increase by (gRNI() / Ray() + 1) / 2.
 */
 definition bounded_error_eq(mathint x, mathint y, mathint scale) returns bool =
   x <= y + (bound() * scale) && x + (bound() * scale) >= y;
@@ -99,14 +99,14 @@ rule nonceChangePermits(method f)
   assert oldNonce != newNonce => f.selector == sig:delegationWithSig(address, address, uint256, uint256, uint8, bytes32, bytes32).selector;
 }
 
-// minting and then buring Variable Debt Token should have no effect on the users balance
+// minting and then burning Variable Debt Token should have no effect on the users balance
 rule inverseMintBurn(address a, address delegatedUser, uint256 amount, uint256 index) {
 	env e;
-	uint256 balancebefore = balanceOf(a);
+	uint256 balanceBefore = balanceOf(a);
 	mint(e, delegatedUser, a, amount, index);
 	burn(e, a, amount, index);
 	uint256 balanceAfter = balanceOf(a);
-	assert balancebefore == balanceAfter, "burn is not the inverse of mint";
+	assert balanceBefore == balanceAfter, "burn is not the inverse of mint";
 }
 
 rule integrityDelegationWithSig(address delegator, address delegatee, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s) {
@@ -134,7 +134,7 @@ rule integrityOfBurn(address u, uint256 amount) {
 	uint256 totalSupplyAfter = totalSupply(e);
 
   assert bounded_error_eq(totalSupplyAfter, totalSupplyBefore - amount, 1), "total supply integrity"; // total supply reduced
-  assert bounded_error_eq(balanceAfterUser, balanceBeforeUser - amount, 1), "integrity break";  // user burns ATokens to recieve underlying
+  assert bounded_error_eq(balanceAfterUser, balanceBeforeUser - amount, 1), "integrity break";  // user burns ATokens to receive underlying
 }
 
 /*
@@ -185,20 +185,20 @@ rule integrityMint(address a, uint256 x) {
 	address delegatedUser;
 	uint256 index = gRNVB();
 	uint256 underlyingBalanceBefore = balanceOf(a);
-	uint256 atokenBlanceBefore = scaledBalanceOf(e, a);
+	uint256 atokenBalanceBefore = scaledBalanceOf(e, a);
 	uint256 totalATokenSupplyBefore = scaledTotalSupply(e);
 	mint(e, delegatedUser, a, x, index);
 
 	uint256 underlyingBalanceAfter = balanceOf(a);
-	uint256 atokenBlanceAfter = scaledBalanceOf(e, a);
+	uint256 atokenBalanceAfter = scaledBalanceOf(e, a);
 	uint256 totalATokenSupplyAfter = scaledTotalSupply(e);
 
-	assert atokenBlanceAfter - atokenBlanceBefore == totalATokenSupplyAfter - totalATokenSupplyBefore;
+	assert atokenBalanceAfter - atokenBalanceBefore == totalATokenSupplyAfter - totalATokenSupplyBefore;
 	assert totalATokenSupplyAfter > totalATokenSupplyBefore;
   assert bounded_error_eq(underlyingBalanceAfter, underlyingBalanceBefore+x, 1);
 }
 
-// Buring zero amount of tokens should have no effect.
+// Burning zero amount of tokens should have no effect.
 rule burnZeroDoesntChangeBalance(address u, uint256 index) {
 	env e;
 	uint256 balanceBefore = balanceOf(u);
