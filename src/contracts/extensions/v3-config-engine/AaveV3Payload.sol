@@ -42,28 +42,16 @@ abstract contract AaveV3Payload {
   function execute() external {
     _preExecute();
 
-    IEngine.EModeCategoryCreation[] memory newEmodes = eModeCategoryCreations();
-    IEngine.EModeCategoryUpdate[] memory eModeCategories = eModeCategoriesUpdates();
     IEngine.Listing[] memory listings = newListings();
     IEngine.ListingWithCustomImpl[] memory listingsCustom = newListingsCustom();
+    IEngine.EModeCategoryUpdate[] memory eModeCategories = eModeCategoriesUpdates();
+    IEngine.AssetEModeUpdate[] memory assetsEModes = assetsEModeUpdates();
+    IEngine.EModeCategoryCreation[] memory newEmodes = eModeCategoryCreations();
     IEngine.CollateralUpdate[] memory collaterals = collateralsUpdates();
     IEngine.BorrowUpdate[] memory borrows = borrowsUpdates();
     IEngine.RateStrategyUpdate[] memory rates = rateStrategiesUpdates();
     IEngine.PriceFeedUpdate[] memory priceFeeds = priceFeedsUpdates();
-    IEngine.AssetEModeUpdate[] memory assetsEModes = assetsEModeUpdates();
     IEngine.CapsUpdate[] memory caps = capsUpdates();
-
-    if (newEmodes.length != 0) {
-      address(CONFIG_ENGINE).functionDelegateCall(
-        abi.encodeWithSelector(CONFIG_ENGINE.createEModeCategories.selector, newEmodes)
-      );
-    }
-
-    if (eModeCategories.length != 0) {
-      address(CONFIG_ENGINE).functionDelegateCall(
-        abi.encodeWithSelector(CONFIG_ENGINE.updateEModeCategories.selector, eModeCategories)
-      );
-    }
 
     if (listings.length != 0) {
       address(CONFIG_ENGINE).functionDelegateCall(
@@ -78,6 +66,24 @@ abstract contract AaveV3Payload {
           getPoolContext(),
           listingsCustom
         )
+      );
+    }
+
+    if (eModeCategories.length != 0) {
+      address(CONFIG_ENGINE).functionDelegateCall(
+        abi.encodeWithSelector(CONFIG_ENGINE.updateEModeCategories.selector, eModeCategories)
+      );
+    }
+
+    if (assetsEModes.length != 0) {
+      address(CONFIG_ENGINE).functionDelegateCall(
+        abi.encodeWithSelector(CONFIG_ENGINE.updateAssetsEMode.selector, assetsEModes)
+      );
+    }
+
+    if (newEmodes.length != 0) {
+      address(CONFIG_ENGINE).functionDelegateCall(
+        abi.encodeWithSelector(CONFIG_ENGINE.createEModeCategories.selector, newEmodes)
       );
     }
 
@@ -102,12 +108,6 @@ abstract contract AaveV3Payload {
     if (priceFeeds.length != 0) {
       address(CONFIG_ENGINE).functionDelegateCall(
         abi.encodeWithSelector(CONFIG_ENGINE.updatePriceFeeds.selector, priceFeeds)
-      );
-    }
-
-    if (assetsEModes.length != 0) {
-      address(CONFIG_ENGINE).functionDelegateCall(
-        abi.encodeWithSelector(CONFIG_ENGINE.updateAssetsEMode.selector, assetsEModes)
       );
     }
 
