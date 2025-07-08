@@ -176,7 +176,6 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
       supplyCap: 85_000,
       borrowCap: 60_000,
       debtCeiling: 0,
-      virtualAccActive: true,
       virtualBalance: 0,
       aTokenUnderlyingBalance: 0
     });
@@ -389,7 +388,6 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
       supplyCap: 85_000,
       borrowCap: 60_000,
       debtCeiling: 0,
-      virtualAccActive: true,
       virtualBalance: 0,
       aTokenUnderlyingBalance: 0
     });
