@@ -146,7 +146,11 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
     address asset = address(new TestnetERC20('1INCH', '1INCH', 18, address(this)));
 
     address feed = address(new MockAggregator(int256(25e8)));
-    AaveV3MockListingWithEModeCreation payload = new AaveV3MockListingWithEModeCreation(asset, feed, configEngine);
+    AaveV3MockListingWithEModeCreation payload = new AaveV3MockListingWithEModeCreation(
+      asset,
+      feed,
+      configEngine
+    );
 
     vm.prank(roleList.marketOwner);
     contracts.aclManager.addPoolAdmin(address(payload));
@@ -370,7 +374,10 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
       IPool(address(contracts.poolProxy))
     );
 
-    diffReports('preTestEngineListingCustomWithEModeCreation', 'postTestEngineListingCustomWithEModeCreation');
+    diffReports(
+      'preTestEngineListingCustomWithEModeCreation',
+      'postTestEngineListingCustomWithEModeCreation'
+    );
 
     ReserveConfig memory expectedAssetConfig = ReserveConfig({
       symbol: 'PSP',
