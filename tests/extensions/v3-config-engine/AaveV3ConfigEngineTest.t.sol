@@ -5,7 +5,9 @@ import 'forge-std/Test.sol';
 import {VmSafe} from 'forge-std/Base.sol';
 import {IAaveV3ConfigEngine} from '../../../src/contracts/extensions/v3-config-engine/IAaveV3ConfigEngine.sol';
 import {AaveV3MockListing} from './mocks/AaveV3MockListing.sol';
+import {AaveV3MockListingWithEModeCreation} from './mocks/AaveV3MockListingWithEModeCreation.sol';
 import {AaveV3MockListingCustom} from './mocks/AaveV3MockListingCustom.sol';
+import {AaveV3MockListingCustomWithEModeCreation} from './mocks/AaveV3MockListingCustomWithEModeCreation.sol';
 import {AaveV3MockCapUpdate} from './mocks/AaveV3MockCapUpdate.sol';
 import {AaveV3MockCollateralUpdate} from './mocks/AaveV3MockCollateralUpdate.sol';
 import {AaveV3MockCollateralUpdateNoChange} from './mocks/AaveV3MockCollateralUpdateNoChange.sol';
@@ -126,6 +128,111 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
     );
   }
 
+  function testListingWithEModeCategoryCreation() public {
+    address asset = address(new TestnetERC20('1INCH', '1INCH', 18, address(this)));
+
+    address feed = address(new MockAggregator(int256(25e8)));
+    AaveV3MockListingWithEModeCreation payload = new AaveV3MockListingWithEModeCreation(
+      asset,
+      feed,
+      configEngine
+    );
+
+    vm.prank(roleList.marketOwner);
+    contracts.aclManager.addPoolAdmin(address(payload));
+
+    ReserveConfig[] memory allConfigsBefore = createConfigurationSnapshot(
+      'preTestEngineListingWithEModeCreation',
+      IPool(address(contracts.poolProxy))
+    );
+
+    payload.execute();
+
+    ReserveConfig[] memory allConfigsAfter = createConfigurationSnapshot(
+      'postTestEngineListingWithEModeCreation',
+      IPool(address(contracts.poolProxy))
+    );
+
+    diffReports('preTestEngineListingWithEModeCreation', 'postTestEngineListingWithEModeCreation');
+
+    ReserveConfig memory expectedAssetConfig = ReserveConfig({
+      symbol: '1INCH',
+      underlying: asset,
+      aToken: address(0), // Mock, as they don't get validated, because of the "dynamic" deployment on proposal execution
+      variableDebtToken: address(0), // Mock, as they don't get validated, because of the "dynamic" deployment on proposal execution
+      decimals: 18,
+      ltv: 82_50,
+      liquidationThreshold: 86_00,
+      liquidationBonus: 105_00,
+      liquidationProtocolFee: 10_00,
+      reserveFactor: 10_00,
+      usageAsCollateralEnabled: true,
+      borrowingEnabled: true,
+      interestRateStrategy: AaveV3ConfigEngine(configEngine).DEFAULT_INTEREST_RATE_STRATEGY(),
+      isPaused: false,
+      isActive: true,
+      isFrozen: false,
+      isSiloed: false,
+      isBorrowableInIsolation: false,
+      isFlashloanable: false,
+      supplyCap: 85_000,
+      borrowCap: 60_000,
+      debtCeiling: 0,
+      virtualBalance: 0,
+      aTokenUnderlyingBalance: 0
+    });
+
+    _validateReserveConfig(expectedAssetConfig, allConfigsAfter);
+
+    _noReservesConfigsChangesApartNewListings(allConfigsBefore, allConfigsAfter);
+
+    _validateReserveTokensImpls(
+      _findReserveConfigBySymbol(allConfigsAfter, '1INCH'),
+      ReserveTokens({
+        aToken: address(contracts.aToken),
+        variableDebtToken: address(contracts.variableDebtToken)
+      })
+    );
+
+    _validateAssetSourceOnOracle(
+      IPoolAddressesProvider(address(contracts.poolAddressesProvider)),
+      asset,
+      feed
+    );
+
+    _validateInterestRateStrategy(
+      asset,
+      contracts.protocolDataProvider.getInterestRateStrategyAddress(asset),
+      AaveV3ConfigEngine(configEngine).DEFAULT_INTEREST_RATE_STRATEGY(),
+      IDefaultInterestRateStrategyV2.InterestRateDataRay({
+        optimalUsageRatio: _bpsToRay(payload.newListings()[0].rateStrategyParams.optimalUsageRatio),
+        baseVariableBorrowRate: _bpsToRay(
+          payload.newListings()[0].rateStrategyParams.baseVariableBorrowRate
+        ),
+        variableRateSlope1: _bpsToRay(
+          payload.newListings()[0].rateStrategyParams.variableRateSlope1
+        ),
+        variableRateSlope2: _bpsToRay(
+          payload.newListings()[0].rateStrategyParams.variableRateSlope2
+        )
+      })
+    );
+
+    DataTypes.EModeCategory memory eModeCategoryData;
+    eModeCategoryData.ltv = 97_40;
+    eModeCategoryData.liquidationThreshold = 97_60;
+    eModeCategoryData.liquidationBonus = 101_50; // 100_00 + 1_50
+    eModeCategoryData.label = 'Listed Asset EMode';
+    eModeCategoryData.collateralBitmap = 8; // 1000
+    eModeCategoryData.borrowableBitmap = 8; // 1000
+
+    _validateEmodeCategory(
+      IPoolAddressesProvider(address(contracts.poolAddressesProvider)),
+      1,
+      eModeCategoryData
+    );
+  }
+
   function testListingsCustom() public {
     address asset = address(new TestnetERC20('PSP', 'PSP', 18, address(this)));
 
@@ -222,6 +329,122 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
           payload.newListingsCustom()[0].base.rateStrategyParams.variableRateSlope2
         )
       })
+    );
+  }
+
+  function testListingsCustomWithEModeCategoryCreation() public {
+    address asset = address(new TestnetERC20('PSP', 'PSP', 18, address(this)));
+
+    address feed = address(new MockAggregator(int256(15e8)));
+    address aTokenImpl = address(
+      new ATokenInstance(contracts.poolProxy, report.rewardsControllerProxy, report.treasury)
+    );
+    address vTokenImpl = address(
+      new VariableDebtTokenInstance(contracts.poolProxy, report.rewardsControllerProxy)
+    );
+
+    AaveV3MockListingCustomWithEModeCreation payload = new AaveV3MockListingCustomWithEModeCreation(
+      asset,
+      feed,
+      configEngine,
+      aTokenImpl,
+      vTokenImpl
+    );
+
+    vm.prank(roleList.marketOwner);
+    contracts.aclManager.addPoolAdmin(address(payload));
+
+    ReserveConfig[] memory allConfigsBefore = createConfigurationSnapshot(
+      'preTestEngineListingCustomWithEModeCreation',
+      IPool(address(contracts.poolProxy))
+    );
+
+    payload.execute();
+
+    ReserveConfig[] memory allConfigsAfter = createConfigurationSnapshot(
+      'postTestEngineListingCustomWithEModeCreation',
+      IPool(address(contracts.poolProxy))
+    );
+
+    diffReports(
+      'preTestEngineListingCustomWithEModeCreation',
+      'postTestEngineListingCustomWithEModeCreation'
+    );
+
+    ReserveConfig memory expectedAssetConfig = ReserveConfig({
+      symbol: 'PSP',
+      underlying: asset,
+      aToken: address(0), // Mock, as they don't get validated, because of the "dynamic" deployment on proposal execution
+      variableDebtToken: address(0), // Mock, as they don't get validated, because of the "dynamic" deployment on proposal execution
+      decimals: 18,
+      ltv: 82_50,
+      liquidationThreshold: 86_00,
+      liquidationBonus: 105_00,
+      liquidationProtocolFee: 10_00,
+      reserveFactor: 10_00,
+      usageAsCollateralEnabled: true,
+      borrowingEnabled: true,
+      interestRateStrategy: AaveV3ConfigEngine(configEngine).DEFAULT_INTEREST_RATE_STRATEGY(),
+      isPaused: false,
+      isActive: true,
+      isFrozen: false,
+      isSiloed: false,
+      isBorrowableInIsolation: false,
+      isFlashloanable: false,
+      supplyCap: 85_000,
+      borrowCap: 60_000,
+      debtCeiling: 0,
+      virtualBalance: 0,
+      aTokenUnderlyingBalance: 0
+    });
+
+    _validateReserveConfig(expectedAssetConfig, allConfigsAfter);
+
+    _noReservesConfigsChangesApartNewListings(allConfigsBefore, allConfigsAfter);
+
+    _validateReserveTokensImpls(
+      _findReserveConfigBySymbol(allConfigsAfter, 'PSP'),
+      ReserveTokens({aToken: aTokenImpl, variableDebtToken: vTokenImpl})
+    );
+
+    _validateAssetSourceOnOracle(
+      IPoolAddressesProvider(address(contracts.poolAddressesProvider)),
+      asset,
+      feed
+    );
+
+    _validateInterestRateStrategy(
+      asset,
+      contracts.protocolDataProvider.getInterestRateStrategyAddress(asset),
+      AaveV3ConfigEngine(configEngine).DEFAULT_INTEREST_RATE_STRATEGY(),
+      IDefaultInterestRateStrategyV2.InterestRateDataRay({
+        optimalUsageRatio: _bpsToRay(
+          payload.newListingsCustom()[0].base.rateStrategyParams.optimalUsageRatio
+        ),
+        baseVariableBorrowRate: _bpsToRay(
+          payload.newListingsCustom()[0].base.rateStrategyParams.baseVariableBorrowRate
+        ),
+        variableRateSlope1: _bpsToRay(
+          payload.newListingsCustom()[0].base.rateStrategyParams.variableRateSlope1
+        ),
+        variableRateSlope2: _bpsToRay(
+          payload.newListingsCustom()[0].base.rateStrategyParams.variableRateSlope2
+        )
+      })
+    );
+
+    DataTypes.EModeCategory memory eModeCategoryData;
+    eModeCategoryData.ltv = 97_40;
+    eModeCategoryData.liquidationThreshold = 97_60;
+    eModeCategoryData.liquidationBonus = 101_50; // 100_00 + 1_50
+    eModeCategoryData.label = 'Listed Asset EMode';
+    eModeCategoryData.collateralBitmap = 8; // 1000
+    eModeCategoryData.borrowableBitmap = 8; // 1000
+
+    _validateEmodeCategory(
+      IPoolAddressesProvider(address(contracts.poolAddressesProvider)),
+      1,
+      eModeCategoryData
     );
   }
 

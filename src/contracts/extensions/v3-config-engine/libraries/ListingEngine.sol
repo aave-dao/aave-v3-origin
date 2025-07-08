@@ -7,7 +7,6 @@ import {PriceFeedEngine} from './PriceFeedEngine.sol';
 import {CapsEngine} from './CapsEngine.sol';
 import {BorrowEngine} from './BorrowEngine.sol';
 import {CollateralEngine} from './CollateralEngine.sol';
-import {EModeEngine} from './EModeEngine.sol';
 import {ConfiguratorInputTypes} from '../../../protocol/libraries/types/ConfiguratorInputTypes.sol';
 import {SafeCast} from 'openzeppelin-contracts/contracts/utils/math/SafeCast.sol';
 
