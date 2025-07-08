@@ -221,8 +221,8 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
     eModeCategoryData.liquidationThreshold = 97_60;
     eModeCategoryData.liquidationBonus = 101_50; // 100_00 + 1_50
     eModeCategoryData.label = 'Listed Asset EMode';
-    eModeCategoryData.collateralBitmap = 16; // 10000
-    eModeCategoryData.borrowableBitmap = 16; // 10000
+    eModeCategoryData.collateralBitmap = 8; // 1000
+    eModeCategoryData.borrowableBitmap = 8; // 1000
 
     _validateEmodeCategory(
       IPoolAddressesProvider(address(contracts.poolAddressesProvider)),
@@ -436,8 +436,8 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
     eModeCategoryData.liquidationThreshold = 97_60;
     eModeCategoryData.liquidationBonus = 101_50; // 100_00 + 1_50
     eModeCategoryData.label = 'Listed Asset EMode';
-    eModeCategoryData.collateralBitmap = 16; // 10000
-    eModeCategoryData.borrowableBitmap = 16; // 10000
+    eModeCategoryData.collateralBitmap = 8; // 1000
+    eModeCategoryData.borrowableBitmap = 8; // 1000
 
     _validateEmodeCategory(
       IPoolAddressesProvider(address(contracts.poolAddressesProvider)),
