@@ -95,6 +95,17 @@ In addition, Enigma Dark has adapted the Foundry-based fuzzing [invariant suite]
 
 <br>
 
+**-> Aave v3.4 - June 2025**
+
+#### Removal of custom GHO. Addition of Multicall & Position manager
+
+- [Certora v3.4](./audits/2025-06-11_Certora_Aave-v3.4_Report.pdf), [Certora v3.4 AIP](./audits/2025-06-11_Certora_Aave-v3.4_AIP_Report.pdf)
+- [StErMi v3.4](./audits/2025-06-11_Stermi_Aave-v3.4_Report.pdf), [StErMi v3.4 AIP](./audits/2025-06-11_Stermi_Aave-v3.4_AIP_Report.pdf)
+- [Blackthorn](./audits/2025-06-12_Blackthorn-v3.4_Report.pdf)
+- [Enigma](./audits/2025-05-13_Enigma_Aave-v3.4.pdf)
+
+<br>
+
 ### Bug bounty
 
 This repository will be subjected to [this bug bounty](https://immunefi.com/bounty/aave/) once the Aave Governance upgrades the smart contracts in the applicable production instances.

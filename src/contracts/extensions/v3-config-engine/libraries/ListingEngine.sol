@@ -8,7 +8,7 @@ import {CapsEngine} from './CapsEngine.sol';
 import {BorrowEngine} from './BorrowEngine.sol';
 import {CollateralEngine} from './CollateralEngine.sol';
 import {ConfiguratorInputTypes} from '../../../protocol/libraries/types/ConfiguratorInputTypes.sol';
-import {SafeCast} from '../../../dependencies/openzeppelin/contracts/SafeCast.sol';
+import {SafeCast} from 'openzeppelin-contracts/contracts/utils/math/SafeCast.sol';
 
 library ListingEngine {
   using Address for address;
@@ -35,9 +35,6 @@ library ListingEngine {
     _initAssets(
       context,
       engineConstants.poolConfigurator,
-      engineConstants.defaultInterestRateStrategy,
-      engineConstants.collector,
-      engineConstants.rewardsController,
       repacked.ids,
       repacked.basics,
       repacked.rates
@@ -145,9 +142,6 @@ library ListingEngine {
   function _initAssets(
     IEngine.PoolContext calldata context,
     IPoolConfigurator poolConfigurator,
-    address rateStrategy,
-    address collector,
-    address rewardsController,
     address[] memory ids,
     IEngine.Basic[] memory basics,
     IDefaultInterestRateStrategyV2.InterestRateData[] memory rates
@@ -159,12 +153,8 @@ library ListingEngine {
       initReserveInputs[i] = ConfiguratorInputTypes.InitReserveInput({
         aTokenImpl: basics[i].implementations.aToken,
         variableDebtTokenImpl: basics[i].implementations.vToken,
-        interestRateStrategyAddress: rateStrategy,
         interestRateData: abi.encode(rates[i]),
         underlyingAsset: ids[i],
-        treasury: collector,
-        incentivesController: rewardsController,
-        useVirtualBalance: true,
         aTokenName: string.concat('Aave ', context.networkName, ' ', basics[i].assetSymbol),
         aTokenSymbol: string.concat('a', context.networkAbbreviation, basics[i].assetSymbol),
         variableDebtTokenName: string.concat(

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import {SafeCast} from '../dependencies/openzeppelin/contracts/SafeCast.sol';
+import {SafeCast} from 'openzeppelin-contracts/contracts/utils/math/SafeCast.sol';
 import {IPool} from '../interfaces/IPool.sol';
 import {DataTypes} from '../protocol/libraries/types/DataTypes.sol';
 

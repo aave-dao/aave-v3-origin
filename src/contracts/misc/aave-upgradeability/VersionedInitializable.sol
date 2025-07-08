@@ -15,6 +15,15 @@ pragma solidity ^0.8.10;
  */
 abstract contract VersionedInitializable {
   /**
+   * @dev Initializes the implementation contract at the current revision.
+   * In practice this breaks further initialization of the implementation.
+   */
+  constructor() {
+    // break the initialize
+    lastInitializedRevision = getRevision();
+  }
+
+  /**
    * @dev Indicates that the contract has been initialized.
    */
   uint256 private lastInitializedRevision = 0;

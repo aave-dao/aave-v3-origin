@@ -21,7 +21,7 @@ contract BaseTest is TestnetProcedures {
   function test_default() public {
     uint256 supplyAmount = 0.2e8;
     uint256 underlyingBalanceBefore = IERC20(tokenList.wbtc).balanceOf(alice);
-    (address aWBTC, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(tokenList.wbtc);
+    address aWBTC = contracts.poolProxy.getReserveAToken(tokenList.wbtc);
 
     vm.prank(alice);
     contracts.poolProxy.supply(tokenList.wbtc, supplyAmount, alice, 0);

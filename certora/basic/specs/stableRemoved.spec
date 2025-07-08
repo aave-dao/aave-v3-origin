@@ -1,7 +1,6 @@
 
 // aave imports
 import "aux/aToken.spec";
-//import "AddressProvider.spec";
 
 methods {
   //  function getReserveDataExtended(address) external returns (DataTypes.ReserveData memory) envfree;
@@ -39,7 +38,6 @@ methods {
   ) internal returns (uint256, uint256, uint256, uint256) => NONDET;
 }
 
-
 // For flashloan
 methods {
     function _.executeOperation(
@@ -61,6 +59,7 @@ methods {
 }
 
 
+ 
 
 
 function init_state() {
@@ -119,3 +118,4 @@ rule stableFieldsUntouched(method f, env e, address _asset)
 
   assert currentStableBorrowRate_BEFORE == currentStableBorrowRate_AFTER;
 }
+

@@ -4,13 +4,14 @@ pragma solidity ^0.8.10;
 import {Context} from '../../../dependencies/openzeppelin/contracts/Context.sol';
 import {IERC20} from '../../../dependencies/openzeppelin/contracts/IERC20.sol';
 import {IERC20Detailed} from '../../../dependencies/openzeppelin/contracts/IERC20Detailed.sol';
-import {SafeCast} from '../../../dependencies/openzeppelin/contracts/SafeCast.sol';
+import {SafeCast} from 'openzeppelin-contracts/contracts/utils/math/SafeCast.sol';
 import {WadRayMath} from '../../libraries/math/WadRayMath.sol';
 import {Errors} from '../../libraries/helpers/Errors.sol';
 import {IAaveIncentivesController} from '../../../interfaces/IAaveIncentivesController.sol';
 import {IPoolAddressesProvider} from '../../../interfaces/IPoolAddressesProvider.sol';
 import {IPool} from '../../../interfaces/IPool.sol';
 import {IACLManager} from '../../../interfaces/IACLManager.sol';
+import {DelegationMode} from './DelegationMode.sol';
 
 /**
  * @title IncentivizedERC20
@@ -26,7 +27,7 @@ abstract contract IncentivizedERC20 is Context, IERC20Detailed {
    */
   modifier onlyPoolAdmin() {
     IACLManager aclManager = IACLManager(_addressesProvider.getACLManager());
-    require(aclManager.isPoolAdmin(msg.sender), Errors.CALLER_NOT_POOL_ADMIN);
+    require(aclManager.isPoolAdmin(_msgSender()), Errors.CallerNotPoolAdmin());
     _;
   }
 
@@ -34,7 +35,7 @@ abstract contract IncentivizedERC20 is Context, IERC20Detailed {
    * @dev Only pool can call functions marked by this modifier.
    */
   modifier onlyPool() {
-    require(_msgSender() == address(POOL), Errors.CALLER_MUST_BE_POOL);
+    require(_msgSender() == address(POOL), Errors.CallerMustBePool());
     _;
   }
 
@@ -44,7 +45,8 @@ abstract contract IncentivizedERC20 is Context, IERC20Detailed {
    * user's last supply/withdrawal/borrow/repayment.
    */
   struct UserState {
-    uint128 balance;
+    uint120 balance;
+    DelegationMode delegationMode;
     uint128 additionalData;
   }
   // Map of users address and their state data (userAddress => userStateData)
@@ -57,9 +59,15 @@ abstract contract IncentivizedERC20 is Context, IERC20Detailed {
   string private _name;
   string private _symbol;
   uint8 private _decimals;
-  IAaveIncentivesController internal _incentivesController;
+  // @dev deprecated on v3.4.0, replaced with immutable REWARDS_CONTROLLER
+  IAaveIncentivesController internal __deprecated_incentivesController;
   IPoolAddressesProvider internal immutable _addressesProvider;
   IPool public immutable POOL;
+  /**
+   * @notice Returns the address of the Incentives Controller contract
+   * @return The address of the Incentives Controller
+   */
+  IAaveIncentivesController public immutable REWARDS_CONTROLLER;
 
   /**
    * @dev Constructor.
@@ -67,13 +75,21 @@ abstract contract IncentivizedERC20 is Context, IERC20Detailed {
    * @param name_ The name of the token
    * @param symbol_ The symbol of the token
    * @param decimals_ The number of decimals of the token
+   * @param rewardsController The address of the rewards controller contract
    */
-  constructor(IPool pool, string memory name_, string memory symbol_, uint8 decimals_) {
+  constructor(
+    IPool pool,
+    string memory name_,
+    string memory symbol_,
+    uint8 decimals_,
+    address rewardsController
+  ) {
     _addressesProvider = pool.ADDRESSES_PROVIDER();
     _name = name_;
     _symbol = symbol_;
     _decimals = decimals_;
     POOL = pool;
+    REWARDS_CONTROLLER = IAaveIncentivesController(rewardsController);
   }
 
   /// @inheritdoc IERC20Detailed
@@ -106,20 +122,12 @@ abstract contract IncentivizedERC20 is Context, IERC20Detailed {
    * @return The address of the Incentives Controller
    */
   function getIncentivesController() external view virtual returns (IAaveIncentivesController) {
-    return _incentivesController;
-  }
-
-  /**
-   * @notice Sets a new Incentives Controller
-   * @param controller the new Incentives controller
-   */
-  function setIncentivesController(IAaveIncentivesController controller) external onlyPoolAdmin {
-    _incentivesController = controller;
+    return REWARDS_CONTROLLER;
   }
 
   /// @inheritdoc IERC20
   function transfer(address recipient, uint256 amount) external virtual override returns (bool) {
-    uint128 castAmount = amount.toUint128();
+    uint120 castAmount = amount.toUint120();
     _transfer(_msgSender(), recipient, castAmount);
     return true;
   }
@@ -144,7 +152,7 @@ abstract contract IncentivizedERC20 is Context, IERC20Detailed {
     address recipient,
     uint256 amount
   ) external virtual override returns (bool) {
-    uint128 castAmount = amount.toUint128();
+    uint120 castAmount = amount.toUint120();
     _approve(sender, _msgSender(), _allowances[sender][_msgSender()] - castAmount);
     _transfer(sender, recipient, castAmount);
     return true;
@@ -181,18 +189,17 @@ abstract contract IncentivizedERC20 is Context, IERC20Detailed {
    * @param recipient The destination address
    * @param amount The amount getting transferred
    */
-  function _transfer(address sender, address recipient, uint128 amount) internal virtual {
-    uint128 oldSenderBalance = _userState[sender].balance;
+  function _transfer(address sender, address recipient, uint120 amount) internal virtual {
+    uint120 oldSenderBalance = _userState[sender].balance;
     _userState[sender].balance = oldSenderBalance - amount;
-    uint128 oldRecipientBalance = _userState[recipient].balance;
+    uint120 oldRecipientBalance = _userState[recipient].balance;
     _userState[recipient].balance = oldRecipientBalance + amount;
 
-    IAaveIncentivesController incentivesControllerLocal = _incentivesController;
-    if (address(incentivesControllerLocal) != address(0)) {
+    if (address(REWARDS_CONTROLLER) != address(0)) {
       uint256 currentTotalSupply = _totalSupply;
-      incentivesControllerLocal.handleAction(sender, currentTotalSupply, oldSenderBalance);
+      REWARDS_CONTROLLER.handleAction(sender, currentTotalSupply, oldSenderBalance);
       if (sender != recipient) {
-        incentivesControllerLocal.handleAction(recipient, currentTotalSupply, oldRecipientBalance);
+        REWARDS_CONTROLLER.handleAction(recipient, currentTotalSupply, oldRecipientBalance);
       }
     }
   }

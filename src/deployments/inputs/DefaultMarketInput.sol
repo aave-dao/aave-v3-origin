@@ -23,8 +23,7 @@ contract DefaultMarketInput is MarketInput {
     config.marketId = 'Aave V3 Testnet Market';
     config.providerId = 8080;
     config.oracleDecimals = 8;
-    config.flashLoanPremiumTotal = 0.0005e4;
-    config.flashLoanPremiumToProtocol = 0.0004e4;
+    config.flashLoanPremium = 0.0005e4;
 
     return (roles, config, flags, deployedContracts);
   }

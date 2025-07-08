@@ -4,6 +4,7 @@ pragma solidity ^0.8.10;
 import {IERC20} from '../../../dependencies/openzeppelin/contracts/IERC20.sol';
 import {GPv2SafeERC20} from '../../../dependencies/gnosis/contracts/GPv2SafeERC20.sol';
 import {IAToken} from '../../../interfaces/IAToken.sol';
+import {IPool} from '../../../interfaces/IPool.sol';
 import {Errors} from '../helpers/Errors.sol';
 import {UserConfiguration} from '../configuration/UserConfiguration.sol';
 import {DataTypes} from '../types/DataTypes.sol';
@@ -26,18 +27,6 @@ library SupplyLogic {
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
   using WadRayMath for uint256;
   using PercentageMath for uint256;
-
-  // See `IPool` for descriptions
-  event ReserveUsedAsCollateralEnabled(address indexed reserve, address indexed user);
-  event ReserveUsedAsCollateralDisabled(address indexed reserve, address indexed user);
-  event Withdraw(address indexed reserve, address indexed user, address indexed to, uint256 amount);
-  event Supply(
-    address indexed reserve,
-    address user,
-    address indexed onBehalfOf,
-    uint256 amount,
-    uint16 indexed referralCode
-  );
 
   /**
    * @notice Implements the supply feature. Through `supply()`, users supply assets to the Aave protocol.
@@ -62,12 +51,18 @@ library SupplyLogic {
 
     ValidationLogic.validateSupply(reserveCache, reserve, params.amount, params.onBehalfOf);
 
-    reserve.updateInterestRatesAndVirtualBalance(reserveCache, params.asset, params.amount, 0);
+    reserve.updateInterestRatesAndVirtualBalance(
+      reserveCache,
+      params.asset,
+      params.amount,
+      0,
+      params.interestRateStrategyAddress
+    );
 
-    IERC20(params.asset).safeTransferFrom(msg.sender, reserveCache.aTokenAddress, params.amount);
+    IERC20(params.asset).safeTransferFrom(params.user, reserveCache.aTokenAddress, params.amount);
 
     bool isFirstSupply = IAToken(reserveCache.aTokenAddress).mint(
-      msg.sender,
+      params.user,
       params.onBehalfOf,
       params.amount,
       reserveCache.nextLiquidityIndex
@@ -76,6 +71,7 @@ library SupplyLogic {
     if (isFirstSupply) {
       if (
         ValidationLogic.validateAutomaticUseAsCollateral(
+          params.user,
           reservesData,
           reservesList,
           userConfig,
@@ -83,12 +79,17 @@ library SupplyLogic {
           reserveCache.aTokenAddress
         )
       ) {
-        userConfig.setUsingAsCollateral(reserve.id, true);
-        emit ReserveUsedAsCollateralEnabled(params.asset, params.onBehalfOf);
+        userConfig.setUsingAsCollateral(reserve.id, params.asset, params.onBehalfOf, true);
       }
     }
 
-    emit Supply(params.asset, msg.sender, params.onBehalfOf, params.amount, params.referralCode);
+    emit IPool.Supply(
+      params.asset,
+      params.user,
+      params.onBehalfOf,
+      params.amount,
+      params.referralCode
+    );
   }
 
   /**
@@ -113,11 +114,11 @@ library SupplyLogic {
     DataTypes.ReserveData storage reserve = reservesData[params.asset];
     DataTypes.ReserveCache memory reserveCache = reserve.cache();
 
-    require(params.to != reserveCache.aTokenAddress, Errors.WITHDRAW_TO_ATOKEN);
+    require(params.to != reserveCache.aTokenAddress, Errors.WithdrawToAToken());
 
     reserve.updateState(reserveCache);
 
-    uint256 userBalance = IAToken(reserveCache.aTokenAddress).scaledBalanceOf(msg.sender).rayMul(
+    uint256 userBalance = IAToken(reserveCache.aTokenAddress).scaledBalanceOf(params.user).rayMul(
       reserveCache.nextLiquidityIndex
     );
 
@@ -129,17 +130,22 @@ library SupplyLogic {
 
     ValidationLogic.validateWithdraw(reserveCache, amountToWithdraw, userBalance);
 
-    reserve.updateInterestRatesAndVirtualBalance(reserveCache, params.asset, 0, amountToWithdraw);
+    reserve.updateInterestRatesAndVirtualBalance(
+      reserveCache,
+      params.asset,
+      0,
+      amountToWithdraw,
+      params.interestRateStrategyAddress
+    );
 
     bool isCollateral = userConfig.isUsingAsCollateral(reserve.id);
 
     if (isCollateral && amountToWithdraw == userBalance) {
-      userConfig.setUsingAsCollateral(reserve.id, false);
-      emit ReserveUsedAsCollateralDisabled(params.asset, msg.sender);
+      userConfig.setUsingAsCollateral(reserve.id, params.asset, params.user, false);
     }
 
     IAToken(reserveCache.aTokenAddress).burn(
-      msg.sender,
+      params.user,
       params.to,
       amountToWithdraw,
       reserveCache.nextLiquidityIndex
@@ -152,14 +158,13 @@ library SupplyLogic {
         eModeCategories,
         userConfig,
         params.asset,
-        msg.sender,
-        params.reservesCount,
+        params.user,
         params.oracle,
         params.userEModeCategory
       );
     }
 
-    emit Withdraw(params.asset, msg.sender, params.to, amountToWithdraw);
+    emit IPool.Withdraw(params.asset, params.user, params.to, amountToWithdraw);
 
     return amountToWithdraw;
   }
@@ -202,14 +207,12 @@ library SupplyLogic {
             usersConfig[params.from],
             params.asset,
             params.from,
-            params.reservesCount,
             params.oracle,
             params.fromEModeCategory
           );
         }
         if (params.balanceFromBefore == params.amount) {
-          fromConfig.setUsingAsCollateral(reserveId, false);
-          emit ReserveUsedAsCollateralDisabled(params.asset, params.from);
+          fromConfig.setUsingAsCollateral(reserveId, params.asset, params.from, false);
         }
       }
 
@@ -217,6 +220,7 @@ library SupplyLogic {
         DataTypes.UserConfigurationMap storage toConfig = usersConfig[params.to];
         if (
           ValidationLogic.validateAutomaticUseAsCollateral(
+            params.from,
             reservesData,
             reservesList,
             toConfig,
@@ -224,8 +228,7 @@ library SupplyLogic {
             reserve.aTokenAddress
           )
         ) {
-          toConfig.setUsingAsCollateral(reserveId, true);
-          emit ReserveUsedAsCollateralEnabled(params.asset, params.to);
+          toConfig.setUsingAsCollateral(reserveId, params.asset, params.to, true);
         }
       }
     }
@@ -241,9 +244,9 @@ library SupplyLogic {
    * @param reservesList The addresses of all the active reserves
    * @param eModeCategories The configuration of all the efficiency mode categories
    * @param userConfig The users configuration mapping that track the supplied/borrowed assets
+   * @param user The user calling the method
    * @param asset The address of the asset being configured as collateral
    * @param useAsCollateral True if the user wants to set the asset as collateral, false otherwise
-   * @param reservesCount The number of initialized reserves
    * @param priceOracle The address of the price oracle
    * @param userEModeCategory The eMode category chosen by the user
    */
@@ -252,49 +255,49 @@ library SupplyLogic {
     mapping(uint256 => address) storage reservesList,
     mapping(uint8 => DataTypes.EModeCategory) storage eModeCategories,
     DataTypes.UserConfigurationMap storage userConfig,
+    address user,
     address asset,
     bool useAsCollateral,
-    uint256 reservesCount,
     address priceOracle,
     uint8 userEModeCategory
   ) external {
     DataTypes.ReserveData storage reserve = reservesData[asset];
-    DataTypes.ReserveCache memory reserveCache = reserve.cache();
+    DataTypes.ReserveConfigurationMap memory reserveConfigCached = reserve.configuration;
 
-    uint256 userBalance = IERC20(reserveCache.aTokenAddress).balanceOf(msg.sender);
-
-    ValidationLogic.validateSetUseReserveAsCollateral(reserveCache, userBalance);
+    ValidationLogic.validateSetUseReserveAsCollateral(reserveConfigCached);
 
     if (useAsCollateral == userConfig.isUsingAsCollateral(reserve.id)) return;
 
     if (useAsCollateral) {
+      // When enabeling a reserve as collateral, we want to ensure the user has at least some collateral
+      require(
+        IAToken(reserve.aTokenAddress).scaledBalanceOf(user) != 0,
+        Errors.UnderlyingBalanceZero()
+      );
+
       require(
         ValidationLogic.validateUseAsCollateral(
           reservesData,
           reservesList,
           userConfig,
-          reserveCache.reserveConfiguration
+          reserveConfigCached
         ),
-        Errors.USER_IN_ISOLATION_MODE_OR_LTV_ZERO
+        Errors.UserInIsolationModeOrLtvZero()
       );
 
-      userConfig.setUsingAsCollateral(reserve.id, true);
-      emit ReserveUsedAsCollateralEnabled(asset, msg.sender);
+      userConfig.setUsingAsCollateral(reserve.id, asset, user, true);
     } else {
-      userConfig.setUsingAsCollateral(reserve.id, false);
+      userConfig.setUsingAsCollateral(reserve.id, asset, user, false);
       ValidationLogic.validateHFAndLtv(
         reservesData,
         reservesList,
         eModeCategories,
         userConfig,
         asset,
-        msg.sender,
-        reservesCount,
+        user,
         priceOracle,
         userEModeCategory
       );
-
-      emit ReserveUsedAsCollateralDisabled(asset, msg.sender);
     }
   }
 }

@@ -29,10 +29,6 @@ methods {
   function getDebtCeiling() external returns (uint256) envfree;
   function setLiquidationProtocolFee(uint256) external envfree;
   function getLiquidationProtocolFee() external returns (uint256) envfree;
-  function setUnbackedMintCap(uint256) external envfree;
-  function getUnbackedMintCap() external returns (uint256) envfree;
-  //  function setEModeCategory(uint256) external envfree;
-  //  function getEModeCategory() external returns (uint256) envfree;
   function setFlashLoanEnabled(bool) external envfree;
   function getFlashLoanEnabled() external returns (bool) envfree;
   function getData() external returns uint256 envfree;
@@ -132,22 +128,11 @@ rule setLiquidationProtocolFeeIntegrity(uint256 liquidationProtocolFee) {
   assert getLiquidationProtocolFee() == liquidationProtocolFee;
 }
 
-// checks the integrity of set UnbackedMintCap function and correct retrieval of the corresponding getter.
-rule setUnbackedMintCapIntegrity(uint256 unbackedMintCap) {
-  setUnbackedMintCap(unbackedMintCap);
-  assert getUnbackedMintCap() == unbackedMintCap;
-}
-
-// checks the integrity of set EModeCategory function and correct retrieval of the corresponding getter.
-//rule setEModeCategoryIntegrity(uint256 category) {
-//  setEModeCategory(category);
-//  assert getEModeCategory() == category;
-//}
 
 // checks for independence of int parameters - if one parameter is being set, non of the others is being changed
 rule integrityAndIndependencyOfIntSetters(uint256 funcId, uint256 otherFuncId, uint256 val) {
-  require 0 <= funcId && funcId <= 9;
-  require 0 <= otherFuncId && otherFuncId <= 9;
+  require 0 <= funcId && funcId <= 8;
+  require 0 <= otherFuncId && otherFuncId <= 8;
   uint256 valueBefore = executeIntGetterById(funcId);
   uint256 otherValueBefore = executeIntGetterById(otherFuncId);
 

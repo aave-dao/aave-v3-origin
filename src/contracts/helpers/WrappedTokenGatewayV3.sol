@@ -57,7 +57,7 @@ contract WrappedTokenGatewayV3 is IWrappedTokenGatewayV3, Ownable {
     uint256 userBalance = aWETH.balanceOf(msg.sender);
     uint256 amountToWithdraw = amount;
 
-    // if amount is equal to uint(-1), the user wants to redeem everything
+    // if amount is equal to type(uint256).max, the user wants to redeem everything
     if (amount == type(uint256).max) {
       amountToWithdraw = userBalance;
     }

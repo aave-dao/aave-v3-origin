@@ -5,11 +5,9 @@ import 'forge-std/Test.sol';
 
 import {TestnetProcedures} from '../../utils/TestnetProcedures.sol';
 import {Errors} from '../../../src/contracts/protocol/libraries/helpers/Errors.sol';
+import {IPoolAddressesProviderRegistry} from '../../../src/contracts/interfaces/IPoolAddressesProviderRegistry.sol';
 
 contract PoolAddressesProviderRegistryTest is TestnetProcedures {
-  event AddressesProviderRegistered(address indexed addressesProvider, uint256 indexed id);
-  event AddressesProviderUnregistered(address indexed addressesProvider, uint256 indexed id);
-
   function setUp() public {
     initTestEnvironment();
   }
@@ -23,7 +21,7 @@ contract PoolAddressesProviderRegistryTest is TestnetProcedures {
   }
 
   function test_revert_registry_0() public {
-    vm.expectRevert(bytes(Errors.INVALID_ADDRESSES_PROVIDER_ID));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidAddressesProviderId.selector));
     vm.prank(poolAdmin);
     contracts.poolAddressesProviderRegistry.registerAddressesProvider(makeAddr('MOCK_PROVIDER'), 0);
   }
@@ -32,7 +30,10 @@ contract PoolAddressesProviderRegistryTest is TestnetProcedures {
     address newAddressesProvider = makeAddr('NEW_PROVIDER');
     uint256 newAddressesProviderId = 1010;
     vm.expectEmit(address(contracts.poolAddressesProviderRegistry));
-    emit AddressesProviderRegistered(newAddressesProvider, newAddressesProviderId);
+    emit IPoolAddressesProviderRegistry.AddressesProviderRegistered(
+      newAddressesProvider,
+      newAddressesProviderId
+    );
 
     vm.startPrank(poolAdmin);
     contracts.poolAddressesProviderRegistry.registerAddressesProvider(
@@ -59,7 +60,10 @@ contract PoolAddressesProviderRegistryTest is TestnetProcedures {
     uint256 newAddressesProviderId = 2020;
 
     vm.expectEmit(address(contracts.poolAddressesProviderRegistry));
-    emit AddressesProviderRegistered(newAddressesProvider, newAddressesProviderId);
+    emit IPoolAddressesProviderRegistry.AddressesProviderRegistered(
+      newAddressesProvider,
+      newAddressesProviderId
+    );
 
     vm.startPrank(poolAdmin);
     contracts.poolAddressesProviderRegistry.registerAddressesProvider(
@@ -68,7 +72,10 @@ contract PoolAddressesProviderRegistryTest is TestnetProcedures {
     );
 
     vm.expectEmit(address(contracts.poolAddressesProviderRegistry));
-    emit AddressesProviderUnregistered(newAddressesProvider, newAddressesProviderId);
+    emit IPoolAddressesProviderRegistry.AddressesProviderUnregistered(
+      newAddressesProvider,
+      newAddressesProviderId
+    );
 
     contracts.poolAddressesProviderRegistry.unregisterAddressesProvider(newAddressesProvider);
     vm.stopPrank();
@@ -107,7 +114,10 @@ contract PoolAddressesProviderRegistryTest is TestnetProcedures {
     );
 
     vm.expectEmit(address(contracts.poolAddressesProviderRegistry));
-    emit AddressesProviderUnregistered(newAddressesProvider2, newAddressesProviderId + 1);
+    emit IPoolAddressesProviderRegistry.AddressesProviderUnregistered(
+      newAddressesProvider2,
+      newAddressesProviderId + 1
+    );
 
     contracts.poolAddressesProviderRegistry.unregisterAddressesProvider(newAddressesProvider2);
     vm.stopPrank();

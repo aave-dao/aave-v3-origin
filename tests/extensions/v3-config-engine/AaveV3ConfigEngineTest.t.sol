@@ -19,6 +19,7 @@ import {AaveV3MockEModeCategoryUpdateNoChange} from './mocks/AaveV3MockEModeCate
 import {AaveV3MockAssetEModeUpdate} from './mocks/AaveV3MockAssetEModeUpdate.sol';
 import {AaveV3MockEModeCategoryCreation} from './mocks/AaveV3MockEModeCategoryCreation.sol';
 
+import {IPoolConfigurator} from '../../../src/contracts/interfaces/IPoolConfigurator.sol';
 import {ATokenInstance} from '../../../src/contracts/instances/ATokenInstance.sol';
 import {EModeConfiguration} from '../../../src/contracts/protocol/libraries/configuration/EModeConfiguration.sol';
 import {VariableDebtTokenInstance} from '../../../src/contracts/instances/VariableDebtTokenInstance.sol';
@@ -37,22 +38,6 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
     initTestEnvironment();
     configEngine = report.configEngine;
   }
-
-  event CollateralConfigurationChanged(
-    address indexed asset,
-    uint256 ltv,
-    uint256 liquidationThreshold,
-    uint256 liquidationBonus
-  );
-
-  event EModeCategoryAdded(
-    uint8 indexed categoryId,
-    uint256 ltv,
-    uint256 liquidationThreshold,
-    uint256 liquidationBonus,
-    address oracle,
-    string label
-  );
 
   function testListings() public {
     address asset = address(new TestnetERC20('1INCH', '1INCH', 18, address(this)));
@@ -100,7 +85,6 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
       supplyCap: 85_000,
       borrowCap: 60_000,
       debtCeiling: 0,
-      virtualAccActive: true,
       virtualBalance: 0,
       aTokenUnderlyingBalance: 0
     });
@@ -252,8 +236,12 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
     address asset = address(new TestnetERC20('PSP', 'PSP', 18, address(this)));
 
     address feed = address(new MockAggregator(int256(15e8)));
-    address aTokenImpl = address(new ATokenInstance(contracts.poolProxy));
-    address vTokenImpl = address(new VariableDebtTokenInstance(contracts.poolProxy));
+    address aTokenImpl = address(
+      new ATokenInstance(contracts.poolProxy, report.rewardsControllerProxy, report.treasury)
+    );
+    address vTokenImpl = address(
+      new VariableDebtTokenInstance(contracts.poolProxy, report.rewardsControllerProxy)
+    );
 
     AaveV3MockListingCustom payload = new AaveV3MockListingCustom(
       asset,
@@ -303,7 +291,6 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
       supplyCap: 85_000,
       borrowCap: 60_000,
       debtCeiling: 0,
-      virtualAccActive: true,
       virtualBalance: 0,
       aTokenUnderlyingBalance: 0
     });
@@ -761,8 +748,8 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
     prevEmodeCategoryData.liquidationThreshold = 97_60;
     prevEmodeCategoryData.liquidationBonus = 101_50; // 100_00 + 1_50
     prevEmodeCategoryData.label = 'Test';
-    prevEmodeCategoryData.collateralBitmap = 10; // 1010
-    prevEmodeCategoryData.borrowableBitmap = 12; // 1100
+    prevEmodeCategoryData.collateralBitmap = 5; // 101
+    prevEmodeCategoryData.borrowableBitmap = 6; // 110
     _validateEmodeCategory(
       IPoolAddressesProvider(address(contracts.poolAddressesProvider)),
       2,

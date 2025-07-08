@@ -61,24 +61,6 @@ rule _updateIndexesWrapperReachable(env e, method f) {
   satisfy updateIndexesCallCountBefore != updateIndexesCallCountAfter;
 }
 
-// @title cumulateToLiquidityIndex does not decrease the liquidity index.
-// This rule is part of a check, that the liquidity index cannot decrease.
-// Proved here:
-// https://prover.certora.com/output/40577/bb018f9a52b64b27a0ac364e0c22cd79/?anonymousKey=21613bfbfc0f479ed2c99ce5fa2dd16e581baf5e
-rule liquidityIndexNonDecresingFor_cumulateToLiquidityIndex() {
-  address asset;
-  uint256 totalLiquidity;
-  uint256 amount;
-  env e;
-
-  uint256 reserveLiquidityIndexBefore = getReserveLiquidityIndex(e, asset);
-  require reserveLiquidityIndexBefore >= RAY();
-
-  uint256 reserveLiquidityIndexAfter = cumulateToLiquidityIndex(e, asset, totalLiquidity, amount);
-
-  assert reserveLiquidityIndexAfter >= reserveLiquidityIndexBefore;
-}
-
 
 function get_AToken_of_asset(env e, address asset) returns address {
   DataTypes.ReserveDataLegacy data = getReserveData(e, asset);

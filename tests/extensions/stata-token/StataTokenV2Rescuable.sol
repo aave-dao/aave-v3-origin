@@ -2,18 +2,12 @@
 pragma solidity ^0.8.10;
 
 import {IRescuable} from 'solidity-utils/contracts/utils/Rescuable.sol';
+import {IRescuableBase} from 'solidity-utils/contracts/utils/interfaces/IRescuableBase.sol';
 import {IAToken} from '../../../src/contracts/extensions/stata-token/StataTokenV2.sol';
 import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import {BaseTest} from './TestBase.sol';
 
 contract StataTokenV2RescuableTest is BaseTest {
-  event ERC20Rescued(
-    address indexed caller,
-    address indexed token,
-    address indexed to,
-    uint256 amount
-  );
-
   function test_rescuable_shouldRevertForInvalidCaller() external {
     deal(tokenList.usdx, address(stataTokenV2), 1 ether);
     vm.expectRevert(abi.encodeWithSelector(IRescuable.OnlyRescueGuardian.selector));
@@ -45,7 +39,7 @@ contract StataTokenV2RescuableTest is BaseTest {
     _fund4626(stake, address(this));
 
     vm.expectEmit(true, true, true, true);
-    emit ERC20Rescued(poolAdmin, aToken, address(this), donation);
+    emit IRescuableBase.ERC20Rescued(poolAdmin, aToken, address(this), donation);
     vm.startPrank(poolAdmin);
     stataTokenV2.emergencyTokenTransfer(aToken, address(this), donation + stake);
   }

@@ -59,29 +59,29 @@ library MathUtils {
       return WadRayMath.RAY;
     }
 
-    uint256 expMinusOne;
-    uint256 expMinusTwo;
-    uint256 basePowerTwo;
-    uint256 basePowerThree;
+    // calculations compound interest using the ideal formula - e^(rate per year * number of years)
+    // 100_000% per year = 1_000 * 100, passed 10_000 years:
+    // e^(1_000 * 10_000) = 6.5922325346184394895608861310659088446667722661221381641234330770... × 10^4342944
+
+    // The current formula in the contract returns:
+    // 1.66666716666676666667 × 10^20
+    // This happens because the contract uses a polynomial approximation of the ideal formula
+    // and on big numbers the ideal formula with exponential function has much more speed.
+    // Used approximation in contracts is not precise enough on such big numbers.
+    //
+    // But we can be sure that the current formula in contracts can't overflow on such big numbers
+    // and we can use unchecked arithmetics to save gas.
+    //
+    // Also, if we take into an account the fact that all timestamps are stored in uint32/40 types
+    // we can only have 100 years left until we will have overflows in timestamps.
+    // Because of that realistically we can't overflow in this formula.
+
     unchecked {
-      expMinusOne = exp - 1;
+      // this can't overflow because rate is always fits in 128 bits and exp always fits in 40 bits
+      uint256 x = (rate * exp) / SECONDS_PER_YEAR;
 
-      expMinusTwo = exp > 2 ? exp - 2 : 0;
-
-      basePowerTwo = rate.rayMul(rate) / (SECONDS_PER_YEAR * SECONDS_PER_YEAR);
-      basePowerThree = basePowerTwo.rayMul(rate) / SECONDS_PER_YEAR;
+      return WadRayMath.RAY + x + x.rayMul(x / 2 + x.rayMul(x / 6));
     }
-
-    uint256 secondTerm = exp * expMinusOne * basePowerTwo;
-    unchecked {
-      secondTerm /= 2;
-    }
-    uint256 thirdTerm = exp * expMinusOne * expMinusTwo * basePowerThree;
-    unchecked {
-      thirdTerm /= 6;
-    }
-
-    return WadRayMath.RAY + (rate * exp) / SECONDS_PER_YEAR + secondTerm + thirdTerm;
   }
 
   /**
