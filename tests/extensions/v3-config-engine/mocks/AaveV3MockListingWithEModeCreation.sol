@@ -3,13 +3,7 @@ pragma solidity ^0.8.0;
 
 import '../../../../src/contracts/extensions/v3-config-engine/AaveV3Payload.sol';
 
-/**
- * @dev Smart contract for a mock listing, to be able to test without having a v3 instance on Local
- * IMPORTANT Parameters are pseudo-random, DON'T USE THIS ANYHOW IN PRODUCTION
- * @dev Inheriting directly from AaveV3Payload for being able to inject a custom engine
- * @author BGD Labs
- */
-contract AaveV3MockListing is AaveV3Payload {
+contract AaveV3MockListingWithEModeCreation is AaveV3Payload {
   address public immutable ASSET_ADDRESS;
   address public immutable ASSET_FEED;
 
@@ -50,6 +44,31 @@ contract AaveV3MockListing is AaveV3Payload {
     });
 
     return listings;
+  }
+
+  function eModeCategoryCreations()
+    public
+    view
+    override
+    returns (IEngine.EModeCategoryCreation[] memory)
+  {
+    IEngine.EModeCategoryCreation[] memory eModeUpdates = new IEngine.EModeCategoryCreation[](1);
+
+    address[] memory collaterals = new address[](1);
+    address[] memory borrowables = new address[](1);
+    collaterals[0] = ASSET_ADDRESS;
+    borrowables[0] = ASSET_ADDRESS;
+
+    eModeUpdates[0] = IEngine.EModeCategoryCreation({
+      ltv: 97_40,
+      liqThreshold: 97_60,
+      liqBonus: 1_50,
+      label: 'Listed Asset EMode',
+      borrowables: borrowables,
+      collaterals: collaterals
+    });
+
+    return eModeUpdates;
   }
 
   function getPoolContext() public pure override returns (IEngine.PoolContext memory) {
