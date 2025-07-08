@@ -334,8 +334,8 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
     address asset = address(new TestnetERC20('PSP', 'PSP', 18, address(this)));
 
     address feed = address(new MockAggregator(int256(15e8)));
-    address aTokenImpl = address(new ATokenInstance(contracts.poolProxy));
-    address vTokenImpl = address(new VariableDebtTokenInstance(contracts.poolProxy));
+    address aTokenImpl = address(new ATokenInstance(contracts.poolProxy, report.rewardsControllerProxy, report.treasury));
+    address vTokenImpl = address(new VariableDebtTokenInstance(contracts.poolProxy, report.rewardsControllerProxy));
 
     AaveV3MockListingCustomWithEModeCreation payload = new AaveV3MockListingCustomWithEModeCreation(
       asset,
