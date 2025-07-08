@@ -95,6 +95,13 @@ In addition, Enigma Dark has adapted the Foundry-based fuzzing [invariant suite]
 
 <br>
 
+**-> Horizon Aave v3.3 - July 2025**
+
+- [Certora](./audits/2025-05-30_Certora_Horizon-v3.3.0.pdf)
+- [StErMi](./audits/2025-06-25_StErMi_Horizon-v3.3.0.pdf)
+
+<br>
+
 ### Bug bounty
 
 This repository will be subjected to [this bug bounty](https://immunefi.com/bounty/aave/) once the Aave Governance upgrades the smart contracts in the applicable production instances.
