@@ -322,9 +322,7 @@ contract PoolBorrowTests is TestnetProcedures {
   }
 
   function test_reverts_borrow_collateral_balance_zero() public {
-    vm.expectRevert(
-      abi.encodeWithSelector(Errors.HealthFactorLowerThanLiquidationThreshold.selector)
-    );
+    vm.expectRevert(abi.encodeWithSelector(Errors.LtvValidationFailed.selector));
 
     vm.prank(alice);
     contracts.poolProxy.borrow(tokenList.usdx, 0.2e8, 2, 0, alice);

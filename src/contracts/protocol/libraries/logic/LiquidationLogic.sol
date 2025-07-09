@@ -4,6 +4,7 @@ pragma solidity ^0.8.10;
 import {IERC20} from '../../../dependencies/openzeppelin/contracts//IERC20.sol';
 import {GPv2SafeERC20} from '../../../dependencies/gnosis/contracts/GPv2SafeERC20.sol';
 import {PercentageMath} from '../../libraries/math/PercentageMath.sol';
+import {MathUtils} from '../../libraries/math/MathUtils.sol';
 import {TokenMath} from '../../libraries/helpers/TokenMath.sol';
 import {DataTypes} from '../../libraries/types/DataTypes.sol';
 import {ReserveLogic} from './ReserveLogic.sol';
@@ -243,10 +244,13 @@ library LiquidationLogic {
     vars.collateralAssetUnit = 10 ** vars.collateralReserveCache.reserveConfiguration.getDecimals();
     vars.debtAssetUnit = 10 ** vars.debtReserveCache.reserveConfiguration.getDecimals();
 
-    vars.borrowerReserveDebtInBaseCurrency =
-      (vars.borrowerReserveDebt * vars.debtAssetPrice) /
-      vars.debtAssetUnit;
+    vars.borrowerReserveDebtInBaseCurrency = MathUtils.mulDivCeil(
+      vars.borrowerReserveDebt,
+      vars.debtAssetPrice,
+      vars.debtAssetUnit
+    );
 
+    // @note floor rounding
     vars.borrowerReserveCollateralInBaseCurrency =
       (vars.borrowerCollateralBalance * vars.collateralAssetPrice) /
       vars.collateralAssetUnit;
@@ -302,11 +306,13 @@ library LiquidationLogic {
       vars.actualCollateralToLiquidate + vars.liquidationProtocolFeeAmount <
       vars.borrowerCollateralBalance
     ) {
-      bool isDebtMoreThanLeftoverThreshold = ((vars.borrowerReserveDebt -
-        vars.actualDebtToLiquidate) * vars.debtAssetPrice) /
-        vars.debtAssetUnit >=
-        MIN_LEFTOVER_BASE;
+      bool isDebtMoreThanLeftoverThreshold = MathUtils.mulDivCeil(
+        vars.borrowerReserveDebt - vars.actualDebtToLiquidate,
+        vars.debtAssetPrice,
+        vars.debtAssetUnit
+      ) >= MIN_LEFTOVER_BASE;
 
+      // @note floor rounding
       bool isCollateralMoreThanLeftoverThreshold = ((vars.borrowerCollateralBalance -
         vars.actualCollateralToLiquidate -
         vars.liquidationProtocolFeeAmount) * vars.collateralAssetPrice) /
