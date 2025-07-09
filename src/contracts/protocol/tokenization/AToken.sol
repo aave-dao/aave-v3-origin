@@ -203,7 +203,7 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
       // As an example: transferFrom(..., 1) at a liquidity index of 1.1 where the recipient has a "scaled up" balance of `9 * 1.1 = 9.9 = 9` before the transfer, will have a balance of `10 * 1.1. = 11` after the Transfer.
       // While this problem is not solvable without introducing breaking changes, on Aave v3.5 the situation is improved in the following way:
       // - The `correct` amount to be deducted is considered to be `scaledUpFloor(scaledDownCeil(input.amount))`. This replicates the behavior on transfer, followed by a balanceOf.
-      // - In order to not introduce a breaking change for existing integrations, the deducted allowance is based on the available allowance as `Max(availableAllowance, (amount, correctAmount))`
+      // - To avoid breaking existing integrations, the amount deducted from the allowance is the minimum of the available allowance and the actual up-scaled asset amount.
       amount.getATokenTransferScaledAmount(index).getATokenBalance(index)
     );
     _transfer(sender, recipient, amount.toUint120());

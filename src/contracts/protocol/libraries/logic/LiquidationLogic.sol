@@ -72,6 +72,7 @@ library LiquidationLogic {
    * @param reservesData The state of all the reserves
    * @param userConfig The user configuration mapping that tracks the supplied/borrowed assets
    * @param params The additional parameters needed to execute the eliminateDeficit function
+   * @return The amount of deficit covered
    */
   function executeEliminateDeficit(
     mapping(address => DataTypes.ReserveData) storage reservesData,
@@ -108,7 +109,6 @@ library LiquidationLogic {
       userConfig.setUsingAsCollateral(reserve.id, params.asset, params.user, false);
     }
 
-    // As aToken.burn rounds up the burned shares, we ensure at least an equivalent of >= balanceWriteOff is burned.
     IAToken(reserveCache.aTokenAddress).burn({
       from: params.user,
       receiverOfUnderlying: reserveCache.aTokenAddress,
@@ -200,11 +200,9 @@ library LiquidationLogic {
       })
     );
 
-    // Replicate aToken.balanceOf (round down), to always underestimate the collateral.
     vars.borrowerCollateralBalance = IAToken(vars.collateralReserveCache.aTokenAddress)
       .scaledBalanceOf(params.borrower)
       .getATokenBalance(vars.collateralReserveCache.nextLiquidityIndex);
-    // Replicate vDebt.balanceOf (round up), to always overestimate the debt.
     vars.borrowerReserveDebt = IVariableDebtToken(vars.debtReserveCache.variableDebtTokenAddress)
       .scaledBalanceOf(params.borrower)
       .getVTokenBalance(vars.debtReserveCache.nextVariableBorrowIndex);

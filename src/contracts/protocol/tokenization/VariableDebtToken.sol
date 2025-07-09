@@ -23,15 +23,16 @@ abstract contract VariableDebtToken is DebtTokenBase, ScaledBalanceTokenBase, IV
   using TokenMath for uint256;
   using SafeCast for uint256;
 
-  // @note This gap is made only to add the `__deprecated_ghoUserState` variable
+  // @note This gap is made only to add the `__DEPRECATED_AND_NEVER_TO_BE_REUSED` variable
   // The length of this gap can be decreased in order to add new variables
-  uint[3] private __unusedGap;
+  uint256[3] private __unusedGap;
 
   // @note deprecated in v3.4.0 upgrade in the GHO vToken.
   // This storage slot can't be used in all vTokens, because the GHO vToken
   // had a mapping here (before v3.4.0) and right now has some non-zero mapping values in this slot.
   // old version: mapping(address => GhoUserState) internal _ghoUserState
-  bytes32 private __deprecated_ghoUserState;
+  // This storage slot MUST NOT be reused to avoid storage layout conflicts.
+  bytes32 private __DEPRECATED_AND_NEVER_TO_BE_REUSED;
 
   /**
    * @dev Constructor.
@@ -66,7 +67,10 @@ abstract contract VariableDebtToken is DebtTokenBase, ScaledBalanceTokenBase, IV
 
   /// @inheritdoc IERC20
   function balanceOf(address user) public view virtual override returns (uint256) {
-    return super.balanceOf(user).getVTokenBalance(POOL.getReserveNormalizedVariableDebt(_underlyingAsset));
+    return
+      super.balanceOf(user).getVTokenBalance(
+        POOL.getReserveNormalizedVariableDebt(_underlyingAsset)
+      );
   }
 
   /// @inheritdoc IVariableDebtToken
@@ -88,7 +92,7 @@ abstract contract VariableDebtToken is DebtTokenBase, ScaledBalanceTokenBase, IV
       // Similar to the aToken `transferFrom` function, handling this scenario exactly is impossible.
       // While this problem is not solvable without introducing breaking changes, on Aave v3.5 the situation is improved in the following way:
       // - The `correct` amount to be deducted is considered to be `scaledUpCeil(scaledAmount)`. This replicates the behavior on borrow followed by a balanceOf.
-      // - In order to not introduce a breaking change for existing integrations, the deducted allowance is based on the available allowance as `Max(availableAllowance, (amount, correctAmount))`
+      // - To avoid breaking existing integrations, the amount deducted from the allowance is the minimum of the available allowance and the actual up-scaled debt amount.
       uint256 scaledUp = scaledAmount.getVTokenBalance(index);
       _decreaseBorrowAllowance(
         onBehalfOf,

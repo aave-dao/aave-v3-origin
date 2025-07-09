@@ -177,7 +177,6 @@ library ValidationLogic {
     }
 
     if (vars.borrowCap != 0) {
-      // Replicate vDebt.totalSupply (round up), to always overestimate the debt.
       vars.totalDebt = (params.reserveCache.currScaledVariableDebt + params.amountScaled)
         .getVTokenBalance(params.reserveCache.nextVariableBorrowIndex);
 
@@ -457,8 +456,8 @@ library ValidationLogic {
    * @param userConfig The state of the user for the specific reserve
    * @param asset The asset for which the ltv will be validated
    * @param from The user from which the aTokens are being transferred
-   * @param userEModeCategory The users active efficiency mode category
    * @param oracle The price oracle
+   * @param userEModeCategory The users active efficiency mode category
    */
   function validateHFAndLtvzero(
     mapping(address => DataTypes.ReserveData) storage reservesData,

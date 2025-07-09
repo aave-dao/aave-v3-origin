@@ -208,8 +208,10 @@ abstract contract IncentivizedERC20 is Context, IERC20Detailed {
     uint256 correctedAmount
   ) internal virtual {
     uint256 currentAllowance = _allowances[owner][spender];
-    if (currentAllowance < amount)
+    if (currentAllowance < amount) {
       revert ERC20InsufficientAllowance(spender, currentAllowance, amount);
+    }
+
     uint256 consumption = currentAllowance >= correctedAmount ? correctedAmount : currentAllowance;
     _approve(owner, spender, currentAllowance - consumption);
   }

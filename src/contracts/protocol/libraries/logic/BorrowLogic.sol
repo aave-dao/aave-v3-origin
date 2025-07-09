@@ -73,7 +73,6 @@ library BorrowLogic {
       })
     );
 
-    // As vDebt.mint rounds up, we ensure an equivalent of >= params.amount debt is created.
     reserveCache.nextScaledVariableDebt = IVariableDebtToken(reserveCache.variableDebtTokenAddress)
       .mint(
         params.user,

@@ -153,10 +153,10 @@ library GenericLogic {
 
     // @note At this point, `avgLiquidationThreshold` represents
     // `SUM(collateral_base_value_i * liquidation_threshold_i)` for all collateral assets.
-    // It has 8 decimals (base currency) + 4 decimals (percentage) = 12 decimals.
+    // It has 8 decimals (base currency) + 2 decimals (percentage) = 10 decimals.
     // healthFactor has 18 decimals
     // healthFactor = (avgLiquidationThreshold * WAD / totalDebtInBaseCurrency) / 100_00
-    // 18 decimals = (12 decimals * 18 decimals / 8 decimals) / 4 decimals = 18 decimals
+    // 18 decimals = (10 decimals * 18 decimals / 8 decimals) / 2 decimals = 18 decimals
     vars.healthFactor = (vars.totalDebtInBaseCurrency == 0)
       ? type(uint256).max
       : vars.avgLiquidationThreshold.wadDiv(vars.totalDebtInBaseCurrency) / 100_00;
@@ -220,7 +220,6 @@ library GenericLogic {
     uint256 assetPrice,
     uint256 assetUnit
   ) private view returns (uint256) {
-    // Replicate vDebt.balanceOf (round up), to always overestimate the debt.
     uint256 userTotalDebt = IScaledBalanceToken(reserve.variableDebtTokenAddress)
       .scaledBalanceOf(user)
       .getVTokenBalance(reserve.getNormalizedDebt());
