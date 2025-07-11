@@ -8,7 +8,10 @@ import {IPool} from '../munged/contracts/interfaces/IPool.sol';
 contract VariableDebtTokenHarness is VariableDebtTokenInstance {
   using WadRayMath for uint256;
 
-  constructor(IPool pool) public VariableDebtTokenInstance(pool) {}
+  constructor(
+    IPool pool,
+    address rewardsController
+  ) public VariableDebtTokenInstance(pool, rewardsController) {}
 
   function scaledBalanceOfToBalanceOf(uint256 bal) public view returns (uint256) {
     return bal.rayMul(POOL.getReserveNormalizedVariableDebt(_underlyingAsset));

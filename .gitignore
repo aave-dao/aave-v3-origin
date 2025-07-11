@@ -1,6 +1,7 @@
 # build and cache
 cache/
 out/
+zkout/
 
 # general
 .env

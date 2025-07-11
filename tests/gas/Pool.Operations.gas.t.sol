@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 
+import {ICreditDelegationToken} from '../../src/contracts/interfaces/ICreditDelegationToken.sol';
 import {Errors} from '../../src/contracts/protocol/libraries/helpers/Errors.sol';
 import {UserConfiguration} from '../../src/contracts/protocol/libraries/configuration/UserConfiguration.sol';
 import {MockFlashLoanReceiverWithoutMint} from '../../src/contracts/mocks/flashloan/MockFlashLoanReceiverWithoutMint.sol';
@@ -75,6 +76,24 @@ contract PoolOperations_gas_Tests is Testhelpers {
 
     contracts.poolProxy.borrow(tokenList.usdx, amountToBorrow, 2, 0, borrower);
     vm.snapshotGasLastCall('Pool.Operations', 'borrow: recurrent borrow');
+  }
+
+  function test_borrow_onBehalfOf() external {
+    _supplyOnReserve(borrower, 100 ether, tokenList.weth);
+    uint256 amountToBorrow = 1000e6;
+    vm.startPrank(borrower);
+    ICreditDelegationToken(contracts.poolProxy.getReserveVariableDebtToken(tokenList.usdx))
+      .approveDelegation({delegatee: supplier, amount: amountToBorrow * 2});
+
+    vm.startPrank(supplier);
+    contracts.poolProxy.borrow(tokenList.usdx, amountToBorrow, 2, 0, borrower);
+    vm.snapshotGasLastCall('Pool.Operations', 'borrow: first borrow->borrowingEnabled; onBehalfOf');
+
+    _skip(100);
+
+    // -1 because the first borrow might have consumed one more allowance than expected due to rounding
+    contracts.poolProxy.borrow(tokenList.usdx, amountToBorrow - 1, 2, 0, borrower);
+    vm.snapshotGasLastCall('Pool.Operations', 'borrow: recurrent borrow; onBehalfOf');
   }
 
   function test_repay() external {
@@ -409,5 +428,110 @@ contract PoolOperations_gas_Tests is Testhelpers {
       referralCode: 0
     });
     vm.snapshotGasLastCall('Pool.Operations', 'flashLoanSimple: simple flash loan');
+  }
+
+  function test_mintToTreasury_one_asset() external {
+    uint256 supplyAmount = 10e18;
+    uint256 borrowAmount = supplyAmount / 10;
+
+    _supplyOnReserve(borrower, supplyAmount, tokenList.weth);
+    vm.startPrank(borrower);
+    contracts.poolProxy.borrow({
+      asset: tokenList.weth,
+      amount: borrowAmount,
+      interestRateMode: 2,
+      referralCode: 0,
+      onBehalfOf: borrower
+    });
+
+    vm.warp(vm.getBlockTimestamp() + 10 days);
+
+    IERC20(tokenList.weth).approve(report.poolProxy, type(uint256).max);
+    contracts.poolProxy.repay({
+      asset: tokenList.weth,
+      amount: borrowAmount,
+      interestRateMode: 2,
+      onBehalfOf: borrower
+    });
+
+    skip(100);
+
+    address[] memory assets = new address[](1);
+    assets[0] = tokenList.weth;
+
+    contracts.poolProxy.mintToTreasury(assets);
+
+    vm.snapshotGasLastCall('Pool.Operations', 'mintToTreasury: one asset with non zero amount');
+  }
+
+  function test_mintToTreasury_two_assets() external {
+    uint256 supplyAmountWeth = 10e18;
+    uint256 supplyAmountWbtc = 10e8;
+    uint256 borrowAmountWeth = supplyAmountWeth / 10;
+    uint256 borrowAmountWbtc = supplyAmountWbtc / 10;
+
+    _supplyOnReserve(borrower, supplyAmountWeth, tokenList.weth);
+    _supplyOnReserve(borrower, supplyAmountWbtc, tokenList.wbtc);
+    vm.startPrank(borrower);
+    contracts.poolProxy.borrow({
+      asset: tokenList.weth,
+      amount: borrowAmountWeth,
+      interestRateMode: 2,
+      referralCode: 0,
+      onBehalfOf: borrower
+    });
+    contracts.poolProxy.borrow({
+      asset: tokenList.wbtc,
+      amount: borrowAmountWbtc,
+      interestRateMode: 2,
+      referralCode: 0,
+      onBehalfOf: borrower
+    });
+
+    vm.warp(vm.getBlockTimestamp() + 10 days);
+
+    IERC20(tokenList.weth).approve(report.poolProxy, type(uint256).max);
+    IERC20(tokenList.wbtc).approve(report.poolProxy, type(uint256).max);
+    contracts.poolProxy.repay({
+      asset: tokenList.weth,
+      amount: borrowAmountWeth,
+      interestRateMode: 2,
+      onBehalfOf: borrower
+    });
+    contracts.poolProxy.repay({
+      asset: tokenList.wbtc,
+      amount: borrowAmountWbtc,
+      interestRateMode: 2,
+      onBehalfOf: borrower
+    });
+
+    skip(100);
+
+    address[] memory assets = new address[](2);
+    assets[0] = tokenList.weth;
+    assets[1] = tokenList.wbtc;
+
+    contracts.poolProxy.mintToTreasury(assets);
+
+    vm.snapshotGasLastCall('Pool.Operations', 'mintToTreasury: two assets with non zero amount');
+  }
+
+  function test_mintToTreasury_one_asset_zero_amount() external {
+    address[] memory assets = new address[](1);
+    assets[0] = tokenList.weth;
+
+    contracts.poolProxy.mintToTreasury(assets);
+
+    vm.snapshotGasLastCall('Pool.Operations', 'mintToTreasury: one asset with zero amount');
+  }
+
+  function test_mintToTreasury_two_assets_zero_amount() external {
+    address[] memory assets = new address[](2);
+    assets[0] = tokenList.weth;
+    assets[1] = tokenList.wbtc;
+
+    contracts.poolProxy.mintToTreasury(assets);
+
+    vm.snapshotGasLastCall('Pool.Operations', 'mintToTreasury: two assets with zero amount');
   }
 }

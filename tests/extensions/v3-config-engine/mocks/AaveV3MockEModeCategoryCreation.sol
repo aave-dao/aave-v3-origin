@@ -36,7 +36,6 @@ contract AaveV3MockEModeCategoryCreation is AaveV3Payload {
     returns (IEngine.EModeCategoryCreation[] memory)
   {
     IEngine.EModeCategoryCreation[] memory eModeUpdates = new IEngine.EModeCategoryCreation[](2);
-
     address[] memory empty = new address[](0);
 
     eModeUpdates[0] = IEngine.EModeCategoryCreation({
@@ -47,12 +46,14 @@ contract AaveV3MockEModeCategoryCreation is AaveV3Payload {
       borrowables: empty,
       collaterals: empty
     });
+
     address[] memory collaterals = new address[](2);
     address[] memory borrowables = new address[](2);
     collaterals[0] = COLLATERAL_ONE;
     collaterals[1] = COLLATERAL_TWO;
     borrowables[0] = BORROWABLE_ONE;
     borrowables[1] = BORROWABLE_TWO;
+
     eModeUpdates[1] = IEngine.EModeCategoryCreation({
       ltv: 97_40,
       liqThreshold: 97_60,

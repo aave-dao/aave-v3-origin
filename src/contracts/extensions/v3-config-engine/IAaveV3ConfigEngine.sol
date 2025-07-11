@@ -77,7 +77,6 @@ interface IAaveV3ConfigEngine {
    *   borrowCap: 60_000, // 60k AAVE
    *   debtCeiling: 100_000, // 100k USD
    *   liqProtocolFee: 10_00, // 10%
-   *   eModeCategory: 0, // No category
    * }
    */
   struct Listing {

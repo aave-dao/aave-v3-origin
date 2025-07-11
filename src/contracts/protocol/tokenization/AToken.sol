@@ -225,7 +225,9 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
       // even if the calculated `actualBalanceDecrease` is 101 wei. In that specific scenario, the allowance consumed will be 100 wei (since that is the `currentAllowance`),
       // and the transaction will not revert. But if the allowance is 101 wei, then the allowance consumed will be 101 wei.
       scaledBalanceOfSender.getATokenBalance(index) -
-        (scaledBalanceOfSender - amount.getATokenTransferScaledAmount(index)).getATokenBalance(index)
+        (scaledBalanceOfSender - amount.getATokenTransferScaledAmount(index)).getATokenBalance(
+          index
+        )
     );
     _transfer(sender, recipient, amount.toUint120());
     return true;
