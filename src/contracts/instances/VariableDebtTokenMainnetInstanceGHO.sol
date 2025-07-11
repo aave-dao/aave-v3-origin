@@ -48,6 +48,6 @@ contract VariableDebtTokenMainnetInstanceGHO is VariableDebtToken {
     );
   }
 
-  // @note deprecated discount hook being called by stkAAVE
+  // @note deprecated discount hook being called by stkAAVE, not used since v3.4
   function updateDiscountDistribution(address, address, uint256, uint256, uint256) external {}
 }

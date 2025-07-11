@@ -34,6 +34,9 @@ contract ATokenTransferFromTests is TestnetProcedures {
     address sender = address(0x1);
     address owner = address(0x2);
     uint256 amount = 100;
+
+    AaveSetters.setATokenBalance(address(aToken), owner, amount, 1e27);
+
     vm.expectRevert(abi.encodeWithSelector(ERC20InsufficientAllowance.selector, sender, 0, amount));
     vm.prank(sender);
     aToken.transferFrom(owner, sender, amount);
@@ -43,8 +46,11 @@ contract ATokenTransferFromTests is TestnetProcedures {
     address sender = address(0x1);
     address owner = address(0x2);
     uint256 amount = 100;
+
     vm.prank(owner);
     aToken.approve(sender, amount - 1);
+
+    AaveSetters.setATokenBalance(address(aToken), owner, amount, 1e27);
 
     vm.expectRevert(
       abi.encodeWithSelector(ERC20InsufficientAllowance.selector, sender, amount - 1, amount)

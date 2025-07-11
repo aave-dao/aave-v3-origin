@@ -191,20 +191,41 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
     uint256 amount
   ) external virtual override(IERC20, IncentivizedERC20) returns (bool) {
     uint256 index = POOL.getReserveNormalizedIncome(_underlyingAsset);
+    uint256 scaledBalanceOfSender = super.balanceOf(sender);
     _spendAllowance(
       sender,
       _msgSender(),
       amount,
-      // According to the ERC20 specification, the spent allowance should reflect the amount transferred.
-      // Following the spec exactly is impossible though, as the allowance references the "scaled up" amount while the transfer operates with "scaled down" amount.
-      // Because of this different handling of amounts, there are amounts that are impossible to accurately reflect on the balance.
-      // As an example: transferFrom(..., 1) at a liquidity index of 2e27, can never transfer exactly `1` as the smallest unit that can be accounted for would be 2.
-      // In addition to that the existing balance has an effect on the final "scaled up" balance after transfer.
-      // As an example: transferFrom(..., 1) at a liquidity index of 1.1 where the recipient has a "scaled up" balance of `9 * 1.1 = 9.9 = 9` before the transfer, will have a balance of `10 * 1.1. = 11` after the Transfer.
-      // While this problem is not solvable without introducing breaking changes, on Aave v3.5 the situation is improved in the following way:
-      // - The `correct` amount to be deducted is considered to be `scaledUpFloor(scaledDownCeil(input.amount))`. This replicates the behavior on transfer, followed by a balanceOf.
-      // - To avoid breaking existing integrations, the amount deducted from the allowance is the minimum of the available allowance and the actual up-scaled asset amount.
-      amount.getATokenTransferScaledAmount(index).getATokenBalance(index)
+      // This comment explains the logic behind the allowance spent calculation.
+      //
+      // Problem:
+      // Simply decreasing the allowance by the input `amount` is not ideal for scaled-balance tokens.
+      // Due to rounding, the actual decrease in the sender's balance (`amount_out`) can be slightly
+      // larger than the input `amount`.
+      //
+      // Definitions:
+      // - `amount`: The unscaled amount to be transferred, passed as an argument.
+      // - `amount_out`: The actual unscaled amount deducted from the sender's balance.
+      // - `amount_in`: The actual unscaled amount added to the recipient's balance.
+      // - `allowance_spent`: The unscaled amount deducted from the spender's allowance.
+      // - `amount_logged`: The amount logged in the `Transfer` event.
+      //
+      // Solution:
+      // To fix this, `allowance_spent` must be exactly equal to `amount_out`.
+      // We calculate `amount_out` precisely by simulating the effect of the transfer on the sender's balance.
+      // `actualBalanceDecrease` in the code corresponds to `amount_out`.
+      // By passing `actualBalanceDecrease` to `_spendAllowance`, we ensure `allowance_spent` is as close as possible to `amount_out`.
+      // `amount_logged` is equal to `amount`. `amount_in` is the actual balance increase for the recipient, which is >= `amount` due to rounding.
+      //
+      // Backward Compatibility & Guarantees:
+      // This implementation is backward-compatible and secure. The `_spendAllowance` function has a critical feature:
+      // 1. It REQUIRES the allowance to be >= `amount` (the user's requested transfer amount).
+      // 2. The amount consumed from the allowance is `actualBalanceDecrease`, but it is capped at the `currentAllowance`.
+      // This means if a user has an allowance of 100 wei and calls `transferFrom` with an `amount` of 100, the call will succeed
+      // even if the calculated `actualBalanceDecrease` is 101 wei. In that specific scenario, the allowance consumed will be 100 wei (since that is the `currentAllowance`),
+      // and the transaction will not revert. But if the allowance is 101 wei, then the allowance consumed will be 101 wei.
+      scaledBalanceOfSender.getATokenBalance(index) -
+        (scaledBalanceOfSender - amount.getATokenTransferScaledAmount(index)).getATokenBalance(index)
     );
     _transfer(sender, recipient, amount.toUint120());
     return true;

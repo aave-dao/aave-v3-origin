@@ -80,7 +80,8 @@ Aave historically has never accurately tracked allowance. The reason for this is
 For allowance / approval, this means that the consumed allowance is not always equal to the amount transferred. While this problem is not perfectly solvable without breaking changes, in v3.5 the protocol ensures that the exact consumed allowance is burned if available.
 
 Example: When a user calls `transferFrom(sender, recipient, 100)` in most cases the transfer will transfer slightly more than `100` tokens (e.g `101`). This is due to precision loss between assets/shares conversion.
-In Aave versions `< 3.5` this action would always result in burning `100` allowance. On Aave v3.5, the transfer will either burn `101` allowance or burn `100` allowance dependent on the users available allowance. This prevents undesired double spending of allowance, while maintaining backwards compatibility.
+In Aave versions `< 3.5` this action would always result in burning `100` allowance. On Aave v3.5, the transfer will check the balance difference on the sender and discount up to the difference from the allowance.
+Example: The user transfers `100`, but due to rounding he loses `102` balance. The allowance is reduced by up to `102`. If the original allowance was only `100`, the transaction will still pass for backwards compatibility.
 
 ### Misc changes
 

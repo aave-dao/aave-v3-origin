@@ -81,24 +81,36 @@ abstract contract VariableDebtToken is DebtTokenBase, ScaledBalanceTokenBase, IV
     uint256 scaledAmount,
     uint256 index
   ) external virtual override onlyPool returns (uint256) {
+    uint256 scaledBalanceOfUser = super.balanceOf(user);
+
     if (user != onBehalfOf) {
-      uint256 borrowAllowance = _borrowAllowances[onBehalfOf][user];
-      if (borrowAllowance < amount) {
-        revert InsufficientBorrowAllowance(user, borrowAllowance, amount);
-      }
-      // When borrowing on behalf of a user, the borrower specified an "amount", which is measured in the underlying the user wants to receive.
-      // The protocol internally works, with a "scaled down" representation of the amount, which in most cases loses precision.
-      // In practice this means that when borrowing `n`, the user might receive `n+m` debt.
-      // Similar to the aToken `transferFrom` function, handling this scenario exactly is impossible.
-      // While this problem is not solvable without introducing breaking changes, on Aave v3.5 the situation is improved in the following way:
-      // - The `correct` amount to be deducted is considered to be `scaledUpCeil(scaledAmount)`. This replicates the behavior on borrow followed by a balanceOf.
-      // - To avoid breaking existing integrations, the amount deducted from the allowance is the minimum of the available allowance and the actual up-scaled debt amount.
-      uint256 scaledUp = scaledAmount.getVTokenBalance(index);
-      _decreaseBorrowAllowance(
-        onBehalfOf,
-        user,
-        borrowAllowance >= scaledUp ? scaledUp : borrowAllowance
-      );
+      // This comment explains the logic behind the borrow allowance spent calculation.
+      //
+      // Problem:
+      // Simply decreasing the allowance by the input `amount` is not ideal for scaled-balance tokens.
+      // Due to rounding, the actual increase in the user's debt (`debt_increase`) can be slightly
+      // larger than the input `amount`.
+      //
+      // Definitions:
+      // - `amount`: The unscaled amount to be borrowed, passed as an argument.
+      // - `debt_increase`: The actual unscaled debt increase for the user.
+      // - `allowance_spent`: The unscaled amount deducted from the delegatee's borrow allowance.
+      //
+      // Solution:
+      // To handle this, `allowance_spent` must be exactly equal to `debt_increase`.
+      // We calculate `debt_increase` precisely by simulating the effect of the borrow on the user's balance.
+      // `actualBalanceIncrease` in the code corresponds to `debt_increase`.
+      // By passing `actualBalanceIncrease` to `_decreaseBorrowAllowance`, we ensure `allowance_spent` is as close as possible to `debt_increase`.
+      //
+      // Backward Compatibility & Guarantees:
+      // This implementation is backward-compatible and secure. The `_decreaseBorrowAllowance` function has a critical feature:
+      // 1. It REQUIRES the borrow allowance to be >= `amount` (the user's requested borrow amount).
+      // 2. The amount consumed from the allowance is `actualBalanceIncrease`, but it is capped at the `currentAllowance`.
+      // This means if a user has a borrow allowance of 100 wei and `borrow` is called with an `amount` of 100, the call will succeed
+      // even if the calculated `actualBalanceIncrease` is 101 wei. In that specific scenario, the allowance consumed will be 100 wei (since that is the `currentAllowance`),
+      // and the transaction will not revert. But if the allowance is 101 wei, then the allowance consumed will be 101 wei.
+      _decreaseBorrowAllowance(onBehalfOf, user, amount, (scaledBalanceOfUser + scaledAmount).getVTokenBalance(index) -
+        scaledBalanceOfUser.getVTokenBalance(index));
     }
     _mintScaled({
       caller: user,

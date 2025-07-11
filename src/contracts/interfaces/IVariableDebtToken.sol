@@ -11,12 +11,14 @@ import {IInitializableDebtToken} from './IInitializableDebtToken.sol';
  */
 interface IVariableDebtToken is IScaledBalanceToken, IInitializableDebtToken {
   /**
-   * @notice Mints debt token to the `onBehalfOf` address
+   * @notice Mints debt token to the `onBehalfOf` address.
+   * @dev Passing both the unscaled and scaled amounts enhances precision. The `scaledAmount` is used for precise balance updates,
+   * while the `amount` is used for allowance checks, preventing cumulative rounding errors.
    * @param user The address receiving the borrowed underlying, being the delegatee in case
    * of credit delegate, or same as `onBehalfOf` otherwise
    * @param onBehalfOf The address receiving the debt tokens
-   * @param amount The amount of debt being accounted for on the allowance
-   * @param scaledAmount The scaledAmount of debt being minted
+   * @param amount The unscaled amount of debt to be accounted for allowance
+   * @param scaledAmount The scaled amount of debt tokens to mint
    * @param index The variable debt index of the reserve
    * @return The scaled total debt of the reserve
    */
@@ -29,11 +31,11 @@ interface IVariableDebtToken is IScaledBalanceToken, IInitializableDebtToken {
   ) external returns (uint256);
 
   /**
-   * @notice Burns user variable debt
-   * @dev In some instances, a burn transaction will emit a mint event
-   * if the amount to burn is less than the interest that the user accrued
+   * @notice Burns user variable debt.
+   * @dev Passing the scaled amount allows for more precise calculations and avoids cumulative errors from repeated conversions.
+   * @dev In some instances, a burn transaction will emit a mint event if the amount to burn is less than the interest that the user accrued.
    * @param from The address from which the debt will be burned
-   * @param scaledAmount The scaled amount getting burned
+   * @param scaledAmount The scaled amount of debt getting burned
    * @param index The variable debt index of the reserve
    * @return True if the new balance is zero
    * @return The scaled total debt of the reserve
