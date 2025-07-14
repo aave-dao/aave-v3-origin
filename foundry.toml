@@ -15,7 +15,7 @@ out = 'out'
 libs = ['lib']
 remappings = []
 fs_permissions = [
-  { access = "write", path = "./reports" },
+  { access = "read-write", path = "./reports" },
   { access = "read", path = "./out" },
   { access = "read", path = "./config" },
 ]

@@ -136,10 +136,10 @@ contract HorizonMainnetListingForkTest is Test {
     //   bool isFrozen
     // ) = provider.getReservesData(listing.BUIDL());
 
-    (
-      IUiPoolDataProviderV3.AggregatedReserveData[] memory reserveData,
-      IUiPoolDataProviderV3.BaseCurrencyInfo memory baseCurrencyInfo
-    ) = provider.getReservesData(IPoolAddressesProvider(provider));
+    // (
+    //   IUiPoolDataProviderV3.AggregatedReserveData[] memory reserveData,
+    //   IUiPoolDataProviderV3.BaseCurrencyInfo memory baseCurrencyInfo
+    // ) = provider.getReservesData(IPoolAddressesProvider(provider));
 
     // assertEq(ltv, 8250, 'Wrong LTV');
     // assertEq(liqThreshold, 8600, 'Wrong LiqThreshold');

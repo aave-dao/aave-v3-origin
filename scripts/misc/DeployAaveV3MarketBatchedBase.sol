@@ -14,7 +14,7 @@ import {MarketInput} from '../../src/deployments/inputs/MarketInput.sol';
 abstract contract DeployAaveV3MarketBatchedBase is DeployUtils, MarketInput, Script {
   using stdJson for string;
 
-  function run() external {
+  function run() public returns (string memory reportFilePath) {
     Roles memory roles;
     MarketConfig memory config;
     DeployFlags memory flags;
@@ -35,7 +35,7 @@ abstract contract DeployAaveV3MarketBatchedBase is DeployUtils, MarketInput, Scr
     IMetadataReporter metadataReporter = IMetadataReporter(
       _deployFromArtifacts('MetadataReporter.sol:MetadataReporter')
     );
-    metadataReporter.writeJsonReportMarket(report);
+    return metadataReporter.writeJsonReportMarket(report);
   }
 
   function _loadWarnings(MarketConfig memory config, DeployFlags memory flags) internal pure {
