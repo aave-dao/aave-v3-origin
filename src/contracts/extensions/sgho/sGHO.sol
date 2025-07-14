@@ -1,17 +1,15 @@
 // SPDX-License-Identifier: agpl-3
 pragma solidity ^0.8.19;
 
-import {ERC4626, ERC20, IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/ERC4626.sol';
-import {ERC20Permit, EIP712} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/ERC20Permit.sol';
+import {ERC4626Upgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC4626Upgradeable.sol';
+import {ERC20PermitUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC20PermitUpgradeable.sol';
+import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
 import {WadRayMath} from '../../../contracts/protocol/libraries/math/WadRayMath.sol';
-import {Initializable} from 'openzeppelin-contracts/contracts/proxy/utils/Initializable.sol';
+import {Initializable} from 'openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol';
 import {IAccessControl} from 'openzeppelin-contracts/contracts/access/IAccessControl.sol';
 import {Math} from 'openzeppelin-contracts/contracts/utils/math/Math.sol';
 import {IsGHO} from './interfaces/IsGHO.sol';
-
-interface IERC1271 {
-  function isValidSignature(bytes32, bytes memory) external view returns (bytes4);
-}
+import {ERC20Upgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol';
 
 /**
  * @title sGHO Token
@@ -20,14 +18,16 @@ interface IERC1271 {
  * @dev This contract implements the ERC4626 standard for tokenized vaults, where the underlying asset is GHO.
  * It also includes functionalities for yield generation based on a target rate, and administrative roles for managing the contract.
  */
-contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
+contract sGHO is Initializable, ERC4626Upgradeable, ERC20PermitUpgradeable, IsGHO {
   using WadRayMath for uint256;
   using Math for uint256;
 
-  address public immutable gho;
+  address public gho;
   IAccessControl internal aclManager;
 
   uint256 public targetRate;
+  uint256 public maxTargetRate;
+  uint256 public supplyCap;
   uint256 public yieldIndex;
   uint256 public lastUpdate;
   uint256 internal constant RATE_PRECISION = 1e10;
@@ -38,22 +38,40 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
 
   // --- EIP712 niceties ---
   uint256 public deploymentChainId;
-  bytes32 private _DOMAIN_SEPARATOR;
-  bytes32 public constant PERMIT_TYPEHASH =
-    keccak256('Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)');
   string public constant VERSION = '1';
 
   /**
-   * @notice Constructs the sGHO contract.
-   * @param _gho The address of the GHO token contract, which is the underlying asset for this vault.
-   * @param _aclmanager The address of the Aave ACL Manager, used to control access to restricted functions.
+   * @dev Disable initializers on the implementation contract
    */
-  constructor(
+  constructor() {
+    _disableInitializers();
+  }
+
+  /**
+   * @notice Initializer for the sGHO vault.
+   * @param _gho       Address of the underlying GHO token.
+   * @param _aclmanager Address of the Aave ACL Manager.
+   * @param _maxTargetRate The maximum allowable target rate.
+   * @param _supplyCap The total supply cap for the vault.
+   */
+  function initialize(
     address _gho,
-    address _aclmanager
-  ) ERC20('sGHO', 'sGHO') ERC4626(IERC20(_gho)) ERC20Permit('sGHO') {
+    address _aclmanager,
+    uint256 _maxTargetRate,
+    uint256 _supplyCap
+  ) public payable initializer {
+    __ERC20_init('sGHO', 'sGHO');
+    __ERC4626_init(IERC20(_gho));
+    __ERC20Permit_init('sGHO');
+
     gho = _gho;
     aclManager = IAccessControl(_aclmanager);
+    maxTargetRate = _maxTargetRate;
+    supplyCap = _supplyCap;
+
+    deploymentChainId = block.chainid;
+    yieldIndex = WadRayMath.RAY;
+    lastUpdate = block.timestamp;
   }
 
   /**
@@ -97,96 +115,7 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
     _;
   }
 
-  /**
-   * @inheritdoc IsGHO
-   */
-  function initialize() public payable initializer {
-    deploymentChainId = block.chainid;
-    _DOMAIN_SEPARATOR = _calculateDomainSeparator(block.chainid);
-    yieldIndex = WadRayMath.RAY;
-    lastUpdate = block.timestamp;
-  }
-
   // --- Approve by signature ---
-
-  /**
-   * @notice Internal function to validate a signature.
-   * @dev It supports both standard EOA signatures (ecrecover) and contract signatures (EIP-1271).
-   * @param signer The address of the signer.
-   * @param digest The hash of the message that was signed.
-   * @param signature The signature to validate.
-   * @return A boolean indicating whether the signature is valid.
-   */
-  function _isValidSignature(
-    address signer,
-    bytes32 digest,
-    bytes memory signature
-  ) internal view returns (bool) {
-    if (signature.length == 65) {
-      bytes32 r;
-      bytes32 s;
-      uint8 v;
-      assembly {
-        r := mload(add(signature, 0x20))
-        s := mload(add(signature, 0x40))
-        v := byte(0, mload(add(signature, 0x60)))
-      }
-      if (signer == ecrecover(digest, v, r, s)) {
-        return true;
-      }
-    }
-
-    (bool success, bytes memory result) = signer.staticcall(
-      abi.encodeWithSelector(IERC1271.isValidSignature.selector, digest, signature)
-    );
-    return (success &&
-      result.length == 32 &&
-      abi.decode(result, (bytes4)) == IERC1271.isValidSignature.selector);
-  }
-
-  /**
-   * @notice Grants approval to a spender by signature.
-   * @dev This function allows a user to approve a spender for a certain amount of tokens
-   * by providing a signature, as per EIP-2612. It accepts a combined signature.
-   * @param owner The address of the token owner.
-   * @param spender The address of the spender.
-   * @param value The amount of tokens to approve.
-   * @param deadline The deadline for the signature's validity.
-   * @param signature The EIP-2612 signature.
-   */
-  function permit(
-    address owner,
-    address spender,
-    uint256 value,
-    uint256 deadline,
-    bytes memory signature
-  ) public {
-    if (block.timestamp > deadline) {
-      revert ERC2612ExpiredSignature(deadline);
-    }
-
-    if (owner == address(0)) {
-      revert ERC2612InvalidSigner(owner, spender);
-    }
-
-    uint256 nonce = _useNonce(owner);
-
-    bytes32 digest = keccak256(
-      abi.encodePacked(
-        '\x19\x01',
-        _domainSeparatorV4(),
-        keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, value, nonce, deadline))
-      )
-    );
-
-    if (!_isValidSignature(owner, digest, signature)) {
-      revert InvalidSignature();
-    }
-
-    _approve(owner, spender, value);
-    emit Approval(owner, spender, value);
-  }
-
   /**
    * @notice Overload of the `permit` function that accepts v, r, and s as separate arguments.
    * @dev This is a convenience function for platforms that do not handle the single `bytes` signature format.
@@ -206,13 +135,14 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
     uint8 v,
     bytes32 r,
     bytes32 s
-  ) public virtual override(IsGHO, ERC20Permit) {
-    permit(owner, spender, value, deadline, abi.encodePacked(r, s, v));
+  ) public virtual override(IsGHO, ERC20PermitUpgradeable) {
+    super.permit(owner, spender, value, deadline, v, r, s);
   }
+
   /**
    * @dev See {IERC20Permit-nonces}.
    */
-  function nonces(address owner) public view virtual override(ERC20Permit) returns (uint256) {
+  function nonces(address owner) public view virtual override(ERC20PermitUpgradeable) returns (uint256) {
     return super.nonces(owner);
   }
 
@@ -223,28 +153,7 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
     return _domainSeparatorV4();
   }
 
-  /**
-   * @notice Calculates the EIP-712 domain separator.
-   * @dev The domain separator is unique to the contract and chain to prevent replay attacks.
-   * @param chainId The chain ID of the network.
-   * @return The domain separator.
-   */
-  function _calculateDomainSeparator(uint256 chainId) private view returns (bytes32) {
-    return
-      keccak256(
-        abi.encode(
-          keccak256(
-            'EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)'
-          ),
-          keccak256(bytes(name())),
-          keccak256(bytes(VERSION)),
-          chainId,
-          address(this)
-        )
-      );
-  }
-
-  function decimals() public view virtual override(ERC20, ERC4626) returns (uint8) {
+  function decimals() public view virtual override(ERC20Upgradeable, ERC4626Upgradeable) returns (uint8) {
     return super.decimals();
   }
 
@@ -256,7 +165,7 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
    * @param owner The address of the user who owns the shares.
    * @return The maximum amount of GHO that can be withdrawn.
    */
-  function maxWithdraw(address owner) public view override(ERC4626) returns (uint256) {
+  function maxWithdraw(address owner) public view override(ERC4626Upgradeable) returns (uint256) {
     return Math.min(super.maxWithdraw(owner), IERC20(gho).balanceOf(address(this)));
   }
 
@@ -266,8 +175,27 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
    * @param owner The address of the user who owns the shares.
    * @return The maximum amount of sGHO shares that can be redeemed.
    */
-  function maxRedeem(address owner) public view override(ERC4626) returns (uint256) {
-    return Math.min(super.maxRedeem(owner), convertToShares(IERC20(gho).balanceOf(address(this))));
+  function maxRedeem(address owner) public view override(ERC4626Upgradeable) returns (uint256) {
+    return Math.min(
+      super.maxRedeem(owner),
+      convertToShares(IERC20(gho).balanceOf(address(this)))
+    );
+  }
+
+  function maxDeposit(address) public view override(ERC4626Upgradeable) returns (uint256) {
+    uint256 currentAssets = totalAssets();
+    if (currentAssets >= supplyCap) {
+      return 0;
+    }
+    return supplyCap - currentAssets;
+  }
+
+  function maxMint(address) public view override(ERC4626Upgradeable) returns (uint256) {
+    uint256 currentAssets = totalAssets();
+    if (currentAssets >= supplyCap) {
+      return 0;
+    }
+    return convertToShares(supplyCap - currentAssets);
   }
 
   /**
@@ -277,7 +205,7 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
    * @param receiver The address that will receive the sGHO shares.
    * @return The amount of sGHO shares minted.
    */
-  function deposit(uint256 assets, address receiver) public override(ERC4626) returns (uint256) {
+  function deposit(uint256 assets, address receiver) public override(ERC4626Upgradeable) returns (uint256) {
     uint256 maxAssets = maxDeposit(receiver);
     if (assets > maxAssets) {
       revert ERC4626ExceededMaxDeposit(receiver, assets, maxAssets);
@@ -297,7 +225,7 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
    * @param receiver The address that will receive the sGHO shares.
    * @return The amount of GHO deposited.
    */
-  function mint(uint256 shares, address receiver) public override(ERC4626) returns (uint256) {
+  function mint(uint256 shares, address receiver) public override(ERC4626Upgradeable) returns (uint256) {
     uint256 maxShares = maxMint(receiver);
     if (shares > maxShares) {
       revert ERC4626ExceededMaxMint(receiver, shares, maxShares);
@@ -323,7 +251,7 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
     uint256 assets,
     address receiver,
     address owner
-  ) public override(ERC4626) returns (uint256) {
+  ) public override(ERC4626Upgradeable) returns (uint256) {
     uint256 maxAssets = maxWithdraw(owner);
     if (assets > maxAssets) {
       revert ERC4626ExceededMaxWithdraw(owner, assets, maxAssets);
@@ -348,7 +276,7 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
     uint256 shares,
     address receiver,
     address owner
-  ) public override(ERC4626) returns (uint256) {
+  ) public override(ERC4626Upgradeable) returns (uint256) {
     uint256 maxShares = maxRedeem(owner);
     if (shares > maxShares) {
       revert ERC4626ExceededMaxRedeem(owner, shares, maxShares);
@@ -366,7 +294,7 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
    * @dev This is calculated based on the total supply of sGHO and the current yield index.
    * @return The total amount of GHO assets.
    */
-  function totalAssets() public view override(ERC4626) returns (uint256) {
+  function totalAssets() public view override(ERC4626Upgradeable) returns (uint256) {
     return _convertToAssets(totalSupply(), Math.Rounding.Floor);
   }
 
@@ -429,25 +357,11 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
    * @dev This function modifies state and is called before any operation that depends on the yield index.
    */
   function _updateYieldIndex() internal {
-    if (targetRate == 0) return;
-
-    uint256 timeSinceLastUpdate = block.timestamp - lastUpdate;
-    if (timeSinceLastUpdate == 0) return;
-
-    // Calculate the rate per second based on the target rate
-    uint256 annualRateRay = targetRate.rayMul(WadRayMath.RAY);
-
-    uint256 currentRatePerSecond = annualRateRay.rayDiv(ONE_YEAR);
-
-    // Calculate the index change per second
-    uint256 currentIndexChangePerSecond = yieldIndex.rayMul(currentRatePerSecond).rayDiv(10000);
-
-    uint256 yieldIndexChange = currentIndexChangePerSecond.rayMul(timeSinceLastUpdate);
-    // Update the yield index
-    yieldIndex += yieldIndexChange;
-
-    // Update the last update timestamp
-    lastUpdate = block.timestamp;
+    uint256 newYieldIndex = _getCurrentYieldIndex();
+    if (newYieldIndex != yieldIndex) {
+      yieldIndex = newYieldIndex;
+      lastUpdate = block.timestamp;
+    }
   }
 
   /**
@@ -462,9 +376,12 @@ contract sGHO is ERC4626, ERC20Permit, Initializable, IsGHO {
    */
   function setTargetRate(uint256 newRate) public onlyYieldManager {
     // Update the yield index before changing the rate to ensure proper accrual
-    if (newRate > 5000) revert RateMustBeLessThan50Percent();
+    if (newRate > maxTargetRate) {
+      revert RateMustBeLessThanMaxRate();
+    }
     _updateYieldIndex();
     targetRate = newRate;
+    emit TargetRateUpdated(newRate);
   }
 
   /**

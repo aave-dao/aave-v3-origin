@@ -41,9 +41,36 @@ interface IsGHO {
   error CannotRescueGHO();
 
   /**
-   * @notice Thrown if the target rate is set to a value greater than 50%.
+   * @notice Thrown if the target rate is set to a value greater than the max rate.
    */
-  error RateMustBeLessThan50Percent();
+  error RateMustBeLessThanMaxRate();
+
+  /**
+   * @notice Thrown when a deposit or mint would exceed the total supply cap.
+   */
+  error SupplyCapExceeded();
+
+  // --- Events ---
+
+  /**
+   * @notice Emitted when the target rate is updated.
+   * @param newRate The new target rate.
+   */
+  event TargetRateUpdated(uint256 newRate);
+
+  /**
+   * @notice Emitted when ERC20 tokens are rescued from the contract.
+   * @param caller The address that initiated the rescue operation.
+   * @param token The address of the rescued ERC20 token.
+   * @param to The recipient address of the rescued tokens.
+   * @param amount The amount of tokens rescued.
+   */
+  event ERC20Rescued(
+    address indexed caller,
+    address indexed token,
+    address indexed to,
+    uint256 amount
+  );
 
   // --- State Variables (as view functions) ---
 
@@ -54,17 +81,17 @@ interface IsGHO {
   function gho() external view returns (address);
 
   /**
+   * @notice Returns the total supply cap of the vault.
+   * @return The total supply cap.
+   */
+  function supplyCap() external view returns (uint256);
+
+  /**
    * @notice Returns the chain ID of the network where the contract is deployed.
    * @dev This is used for EIP-712 signature validation to prevent replay attacks across different chains.
    * @return The chain ID.
    */
   function deploymentChainId() external view returns (uint256);
-
-  /**
-   * @notice Returns the EIP-712 version for the permit signature.
-   * @return The version string.
-   */
-  function VERSION() external view returns (string memory);
 
   /**
    * @notice Returns the current yield index, representing the accumulated yield.
@@ -100,13 +127,6 @@ interface IsGHO {
    */
   function YIELD_MANAGER_ROLE() external view returns (bytes32);
 
-  /**
-   * @notice Returns the EIP-712 type hash for the permit signature.
-   * @dev This is used to construct the domain separator for EIP-712 signatures.
-   * @return The EIP-712 type hash for the permit.
-   */
-  function PERMIT_TYPEHASH() external view returns (bytes32);
-
   // --- Functions ---
 
   // Note: Standard ERC4626 functions (asset, totalAssets, convertToShares, convertToAssets,
@@ -121,7 +141,12 @@ interface IsGHO {
    * @dev This function can only be called once. It sets up initial roles and configurations.
    * While the function is marked as `payable`, it is designed to reject any attached Ether value.
    */
-  function initialize() external payable;
+  function initialize(
+    address gho_,
+    address aclManager_,
+    uint256 maxTargetRate_,
+    uint256 supplyCap_
+  ) external payable;
 
   /**
    * @notice Overload of the standard ERC20Permit `permit` function.
@@ -170,20 +195,6 @@ interface IsGHO {
   function rescueERC20(address erc20Token, address to, uint256 amount) external;
 
   // --- Events ---
-
-  /**
-   * @notice Emitted when ERC20 tokens are rescued from the contract.
-   * @param caller The address that initiated the rescue operation.
-   * @param token The address of the rescued ERC20 token.
-   * @param to The recipient address of the rescued tokens.
-   * @param amount The amount of tokens rescued.
-   */
-  event ERC20Rescued(
-    address indexed caller,
-    address indexed token,
-    address indexed to,
-    uint256 amount
-  );
 
   /**
    * @notice The receive function is implemented to reject direct Ether transfers to the contract.

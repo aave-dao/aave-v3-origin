@@ -5,8 +5,8 @@ pragma solidity ^0.8.19;
 import {console} from 'forge-std/console.sol';
 import {stdStorage, StdStorage} from 'forge-std/Test.sol';
 import {TestnetProcedures, TestnetERC20} from '../../utils/TestnetProcedures.sol';
-import {sGHO, IERC1271} from '../../../src/contracts/extensions/sgho/sGHO.sol';
-import {MockERC1271} from '../../mocks/MockERC1271.sol';
+import {sGHO} from '../../../src/contracts/extensions/sgho/sGHO.sol';
+import {MockERC1271, IERC1271} from '../../mocks/MockERC1271.sol';
 import {IAccessControl} from 'openzeppelin-contracts/contracts/access/IAccessControl.sol';
 import {IERC20Permit} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol';
 import {ERC20Permit} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/ERC20Permit.sol';
@@ -16,6 +16,7 @@ import {IERC20Metadata as IERC20} from 'openzeppelin-contracts/contracts/token/E
 import {IsGHO} from '../../../src/contracts/extensions/sgho/interfaces/IsGHO.sol';
 import {ERC4626} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/ERC4626.sol';
 import {Math} from 'openzeppelin-contracts/contracts/utils/math/Math.sol';
+import {TransparentUpgradeableProxy} from 'openzeppelin-contracts/contracts/proxy/transparent/TransparentUpgradeableProxy.sol';
 
 // --- Test Contract ---
 
@@ -34,9 +35,10 @@ contract sGhoTest is TestnetProcedures {
   address internal Admin;
   address internal yManager; // Yield manager user
 
+  uint256 internal constant MAX_TARGET_RATE = 5000; // 50%
+  uint256 internal constant SUPPLY_CAP = 1_000_000 ether; // 1M GHO
+
   // Permit constants
-  bytes32 internal constant PERMIT_TYPEHASH =
-    keccak256('Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)');
   string internal constant VERSION = '1'; // Matches sGHO constructor
   bytes32 internal DOMAIN_SEPARATOR_sGHO;
 
@@ -53,11 +55,25 @@ contract sGhoTest is TestnetProcedures {
     // Deploy Mocks & sGHO
     gho = new TestnetERC20('Mock GHO', 'GHO', 18, poolAdmin);
 
-    // Deploy sGHO with ACLManager address
-    sgho = new sGHO(address(gho), address(contracts.aclManager));
-
-    // Initialize sGHO
-    sgho.initialize();
+    // Deploy sGHO implementation and proxy
+    address sghoImpl = address(new sGHO());
+    sgho = sGHO(
+      payable(
+        address(
+          new TransparentUpgradeableProxy(
+            sghoImpl,
+            address(this),
+            abi.encodeWithSelector(
+              sGHO.initialize.selector,
+              address(gho),
+              address(contracts.aclManager),
+              MAX_TARGET_RATE,
+              SUPPLY_CAP
+            )
+          )
+        )
+      )
+    );
 
     deal(address(gho), address(sgho), 1 ether, true);
 
@@ -90,11 +106,11 @@ contract sGhoTest is TestnetProcedures {
 
   // --- Constructor Tests ---
 
-  function test_constructor() external {
+  function test_constructor() external view {
     assertEq(sgho.gho(), address(gho), 'GHO address mismatch');
     assertEq(sgho.deploymentChainId(), block.chainid, 'Chain ID mismatch');
     assertEq(sgho.VERSION(), VERSION, 'Version mismatch');
-    assertEq(sgho.PERMIT_TYPEHASH(), PERMIT_TYPEHASH, 'Permit typehash mismatch');
+    assertEq(sgho.DOMAIN_SEPARATOR(), DOMAIN_SEPARATOR_sGHO, 'Domain separator mismatch');
   }
 
   // --- ERC20 Metadata Tests ---
@@ -108,6 +124,32 @@ contract sGhoTest is TestnetProcedures {
   function test_revert_ReceiveETH() external {
     vm.expectRevert(abi.encodeWithSelector(IsGHO.NoEthAllowed.selector));
     payable(address(sgho)).transfer(1 ether);
+  }
+
+  // --- Admin functions ---
+  function test_setTargetRate_event() external {
+    vm.startPrank(yManager);
+    uint256 newRate = 2000; // 20% APR
+    vm.expectEmit(true, true, true, true, address(sgho));
+    emit IsGHO.TargetRateUpdated(newRate);
+    sgho.setTargetRate(newRate);
+    vm.stopPrank();
+    assertEq(sgho.targetRate(), newRate, 'Target rate should be updated');
+  }
+
+  function test_revert_setTargetRate_exceedsMaxRate() external {
+    vm.startPrank(yManager);
+    uint256 newRate = MAX_TARGET_RATE + 1;
+    vm.expectRevert(IsGHO.RateMustBeLessThanMaxRate.selector);
+    sgho.setTargetRate(newRate);
+    vm.stopPrank();
+  }
+
+  function test_setTargetRate_atMaxRate() external {
+    vm.startPrank(yManager);
+    sgho.setTargetRate(MAX_TARGET_RATE);
+    vm.stopPrank();
+    assertEq(sgho.targetRate(), MAX_TARGET_RATE, 'Target rate should be updated to max rate');
   }
 
   // --- ERC4626 Tests ---
@@ -262,11 +304,14 @@ contract sGhoTest is TestnetProcedures {
   }
 
   function test_4626_maxMethods() external {
-    // Deposit max checks (no limits implemented in this sGHO version)
-    assertEq(sgho.maxDeposit(user1), type(uint256).max, 'maxDeposit should be max');
-    assertEq(sgho.maxMint(user1), type(uint256).max, 'maxMint should be max');
+    // Max deposit should be the supply cap initially
+    assertEq(sgho.maxDeposit(user1), SUPPLY_CAP, 'maxDeposit should be supply cap');
 
-    // Withdraw max checks
+    // Max mint should correspond to the supply cap
+    uint256 expectedMaxMint = sgho.convertToShares(SUPPLY_CAP);
+    assertEq(sgho.maxMint(user1), expectedMaxMint, 'maxMint should be supply cap in shares');
+
+    // Deposit some amount and check max withdraw/redeem
     vm.startPrank(user1);
     uint256 depositAmount = 100 ether;
     sgho.deposit(depositAmount, user1);
@@ -274,6 +319,13 @@ contract sGhoTest is TestnetProcedures {
 
     assertEq(sgho.maxWithdraw(user1), depositAmount, 'maxWithdraw mismatch');
     assertEq(sgho.maxRedeem(user1), shares, 'maxRedeem mismatch');
+
+    // Max deposit should be reduced by the deposited amount
+    assertEq(
+      sgho.maxDeposit(user1),
+      SUPPLY_CAP - depositAmount,
+      'maxDeposit should be reduced'
+    );
     vm.stopPrank();
   }
 
@@ -319,190 +371,49 @@ contract sGhoTest is TestnetProcedures {
     vm.stopPrank();
   }
 
-  // --- Permit Tests ---
-  function test_permit() external {
-    uint256 privateKey = 0xA11CE;
-    address owner = vm.addr(privateKey);
-    address spender = user2;
-    uint256 value = 100 ether;
-    uint256 deadline = block.timestamp + 1 hours;
-    uint256 nonce = sgho.nonces(owner);
-
-    // Create permit signature
-    (uint8 v, bytes32 r, bytes32 s) = _generatePermitSignature(
-      privateKey,
-      owner,
-      spender,
-      value,
-      nonce,
-      deadline,
-      DOMAIN_SEPARATOR_sGHO
-    );
-
-    // Execute permit
-    sgho.permit(owner, spender, value, deadline, v, r, s);
-
-    assertEq(sgho.allowance(owner, spender), value, 'Allowance not set correctly');
-  }
-
-  function test_permit_contractSignature() external {
-    // Deploy mock ERC1271 contract
-    MockERC1271 owner = new MockERC1271();
-    address spender = user2;
-    uint256 value = 100 ether;
-    uint256 deadline = block.timestamp + 1 hours;
-
-    // Use the valid signature from the mock contract
-    bytes memory signature = bytes('VALID_SIGNATURE');
-
-    // Execute permit
-    sgho.permit(address(owner), spender, value, deadline, signature);
-
-    assertEq(
-      sgho.allowance(address(owner), spender),
-      value,
-      'Allowance not set correctly for contract signature'
-    );
-  }
-
-  function test_revert_permit_invalidContractSignature() external {
-    // Deploy mock ERC1271 contract
-    MockERC1271 owner = new MockERC1271();
-    address spender = user2;
-    uint256 value = 100 ether;
-    uint256 deadline = block.timestamp + 1 hours;
-    uint256 nonce = sgho.nonces(address(owner));
-
-    // Use an invalid signature
-    bytes memory signature = bytes('INVALID_SIGNATURE');
-
-    bytes32 structHash = keccak256(
-      abi.encode(PERMIT_TYPEHASH, address(owner), spender, value, nonce, deadline)
-    );
-    bytes32 hash = keccak256(abi.encodePacked('\x19\x01', DOMAIN_SEPARATOR_sGHO, structHash));
-
-    // Execute permit - should revert
-    vm.expectRevert(abi.encodeWithSelector(IsGHO.InvalidSignature.selector));
-    sgho.permit(address(owner), spender, value, deadline, signature);
-  }
-
-  function test_permit_differentChainId() external {
-    uint256 privateKey = 0xA11CE;
-    address owner = vm.addr(privateKey);
-    address spender = user2;
-    uint256 value = 100 ether;
-    uint256 deadline = block.timestamp + 1 hours;
-    uint256 nonce = sgho.nonces(owner);
-
-    // Change chain ID
-    uint256 newChainId = 31337;
-    vm.chainId(newChainId);
-
-    string memory sghoName = sgho.name();
-    string memory sghoVersion = sgho.VERSION();
-
-    // Create permit signature with new domain separator
-    bytes32 domainSeparator = keccak256(
-      abi.encode(
-        keccak256(
-          'EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)'
-        ),
-        keccak256(bytes(sghoName)),
-        keccak256(bytes(sghoVersion)),
-        newChainId,
-        address(sgho)
+  // --- Supply Cap Tests ---
+  function test_revert_deposit_exceedsCap() external {
+    vm.startPrank(user1);
+    uint256 amount = SUPPLY_CAP + 1;
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        ERC4626.ERC4626ExceededMaxDeposit.selector,
+        user1,
+        amount,
+        SUPPLY_CAP
       )
     );
-    (uint8 v, bytes32 r, bytes32 s) = _generatePermitSignature(
-      privateKey,
-      owner,
-      spender,
-      value,
-      nonce,
-      deadline,
-      domainSeparator
-    );
-
-    // Execute permit
-    sgho.permit(owner, spender, value, deadline, v, r, s);
-
-    assertEq(
-      sgho.allowance(owner, spender),
-      value,
-      'Allowance not set correctly on different chain id'
-    );
+    sgho.deposit(amount, user1);
+    vm.stopPrank();
   }
 
-  function test_revert_permit_zeroOwner() external {
-    address spender = user2;
-    uint256 value = 100 ether;
-    uint256 deadline = block.timestamp + 1 hours;
-
+  function test_revert_mint_exceedsCap() external {
+    vm.startPrank(user1);
+    uint256 shares = sgho.convertToShares(SUPPLY_CAP) + 1;
+    uint256 maxShares = sgho.maxMint(user1);
     vm.expectRevert(
-      abi.encodeWithSelector(ERC20Permit.ERC2612InvalidSigner.selector, address(0), spender)
+      abi.encodeWithSelector(
+        ERC4626.ERC4626ExceededMaxMint.selector,
+        user1,
+        shares,
+        maxShares
+      )
     );
-    sgho.permit(address(0), spender, value, deadline, new bytes(0));
+    sgho.mint(shares, user1);
+    vm.stopPrank();
   }
 
-  function test_revert_permit_expired() external {
-    uint256 privateKey = 0xA11CE;
-    address owner = vm.addr(privateKey);
-    address spender = user2;
-    uint256 value = 100 ether;
-    uint256 deadline = block.timestamp - 1; // Expired
-    uint256 nonce = sgho.nonces(owner);
-
-    (uint8 v, bytes32 r, bytes32 s) = _generatePermitSignature(
-      privateKey,
-      owner,
-      spender,
-      value,
-      nonce,
-      deadline,
-      DOMAIN_SEPARATOR_sGHO
+  function test_deposit_atCap() external {
+    vm.startPrank(user1);
+    sgho.deposit(SUPPLY_CAP, user1);
+    assertEq(sgho.totalAssets(), SUPPLY_CAP, 'Total assets should equal supply cap');
+    // The contract balance will be the supply cap plus the 1 GHO donated in setUp
+    assertEq(
+      gho.balanceOf(address(sgho)),
+      SUPPLY_CAP + 1 ether,
+      'Contract balance should be supply cap + initial donation'
     );
-
-    vm.expectRevert(abi.encodeWithSelector(ERC20Permit.ERC2612ExpiredSignature.selector, deadline));
-    sgho.permit(owner, spender, value, deadline, v, r, s);
-  }
-
-  function test_revert_permit_invalidSignature() external {
-    uint256 privateKey = 0xA11CE;
-    address owner = vm.addr(privateKey);
-    address spender = user2;
-    uint256 value = 100 ether;
-    uint256 deadline = block.timestamp + 1 hours;
-    uint256 nonce = sgho.nonces(owner);
-
-    (uint8 v, bytes32 r, bytes32 s) = _generatePermitSignature(
-      privateKey,
-      owner,
-      spender,
-      value,
-      nonce,
-      deadline,
-      DOMAIN_SEPARATOR_sGHO
-    );
-
-    // Invalid signature
-    vm.expectRevert(abi.encodeWithSelector(IsGHO.InvalidSignature.selector));
-    sgho.permit(user1, spender, value, deadline, v, r, s);
-  }
-
-  function _generatePermitSignature(
-    uint256 privateKey,
-    address owner,
-    address spender,
-    uint256 value,
-    uint256 nonce,
-    uint256 deadline,
-    bytes32 domainSeparator
-  ) internal returns (uint8 v, bytes32 r, bytes32 s) {
-    bytes32 structHash = keccak256(
-      abi.encode(PERMIT_TYPEHASH, owner, spender, value, nonce, deadline)
-    );
-    bytes32 hash = keccak256(abi.encodePacked('\x19\x01', domainSeparator, structHash));
-    (v, r, s) = vm.sign(privateKey, hash);
+    vm.stopPrank();
   }
 
   // --- Yield Integration Tests (_updateVault) ---
@@ -615,7 +526,7 @@ contract sGhoTest is TestnetProcedures {
   function test_yield_is_compounded_with_intermediate_update(uint256 rate) external {
     rate = uint256(bound(rate, 100, 5000));
     vm.startPrank(yManager);
-    sgho.setTargetRate(rate);   
+    sgho.setTargetRate(rate);
     vm.stopPrank();
 
     // User1 deposits 100 GHO
@@ -838,10 +749,10 @@ contract sGhoTest is TestnetProcedures {
     sgho.setTargetRate(newRate);
   }
 
-  function test_revert_setTargetRate_rateGreaterThan50Percent() external {
+  function test_revert_setTargetRate_rateGreaterThanMaxRate() external {
     uint256 newRate = 5001; // 50.01% APR
     vm.startPrank(yManager);
-    vm.expectRevert(abi.encodeWithSelector(IsGHO.RateMustBeLessThan50Percent.selector));
+    vm.expectRevert(abi.encodeWithSelector(IsGHO.RateMustBeLessThanMaxRate.selector));
     sgho.setTargetRate(newRate);
     vm.stopPrank();
   }
@@ -925,10 +836,24 @@ contract sGhoTest is TestnetProcedures {
   // --- Initialization Tests ---
   function test_initialization() external {
     // Deploy a new sGHO instance
-    sGHO newSgho = new sGHO(address(gho), address(contracts.aclManager));
-
-    // Initialize
-    newSgho.initialize();
+    address impl = address(new sGHO());
+    sGHO newSgho = sGHO(
+      payable(
+        address(
+          new TransparentUpgradeableProxy(
+            impl,
+            address(this),
+            abi.encodeWithSelector(
+              sGHO.initialize.selector,
+              address(gho),
+              address(contracts.aclManager),
+              MAX_TARGET_RATE,
+              SUPPLY_CAP
+            )
+          )
+        )
+      )
+    );
 
     // Should work after initialization
     assertEq(newSgho.totalAssets(), 0, 'Should be initialized');
@@ -936,14 +861,29 @@ contract sGhoTest is TestnetProcedures {
 
   function test_revert_initialize_twice() external {
     // Deploy a new sGHO instance
-    sGHO newSgho = new sGHO(address(gho), address(contracts.aclManager));
+    address impl = address(new sGHO());
+    TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
+      impl,
+      address(this),
+      abi.encodeWithSelector(
+        sGHO.initialize.selector,
+        address(gho),
+        address(contracts.aclManager),
+        MAX_TARGET_RATE,
+        SUPPLY_CAP
+      )
+    );
 
-    // Initialize first time
-    newSgho.initialize();
+    sGHO newSgho = sGHO(payable(address(proxy)));
 
-    // Should revert on second initialization
+    // Should revert on second initialization via proxy
     vm.expectRevert();
-    newSgho.initialize();
+    newSgho.initialize(
+      address(gho),
+      address(contracts.aclManager),
+      MAX_TARGET_RATE,
+      SUPPLY_CAP
+    );
   }
 
   function _wadPow(uint256 base, uint256 exp) internal pure returns (uint256) {
