@@ -11,7 +11,9 @@ contract MetadataReporter is IMetadataReporter {
 
   Vm private constant vm = Vm(address(bytes20(uint160(uint256(keccak256('hevm cheat code'))))));
 
-  function writeJsonReportMarket(MarketReport memory report) external returns (string memory filePath) {
+  function writeJsonReportMarket(
+    MarketReport memory report
+  ) external returns (string memory filePath) {
     string memory factoryV3Commit;
     string memory factoryV3Branch;
 
@@ -100,43 +102,48 @@ contract MetadataReporter is IMetadataReporter {
     vm.writeJson(output, filePath);
   }
 
-  function parseMarketReport(string memory reportFilePath) external view returns (MarketReport memory report) {
+  function parseMarketReport(
+    string memory reportFilePath
+  ) external view returns (MarketReport memory report) {
     string memory json = vm.readFile(reportFilePath);
-    report.poolAddressesProviderRegistry     = _parseAddr(json, '.poolAddressesProviderRegistry');
-    report.poolAddressesProvider             = _parseAddr(json, '.poolAddressesProvider');
-    report.poolProxy                         = _parseAddr(json, '.poolProxy');
-    report.poolImplementation                = _parseAddr(json, '.poolImplementation');
-    report.poolConfiguratorProxy             = _parseAddr(json, '.poolConfiguratorProxy');
-    report.poolConfiguratorImplementation    = _parseAddr(json, '.poolConfiguratorImplementation');
-    report.protocolDataProvider              = _parseAddr(json, '.protocolDataProvider');
-    report.aaveOracle                        = _parseAddr(json, '.aaveOracle');
-    report.defaultInterestRateStrategy       = _parseAddr(json, '.defaultInterestRateStrategy');
-    report.priceOracleSentinel               = _parseAddr(json, '.priceOracleSentinel');
-    report.aclManager                        = _parseAddr(json, '.aclManager');
-    report.treasury                          = _parseAddr(json, '.treasury');
-    report.treasuryImplementation            = _parseAddr(json, '.treasuryImplementation');
-    report.wrappedTokenGateway               = _parseAddr(json, '.wrappedTokenGateway');
-    report.walletBalanceProvider             = _parseAddr(json, '.walletBalanceProvider');
-    report.uiIncentiveDataProvider           = _parseAddr(json, '.uiIncentiveDataProvider');
-    report.uiPoolDataProvider                = _parseAddr(json, '.uiPoolDataProvider');
-    report.paraSwapLiquiditySwapAdapter      = _parseAddr(json, '.paraSwapLiquiditySwapAdapter');
-    report.paraSwapRepayAdapter              = _parseAddr(json, '.paraSwapRepayAdapter');
-    report.paraSwapWithdrawSwapAdapter       = _parseAddr(json, '.paraSwapWithdrawSwapAdapter');
-    report.l2Encoder                         = _parseAddr(json, '.l2Encoder');
-    report.aToken                            = _parseAddr(json, '.aToken');
-    report.rwaAToken                         = _parseAddr(json, '.rwaAToken');
-    report.variableDebtToken                 = _parseAddr(json, '.variableDebtToken');
-    report.emissionManager                   = _parseAddr(json, '.emissionManager');
-    report.rewardsControllerImplementation   = _parseAddr(json, '.rewardsControllerImplementation');
-    report.rewardsControllerProxy            = _parseAddr(json, '.rewardsControllerProxy');
-    report.configEngine                      = _parseAddr(json, '.configEngine');
-    report.transparentProxyFactory           = _parseAddr(json, '.transparentProxyFactory');
-    report.staticATokenFactoryImplementation = _parseAddr(json, '.staticATokenFactoryImplementation');
-    report.staticATokenFactoryProxy          = _parseAddr(json, '.staticATokenFactoryProxy');
-    report.staticATokenImplementation        = _parseAddr(json, '.staticATokenImplementation');
-    report.revenueSplitter                   = _parseAddr(json, '.revenueSplitter');
-    report.dustBin                           = _parseAddr(json, '.dustBin');
-    report.emptyImplementation               = _parseAddr(json, '.emptyImplementation');
+    report.poolAddressesProviderRegistry = _parseAddr(json, '.poolAddressesProviderRegistry');
+    report.poolAddressesProvider = _parseAddr(json, '.poolAddressesProvider');
+    report.poolProxy = _parseAddr(json, '.poolProxy');
+    report.poolImplementation = _parseAddr(json, '.poolImplementation');
+    report.poolConfiguratorProxy = _parseAddr(json, '.poolConfiguratorProxy');
+    report.poolConfiguratorImplementation = _parseAddr(json, '.poolConfiguratorImplementation');
+    report.protocolDataProvider = _parseAddr(json, '.protocolDataProvider');
+    report.aaveOracle = _parseAddr(json, '.aaveOracle');
+    report.defaultInterestRateStrategy = _parseAddr(json, '.defaultInterestRateStrategy');
+    report.priceOracleSentinel = _parseAddr(json, '.priceOracleSentinel');
+    report.aclManager = _parseAddr(json, '.aclManager');
+    report.treasury = _parseAddr(json, '.treasury');
+    report.treasuryImplementation = _parseAddr(json, '.treasuryImplementation');
+    report.wrappedTokenGateway = _parseAddr(json, '.wrappedTokenGateway');
+    report.walletBalanceProvider = _parseAddr(json, '.walletBalanceProvider');
+    report.uiIncentiveDataProvider = _parseAddr(json, '.uiIncentiveDataProvider');
+    report.uiPoolDataProvider = _parseAddr(json, '.uiPoolDataProvider');
+    report.paraSwapLiquiditySwapAdapter = _parseAddr(json, '.paraSwapLiquiditySwapAdapter');
+    report.paraSwapRepayAdapter = _parseAddr(json, '.paraSwapRepayAdapter');
+    report.paraSwapWithdrawSwapAdapter = _parseAddr(json, '.paraSwapWithdrawSwapAdapter');
+    report.l2Encoder = _parseAddr(json, '.l2Encoder');
+    report.aToken = _parseAddr(json, '.aToken');
+    report.rwaAToken = _parseAddr(json, '.rwaAToken');
+    report.variableDebtToken = _parseAddr(json, '.variableDebtToken');
+    report.emissionManager = _parseAddr(json, '.emissionManager');
+    report.rewardsControllerImplementation = _parseAddr(json, '.rewardsControllerImplementation');
+    report.rewardsControllerProxy = _parseAddr(json, '.rewardsControllerProxy');
+    report.configEngine = _parseAddr(json, '.configEngine');
+    report.transparentProxyFactory = _parseAddr(json, '.transparentProxyFactory');
+    report.staticATokenFactoryImplementation = _parseAddr(
+      json,
+      '.staticATokenFactoryImplementation'
+    );
+    report.staticATokenFactoryProxy = _parseAddr(json, '.staticATokenFactoryProxy');
+    report.staticATokenImplementation = _parseAddr(json, '.staticATokenImplementation');
+    report.revenueSplitter = _parseAddr(json, '.revenueSplitter');
+    report.dustBin = _parseAddr(json, '.dustBin');
+    report.emptyImplementation = _parseAddr(json, '.emptyImplementation');
   }
 
   function _parseAddr(string memory json, string memory key) internal view returns (address) {
