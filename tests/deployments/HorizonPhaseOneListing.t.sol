@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Test} from 'forge-std/Test.sol';
+import {Test, Vm} from 'forge-std/Test.sol';
 import {DataTypes} from '../../src/contracts/protocol/libraries/types/DataTypes.sol';
 import {MarketReport, ContractsReport} from '../../src/deployments/interfaces/IMarketReportTypes.sol';
 import {Default} from '../../scripts/DeployAaveV3MarketBatched.sol';
@@ -30,6 +30,8 @@ contract HorizonPhaseOneListingTest is Test, Default {
   ContractsReport internal contracts;
 
   function setUp() public {
+    vm.createSelectFork('mainnet');
+
     string memory reportFilePath = run();
 
     IMetadataReporter metadataReporter = IMetadataReporter(
@@ -49,19 +51,33 @@ contract HorizonPhaseOneListingTest is Test, Default {
     USYC_ADDRESS = 0x136471a34f6ef19fE571EFFC1CA711fdb8E49f2b;
   }
 
-  function test_listing() public {
+  function test_getConfiguration_GHO() public {
     assertEq(contracts.poolProxy.getConfiguration(GHO_ADDRESS).getSupplyCap(), 5_000_000);
-    assertEq(contracts.poolProxy.getConfiguration(USDC_ADDRESS).getSupplyCap(), 5_000_000);
-    assertEq(contracts.poolProxy.getConfiguration(RLUSD_ADDRESS).getSupplyCap(), 5_000_000);
-    assertEq(contracts.poolProxy.getConfiguration(USTB_ADDRESS).getSupplyCap(), 3_000_000);
-    assertEq(contracts.poolProxy.getConfiguration(USCC_ADDRESS).getSupplyCap(), 3_000_000);
-    assertEq(contracts.poolProxy.getConfiguration(USYC_ADDRESS).getSupplyCap(), 3_000_000);
-
     assertEq(contracts.poolProxy.getConfiguration(GHO_ADDRESS).getBorrowCap(), 4_000_000);
+  }
+
+  function test_getConfiguration_USDC() public {
+    assertEq(contracts.poolProxy.getConfiguration(USDC_ADDRESS).getSupplyCap(), 5_000_000);
     assertEq(contracts.poolProxy.getConfiguration(USDC_ADDRESS).getBorrowCap(), 4_000_000);
+  }
+
+  function test_getConfiguration_RLUSD() public {
+    assertEq(contracts.poolProxy.getConfiguration(RLUSD_ADDRESS).getSupplyCap(), 5_000_000);
     assertEq(contracts.poolProxy.getConfiguration(RLUSD_ADDRESS).getBorrowCap(), 4_000_000);
+  }
+
+  function test_getConfiguration_USTB() public {
+    assertEq(contracts.poolProxy.getConfiguration(USTB_ADDRESS).getSupplyCap(), 3_000_000);
     assertEq(contracts.poolProxy.getConfiguration(USTB_ADDRESS).getBorrowCap(), 0);
+  }
+
+  function test_getConfiguration_USCC() public {
+    assertEq(contracts.poolProxy.getConfiguration(USCC_ADDRESS).getSupplyCap(), 3_000_000);
     assertEq(contracts.poolProxy.getConfiguration(USCC_ADDRESS).getBorrowCap(), 0);
+  }
+
+  function test_getConfiguration_USYC() public {
+    assertEq(contracts.poolProxy.getConfiguration(USYC_ADDRESS).getSupplyCap(), 3_000_000);
     assertEq(contracts.poolProxy.getConfiguration(USYC_ADDRESS).getBorrowCap(), 0);
   }
 }

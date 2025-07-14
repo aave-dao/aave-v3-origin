@@ -22,6 +22,7 @@ import '../../contracts/extensions/paraswap-adapters/ParaSwapWithdrawSwapAdapter
 import '../../contracts/helpers/interfaces/IWrappedTokenGatewayV3.sol';
 import '../../contracts/helpers/L2Encoder.sol';
 import {ICollector} from '../../contracts/treasury/ICollector.sol';
+import {IRevenueSplitter} from '../../contracts/treasury/IRevenueSplitter.sol';
 
 struct ContractsReport {
   IPoolAddressesProviderRegistry poolAddressesProviderRegistry;
@@ -49,6 +50,7 @@ struct ContractsReport {
   IEmissionManager emissionManager;
   IRewardsController rewardsControllerImplementation;
   IRewardsController rewardsControllerProxy;
+  IRevenueSplitter revenueSplitter;
 }
 
 struct MarketReport {
