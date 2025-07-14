@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Test} from 'forge-std/Test.sol';
+import {Ownable} from '../../src/contracts/dependencies/openzeppelin/contracts/Ownable.sol';
 import {Default} from '../../scripts/DeployAaveV3MarketBatched.sol';
 import {MarketReport, ContractsReport, MarketConfig} from '../../src/deployments/interfaces/IMarketReportTypes.sol';
 import {MarketReportUtils} from '../../src/deployments/contracts/utilities/MarketReportUtils.sol';
 import {IMetadataReporter} from '../../src/deployments/interfaces/IMetadataReporter.sol';
+import {Test} from 'forge-std/Test.sol';
 
 contract HorizonDeploymentTest is Test, Default {
   MarketReport internal marketReport;
@@ -40,5 +41,10 @@ contract HorizonDeploymentTest is Test, Default {
     assertEq(contracts.revenueSplitter.RECIPIENT_A(), marketReport.treasury);
     assertEq(contracts.revenueSplitter.RECIPIENT_B(), config.treasuryPartner);
     assertEq(contracts.revenueSplitter.SPLIT_PERCENTAGE_RECIPIENT_A(), config.treasurySplitPercent);
+  }
+
+  function test_RewardsController() public {
+    assertEq(contracts.rewardsControllerProxy.EMISSION_MANAGER(), marketReport.emissionManager);
+    assertEq(Ownable(address(contracts.emissionManager)).owner(), DEPLOYER);
   }
 }
