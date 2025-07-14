@@ -13,7 +13,6 @@ import {IRevenueSplitter} from '../../src/contracts/treasury/IRevenueSplitter.so
 import {IAToken} from '../../src/contracts/interfaces/IAToken.sol';
 import {IPool} from '../../src/contracts/interfaces/IPool.sol';
 
-
 contract ConfigureHorizonPhaseOneTest is Test, ConfigureHorizonPhaseOne {
   function run(address deployer, string memory reportFilePath) public {
     _run(deployer, reportFilePath);
@@ -36,11 +35,13 @@ contract HorizonListingBaseTest is Test {
     revenueSplitter = IRevenueSplitter(_revenueSplitter);
   }
 
-
   function _checkTokenListing(address token, TokenListingParams memory params) internal {
     assertEq(pool.getConfiguration(token).getSupplyCap(), params.supplyCap);
     assertEq(pool.getConfiguration(token).getBorrowCap(), params.borrowCap);
-    assertEq(IAToken(pool.getReserveAToken(token)).RESERVE_TREASURY_ADDRESS(), address(revenueSplitter));
+    assertEq(
+      IAToken(pool.getReserveAToken(token)).RESERVE_TREASURY_ADDRESS(),
+      address(revenueSplitter)
+    );
   }
 }
 
@@ -73,15 +74,24 @@ contract HorizonPhaseOneListingTest is HorizonListingBaseTest, Default {
   }
 
   function test_listing_GHO() public {
-    _checkTokenListing(GHO_ADDRESS, TokenListingParams({supplyCap: 5_000_000, borrowCap: 4_000_000}));
+    _checkTokenListing(
+      GHO_ADDRESS,
+      TokenListingParams({supplyCap: 5_000_000, borrowCap: 4_000_000})
+    );
   }
 
   function test_listing_USDC() public {
-    _checkTokenListing(USDC_ADDRESS, TokenListingParams({supplyCap: 5_000_000, borrowCap: 4_000_000}));
+    _checkTokenListing(
+      USDC_ADDRESS,
+      TokenListingParams({supplyCap: 5_000_000, borrowCap: 4_000_000})
+    );
   }
 
   function test_listing_RLUSD() public {
-    _checkTokenListing(RLUSD_ADDRESS, TokenListingParams({supplyCap: 5_000_000, borrowCap: 4_000_000}));
+    _checkTokenListing(
+      RLUSD_ADDRESS,
+      TokenListingParams({supplyCap: 5_000_000, borrowCap: 4_000_000})
+    );
   }
 
   function test_listing_USTB() public {

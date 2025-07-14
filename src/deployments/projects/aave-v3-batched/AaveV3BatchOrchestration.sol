@@ -334,6 +334,7 @@ library AaveV3BatchOrchestration {
     report.staticATokenImplementation = staticATokenReport.staticATokenImplementation;
     report.transparentProxyFactory = staticATokenReport.transparentProxyFactory;
     report.revenueSplitter = peripheryReport.revenueSplitter;
+    report.rwaATokenManager = miscReport.rwaATokenManager;
 
     return report;
   }

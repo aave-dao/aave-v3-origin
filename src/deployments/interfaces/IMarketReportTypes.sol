@@ -23,6 +23,7 @@ import '../../contracts/helpers/interfaces/IWrappedTokenGatewayV3.sol';
 import '../../contracts/helpers/L2Encoder.sol';
 import {ICollector} from '../../contracts/treasury/ICollector.sol';
 import {IRevenueSplitter} from '../../contracts/treasury/IRevenueSplitter.sol';
+import {IRwaATokenManager} from '../../contracts/interfaces/IRwaATokenManager.sol';
 
 struct ContractsReport {
   IPoolAddressesProviderRegistry poolAddressesProviderRegistry;
@@ -51,6 +52,7 @@ struct ContractsReport {
   IRewardsController rewardsControllerImplementation;
   IRewardsController rewardsControllerProxy;
   IRevenueSplitter revenueSplitter;
+  IRwaATokenManager rwaATokenManager;
 }
 
 struct MarketReport {
@@ -89,6 +91,7 @@ struct MarketReport {
   address revenueSplitter;
   address dustBin;
   address emptyImplementation;
+  address rwaATokenManager;
 }
 
 struct LibrariesReport {

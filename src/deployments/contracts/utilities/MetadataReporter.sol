@@ -52,6 +52,7 @@ contract MetadataReporter is IMetadataReporter {
     vm.serializeAddress(jsonReport, 'aToken', report.aToken);
     vm.serializeAddress(jsonReport, 'rwaAToken', report.rwaAToken);
     vm.serializeAddress(jsonReport, 'variableDebtToken', report.variableDebtToken);
+    vm.serializeAddress(jsonReport, 'rwaATokenManager', report.rwaATokenManager);
     vm.serializeAddress(jsonReport, 'emissionManager', report.emissionManager);
     vm.serializeAddress(
       jsonReport,
@@ -144,6 +145,7 @@ contract MetadataReporter is IMetadataReporter {
     report.revenueSplitter = _parseAddr(json, '.revenueSplitter');
     report.dustBin = _parseAddr(json, '.dustBin');
     report.emptyImplementation = _parseAddr(json, '.emptyImplementation');
+    report.rwaATokenManager = _parseAddr(json, '.rwaATokenManager');
   }
 
   function _parseAddr(string memory json, string memory key) internal view returns (address) {
