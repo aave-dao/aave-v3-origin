@@ -31,11 +31,6 @@ interface IsGHO {
   error OnlyYieldManager();
 
   /**
-   * @notice Thrown if the contract is not initialized.
-   */
-  error NotInitialized();
-
-  /**
    * @notice Thrown when an attempt is made to rescue the underlying GHO token.
    */
   error CannotRescueGHO();

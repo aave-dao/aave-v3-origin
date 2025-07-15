@@ -1559,21 +1559,7 @@ contract sGhoTest is TestnetProcedures {
     newSgho.initialize(address(gho), address(contracts.aclManager), MAX_TARGET_RATE, SUPPLY_CAP);
   }
 
-  function test_revert_notInitialized() external {
-    // Deploy a new sGHO implementation and proxy without initializing it
-    address impl = address(new sGHO());
-    TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
-      impl,
-      address(this),
-      '' // No initialization data
-    );
-    sGHO uninitializedSgho = sGHO(payable(address(proxy)));
-    
-    // Since the isInitialized modifier is not used by any functions,
-    // we'll test that the contract works correctly when not initialized
-    // The totalAssets should return 0 for an uninitialized contract
-    assertEq(uninitializedSgho.totalAssets(), 0, 'Uninitialized contract should return 0 totalAssets');
-  }
+
 
   // --- Getter Functions Tests ---
 

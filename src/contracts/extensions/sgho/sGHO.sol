@@ -13,7 +13,7 @@ import {ERC20Upgradeable} from 'openzeppelin-contracts-upgradeable/contracts/tok
 
 /**
  * @title sGHO Token
- * @author Luigy-Lemon @kpk
+ * @author @kpk
  * @notice sGHO is an ERC4626 vault that allows users to deposit GHO and earn yield.
  * @dev This contract implements the ERC4626 standard for tokenized vaults, where the underlying asset is GHO.
  * It also includes functionalities for yield generation based on a target rate, and administrative roles for managing the contract.
@@ -30,7 +30,6 @@ contract sGHO is Initializable, ERC4626Upgradeable, ERC20PermitUpgradeable, IsGH
   uint256 public supplyCap;
   uint256 public yieldIndex;
   uint256 public lastUpdate;
-  uint256 internal constant RATE_PRECISION = 1e10;
   uint256 internal constant ONE_YEAR = 365 days;
 
   bytes32 public constant FUNDS_ADMIN_ROLE = 'FUNDS_ADMIN';
@@ -80,17 +79,6 @@ contract sGHO is Initializable, ERC4626Upgradeable, ERC20PermitUpgradeable, IsGH
    */
   receive() external payable {
     revert NoEthAllowed();
-  }
-
-  /**
-   * @notice Modifier to check if the contract has been initialized.
-   * @dev Throws if the `initialize` function has not been called.
-   */
-  modifier isInitialized() {
-    if (_getInitializedVersion() == 0) {
-      revert NotInitialized();
-    }
-    _;
   }
 
   /**
@@ -144,13 +132,6 @@ contract sGHO is Initializable, ERC4626Upgradeable, ERC20PermitUpgradeable, IsGH
    */
   function nonces(address owner) public view virtual override(ERC20PermitUpgradeable) returns (uint256) {
     return super.nonces(owner);
-  }
-
-  /**
-   * @dev See {IERC20Permit-DOMAIN_SEPARATOR}.
-   */
-  function DOMAIN_SEPARATOR() external view virtual override returns (bytes32) {
-    return _domainSeparatorV4();
   }
 
   function decimals() public view virtual override(ERC20Upgradeable, ERC4626Upgradeable) returns (uint8) {
