@@ -4,6 +4,8 @@ import './MarketInput.sol';
 
 contract HorizonInput is MarketInput {
   address public constant DEPLOYER = 0xA22f39d5fEb10489F7FA84C2C545BAc4EA48eBB7;
+  bytes32 public constant POOL_ADMIN_ROLE = keccak256('POOL_ADMIN');
+  address public constant PHASE_ONE_LISTING_EXECUTOR = address(0); // todo
 
   function _getMarketInput(
     address
@@ -18,10 +20,15 @@ contract HorizonInput is MarketInput {
       MarketReport memory deployedContracts
     )
   {
-    roles.marketOwner = DEPLOYER;
-    roles.emergencyAdmin = DEPLOYER;
-    roles.poolAdmin = DEPLOYER;
-    roles.rwaATokenManagerAdmin = DEPLOYER;
+    bytes[] memory additionalRoles = new bytes[](1);
+    additionalRoles[0] = abi.encode(POOL_ADMIN_ROLE, PHASE_ONE_LISTING_EXECUTOR);
+    roles = Roles({
+      marketOwner: DEPLOYER,
+      emergencyAdmin: DEPLOYER,
+      poolAdmin: DEPLOYER,
+      rwaATokenManagerAdmin: DEPLOYER,
+      additionalRoles: additionalRoles
+    });
 
     config = MarketConfig({
       networkBaseTokenPriceInUsdProxyAggregator: 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419, // eth-usd chainlink price feed

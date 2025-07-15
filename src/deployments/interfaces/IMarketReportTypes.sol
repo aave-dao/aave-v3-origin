@@ -110,6 +110,9 @@ struct Roles {
   address poolAdmin;
   address emergencyAdmin;
   address rwaATokenManagerAdmin;
+  // array of additional roles to be granted, where the i-th element represents the
+  // abi.encode result of the bytes32 role and the address of the account to be granted
+  bytes[] additionalRoles;
 }
 
 struct MarketConfig {

@@ -178,6 +178,11 @@ contract AaveV3SetupProcedure {
 
     manager.grantRole(manager.DEFAULT_ADMIN_ROLE(), roles.poolAdmin);
 
+    for (uint256 i = 0; i < roles.additionalRoles.length; ++i) {
+      (bytes32 role, address account) = abi.decode(roles.additionalRoles[i], (bytes32, address));
+      manager.grantRole(role, account);
+    }
+
     manager.revokeRole(manager.DEFAULT_ADMIN_ROLE(), address(this));
 
     return aclManager;

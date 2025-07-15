@@ -40,7 +40,7 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
     emergencyAdmin = makeAddr('emergencyAdmin');
     rwaATokenManagerAdmin = makeAddr('rwaATokenManagerAdmin');
 
-    roles = Roles(marketOwner, poolAdmin, emergencyAdmin, rwaATokenManagerAdmin);
+    roles = Roles(marketOwner, poolAdmin, emergencyAdmin, rwaATokenManagerAdmin, new bytes[](0));
     config = MarketConfig(
       makeAddr('ethUsdOracle'),
       makeAddr('ethUsdOracle'),

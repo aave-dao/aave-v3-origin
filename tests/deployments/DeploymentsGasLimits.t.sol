@@ -48,7 +48,7 @@ contract DeploymentsGasLimits is BatchTestProcedures {
     address emergencyAdmin = makeAddr('emergencyAdmin');
     address rwaATokenManagerAdmin = makeAddr('rwaATokenManagerAdmin');
     bytes32 empty;
-    roles = Roles(marketOwner, poolAdmin, emergencyAdmin, rwaATokenManagerAdmin);
+    roles = Roles(marketOwner, poolAdmin, emergencyAdmin, rwaATokenManagerAdmin, new bytes[](0));
 
     config = MarketConfig(
       makeAddr('ethUsdOracle'),
