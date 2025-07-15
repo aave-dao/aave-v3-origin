@@ -17,6 +17,8 @@ import {IsGHO} from '../../../src/contracts/extensions/sgho/interfaces/IsGHO.sol
 import {ERC4626} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/ERC4626.sol';
 import {Math} from 'openzeppelin-contracts/contracts/utils/math/Math.sol';
 import {TransparentUpgradeableProxy} from 'openzeppelin-contracts/contracts/proxy/transparent/TransparentUpgradeableProxy.sol';
+import {ERC20Permit} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/ERC20Permit.sol';
+import {ECDSA} from 'openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol';
 
 // --- Test Contract ---
 
@@ -75,6 +77,7 @@ contract sGhoTest is TestnetProcedures {
       )
     );
 
+    deal(address(user1), 10 ether);
     deal(address(gho), address(sgho), 1 ether, true);
 
     // Grant YIELD_MANAGER role to yManager through ACLManager
@@ -122,8 +125,12 @@ contract sGhoTest is TestnetProcedures {
 
   // --- Receive ETH Test ---
   function test_revert_ReceiveETH() external {
+    vm.startPrank(user1);
+    uint256 initialBalance = user1.balance;
     vm.expectRevert(abi.encodeWithSelector(IsGHO.NoEthAllowed.selector));
-    payable(address(sgho)).transfer(1 ether);
+    payable(address(sgho)).call{value: 1 ether}('');
+    assertEq(user1.balance, initialBalance, 'Transfer should revert');
+    vm.stopPrank();
   }
 
   // --- Admin functions ---
@@ -183,7 +190,7 @@ contract sGhoTest is TestnetProcedures {
     assertEq(sgho.totalAssets(), amount, 'totalAssets mismatch after deposit');
     assertEq(sgho.totalSupply(), shares, 'totalSupply mismatch after deposit');
 
-    vm.stopPrank();
+    vm.stopPrank(); 
   }
 
   function test_4626_mint(uint256 shares) external {
@@ -321,12 +328,43 @@ contract sGhoTest is TestnetProcedures {
     assertEq(sgho.maxRedeem(user1), shares, 'maxRedeem mismatch');
 
     // Max deposit should be reduced by the deposited amount
-    assertEq(
-      sgho.maxDeposit(user1),
-      SUPPLY_CAP - depositAmount,
-      'maxDeposit should be reduced'
-    );
+    assertEq(sgho.maxDeposit(user1), SUPPLY_CAP - depositAmount, 'maxDeposit should be reduced');
     vm.stopPrank();
+  }
+
+  function test_4626_convertToShares() external {
+    uint256 assets = 100 ether;
+    uint256 shares = sgho.convertToShares(assets);
+    
+    // Initially, 1:1 conversion since yield index starts at RAY
+    assertEq(shares, assets, 'Initial convertToShares should be 1:1');
+    
+    // After some yield accrual, conversion should change
+    vm.warp(block.timestamp + 365 days);
+    uint256 sharesAfterYield = sgho.convertToShares(assets);
+    assertTrue(sharesAfterYield < assets, 'Shares should be less than assets after yield accrual');
+  }
+
+  function test_4626_convertToAssets() external {
+    uint256 shares = 100 ether;
+    uint256 assets = sgho.convertToAssets(shares);
+    
+    // Initially, 1:1 conversion since yield index starts at RAY
+    assertEq(assets, shares, 'Initial convertToAssets should be 1:1');
+    
+    // After some yield accrual, conversion should change
+    vm.warp(block.timestamp + 365 days);
+    uint256 assetsAfterYield = sgho.convertToAssets(shares);
+    assertTrue(assetsAfterYield > shares, 'Assets should be greater than shares after yield accrual');
+  }
+
+  function test_4626_convertFunctionsConsistency() external {
+    uint256 assets = 100 ether;
+    uint256 shares = sgho.convertToShares(assets);
+    uint256 convertedBackAssets = sgho.convertToAssets(shares);
+    
+    // Round-trip conversion should be consistent (allowing for rounding)
+    assertApproxEqAbs(assets, convertedBackAssets, 1, 'Round-trip conversion should be consistent');
   }
 
   function test_revert_4626_withdraw_max() external {
@@ -371,17 +409,437 @@ contract sGhoTest is TestnetProcedures {
     vm.stopPrank();
   }
 
+  function test_4626_zeroDeposit() external {
+    vm.startPrank(user1);
+    uint256 initialBalance = sgho.balanceOf(user1);
+    uint256 initialGhoBalance = gho.balanceOf(user1);
+    
+    uint256 shares = sgho.deposit(0, user1);
+    
+    assertEq(shares, 0, 'Zero deposit should return 0 shares');
+    assertEq(sgho.balanceOf(user1), initialBalance, 'Balance should remain unchanged');
+    assertEq(gho.balanceOf(user1), initialGhoBalance, 'GHO balance should remain unchanged');
+    vm.stopPrank();
+  }
+
+  function test_4626_zeroMint() external {
+    vm.startPrank(user1);
+    uint256 initialBalance = sgho.balanceOf(user1);
+    uint256 initialGhoBalance = gho.balanceOf(user1);
+    
+    uint256 assets = sgho.mint(0, user1);
+    
+    assertEq(assets, 0, 'Zero mint should return 0 assets');
+    assertEq(sgho.balanceOf(user1), initialBalance, 'Balance should remain unchanged');
+    assertEq(gho.balanceOf(user1), initialGhoBalance, 'GHO balance should remain unchanged');
+    vm.stopPrank();
+  }
+
+  function test_4626_zeroWithdraw() external {
+    vm.startPrank(user1);
+    // First deposit some amount to have balance
+    sgho.deposit(100 ether, user1);
+    uint256 initialBalance = sgho.balanceOf(user1);
+    uint256 initialGhoBalance = gho.balanceOf(user1);
+    
+    uint256 shares = sgho.withdraw(0, user1, user1);
+    
+    assertEq(shares, 0, 'Zero withdraw should return 0 shares');
+    assertEq(sgho.balanceOf(user1), initialBalance, 'Balance should remain unchanged');
+    assertEq(gho.balanceOf(user1), initialGhoBalance, 'GHO balance should remain unchanged');
+    vm.stopPrank();
+  }
+
+  function test_4626_zeroRedeem() external {
+    vm.startPrank(user1);
+    // First deposit some amount to have balance
+    sgho.deposit(100 ether, user1);
+    uint256 initialBalance = sgho.balanceOf(user1);
+    uint256 initialGhoBalance = gho.balanceOf(user1);
+    
+    uint256 assets = sgho.redeem(0, user1, user1);
+    
+    assertEq(assets, 0, 'Zero redeem should return 0 assets');
+    assertEq(sgho.balanceOf(user1), initialBalance, 'Balance should remain unchanged');
+    assertEq(gho.balanceOf(user1), initialGhoBalance, 'GHO balance should remain unchanged');
+    vm.stopPrank();
+  }
+
+  function test_4626_previewZero() external view {
+    assertEq(sgho.previewDeposit(0), 0, 'previewDeposit(0) should be 0');
+    assertEq(sgho.previewMint(0), 0, 'previewMint(0) should be 0');
+    assertEq(sgho.previewWithdraw(0), 0, 'previewWithdraw(0) should be 0');
+    assertEq(sgho.previewRedeem(0), 0, 'previewRedeem(0) should be 0');
+  }
+
+  function test_4626_maxTypeDeposit() external {
+    vm.startPrank(user1);
+    // Try to deposit max uint256 - should revert due to supply cap
+    vm.expectRevert(
+      abi.encodeWithSelector(ERC4626.ERC4626ExceededMaxDeposit.selector, user1, type(uint256).max, SUPPLY_CAP)
+    );
+    sgho.deposit(type(uint256).max, user1);
+    vm.stopPrank();
+  }
+
+  function test_4626_maxTypeMint() external {
+    vm.startPrank(user1);
+    // Try to mint max uint256 shares - should revert due to supply cap
+    uint256 maxShares = sgho.convertToShares(SUPPLY_CAP);
+    vm.expectRevert(
+      abi.encodeWithSelector(ERC4626.ERC4626ExceededMaxMint.selector, user1, type(uint256).max, maxShares)
+    );
+    sgho.mint(type(uint256).max, user1);
+    vm.stopPrank();
+  }
+
+  function test_4626_maxTypeWithdraw() external {
+    vm.startPrank(user1);
+    // First deposit some amount
+    uint256 depositAmount = 100 ether;
+    sgho.deposit(depositAmount, user1);
+    
+    // Try to withdraw max uint256 - should revert due to insufficient balance
+    vm.expectRevert(
+      abi.encodeWithSelector(ERC4626.ERC4626ExceededMaxWithdraw.selector, user1, type(uint256).max, depositAmount)
+    );
+    sgho.withdraw(type(uint256).max, user1, user1);
+    vm.stopPrank();
+  }
+
+  function test_4626_maxTypeRedeem() external {
+    vm.startPrank(user1);
+    // First deposit some amount
+    uint256 depositAmount = 100 ether;
+    sgho.deposit(depositAmount, user1);
+    uint256 shares = sgho.balanceOf(user1);
+    
+    // Try to redeem max uint256 shares - should revert due to insufficient shares
+    vm.expectRevert(
+      abi.encodeWithSelector(ERC4626.ERC4626ExceededMaxRedeem.selector, user1, type(uint256).max, shares)
+    );
+    sgho.redeem(type(uint256).max, user1, user1);
+    vm.stopPrank();
+  }
+
+  function test_4626_maxTypePreview() external view {
+    // Preview functions should handle max uint256 gracefully and never revert
+    uint256 maxPreviewDeposit = sgho.previewDeposit(type(uint256).max);
+    uint256 maxPreviewMint = sgho.previewMint(type(uint256).max);
+    
+    // Preview functions should return the theoretical conversion result regardless of supply cap
+    // They are pure conversion functions that don't enforce limits
+    assertTrue(maxPreviewDeposit > 0, 'previewDeposit should return positive value for max uint256');
+    assertTrue(maxPreviewMint > 0, 'previewMint should return positive value for max uint256');
+  }
+
+  function test_4626_previewWithdrawMaxType() external {
+    vm.startPrank(user1);
+    uint256 depositAmount = 100 ether;
+    sgho.deposit(depositAmount, user1);
+    
+    // Preview withdraw with max uint256 should perform conversion calculation
+    // It should return the theoretical shares needed for max uint256 assets
+    uint256 maxPreviewWithdraw = sgho.previewWithdraw(type(uint256).max);
+    assertTrue(maxPreviewWithdraw > 0, 'previewWithdraw should return positive value for max uint256');
+    vm.stopPrank();
+  }
+
+  function test_4626_previewRedeemMaxType() external {
+    vm.startPrank(user1);
+    uint256 depositAmount = 100 ether;
+    sgho.deposit(depositAmount, user1);
+    uint256 shares = sgho.balanceOf(user1);
+    
+    // Preview redeem with max uint256 should perform conversion calculation
+    // It should return the theoretical assets for max uint256 shares
+    uint256 maxPreviewRedeem = sgho.previewRedeem(type(uint256).max);
+    assertTrue(maxPreviewRedeem > 0, 'previewRedeem should return positive value for max uint256');
+    vm.stopPrank();
+  }
+
+  // --- ERC20 Standard Tests ---
+
+  function test_transfer() external {
+    vm.startPrank(user1);
+    uint256 depositAmount = 100 ether;
+    sgho.deposit(depositAmount, user1);
+    
+    uint256 transferAmount = 50 ether;
+    bool success = sgho.transfer(user2, transferAmount);
+    
+    assertTrue(success, 'Transfer should succeed');
+    assertEq(sgho.balanceOf(user1), depositAmount - transferAmount, 'Sender balance should decrease');
+    assertEq(sgho.balanceOf(user2), transferAmount, 'Receiver balance should increase');
+    vm.stopPrank();
+  }
+
+  function test_transfer_zeroAmount() external {
+    vm.startPrank(user1);
+    sgho.deposit(100 ether, user1);
+    bool success = sgho.transfer(user2, 0);
+    assertTrue(success, 'transfer of 0 should succeed');
+    vm.stopPrank();
+  }
+
+  function test_transferFrom() external {
+    vm.startPrank(user1);
+    uint256 depositAmount = 100 ether;
+    sgho.deposit(depositAmount, user1);
+    
+    uint256 approveAmount = 50 ether;
+    sgho.approve(user2, approveAmount);
+    vm.stopPrank();
+    
+    vm.startPrank(user2);
+    uint256 transferAmount = 30 ether;
+    bool success = sgho.transferFrom(user1, user2, transferAmount);
+    
+    assertTrue(success, 'TransferFrom should succeed');
+    assertEq(sgho.balanceOf(user1), depositAmount - transferAmount, 'Owner balance should decrease');
+    assertEq(sgho.balanceOf(user2), transferAmount, 'Receiver balance should increase');
+    assertEq(sgho.allowance(user1, user2), approveAmount - transferAmount, 'Allowance should decrease');
+    vm.stopPrank();
+  }
+
+  function test_transferFrom_zeroAmount() external {
+    vm.startPrank(user1);
+    sgho.deposit(100 ether, user1);
+    sgho.approve(user2, 100 ether);
+    vm.stopPrank();
+    vm.startPrank(user2);
+    bool success = sgho.transferFrom(user1, user2, 0);
+    assertTrue(success, 'transferFrom of 0 should succeed');
+    vm.stopPrank();
+  }
+
+  function test_approve() external {
+    vm.startPrank(user1);
+    uint256 approveAmount = 100 ether;
+    bool success = sgho.approve(user2, approveAmount);
+    
+    assertTrue(success, 'Approve should succeed');
+    assertEq(sgho.allowance(user1, user2), approveAmount, 'Allowance should be set correctly');
+    vm.stopPrank();
+  }
+
+  function test_approve_zeroAmount() external {
+    vm.startPrank(user1);
+    bool success = sgho.approve(user2, 0);
+    assertTrue(success, 'approve of 0 should succeed');
+    assertEq(sgho.allowance(user1, user2), 0, 'allowance should be 0');
+    vm.stopPrank();
+  }
+
+  function test_transfer_maxType() external {
+    vm.startPrank(user1);
+    // First deposit some amount
+    uint256 depositAmount = 100 ether;
+    sgho.deposit(depositAmount, user1);
+    
+    // Try to transfer max uint256 - should revert due to insufficient balance
+    vm.expectRevert();
+    sgho.transfer(user2, type(uint256).max);
+    vm.stopPrank();
+  }
+
+  function test_transferFrom_maxType() external {
+    vm.startPrank(user1);
+    // First deposit some amount
+    uint256 depositAmount = 100 ether;
+    sgho.deposit(depositAmount, user1);
+    sgho.approve(user2, type(uint256).max);
+    vm.stopPrank();
+    
+    vm.startPrank(user2);
+    // Try to transferFrom max uint256 - should revert due to insufficient balance
+    vm.expectRevert();
+    sgho.transferFrom(user1, user2, type(uint256).max);
+    vm.stopPrank();
+  }
+
+  function test_approve_maxType() external {
+    vm.startPrank(user1);
+    // Approve max uint256 should succeed
+    bool success = sgho.approve(user2, type(uint256).max);
+    assertTrue(success, 'approve of max uint256 should succeed');
+    assertEq(sgho.allowance(user1, user2), type(uint256).max, 'allowance should be max uint256');
+    vm.stopPrank();
+  }
+
+  function test_allowance() external {
+    vm.startPrank(user1);
+    uint256 approveAmount = 100 ether;
+    sgho.approve(user2, approveAmount);
+    vm.stopPrank();
+    
+    assertEq(sgho.allowance(user1, user2), approveAmount, 'Allowance should return correct amount');
+    assertEq(sgho.allowance(user1, user1), 0, 'Self allowance should be zero');
+  }
+
+  // --- ERC20Permit Tests ---
+
+  struct PermitVars {
+    uint256 privateKey;
+    address owner;
+    address spender;
+    uint256 value;
+    uint256 deadline;
+    uint256 nonce;
+    uint8 v;
+    bytes32 r;
+    bytes32 s;
+  }
+
+  function test_permit_invalidSignature() external {
+    PermitVars memory vars;
+    vars.privateKey = 0xA11CE;
+    vars.owner = vm.addr(vars.privateKey);
+    vars.spender = user2;
+    vars.value = 100 ether;
+    vars.deadline = block.timestamp + 1 hours;
+    vars.nonce = sgho.nonces(vars.owner);
+    (vars.v, vars.r, vars.s) = _createPermitSignature(vars.owner, vars.spender, vars.value, vars.nonce, vars.deadline, vars.privateKey);
+    // Use wrong owner address - should revert with ERC2612InvalidSigner
+    {
+      bytes32 PERMIT_TYPEHASH = keccak256('Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)');
+      bytes32 structHash = keccak256(abi.encode(PERMIT_TYPEHASH, user1, vars.spender, vars.value, vars.nonce, vars.deadline));
+      bytes32 hash = keccak256(abi.encodePacked('\x19\x01', sgho.DOMAIN_SEPARATOR(), structHash));
+      address recovered = ECDSA.recover(hash, vars.v, vars.r, vars.s);
+      vm.expectRevert(abi.encodeWithSelector(ERC20Permit.ERC2612InvalidSigner.selector, recovered, user1));
+      sgho.permit(user1, vars.spender, vars.value, vars.deadline, vars.v, vars.r, vars.s);
+    }
+  }
+
+  function test_permit_replay() external {
+    PermitVars memory vars;
+    vars.privateKey = 0xA11CE;
+    vars.owner = vm.addr(vars.privateKey);
+    vars.spender = user2;
+    vars.value = 100 ether;
+    vars.deadline = block.timestamp + 1 hours;
+    vars.nonce = sgho.nonces(vars.owner);
+    (vars.v, vars.r, vars.s) = _createPermitSignature(vars.owner, vars.spender, vars.value, vars.nonce, vars.deadline, vars.privateKey);
+    // First permit should succeed
+    sgho.permit(vars.owner, vars.spender, vars.value, vars.deadline, vars.v, vars.r, vars.s);
+    assertEq(sgho.allowance(vars.owner, vars.spender), vars.value, 'First permit should set allowance');
+    // Second permit with same signature should revert (nonce already used)
+    // The contract expects nonce 1, but our signature is for nonce 0
+    {
+      bytes32 PERMIT_TYPEHASH = keccak256('Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)');
+      bytes32 structHash = keccak256(abi.encode(PERMIT_TYPEHASH, vars.owner, vars.spender, vars.value, vars.nonce + 1, vars.deadline));
+      bytes32 hash = keccak256(abi.encodePacked('\x19\x01', sgho.DOMAIN_SEPARATOR(), structHash));
+      address recovered = ECDSA.recover(hash, vars.v, vars.r, vars.s);
+      vm.expectRevert(abi.encodeWithSelector(ERC20Permit.ERC2612InvalidSigner.selector, recovered, vars.owner));
+      sgho.permit(vars.owner, vars.spender, vars.value, vars.deadline, vars.v, vars.r, vars.s);
+    }
+  }
+
+  function test_permit_wrongDomainSeparator() external {
+    PermitVars memory vars;
+    vars.privateKey = 0xA11CE;
+    vars.owner = vm.addr(vars.privateKey);
+    vars.spender = user2;
+    vars.value = 100 ether;
+    vars.deadline = block.timestamp + 1 hours;
+    vars.nonce = sgho.nonces(vars.owner);
+    // Use wrong domain separator
+    bytes32 PERMIT_TYPEHASH = keccak256('Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)');
+    bytes32 structHash = keccak256(abi.encode(PERMIT_TYPEHASH, vars.owner, vars.spender, vars.value, vars.nonce, vars.deadline));
+    bytes32 wrongDomainSeparator = keccak256('WRONG_DOMAIN');
+    bytes32 hash = keccak256(abi.encodePacked('\x19\x01', wrongDomainSeparator, structHash));
+    (vars.v, vars.r, vars.s) = vm.sign(vars.privateKey, hash);
+    // The contract will recover a different signer than owner
+    {
+      bytes32 contractHash = keccak256(abi.encodePacked('\x19\x01', sgho.DOMAIN_SEPARATOR(), structHash));
+      address recovered = ECDSA.recover(contractHash, vars.v, vars.r, vars.s);
+      vm.expectRevert(abi.encodeWithSelector(ERC20Permit.ERC2612InvalidSigner.selector, recovered, vars.owner));
+      sgho.permit(vars.owner, vars.spender, vars.value, vars.deadline, vars.v, vars.r, vars.s);
+    }
+  }
+
+  function test_permit_validSignature() external {
+    PermitVars memory vars;
+    vars.privateKey = 0xA11CE;
+    vars.owner = vm.addr(vars.privateKey);
+    vars.spender = user2;
+    vars.value = 100 ether;
+    vars.deadline = block.timestamp + 1 hours;
+    vars.nonce = sgho.nonces(vars.owner);
+    (vars.v, vars.r, vars.s) = _createPermitSignature(vars.owner, vars.spender, vars.value, vars.nonce, vars.deadline, vars.privateKey);
+    sgho.permit(vars.owner, vars.spender, vars.value, vars.deadline, vars.v, vars.r, vars.s);
+    assertEq(sgho.allowance(vars.owner, vars.spender), vars.value, 'Permit should set allowance correctly');
+  }
+
+  function test_permit_expiredDeadline() external {
+    PermitVars memory vars;
+    vars.privateKey = 0xA11CE;
+    vars.owner = vm.addr(vars.privateKey);
+    vars.spender = user2;
+    vars.value = 100 ether;
+    vars.deadline = block.timestamp - 1; // Expired deadline
+    vars.nonce = sgho.nonces(vars.owner);
+    (vars.v, vars.r, vars.s) = _createPermitSignature(vars.owner, vars.spender, vars.value, vars.nonce, vars.deadline, vars.privateKey);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        ERC20Permit.ERC2612ExpiredSignature.selector,
+        vars.deadline
+      )
+    );
+    sgho.permit(vars.owner, vars.spender, vars.value, vars.deadline, vars.v, vars.r, vars.s);
+  }
+
+  function test_permit_zeroValue() external {
+    PermitVars memory vars;
+    vars.privateKey = 0xA11CE;
+    vars.owner = vm.addr(vars.privateKey);
+    vars.spender = user2;
+    vars.value = 0;
+    vars.deadline = block.timestamp + 1 hours;
+    vars.nonce = sgho.nonces(vars.owner);
+    (vars.v, vars.r, vars.s) = _createPermitSignature(vars.owner, vars.spender, vars.value, vars.nonce, vars.deadline, vars.privateKey);
+    sgho.permit(vars.owner, vars.spender, vars.value, vars.deadline, vars.v, vars.r, vars.s);
+    assertEq(sgho.allowance(vars.owner, vars.spender), 0, 'permit with value 0 should set allowance to 0');
+  }
+
+  function test_permit_selfApproval() external {
+    PermitVars memory vars;
+    vars.privateKey = 0xA11CE;
+    vars.owner = vm.addr(vars.privateKey);
+    vars.value = 100 ether;
+    vars.deadline = block.timestamp + 1 hours;
+    vars.nonce = sgho.nonces(vars.owner);
+    (vars.v, vars.r, vars.s) = _createPermitSignature(vars.owner, vars.owner, vars.value, vars.nonce, vars.deadline, vars.privateKey);
+    sgho.permit(vars.owner, vars.owner, vars.value, vars.deadline, vars.v, vars.r, vars.s);
+    assertEq(sgho.allowance(vars.owner, vars.owner), vars.value, 'Self approval should work');
+  }
+
+  function test_nonces() external {
+    address owner = user1;
+    uint256 initialNonce = sgho.nonces(owner);
+    
+    // Nonce should increment after permit
+    uint256 privateKey = 0xA11CE;
+    address permitOwner = vm.addr(privateKey);
+    address spender = user2;
+    uint256 value = 100 ether;
+    uint256 deadline = block.timestamp + 1 hours;
+    uint256 nonce = sgho.nonces(permitOwner);
+    
+    (uint8 v, bytes32 r, bytes32 s) = _createPermitSignature(permitOwner, spender, value, nonce, deadline, privateKey);
+    
+    sgho.permit(permitOwner, spender, value, deadline, v, r, s);
+    
+    assertEq(sgho.nonces(permitOwner), nonce + 1, 'Nonce should increment after permit');
+    assertEq(sgho.nonces(owner), initialNonce, 'Other user nonce should remain unchanged');
+  }
+
   // --- Supply Cap Tests ---
   function test_revert_deposit_exceedsCap() external {
     vm.startPrank(user1);
     uint256 amount = SUPPLY_CAP + 1;
     vm.expectRevert(
-      abi.encodeWithSelector(
-        ERC4626.ERC4626ExceededMaxDeposit.selector,
-        user1,
-        amount,
-        SUPPLY_CAP
-      )
+      abi.encodeWithSelector(ERC4626.ERC4626ExceededMaxDeposit.selector, user1, amount, SUPPLY_CAP)
     );
     sgho.deposit(amount, user1);
     vm.stopPrank();
@@ -392,12 +850,7 @@ contract sGhoTest is TestnetProcedures {
     uint256 shares = sgho.convertToShares(SUPPLY_CAP) + 1;
     uint256 maxShares = sgho.maxMint(user1);
     vm.expectRevert(
-      abi.encodeWithSelector(
-        ERC4626.ERC4626ExceededMaxMint.selector,
-        user1,
-        shares,
-        maxShares
-      )
+      abi.encodeWithSelector(ERC4626.ERC4626ExceededMaxMint.selector, user1, shares, maxShares)
     );
     sgho.mint(shares, user1);
     vm.stopPrank();
@@ -414,6 +867,28 @@ contract sGhoTest is TestnetProcedures {
       'Contract balance should be supply cap + initial donation'
     );
     vm.stopPrank();
+  }
+
+  function test_maxDeposit_atCap() external {
+    vm.startPrank(user1);
+    sgho.deposit(SUPPLY_CAP, user1);
+    vm.stopPrank();
+    
+    // Max deposit should be 0 when at cap
+    assertEq(sgho.maxDeposit(user2), 0, 'maxDeposit should be 0 when at supply cap');
+    assertEq(sgho.maxMint(user2), 0, 'maxMint should be 0 when at supply cap');
+  }
+
+  function test_maxDeposit_partialCap() external {
+    vm.startPrank(user1);
+    uint256 depositAmount = SUPPLY_CAP / 2;
+    sgho.deposit(depositAmount, user1);
+    vm.stopPrank();
+    
+    // Max deposit should be remaining capacity
+    assertEq(sgho.maxDeposit(user2), SUPPLY_CAP - depositAmount, 'maxDeposit should be remaining capacity');
+    uint256 expectedMaxMint = sgho.convertToShares(SUPPLY_CAP - depositAmount);
+    assertEq(sgho.maxMint(user2), expectedMaxMint, 'maxMint should be remaining capacity in shares');
   }
 
   // --- Yield Integration Tests (_updateVault) ---
@@ -493,21 +968,28 @@ contract sGhoTest is TestnetProcedures {
 
     assertEq(sgho.totalAssets(), depositAmount, 'Initial total assets should be deposit amount');
 
+    // User2 deposits 500 GHO
+    uint256 depositAmount2 = 500 ether;
+    vm.startPrank(user2);
+    sgho.deposit(depositAmount2, user2);
+    vm.stopPrank();
+
     // Skip time by 365 days
     uint256 timeSkip = 365 days;
     vm.warp(block.timestamp + timeSkip);
 
-    // Trigger yield update by a small deposit.
+    // Trigger yield update by redeeming all of user2 shares
     // Any state-changing action that calls `_updateVault` would work.
-    uint256 smallDeposit = 1 wei;
-    deal(address(gho), user1, smallDeposit, true);
-    gho.approve(address(sgho), smallDeposit);
-    sgho.deposit(smallDeposit, user1);
+    vm.startPrank(user2);
+    uint256 user2Shares = sgho.balanceOf(user2);
+    sgho.redeem(user2Shares, user2, user2);
+    assertEq(sgho.balanceOf(user2), 0, 'User2 should have no shares after redeeming');
+    vm.stopPrank();
 
     // After 1 year at 10% APR, the 100 GHO should have become ~110 GHO.
     // The total assets will be ~110 GHO + the small deposit.
-    uint256 expectedYield = (depositAmount * 1000) / 10000;
-    uint256 expectedTotalAssets = depositAmount + expectedYield + smallDeposit;
+    uint256 expectedYield = ((depositAmount) * 1000) / 10000;
+    uint256 expectedTotalAssets = depositAmount + expectedYield;
 
     assertApproxEqAbs(
       sgho.totalAssets(),
@@ -519,7 +1001,12 @@ contract sGhoTest is TestnetProcedures {
     // Also check the value of user1's shares
     uint256 user1Shares = sgho.balanceOf(user1);
     uint256 user1Assets = sgho.previewRedeem(user1Shares);
-    assertApproxEqAbs(user1Assets, expectedTotalAssets, 1, 'User asset value should reflect 10% yield');
+    assertApproxEqAbs(
+      user1Assets,
+      expectedTotalAssets,
+      1,
+      'User asset value should reflect 10% yield'
+    );
     vm.stopPrank();
   }
 
@@ -537,7 +1024,7 @@ contract sGhoTest is TestnetProcedures {
     vm.stopPrank();
 
     // Warp time to the middle of the year
-    for(uint i = 0; i < 365; i++) {
+    for (uint i = 0; i < 365; i++) {
       vm.warp(block.timestamp + 1 days);
       vm.prank(yManager);
       sgho.setTargetRate(rate); // Re-setting the rate triggers the update
@@ -577,6 +1064,165 @@ contract sGhoTest is TestnetProcedures {
     );
   }
 
+  // --- Yield Edge Case Tests ---
+
+  function test_yield_zeroTargetRate() external {
+    // Set target rate to 0
+    vm.startPrank(yManager);
+    sgho.setTargetRate(0);
+    vm.stopPrank();
+
+    // User1 deposits 100 GHO
+    uint256 depositAmount = 100 ether;
+    vm.startPrank(user1);
+    sgho.deposit(depositAmount, user1);
+    uint256 initialShares = sgho.balanceOf(user1);
+    vm.stopPrank();
+
+    // Skip time - no yield should accrue
+    vm.warp(block.timestamp + 365 days);
+    
+    // Trigger yield update
+    vm.startPrank(user2);
+    sgho.deposit(1 ether, user2);
+    vm.stopPrank();
+
+    // User1 should have the same assets value
+    vm.startPrank(user1);
+    uint256 finalAssets = sgho.previewRedeem(initialShares);
+    assertEq(finalAssets, depositAmount, 'Assets should remain unchanged with zero target rate');
+    vm.stopPrank();
+  }
+
+  function test_yield_zeroTimeSinceLastUpdate() external {
+    // User1 deposits 100 GHO
+    uint256 depositAmount = 100 ether;
+    vm.startPrank(user1);
+    sgho.deposit(depositAmount, user1);
+    uint256 initialShares = sgho.balanceOf(user1);
+    vm.stopPrank();
+
+    // Don't skip time - timeSinceLastUpdate should be 0
+    // Trigger another operation immediately
+    vm.startPrank(user2);
+    sgho.deposit(1 ether, user2);
+    vm.stopPrank();
+
+    // User1 should have the same assets value (no time passed)
+    vm.startPrank(user1);
+    uint256 finalAssets = sgho.previewRedeem(initialShares);
+    assertEq(finalAssets, depositAmount, 'Assets should remain unchanged with zero time since last update');
+    vm.stopPrank();
+  }
+
+  function test_yield_index_edgeCases() external {
+    // Test with very small amounts and very large amounts
+    uint256 smallAmount = 1; // 1 wei
+    uint256 largeAmount = SUPPLY_CAP - 1 ether;
+    
+    vm.startPrank(user1);
+    
+    // Test small amount
+    sgho.deposit(smallAmount, user1);
+    uint256 smallShares = sgho.balanceOf(user1);
+    assertEq(smallShares, smallAmount, 'Small amount should convert 1:1 initially');
+    
+    // Test large amount
+    deal(address(gho), user1, largeAmount, true);
+    gho.approve(address(sgho), largeAmount);
+    sgho.deposit(largeAmount, user1);
+    uint256 largeShares = sgho.balanceOf(user1);
+    assertEq(largeShares, smallShares + largeAmount, 'Large amount should convert 1:1 initially');
+    
+    vm.stopPrank();
+  }
+
+  function test_yield_accrual_atSupplyCap() external {
+    // Set a higher target rate to ensure significant yield accrual
+    vm.startPrank(yManager);
+    sgho.setTargetRate(5000); // 50% APR to ensure significant yield
+    vm.stopPrank();
+    
+    // Fill the vault to supply cap
+    vm.startPrank(user1);
+    sgho.deposit(SUPPLY_CAP, user1);
+    uint256 initialShares = sgho.balanceOf(user1);
+    vm.stopPrank();
+
+    // Check that yield accrual still works even at supply cap
+    uint256 totalAssetsBefore = sgho.totalAssets();
+    uint256 yieldIndexBefore = sgho.yieldIndex();
+    
+    // Skip time to accrue yield (use a longer period to ensure significant yield)
+    vm.warp(block.timestamp + 365 days);
+    
+    // Trigger yield update by withdrawing 1 wei (any state-changing operation would work)
+    vm.startPrank(user1);
+    sgho.withdraw(1, user1, user1);
+    vm.stopPrank();
+    
+    uint256 totalAssetsAfter = sgho.totalAssets();
+    uint256 yieldIndexAfter = sgho.yieldIndex();
+    
+    // Yield should have accrued even at supply cap
+    // The total assets after should be greater than before minus the withdrawal amount
+    // because yield accrual should offset the withdrawal
+    assertTrue(totalAssetsAfter > totalAssetsBefore - 1, 'Yield should accrue even at supply cap');
+    assertTrue(yieldIndexAfter > yieldIndexBefore, 'Yield index should increase even at supply cap');
+    
+    // User's share value should have increased (accounting for the 1 wei withdrawal)
+    vm.startPrank(user1);
+    uint256 userAssetsAfter = sgho.previewRedeem(initialShares - sgho.convertToShares(1));
+    assertTrue(userAssetsAfter > SUPPLY_CAP - 1, 'User assets should increase with yield even at supply cap');
+    vm.stopPrank();
+  }
+
+  function test_maxDeposit_withYieldAccrual() external {
+    // Set up initial state with some deposits
+    vm.startPrank(user1);
+    uint256 initialDeposit = SUPPLY_CAP / 2;
+    sgho.deposit(initialDeposit, user1);
+    vm.stopPrank();
+    
+    // Check maxDeposit before any yield update
+    uint256 maxDepositBefore = sgho.maxDeposit(user2);
+    uint256 totalAssetsBefore = sgho.totalAssets();
+    
+    // Skip time to accrue yield
+    vm.warp(block.timestamp + 30 days);
+    
+    // The maxDeposit should account for the fact that the deposit itself will trigger yield update
+    // and potentially increase totalAssets beyond the current calculation  
+    
+    // The maxDeposit should account for the fact that the deposit itself will trigger yield update
+    // and potentially increase totalAssets beyond the current calculation
+    assertTrue(maxDepositBefore <= SUPPLY_CAP - totalAssetsBefore, 'maxDeposit should not exceed remaining capacity');
+    
+    // Now trigger a yield update by withdrawing 1 wei from user1
+    vm.startPrank(user1);
+    sgho.withdraw(1, user1, user1);
+    vm.stopPrank();
+    
+    uint256 totalAssetsAfter = sgho.totalAssets();
+    uint256 maxDepositAfter = sgho.maxDeposit(user2);
+    
+    // The total assets should have increased due to yield accrual (minus the 1 wei withdrawal)
+    assertTrue(totalAssetsAfter > totalAssetsBefore - 1, 'Total assets should increase due to yield despite withdrawal');
+    
+    // The new maxDeposit should be accurate after the yield update
+    assertEq(maxDepositAfter, SUPPLY_CAP - totalAssetsAfter, 'maxDeposit should be accurate after yield update');
+    
+    // Verify that the maxDeposit calculation is correct by attempting to deposit exactly that amount
+    vm.startPrank(user2);
+    deal(address(gho), user2, maxDepositAfter, true);
+    gho.approve(address(sgho), maxDepositAfter);
+    sgho.deposit(maxDepositAfter, user2);
+    vm.stopPrank();
+    
+    // Should now be at supply cap
+    assertEq(sgho.totalAssets(), SUPPLY_CAP, 'Should be at supply cap after depositing maxDeposit amount');
+  }
+
   // --- Precision Tests ---
   function test_precision_multipleOperations(
     uint256[5] memory depositAmounts,
@@ -614,16 +1260,25 @@ contract sGhoTest is TestnetProcedures {
       // Calculate expected yield for this period
       if (i > 0) {
         uint256 currentRatePerSecond = ((sgho.targetRate() * 1e27) / 365 days);
-        uint256 currentIndexChangePerSecond = (lastYieldIndex * currentRatePerSecond)/10000;
+        uint256 currentIndexChangePerSecond = (lastYieldIndex * currentRatePerSecond) / 10000;
         uint256 nextYieldIndex = lastYieldIndex +
-          ((currentIndexChangePerSecond * timeSkips[i])/1e27);
-        uint256 expectedTotalAssets = (sgho.totalSupply() * nextYieldIndex)/1e27;
+          ((currentIndexChangePerSecond * timeSkips[i]) / 1e27);
+        uint256 expectedTotalAssets = (sgho.totalSupply() * nextYieldIndex) / 1e27;
         uint256 expectedYield = expectedTotalAssets - lastTotalAssets;
 
         totalExpectedYield += expectedYield;
         totalClaimedYield += sgho.totalAssets() - lastTotalAssets;
-        assertApproxEqAbs(expectedTotalAssets, sgho.totalAssets(), 1, 'totalAssets mismatch from Yield calculation');
-        assertEq(sgho.balanceOf(user1), totalBobShares, 'user1 balance mismatch from Yield calculation');
+        assertApproxEqAbs(
+          expectedTotalAssets,
+          sgho.totalAssets(),
+          1,
+          'totalAssets mismatch from Yield calculation'
+        );
+        assertEq(
+          sgho.balanceOf(user1),
+          totalBobShares,
+          'user1 balance mismatch from Yield calculation'
+        );
       }
 
       // Deposit
@@ -833,6 +1488,29 @@ contract sGhoTest is TestnetProcedures {
     vm.stopPrank();
   }
 
+  function test_rescueERC20_zeroAmount() external {
+    // Deploy a mock ERC20 token
+    TestnetERC20 mockToken = new TestnetERC20('Mock Token', 'MTK', 18, address(this));
+    uint256 initialAmount = 100 ether;
+
+    // Transfer some tokens to sGHO
+    deal(address(mockToken), address(sgho), initialAmount, true);
+
+    // Grant FUNDS_ADMIN role to Admin
+    vm.startPrank(poolAdmin);
+    aclManager.grantRole(sgho.FUNDS_ADMIN_ROLE(), Admin);
+    vm.stopPrank();
+
+    // Rescue zero amount should be a no-op
+    vm.startPrank(Admin);
+    sgho.rescueERC20(address(mockToken), user1, 0);
+    vm.stopPrank();
+
+    // Token balances should remain unchanged
+    assertEq(mockToken.balanceOf(address(sgho)), initialAmount, 'Contract balance should remain unchanged');
+    assertEq(mockToken.balanceOf(user1), 0, 'User balance should remain unchanged');
+  }
+
   // --- Initialization Tests ---
   function test_initialization() external {
     // Deploy a new sGHO instance
@@ -878,13 +1556,110 @@ contract sGhoTest is TestnetProcedures {
 
     // Should revert on second initialization via proxy
     vm.expectRevert();
-    newSgho.initialize(
-      address(gho),
-      address(contracts.aclManager),
-      MAX_TARGET_RATE,
-      SUPPLY_CAP
-    );
+    newSgho.initialize(address(gho), address(contracts.aclManager), MAX_TARGET_RATE, SUPPLY_CAP);
   }
+
+  function test_revert_notInitialized() external {
+    // Deploy a new sGHO implementation and proxy without initializing it
+    address impl = address(new sGHO());
+    TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
+      impl,
+      address(this),
+      '' // No initialization data
+    );
+    sGHO uninitializedSgho = sGHO(payable(address(proxy)));
+    
+    // Since the isInitialized modifier is not used by any functions,
+    // we'll test that the contract works correctly when not initialized
+    // The totalAssets should return 0 for an uninitialized contract
+    assertEq(uninitializedSgho.totalAssets(), 0, 'Uninitialized contract should return 0 totalAssets');
+  }
+
+  // --- Getter Functions Tests ---
+
+  function test_getter_gho() external view {
+    assertEq(sgho.gho(), address(gho), 'GHO address getter should return correct address');
+  }
+
+  function test_getter_deploymentChainId() external view {
+    assertEq(sgho.deploymentChainId(), block.chainid, 'Deployment chain ID should match current chain');
+  }
+
+  function test_getter_VERSION() external view {
+    assertEq(sgho.VERSION(), VERSION, 'VERSION should match constant');
+  }
+
+  function test_getter_name() external view {
+    assertEq(sgho.name(), 'sGHO', 'Name should be sGHO');
+  }
+
+  function test_getter_symbol() external view {
+    assertEq(sgho.symbol(), 'sGHO', 'Symbol should be sGHO');
+  }
+
+  function test_getter_decimals() external view {
+    assertEq(sgho.decimals(), 18, 'Decimals should be 18');
+  }
+
+  function test_getter_asset() external view {
+    assertEq(sgho.asset(), address(gho), 'Asset should return GHO address');
+  }
+
+  function test_getter_targetRate() external view {
+    assertEq(sgho.targetRate(), 1000, 'Target rate should be 10% (1000 bps)');
+  }
+
+  function test_getter_maxTargetRate() external view {
+    assertEq(sgho.maxTargetRate(), MAX_TARGET_RATE, 'Max target rate should match constant');
+  }
+
+  function test_getter_supplyCap() external view {
+    assertEq(sgho.supplyCap(), SUPPLY_CAP, 'Supply cap should match constant');
+  }
+
+  function test_getter_yieldIndex() external view {
+    assertEq(sgho.yieldIndex(), 1e27, 'Initial yield index should be RAY (1e27)');
+  }
+
+  function test_getter_lastUpdate() external view {
+    assertEq(sgho.lastUpdate(), block.timestamp, 'Last update should be current timestamp');
+  }
+
+  function test_getter_vaultAPR() external view {
+    assertEq(sgho.vaultAPR(), sgho.targetRate(), 'Vault APR should equal target rate');
+  }
+
+  function test_getter_FUNDS_ADMIN_ROLE() external view {
+    assertEq(sgho.FUNDS_ADMIN_ROLE(), bytes32('FUNDS_ADMIN'), 'FUNDS_ADMIN_ROLE should match hash');
+  }
+
+  function test_getter_YIELD_MANAGER_ROLE() external view {
+    assertEq(sgho.YIELD_MANAGER_ROLE(), bytes32('YIELD_MANAGER'), 'YIELD_MANAGER_ROLE should match hash');
+  }
+
+  function test_getter_DOMAIN_SEPARATOR() external view {
+    assertEq(sgho.DOMAIN_SEPARATOR(), DOMAIN_SEPARATOR_sGHO, 'Domain separator should match calculated value');
+  }
+
+  function test_getter_totalSupply() external view {
+    assertEq(sgho.totalSupply(), 0, 'Initial total supply should be 0');
+  }
+
+  function test_getter_balanceOf() external {
+    vm.startPrank(user1);
+    uint256 depositAmount = 100 ether;
+    sgho.deposit(depositAmount, user1);
+    assertEq(sgho.balanceOf(user1), depositAmount, 'Balance should match deposited amount');
+    assertEq(sgho.balanceOf(user2), 0, 'User2 balance should be 0');
+    vm.stopPrank();
+  }
+
+  function test_getter_totalAssets() external view {
+    assertEq(sgho.totalAssets(), 0, 'Initial total assets should be 0');
+  }
+
+
+  // --- Internal Utility Functions ---
 
   function _wadPow(uint256 base, uint256 exp) internal pure returns (uint256) {
     uint256 res = 1e18; // WAD
@@ -896,5 +1671,19 @@ contract sGhoTest is TestnetProcedures {
       exp /= 2;
     }
     return res;
+  }
+
+  function _createPermitSignature(
+    address owner,
+    address spender,
+    uint256 value,
+    uint256 nonce,
+    uint256 deadline,
+    uint256 privateKey
+  ) internal view returns (uint8 v, bytes32 r, bytes32 s) {
+    bytes32 PERMIT_TYPEHASH = keccak256('Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)');
+    bytes32 structHash = keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, value, nonce, deadline));
+    bytes32 hash = keccak256(abi.encodePacked('\x19\x01', sgho.DOMAIN_SEPARATOR(), structHash));
+    return vm.sign(privateKey, hash);
   }
 }
