@@ -204,11 +204,11 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
       // larger than the input `amount`.
       //
       // Definitions:
-      // - `amount`: The unscaled amount to be transferred, passed as an argument.
+      // - `amount`: The unscaled `amount` to be transferred, passed as an argument.
       // - `amount_out`: The actual unscaled amount deducted from the sender's balance.
       // - `amount_in`: The actual unscaled amount added to the recipient's balance.
-      // - `allowance_spent`: The unscaled amount deducted from the spender's allowance.
-      // - `amount_logged`: The amount logged in the `Transfer` event.
+      // - `allowance_spent`: The unscaled amount deducted from the spender's allowance. Equivalent to `amount_out`.
+      // - `amount_logged`: The amount logged in the `Transfer` event. Equivalent to `amount`.
       //
       // Solution:
       // To fix this, `allowance_spent` must be exactly equal to `amount_out`.
@@ -224,6 +224,10 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
       // This means if a user has an allowance of 100 wei and calls `transferFrom` with an `amount` of 100, the call will succeed
       // even if the calculated `actualBalanceDecrease` is 101 wei. In that specific scenario, the allowance consumed will be 100 wei (since that is the `currentAllowance`),
       // and the transaction will not revert. But if the allowance is 101 wei, then the allowance consumed will be 101 wei.
+      //
+      // uint256 amount_in = amount.getATokenTransferScaledAmount(index);
+      // uint256 amount_out = balanceBefore - balanceAfter = scaledBalanceOfSender.getATokenBalance(index) - (scaledBalanceOfSender - amount_in).getATokenBalance(index);
+      // Due to limitations of the solidity compiler, the calculation is inlined for gas efficiency.
       scaledBalanceOfSender.getATokenBalance(index) -
         (scaledBalanceOfSender - amount.getATokenTransferScaledAmount(index)).getATokenBalance(
           index

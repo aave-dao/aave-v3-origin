@@ -77,7 +77,6 @@ library ValidationLogic {
     require(onBehalfOf != reserveCache.aTokenAddress, Errors.SupplyToAToken());
 
     uint256 supplyCap = reserveCache.reserveConfiguration.getSupplyCap();
-    // Replicate aToken.totalSupply (round down), to always underestimate the collateral.
     require(
       supplyCap == 0 ||
         (

@@ -243,7 +243,6 @@ library GenericLogic {
     uint256 assetPrice,
     uint256 assetUnit
   ) private view returns (uint256) {
-    // Replicate aToken.balanceOf (round down), to always underestimate the collateral.
     uint256 balance = (
       IScaledBalanceToken(reserve.aTokenAddress).scaledBalanceOf(user).getATokenBalance(
         reserve.getNormalizedIncome()

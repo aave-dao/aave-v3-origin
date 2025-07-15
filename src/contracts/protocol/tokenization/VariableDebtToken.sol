@@ -94,7 +94,7 @@ abstract contract VariableDebtToken is DebtTokenBase, ScaledBalanceTokenBase, IV
       // Definitions:
       // - `amount`: The unscaled amount to be borrowed, passed as an argument.
       // - `debt_increase`: The actual unscaled debt increase for the user.
-      // - `allowance_spent`: The unscaled amount deducted from the delegatee's borrow allowance.
+      // - `allowance_spent`: The unscaled amount deducted from the delegatee's borrow allowance. Equivalent to `debt_increase`.
       //
       // Solution:
       // To handle this, `allowance_spent` must be exactly equal to `debt_increase`.
@@ -109,6 +109,9 @@ abstract contract VariableDebtToken is DebtTokenBase, ScaledBalanceTokenBase, IV
       // This means if a user has a borrow allowance of 100 wei and `borrow` is called with an `amount` of 100, the call will succeed
       // even if the calculated `actualBalanceIncrease` is 101 wei. In that specific scenario, the allowance consumed will be 100 wei (since that is the `currentAllowance`),
       // and the transaction will not revert. But if the allowance is 101 wei, then the allowance consumed will be 101 wei.
+      //
+      // uint256 debt_increase = balanceAfter - balanceBefore = (scaledBalanceOfUser + scaledAmount).getVTokenBalance(index) - scaledBalanceOfUser.getVTokenBalance(index);
+      // Due to limitations of the solidity compiler, the calculation is inlined for gas efficiency.
       _decreaseBorrowAllowance(
         onBehalfOf,
         user,
