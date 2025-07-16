@@ -3,9 +3,10 @@ pragma solidity ^0.8.0;
 import './MarketInput.sol';
 
 contract HorizonInput is MarketInput {
-  address public constant DEPLOYER = 0xA22f39d5fEb10489F7FA84C2C545BAc4EA48eBB7;
+  address public constant AAVE_DAO_EXECUTOR = 0x5300A1a15135EA4dc7aD5a167152C01EFc9b192A;
+  address public constant AAVE_DAO_COLLECTOR = 0x464C71f6c2F760DdA6093dCB91C24c39e5d6e18c;
   bytes32 public constant POOL_ADMIN_ROLE = keccak256('POOL_ADMIN');
-  address public constant PHASE_ONE_LISTING_EXECUTOR = address(0); // todo
+  address public constant PHASE_ONE_LISTING_EXECUTOR = 0xf046907a4371F7F027113bf751F3347459a08b71;
 
   function _getMarketInput(
     address
@@ -23,10 +24,10 @@ contract HorizonInput is MarketInput {
     bytes[] memory additionalRoles = new bytes[](1);
     additionalRoles[0] = abi.encode(POOL_ADMIN_ROLE, PHASE_ONE_LISTING_EXECUTOR);
     roles = Roles({
-      marketOwner: DEPLOYER,
-      emergencyAdmin: DEPLOYER,
-      poolAdmin: DEPLOYER,
-      rwaATokenManagerAdmin: DEPLOYER,
+      marketOwner: AAVE_DAO_EXECUTOR,
+      emergencyAdmin: AAVE_DAO_EXECUTOR,
+      poolAdmin: AAVE_DAO_EXECUTOR,
+      rwaATokenManagerAdmin: AAVE_DAO_EXECUTOR,
       additionalRoles: additionalRoles
     });
 
@@ -45,7 +46,7 @@ contract HorizonInput is MarketInput {
       flashLoanPremiumToProtocol: 1e4,
       incentivesProxy: address(0),
       treasury: address(0),
-      treasuryPartner: 0x464C71f6c2F760DdA6093dCB91C24c39e5d6e18c, // TreasuryCollector
+      treasuryPartner: AAVE_DAO_COLLECTOR, // TreasuryCollector
       treasurySplitPercent: 50_00
     });
 

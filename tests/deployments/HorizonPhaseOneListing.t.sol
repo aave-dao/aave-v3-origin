@@ -12,6 +12,7 @@ import {IMetadataReporter} from '../../src/deployments/interfaces/IMetadataRepor
 import {IRevenueSplitter} from '../../src/contracts/treasury/IRevenueSplitter.sol';
 import {IDefaultInterestRateStrategyV2} from '../../src/contracts/interfaces/IDefaultInterestRateStrategyV2.sol';
 import {IERC20Detailed} from '../../src/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
+import {IACLManager} from '../../src/contracts/interfaces/IACLManager.sol';
 import {IAToken} from '../../src/contracts/interfaces/IAToken.sol';
 import {IPool} from '../../src/contracts/interfaces/IPool.sol';
 import {Errors} from '../../src/contracts/protocol/libraries/helpers/Errors.sol';
@@ -23,7 +24,7 @@ contract ConfigureHorizonPhaseOneTest is Test, ConfigureHorizonPhaseOne {
   }
 }
 
-contract HorizonListingBaseTest is Test {
+abstract contract HorizonListingBaseTest is Test {
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
 
   IPool internal pool;
@@ -71,6 +72,15 @@ contract HorizonListingBaseTest is Test {
     variableDebtTokenImpl = variableDebtTokenImpl_;
   }
 
+  function getListingExecutor() internal view virtual returns (address);
+
+  function test_listingExecutor() public {
+    assertEq(
+      IACLManager(pool.ADDRESSES_PROVIDER().getACLManager()).isPoolAdmin(getListingExecutor()),
+      false
+    );
+  }
+
   function test_getConfiguration(address token, TokenListingParams memory params) private {
     DataTypes.ReserveConfigurationMap memory config = pool.getConfiguration(token);
     assertEq(config.getSupplyCap(), params.supplyCap);
@@ -86,6 +96,7 @@ contract HorizonListingBaseTest is Test {
     assertEq(config.getLiquidationBonus(), params.liquidationBonus);
     assertEq(config.getDebtCeiling(), params.debtCeiling);
     assertEq(config.getLiquidationProtocolFee(), params.liqProtocolFee);
+    assertEq(config.getPaused(), true);
   }
 
   function test_interestRateStrategy(address token, TokenListingParams memory params) private {
@@ -162,6 +173,9 @@ contract HorizonListingBaseTest is Test {
 }
 
 contract HorizonListingMainnetTest is HorizonListingBaseTest {
+  address internal constant DEPLOYER = 0xA22f39d5fEb10489F7FA84C2C545BAc4EA48eBB7;
+  address internal constant LISTING_EXECUTOR = 0xf046907a4371F7F027113bf751F3347459a08b71;
+
   address internal constant GHO_ADDRESS = 0x40D16FC0246aD3160Ccc09B8D0D3A2cD28aE6C2f;
   address internal constant USDC_ADDRESS = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
   address internal constant RLUSD_ADDRESS = 0x8292Bb45bf1Ee4d140127049757C2E0fF06317eD;
@@ -199,6 +213,10 @@ contract HorizonListingMainnetTest is HorizonListingBaseTest {
 
   function setUp() public virtual {
     vm.createSelectFork('mainnet');
+  }
+
+  function getListingExecutor() internal pure override returns (address) {
+    return LISTING_EXECUTOR;
   }
 }
 

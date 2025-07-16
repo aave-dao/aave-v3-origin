@@ -286,6 +286,12 @@ contract HorizonPhaseOneListing is AaveV3Payload {
   }
 
   function _postExecute() internal override {
+    CONFIGURATOR.setReservePause(GHO_ADDRESS, true, 0);
+    CONFIGURATOR.setReservePause(USDC_ADDRESS, true, 0);
+    CONFIGURATOR.setReservePause(RLUSD_ADDRESS, true, 0);
+    CONFIGURATOR.setReservePause(USTB_ADDRESS, true, 0);
+    CONFIGURATOR.setReservePause(USCC_ADDRESS, true, 0);
+    CONFIGURATOR.setReservePause(USYC_ADDRESS, true, 0);
     ACL_MANAGER.renounceRole(POOL_ADMIN_ROLE_ID, address(this));
   }
 }

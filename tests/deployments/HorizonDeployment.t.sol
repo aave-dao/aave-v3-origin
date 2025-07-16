@@ -24,7 +24,7 @@ contract HorizonDeploymentTest is Test, Default {
   }
 
   function test_HorizonInput() public {
-    (, MarketConfig memory config, , ) = _getMarketInput(DEPLOYER);
+    (, MarketConfig memory config, , ) = _getMarketInput(address(0));
     assertEq(contracts.poolAddressesProvider.getMarketId(), config.marketId);
     assertEq(
       contracts.poolAddressesProviderRegistry.getAddressesProviderAddressById(config.providerId),
@@ -37,7 +37,7 @@ contract HorizonDeploymentTest is Test, Default {
       contracts.poolProxy.FLASHLOAN_PREMIUM_TO_PROTOCOL(),
       config.flashLoanPremiumToProtocol
     );
-    assertEq(contracts.treasury.isFundsAdmin(DEPLOYER), true);
+    assertEq(contracts.treasury.isFundsAdmin(AAVE_DAO_EXECUTOR), true);
     assertEq(contracts.revenueSplitter.RECIPIENT_A(), marketReport.treasury);
     assertEq(contracts.revenueSplitter.RECIPIENT_B(), config.treasuryPartner);
     assertEq(contracts.revenueSplitter.SPLIT_PERCENTAGE_RECIPIENT_A(), config.treasurySplitPercent);
@@ -45,6 +45,6 @@ contract HorizonDeploymentTest is Test, Default {
 
   function test_RewardsController() public {
     assertEq(contracts.rewardsControllerProxy.EMISSION_MANAGER(), marketReport.emissionManager);
-    assertEq(Ownable(address(contracts.emissionManager)).owner(), DEPLOYER);
+    assertEq(Ownable(address(contracts.emissionManager)).owner(), AAVE_DAO_EXECUTOR);
   }
 }
