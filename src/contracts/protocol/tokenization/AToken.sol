@@ -204,7 +204,7 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
       // larger than the input `amount`.
       //
       // Definitions:
-      // - `amount`: The unscaled `amount` to be transferred, passed as an argument.
+      // - `amount`: The unscaled amount to be transferred, passed as the `amount` argument.
       // - `amount_out`: The actual unscaled amount deducted from the sender's balance.
       // - `amount_in`: The actual unscaled amount added to the recipient's balance.
       // - `allowance_spent`: The unscaled amount deducted from the spender's allowance. Equivalent to `amount_out`.
@@ -213,16 +213,15 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
       // Solution:
       // To fix this, `allowance_spent` must be exactly equal to `amount_out`.
       // We calculate `amount_out` precisely by simulating the effect of the transfer on the sender's balance.
-      // `actualBalanceDecrease` in the code corresponds to `amount_out`.
-      // By passing `actualBalanceDecrease` to `_spendAllowance`, we ensure `allowance_spent` is as close as possible to `amount_out`.
+      // By passing `amount_out` to `_spendAllowance`, we ensure `allowance_spent` is as close as possible to `amount_out`.
       // `amount_logged` is equal to `amount`. `amount_in` is the actual balance increase for the recipient, which is >= `amount` due to rounding.
       //
       // Backward Compatibility & Guarantees:
       // This implementation is backward-compatible and secure. The `_spendAllowance` function has a critical feature:
       // 1. It REQUIRES the allowance to be >= `amount` (the user's requested transfer amount).
-      // 2. The amount consumed from the allowance is `actualBalanceDecrease`, but it is capped at the `currentAllowance`.
+      // 2. The amount consumed from the allowance is `amount_out`, but it is capped at the `currentAllowance`.
       // This means if a user has an allowance of 100 wei and calls `transferFrom` with an `amount` of 100, the call will succeed
-      // even if the calculated `actualBalanceDecrease` is 101 wei. In that specific scenario, the allowance consumed will be 100 wei (since that is the `currentAllowance`),
+      // even if the calculated `amount_out` is 101 wei. In that specific scenario, the allowance consumed will be 100 wei (since that is the `currentAllowance`),
       // and the transaction will not revert. But if the allowance is 101 wei, then the allowance consumed will be 101 wei.
       //
       // uint256 amount_in = amount.getATokenTransferScaledAmount(index);

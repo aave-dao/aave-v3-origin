@@ -99,15 +99,14 @@ abstract contract VariableDebtToken is DebtTokenBase, ScaledBalanceTokenBase, IV
       // Solution:
       // To handle this, `allowance_spent` must be exactly equal to `debt_increase`.
       // We calculate `debt_increase` precisely by simulating the effect of the borrow on the user's balance.
-      // `actualBalanceIncrease` in the code corresponds to `debt_increase`.
-      // By passing `actualBalanceIncrease` to `_decreaseBorrowAllowance`, we ensure `allowance_spent` is as close as possible to `debt_increase`.
+      // By passing `debt_increase` to `_decreaseBorrowAllowance`, we ensure `allowance_spent` is as close as possible to `debt_increase`.
       //
       // Backward Compatibility & Guarantees:
       // This implementation is backward-compatible and secure. The `_decreaseBorrowAllowance` function has a critical feature:
       // 1. It REQUIRES the borrow allowance to be >= `amount` (the user's requested borrow amount).
-      // 2. The amount consumed from the allowance is `actualBalanceIncrease`, but it is capped at the `currentAllowance`.
+      // 2. The amount consumed from the allowance is `debt_increase`, but it is capped at the `currentAllowance`.
       // This means if a user has a borrow allowance of 100 wei and `borrow` is called with an `amount` of 100, the call will succeed
-      // even if the calculated `actualBalanceIncrease` is 101 wei. In that specific scenario, the allowance consumed will be 100 wei (since that is the `currentAllowance`),
+      // even if the calculated `debt_increase` is 101 wei. In that specific scenario, the allowance consumed will be 100 wei (since that is the `currentAllowance`),
       // and the transaction will not revert. But if the allowance is 101 wei, then the allowance consumed will be 101 wei.
       //
       // uint256 debt_increase = balanceAfter - balanceBefore = (scaledBalanceOfUser + scaledAmount).getVTokenBalance(index) - scaledBalanceOfUser.getVTokenBalance(index);
