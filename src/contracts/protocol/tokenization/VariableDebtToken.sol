@@ -92,7 +92,7 @@ abstract contract VariableDebtToken is DebtTokenBase, ScaledBalanceTokenBase, IV
       // larger than the input `amount`.
       //
       // Definitions:
-      // - `amount`: The unscaled amount to be borrowed, passed as an argument.
+      // - `amount`: The unscaled amount to be borrowed, passed as the `amount` argument.
       // - `debt_increase`: The actual unscaled debt increase for the user.
       // - `allowance_spent`: The unscaled amount deducted from the delegatee's borrow allowance. Equivalent to `debt_increase`.
       //
