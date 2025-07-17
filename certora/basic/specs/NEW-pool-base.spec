@@ -38,7 +38,8 @@ methods {
 
   // ATOKEN
   //function _.mint(address user, uint256 amount, uint256 index) external => DISPATCHER(true);
-  function _.burn(address user, address receiverOfUnderlying, uint256 amount, uint256 index) external => DISPATCHER(true);
+  function _.burn(address user, address receiverOfUnderlying, uint256 amount, uint256 scaledAmount, uint256 index) external
+    => DISPATCHER(true);
   function _.mintToTreasury(uint256 amount, uint256 index) external => DISPATCHER(true);
   //  function _.transferOnLiquidation(address from, address to, uint256 value) external => DISPATCHER(true);
   function _.transferUnderlyingTo(address user, uint256 amount) external => DISPATCHER(true);

@@ -11,6 +11,7 @@
   The rules are verified under the following strong assumption:
               _SymbolicLendingPoolL1.getReserveNormalizedIncome() == RAY().
   That means that the liquidity index is 1.
+  This is OK, because ATokenWithDelegation is going to be used only this way.
   =============================================================================================*/
 
 import "base_token_v3.spec";

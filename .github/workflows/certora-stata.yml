@@ -35,10 +35,10 @@ jobs:
           cd certora/stata
           touch applyHarness.patch
           make munged
-
+    
       - uses: Certora/certora-run-action@v1
         with:
-          cli-version: 7.28.0
+          cli-version: 7.31.0
           configurations: |-
             certora/stata/conf/verifyERC4626.conf --rule previewRedeemIndependentOfBalance previewMintAmountCheck previewDepositIndependentOfAllowanceApprove previewWithdrawAmountCheck previewWithdrawIndependentOfBalance2 previewWithdrawIndependentOfBalance1 previewRedeemIndependentOfMaxRedeem1 previewRedeemAmountCheck previewRedeemIndependentOfMaxRedeem2 amountConversionRoundedDown withdrawCheck redeemCheck redeemATokensCheck convertToAssetsCheck convertToSharesCheck toAssetsDoesNotRevert sharesConversionRoundedDown toSharesDoesNotRevert previewDepositAmountCheck maxRedeemCompliance maxWithdrawConversionCompliance previewMintIndependentOfAllowance
             certora/stata/conf/verifyERC4626.conf --rule maxMintMustntRevert maxDepositMustntRevert maxRedeemMustntRevert maxWithdrawMustntRevert totalAssetsMustntRevert
@@ -71,3 +71,5 @@ jobs:
           install-java: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+

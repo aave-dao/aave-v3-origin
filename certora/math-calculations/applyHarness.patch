@@ -1,0 +1,114 @@
+diff -ruN .gitignore .gitignore
+--- .gitignore	1970-01-01 02:00:00.000000000 +0200
++++ .gitignore	2025-07-13 12:34:41.980929052 +0300
+@@ -0,0 +1,2 @@
++*
++!.gitignore
+\ No newline at end of file
+diff -ruN src/contracts/dependencies/gnosis/contracts/GPv2SafeERC20.sol src/contracts/dependencies/gnosis/contracts/GPv2SafeERC20.sol
+--- src/contracts/dependencies/gnosis/contracts/GPv2SafeERC20.sol	2025-07-13 12:41:55.192409861 +0300
++++ src/contracts/dependencies/gnosis/contracts/GPv2SafeERC20.sol	2025-07-13 12:34:41.980929052 +0300
+@@ -10,6 +10,8 @@
+   /// @dev Wrapper around a call to the ERC20 function `transfer` that reverts
+   /// also when the token returns `false`.
+   function safeTransfer(IERC20 token, address to, uint256 value) internal {
++    require(token.transfer(to,value));
++    /*
+     bytes4 selector_ = token.transfer.selector;
+ 
+     // solhint-disable-next-line no-inline-assembly
+@@ -24,13 +26,15 @@
+         revert(0, returndatasize())
+       }
+     }
+-
+-    require(getLastTransferResult(token), 'GPv2: failed transfer');
++    
++    require(getLastTransferResult(token), 'GPv2: failed transfer');*/
+   }
+ 
+   /// @dev Wrapper around a call to the ERC20 function `transferFrom` that
+   /// reverts also when the token returns `false`.
+   function safeTransferFrom(IERC20 token, address from, address to, uint256 value) internal {
++    require(token.transferFrom(from,to,value));
++    /*
+     bytes4 selector_ = token.transferFrom.selector;
+ 
+     // solhint-disable-next-line no-inline-assembly
+@@ -48,6 +52,7 @@
+     }
+ 
+     require(getLastTransferResult(token), 'GPv2: failed transferFrom');
++    */
+   }
+ 
+   /// @dev Verifies that the last return was a successful `transfer*` call.
+diff -ruN src/contracts/protocol/libraries/logic/LiquidationLogic.sol src/contracts/protocol/libraries/logic/LiquidationLogic.sol
+--- src/contracts/protocol/libraries/logic/LiquidationLogic.sol	2025-07-13 12:41:55.188409817 +0300
++++ src/contracts/protocol/libraries/logic/LiquidationLogic.sol	2025-07-13 12:34:41.980929052 +0300
+@@ -622,16 +622,24 @@
+       .getLiquidationProtocolFee();
+ 
+     // This is the base collateral to liquidate based on the given debt to cover
+-    vars.baseCollateral =
+-      (debtAssetPrice * debtToCover * collateralAssetUnit) /
+-      (vars.collateralAssetPrice * debtAssetUnit);
+ 
+-    vars.maxCollateralToLiquidate = vars.baseCollateral.percentMul(liquidationBonus);
++    if ((debtAssetPrice * debtToCover * collateralAssetUnit) % (vars.collateralAssetPrice * debtAssetUnit) == 0) // ADDED
++      vars.baseCollateral =
++        (debtAssetPrice * debtToCover * collateralAssetUnit) /
++        (vars.collateralAssetPrice * debtAssetUnit);
++    else // ADDED
++      vars.baseCollateral = // ADDED
++        (debtAssetPrice * debtToCover * collateralAssetUnit) /   // ADDED
++        (vars.collateralAssetPrice * debtAssetUnit)    // ADDED
++        + 1      ;   // ADDED
++
++    vars.maxCollateralToLiquidate = vars.baseCollateral.percentMulCeil(liquidationBonus);
+ 
+     if (vars.maxCollateralToLiquidate > borrowerCollateralBalance) {
+       vars.collateralAmount = borrowerCollateralBalance;
+       vars.debtAmountNeeded = ((vars.collateralAssetPrice * vars.collateralAmount * debtAssetUnit) /
+-        (debtAssetPrice * collateralAssetUnit)).percentDivCeil(liquidationBonus);
++                               //(debtAssetPrice * collateralAssetUnit)).percentDivCeil(liquidationBonus);
++                               (debtAssetPrice * collateralAssetUnit)).percentDivFloor(liquidationBonus);  // CHANGE !
+     } else {
+       vars.collateralAmount = vars.maxCollateralToLiquidate;
+       vars.debtAmountNeeded = debtToCover;
+@@ -644,9 +652,11 @@
+     if (vars.liquidationProtocolFeePercentage != 0) {
+       vars.bonusCollateral =
+         vars.collateralAmount -
+-        vars.collateralAmount.percentDiv(liquidationBonus);
++        //        vars.collateralAmount.percentDiv(liquidationBonus);
++        vars.collateralAmount.percentDivCeil(liquidationBonus); // CHANGE
+ 
+-      vars.liquidationProtocolFee = vars.bonusCollateral.percentMul(
++      //      vars.liquidationProtocolFee = vars.bonusCollateral.percentMul(
++      vars.liquidationProtocolFee = vars.bonusCollateral.percentMulFloor( // CHANGE
+         vars.liquidationProtocolFeePercentage
+       );
+       vars.collateralAmount -= vars.liquidationProtocolFee;
+diff -ruN src/contracts/protocol/libraries/math/PercentageMath.sol src/contracts/protocol/libraries/math/PercentageMath.sol
+--- src/contracts/protocol/libraries/math/PercentageMath.sol	2025-07-13 12:41:55.188409817 +0300
++++ src/contracts/protocol/libraries/math/PercentageMath.sol	2025-07-13 12:41:43.638281598 +0300
+@@ -104,4 +104,18 @@
+       result := add(div(val, percentage), iszero(iszero(mod(val, percentage))))
+     }
+   }
++
++  function percentDivFloor(
++    uint256 value,
++    uint256 percentage
++  ) internal pure returns (uint256 result) {
++    // to avoid overflow, value <= type(uint256).max / PERCENTAGE_FACTOR
++    assembly {
++      if or(iszero(percentage), iszero(iszero(gt(value, div(not(0), PERCENTAGE_FACTOR))))) {
++        revert(0, 0)
++      }
++      let val := mul(value, PERCENTAGE_FACTOR)
++      result := div(val, percentage)
++    }
++  }
+ }

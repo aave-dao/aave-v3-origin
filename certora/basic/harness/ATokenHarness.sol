@@ -15,11 +15,8 @@ import {IScaledBalanceToken} from '../munged/contracts/interfaces/IScaledBalance
 contract ATokenHarness is ATokenInstance {
   using WadRayMath for uint256;
 
-  constructor(
-    Pool pool,
-    address rewardsController,
-    address treasury
-  ) public ATokenInstance(pool, rewardsController, treasury) {}
+  constructor(Pool pool, address rewardsController, address treasury) public
+    ATokenInstance(pool,rewardsController,treasury) {}
 
   function scaledTotalSupply()
     public
@@ -35,8 +32,8 @@ contract ATokenHarness is ATokenInstance {
     return _userState[user].additionalData;
   }
 
-  function scaledBalanceOfToBalanceOf(uint256 bal) public view returns (uint256) {
-    return bal.rayMul(POOL.getReserveNormalizedIncome(_underlyingAsset));
+  function scaledBalance_to_balance(uint256 scaledBal) public view returns (uint256) {
+    return scaledBal.rayMul(POOL.getReserveNormalizedIncome(_underlyingAsset));
   }
 
   function ATokenBalanceOf(address user) public view returns (uint256) {

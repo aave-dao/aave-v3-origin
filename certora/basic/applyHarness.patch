@@ -1,7 +1,7 @@
 diff -ruN ../contracts/instances/ATokenInstance.sol contracts/instances/ATokenInstance.sol
---- ../contracts/instances/ATokenInstance.sol	2025-04-23 17:28:19.139992867 +0300
-+++ contracts/instances/ATokenInstance.sol	2025-05-06 15:03:25.944737209 +0300
-@@ -42,15 +42,15 @@
+--- ../contracts/instances/ATokenInstance.sol	2025-07-06 19:25:57.568302476 +0300
++++ contracts/instances/ATokenInstance.sol	2025-07-13 11:26:19.044856577 +0300
+@@ -47,15 +47,15 @@
  
      _domainSeparator = _calculateDomainSeparator();
  
@@ -28,8 +28,8 @@ diff -ruN ../contracts/instances/ATokenInstance.sol contracts/instances/ATokenIn
    }
  }
 diff -ruN ../contracts/protocol/tokenization/base/ScaledBalanceTokenBase.sol contracts/protocol/tokenization/base/ScaledBalanceTokenBase.sol
---- ../contracts/protocol/tokenization/base/ScaledBalanceTokenBase.sol	2025-04-23 18:29:01.199278896 +0300
-+++ contracts/protocol/tokenization/base/ScaledBalanceTokenBase.sol	2025-05-06 15:00:24.712516914 +0300
+--- ../contracts/protocol/tokenization/base/ScaledBalanceTokenBase.sol	2025-07-06 19:25:57.568302476 +0300
++++ contracts/protocol/tokenization/base/ScaledBalanceTokenBase.sol	2025-07-13 11:26:19.044856577 +0300
 @@ -36,7 +36,7 @@
    }
  
@@ -41,7 +41,7 @@ diff -ruN ../contracts/protocol/tokenization/base/ScaledBalanceTokenBase.sol con
  
 diff -ruN ../.gitignore .gitignore
 --- ../.gitignore	1970-01-01 02:00:00.000000000 +0200
-+++ .gitignore	2025-05-06 15:00:24.712516914 +0300
++++ .gitignore	2025-07-13 11:26:19.048856636 +0300
 @@ -0,0 +1,2 @@
 +*
 +!.gitignore

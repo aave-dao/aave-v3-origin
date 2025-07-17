@@ -14,10 +14,8 @@ contract PoolHarness is PoolInstance {
   using ReserveLogic for DataTypes.ReserveData;
   using ReserveLogic for DataTypes.ReserveCache;
 
-  constructor(
-    IPoolAddressesProvider provider,
-    IReserveInterestRateStrategy interestRateStrategy_
-  ) public PoolInstance(provider, interestRateStrategy_) {}
+  constructor(IPoolAddressesProvider provider,
+              IReserveInterestRateStrategy interestRateStrategy_) public PoolInstance(provider,interestRateStrategy_) {}
 
   function getCurrScaledVariableDebt(address asset) public view returns (uint256) {
     DataTypes.ReserveData storage reserve = _reserves[asset];
