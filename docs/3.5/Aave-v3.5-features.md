@@ -91,3 +91,70 @@ Example: The user transfers `100`, but due to rounding he loses `102` balance. T
   - Note: This is a non-breaking change. The migration from no return value to a `uint256` return value is not expected to break any existing integrations.
 - In previous versions of the protocol, `Mint` and `Burn` events on `AToken` and `VariableDebtToken` did not always perfectly reflect the amount minted and burned due to imprecision in the calculation of the `amountToMint` and `amountToBurn` variables. In v3.5, the `value` emitted in `Mint` and `Burn` events now always accurately reflects the difference between the previous upscaled balance and the new upscaled balance. For `AToken` transfers, the `Transfer` event emits the input amount, while the `BalanceTransfer` event emits the precise scaled amount being transferred. Due to the new rounding logic, the actual change in unscaled balance might differ slightly from the input amount.
 - The control flow of `borrow` has been altered. While in previous versions of the protocol the `borrow` function would first check the hf limitations, from v3.5.0 the healthfactor check is performed at the end. Moving the check allows to de-duplicate the healthfactor related calculations and avoids issues due to non-equivalence in some edge cases.
+
+### Changelog
+
+- General changes:
+  - Changed conversions between scaled and unscaled amounts:
+    - In the `AToken` contract:
+      - The `balanceOf` and `totalSupply` functions now round down (from scaled to unscaled).
+      - The `mint` function now rounds down (from unscaled to scaled).
+      - The `burn` function now rounds up (from unscaled to scaled).
+      - Calculations of a transfer's scaled amount now round up in `AToken` (from unscaled to scaled).
+    - In the `VariableDebtToken` contract:
+      - The `balanceOf` and `totalSupply` functions now round up (from scaled to unscaled).
+      - The `mint` function now rounds up (from unscaled to scaled).
+      - The `burn` function now rounds down (from unscaled to scaled).
+- `Pool` contract:
+  - The `finalizeTransfer` function now accepts scaled amounts instead of unscaled amounts. This avoids the precision loss caused by rounding the unscaled parameters.
+  - The `eliminateReserveDeficit` function now returns the actual amount of deficit that was covered.
+- `AToken` contract:
+  - The following functions now accept a `scaledAmount` parameter instead of the `amount` parameter, which avoids the precision loss caused by rounding the `amount` parameter:
+    - `mint`
+    - `mintToTreasury`
+    - `transferOnLiquidation`
+  - The `burn` function now accepts a new `scaledAmount` argument, which is the scaled amount of tokens to be burned. This avoids the precision loss caused by rounding the `amount` parameter.
+  - Changed the logic and math of the allowance decrease in the `transferFrom` function.
+- `VariableDebtToken` contract:
+  - The `mint` function now accepts a new `scaledAmount` argument, which is the scaled amount of tokens to be minted. This avoids the precision loss caused by rounding the `amount` parameter.
+  - The `burn` function now accepts a `scaledAmount` parameter instead of the `amount` parameter, which avoids the precision loss caused by rounding the `amount` parameter.
+  - Added new state variables `__unusedGap` and `__DEPRECATED_AND_NEVER_TO_BE_REUSED`.
+  - Changed the logic and math of the borrow allowance decrease in the `mint` function.
+- `DebtTokenBase` contract:
+  - Changed the logic and math of the borrow allowance decrease in the `_decreaseBorrowAllowance` function.
+- `IncentivizedERC20` contract:
+  - Added a new `_spendAllowance` function, which is used to decrease the allowance of a spender.
+- `ScaledBalanceTokenBase` contract:
+  - The following functions now accept scaled amounts instead of unscaled amounts:
+    - `_mintScaled`
+    - `_burnScaled`
+  - Changed the math of the `amountToMint` variable in the `_mintScaled` function.
+  - Changed the math of the `amountToBurn` and `amountToMint` variables in the `_burnScaled` function.
+- Libraries:
+  - `BorrowLogic` library:
+    - The `executeBorrow` function now checks the health factor and the LTV of a user after the borrow operation by calling the new `ValidationLogic.validateHFAndLtv` function.
+    - In the `executeRepay` function, the contract now checks the health factor of a user (`user`, not `onBehalfOf`) after the repay operation when the user is repaying with `ATokens`.
+  - `FlashLoanLogic` library:
+    - The `executeFlashLoan` function now rounds up the protocol fees for flash loans of type `0`.
+  - `GenericLogic` library:
+    - In the `calculateUserAccountData` function, the precision in health factor calculations has been improved.
+    - In the `calculateAvailableBorrows` function, the `availableBorrowsInBaseCurrency` variable is now rounded down.
+    - In the `_getUserDebtInBaseCurrency` function, the amount in the base currency is now rounded up.
+  - `LiquidationLogic` library:
+    - The `executeEliminateDeficit` function now returns the actual amount of deficit that was covered.
+    - In the `executeLiquidationCall` function, some rounding behavior has been changed:
+      - The `borrowerReserveDebtInBaseCurrency` variable is now rounded up.
+      - The `isDebtMoreThanLeftoverThreshold` variable is now rounded up.
+    - In the `_calculateAvailableCollateralToLiquidate` function, the `debtAmountNeeded` variable is now rounded up when `maxCollateralToLiquidate > borrowerCollateralBalance`.
+  - `ReserveLogic` library:
+    - In the `_accrueToTreasury` function, the `totalDebtAccrued` variable is now rounded down.
+  - `SupplyLogic` library:
+    - The `executeFinalizeTransfer` function now accepts scaled amounts instead of unscaled amounts.
+  - `ValidationLogic` library:
+    - The following functions now accept scaled parameters instead of unscaled parameters, which avoids the precision loss caused by rounding unscaled parameters:
+      - `validateSupply`
+      - `validateWithdraw`
+      - `validateBorrow`
+      - `validateRepay`
+    - The `validateBorrow` function no longer checks the user's health factor and LTV before the borrow operation.
+  - A new `TokenMath` library has been added. It contains functions to perform conversions between scaled and unscaled amounts for A/V tokens.
