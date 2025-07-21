@@ -11,11 +11,11 @@ import {WadRayMath} from '../munged/src/contracts/protocol/libraries/math/WadRay
 import {LiquidationLogic} from '../munged/src/contracts/protocol/libraries/logic/LiquidationLogic.sol';
 import {GenericLogic} from '../munged/src/contracts/protocol/libraries/logic/GenericLogic.sol';
 
-
-
 contract PoolInstanceHarness is PoolInstance {
-  constructor(IPoolAddressesProvider provider,
-              IReserveInterestRateStrategy interestRateStrategy_) PoolInstance(provider,interestRateStrategy_) {}
+  constructor(
+    IPoolAddressesProvider provider,
+    IReserveInterestRateStrategy interestRateStrategy_
+  ) PoolInstance(provider, interestRateStrategy_) {}
 
   function getNormalizedIncome(address asset) external returns (uint256) {
     return ReserveLogic.getNormalizedIncome(_reserves[asset]);
@@ -26,23 +26,23 @@ contract PoolInstanceHarness is PoolInstance {
   }
 
   function rayMul(uint256 a, uint256 b) external returns (uint256) {
-    return WadRayMath.rayMul(a,b);
-  }
-  
-  function rayDiv(uint256 a, uint256 b) external returns (uint256) {
-    return WadRayMath.rayDiv(a,b);
+    return WadRayMath.rayMul(a, b);
   }
 
-  function getReserveDataExtended(address asset)
-    external view returns (DataTypes.ReserveData memory) {
+  function rayDiv(uint256 a, uint256 b) external returns (uint256) {
+    return WadRayMath.rayDiv(a, b);
+  }
+
+  function getReserveDataExtended(
+    address asset
+  ) external view returns (DataTypes.ReserveData memory) {
     return _reserves[asset];
   }
 
   function _burnBadDebt_WRP(address user) external {
     DataTypes.ExecuteLiquidationCallParams memory params;
-    LiquidationLogic._burnBadDebt(_reserves, _reservesList, _usersConfig[user], params); 
+    LiquidationLogic._burnBadDebt(_reserves, _reservesList, _usersConfig[user], params);
   }
-
 
   function WRP_calculateAvailableCollateralToLiquidate(
     DataTypes.ReserveConfigurationMap memory collateralReserveConfiguration,
@@ -59,25 +59,36 @@ contract PoolInstanceHarness is PoolInstance {
     uint256 c;
     uint256 d;
 
-    (a,b,c,d) = 
-      LiquidationLogic._calculateAvailableCollateralToLiquidate(collateralReserveConfiguration,
-                                                                collateralAssetPrice,
-                                                                collateralAssetUnit,
-                                                                debtAssetPrice,
-                                                                debtAssetUnit,
-                                                                debtToCover,
-                                                                borrowerCollateralBalance,
-                                                                liquidationBonus);
-    return (a,b,c,d);
+    (a, b, c, d) = LiquidationLogic._calculateAvailableCollateralToLiquidate(
+      collateralReserveConfiguration,
+      collateralAssetPrice,
+      collateralAssetUnit,
+      debtAssetPrice,
+      debtAssetUnit,
+      debtToCover,
+      borrowerCollateralBalance,
+      liquidationBonus
+    );
+    return (a, b, c, d);
   }
-  
-  function WRP_calculateUserAccountData_ORIG(DataTypes.CalculateUserAccountDataParams memory params)
-    external view returns (uint256, uint256, uint256, uint256, uint256, bool) {
-    uint256 a; uint256 b; uint256 c; uint256 d; uint256 e; bool f;
-    (a,b,c,d,e,f) =
-      GenericLogic.calculateUserAccountData(_reserves, _reservesList, _eModeCategories, params);
 
-    return (a,b,c,d,e,f);
+  function WRP_calculateUserAccountData_ORIG(
+    DataTypes.CalculateUserAccountDataParams memory params
+  ) external view returns (uint256, uint256, uint256, uint256, uint256, bool) {
+    uint256 a;
+    uint256 b;
+    uint256 c;
+    uint256 d;
+    uint256 e;
+    bool f;
+    (a, b, c, d, e, f) = GenericLogic.calculateUserAccountData(
+      _reserves,
+      _reservesList,
+      _eModeCategories,
+      params
+    );
+
+    return (a, b, c, d, e, f);
   }
 
   function getNextFlags(uint256 data) external pure returns (uint256, bool, bool) {
@@ -85,5 +96,4 @@ contract PoolInstanceHarness is PoolInstance {
     bool isEnabledAsCollateral = data & 2 == 2;
     return (data >> 2, isBorrowed, isEnabledAsCollateral);
   }
-
 }

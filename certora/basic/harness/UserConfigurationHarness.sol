@@ -18,8 +18,19 @@ contract UserConfigurationHarness is PoolStorage {
   }
 
   //Sets if the user is using as collateral the reserve identified by reserveIndex
-  function setUsingAsCollateral(uint256 reserveIndex, address asset, address user, bool _usingAsCollateral) public {
-    UserConfiguration.setUsingAsCollateral(usersConfig, reserveIndex, asset, user, _usingAsCollateral);
+  function setUsingAsCollateral(
+    uint256 reserveIndex,
+    address asset,
+    address user,
+    bool _usingAsCollateral
+  ) public {
+    UserConfiguration.setUsingAsCollateral(
+      usersConfig,
+      reserveIndex,
+      asset,
+      user,
+      _usingAsCollateral
+    );
   }
 
   // Returns if a user has been using the reserve for borrowing or as collateral

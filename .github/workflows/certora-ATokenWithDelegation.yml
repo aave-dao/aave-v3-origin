@@ -35,7 +35,7 @@ jobs:
           cd certora/atoken-with-delegation
           touch applyHarness.patch
           make munged
-    
+
       - uses: Certora/certora-run-action@v1
         with:
           cli-version: 7.31.0
@@ -49,7 +49,7 @@ jobs:
             certora/atoken-with-delegation/conf/token-v3-delegate-HL-rules.conf --rule vp_change_of_balance_affect_power_NON_DELEGATEE 
             certora/atoken-with-delegation/conf/token-v3-delegate-HL-rules.conf --rule pp_change_in_balance_affect_power_DELEGATEE 
             certora/atoken-with-delegation/conf/token-v3-delegate-HL-rules.conf --rule pp_change_of_balance_affect_power_NON_DELEGATEE 
-            certora/atoken-with-delegation/conf/token-v3-delegate-HL-rules.conf --rule no_function_changes_both_balance_and_delegation_state 
+            certora/atoken-with-delegation/conf/token-v3-delegate-HL-rules.conf --rule no_function_changes_both_balance_and_delegation_state
           solc-versions: 0.8.27
           comment-fail-only: false
           solc-remove-version-prefix: "0."
@@ -58,11 +58,3 @@ jobs:
           install-java: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-
-
-          
-
-
-
-

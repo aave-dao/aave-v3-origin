@@ -64,8 +64,6 @@ jobs:
           install-java: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-
 # Put back the following rule after ticket 8889 is closed
-# certora/basic/conf/NEW-pool-no-summarizations.conf ##### waiting for  
+# certora/basic/conf/NEW-pool-no-summarizations.conf ##### waiting for
 

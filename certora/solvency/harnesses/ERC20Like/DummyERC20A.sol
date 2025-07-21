@@ -4,52 +4,48 @@
 pragma solidity ^0.8.0;
 
 contract DummyERC20A {
-    uint256 t;
-    mapping(address => uint256) b;
-    mapping(address => mapping(address => uint256)) a;
+  uint256 t;
+  mapping(address => uint256) b;
+  mapping(address => mapping(address => uint256)) a;
 
-    string public name;
-    string public symbol;
-    uint public decimals;
+  string public name;
+  string public symbol;
+  uint public decimals;
 
-    function myAddress() external view returns (address) {
-        return address(this);
-    }
-    
-    function totalSupply() external view returns (uint256) {
-        return t;
-    }
+  function myAddress() external view returns (address) {
+    return address(this);
+  }
 
-    function balanceOf(address account) external view returns (uint256) {
-        return b[account];
-    }
+  function totalSupply() external view returns (uint256) {
+    return t;
+  }
 
-    function transfer(address recipient, uint256 amount) external returns (bool) {
-        b[msg.sender] -= amount;
-        b[recipient] += amount;
+  function balanceOf(address account) external view returns (uint256) {
+    return b[account];
+  }
 
-        return true;
-    }
+  function transfer(address recipient, uint256 amount) external returns (bool) {
+    b[msg.sender] -= amount;
+    b[recipient] += amount;
 
-    function allowance(address owner, address spender) external view returns (uint256) {
-        return a[owner][spender];
-    }
+    return true;
+  }
 
-    function approve(address spender, uint256 amount) external returns (bool) {
-        a[msg.sender][spender] = amount;
+  function allowance(address owner, address spender) external view returns (uint256) {
+    return a[owner][spender];
+  }
 
-        return true;
-    }
+  function approve(address spender, uint256 amount) external returns (bool) {
+    a[msg.sender][spender] = amount;
 
-    function transferFrom(
-        address sender,
-        address recipient,
-        uint256 amount
-    ) external returns (bool) {
-        b[sender] -= amount;
-        b[recipient] += amount;
-        a[sender][msg.sender] -= amount;
+    return true;
+  }
 
-        return true;
-    }
+  function transferFrom(address sender, address recipient, uint256 amount) external returns (bool) {
+    b[sender] -= amount;
+    b[recipient] += amount;
+    a[sender][msg.sender] -= amount;
+
+    return true;
+  }
 }

@@ -61,7 +61,7 @@ jobs:
             certora/solvency/confs/solvency/liquidationCall/burnBadDebt-assetINloop.conf 
             certora/solvency/confs/solvency/liquidationCall/burnBadDebt-assetNOTINloop.conf 
             certora/solvency/confs/solvency/liquidationCall/main-SAMEasset.conf 
-            certora/solvency/confs/solvency/liquidationCall/lemma-SAMEasset.conf 
+            certora/solvency/confs/solvency/liquidationCall/lemma-SAMEasset.conf
           solc-versions: 0.8.27
           comment-fail-only: false
           solc-remove-version-prefix: "0."
@@ -70,21 +70,6 @@ jobs:
           install-java: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-
 # Put back the following rule after ticket 8889 is closed
-# certora/basic/conf/NEW-pool-no-summarizations.conf ##### waiting for  
-
-
-
-
-
-
-
-
-
-
-
-
-
+# certora/basic/conf/NEW-pool-no-summarizations.conf ##### waiting for
 

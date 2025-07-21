@@ -1,11 +1,9 @@
 pragma solidity ^0.8.10;
 pragma experimental ABIEncoderV2;
 
-
-import {IERC20} from "certora/atoken-with-delegation/munged/src/contracts/dependencies/openzeppelin/contracts/IERC20.sol";
-import {IAToken} from "certora/atoken-with-delegation/munged/src/contracts/interfaces/IAToken.sol";
+import {IERC20} from 'certora/atoken-with-delegation/munged/src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {IAToken} from 'certora/atoken-with-delegation/munged/src/contracts/interfaces/IAToken.sol';
 import {WadRayMath} from 'certora/atoken-with-delegation/munged/src/contracts/protocol/libraries/math/WadRayMath.sol';
-
 
 contract SymbolicLendingPoolL1 {
   using WadRayMath for uint256;
@@ -24,15 +22,10 @@ contract SymbolicLendingPoolL1 {
    * @param onBehalfOf The recipient of the minted Atokens
    * @param referralCode A unique code (unused)
    **/
-  function supply(
-    address asset,
-    uint256 amount,
-    address onBehalfOf,
-    uint16 referralCode
-  ) external {
+  function supply(address asset, uint256 amount, address onBehalfOf, uint16 referralCode) external {
     require(asset == address(underlyingToken));
     underlyingToken.transferFrom(msg.sender, address(aToken), amount);
-    
+
     uint256 scaledAmount = amount.rayDivFloor(liquidityIndex);
     aToken.mint(msg.sender, onBehalfOf, scaledAmount, liquidityIndex);
   }
@@ -44,11 +37,7 @@ contract SymbolicLendingPoolL1 {
    * @param to The recipient of the burned Atokens
    * @return The `amount` of tokens withdrawn
    **/
-  function withdraw(
-    address asset,
-    uint256 amount,
-    address to
-  ) external returns (uint256) {
+  function withdraw(address asset, uint256 amount, address to) external returns (uint256) {
     require(asset == address(underlyingToken));
 
     uint256 scaledAmountToWithdraw = amount.rayDivCeil(liquidityIndex);
@@ -56,26 +45,16 @@ contract SymbolicLendingPoolL1 {
     return amount;
   }
 
-    /**
-     * @dev A simplification returning a constant
-     * @param asset The underlying asset to which the Atoken is connected
-     * @return liquidityIndex the `liquidityIndex` of the asset
-     **/
-    function getReserveNormalizedIncome(address asset)
-        external
-        view
-        virtual
-        returns (uint256)
-    {
-        return liquidityIndex;
-    }
+  /**
+   * @dev A simplification returning a constant
+   * @param asset The underlying asset to which the Atoken is connected
+   * @return liquidityIndex the `liquidityIndex` of the asset
+   **/
+  function getReserveNormalizedIncome(address asset) external view virtual returns (uint256) {
+    return liquidityIndex;
+  }
 
-    function getLiquidityIndex()
-        external
-        view
-        virtual
-        returns (uint256)
-    {
-        return liquidityIndex;
-    }
+  function getLiquidityIndex() external view virtual returns (uint256) {
+    return liquidityIndex;
+  }
 }

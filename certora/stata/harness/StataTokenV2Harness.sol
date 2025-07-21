@@ -27,7 +27,6 @@ contract StataTokenV2Harness is StataTokenV2 {
     return rewardTokens().length;
   }
 
-
   // claims rewards for a user on the static aToken.
   // the method builds the rewards array with a single reward and calls the internal claim function with it
   function claimSingleRewardOnBehalf(

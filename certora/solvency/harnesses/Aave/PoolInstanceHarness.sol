@@ -10,14 +10,15 @@ import {ReserveLogic} from '../../munged/src/contracts/protocol/libraries/logic/
 import {WadRayMath} from '../../munged/src/contracts/protocol/libraries/math/WadRayMath.sol';
 import {LiquidationLogic} from '../../munged/src/contracts/protocol/libraries/logic/LiquidationLogic.sol';
 
-import {DummyContract} from "./DummyContract.sol";
-
+import {DummyContract} from './DummyContract.sol';
 
 contract PoolInstanceHarness is PoolInstance {
   DummyContract DUMMY;
 
-  constructor(IPoolAddressesProvider provider,
-              IReserveInterestRateStrategy interestRateStrategy_) PoolInstance(provider,interestRateStrategy_) {}
+  constructor(
+    IPoolAddressesProvider provider,
+    IReserveInterestRateStrategy interestRateStrategy_
+  ) PoolInstance(provider, interestRateStrategy_) {}
 
   function getNormalizedIncome(address asset) external returns (uint256) {
     return ReserveLogic.getNormalizedIncome(_reserves[asset]);
@@ -30,23 +31,24 @@ contract PoolInstanceHarness is PoolInstance {
   function havoc_all() public {
     DUMMY.havoc_all_dummy();
   }
-  
+
   function rayMul(uint256 a, uint256 b) external returns (uint256) {
-    return WadRayMath.rayMul(a,b);
-  }
-  
-  function rayDiv(uint256 a, uint256 b) external returns (uint256) {
-    return WadRayMath.rayDiv(a,b);
+    return WadRayMath.rayMul(a, b);
   }
 
-  function getReserveDataExtended(address asset)
-    external view returns (DataTypes.ReserveData memory) {
+  function rayDiv(uint256 a, uint256 b) external returns (uint256) {
+    return WadRayMath.rayDiv(a, b);
+  }
+
+  function getReserveDataExtended(
+    address asset
+  ) external view returns (DataTypes.ReserveData memory) {
     return _reserves[asset];
   }
 
   function _burnBadDebt_WRP(address user) external {
     DataTypes.ExecuteLiquidationCallParams memory params;
     //    LiquidationLogic._burnBadDebt(_reserves, _reservesList, _usersConfig[user], user, RESERVE_INTEREST_RATE_STRATEGY);
-    LiquidationLogic._burnBadDebt(_reserves, _reservesList, _usersConfig[user], params); 
+    LiquidationLogic._burnBadDebt(_reserves, _reservesList, _usersConfig[user], params);
   }
 }
