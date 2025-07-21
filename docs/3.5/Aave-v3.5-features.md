@@ -68,7 +68,7 @@ While these problems are not critical, for the most part, they can be mitigated 
 
 ### Improved flag logic
 
-In v3.4 we increased the robustness of the flag logic for borrow operations, by switching validations from `scaledBalance to scaled` comparisons to checks against the actual balance (e.g. `balanceZeroAfterBurn`).
+In v3.4 we increased the robustness of the flag logic for borrow operations, by switching validations from `unscaled to scaled` comparisons to checks against the actual balance (e.g. `balanceZeroAfterBurn`).
 
 In v3.5 we decided to double down on these robustness improvements:
 
