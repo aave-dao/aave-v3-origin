@@ -639,7 +639,13 @@ contract ATokenDelegationTest is TestnetProcedures {
 
           vm.prank(caller);
 
-          aToken.transferOnLiquidation({from: from, to: to, amount: amount, index: index});
+          aToken.transferOnLiquidation({
+            from: from,
+            to: to,
+            amount: amount,
+            scaledAmount: amount.rayDivCeil(index),
+            index: index
+          });
         }
       } else {
         vm.prank(from);

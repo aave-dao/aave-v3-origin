@@ -414,4 +414,25 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     Multicall(address(contracts.poolProxy)).multicall(calls);
     vm.stopPrank();
   }
+
+  function _checkInterestRates(address asset) internal view {
+    DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(asset);
+
+    (uint256 nextLiquidityRate, uint256 nextVariableRate) = contracts
+      .defaultInterestRateStrategy
+      .calculateInterestRates(
+        DataTypes.CalculateInterestRatesParams({
+          unbacked: contracts.poolProxy.getReserveDeficit(asset),
+          liquidityAdded: 0,
+          liquidityTaken: 0,
+          totalDebt: IERC20(contracts.poolProxy.getReserveVariableDebtToken(asset)).totalSupply(),
+          reserveFactor: reserveData.configuration.getReserveFactor(),
+          reserve: asset,
+          usingVirtualBalance: true,
+          virtualUnderlyingBalance: contracts.poolProxy.getVirtualUnderlyingBalance(asset)
+        })
+      );
+    assertEq(reserveData.currentLiquidityRate, nextLiquidityRate, 'bad liquidity rate');
+    assertEq(reserveData.currentVariableBorrowRate, nextVariableRate, 'bad debt rate');
+  }
 }

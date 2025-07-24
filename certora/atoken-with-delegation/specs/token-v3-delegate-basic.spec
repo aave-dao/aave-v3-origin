@@ -12,7 +12,7 @@
   The rules are verified under the following strong assumption:
               _SymbolicLendingPoolL1.getReserveNormalizedIncome() == RAY().
   That means that the liquidity index is 1.
-  This is OK, because ATokenWithDelegation is going to be used on that way.
+  This is OK, because ATokenWithDelegation is going to be used only this way.
   =============================================================================================*/
 
 
@@ -113,14 +113,14 @@ rule powerWhenNotDelegating(address account) {
    This function should cover all the possible transfer functions
    ==============================================================*/
 function CALL_TRANSFER(env e, address alice, address bob, uint256 amount) {
-    uint8 choose;
-
-    if (choose ==0)
-        transferFrom(e, alice, bob, amount);
-    else {
-      uint256 indexx;
-      transferOnLiquidation(e, alice, bob, amount, index());
-    }
+  uint8 choose;
+  
+  if (choose ==0) 
+    transferFrom(e, alice, bob, amount);
+  else {
+    uint256 indexx;
+    transferOnLiquidation(e, alice, bob, amount, amount, index()); // Since index==1 we assume that scaledAmount==amount
+  }
 }
 
 
@@ -793,32 +793,32 @@ rule votingDelegateChanges(address alice, method f) {
     @Link:
 */
 rule votingPowerChanges(address alice, method f) 
-filtered { f -> !f.isView && f.contract == currentContract}
+  filtered { f -> !f.isView && f.contract == currentContract}
 {
-    env e;
-    calldataarg args;
-
-    uint aliceVotingPowerBefore = getPowerCurrent(alice, VOTING_POWER());
-    uint alicePropPowerBefore = getPowerCurrent(alice, PROPOSITION_POWER());
-
-    f(e, args);
-
-    uint aliceVotingPowerAfter = getPowerCurrent(alice, VOTING_POWER());
-    uint alicePropPowerAfter = getPowerCurrent(alice, PROPOSITION_POWER());
-
-    // only the following function may change the power of an address
-    assert aliceVotingPowerAfter != aliceVotingPowerBefore || alicePropPowerAfter != alicePropPowerBefore =>
-        f.selector == sig:delegate(address).selector || 
-        f.selector == sig:delegateByType(address,IBaseDelegation.GovernancePowerType).selector ||
-        f.selector == sig:metaDelegate(address,address,uint256,uint8,bytes32,bytes32).selector ||
-        f.selector == sig:metaDelegateByType(address,address,IBaseDelegation.GovernancePowerType,uint256,uint8,bytes32,bytes32).selector ||
-        f.selector == sig:transfer(address,uint256).selector ||
-        f.selector == sig:transferFrom(address,address,uint256).selector ||
-      f.selector == sig:transferOnLiquidation(address,address,uint256,uint256).selector ||
-        f.selector == sig:burn(address,address,uint256,uint256).selector ||
-        f.selector == sig:mint(address,address,uint256,uint256).selector ||
-        f.selector == sig:mintToTreasury(uint256,uint256).selector
-        ;
+  env e;
+  calldataarg args;
+  
+  uint aliceVotingPowerBefore = getPowerCurrent(alice, VOTING_POWER());
+  uint alicePropPowerBefore = getPowerCurrent(alice, PROPOSITION_POWER());
+  
+  f(e, args);
+  
+  uint aliceVotingPowerAfter = getPowerCurrent(alice, VOTING_POWER());
+  uint alicePropPowerAfter = getPowerCurrent(alice, PROPOSITION_POWER());
+  
+  // only the following function may change the power of an address
+  assert aliceVotingPowerAfter != aliceVotingPowerBefore || alicePropPowerAfter != alicePropPowerBefore =>
+    f.selector == sig:delegate(address).selector || 
+    f.selector == sig:delegateByType(address,IBaseDelegation.GovernancePowerType).selector ||
+    f.selector == sig:metaDelegate(address,address,uint256,uint8,bytes32,bytes32).selector ||
+    f.selector == sig:metaDelegateByType(address,address,IBaseDelegation.GovernancePowerType,uint256,uint8,bytes32,bytes32).selector ||
+    f.selector == sig:transfer(address,uint256).selector ||
+    f.selector == sig:transferFrom(address,address,uint256).selector ||
+    f.selector == sig:transferOnLiquidation(address,address,uint256,uint256,uint256).selector ||
+    f.selector == sig:burn(address,address,uint256,uint256,uint256).selector ||
+    f.selector == sig:mint(address,address,uint256,uint256).selector ||
+    f.selector == sig:mintToTreasury(uint256,uint256).selector
+    ;
 }
 
 /*

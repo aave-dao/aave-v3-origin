@@ -91,7 +91,8 @@ contract PoolOperations_gas_Tests is Testhelpers {
 
     _skip(100);
 
-    contracts.poolProxy.borrow(tokenList.usdx, amountToBorrow, 2, 0, borrower);
+    // -1 because the first borrow might have consumed one more allowance than expected due to rounding
+    contracts.poolProxy.borrow(tokenList.usdx, amountToBorrow - 1, 2, 0, borrower);
     vm.snapshotGasLastCall('Pool.Operations', 'borrow: recurrent borrow; onBehalfOf');
   }
 

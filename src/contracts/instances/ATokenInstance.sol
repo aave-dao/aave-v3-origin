@@ -16,7 +16,7 @@ import {AToken} from '../protocol/tokenization/AToken.sol';
  * @notice Instance of the interest bearing token for the Aave protocol
  */
 contract ATokenInstance is AToken {
-  uint256 public constant ATOKEN_REVISION = 3;
+  uint256 public constant ATOKEN_REVISION = 4;
 
   constructor(
     IPool pool,

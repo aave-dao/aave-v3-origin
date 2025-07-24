@@ -16,7 +16,7 @@ import {ATokenWithDelegation} from '../protocol/tokenization/ATokenWithDelegatio
  * @notice Instance of the interest bearing token for the Aave protocol with additional delegation functionality used on aAAVE(mainnet)
  */
 contract ATokenWithDelegationInstance is ATokenWithDelegation {
-  uint256 public constant ATOKEN_REVISION = 3;
+  uint256 public constant ATOKEN_REVISION = 4;
 
   constructor(
     IPool pool,

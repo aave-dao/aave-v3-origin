@@ -1,13 +1,13 @@
 diff -ruN .gitignore .gitignore
 --- .gitignore	1970-01-01 02:00:00.000000000 +0200
-+++ .gitignore	2025-05-06 17:28:25.452368257 +0300
++++ .gitignore	2025-07-02 13:19:44.683772883 +0300
 @@ -0,0 +1,2 @@
 +*
 +!.gitignore
 \ No newline at end of file
 diff -ruN src/contracts/extensions/stata-token/ERC20AaveLMUpgradeable.sol src/contracts/extensions/stata-token/ERC20AaveLMUpgradeable.sol
---- src/contracts/extensions/stata-token/ERC20AaveLMUpgradeable.sol	2025-05-06 17:33:09.058207881 +0300
-+++ src/contracts/extensions/stata-token/ERC20AaveLMUpgradeable.sol	2025-05-06 17:28:25.453368256 +0300
+--- src/contracts/extensions/stata-token/ERC20AaveLMUpgradeable.sol	2025-07-02 13:20:01.232056816 +0300
++++ src/contracts/extensions/stata-token/ERC20AaveLMUpgradeable.sol	2025-07-02 13:19:44.683772883 +0300
 @@ -151,7 +151,7 @@
    }
  
@@ -18,9 +18,9 @@ diff -ruN src/contracts/extensions/stata-token/ERC20AaveLMUpgradeable.sol src/co
      return $._rewardTokens;
    }
 diff -ruN src/contracts/instances/ATokenInstance.sol src/contracts/instances/ATokenInstance.sol
---- src/contracts/instances/ATokenInstance.sol	2025-05-06 17:33:09.058207881 +0300
-+++ src/contracts/instances/ATokenInstance.sol	2025-05-06 17:30:20.488252034 +0300
-@@ -42,15 +42,15 @@
+--- src/contracts/instances/ATokenInstance.sol	2025-07-02 13:20:01.232056816 +0300
++++ src/contracts/instances/ATokenInstance.sol	2025-07-02 13:19:44.683772883 +0300
+@@ -47,15 +47,15 @@
  
      _domainSeparator = _calculateDomainSeparator();
  

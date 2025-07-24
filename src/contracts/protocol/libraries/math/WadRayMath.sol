@@ -6,10 +6,16 @@ pragma solidity ^0.8.0;
  * @author Aave
  * @notice Provides functions to perform calculations with Wad and Ray units
  * @dev Provides mul and div function for wads (decimal numbers with 18 digits of precision) and rays (decimal numbers
- * with 27 digits of precision)
- * @dev Operations are rounded. If a value is >=.5, will be rounded up, otherwise rounded down.
+ * with 27 digits of precision).
+ * @dev Default operations round half up (if a value is >= .5, it will be rounded up, otherwise rounded down).
+ * @dev For specific rounding behaviors, functions with `Floor` and `Ceil` suffixes or a `Rounding` parameter are available.
  */
 library WadRayMath {
+  enum Rounding {
+    Floor,
+    Ceil
+  }
+
   // HALF_WAD and HALF_RAY expressed with extended notation as constant with operations are not supported in Yul assembly
   uint256 internal constant WAD = 1e18;
   uint256 internal constant HALF_WAD = 0.5e18;
@@ -55,21 +61,41 @@ library WadRayMath {
     }
   }
 
-  /**
-   * @notice Multiplies two ray, rounding half up to the nearest ray
-   * @dev assembly optimized for improved gas savings, see https://twitter.com/transmissions11/status/1451131036377571328
-   * @param a Ray
-   * @param b Ray
-   * @return c = a raymul b
-   */
   function rayMul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    // to avoid overflow, a <= (type(uint256).max - HALF_RAY) / b
     assembly {
+      // to avoid overflow, a <= (type(uint256).max - HALF_RAY) / b
       if iszero(or(iszero(b), iszero(gt(a, div(sub(not(0), HALF_RAY), b))))) {
         revert(0, 0)
       }
-
       c := div(add(mul(a, b), HALF_RAY), RAY)
+    }
+  }
+
+  function rayMul(uint256 a, uint256 b, Rounding rounding) internal pure returns (uint256 c) {
+    if (rounding == Rounding.Floor) return rayMulFloor(a, b);
+    return rayMulCeil(a, b);
+  }
+
+  function rayMulFloor(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    assembly {
+      // Overflow check: Ensure a * b does not exceed uint256 max
+      if iszero(or(iszero(b), iszero(gt(a, div(not(0), b))))) {
+        revert(0, 0)
+      }
+
+      c := div(mul(a, b), RAY)
+    }
+  }
+
+  function rayMulCeil(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    assembly {
+      // Overflow check: Ensure a * b does not exceed uint256 max
+      if iszero(or(iszero(b), iszero(gt(a, div(not(0), b))))) {
+        revert(0, 0)
+      }
+
+      let product := mul(a, b)
+      c := add(div(product, RAY), iszero(iszero(mod(product, RAY))))
     }
   }
 
@@ -81,13 +107,38 @@ library WadRayMath {
    * @return c = a raydiv b
    */
   function rayDiv(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    // to avoid overflow, a <= (type(uint256).max - halfB) / RAY
     assembly {
+      // to avoid overflow, a <= (type(uint256).max - b / 2) / RAY
       if or(iszero(b), iszero(iszero(gt(a, div(sub(not(0), div(b, 2)), RAY))))) {
         revert(0, 0)
       }
-
       c := div(add(mul(a, RAY), div(b, 2)), b)
+    }
+  }
+
+  function rayDiv(uint256 a, uint256 b, Rounding rounding) internal pure returns (uint256 c) {
+    if (rounding == Rounding.Floor) return rayDivFloor(a, b);
+    return rayDivCeil(a, b);
+  }
+
+  function rayDivCeil(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    assembly {
+      // Overflow check: Ensure a * RAY does not exceed uint256 max
+      if or(iszero(b), iszero(iszero(gt(a, div(not(0), RAY))))) {
+        revert(0, 0)
+      }
+      let scaled := mul(a, RAY)
+      c := add(div(scaled, b), iszero(iszero(mod(scaled, b))))
+    }
+  }
+
+  function rayDivFloor(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    assembly {
+      // Overflow check: Ensure a * RAY does not exceed uint256 max
+      if or(iszero(b), iszero(iszero(gt(a, div(not(0), RAY))))) {
+        revert(0, 0)
+      }
+      c := div(mul(a, RAY), b)
     }
   }
 

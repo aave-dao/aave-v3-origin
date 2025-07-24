@@ -29,7 +29,7 @@ methods {
     
     function scaledTotalSupply() external returns (uint256);
     function scaledBalanceOf(address) external returns (uint256);
-    function scaledBalanceOfToBalanceOf(uint256) external returns (uint256) envfree;
+    function scaledBalance_to_balance(uint256) external returns (uint256) envfree;
 }
 
 
@@ -77,8 +77,9 @@ hook Sstore _userState[KEY address a].balance uint120 balance (uint120 old_balan
 
 
 invariant totalSupplyEqualsSumAllBalance(env e)
-    totalSupply(e) == scaledBalanceOfToBalanceOf(require_uint256(sumAllBalance()))
+    totalSupply(e) == scaledBalance_to_balance(require_uint256(sumAllBalance()))
     filtered { f -> !f.isView && f.contract == currentContract}
+/*
     {
         preserved mint(address caller, address onBehalfOf, uint256 amount, uint256 index) with (env e2) {
             require index == gRNI();
@@ -87,7 +88,7 @@ invariant totalSupplyEqualsSumAllBalance(env e)
             require index == gRNI();
         }
     }
-    
+*/  
 
 /*
   --------------------------------------------------------------------------------------

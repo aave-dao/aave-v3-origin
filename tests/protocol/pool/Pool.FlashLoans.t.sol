@@ -355,6 +355,200 @@ contract PoolFlashLoansTests is TestnetProcedures {
     );
   }
 
+  function test_flashloan_simple_rounding_premium() public {
+    vm.prank(poolAdmin);
+    TestnetERC20(tokenList.usdx).transferOwnership(address(mockFlashSimpleReceiver));
+
+    vm.expectEmit(address(contracts.poolProxy));
+    emit IPool.FlashLoan(
+      address(mockFlashSimpleReceiver),
+      alice,
+      tokenList.usdx,
+      1,
+      DataTypes.InterestRateMode(0),
+      1, // should be 1 although
+      0
+    );
+
+    vm.prank(alice);
+    contracts.poolProxy.flashLoanSimple(
+      address(mockFlashSimpleReceiver),
+      tokenList.usdx,
+      1,
+      '0x',
+      0
+    );
+  }
+
+  function test_flashloan_rounding_premium() public {
+    vm.prank(poolAdmin);
+    TestnetERC20(tokenList.usdx).transferOwnership(address(mockFlashReceiver));
+
+    address[] memory assets = new address[](1);
+    uint256[] memory amounts = new uint256[](1);
+    uint256[] memory modes = new uint256[](1);
+
+    assets[0] = tokenList.usdx;
+    amounts[0] = 1;
+    modes[0] = 0;
+
+    vm.expectEmit(address(contracts.poolProxy));
+    emit IPool.FlashLoan(
+      address(mockFlashReceiver),
+      alice,
+      tokenList.usdx,
+      1,
+      DataTypes.InterestRateMode(0),
+      1, // should be 1 although
+      0
+    );
+
+    vm.prank(alice);
+    contracts.poolProxy.flashLoan(
+      address(mockFlashReceiver),
+      assets,
+      amounts,
+      modes,
+      alice,
+      '0x',
+      0
+    );
+  }
+
+  function test_flashloan_rounding_accruedToTreasury() public {
+    vm.prank(poolAdmin);
+    TestnetERC20(tokenList.usdx).transferOwnership(address(mockFlashReceiver));
+
+    // increase liquidity index
+
+    vm.startPrank(alice);
+
+    uint256 supplyAmount = 50_000e6;
+
+    contracts.poolProxy.supply({
+      asset: tokenList.usdx,
+      amount: supplyAmount,
+      onBehalfOf: alice,
+      referralCode: 0
+    });
+
+    contracts.poolProxy.borrow({
+      asset: tokenList.usdx,
+      amount: supplyAmount / 5,
+      interestRateMode: 2,
+      referralCode: 0,
+      onBehalfOf: alice
+    });
+
+    vm.warp(block.timestamp + 4500000 days);
+
+    contracts.poolProxy.repay({
+      asset: tokenList.usdx,
+      amount: supplyAmount / 5,
+      interestRateMode: 2,
+      onBehalfOf: alice
+    });
+
+    vm.stopPrank();
+
+    // check liquidity index
+
+    DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
+      tokenList.usdx
+    );
+    assertNotEq(reserveData.liquidityIndex, 1e27);
+    assertGt(reserveData.liquidityIndex, 10e27);
+    assertLt(reserveData.liquidityIndex, 11e27);
+
+    // accruedToTreasury += 18.rayDivFloor(10e27) = 18 * 1e27 / 10e27 = 1.8
+    // accruedToTreasury += 18.rayDivFloor(10e27) = 18 * 1e27 / 10e27 = 1.63636363636
+
+    uint256 flashLoanFeeAmount = 18;
+    uint256 flashLoanFeePercentageTotal = contracts.poolProxy.FLASHLOAN_PREMIUM_TOTAL();
+    uint256 flashLoanAmount = (flashLoanFeeAmount * 100_00) / flashLoanFeePercentageTotal;
+
+    address[] memory assets = new address[](1);
+    uint256[] memory amounts = new uint256[](1);
+    uint256[] memory modes = new uint256[](1);
+
+    assets[0] = tokenList.usdx;
+    amounts[0] = flashLoanAmount;
+    modes[0] = 0;
+
+    vm.prank(alice);
+    contracts.poolProxy.flashLoan(address(mockFlashReceiver), assets, amounts, modes, alice, '', 0);
+
+    uint256 oldAccruedToTreasury = reserveData.accruedToTreasury;
+    reserveData = contracts.poolProxy.getReserveData(tokenList.usdx);
+    assertEq(reserveData.accruedToTreasury, oldAccruedToTreasury + 1);
+  }
+
+  function test_flashloan_simple_rounding_accruedToTreasury() public {
+    vm.prank(poolAdmin);
+    TestnetERC20(tokenList.usdx).transferOwnership(address(mockFlashSimpleReceiver));
+
+    // increase liquidity index
+
+    vm.startPrank(alice);
+
+    uint256 supplyAmount = 50_000e6;
+
+    contracts.poolProxy.supply({
+      asset: tokenList.usdx,
+      amount: supplyAmount,
+      onBehalfOf: alice,
+      referralCode: 0
+    });
+
+    contracts.poolProxy.borrow({
+      asset: tokenList.usdx,
+      amount: supplyAmount / 5,
+      interestRateMode: 2,
+      referralCode: 0,
+      onBehalfOf: alice
+    });
+
+    vm.warp(block.timestamp + 4500000 days);
+
+    contracts.poolProxy.repay({
+      asset: tokenList.usdx,
+      amount: supplyAmount / 5,
+      interestRateMode: 2,
+      onBehalfOf: alice
+    });
+
+    vm.stopPrank();
+
+    // check liquidity index
+
+    DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
+      tokenList.usdx
+    );
+    assertNotEq(reserveData.liquidityIndex, 1e27);
+    assertGt(reserveData.liquidityIndex, 10e27);
+    assertLt(reserveData.liquidityIndex, 11e27);
+
+    // accruedToTreasury += 18.rayDivFloor(10e27) = 18 * 1e27 / 10e27 = 1.8
+    // accruedToTreasury += 18.rayDivFloor(10e27) = 18 * 1e27 / 10e27 = 1.63636363636
+
+    uint256 flashLoanFeeAmount = 18;
+    uint256 flashLoanFeePercentageTotal = contracts.poolProxy.FLASHLOAN_PREMIUM_TOTAL();
+    uint256 flashLoanAmount = (flashLoanFeeAmount * 100_00) / flashLoanFeePercentageTotal;
+
+    vm.prank(alice);
+    contracts.poolProxy.flashLoanSimple({
+      receiverAddress: address(mockFlashSimpleReceiver),
+      asset: tokenList.usdx,
+      amount: flashLoanAmount,
+      params: '',
+      referralCode: 0
+    });
+
+    uint256 oldAccruedToTreasury = reserveData.accruedToTreasury;
+    reserveData = contracts.poolProxy.getReserveData(tokenList.usdx);
+    assertEq(reserveData.accruedToTreasury, oldAccruedToTreasury + 1);
+  }
+
   function test_flashloan_simple_2() public {
     uint256 virtualUnderlyingBalanceBefore = contracts.poolProxy.getVirtualUnderlyingBalance(
       tokenList.usdx
@@ -517,24 +711,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
       referralCode: 0
     });
 
-    reserveData = contracts.poolProxy.getReserveData(asset);
-
-    (uint256 nextLiquidityRate, uint256 nextVariableRate) = contracts
-      .defaultInterestRateStrategy
-      .calculateInterestRates(
-        DataTypes.CalculateInterestRatesParams({
-          unbacked: contracts.poolProxy.getReserveDeficit(asset),
-          liquidityAdded: 0,
-          liquidityTaken: 0,
-          totalDebt: IERC20(contracts.poolProxy.getReserveVariableDebtToken(asset)).totalSupply(),
-          reserveFactor: reserveData.configuration.getReserveFactor(),
-          reserve: asset,
-          usingVirtualBalance: true,
-          virtualUnderlyingBalance: contracts.poolProxy.getVirtualUnderlyingBalance(asset)
-        })
-      );
-    assertEq(reserveData.currentLiquidityRate, nextLiquidityRate);
-    assertEq(reserveData.currentVariableBorrowRate, nextVariableRate);
+    _checkInterestRates(asset);
   }
 
   function test_flashloan_borrow_inside_flashloan_and_check_rate_after() public {
@@ -596,27 +773,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
     });
 
     for (uint256 i = 0; i < assets.length; ++i) {
-      DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
-        assets[i]
-      );
-
-      (uint256 nextLiquidityRate, uint256 nextVariableRate) = contracts
-        .defaultInterestRateStrategy
-        .calculateInterestRates(
-          DataTypes.CalculateInterestRatesParams({
-            unbacked: contracts.poolProxy.getReserveDeficit(assets[0]),
-            liquidityAdded: 0,
-            liquidityTaken: 0,
-            totalDebt: IERC20(contracts.poolProxy.getReserveVariableDebtToken(assets[0]))
-              .totalSupply(),
-            reserveFactor: reserveData.configuration.getReserveFactor(),
-            reserve: assets[0],
-            usingVirtualBalance: true,
-            virtualUnderlyingBalance: contracts.poolProxy.getVirtualUnderlyingBalance(assets[0])
-          })
-        );
-      assertEq(reserveData.currentLiquidityRate, nextLiquidityRate);
-      assertEq(reserveData.currentVariableBorrowRate, nextVariableRate);
+      _checkInterestRates(assets[i]);
     }
   }
 
@@ -725,7 +882,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
         assets[x],
         amounts[x],
         DataTypes.InterestRateMode(modes[x]),
-        modes[x] > 0 ? 0 : amounts[x].percentMul(totalFee),
+        modes[x] > 0 ? 0 : amounts[x].percentMulCeil(totalFee),
         0
       );
     }

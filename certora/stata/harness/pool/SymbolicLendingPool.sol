@@ -4,8 +4,11 @@ pragma experimental ABIEncoderV2;
 import {IERC20} from '../../munged/src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
 import {IAToken} from '../../munged/src/contracts/interfaces/IAToken.sol';
 import {DataTypes} from '../../munged/src/contracts/protocol/libraries/types/DataTypes.sol';
+import {WadRayMath} from '../../munged/src/contracts/protocol/libraries/math/WadRayMath.sol';
 
 contract SymbolicLendingPool {
+  using WadRayMath for uint256;
+
   // an underlying asset in the pool
   IERC20 public underlyingToken;
   // the aToken associated with the underlying above
@@ -30,7 +33,9 @@ contract SymbolicLendingPool {
   ) external {
     require(asset == address(underlyingToken));
     underlyingToken.transferFrom(msg.sender, address(aToken), amount);
-    aToken.mint(msg.sender, onBehalfOf, amount, liquidityIndex);
+
+    uint256 scaledAmount = amount.rayDivFloor(liquidityIndex);
+    aToken.mint(msg.sender, onBehalfOf, scaledAmount, liquidityIndex);
   }
 
   /**
@@ -42,7 +47,9 @@ contract SymbolicLendingPool {
    **/
   function withdraw(address asset, uint256 amount, address to) external returns (uint256) {
     require(asset == address(underlyingToken));
-    aToken.burn(msg.sender, to, amount, liquidityIndex);
+
+    uint256 scaledAmountToWithdraw = amount.rayDivCeil(liquidityIndex);
+    aToken.burn(msg.sender, to, amount, scaledAmountToWithdraw, liquidityIndex);
     return amount;
   }
 

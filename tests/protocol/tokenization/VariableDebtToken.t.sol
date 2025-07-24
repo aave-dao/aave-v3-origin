@@ -12,12 +12,14 @@ import {Errors} from '../../../src/contracts/protocol/libraries/helpers/Errors.s
 import {TestnetERC20} from '../../../src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
 import {ReserveLogic, DataTypes} from '../../../src/contracts/protocol/libraries/logic/ReserveLogic.sol';
 import {WadRayMath} from '../../../src/contracts/protocol/libraries/math/WadRayMath.sol';
+import {TokenMath} from '../../../src/contracts/protocol/libraries/helpers/TokenMath.sol';
 import {ConfiguratorInputTypes, IPool} from '../../../src/contracts/protocol/pool/PoolConfigurator.sol';
 import {EIP712SigUtils} from '../../utils/EIP712SigUtils.sol';
 import {TestnetProcedures, TestVars} from '../../utils/TestnetProcedures.sol';
 
 contract VariableDebtTokenEventsTests is TestnetProcedures {
   using WadRayMath for uint256;
+  using TokenMath for uint256;
   using ReserveLogic for DataTypes.ReserveCache;
   using ReserveLogic for DataTypes.ReserveData;
 
@@ -48,7 +50,7 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     assertEq(address(varDebtToken.POOL()), address(report.poolProxy));
     assertEq(address(varDebtToken.getIncentivesController()), report.rewardsControllerProxy);
     assertEq(varDebtToken.UNDERLYING_ASSET_ADDRESS(), address(0));
-    assertEq(varDebtToken.DEBT_TOKEN_REVISION(), 0x3);
+    assertEq(varDebtToken.DEBT_TOKEN_REVISION(), 0x4);
 
     return varDebtToken;
   }
@@ -99,7 +101,7 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     assertEq(address(varDebtToken.POOL()), address(report.poolProxy));
     assertEq(address(varDebtToken.getIncentivesController()), report.rewardsControllerProxy);
     assertEq(varDebtToken.UNDERLYING_ASSET_ADDRESS(), listing.underlyingAsset);
-    assertEq(varDebtToken.DEBT_TOKEN_REVISION(), 0x3);
+    assertEq(varDebtToken.DEBT_TOKEN_REVISION(), 0x4);
 
     return varDebtToken;
   }
@@ -141,7 +143,7 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     emit IScaledBalanceToken.Mint(alice, alice, amount, 0, 1e27);
 
     vm.prank(report.poolProxy);
-    debtToken.mint(alice, alice, amount, 1e27);
+    debtToken.mint(alice, alice, amount, amount, 1e27);
 
     assertEq(debtToken.scaledBalanceOf(alice), amount);
   }
@@ -162,7 +164,7 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     emit IScaledBalanceToken.Mint(bob, alice, amount, 0, 1e27);
 
     vm.prank(report.poolProxy);
-    debtToken.mint(bob, alice, amount, 1e27);
+    debtToken.mint(bob, alice, amount, amount, 1e27);
 
     assertEq(debtToken.scaledBalanceOf(alice), amount);
   }
@@ -174,28 +176,41 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     uint256 amount = 1200 * 10 ** decimals;
     uint256 repayment = amount / 2;
     uint256 supplyIndex = 1.001e27;
-    uint256 balanceScaled = amount.rayDiv(supplyIndex);
+    uint256 balanceScaled = amount.rayDiv(supplyIndex, WadRayMath.Rounding.Ceil);
     uint256 newIndex = 1.003e27;
-    uint256 repaymentScaled = repayment.rayDiv(newIndex);
+    uint256 repaymentScaled = repayment.rayDiv(newIndex, WadRayMath.Rounding.Floor);
 
     vm.expectEmit(address(debtToken));
-    emit IScaledBalanceToken.Mint(alice, alice, amount, 0, supplyIndex);
+    emit IScaledBalanceToken.Mint(
+      alice,
+      alice,
+      balanceScaled.rayMul(supplyIndex, WadRayMath.Rounding.Ceil),
+      0,
+      supplyIndex
+    );
 
     vm.prank(report.poolProxy);
-    debtToken.mint(alice, alice, amount, supplyIndex);
+    debtToken.mint(alice, alice, amount, amount.rayDivCeil(supplyIndex), supplyIndex);
 
-    uint256 balanceIncrease = balanceScaled.rayMul(newIndex) - balanceScaled.rayMul(supplyIndex);
+    uint256 nextBalance = (balanceScaled - repaymentScaled).rayMul(
+      newIndex,
+      WadRayMath.Rounding.Ceil
+    );
+    uint256 previousBalance = balanceScaled.rayMul(supplyIndex, WadRayMath.Rounding.Ceil);
+    uint256 balanceIncrease = balanceScaled.rayMul(newIndex, WadRayMath.Rounding.Ceil) -
+      previousBalance;
+
     vm.expectEmit(address(debtToken));
     emit IScaledBalanceToken.Burn(
       alice,
       address(0),
-      repayment - balanceIncrease,
+      previousBalance - nextBalance,
       balanceIncrease,
       newIndex
     );
 
     vm.prank(report.poolProxy);
-    debtToken.burn(alice, repayment, newIndex);
+    debtToken.burn(alice, repayment.getVTokenBurnScaledAmount(newIndex), newIndex);
     assertEq(debtToken.scaledBalanceOf(alice), balanceScaled - repaymentScaled);
   }
 
@@ -206,28 +221,41 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     uint256 amount = 1200 * 10 ** decimals;
     uint256 supplyIndex = 1.001e27;
     uint256 newIndex = 1.003e27;
-    uint256 balanceScaled = amount.rayDiv(supplyIndex);
+    uint256 balanceScaled = amount.rayDiv(supplyIndex, WadRayMath.Rounding.Ceil);
     uint256 repayment = amount;
-    uint256 repaymentScaled = repayment.rayDiv(newIndex);
+    uint256 repaymentScaled = repayment.rayDiv(newIndex, WadRayMath.Rounding.Floor);
 
     vm.expectEmit(address(debtToken));
-    emit IScaledBalanceToken.Mint(alice, alice, amount, 0, supplyIndex);
+    emit IScaledBalanceToken.Mint(
+      alice,
+      alice,
+      balanceScaled.rayMul(supplyIndex, WadRayMath.Rounding.Ceil),
+      0,
+      supplyIndex
+    );
 
     vm.prank(report.poolProxy);
-    debtToken.mint(alice, alice, amount, supplyIndex);
+    debtToken.mint(alice, alice, amount, amount.rayDivCeil(supplyIndex), supplyIndex);
 
-    uint256 balanceIncrease = balanceScaled.rayMul(newIndex) - balanceScaled.rayMul(supplyIndex);
+    uint256 nextBalance = (balanceScaled - repaymentScaled).rayMul(
+      newIndex,
+      WadRayMath.Rounding.Ceil
+    );
+    uint256 previousBalance = balanceScaled.rayMul(supplyIndex, WadRayMath.Rounding.Ceil);
+    uint256 balanceIncrease = balanceScaled.rayMul(newIndex, WadRayMath.Rounding.Ceil) -
+      previousBalance;
+
     vm.expectEmit(address(debtToken));
     emit IScaledBalanceToken.Burn(
       alice,
       address(0),
-      repayment - balanceIncrease,
+      previousBalance - nextBalance,
       balanceIncrease,
       newIndex
     );
 
     vm.prank(report.poolProxy);
-    debtToken.burn(alice, repayment, newIndex);
+    debtToken.burn(alice, repayment.getVTokenBurnScaledAmount(newIndex), newIndex);
     assertEq(debtToken.scaledBalanceOf(alice), balanceScaled - repaymentScaled);
   }
 
@@ -262,7 +290,8 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     uint256 previousIndex = contracts.poolProxy.getReserveNormalizedVariableDebt(tokenList.usdx);
     vm.warp(vm.getBlockTimestamp() + 30 days);
     uint256 newIndex = contracts.poolProxy.getReserveNormalizedVariableDebt(tokenList.usdx);
-    uint256 balanceIncrease = amount.rayMul(newIndex) - amount.rayMul(previousIndex);
+    uint256 balanceIncrease = amount.rayMul(newIndex, WadRayMath.Rounding.Ceil) -
+      amount.rayMul(previousIndex, WadRayMath.Rounding.Ceil);
 
     assertEq(variableDebtToken.balanceOf(alice), amount + balanceIncrease);
   }
@@ -321,7 +350,8 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
 
     assertEq(
       variableDebtToken.scaledBalanceOf(alice),
-      aliceAmount1.rayDiv(index1) + aliceAmount2.rayDiv(index2)
+      aliceAmount1.rayDiv(index1, WadRayMath.Rounding.Ceil) +
+        aliceAmount2.rayDiv(index2, WadRayMath.Rounding.Ceil)
     );
   }
 

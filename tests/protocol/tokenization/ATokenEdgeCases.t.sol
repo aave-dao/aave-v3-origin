@@ -133,7 +133,7 @@ contract ATokenEdgeCasesTests is TestnetProcedures {
   function test_reverts_burnAmountScaledZero() public {
     vm.expectRevert(abi.encodeWithSelector(Errors.InvalidBurnAmount.selector));
     vm.prank(address(contracts.poolProxy));
-    aToken.burn(alice, alice, 0, 1e27);
+    aToken.burn(alice, alice, 0, 0, 1e27);
   }
 
   function test_burn_zeroAddress() public {
@@ -147,7 +147,7 @@ contract ATokenEdgeCasesTests is TestnetProcedures {
     deal(address(usdx), address(aToken), burnAmount);
 
     aToken.mint(address(0), address(0), burnAmount, 1e27);
-    aToken.burn(address(0), alice, burnAmount, 1e27);
+    aToken.burn(address(0), alice, burnAmount, burnAmount, 1e27);
     vm.stopPrank();
   }
 

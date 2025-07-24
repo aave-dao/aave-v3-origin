@@ -11,7 +11,7 @@ import {IFlashLoanSimpleReceiver} from '../../../misc/flashloan/interfaces/IFlas
 import {IPoolAddressesProvider} from '../../../interfaces/IPoolAddressesProvider.sol';
 import {ReserveConfiguration} from '../configuration/ReserveConfiguration.sol';
 import {Errors} from '../helpers/Errors.sol';
-import {WadRayMath} from '../math/WadRayMath.sol';
+import {TokenMath} from '../helpers/TokenMath.sol';
 import {PercentageMath} from '../math/PercentageMath.sol';
 import {DataTypes} from '../types/DataTypes.sol';
 import {ValidationLogic} from './ValidationLogic.sol';
@@ -28,7 +28,7 @@ library FlashLoanLogic {
   using ReserveLogic for DataTypes.ReserveData;
   using GPv2SafeERC20 for IERC20;
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
-  using WadRayMath for uint256;
+  using TokenMath for uint256;
   using PercentageMath for uint256;
   using SafeCast for uint256;
 
@@ -78,7 +78,7 @@ library FlashLoanLogic {
       vars.currentAmount = params.amounts[i];
       vars.totalPremiums[i] = DataTypes.InterestRateMode(params.interestRateModes[i]) ==
         DataTypes.InterestRateMode.NONE
-        ? vars.currentAmount.percentMul(vars.flashloanPremium)
+        ? vars.currentAmount.percentMulCeil(vars.flashloanPremium)
         : 0;
 
       reservesData[params.assets[i]].virtualUnderlyingBalance -= vars.currentAmount.toUint128();
@@ -177,7 +177,7 @@ library FlashLoanLogic {
     ValidationLogic.validateFlashloanSimple(reserve, params.amount);
 
     IFlashLoanSimpleReceiver receiver = IFlashLoanSimpleReceiver(params.receiverAddress);
-    uint256 totalPremium = params.amount.percentMul(params.flashLoanPremium);
+    uint256 totalPremium = params.amount.percentMulCeil(params.flashLoanPremium);
 
     reserve.virtualUnderlyingBalance -= params.amount.toUint128();
 
@@ -225,7 +225,7 @@ library FlashLoanLogic {
 
     reserve.accruedToTreasury += params
       .totalPremium
-      .rayDiv(reserveCache.nextLiquidityIndex)
+      .getATokenMintScaledAmount(reserveCache.nextLiquidityIndex)
       .toUint128();
 
     reserve.updateInterestRatesAndVirtualBalance(

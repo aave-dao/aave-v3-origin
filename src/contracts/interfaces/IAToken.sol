@@ -24,43 +24,61 @@ interface IAToken is IERC20, IScaledBalanceToken, IInitializableAToken {
    * @notice Mints `amount` aTokens to `user`
    * @param caller The address performing the mint
    * @param onBehalfOf The address of the user that will receive the minted aTokens
-   * @param amount The amount of tokens getting minted
+   * @param scaledAmount The scaled amount of tokens getting minted
    * @param index The next liquidity index of the reserve
    * @return `true` if the the previous balance of the user was 0
    */
   function mint(
     address caller,
     address onBehalfOf,
-    uint256 amount,
+    uint256 scaledAmount,
     uint256 index
   ) external returns (bool);
 
   /**
-   * @notice Burns aTokens from `user` and sends the equivalent amount of underlying to `receiverOfUnderlying`
-   * @dev In some instances, the mint event could be emitted from a burn transaction
-   * if the amount to burn is less than the interest that the user accrued
+   * @notice Burns aTokens from `user` and sends the equivalent amount of underlying to `receiverOfUnderlying`.
+   * @dev Passing both the unscaled and scaled amounts enhances precision. The `scaledAmount` is used for precise balance updates,
+   * while the `amount` is used for the underlying asset transfer, preventing cumulative rounding errors.
+   * @dev In some instances, a mint event may be emitted from a burn transaction if the amount to burn is less than the interest that the user accrued.
    * @param from The address from which the aTokens will be burned
    * @param receiverOfUnderlying The address that will receive the underlying
-   * @param amount The amount being burned
+   * @param amount The amount of underlying to be burned (non scaled)
+   * @param scaledAmount The scaled amount of aTokens to be burned (scaled)
    * @param index The next liquidity index of the reserve
+   * @return `true` if the the new balance of the user is 0
    */
-  function burn(address from, address receiverOfUnderlying, uint256 amount, uint256 index) external;
+  function burn(
+    address from,
+    address receiverOfUnderlying,
+    uint256 amount,
+    uint256 scaledAmount,
+    uint256 index
+  ) external returns (bool);
 
   /**
    * @notice Mints aTokens to the reserve treasury
-   * @param amount The amount of tokens getting minted
+   * @param scaledAmount The scaled amount of tokens getting minted
    * @param index The next liquidity index of the reserve
    */
-  function mintToTreasury(uint256 amount, uint256 index) external;
+  function mintToTreasury(uint256 scaledAmount, uint256 index) external;
 
   /**
-   * @notice Transfers aTokens in the event of a borrow being liquidated, in case the liquidators reclaims the aToken
+   * @notice Transfers aTokens in the event of a borrow being liquidated, in case the liquidator reclaims the aToken.
+   * @dev Passing both the unscaled and scaled amounts enhances precision. The `scaledAmount` is used for precise balance updates,
+   * while the `amount` is used for logging and consistency, preventing cumulative rounding errors.
    * @param from The address getting liquidated, current owner of the aTokens
    * @param to The recipient
-   * @param value The amount of tokens getting transferred
+   * @param amount The amount of tokens getting transferred (non-scaled)
+   * @param scaledAmount The scaled amount of tokens getting transferred (scaled)
    * @param index The next liquidity index of the reserve
    */
-  function transferOnLiquidation(address from, address to, uint256 value, uint256 index) external;
+  function transferOnLiquidation(
+    address from,
+    address to,
+    uint256 amount,
+    uint256 scaledAmount,
+    uint256 index
+  ) external;
 
   /**
    * @notice Transfers the underlying asset to `target`.
