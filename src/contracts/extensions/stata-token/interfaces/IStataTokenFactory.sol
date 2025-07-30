@@ -5,6 +5,8 @@ import {ITransparentProxyFactory} from 'solidity-utils/contracts/transparent-pro
 import {IPool, IPoolAddressesProvider} from '../../../interfaces/IPool.sol';
 
 interface IStataTokenFactory {
+  event StataTokenCreated(address indexed stataToken, address indexed underlying);
+
   error NotListedUnderlying(address underlying);
 
   /**

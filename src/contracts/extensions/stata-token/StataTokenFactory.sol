@@ -31,8 +31,6 @@ contract StataTokenFactory is Initializable, IStataTokenFactory {
   mapping(address => address) internal _underlyingToStataToken;
   address[] internal _stataTokens;
 
-  event StataTokenCreated(address indexed stataToken, address indexed underlying);
-
   constructor(
     IPool pool,
     address initialOwner,
