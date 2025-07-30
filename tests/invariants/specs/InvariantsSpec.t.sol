@@ -22,8 +22,14 @@ abstract contract InvariantsSpec {
   string constant BASE_INVARIANT_A =
     'BASE_INVARIANT_A: debtToken totalSupply should be equal to the sum of all user balances (user debt)';
 
+  string constant BASE_INVARIANT_A_EXACT =
+    'BASE_INVARIANT_A_EXACT: debtToken totalScaledSupply should be equal to the sum of all scaled user balances (user debt)';
+
   string constant BASE_INVARIANT_B =
     'BASE_INVARIANT_B: aToken totalSupply should be equal to the sum of all user balances)';
+
+  string constant BASE_INVARIANT_B_EXACT =
+    'BASE_INVARIANT_B_EXACT: aToken totalScaledSupply should be equal to the sum of all scaled user balances)';
 
   string constant BASE_INVARIANT_C =
     'BASE_INVARIANT_C: The total amount of underlying in the protocol should be greater or equal than the aToken totalSuuply - debtToken totalSupply';

@@ -39,6 +39,8 @@ contract PoolWithdrawTests is TestnetProcedures {
 
     assertEq(IERC20(tokenList.usdx).balanceOf(alice), balanceBefore + amountToWithdraw);
     assertEq(IAToken(aUSDX).balanceOf(alice), 0);
+
+    _checkInterestRates(tokenList.usdx);
   }
 
   function test_partial_withdraw() public {
@@ -60,6 +62,8 @@ contract PoolWithdrawTests is TestnetProcedures {
     vm.stopPrank();
 
     assertEq(IERC20(tokenList.usdx).balanceOf(alice), balanceBefore + amountToWithdraw);
+
+    _checkInterestRates(tokenList.usdx);
   }
 
   function test_full_withdraw_to() public {
@@ -82,6 +86,8 @@ contract PoolWithdrawTests is TestnetProcedures {
 
     assertEq(IERC20(tokenList.usdx).balanceOf(bob), balanceBefore + amountToWithdraw);
     assertEq(IAToken(aUSDX).balanceOf(alice), 0);
+
+    _checkInterestRates(tokenList.usdx);
   }
 
   function test_withdraw_not_enabled_as_collateral() public {
@@ -106,6 +112,8 @@ contract PoolWithdrawTests is TestnetProcedures {
 
     assertEq(IERC20(tokenList.usdx).balanceOf(alice), balanceBefore + amountToWithdraw);
     assertEq(IAToken(aUSDX).balanceOf(alice), 0);
+
+    _checkInterestRates(tokenList.usdx);
   }
 
   function test_reverts_withdraw_invalidAmount() public {

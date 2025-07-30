@@ -92,11 +92,11 @@ contract ATokenWithDelegation_gas_Tests is Testhelpers {
   }
 
   function test_transfer_fullAmountWithoutDelegations_notDelegatees() external {
-    vm.prank(sender);
+    vm.startPrank(sender);
 
     _skip(100);
 
-    aToken.transfer(receiver, transferAmount);
+    aToken.transfer(receiver, aToken.balanceOf(sender));
     vm.snapshotGasLastCall(
       'ATokenWithDelegation.transfer',
       'full amount; sender: without delegations, not delegatee, ->disableCollateral; receiver: without delegations, not delegatee, ->enableCollateral'
@@ -110,11 +110,11 @@ contract ATokenWithDelegation_gas_Tests is Testhelpers {
     vm.prank(user2);
     aToken.delegate(receiver);
 
-    vm.prank(sender);
+    vm.startPrank(sender);
 
     _skip(100);
 
-    aToken.transfer(receiver, transferAmount);
+    aToken.transfer(receiver, aToken.balanceOf(sender));
     vm.snapshotGasLastCall(
       'ATokenWithDelegation.transfer',
       'full amount; sender: without delegations, delegatee, ->disableCollateral; receiver: without delegations, delegatee, ->enableCollateral'
@@ -128,11 +128,11 @@ contract ATokenWithDelegation_gas_Tests is Testhelpers {
     vm.prank(receiver);
     aToken.delegate(user2);
 
-    vm.prank(sender);
+    vm.startPrank(sender);
 
     _skip(100);
 
-    aToken.transfer(receiver, transferAmount);
+    aToken.transfer(receiver, aToken.balanceOf(sender));
     vm.snapshotGasLastCall(
       'ATokenWithDelegation.transfer',
       'full amount; sender: with delegations, not delegatee, ->disableCollateral; receiver: with delegations, not delegatee, ->enableCollateral'
@@ -152,11 +152,11 @@ contract ATokenWithDelegation_gas_Tests is Testhelpers {
     vm.prank(receiver);
     aToken.delegate(user2);
 
-    vm.prank(sender);
+    vm.startPrank(sender);
 
     _skip(100);
 
-    aToken.transfer(receiver, transferAmount);
+    aToken.transfer(receiver, aToken.balanceOf(sender));
     vm.snapshotGasLastCall(
       'ATokenWithDelegation.transfer',
       'full amount; sender: with delegations, delegatee, ->disableCollateral; receiver: with delegations, delegatee, ->enableCollateral'
@@ -168,11 +168,11 @@ contract ATokenWithDelegation_gas_Tests is Testhelpers {
 
     aToken.delegate(user1);
 
-    vm.prank(sender);
+    vm.startPrank(sender);
 
     _skip(100);
 
-    aToken.transfer(receiver, transferAmount);
+    aToken.transfer(receiver, aToken.balanceOf(sender));
     vm.snapshotGasLastCall(
       'ATokenWithDelegation.transfer',
       'full amount; sender: with delegations, ->disableCollateral; receiver: without delegations, ->enableCollateral'
@@ -186,11 +186,11 @@ contract ATokenWithDelegation_gas_Tests is Testhelpers {
 
     aToken.delegate(user1);
 
-    vm.prank(sender);
+    vm.startPrank(sender);
 
     _skip(100);
 
-    aToken.transfer(receiver, transferAmount);
+    aToken.transfer(receiver, aToken.balanceOf(sender));
     vm.snapshotGasLastCall(
       'ATokenWithDelegation.transfer',
       'full amount; sender: without delegations, ->disableCollateral; receiver: with delegations, ->enableCollateral'

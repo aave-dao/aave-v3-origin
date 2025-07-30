@@ -1,10 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
+import {SafeCast} from 'openzeppelin-contracts/contracts/utils/math/SafeCast.sol';
+
 import {ATokenInstance} from '../../instances/ATokenInstance.sol';
 import {IPool} from '../../interfaces/IPool.sol';
+import {TokenMath} from '../../protocol/libraries/helpers/TokenMath.sol';
 
 contract MockAToken is ATokenInstance {
+  using TokenMath for uint256;
+  using SafeCast for uint256;
+
   constructor(
     IPool pool,
     address rewardsController,
@@ -30,7 +36,13 @@ contract MockAToken is ATokenInstance {
     uint256 amount,
     uint256 newIndex
   ) public {
-    _transfer(sender, recipient, amount, newIndex);
+    _transfer(
+      sender,
+      recipient,
+      amount,
+      amount.getATokenTransferScaledAmount(newIndex).toUint120(),
+      newIndex
+    );
   }
 
   function getRevision() internal pure override returns (uint256) {

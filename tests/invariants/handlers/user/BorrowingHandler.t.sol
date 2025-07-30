@@ -87,6 +87,11 @@ contract BorrowingHandler is BaseHandler {
           1,
           BORROWING_HSPOST_J
         );
+        assertGe(
+          IERC20(protocolTokens[asset].variableDebtTokenAddress).balanceOf(onBehalfOf),
+          onBehalfOfDebtBefore + amount,
+          BORROWING_HSPOST_J
+        );
       }
     }
   }
@@ -146,6 +151,11 @@ contract BorrowingHandler is BaseHandler {
         1,
         BORROWING_HSPOST_L
       );
+      assertGe(
+        IERC20(protocolTokens[asset].variableDebtTokenAddress).balanceOf(onBehalfOf),
+        onBehalfOfDebtBefore - amount,
+        BORROWING_HSPOST_L
+      );
     }
   }
 
@@ -157,6 +167,13 @@ contract BorrowingHandler is BaseHandler {
     Flags memory flags = _getFlags(asset);
 
     address target = address(pool);
+
+    uint256 actorDebtBefore = IERC20(protocolTokens[asset].variableDebtTokenAddress).balanceOf(
+      address(actor)
+    );
+    uint256 actorATokenBalanceBefore = IERC20(protocolTokens[asset].aTokenAddress).balanceOf(
+      address(actor)
+    );
 
     _before();
     (success, returnData) = actor.proxy(
@@ -174,6 +191,17 @@ contract BorrowingHandler is BaseHandler {
 
       // POST-CONDITIONS
       assertTrue(assertReserveIsActiveAndNotPaused(flags), BORROWING_HSPOST_F);
+      uint256 actorDebtAfter = IERC20(protocolTokens[asset].variableDebtTokenAddress).balanceOf(
+        address(actor)
+      );
+      uint256 actorATokenBalanceAfter = IERC20(protocolTokens[asset].aTokenAddress).balanceOf(
+        address(actor)
+      );
+      assertGe(
+        actorATokenBalanceBefore - actorATokenBalanceAfter,
+        actorDebtBefore - actorDebtAfter,
+        BORROWING_HSPOST_M
+      );
     }
   }
 

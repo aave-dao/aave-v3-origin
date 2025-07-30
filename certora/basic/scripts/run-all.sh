@@ -1,4 +1,4 @@
-CMN="--compilation_steps_only"
+#CMN="--compilation_steps_only"
 #CMN="--typecheck_only"
 
 
@@ -9,24 +9,23 @@ certoraRun $CMN certora/basic/conf/AToken.conf \
 
 echo
 echo "******** Running:  2 ***************"
-certoraRun $CMN certora/basic/conf/ReserveConfiguration.conf \
-           --msg "2: ReserveConfiguration.conf"
+certoraRun $CMN certora/basic/conf/VariableDebtToken.conf \
+           --msg "2: VariableDebtToken.conf"
 
 echo
 echo "******** Running:  3 ***************"
-certoraRun $CMN certora/basic/conf/UserConfiguration.conf \
-           --msg "3: UserConfiguration.conf"
+certoraRun $CMN certora/basic/conf/ReserveConfiguration.conf \
+           --msg "3: ReserveConfiguration.conf"
 
 echo
 echo "******** Running:  4 ***************"
-certoraRun $CMN certora/basic/conf/VariableDebtToken.conf \
-           --msg "4: VariableDebtToken.conf"
+certoraRun $CMN certora/basic/conf/UserConfiguration.conf \
+           --msg "4: UserConfiguration.conf"
 
-##### ##### waiting for ticket 8889 
-#echo
-#echo "******** Running:  5 NEW no summarization ***************"
-#certoraRun $CMN certora/basic/conf/NEW-pool-no-summarizations.conf \
-#           --msg "5: NEW-pool-no-summarizations"
+echo
+echo "******** Running:  5 NEW no summarization ***************"
+certoraRun $CMN certora/basic/conf/NEW-pool-no-summarizations.conf \
+           --msg "5: NEW-pool-no-summarizations"
 
 echo
 echo "******** Running:  6 Stable fields are un-touched ***************"

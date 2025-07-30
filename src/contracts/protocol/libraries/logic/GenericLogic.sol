@@ -9,6 +9,8 @@ import {UserConfiguration} from '../configuration/UserConfiguration.sol';
 import {EModeConfiguration} from '../configuration/EModeConfiguration.sol';
 import {PercentageMath} from '../math/PercentageMath.sol';
 import {WadRayMath} from '../math/WadRayMath.sol';
+import {TokenMath} from '../helpers/TokenMath.sol';
+import {MathUtils} from '../math/MathUtils.sol';
 import {DataTypes} from '../types/DataTypes.sol';
 import {ReserveLogic} from './ReserveLogic.sol';
 import {EModeLogic} from './EModeLogic.sol';
@@ -20,6 +22,7 @@ import {EModeLogic} from './EModeLogic.sol';
  */
 library GenericLogic {
   using ReserveLogic for DataTypes.ReserveData;
+  using TokenMath for uint256;
   using WadRayMath for uint256;
   using PercentageMath for uint256;
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
@@ -148,6 +151,16 @@ library GenericLogic {
       }
     }
 
+    // @note At this point, `avgLiquidationThreshold` represents
+    // `SUM(collateral_base_value_i * liquidation_threshold_i)` for all collateral assets.
+    // It has 8 decimals (base currency) + 2 decimals (percentage) = 10 decimals.
+    // healthFactor has 18 decimals
+    // healthFactor = (avgLiquidationThreshold * WAD / totalDebtInBaseCurrency) / 100_00
+    // 18 decimals = (10 decimals * 18 decimals / 8 decimals) / 2 decimals = 18 decimals
+    vars.healthFactor = (vars.totalDebtInBaseCurrency == 0)
+      ? type(uint256).max
+      : vars.avgLiquidationThreshold.wadDiv(vars.totalDebtInBaseCurrency) / 100_00;
+
     unchecked {
       vars.avgLtv = vars.totalCollateralInBaseCurrency != 0
         ? vars.avgLtv / vars.totalCollateralInBaseCurrency
@@ -157,11 +170,6 @@ library GenericLogic {
         : 0;
     }
 
-    vars.healthFactor = (vars.totalDebtInBaseCurrency == 0)
-      ? type(uint256).max
-      : (vars.totalCollateralInBaseCurrency.percentMul(vars.avgLiquidationThreshold)).wadDiv(
-        vars.totalDebtInBaseCurrency
-      );
     return (
       vars.totalCollateralInBaseCurrency,
       vars.totalDebtInBaseCurrency,
@@ -185,7 +193,7 @@ library GenericLogic {
     uint256 totalDebtInBaseCurrency,
     uint256 ltv
   ) internal pure returns (uint256) {
-    uint256 availableBorrowsInBaseCurrency = totalCollateralInBaseCurrency.percentMul(ltv);
+    uint256 availableBorrowsInBaseCurrency = totalCollateralInBaseCurrency.percentMulFloor(ltv);
 
     if (availableBorrowsInBaseCurrency <= totalDebtInBaseCurrency) {
       return 0;
@@ -212,18 +220,11 @@ library GenericLogic {
     uint256 assetPrice,
     uint256 assetUnit
   ) private view returns (uint256) {
-    // fetching variable debt
-    uint256 userTotalDebt = IScaledBalanceToken(reserve.variableDebtTokenAddress).scaledBalanceOf(
-      user
-    );
-    if (userTotalDebt == 0) {
-      return 0;
-    }
+    uint256 userTotalDebt = IScaledBalanceToken(reserve.variableDebtTokenAddress)
+      .scaledBalanceOf(user)
+      .getVTokenBalance(reserve.getNormalizedDebt());
 
-    userTotalDebt = userTotalDebt.rayMul(reserve.getNormalizedDebt()) * assetPrice;
-    unchecked {
-      return userTotalDebt / assetUnit;
-    }
+    return MathUtils.mulDivCeil(userTotalDebt, assetPrice, assetUnit);
   }
 
   /**
@@ -242,9 +243,10 @@ library GenericLogic {
     uint256 assetPrice,
     uint256 assetUnit
   ) private view returns (uint256) {
-    uint256 normalizedIncome = reserve.getNormalizedIncome();
     uint256 balance = (
-      IScaledBalanceToken(reserve.aTokenAddress).scaledBalanceOf(user).rayMul(normalizedIncome)
+      IScaledBalanceToken(reserve.aTokenAddress).scaledBalanceOf(user).getATokenBalance(
+        reserve.getNormalizedIncome()
+      )
     ) * assetPrice;
 
     unchecked {

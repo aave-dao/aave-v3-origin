@@ -81,23 +81,31 @@ abstract contract ATokenWithDelegation is AToken, BaseDelegation {
    * @param from The sender's address.
    * @param to The recipient's address.
    * @param amount The amount of tokens to transfer (non-scaled).
+   * @param scaledAmount The amount of tokens to transfer (scaled).
    * @param index The current liquidity index of the reserve.
    */
   function _transfer(
     address from,
     address to,
     uint256 amount,
+    uint120 scaledAmount,
     uint256 index
-  ) internal virtual override {
+  ) internal override {
     _delegationChangeOnTransfer({
       from: from,
       to: to,
       fromBalanceBefore: _userState[from].balance,
       toBalanceBefore: _userState[to].balance,
-      amount: uint256(amount).rayDiv(index)
+      amount: scaledAmount
     });
 
-    super._transfer(from, to, amount, index);
+    super._transfer({
+      sender: from,
+      recipient: to,
+      amount: amount,
+      scaledAmount: scaledAmount,
+      index: index
+    });
   }
 
   /**

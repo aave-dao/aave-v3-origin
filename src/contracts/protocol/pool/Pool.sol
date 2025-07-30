@@ -238,6 +238,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
       BorrowLogic.executeRepay(
         _reserves,
         _reservesList,
+        _eModeCategories,
         _usersConfig[onBehalfOf],
         DataTypes.ExecuteRepayParams({
           asset: asset,
@@ -246,7 +247,9 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
           amount: amount,
           interestRateMode: DataTypes.InterestRateMode(interestRateMode),
           onBehalfOf: onBehalfOf,
-          useATokens: false
+          useATokens: false,
+          oracle: ADDRESSES_PROVIDER.getPriceOracle(),
+          userEModeCategory: _usersEModeCategory[onBehalfOf]
         })
       );
   }
@@ -282,9 +285,18 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
         amount: amount,
         interestRateMode: DataTypes.InterestRateMode(interestRateMode),
         onBehalfOf: onBehalfOf,
-        useATokens: false
+        useATokens: false,
+        oracle: ADDRESSES_PROVIDER.getPriceOracle(),
+        userEModeCategory: _usersEModeCategory[onBehalfOf]
       });
-      return BorrowLogic.executeRepay(_reserves, _reservesList, _usersConfig[onBehalfOf], params);
+      return
+        BorrowLogic.executeRepay(
+          _reserves,
+          _reservesList,
+          _eModeCategories,
+          _usersConfig[onBehalfOf],
+          params
+        );
     }
   }
 
@@ -298,6 +310,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
       BorrowLogic.executeRepay(
         _reserves,
         _reservesList,
+        _eModeCategories,
         _usersConfig[_msgSender()],
         DataTypes.ExecuteRepayParams({
           asset: asset,
@@ -306,7 +319,9 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
           amount: amount,
           interestRateMode: DataTypes.InterestRateMode(interestRateMode),
           onBehalfOf: _msgSender(),
-          useATokens: true
+          useATokens: true,
+          oracle: ADDRESSES_PROVIDER.getPriceOracle(),
+          userEModeCategory: _usersEModeCategory[_msgSender()]
         })
       );
   }
@@ -562,9 +577,9 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
     address asset,
     address from,
     address to,
-    uint256 amount,
-    uint256 balanceFromBefore,
-    uint256 balanceToBefore
+    uint256 scaledAmount,
+    uint256 scaledBalanceFromBefore,
+    uint256 scaledBalanceToBefore
   ) external virtual override {
     require(_msgSender() == _reserves[asset].aTokenAddress, Errors.CallerNotAToken());
     SupplyLogic.executeFinalizeTransfer(
@@ -576,9 +591,9 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
         asset: asset,
         from: from,
         to: to,
-        amount: amount,
-        balanceFromBefore: balanceFromBefore,
-        balanceToBefore: balanceToBefore,
+        scaledAmount: scaledAmount,
+        scaledBalanceFromBefore: scaledBalanceFromBefore,
+        scaledBalanceToBefore: scaledBalanceToBefore,
         oracle: ADDRESSES_PROVIDER.getPriceOracle(),
         fromEModeCategory: _usersEModeCategory[from]
       })
@@ -787,17 +802,21 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
   }
 
   /// @inheritdoc IPool
-  function eliminateReserveDeficit(address asset, uint256 amount) external override onlyUmbrella {
-    LiquidationLogic.executeEliminateDeficit(
-      _reserves,
-      _usersConfig[_msgSender()],
-      DataTypes.ExecuteEliminateDeficitParams({
-        user: _msgSender(),
-        asset: asset,
-        amount: amount,
-        interestRateStrategyAddress: RESERVE_INTEREST_RATE_STRATEGY
-      })
-    );
+  function eliminateReserveDeficit(
+    address asset,
+    uint256 amount
+  ) external override onlyUmbrella returns (uint256) {
+    return
+      LiquidationLogic.executeEliminateDeficit(
+        _reserves,
+        _usersConfig[_msgSender()],
+        DataTypes.ExecuteEliminateDeficitParams({
+          user: _msgSender(),
+          asset: asset,
+          amount: amount,
+          interestRateStrategyAddress: RESERVE_INTEREST_RATE_STRATEGY
+        })
+      );
   }
 
   /// @inheritdoc IPool

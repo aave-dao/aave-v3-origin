@@ -38,12 +38,13 @@ jobs:
 
       - uses: Certora/certora-run-action@v1
         with:
-          cli-version: 7.28.0
+          cli-version: 7.31.0
           configurations: |-
             certora/basic/conf/AToken.conf
+            certora/basic/conf/VariableDebtToken.conf
             certora/basic/conf/ReserveConfiguration.conf
             certora/basic/conf/UserConfiguration.conf
-            certora/basic/conf/VariableDebtToken.conf
+            certora/basic/conf/NEW-pool-no-summarizations.conf
             certora/basic/conf/stableRemoved.conf
             certora/basic/conf/EModeConfiguration.conf
             certora/basic/conf/NEW-pool-simple-properties.conf --rule cannotDepositInInactiveReserve

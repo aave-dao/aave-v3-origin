@@ -12,7 +12,7 @@ import {Errors} from '../protocol/libraries/helpers/Errors.sol';
  * @notice Instance of the Pool for the Aave protocol
  */
 contract PoolInstance is Pool {
-  uint256 public constant POOL_REVISION = 8;
+  uint256 public constant POOL_REVISION = 9;
 
   constructor(
     IPoolAddressesProvider provider,

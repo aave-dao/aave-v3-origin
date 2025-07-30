@@ -36,14 +36,31 @@ contract ATokenEventsTests is TestnetProcedures {
       underlyingToken
     );
 
-    uint256 cumulatedLiquidityInterest = MathUtils.calculateLinearInterest(
-      reserveData.currentLiquidityRate,
-      reserveData.lastUpdateTimestamp
-    );
-    uint256 index = cumulatedLiquidityInterest.rayMul(reserveData.liquidityIndex);
-    uint256 scaledBalance = IAToken(aTokenAddress).scaledBalanceOf(onBehalfOf);
-    uint256 balanceIncrease = scaledBalance.rayMul(index) -
-      scaledBalance.rayMul(IAToken(aTokenAddress).getPreviousIndex(onBehalfOf));
+    uint256 oldIndex;
+    uint256 newIndex;
+    {
+      uint256 cumulatedLiquidityInterest = MathUtils.calculateLinearInterest(
+        reserveData.currentLiquidityRate,
+        reserveData.lastUpdateTimestamp
+      );
+
+      oldIndex = IAToken(aTokenAddress).getPreviousIndex(onBehalfOf);
+      newIndex = cumulatedLiquidityInterest.rayMul(reserveData.liquidityIndex);
+    }
+
+    uint256 mintAmount;
+    uint256 balanceIncrease;
+    {
+      uint256 scaledBalance = IAToken(aTokenAddress).scaledBalanceOf(onBehalfOf);
+      uint256 scaledMintAmount = amount.rayDiv(newIndex, WadRayMath.Rounding.Floor);
+      uint256 nextBalance = (scaledBalance + scaledMintAmount).rayMul(
+        newIndex,
+        WadRayMath.Rounding.Floor
+      );
+      uint256 previousBalance = scaledBalance.rayMul(oldIndex, WadRayMath.Rounding.Floor);
+      balanceIncrease = scaledBalance.rayMul(newIndex, WadRayMath.Rounding.Floor) - previousBalance;
+      mintAmount = nextBalance - previousBalance;
+    }
 
     if (checkInterestsNonZero) {
       assertTrue(
@@ -55,15 +72,9 @@ contract ATokenEventsTests is TestnetProcedures {
     vm.expectEmit(address(underlyingToken));
     emit IERC20.Transfer(user, aTokenAddress, amount);
     vm.expectEmit(address(aToken));
-    emit IERC20.Transfer(address(0), onBehalfOf, amount + balanceIncrease);
+    emit IERC20.Transfer(address(0), onBehalfOf, mintAmount);
     vm.expectEmit(address(aToken));
-    emit IScaledBalanceToken.Mint(
-      user,
-      onBehalfOf,
-      amount + balanceIncrease,
-      balanceIncrease,
-      index
-    );
+    emit IScaledBalanceToken.Mint(user, onBehalfOf, mintAmount, balanceIncrease, newIndex);
   }
 
   function _expectATokenWithdrawEvents(
@@ -79,14 +90,32 @@ contract ATokenEventsTests is TestnetProcedures {
       underlyingToken
     );
 
-    uint256 cumulatedLiquidityInterest = MathUtils.calculateLinearInterest(
-      reserveData.currentLiquidityRate,
-      reserveData.lastUpdateTimestamp
-    );
-    uint256 index = cumulatedLiquidityInterest.rayMul(reserveData.liquidityIndex);
-    uint256 scaledBalance = IAToken(aTokenAddress).scaledBalanceOf(user);
-    uint256 balanceIncrease = scaledBalance.rayMul(index) -
-      scaledBalance.rayMul(IAToken(aTokenAddress).getPreviousIndex(user));
+    uint256 oldIndex;
+    uint256 newIndex;
+    {
+      uint256 cumulatedLiquidityInterest = MathUtils.calculateLinearInterest(
+        reserveData.currentLiquidityRate,
+        reserveData.lastUpdateTimestamp
+      );
+
+      oldIndex = IAToken(aTokenAddress).getPreviousIndex(user);
+      newIndex = cumulatedLiquidityInterest.rayMul(reserveData.liquidityIndex);
+    }
+
+    int256 deltaAmount;
+    uint256 balanceIncrease;
+    {
+      uint256 scaledBalance = IAToken(aTokenAddress).scaledBalanceOf(user);
+      uint256 scaledBurnAmount = amount.rayDiv(newIndex, WadRayMath.Rounding.Ceil);
+      uint256 nextBalance = (scaledBalance - scaledBurnAmount).rayMul(
+        newIndex,
+        WadRayMath.Rounding.Floor
+      );
+      uint256 previousBalance = scaledBalance.rayMul(oldIndex, WadRayMath.Rounding.Floor);
+      balanceIncrease = scaledBalance.rayMul(newIndex, WadRayMath.Rounding.Floor) - previousBalance;
+      deltaAmount = int256(nextBalance) - int256(previousBalance);
+    }
+
     // Ensure test intention via bool to determine if withdrawal amount should be less than interests
     if (checkAmountLessThanInterests) {
       assertTrue(
@@ -105,20 +134,18 @@ contract ATokenEventsTests is TestnetProcedures {
         'Intention failed: balanceIncrease should be greater than zero'
       );
     }
-    if (balanceIncrease > amount) {
-      uint256 amountToMint = balanceIncrease - amount;
+    if (deltaAmount > 0) {
       vm.expectEmit(address(aToken));
-      emit IERC20.Transfer(address(0), user, amountToMint);
+      emit IERC20.Transfer(address(0), user, uint256(deltaAmount));
       vm.expectEmit(address(aToken));
-      emit IScaledBalanceToken.Mint(user, user, amountToMint, balanceIncrease, index);
+      emit IScaledBalanceToken.Mint(user, user, uint256(deltaAmount), balanceIncrease, newIndex);
       vm.expectEmit(address(underlyingToken));
       emit IERC20.Transfer(aTokenAddress, user, amount);
     } else {
-      uint256 amountToBurn = amount - balanceIncrease;
       vm.expectEmit(address(aToken));
-      emit IERC20.Transfer(user, address(0), amountToBurn);
+      emit IERC20.Transfer(user, address(0), uint256(-deltaAmount));
       vm.expectEmit(address(aToken));
-      emit IScaledBalanceToken.Burn(user, target, amountToBurn, balanceIncrease, index);
+      emit IScaledBalanceToken.Burn(user, target, uint256(-deltaAmount), balanceIncrease, newIndex);
       vm.expectEmit(address(underlyingToken));
       emit IERC20.Transfer(aTokenAddress, user, amount);
     }

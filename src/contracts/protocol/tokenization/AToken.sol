@@ -8,7 +8,6 @@ import {IERC20} from '../../dependencies/openzeppelin/contracts/IERC20.sol';
 import {GPv2SafeERC20} from '../../dependencies/gnosis/contracts/GPv2SafeERC20.sol';
 import {VersionedInitializable} from '../../misc/aave-upgradeability/VersionedInitializable.sol';
 import {Errors} from '../libraries/helpers/Errors.sol';
-import {WadRayMath} from '../libraries/math/WadRayMath.sol';
 import {IPool} from '../../interfaces/IPool.sol';
 import {IAToken} from '../../interfaces/IAToken.sol';
 import {IAaveIncentivesController} from '../../interfaces/IAaveIncentivesController.sol';
@@ -16,6 +15,7 @@ import {IInitializableAToken} from '../../interfaces/IInitializableAToken.sol';
 import {ScaledBalanceTokenBase} from './base/ScaledBalanceTokenBase.sol';
 import {IncentivizedERC20} from './base/IncentivizedERC20.sol';
 import {EIP712Base} from './base/EIP712Base.sol';
+import {TokenMath} from '../libraries/helpers/TokenMath.sol';
 
 /**
  * @title Aave ERC20 AToken
@@ -23,7 +23,7 @@ import {EIP712Base} from './base/EIP712Base.sol';
  * @notice Implementation of the interest bearing token for the Aave protocol
  */
 abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP712Base, IAToken {
-  using WadRayMath for uint256;
+  using TokenMath for uint256;
   using SafeCast for uint256;
   using GPv2SafeERC20 for IERC20;
 
@@ -64,10 +64,17 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
   function mint(
     address caller,
     address onBehalfOf,
-    uint256 amount,
+    uint256 scaledAmount,
     uint256 index
   ) external virtual override onlyPool returns (bool) {
-    return _mintScaled(caller, onBehalfOf, amount, index);
+    return
+      _mintScaled({
+        caller: caller,
+        onBehalfOf: onBehalfOf,
+        amountScaled: scaledAmount,
+        index: index,
+        getTokenBalance: TokenMath.getATokenBalance
+      });
   }
 
   /// @inheritdoc IAToken
@@ -75,20 +82,35 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
     address from,
     address receiverOfUnderlying,
     uint256 amount,
+    uint256 scaledAmount,
     uint256 index
-  ) external virtual override onlyPool {
-    _burnScaled(from, receiverOfUnderlying, amount, index);
+  ) external virtual override onlyPool returns (bool) {
+    bool zeroBalanceAfterBurn = _burnScaled({
+      user: from,
+      target: receiverOfUnderlying,
+      amountScaled: scaledAmount,
+      index: index,
+      getTokenBalance: TokenMath.getATokenBalance
+    });
+
     if (receiverOfUnderlying != address(this)) {
       IERC20(_underlyingAsset).safeTransfer(receiverOfUnderlying, amount);
     }
+    return zeroBalanceAfterBurn;
   }
 
   /// @inheritdoc IAToken
-  function mintToTreasury(uint256 amount, uint256 index) external virtual override onlyPool {
-    if (amount == 0) {
+  function mintToTreasury(uint256 scaledAmount, uint256 index) external virtual override onlyPool {
+    if (scaledAmount == 0) {
       return;
     }
-    _mintScaled(address(POOL), TREASURY, amount, index);
+    _mintScaled({
+      caller: address(POOL),
+      onBehalfOf: TREASURY,
+      amountScaled: scaledAmount,
+      index: index,
+      getTokenBalance: TokenMath.getATokenBalance
+    });
   }
 
   /// @inheritdoc IAToken
@@ -96,27 +118,29 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
     address from,
     address to,
     uint256 amount,
+    uint256 scaledAmount,
     uint256 index
   ) external virtual override onlyPool {
-    _transfer(from, to, amount, index);
+    _transfer({
+      sender: from,
+      recipient: to,
+      amount: amount,
+      scaledAmount: scaledAmount.toUint120(),
+      index: index
+    });
   }
 
   /// @inheritdoc IERC20
   function balanceOf(
     address user
   ) public view virtual override(IncentivizedERC20, IERC20) returns (uint256) {
-    return super.balanceOf(user).rayMul(POOL.getReserveNormalizedIncome(_underlyingAsset));
+    return
+      super.balanceOf(user).getATokenBalance(POOL.getReserveNormalizedIncome(_underlyingAsset));
   }
 
   /// @inheritdoc IERC20
   function totalSupply() public view virtual override(IncentivizedERC20, IERC20) returns (uint256) {
-    uint256 currentSupplyScaled = super.totalSupply();
-
-    if (currentSupplyScaled == 0) {
-      return 0;
-    }
-
-    return currentSupplyScaled.rayMul(POOL.getReserveNormalizedIncome(_underlyingAsset));
+    return super.totalSupply().getATokenBalance(POOL.getReserveNormalizedIncome(_underlyingAsset));
   }
 
   /// @inheritdoc IAToken
@@ -160,6 +184,58 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
     _approve(owner, spender, value);
   }
 
+  /// @inheritdoc IERC20
+  function transferFrom(
+    address sender,
+    address recipient,
+    uint256 amount
+  ) external virtual override(IERC20, IncentivizedERC20) returns (bool) {
+    uint256 index = POOL.getReserveNormalizedIncome(_underlyingAsset);
+    uint256 scaledBalanceOfSender = super.balanceOf(sender);
+    _spendAllowance(
+      sender,
+      _msgSender(),
+      amount,
+      // This comment explains the logic behind the allowance spent calculation.
+      //
+      // Problem:
+      // Simply decreasing the allowance by the input `amount` is not ideal for scaled-balance tokens.
+      // Due to rounding, the actual decrease in the sender's balance (`amount_out`) can be slightly
+      // larger than the input `amount`.
+      //
+      // Definitions:
+      // - `amount`: The unscaled amount to be transferred, passed as the `amount` argument.
+      // - `amount_out`: The actual unscaled amount deducted from the sender's balance.
+      // - `amount_in`: The actual unscaled amount added to the recipient's balance.
+      // - `allowance_spent`: The unscaled amount deducted from the spender's allowance. Equivalent to `amount_out`.
+      // - `amount_logged`: The amount logged in the `Transfer` event. Equivalent to `amount`.
+      //
+      // Solution:
+      // To fix this, `allowance_spent` must be exactly equal to `amount_out`.
+      // We calculate `amount_out` precisely by simulating the effect of the transfer on the sender's balance.
+      // By passing `amount_out` to `_spendAllowance`, we ensure `allowance_spent` is as close as possible to `amount_out`.
+      // `amount_logged` is equal to `amount`. `amount_in` is the actual balance increase for the recipient, which is >= `amount` due to rounding.
+      //
+      // Backward Compatibility & Guarantees:
+      // This implementation is backward-compatible and secure. The `_spendAllowance` function has a critical feature:
+      // 1. It REQUIRES the allowance to be >= `amount` (the user's requested transfer amount).
+      // 2. The amount consumed from the allowance is `amount_out`, but it is capped at the `currentAllowance`.
+      // This means if a user has an allowance of 100 wei and calls `transferFrom` with an `amount` of 100, the call will succeed
+      // even if the calculated `amount_out` is 101 wei. In that specific scenario, the allowance consumed will be 100 wei (since that is the `currentAllowance`),
+      // and the transaction will not revert. But if the allowance is 101 wei, then the allowance consumed will be 101 wei.
+      //
+      // uint256 amount_in = amount.getATokenTransferScaledAmount(index);
+      // uint256 amount_out = balanceBefore - balanceAfter = scaledBalanceOfSender.getATokenBalance(index) - (scaledBalanceOfSender - amount_in).getATokenBalance(index);
+      // Due to limitations of the solidity compiler, the calculation is inlined for gas efficiency.
+      scaledBalanceOfSender.getATokenBalance(index) -
+        (scaledBalanceOfSender - amount.getATokenTransferScaledAmount(index)).getATokenBalance(
+          index
+        )
+    );
+    _transfer(sender, recipient, amount.toUint120());
+    return true;
+  }
+
   /**
    * @notice Overrides the parent _transfer to force validated transfer() and transferFrom()
    * @param from The source address
@@ -171,12 +247,26 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
 
     uint256 index = POOL.getReserveNormalizedIncome(underlyingAsset);
 
-    uint256 fromBalanceBefore = super.balanceOf(from).rayMul(index);
-    uint256 toBalanceBefore = super.balanceOf(to).rayMul(index);
+    uint256 scaledBalanceFromBefore = super.balanceOf(from);
+    uint256 scaledBalanceToBefore = super.balanceOf(to);
+    uint256 scaledAmount = uint256(amount).getATokenTransferScaledAmount(index);
 
-    _transfer(from, to, amount, index);
+    _transfer({
+      sender: from,
+      recipient: to,
+      amount: amount,
+      scaledAmount: scaledAmount.toUint120(),
+      index: index
+    });
 
-    POOL.finalizeTransfer(underlyingAsset, from, to, amount, fromBalanceBefore, toBalanceBefore);
+    POOL.finalizeTransfer({
+      asset: underlyingAsset,
+      from: from,
+      to: to,
+      scaledAmount: scaledAmount,
+      scaledBalanceFromBefore: scaledBalanceFromBefore,
+      scaledBalanceToBefore: scaledBalanceToBefore
+    });
   }
 
   /**
@@ -185,25 +275,26 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
    * @param sender The source address
    * @param recipient The destination address
    * @param amount The amount getting transferred
+   * @param scaledAmount The scaled amount getting transferred
    * @param index The next liquidity index of the reserve
    */
   function _transfer(
     address sender,
     address recipient,
     uint256 amount,
+    uint120 scaledAmount,
     uint256 index
   ) internal virtual {
     uint256 senderScaledBalance = super.balanceOf(sender);
-    uint256 senderBalanceIncrease = senderScaledBalance.rayMul(index) -
-      senderScaledBalance.rayMul(_userState[sender].additionalData);
+    uint256 senderBalanceIncrease = senderScaledBalance.getATokenBalance(index) -
+      senderScaledBalance.getATokenBalance(_userState[sender].additionalData);
 
     uint256 recipientScaledBalance = super.balanceOf(recipient);
-    uint256 recipientBalanceIncrease = recipientScaledBalance.rayMul(index) -
-      recipientScaledBalance.rayMul(_userState[recipient].additionalData);
+    uint256 recipientBalanceIncrease = recipientScaledBalance.getATokenBalance(index) -
+      recipientScaledBalance.getATokenBalance(_userState[recipient].additionalData);
 
     _userState[sender].additionalData = index.toUint128();
     _userState[recipient].additionalData = index.toUint128();
-    uint120 scaledAmount = amount.rayDiv(index).toUint120();
 
     super._transfer(sender, recipient, scaledAmount);
 

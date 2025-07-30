@@ -30,7 +30,7 @@ contract ATokenModifiersTests is TestnetProcedures {
 
     vm.prank(alice);
 
-    aToken.burn(alice, alice, 1, 1);
+    aToken.burn(alice, alice, 1, 1, 1);
   }
 
   function test_revert_notAdmin_transferOnLiquidation() public {
@@ -38,7 +38,7 @@ contract ATokenModifiersTests is TestnetProcedures {
 
     vm.prank(alice);
 
-    aToken.transferOnLiquidation(alice, alice, 1, 1);
+    aToken.transferOnLiquidation(alice, alice, 1, 1, 1);
   }
 
   function test_revert_notAdmin_transferUnderlyingTo() public {
