@@ -1,5 +1,11 @@
 # @aave-dao/aave-v3-origin
 
+## 3.5.0
+
+### Minor Changes
+
+- 95eb3dd: Release of Aave v3.5
+
 ## 3.4.0
 
 ### Minor Changes
