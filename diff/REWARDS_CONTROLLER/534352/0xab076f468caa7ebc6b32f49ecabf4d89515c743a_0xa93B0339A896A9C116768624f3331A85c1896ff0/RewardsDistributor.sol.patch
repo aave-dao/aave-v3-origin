@@ -1,0 +1,40 @@
+===================================================================
+--- src/periphery/contracts/rewards/RewardsDistributor.sol
++++ src/contracts/rewards/RewardsDistributor.sol
+@@ -1,10 +1,10 @@
+-// SPDX-License-Identifier: MIT
++// SPDX-License-Identifier: BUSL-1.1
+ pragma solidity ^0.8.10;
+ 
+-import {IScaledBalanceToken} from "aave-v3-core/contracts/interfaces/IScaledBalanceToken.sol";
+-import {IERC20Detailed} from "aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol";
+-import {SafeCast} from "aave-v3-core/contracts/dependencies/openzeppelin/contracts/SafeCast.sol";
++import {IScaledBalanceToken} from "../interfaces/IScaledBalanceToken.sol";
++import {IERC20Detailed} from "../dependencies/openzeppelin/contracts/IERC20Detailed.sol";
++import {SafeCast} from "openzeppelin-contracts/contracts/utils/math/SafeCast.sol";
+ import {IRewardsDistributor} from "./interfaces/IRewardsDistributor.sol";
+ import {RewardsDataTypes} from "./libraries/RewardsDataTypes.sol";
+ 
+ /**
+@@ -44,9 +44,9 @@
+     /// @inheritdoc IRewardsDistributor
+     function getRewardsData(
+         address asset,
+         address reward
+-    ) public view override returns (uint256, uint256, uint256, uint256) {
++    ) external view override returns (uint256, uint256, uint256, uint256) {
+         return (
+             _assets[asset].rewards[reward].index,
+             _assets[asset].rewards[reward].emissionPerSecond,
+             _assets[asset].rewards[reward].lastUpdateTimestamp,
+@@ -105,9 +105,9 @@
+     function getUserAssetIndex(
+         address user,
+         address asset,
+         address reward
+-    ) public view override returns (uint256) {
++    ) external view override returns (uint256) {
+         return _assets[asset].rewards[reward].usersData[user].index;
+     }
+ 
+     /// @inheritdoc IRewardsDistributor

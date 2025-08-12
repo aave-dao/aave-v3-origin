@@ -1,0 +1,66 @@
+===================================================================
+--- src/periphery/contracts/rewards/RewardsController.sol
++++ src/contracts/rewards/RewardsController.sol
+@@ -1,15 +1,15 @@
+-// SPDX-License-Identifier: MIT
++// SPDX-License-Identifier: BUSL-1.1
+ pragma solidity ^0.8.10;
+ 
+-import {VersionedInitializable} from "aave-v3-core/contracts/protocol/libraries/aave-upgradeability/VersionedInitializable.sol";
+-import {SafeCast} from "aave-v3-core/contracts/dependencies/openzeppelin/contracts/SafeCast.sol";
+-import {IScaledBalanceToken} from "aave-v3-core/contracts/interfaces/IScaledBalanceToken.sol";
++import {VersionedInitializable} from "../misc/aave-upgradeability/VersionedInitializable.sol";
++import {SafeCast} from "openzeppelin-contracts/contracts/utils/math/SafeCast.sol";
++import {IScaledBalanceToken} from "../interfaces/IScaledBalanceToken.sol";
+ import {RewardsDistributor} from "./RewardsDistributor.sol";
+ import {IRewardsController} from "./interfaces/IRewardsController.sol";
+ import {ITransferStrategyBase} from "./interfaces/ITransferStrategyBase.sol";
+ import {RewardsDataTypes} from "./libraries/RewardsDataTypes.sol";
+-import {IEACAggregatorProxy} from "../misc/interfaces/IEACAggregatorProxy.sol";
++import {AggregatorInterface} from "../dependencies/chainlink/AggregatorInterface.sol";
+ 
+ /**
+  * @title RewardsController
+  * @notice Abstract contract template to build Distributors contracts for ERC20 rewards to protocol participants
+@@ -37,9 +37,9 @@
+     // A price oracle is enforced for integrators to be able to show incentives at
+     // the current Aave UI without the need to setup an external price registry
+     // At the moment of reward configuration, the Incentives Controller performs
+     // a check to see if the provided reward oracle contains `latestAnswer`.
+-    mapping(address => IEACAggregatorProxy) internal _rewardOracle;
++    mapping(address => AggregatorInterface) internal _rewardOracle;
+ 
+     modifier onlyAuthorizedClaimers(address claimer, address user) {
+         require(_authorizedClaimers[user] == claimer, "CLAIMER_UNAUTHORIZED");
+         _;
+@@ -111,9 +111,9 @@
+ 
+     /// @inheritdoc IRewardsController
+     function setRewardOracle(
+         address reward,
+-        IEACAggregatorProxy rewardOracle
++        AggregatorInterface rewardOracle
+     ) external onlyEmissionManager {
+         _setRewardOracle(reward, rewardOracle);
+     }
+ 
+@@ -422,17 +422,17 @@
+         emit TransferStrategyInstalled(reward, address(transferStrategy));
+     }
+ 
+     /**
+-     * @dev Update the Price Oracle of a reward token. The Price Oracle must follow Chainlink IEACAggregatorProxy interface.
++     * @dev Update the Price Oracle of a reward token. The Price Oracle must follow Chainlink AggregatorInterface interface.
+      * @notice The Price Oracle of a reward is used for displaying correct data about the incentives at the UI frontend.
+      * @param reward The address of the reward token
+      * @param rewardOracle The address of the price oracle
+      */
+ 
+     function _setRewardOracle(
+         address reward,
+-        IEACAggregatorProxy rewardOracle
++        AggregatorInterface rewardOracle
+     ) internal {
+         require(rewardOracle.latestAnswer() > 0, "ORACLE_MUST_RETURN_PRICE");
+         _rewardOracle[reward] = rewardOracle;
+         emit RewardOracleUpdated(reward, address(rewardOracle));

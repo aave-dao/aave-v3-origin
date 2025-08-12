@@ -1,0 +1,116 @@
+Index: settings
+===================================================================
+--- settings
++++ settings
+@@ -1,65 +1,57 @@
+ {
+-  "remappings": [
+-    "aave-v3-core/=src/core/",
+-    "aave-v3-periphery/=src/periphery/",
+-    "aave-collector-unification/=lib/aave-collector-unification/",
+-    "solidity-utils/=lib/solidity-utils/src/",
+-    "aave-helpers/=lib/aave-helpers/src/",
+-    "aave-address-book/=lib/aave-address-book/src/",
+-    "forge-std/=lib/forge-std/src/",
+-    "ds-test/=lib/forge-std/lib/ds-test/src/",
+-    "@aave/core-v2/=lib/aave-collector-unification/lib/protocol-v2/",
+-    "@aave/core-v3/=lib/aave-address-book/lib/aave-v3-core/",
+-    "@aave/periphery-v3/=lib/aave-address-book/lib/aave-v3-periphery/",
+-    "governance-crosschain-bridges/=lib/aave-helpers/lib/governance-crosschain-bridges/",
+-    "protocol-v2/=lib/aave-collector-unification/lib/protocol-v2/"
+-  ],
++  "evmVersion": "shanghai",
++  "libraries": {
++    "src/contracts/protocol/libraries/logic/BorrowLogic.sol": {
++      "BorrowLogic": "0xFeD9871528E713B5038c4c44BbE7a315f56cAdc6"
++    },
++    "src/contracts/protocol/libraries/logic/ConfiguratorLogic.sol": {
++      "ConfiguratorLogic": "0x6E2aFD57a161d12f34f416c29619BFeAcAC8AA18"
++    },
++    "src/contracts/protocol/libraries/logic/EModeLogic.sol": {
++      "EModeLogic": "0xD1bddC05A3BB5A7907d82A1b4F1E21dBCE69c3d5"
++    },
++    "src/contracts/protocol/libraries/logic/FlashLoanLogic.sol": {
++      "FlashLoanLogic": "0x5e84CEe2afb7B37d2AB14722C39A7c1C26F5B0BB"
++    },
++    "src/contracts/protocol/libraries/logic/LiquidationLogic.sol": {
++      "LiquidationLogic": "0x36Ae486289bB807C3C79A1427b9c3D934294ef43"
++    },
++    "src/contracts/protocol/libraries/logic/PoolLogic.sol": {
++      "PoolLogic": "0xE51B69e5722Bf547866A4d7Bc190c6e81b626806"
++    },
++    "src/contracts/protocol/libraries/logic/SupplyLogic.sol": {
++      "SupplyLogic": "0x034Fd14b9Ae6bB066a1F9f85A55e990b0b25c168"
++    }
++  },
++  "metadata": {
++    "appendCBOR": true,
++    "bytecodeHash": "none",
++    "useLiteralContent": false
++  },
+   "optimizer": {
+     "enabled": true,
+     "runs": 200
+   },
+-  "metadata": {
+-    "useLiteralContent": false,
+-    "bytecodeHash": "ipfs",
+-    "appendCBOR": true
+-  },
+   "outputSelection": {
+     "*": {
++      "": [
++        "*"
++      ],
+       "*": [
+-        "evm.bytecode",
+-        "evm.deployedBytecode",
+-        "devdoc",
+-        "userdoc",
+-        "metadata",
+-        "abi"
++        "*"
+       ]
+     }
+   },
+-  "evmVersion": "paris",
+-  "libraries": {
+-    "src/core/contracts/protocol/libraries/logic/BorrowLogic.sol": {
+-      "BorrowLogic": "0x5547D7d54d10C359108e36d098016c4020443Fd4"
+-    },
+-    "src/core/contracts/protocol/libraries/logic/BridgeLogic.sol": {
+-      "BridgeLogic": "0xd948Cfb92eBF175E4bD772305fdEe8f39e934520"
+-    },
+-    "src/core/contracts/protocol/libraries/logic/ConfiguratorLogic.sol": {
+-      "ConfiguratorLogic": "0x433c792f11D102249DccD55452dDD84c7A2Ef8f2"
+-    },
+-    "src/core/contracts/protocol/libraries/logic/EModeLogic.sol": {
+-      "EModeLogic": "0xB341e4f99c73caA2136302f468ac3b75827C1736"
+-    },
+-    "src/core/contracts/protocol/libraries/logic/FlashLoanLogic.sol": {
+-      "FlashLoanLogic": "0x0063Bcd116694c21F6A94AA78E10eF4d7819a609"
+-    },
+-    "src/core/contracts/protocol/libraries/logic/LiquidationLogic.sol": {
+-      "LiquidationLogic": "0x5125bCf6380C5D5Ccad4d4A88C3664DF646Bc6c3"
+-    },
+-    "src/core/contracts/protocol/libraries/logic/PoolLogic.sol": {
+-      "PoolLogic": "0x7b8186933eAd860f49114fb10e3a7f17a11bEd8a"
+-    },
+-    "src/core/contracts/protocol/libraries/logic/SupplyLogic.sol": {
+-      "SupplyLogic": "0x589F82Ff8162Fa96545b435435713E9D6ca79fBB"
+-    }
+-  }
++  "remappings": [
++    "solidity-utils/=lib/solidity-utils/src/",
++    "forge-std/=lib/forge-std/src/",
++    "ds-test/=lib/forge-std/lib/ds-test/src/",
++    "openzeppelin-contracts-upgradeable/=lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/",
++    "openzeppelin-contracts/=lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/",
++    "@openzeppelin/contracts-upgradeable/=lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/contracts/",
++    "@openzeppelin/contracts/=lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/",
++    "erc4626-tests/=lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/erc4626-tests/",
++    "halmos-cheatcodes/=lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/halmos-cheatcodes/src/"
++  ],
++  "viaIR": false
+ }
+\ No newline at end of file

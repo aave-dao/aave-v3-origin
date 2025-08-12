@@ -1,0 +1,27 @@
+Index: src/contracts/helpers/interfaces/IUiPoolDataProviderV3.sol
+===================================================================
+--- src/contracts/helpers/interfaces/IUiPoolDataProviderV3.sol
++++ src/contracts/helpers/interfaces/IUiPoolDataProviderV3.sol
+@@ -39,9 +39,8 @@
+         // v3 only
+         bool isPaused;
+         bool isSiloedBorrowing;
+         uint128 accruedToTreasury;
+-        uint128 unbacked;
+         uint128 isolationModeTotalDebt;
+         bool flashLoanEnabled;
+         //
+         uint256 debtCeiling;
+@@ -49,10 +48,11 @@
+         uint256 borrowCap;
+         uint256 supplyCap;
+         bool borrowableInIsolation;
+         // v3.1
+-        bool virtualAccActive;
+         uint128 virtualUnderlyingBalance;
++        // v3.3
++        uint128 deficit;
+     }
+ 
+     struct UserReserveData {
+         address underlyingAsset;

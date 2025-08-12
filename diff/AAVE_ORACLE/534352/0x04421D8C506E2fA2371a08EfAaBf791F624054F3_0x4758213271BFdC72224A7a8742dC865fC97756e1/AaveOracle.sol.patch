@@ -1,0 +1,24 @@
+===================================================================
+--- src/core/contracts/misc/AaveOracle.sol
++++ src/contracts/misc/AaveOracle.sol
+@@ -85,9 +85,9 @@
+         address[] memory sources
+     ) internal {
+         require(
+             assets.length == sources.length,
+-            Errors.INCONSISTENT_PARAMS_LENGTH
++            Errors.InconsistentParamsLength()
+         );
+         for (uint256 i = 0; i < assets.length; i++) {
+             assetsSources[assets[i]] = AggregatorInterface(sources[i]);
+             emit AssetSourceUpdated(assets[i], sources[i]);
+@@ -152,8 +152,8 @@
+         );
+         require(
+             aclManager.isAssetListingAdmin(msg.sender) ||
+                 aclManager.isPoolAdmin(msg.sender),
+-            Errors.CALLER_NOT_ASSET_LISTING_OR_POOL_ADMIN
++            Errors.CallerNotAssetListingOrPoolAdmin()
+         );
+     }
+ }

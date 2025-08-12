@@ -1,0 +1,15 @@
+===================================================================
+--- src/core/contracts/protocol/libraries/aave-upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol
++++ src/contracts/misc/aave-upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol
+@@ -1,9 +1,9 @@
+ // SPDX-License-Identifier: MIT
+ pragma solidity ^0.8.10;
+ 
+-import {InitializableUpgradeabilityProxy} from "../../../dependencies/openzeppelin/upgradeability/InitializableUpgradeabilityProxy.sol";
+-import {Proxy} from "../../../dependencies/openzeppelin/upgradeability/Proxy.sol";
++import {InitializableUpgradeabilityProxy} from "../../dependencies/openzeppelin/upgradeability/InitializableUpgradeabilityProxy.sol";
++import {Proxy} from "../../dependencies/openzeppelin/upgradeability/Proxy.sol";
+ import {BaseImmutableAdminUpgradeabilityProxy} from "./BaseImmutableAdminUpgradeabilityProxy.sol";
+ 
+ /**
+  * @title InitializableAdminUpgradeabilityProxy

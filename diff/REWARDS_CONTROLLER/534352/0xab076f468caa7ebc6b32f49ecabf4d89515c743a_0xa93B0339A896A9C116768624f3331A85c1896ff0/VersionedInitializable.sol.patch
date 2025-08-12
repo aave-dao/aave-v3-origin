@@ -1,0 +1,21 @@
+===================================================================
+--- src/core/contracts/protocol/libraries/aave-upgradeability/VersionedInitializable.sol
++++ src/contracts/misc/aave-upgradeability/VersionedInitializable.sol
+@@ -14,8 +14,17 @@
+  * because this is not dealt with automatically as with constructors.
+  */
+ abstract contract VersionedInitializable {
+     /**
++     * @dev Initializes the implementation contract at the current revision.
++     * In practice this breaks further initialization of the implementation.
++     */
++    constructor() {
++        // break the initialize
++        lastInitializedRevision = getRevision();
++    }
++
++    /**
+      * @dev Indicates that the contract has been initialized.
+      */
+     uint256 private lastInitializedRevision = 0;
+ 

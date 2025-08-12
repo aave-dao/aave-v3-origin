@@ -1,0 +1,14 @@
+===================================================================
+--- lib/aave-v3-origin/src/contracts/helpers/WrappedTokenGatewayV3.sol
++++ src/contracts/helpers/WrappedTokenGatewayV3.sol
+@@ -64,9 +64,9 @@
+         IAToken aWETH = IAToken(POOL.getReserveAToken(address(WETH)));
+         uint256 userBalance = aWETH.balanceOf(msg.sender);
+         uint256 amountToWithdraw = amount;
+ 
+-        // if amount is equal to uint(-1), the user wants to redeem everything
++        // if amount is equal to type(uint256).max, the user wants to redeem everything
+         if (amount == type(uint256).max) {
+             amountToWithdraw = userBalance;
+         }
+         aWETH.transferFrom(msg.sender, address(this), amountToWithdraw);

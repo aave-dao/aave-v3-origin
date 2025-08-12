@@ -1,0 +1,20 @@
+===================================================================
+--- src/core/contracts/dependencies/openzeppelin/upgradeability/Proxy.sol
++++ src/contracts/dependencies/openzeppelin/upgradeability/Proxy.sol
+@@ -18,8 +18,16 @@
+         _fallback();
+     }
+ 
+     /**
++     * @dev Fallback function that will run if call data is empty.
++     * IMPORTANT. receive() on implementation contracts will be unreachable
++     */
++    receive() external payable {
++        _fallback();
++    }
++
++    /**
+      * @return The Address of the implementation.
+      */
+     function _implementation() internal view virtual returns (address);
+ 

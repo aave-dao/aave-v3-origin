@@ -1,0 +1,41 @@
+===================================================================
+--- src/core/contracts/protocol/configuration/PoolAddressesProviderRegistry.sol
++++ src/contracts/protocol/configuration/PoolAddressesProviderRegistry.sol
+@@ -1,5 +1,5 @@
+-// SPDX-License-Identifier: MIT
++// SPDX-License-Identifier: BUSL-1.1
+ pragma solidity ^0.8.10;
+ 
+ import {Ownable} from "../../dependencies/openzeppelin/contracts/Ownable.sol";
+ import {Errors} from "../libraries/helpers/Errors.sol";
+@@ -47,16 +47,15 @@
+     function registerAddressesProvider(
+         address provider,
+         uint256 id
+     ) external override onlyOwner {
+-        require(id != 0, Errors.INVALID_ADDRESSES_PROVIDER_ID);
+         require(
+-            _idToAddressesProvider[id] == address(0),
+-            Errors.INVALID_ADDRESSES_PROVIDER_ID
++            id != 0 && _idToAddressesProvider[id] == address(0),
++            Errors.InvalidAddressesProviderId()
+         );
+         require(
+             _addressesProviderToId[provider] == 0,
+-            Errors.ADDRESSES_PROVIDER_ALREADY_ADDED
++            Errors.AddressesProviderAlreadyAdded()
+         );
+ 
+         _addressesProviderToId[provider] = id;
+         _idToAddressesProvider[id] = provider;
+@@ -70,9 +69,9 @@
+         address provider
+     ) external override onlyOwner {
+         require(
+             _addressesProviderToId[provider] != 0,
+-            Errors.ADDRESSES_PROVIDER_NOT_REGISTERED
++            Errors.AddressesProviderNotRegistered()
+         );
+         uint256 oldId = _addressesProviderToId[provider];
+         _idToAddressesProvider[oldId] = address(0);
+         _addressesProviderToId[provider] = 0;

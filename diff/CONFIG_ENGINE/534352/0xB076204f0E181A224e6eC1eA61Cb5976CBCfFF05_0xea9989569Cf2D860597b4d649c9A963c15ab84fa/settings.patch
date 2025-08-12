@@ -1,0 +1,92 @@
+Index: settings
+===================================================================
+--- settings
++++ settings
+@@ -1,42 +1,57 @@
+ {
+-  "remappings": [
+-    "aave-address-book/=lib/aave-helpers/lib/aave-address-book/src/",
+-    "aave-helpers/=lib/aave-helpers/",
+-    "aave-v3-origin-tests/=lib/aave-v3-origin/tests/",
+-    "aave-v3-origin/=lib/aave-v3-origin/src/",
+-    "erc4626-tests/=lib/aave-helpers/lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/erc4626-tests/",
+-    "forge-std/=lib/forge-std/src/",
+-    "openzeppelin-contracts-upgradeable/=lib/aave-helpers/lib/aave-address-book/lib/aave-v3-origin/lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/",
+-    "openzeppelin-contracts/=lib/aave-helpers/lib/aave-address-book/lib/aave-v3-origin/lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/",
+-    "solidity-utils/=lib/aave-helpers/lib/aave-address-book/lib/aave-v3-origin/lib/solidity-utils/src/",
+-    "lib/aave-helpers/:aave-address-book/=lib/aave-helpers/lib/aave-address-book/src/",
+-    "lib/aave-helpers/:solidity-utils/=lib/aave-helpers/lib/aave-address-book/lib/aave-v3-origin/lib/solidity-utils/src/",
+-    "@openzeppelin/contracts-upgradeable/=lib/aave-v3-origin/lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/contracts/",
+-    "@openzeppelin/contracts/=lib/aave-v3-origin/lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/",
+-    "ds-test/=lib/aave-v3-origin/lib/forge-std/lib/ds-test/src/",
+-    "halmos-cheatcodes/=lib/aave-v3-origin/lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/halmos-cheatcodes/src/"
+-  ],
+-  "optimizer": {
+-    "enabled": true,
+-    "runs": 200
++  "evmVersion": "shanghai",
++  "libraries": {
++    "src/contracts/protocol/libraries/logic/BorrowLogic.sol": {
++      "BorrowLogic": "0xFeD9871528E713B5038c4c44BbE7a315f56cAdc6"
++    },
++    "src/contracts/protocol/libraries/logic/ConfiguratorLogic.sol": {
++      "ConfiguratorLogic": "0x6E2aFD57a161d12f34f416c29619BFeAcAC8AA18"
++    },
++    "src/contracts/protocol/libraries/logic/EModeLogic.sol": {
++      "EModeLogic": "0xD1bddC05A3BB5A7907d82A1b4F1E21dBCE69c3d5"
++    },
++    "src/contracts/protocol/libraries/logic/FlashLoanLogic.sol": {
++      "FlashLoanLogic": "0x5e84CEe2afb7B37d2AB14722C39A7c1C26F5B0BB"
++    },
++    "src/contracts/protocol/libraries/logic/LiquidationLogic.sol": {
++      "LiquidationLogic": "0x36Ae486289bB807C3C79A1427b9c3D934294ef43"
++    },
++    "src/contracts/protocol/libraries/logic/PoolLogic.sol": {
++      "PoolLogic": "0xE51B69e5722Bf547866A4d7Bc190c6e81b626806"
++    },
++    "src/contracts/protocol/libraries/logic/SupplyLogic.sol": {
++      "SupplyLogic": "0x034Fd14b9Ae6bB066a1F9f85A55e990b0b25c168"
++    }
+   },
+   "metadata": {
+-    "useLiteralContent": false,
++    "appendCBOR": true,
+     "bytecodeHash": "none",
+-    "appendCBOR": true
++    "useLiteralContent": false
+   },
++  "optimizer": {
++    "enabled": true,
++    "runs": 200
++  },
+   "outputSelection": {
+     "*": {
++      "": [
++        "*"
++      ],
+       "*": [
+-        "evm.bytecode",
+-        "evm.deployedBytecode",
+-        "devdoc",
+-        "userdoc",
+-        "metadata",
+-        "abi"
++        "*"
+       ]
+     }
+   },
+-  "evmVersion": "shanghai",
++  "remappings": [
++    "solidity-utils/=lib/solidity-utils/src/",
++    "forge-std/=lib/forge-std/src/",
++    "ds-test/=lib/forge-std/lib/ds-test/src/",
++    "openzeppelin-contracts-upgradeable/=lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/",
++    "openzeppelin-contracts/=lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/",
++    "@openzeppelin/contracts-upgradeable/=lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/contracts/",
++    "@openzeppelin/contracts/=lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/",
++    "erc4626-tests/=lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/erc4626-tests/",
++    "halmos-cheatcodes/=lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/halmos-cheatcodes/src/"
++  ],
+   "viaIR": false
+ }
+\ No newline at end of file

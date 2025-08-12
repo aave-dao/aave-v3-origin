@@ -1,0 +1,15 @@
+===================================================================
+--- src/periphery/contracts/rewards/interfaces/ITransferStrategyBase.sol
++++ src/contracts/rewards/interfaces/ITransferStrategyBase.sol
+@@ -1,8 +1,11 @@
+ // SPDX-License-Identifier: MIT
+ pragma solidity ^0.8.10;
+ 
+ interface ITransferStrategyBase {
++    error CallerNotIncentivesController();
++    error OnlyRewardsAdmin();
++
+     event EmergencyWithdrawal(
+         address indexed caller,
+         address indexed token,
+         address indexed to,

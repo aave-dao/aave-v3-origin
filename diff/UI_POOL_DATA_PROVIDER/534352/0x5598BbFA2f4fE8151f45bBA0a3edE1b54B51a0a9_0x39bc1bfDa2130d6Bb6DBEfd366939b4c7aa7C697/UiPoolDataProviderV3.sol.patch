@@ -1,0 +1,86 @@
+Index: src/contracts/helpers/UiPoolDataProviderV3.sol
+===================================================================
+--- src/contracts/helpers/UiPoolDataProviderV3.sol
++++ src/contracts/helpers/UiPoolDataProviderV3.sol
+@@ -12,28 +12,28 @@
+ import {WadRayMath} from "../protocol/libraries/math/WadRayMath.sol";
+ import {ReserveConfiguration} from "../protocol/libraries/configuration/ReserveConfiguration.sol";
+ import {UserConfiguration} from "../protocol/libraries/configuration/UserConfiguration.sol";
+ import {DataTypes} from "../protocol/libraries/types/DataTypes.sol";
+-import {IEACAggregatorProxy} from "./interfaces/IEACAggregatorProxy.sol";
++import {AggregatorInterface} from "../dependencies/chainlink/AggregatorInterface.sol";
+ import {IERC20DetailedBytes} from "./interfaces/IERC20DetailedBytes.sol";
+ import {IUiPoolDataProviderV3} from "./interfaces/IUiPoolDataProviderV3.sol";
+ 
+ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
+     using WadRayMath for uint256;
+     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
+     using UserConfiguration for DataTypes.UserConfigurationMap;
+ 
+-    IEACAggregatorProxy
++    AggregatorInterface
+         public immutable networkBaseTokenPriceInUsdProxyAggregator;
+-    IEACAggregatorProxy
++    AggregatorInterface
+         public immutable marketReferenceCurrencyPriceInUsdProxyAggregator;
+     uint256 public constant ETH_CURRENCY_UNIT = 1 ether;
+     address public constant MKR_ADDRESS =
+         0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2;
+ 
+     constructor(
+-        IEACAggregatorProxy _networkBaseTokenPriceInUsdProxyAggregator,
+-        IEACAggregatorProxy _marketReferenceCurrencyPriceInUsdProxyAggregator
++        AggregatorInterface _networkBaseTokenPriceInUsdProxyAggregator,
++        AggregatorInterface _marketReferenceCurrencyPriceInUsdProxyAggregator
+     ) {
+         networkBaseTokenPriceInUsdProxyAggregator = _networkBaseTokenPriceInUsdProxyAggregator;
+         marketReferenceCurrencyPriceInUsdProxyAggregator = _marketReferenceCurrencyPriceInUsdProxyAggregator;
+     }
+@@ -149,8 +149,11 @@
+                 reserveData.optimalUsageRatio = res.optimalUsageRatio;
+             } catch {}
+ 
+             // v3 only
++            reserveData.deficit = uint128(
++                pool.getReserveDeficit(reserveData.underlyingAsset)
++            );
+             reserveData.debtCeiling = reserveConfigurationMap.getDebtCeiling();
+             reserveData.debtCeilingDecimals = poolDataProvider
+                 .getDebtCeilingDecimals();
+             (
+@@ -169,33 +172,16 @@
+             }
+ 
+             reserveData.isSiloedBorrowing = reserveConfigurationMap
+                 .getSiloedBorrowing();
+-            reserveData.unbacked = baseData.unbacked;
+             reserveData.isolationModeTotalDebt = baseData
+                 .isolationModeTotalDebt;
+             reserveData.accruedToTreasury = baseData.accruedToTreasury;
+ 
+             reserveData.borrowableInIsolation = reserveConfigurationMap
+                 .getBorrowableInIsolation();
+-
+-            try
+-                poolDataProvider.getIsVirtualAccActive(
+-                    reserveData.underlyingAsset
+-                )
+-            returns (bool virtualAccActive) {
+-                reserveData.virtualAccActive = virtualAccActive;
+-            } catch (bytes memory) {
+-                reserveData.virtualAccActive = false;
+-            }
+-
+-            try
+-                pool.getVirtualUnderlyingBalance(reserveData.underlyingAsset)
+-            returns (uint128 virtualUnderlyingBalance) {
+-                reserveData.virtualUnderlyingBalance = virtualUnderlyingBalance;
+-            } catch (bytes memory) {
+-                reserveData.virtualUnderlyingBalance = 0;
+-            }
++            reserveData.virtualUnderlyingBalance = pool
++                .getVirtualUnderlyingBalance(reserveData.underlyingAsset);
+         }
+ 
+         BaseCurrencyInfo memory baseCurrencyInfo;
+         baseCurrencyInfo

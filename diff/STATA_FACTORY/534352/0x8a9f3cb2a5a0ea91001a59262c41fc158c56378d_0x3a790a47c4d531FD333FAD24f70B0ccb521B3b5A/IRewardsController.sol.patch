@@ -1,0 +1,88 @@
+Index: src/contracts/rewards/interfaces/IRewardsController.sol
+===================================================================
+--- src/contracts/rewards/interfaces/IRewardsController.sol
++++ src/contracts/rewards/interfaces/IRewardsController.sol
+@@ -130,10 +130,9 @@
+      * @dev The units of `totalSupply` and `userBalance` should be the same.
+      * @param user The address of the user whose asset balance has changed
+      * @param totalSupply The total supply of the asset prior to user balance change
+      * @param userBalance The previous user balance prior to balance change
+-     *
+-     */
++     **/
+     function handleAction(
+         address user,
+         uint256 totalSupply,
+         uint256 userBalance
+@@ -145,10 +144,9 @@
+      * @param amount The amount of rewards to claim
+      * @param to The address that will be receiving the rewards
+      * @param reward The address of the reward token
+      * @return The amount of rewards claimed
+-     *
+-     */
++     **/
+     function claimRewards(
+         address[] calldata assets,
+         uint256 amount,
+         address to,
+@@ -163,10 +161,9 @@
+      * @param user The address to check and claim rewards
+      * @param to The address that will be receiving the rewards
+      * @param reward The address of the reward token
+      * @return The amount of rewards claimed
+-     *
+-     */
++     **/
+     function claimRewardsOnBehalf(
+         address[] calldata assets,
+         uint256 amount,
+         address user,
+@@ -179,10 +176,9 @@
+      * @param assets The list of assets to check eligible distributions before claiming rewards
+      * @param amount The amount of rewards to claim
+      * @param reward The address of the reward token
+      * @return The amount of rewards claimed
+-     *
+-     */
++     **/
+     function claimRewardsToSelf(
+         address[] calldata assets,
+         uint256 amount,
+         address reward
+@@ -193,10 +189,9 @@
+      * @param assets The list of assets to check eligible distributions before claiming rewards
+      * @param to The address that will be receiving the rewards
+      * @return rewardsList List of addresses of the reward tokens
+      * @return claimedAmounts List that contains the claimed amount per reward, following same order as "rewardList"
+-     *
+-     */
++     **/
+     function claimAllRewards(
+         address[] calldata assets,
+         address to
+     )
+@@ -210,10 +205,9 @@
+      * @param user The address to check and claim rewards
+      * @param to The address that will be receiving the rewards
+      * @return rewardsList List of addresses of the reward tokens
+      * @return claimedAmounts List that contains the claimed amount per reward, following same order as "rewardsList"
+-     *
+-     */
++     **/
+     function claimAllRewardsOnBehalf(
+         address[] calldata assets,
+         address user,
+         address to
+@@ -225,10 +219,9 @@
+      * @dev Claims all reward for msg.sender, on all the assets of the pool, accumulating the pending rewards
+      * @param assets The list of assets to check eligible distributions before claiming rewards
+      * @return rewardsList List of addresses of the reward tokens
+      * @return claimedAmounts List that contains the claimed amount per reward, following same order as "rewardsList"
+-     *
+-     */
++     **/
+     function claimAllRewardsToSelf(
+         address[] calldata assets
+     )
+         external
