@@ -12,7 +12,7 @@ import {IAaveOracle} from '../../src/contracts/interfaces/IAaveOracle.sol';
 import {DataTypes} from '../../src/contracts/protocol/libraries/types/DataTypes.sol';
 import {IPoolConfigurator} from '../../src/contracts/interfaces/IPoolConfigurator.sol';
 import {ProxyHelpers} from './ProxyHelpers.sol';
-import {DiffUtils} from './DiffUtils.sol';
+import {Test} from 'forge-std/Test.sol';
 
 struct ReserveTokens {
   address aToken;
@@ -67,7 +67,7 @@ struct LocalVars {
 /**
  * only applicable to harmony at this point
  */
-contract ProtocolV3TestBase is DiffUtils {
+contract ProtocolV3TestBase is Test {
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
 
   /**
