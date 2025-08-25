@@ -161,6 +161,7 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
 
       emit PendingLtvChanged(asset, ltv);
     } else {
+      if (_pendingLtv[asset] != 0) delete _pendingLtv[asset];
       currentConfig.setLtv(ltv);
     }
 
@@ -198,35 +199,41 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
     address asset,
     bool freeze
   ) external override onlyRiskOrPoolOrEmergencyAdmins {
-    DataTypes.ReserveConfigurationMap memory currentConfig = _pool.getConfiguration(asset);
+    DataTypes.ReserveDataLegacy memory reserveData = _pool.getReserveData(asset);
+    DataTypes.ReserveConfigurationMap memory currentConfig = reserveData.configuration;
 
     require(freeze != currentConfig.getFrozen(), Errors.InvalidFreezeState());
 
     currentConfig.setFrozen(freeze);
 
-    uint256 ltvSet;
-    uint256 pendingLtvSet;
-
     if (freeze) {
-      pendingLtvSet = currentConfig.getLtv();
-      _pendingLtv[asset] = pendingLtvSet;
-      currentConfig.setLtv(0);
-    } else {
-      ltvSet = _pendingLtv[asset];
-      currentConfig.setLtv(ltvSet);
-      delete _pendingLtv[asset];
+      _setReserveLtvzero(asset, true, currentConfig);
+      uint128 collateralEnabledBitmap;
+      uint128 ltvzeroBitmap;
+      // The loop will worst case do 2 * 255 SLOADs + 255 SSTOREs, which should be around ~6M gas.
+      // In practice, a single asset will never be enabled as collateral on all eModes, so the expected gas consumption is much lower.
+      // uint256 to not overflow when `j = type(uint8).max + 1`
+      for (uint256 j = 1; j <= type(uint8).max; j++) {
+        collateralEnabledBitmap = _pool.getEModeCategoryCollateralBitmap(uint8(j));
+        if (EModeConfiguration.isReserveEnabledOnBitmap(collateralEnabledBitmap, reserveData.id)) {
+          ltvzeroBitmap = _pool.getEModeCategoryLtvzeroBitmap(uint8(j));
+          _setEmodeLtvZero(ltvzeroBitmap, asset, reserveData.id, uint8(j), true);
+        }
+      }
     }
-
-    emit PendingLtvChanged(asset, pendingLtvSet);
-    emit CollateralConfigurationChanged(
-      asset,
-      ltvSet,
-      currentConfig.getLiquidationThreshold(),
-      currentConfig.getLiquidationBonus()
-    );
 
     _pool.setConfiguration(asset, currentConfig);
     emit ReserveFrozen(asset, freeze);
+  }
+
+  /// @inheritdoc IPoolConfigurator
+  function setReserveLtvzero(address asset, bool ltvZero) external onlyRiskOrPoolOrEmergencyAdmins {
+    DataTypes.ReserveConfigurationMap memory currentConfig = _pool.getConfiguration(asset);
+    uint256 configCache = currentConfig.data;
+
+    _setReserveLtvzero(asset, ltvZero, currentConfig);
+    require(currentConfig.data != configCache, Errors.InvalidLtvzeroState());
+    _pool.setConfiguration(asset, currentConfig);
   }
 
   /// @inheritdoc IPoolConfigurator
@@ -422,6 +429,21 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
     uint128 collateralBitmap = _pool.getEModeCategoryCollateralBitmap(categoryId);
     DataTypes.ReserveDataLegacy memory reserveData = _pool.getReserveData(asset);
     require(reserveData.id != 0 || _pool.getReservesList()[0] == asset, Errors.AssetNotListed());
+    // Disabling an asset from an eMode is always a difficult situation and
+    // must be performed taking into account the current exposure.
+    // The following checks only ensure the protocol stays in a valid state, it does not account for effects triggered by the change.
+    if (!allowed) {
+      DataTypes.ReserveConfigurationMap memory currentConfig = _pool.getConfiguration(asset);
+      if (currentConfig.getLiquidationThreshold() == 0) _checkNoSuppliers(asset);
+
+      uint128 ltvzeroBitmap = _pool.getEModeCategoryLtvzeroBitmap(categoryId);
+      // if removing an asset from an eMode it must also be removed from the ltvzero bitmap
+      if (EModeConfiguration.isReserveEnabledOnBitmap(ltvzeroBitmap, reserveData.id)) {
+        _setEmodeLtvZero(ltvzeroBitmap, asset, reserveData.id, categoryId, false);
+      }
+    } else {
+      require(!reserveData.configuration.getFrozen(), Errors.ReserveFrozen());
+    }
     collateralBitmap = EModeConfiguration.setReserveBitmapBit(
       collateralBitmap,
       reserveData.id,
@@ -447,6 +469,27 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
     );
     _pool.configureEModeCategoryBorrowableBitmap(categoryId, borrowableBitmap);
     emit AssetBorrowableInEModeChanged(asset, categoryId, borrowable);
+  }
+
+  /// @inheritdoc IPoolConfigurator
+  function setAssetLtvzeroInEMode(
+    address asset,
+    uint8 categoryId,
+    bool ltvzero
+  ) external onlyRiskOrPoolOrEmergencyAdmins {
+    uint128 ltvzeroBitmap = _pool.getEModeCategoryLtvzeroBitmap(categoryId);
+    DataTypes.ReserveDataLegacy memory reserveData = _pool.getReserveData(asset);
+    require(reserveData.id != 0 || _pool.getReservesList()[0] == asset, Errors.AssetNotListed());
+    uint128 collateralBitmap = _pool.getEModeCategoryCollateralBitmap(categoryId);
+    require(
+      EModeConfiguration.isReserveEnabledOnBitmap(collateralBitmap, reserveData.id),
+      Errors.MustBeEmodeCollateral(asset)
+    );
+    // ltvzero can only be removed on non frozen reserves
+    if (!ltvzero) {
+      require(!reserveData.configuration.getFrozen(), Errors.ReserveFrozen());
+    }
+    _setEmodeLtvZero(ltvzeroBitmap, asset, reserveData.id, categoryId, ltvzero);
   }
 
   /// @inheritdoc IPoolConfigurator
@@ -503,6 +546,47 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
   /// @inheritdoc IPoolConfigurator
   function getConfiguratorLogic() external pure returns (address) {
     return address(ConfiguratorLogic);
+  }
+
+  function _setReserveLtvzero(
+    address asset,
+    bool ltvZero,
+    DataTypes.ReserveConfigurationMap memory currentConfig
+  ) internal {
+    uint256 newLtv;
+    uint256 newPendingLtv;
+    if (ltvZero) {
+      if (currentConfig.getLtv() == 0) return;
+      newPendingLtv = currentConfig.getLtv();
+      _pendingLtv[asset] = newPendingLtv;
+      currentConfig.setLtv(0);
+    } else {
+      // ltvzero can only be removed on non frozen reserves
+      require(!currentConfig.getFrozen(), Errors.ReserveFrozen());
+      newLtv = _pendingLtv[asset];
+      if (newLtv == 0 || currentConfig.getLtv() != 0) return;
+      currentConfig.setLtv(newLtv);
+      delete _pendingLtv[asset];
+    }
+    emit PendingLtvChanged(asset, newPendingLtv);
+    emit CollateralConfigurationChanged(
+      asset,
+      newLtv,
+      currentConfig.getLiquidationThreshold(),
+      currentConfig.getLiquidationBonus()
+    );
+  }
+
+  function _setEmodeLtvZero(
+    uint128 ltvzeroBitmap,
+    address reserve,
+    uint16 reserveId,
+    uint8 eModeCategoryId,
+    bool ltvzero
+  ) internal {
+    ltvzeroBitmap = EModeConfiguration.setReserveBitmapBit(ltvzeroBitmap, reserveId, ltvzero);
+    _pool.configureEModeCategoryLtvzeroBitmap(eModeCategoryId, ltvzeroBitmap);
+    emit AssetLtvzeroInEModeChanged(reserve, eModeCategoryId, ltvzero);
   }
 
   function _checkNoSuppliers(address asset) internal view {

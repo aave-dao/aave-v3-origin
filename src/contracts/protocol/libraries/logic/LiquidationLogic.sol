@@ -367,7 +367,15 @@ library LiquidationLogic {
     }
 
     if (params.receiveAToken) {
-      _liquidateATokens(reservesData, reservesList, usersConfig, collateralReserve, params, vars);
+      IAToken(vars.collateralReserveCache.aTokenAddress).transferOnLiquidation(
+        params.borrower,
+        params.liquidator,
+        vars.actualCollateralToLiquidate,
+        vars.actualCollateralToLiquidate.getATokenTransferScaledAmount(
+          vars.collateralReserveCache.nextLiquidityIndex
+        ),
+        vars.collateralReserveCache.nextLiquidityIndex
+      );
     } else {
       // @note Manually updating the cache in case the debt and collateral are the same asset.
       // This ensures the rates are updated correctly, considering the burning of debt
@@ -460,59 +468,6 @@ library LiquidationLogic {
       ),
       index: vars.collateralReserveCache.nextLiquidityIndex
     });
-  }
-
-  /**
-   * @notice Liquidates the user aTokens by transferring them to the liquidator.
-   * @dev   The function also checks the state of the liquidator and activates the aToken as collateral
-   *        as in standard transfers if the isolation mode constraints are respected.
-   * @param reservesData The state of all the reserves
-   * @param reservesList The addresses of all the active reserves
-   * @param usersConfig The users configuration mapping that track the supplied/borrowed assets
-   * @param collateralReserve The data of the collateral reserve
-   * @param params The additional parameters needed to execute the liquidation function
-   * @param vars The executeLiquidationCall() function local vars
-   */
-  function _liquidateATokens(
-    mapping(address => DataTypes.ReserveData) storage reservesData,
-    mapping(uint256 => address) storage reservesList,
-    mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
-    DataTypes.ReserveData storage collateralReserve,
-    DataTypes.ExecuteLiquidationCallParams memory params,
-    LiquidationCallLocalVars memory vars
-  ) internal {
-    uint256 liquidatorPreviousATokenBalance = IAToken(vars.collateralReserveCache.aTokenAddress)
-      .scaledBalanceOf(params.liquidator);
-    IAToken(vars.collateralReserveCache.aTokenAddress).transferOnLiquidation(
-      params.borrower,
-      params.liquidator,
-      vars.actualCollateralToLiquidate,
-      vars.actualCollateralToLiquidate.getATokenTransferScaledAmount(
-        vars.collateralReserveCache.nextLiquidityIndex
-      ),
-      vars.collateralReserveCache.nextLiquidityIndex
-    );
-
-    if (liquidatorPreviousATokenBalance == 0) {
-      DataTypes.UserConfigurationMap storage liquidatorConfig = usersConfig[params.liquidator];
-      if (
-        ValidationLogic.validateAutomaticUseAsCollateral(
-          params.liquidator,
-          reservesData,
-          reservesList,
-          liquidatorConfig,
-          vars.collateralReserveCache.reserveConfiguration,
-          vars.collateralReserveCache.aTokenAddress
-        )
-      ) {
-        liquidatorConfig.setUsingAsCollateral(
-          collateralReserve.id,
-          params.collateralAsset,
-          params.liquidator,
-          true
-        );
-      }
-    }
   }
 
   /**
@@ -674,11 +629,14 @@ library LiquidationLogic {
     DataTypes.UserConfigurationMap storage borrowerConfig,
     DataTypes.ExecuteLiquidationCallParams memory params
   ) internal {
-    uint256 cachedBorrowerConfig = borrowerConfig.data;
+    // the cache is muted inside the iteration and should not be used for other operations
+    uint256 unsafe_cachedBorrowerConfig = borrowerConfig.data;
     uint256 i = 0;
     bool isBorrowed = false;
-    while (cachedBorrowerConfig != 0) {
-      (cachedBorrowerConfig, isBorrowed, ) = UserConfiguration.getNextFlags(cachedBorrowerConfig);
+    while (unsafe_cachedBorrowerConfig != 0) {
+      (unsafe_cachedBorrowerConfig, isBorrowed, ) = UserConfiguration.getNextFlags(
+        unsafe_cachedBorrowerConfig
+      );
       if (isBorrowed) {
         address reserveAddress = reservesList[i];
         if (reserveAddress != address(0)) {

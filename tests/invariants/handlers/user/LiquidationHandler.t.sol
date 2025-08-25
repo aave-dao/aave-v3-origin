@@ -5,6 +5,8 @@ pragma solidity ^0.8.19;
 import {IERC20Detailed, IERC20} from 'src/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
 import {IPool} from 'src/contracts/interfaces/IPool.sol';
 import {PercentageMath} from 'src/contracts/protocol/libraries/math/PercentageMath.sol';
+import {ReserveConfiguration} from 'src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
+import {DataTypes} from 'src/contracts/protocol/libraries/types/DataTypes.sol';
 
 // Libraries
 import 'forge-std/console2.sol';
@@ -17,16 +19,7 @@ import {BaseHandler} from '../../base/BaseHandler.t.sol';
 /// @notice Handler test contract for a set of actions
 contract LiquidationHandler is BaseHandler {
   using PercentageMath for uint256;
-  ///////////////////////////////////////////////////////////////////////////////////////////////
-  //                                      STATE VARIABLES                                      //
-  ///////////////////////////////////////////////////////////////////////////////////////////////
-
-  uint256 helper_violatorDebtBalanceBefore;
-  uint256 helper_violatorDebtReserveValueBefore;
-  uint256 helper_violatorCollateralReserveValueBefore;
-  uint256 helper_debtAssetDeficitBefore;
-  uint256 helper_collateralAssetPrice;
-  uint256 helper_debtAssetPrice;
+  using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
 
   ///////////////////////////////////////////////////////////////////////////////////////////////
   //                                          ACTIONS                                          //
@@ -37,58 +30,39 @@ contract LiquidationHandler is BaseHandler {
     bool receiveAToken,
     uint8 i,
     uint8 j,
-    uint8 k,
-    uint8 l
+    uint8 k
   ) external setup {
     bool success;
     bytes memory returnData;
 
-    address user = _getRandomActor(i);
-    _setReceiverActor(user);
+    address borrower = _getRandomActor(i);
+    _setReceiverActor(borrower);
     // users cannot liquidate themselfes
-    require(user != address(actor));
+    if (borrower == address(actor)) {
+      borrower = _getRandomActor(i + 1);
+    }
+    require(borrower != address(actor));
 
-    // Set the storage helper variable to the collateral asset
-    targetAsset = _getRandomBaseAsset(j);
-
-    helper_violatorCollateralReserveValueBefore = _getUserReserveValueInBaseCurrency(
-      targetAsset,
-      IERC20(protocolTokens[targetAsset].aTokenAddress).balanceOf(user)
-    );
-
-    helper_violatorDebtBalanceBefore = IERC20(
-      protocolTokens[_getRandomBaseAsset(k)].variableDebtTokenAddress
-    ).balanceOf(user);
-
-    helper_violatorDebtReserveValueBefore = _getUserReserveValueInBaseCurrency(
-      _getRandomBaseAsset(k),
-      helper_violatorDebtBalanceBefore
-    );
-
-    helper_debtAssetDeficitBefore = pool.getReserveDeficit(_getRandomBaseAsset(k));
-
-    helper_collateralAssetPrice = contracts.aaveOracle.getAssetPrice(_getRandomBaseAsset(j));
-
-    helper_debtAssetPrice = contracts.aaveOracle.getAssetPrice(_getRandomBaseAsset(k));
-
-    debtToCover = biasedclampLe(debtToCover, helper_violatorDebtBalanceBefore, l);
+    address collateralAsset = _getRandomBaseAsset(j);
+    address debtAsset = _getRandomBaseAsset(k);
 
     _before();
-    (success, returnData) = actor.proxy(
-      address(pool),
-      abi.encodeWithSelector(
+    {
+      bytes memory callData = abi.encodeWithSelector(
         IPool.liquidationCall.selector,
-        _getRandomBaseAsset(j),
-        _getRandomBaseAsset(k),
-        user,
+        collateralAsset,
+        debtAsset,
+        borrower,
         debtToCover,
         receiveAToken
-      )
-    );
+      );
+      (success, returnData) = actor.proxy(address(pool), callData);
+    }
 
     if (
-      pool.getLiquidationGracePeriod(_getRandomBaseAsset(j)) >= block.timestamp ||
-      pool.getLiquidationGracePeriod(_getRandomBaseAsset(k)) >= block.timestamp
+      snapshotGlobalVarsBefore.assetsInfo[collateralAsset].liquidationGracePeriodUntil >=
+      block.timestamp ||
+      snapshotGlobalVarsBefore.assetsInfo[debtAsset].liquidationGracePeriodUntil >= block.timestamp
     ) {
       assertFalse(success, LIQUIDATION_HSPOST_B);
     }
@@ -97,62 +71,107 @@ contract LiquidationHandler is BaseHandler {
       _after();
 
       // POST-CONDITIONS
-      assertFalse(defaultVarsBefore.users[receiverActor].isHealthy, LIQUIDATION_HSPOST_A);
+      assertFalse(snapshotGlobalVarsBefore.usersInfo[borrower].isHealthy, LIQUIDATION_HSPOST_A);
 
-      uint256 violatorDebtReserveValueAfter = _getUserReserveValueInBaseCurrency(
-        _getRandomBaseAsset(k),
-        IERC20(protocolTokens[_getRandomBaseAsset(k)].variableDebtTokenAddress).balanceOf(user)
-      );
-
-      uint256 amountWithCloseFactor = violatorDebtReserveValueAfter.percentMul(
-        DEFAULT_LIQUIDATION_CLOSE_FACTOR
-      );
-
-      if (violatorDebtReserveValueAfter < violatorDebtReserveValueAfter - amountWithCloseFactor) {
-        assertTrue(
-          (helper_violatorCollateralReserveValueBefore < MIN_BASE_MAX_CLOSE_FACTOR_THRESHOLD ||
-            helper_violatorDebtReserveValueBefore < MIN_BASE_MAX_CLOSE_FACTOR_THRESHOLD) ||
-            defaultVarsBefore.users[user].healthFactor < CLOSE_FACTOR_HF_THRESHOLD,
-          LIQUIDATION_HSPOST_F
+      uint256 additionalDeficit = snapshotGlobalVarsAfter.assetsInfo[debtAsset].reserveDeficit -
+        snapshotGlobalVarsBefore.assetsInfo[debtAsset].reserveDeficit;
+      if (additionalDeficit > 0) {
+        assertEq(
+          snapshotGlobalVarsAfter.usersInfo[borrower].totalCollateralBase,
+          0,
+          LIQUIDATION_HSPOST_L
+        );
+        assertEq(
+          snapshotGlobalVarsAfter.usersInfo[borrower].userAssetsInfo[debtAsset].vTokenBalance,
+          0,
+          LIQUIDATION_HSPOST_M
+        );
+        assertLe(
+          additionalDeficit,
+          snapshotGlobalVarsBefore.usersInfo[borrower].userAssetsInfo[debtAsset].vTokenBalance,
+          LIQUIDATION_HSPOST_N
         );
       }
 
-      uint256 userDebtBalance = IERC20(
-        protocolTokens[_getRandomBaseAsset(k)].variableDebtTokenAddress
-      ).balanceOf(user);
+      uint256 liquidatedDebtAmount = snapshotGlobalVarsBefore
+        .usersInfo[borrower]
+        .userAssetsInfo[debtAsset]
+        .vTokenBalance -
+        snapshotGlobalVarsAfter.usersInfo[borrower].userAssetsInfo[debtAsset].vTokenBalance;
 
-      {
-        uint256 userCollateralBalance = IERC20(protocolTokens[_getRandomBaseAsset(j)].aTokenAddress)
-          .balanceOf(user);
+      uint256 liquidatedCollateralAmount = snapshotGlobalVarsBefore
+        .usersInfo[borrower]
+        .userAssetsInfo[collateralAsset]
+        .aTokenBalance -
+        snapshotGlobalVarsAfter.usersInfo[borrower].userAssetsInfo[collateralAsset].aTokenBalance;
+      uint256 protocolFeeAmount = snapshotGlobalVarsAfter
+        .usersInfo[address(contracts.treasury)]
+        .userAssetsInfo[collateralAsset]
+        .aTokenBalance -
+        snapshotGlobalVarsBefore
+          .usersInfo[address(contracts.treasury)]
+          .userAssetsInfo[collateralAsset]
+          .aTokenBalance;
+      liquidatedCollateralAmount -= protocolFeeAmount;
 
-        uint256 collateralAssetUnit = 10 ** IERC20Detailed(_getRandomBaseAsset(k)).decimals();
-        uint256 debtAssetUnit = 10 ** IERC20Detailed(_getRandomBaseAsset(j)).decimals();
-
-        assertTrue(
-          (userDebtBalance == 0 || userCollateralBalance == 0) ||
-            ((userDebtBalance * helper_debtAssetPrice) / debtAssetUnit > MIN_LEFTOVER_BASE &&
-              (userCollateralBalance * helper_collateralAssetPrice) / collateralAssetUnit >
-              MIN_LEFTOVER_BASE),
-          LIQUIDATION_HSPOST_H
+      if (receiveAToken) {
+        assertApproxEqAbs(
+          snapshotGlobalVarsAfter
+            .usersInfo[address(actor)]
+            .userAssetsInfo[collateralAsset]
+            .aTokenBalance,
+          snapshotGlobalVarsBefore
+            .usersInfo[address(actor)]
+            .userAssetsInfo[collateralAsset]
+            .aTokenBalance + liquidatedCollateralAmount,
+          8,
+          LIQUIDATION_HSPOST_P
+        );
+      } else {
+        assertApproxEqAbs(
+          snapshotGlobalVarsAfter
+            .usersInfo[address(actor)]
+            .userAssetsInfo[collateralAsset]
+            .underlyingBalance,
+          snapshotGlobalVarsBefore
+            .usersInfo[address(actor)]
+            .userAssetsInfo[collateralAsset]
+            .underlyingBalance + liquidatedCollateralAmount,
+          8,
+          LIQUIDATION_HSPOST_P
         );
       }
 
-      uint256 deficitDelta = pool.getReserveDeficit(_getRandomBaseAsset(k)) -
-        helper_debtAssetDeficitBefore;
+      assertApproxEqAbs(
+        snapshotGlobalVarsBefore
+          .usersInfo[address(actor)]
+          .userAssetsInfo[debtAsset]
+          .underlyingBalance,
+        snapshotGlobalVarsAfter
+          .usersInfo[address(actor)]
+          .userAssetsInfo[debtAsset]
+          .underlyingBalance + liquidatedDebtAmount,
+        4,
+        LIQUIDATION_HSPOST_Q
+      );
 
-      if (deficitDelta != 0) {
-        assertEq(defaultVarsAfter.users[user].totalCollateralBase, 0, LIQUIDATION_HSPOST_L);
-        assertEq(userDebtBalance, 0, LIQUIDATION_HSPOST_M);
-      }
-
-      assertLe(deficitDelta, helper_violatorDebtBalanceBefore, LIQUIDATION_HSPOST_N);
-
-      if (deficitDelta > 0) {
-        assertTrue(_isReserveActive(_getRandomBaseAsset(k)), LIQUIDATION_HSPOST_O);
-      }
+      assertApproxEqAbs(
+        snapshotGlobalVarsAfter.assetsInfo[debtAsset].virtualUnderlyingBalance,
+        snapshotGlobalVarsBefore.assetsInfo[debtAsset].virtualUnderlyingBalance +
+          liquidatedDebtAmount,
+        4,
+        LIQUIDATION_HSPOST_R
+      );
+      assertApproxEqAbs(
+        snapshotGlobalVarsBefore.assetsInfo[collateralAsset].virtualUnderlyingBalance,
+        snapshotGlobalVarsAfter.assetsInfo[collateralAsset].virtualUnderlyingBalance +
+          liquidatedDebtAmount,
+        4,
+        LIQUIDATION_HSPOST_S
+      );
+    } else {
+      revert('LiquidationHandler: liquidate action reverted');
     }
-
-    _deleteLiquidationHelperVars();
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -162,13 +181,4 @@ contract LiquidationHandler is BaseHandler {
   ///////////////////////////////////////////////////////////////////////////////////////////////
   //                                           HELPERS                                         //
   ///////////////////////////////////////////////////////////////////////////////////////////////
-
-  function _deleteLiquidationHelperVars() internal {
-    delete helper_violatorDebtBalanceBefore;
-    delete helper_violatorCollateralReserveValueBefore;
-    delete helper_violatorDebtReserveValueBefore;
-    delete helper_debtAssetDeficitBefore;
-    delete helper_collateralAssetPrice;
-    delete helper_debtAssetPrice;
-  }
 }

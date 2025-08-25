@@ -537,15 +537,13 @@ interface IPool {
    * @param to The user receiving the aTokens
    * @param scaledAmount The scaled amount being transferred/withdrawn
    * @param scaledBalanceFromBefore The aToken scaled balance of the `from` user before the transfer
-   * @param scaledBalanceToBefore The aToken scaled balance of the `to` user before the transfer
    */
   function finalizeTransfer(
     address asset,
     address from,
     address to,
     uint256 scaledAmount,
-    uint256 scaledBalanceFromBefore,
-    uint256 scaledBalanceToBefore
+    uint256 scaledBalanceFromBefore
   ) external;
 
   /**
@@ -616,6 +614,13 @@ interface IPool {
   function configureEModeCategoryBorrowableBitmap(uint8 id, uint128 borrowableBitmap) external;
 
   /**
+   * @notice Replaces the current eMode ltvzeroBitmap.
+   * @param id The id of the category
+   * @param ltvzeroBitmap The ltvzeroBitmap of the category
+   */
+  function configureEModeCategoryLtvzeroBitmap(uint8 id, uint128 ltvzeroBitmap) external;
+
+  /**
    * @notice Returns the data of an eMode category
    * @dev DEPRECATED use independent getters instead
    * @param id The id of the category
@@ -627,6 +632,8 @@ interface IPool {
 
   /**
    * @notice Returns the label of an eMode category
+   * @dev This function is deprecated and will be removed in a future version.
+   * @custom:deprecated
    * @param id The id of the category
    * @return The label of the category
    */
@@ -654,6 +661,13 @@ interface IPool {
    * @return The borrowableBitmap of the category
    */
   function getEModeCategoryBorrowableBitmap(uint8 id) external view returns (uint128);
+
+  /**
+   * @notice Returns the ltvzero of an eMode category
+   * @param id The id of the category
+   * @return The ltvzeroBitmap of the category
+   */
+  function getEModeCategoryLtvzeroBitmap(uint8 id) external view returns (uint128);
 
   /**
    * @notice Allows a user to use the protocol in eMode
@@ -824,11 +838,6 @@ interface IPool {
    * @notice Gets the address of the external BorrowLogic
    */
   function getBorrowLogic() external view returns (address);
-
-  /**
-   * @notice Gets the address of the external EModeLogic
-   */
-  function getEModeLogic() external view returns (address);
 
   /**
    * @notice Gets the address of the external LiquidationLogic

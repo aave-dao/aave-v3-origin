@@ -5,7 +5,6 @@ import '../../contracts/LibraryReportStorage.sol';
 import {Create2Utils} from '../../contracts/utilities/Create2Utils.sol';
 import {BorrowLogic} from '../../../contracts/protocol/libraries/logic/BorrowLogic.sol';
 import {ConfiguratorLogic} from '../../../contracts/protocol/libraries/logic/ConfiguratorLogic.sol';
-import {EModeLogic} from '../../../contracts/protocol/libraries/logic/EModeLogic.sol';
 
 contract AaveV3LibrariesBatch1 is LibraryReportStorage {
   constructor() {
@@ -20,7 +19,6 @@ contract AaveV3LibrariesBatch1 is LibraryReportStorage {
       salt,
       type(ConfiguratorLogic).creationCode
     );
-    libReport.eModeLogic = Create2Utils._create2Deploy(salt, type(EModeLogic).creationCode);
     return libReport;
   }
 }

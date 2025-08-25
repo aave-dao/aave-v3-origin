@@ -530,9 +530,6 @@ contract PoolLiquidationTests is TestnetProcedures {
     emit IPool.ReserveUsedAsCollateralDisabled(params.collateralAsset, params.user);
 
     vm.expectEmit(address(contracts.poolProxy));
-    emit IPool.ReserveUsedAsCollateralEnabled(params.collateralAsset, bob);
-
-    vm.expectEmit(address(contracts.poolProxy));
     emit IPool.LiquidationCall(
       params.collateralAsset,
       params.debtAsset,

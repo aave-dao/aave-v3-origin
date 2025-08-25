@@ -178,6 +178,10 @@ abstract contract VariableDebtToken is DebtTokenBase, ScaledBalanceTokenBase, IV
     revert Errors.OperationNotSupported();
   }
 
+  function renounceAllowance(address) external virtual override {
+    revert Errors.OperationNotSupported();
+  }
+
   function increaseAllowance(address, uint256) external virtual override returns (bool) {
     revert Errors.OperationNotSupported();
   }

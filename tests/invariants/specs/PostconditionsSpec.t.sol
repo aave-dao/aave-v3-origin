@@ -60,7 +60,7 @@ abstract contract PostconditionsSpec {
     'LENDING_HJPOST_D: After a successful deposit the sender underlying balance should decrease by the amount deposited';
 
   string constant LENDING_HPOST_E =
-    'LENDING_HPOST_E: After a successful deposit the onBehalf AToken balance should increase by the amount deposited';
+    'LENDING_HPOST_E: After a successful deposit the onBehalf AToken balance should increase by approximately the amount deposited';
 
   string constant LENDING_HPOST_F =
     'LENDING_HPOST_F: After a successful withdraw the actor AToken balance should decrease by the amount withdrawn';
@@ -101,10 +101,10 @@ abstract contract PostconditionsSpec {
     'BORROWING_GPOST_H: If totalBorrow for a reserve increases new totalBorrow must be less than or equal to borrow cap';
 
   string constant BORROWING_HSPOST_I =
-    'BORROWING_HSPOST_I: After a successful borrow the actor asset balance should increase by the amount borrowed';
+    'BORROWING_HSPOST_I: After a successful borrow the onBehalfOf user asset balance should increase by the amount borrowed';
 
   string constant BORROWING_HSPOST_J =
-    'BORROWING_HSPOST_J: After a successful borrow the onBehalf debt balance should increase by the amount borrowed';
+    'BORROWING_HSPOST_J: After a successful borrow the onBehalf debt balance should increase by approximately the amount borrowed';
 
   string constant BORROWING_HSPOST_K =
     'BORROWING_HSPOST_K: After a successful repay the actor asset balance should decrease by the amount repaid';
@@ -114,6 +114,16 @@ abstract contract PostconditionsSpec {
 
   string constant BORROWING_HSPOST_M =
     'BORROWING_HSPOST_M: After a successful repayWithAToken debt balance should decrease by maximum of the amount repaid';
+
+  string constant BORROWING_HSPOST_N =
+    'BORROWING_HSPOST_N: After a successful borrow, the reserve virtual underlying balance should decrease by the amount borrowed.';
+  string constant BORROWING_HSPOST_O =
+    'BORROWING_HSPOST_O: After a successful repay, the reserve virtual underlying balance should increase by the amount repaid.';
+  string constant BORROWING_HSPOST_P =
+    'BORROWING_HSPOST_P: After a successful repayWithATokens, the user aToken balance should decrease by approximately the amount repaid.';
+
+  string constant BORROWING_HSPOST_Q =
+    'BORROWING_HSPOST_Q: After a successful repayWithATokens, the reserve virtual underlying balance should not change.';
 
   ///////////////////////////////////////////////////////////////////////////////////////////////
   //                                       LIQUIDATION                                         //
@@ -149,6 +159,15 @@ abstract contract PostconditionsSpec {
   // Docs v3.3 Properties 1.12
   string constant LIQUIDATION_HSPOST_O =
     'LIQUIDATION_HSPOST_O: Deficit can only be created and eliminated for an active reserve';
+
+  string constant LIQUIDATION_HSPOST_P =
+    'LIQUIDATION_HSPOST_P: After a liquidation, the liquidator collateral balance should increase by the liquidated collateral amount.';
+  string constant LIQUIDATION_HSPOST_Q =
+    'LIQUIDATION_HSPOST_Q: After a liquidation, the liquidator underlying balance of the debt asset should decrease by the amount of debt covered.';
+  string constant LIQUIDATION_HSPOST_R =
+    'LIQUIDATION_HSPOST_R: After a liquidation, the debt asset virtual balance should increase by the amount of debt covered.';
+  string constant LIQUIDATION_HSPOST_S =
+    'LIQUIDATION_HSPOST_S: After a liquidation, the collateral asset virtual balance should decrease by the amount of collateral liquidated.';
 
   ///////////////////////////////////////////////////////////////////////////////////////////////
   //                                         E-MODE                                            //
@@ -191,6 +210,11 @@ abstract contract PostconditionsSpec {
   string constant ERC20_HSPOST_D =
     'ERC20_HSPOST_D: Before a successful transferFrom, from should be healthy';
 
+  string constant ERC20_HSPOST_E =
+    'ERC20_HSPOST_E: After a transfer, the sender allowance and balance must decrease by at least the amount transferred (accounting for rounding).';
+  string constant ERC20_HSPOST_F =
+    'ERC20_HSPOST_F: After a transfer, the recipient balance must increase by at least the amount transferred (accounting for rounding).';
+
   ///////////////////////////////////////////////////////////////////////////////////////////////
   //                                       FLASHLOAN                                           //
   ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -215,4 +239,16 @@ abstract contract PostconditionsSpec {
   // Docs v3.3 Properties 1.6
   string constant DM_HSPOST_C =
     'DM_HSPOST_C: `eliminateReserveDeficit` requires for the UMBRELLA entity to never have any debt';
+
+  string constant DM_HSPOST_D =
+    'DM_HSPOST_D: After eliminating a deficit, the umbrella aToken balance should decrease by the amount covered.';
+  string constant DM_HSPOST_E =
+    'DM_HSPOST_E: Eliminating a deficit should not change the reserve virtual underlying balance.';
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////
+  //                                          POOL                                             //
+  ///////////////////////////////////////////////////////////////////////////////////////////////
+
+  string constant POOL_HSPOST_A =
+    'POOL_HSPOST_A: After mintToTreasury, the treasury aToken balance for the asset should increase by the amount of accrued fees.';
 }

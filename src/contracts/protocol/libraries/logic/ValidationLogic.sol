@@ -52,12 +52,6 @@ library ValidationLogic {
   uint256 public constant HEALTH_FACTOR_LIQUIDATION_THRESHOLD = 1e18;
 
   /**
-   * @dev Role identifier for the role allowed to supply isolated reserves as collateral
-   */
-  bytes32 public constant ISOLATED_COLLATERAL_SUPPLIER_ROLE =
-    keccak256('ISOLATED_COLLATERAL_SUPPLIER');
-
-  /**
    * @notice Validates a supply action.
    * @param reserveCache The cached data of the reserve
    * @param scaledAmount The scaledAmount to be supplied
@@ -151,7 +145,17 @@ library ValidationLogic {
     require(vars.isActive, Errors.ReserveInactive());
     require(!vars.isPaused, Errors.ReservePaused());
     require(!vars.isFrozen, Errors.ReserveFrozen());
-    require(vars.borrowingEnabled, Errors.BorrowingNotEnabled());
+    if (params.userEModeCategory != 0) {
+      require(
+        EModeConfiguration.isReserveEnabledOnBitmap(
+          eModeCategories[params.userEModeCategory].borrowableBitmap,
+          reservesData[params.asset].id
+        ),
+        Errors.NotBorrowableInEMode()
+      );
+    } else {
+      require(vars.borrowingEnabled, Errors.BorrowingNotEnabled());
+    }
     require(
       IERC20(params.reserveCache.aTokenAddress).totalSupply() >= vars.amount,
       Errors.InvalidAmount()
@@ -182,16 +186,6 @@ library ValidationLogic {
       unchecked {
         require(vars.totalDebt <= vars.borrowCap * vars.assetUnit, Errors.BorrowCapExceeded());
       }
-    }
-
-    if (params.userEModeCategory != 0) {
-      require(
-        EModeConfiguration.isReserveEnabledOnBitmap(
-          eModeCategories[params.userEModeCategory].borrowableBitmap,
-          reservesData[params.asset].id
-        ),
-        Errors.NotBorrowableInEMode()
-      );
     }
 
     if (params.userConfig.isBorrowingAny()) {
@@ -478,10 +472,19 @@ library ValidationLogic {
       oracle
     );
 
-    require(
-      !hasZeroLtvCollateral || reservesData[asset].configuration.getLtv() == 0,
-      Errors.LtvValidationFailed()
-    );
+    // User must either:
+    // 1. not have any ltvzero collateral or
+    // 2. interact with asset that have 0 ltv on their position
+    if (hasZeroLtvCollateral) {
+      require(
+        getUserReserveLtv(
+          reservesData[asset],
+          eModeCategories[userEModeCategory],
+          userEModeCategory
+        ) == 0,
+        Errors.LtvValidationFailed()
+      );
+    }
   }
 
   /**
@@ -517,11 +520,15 @@ library ValidationLogic {
 
   /**
    * @notice Validates the action of setting efficiency mode.
+   * @param reservesData The state of all the reserves
+   * @param reservesList The addresses of all the active reserves
    * @param eModeCategories a mapping storing configurations for all efficiency mode categories
    * @param userConfig the user configuration
-   * @param categoryId The id of the category
+   * @param categoryId The id of the users eMode category
    */
   function validateSetUserEMode(
+    mapping(address => DataTypes.ReserveData) storage reservesData,
+    mapping(uint256 => address) storage reservesList,
     mapping(uint8 => DataTypes.EModeCategory) storage eModeCategories,
     DataTypes.UserConfigurationMap memory userConfig,
     uint8 categoryId
@@ -538,25 +545,35 @@ library ValidationLogic {
       return;
     }
 
-    // if user is trying to set another category than default we require that
-    // either the user is not borrowing, or it's borrowing assets of categoryId
-    if (categoryId != 0) {
-      uint256 i = 0;
-      bool isBorrowed = false;
-      uint128 cachedBorrowableBitmap = eModeCategory.borrowableBitmap;
-      uint256 cachedUserConfig = userConfig.data;
-      unchecked {
-        while (cachedUserConfig != 0) {
-          (cachedUserConfig, isBorrowed, ) = UserConfiguration.getNextFlags(cachedUserConfig);
+    uint256 i = 0;
+    bool isBorrowed = false;
+    bool isEnabledAsCollateral = false;
+    // the cache is muted inside the iteration and should not be used for other operations
+    uint256 unsafe_cachedUserConfig = userConfig.data;
 
-          if (isBorrowed) {
-            require(
-              EModeConfiguration.isReserveEnabledOnBitmap(cachedBorrowableBitmap, i),
-              Errors.NotBorrowableInEMode()
-            );
-          }
-          ++i;
+    // ensure that in the target eMode (even if it's eMode 0), the assets can still be borrowed and be used as collateral
+    unchecked {
+      while (unsafe_cachedUserConfig != 0) {
+        (unsafe_cachedUserConfig, isBorrowed, isEnabledAsCollateral) = UserConfiguration
+          .getNextFlags(unsafe_cachedUserConfig);
+
+        // ensure a user can only enter or exit an eMode if all his borrowed assets can be borrowed in the target state
+        if (isBorrowed) {
+          require(
+            categoryId != 0
+              ? EModeConfiguration.isReserveEnabledOnBitmap(eModeCategory.borrowableBitmap, i)
+              : reservesData[reservesList[i]].configuration.getBorrowingEnabled(),
+            Errors.InvalidDebtInEmode(reservesList[i])
+          );
         }
+        // the asset must either be collateral inside or outside of eMode
+        if (isEnabledAsCollateral) {
+          require(
+            getUserReserveLtv(reservesData[reservesList[i]], eModeCategory, categoryId) != 0,
+            Errors.InvalidCollateralInEmode(reservesList[i])
+          );
+        }
+        ++i;
       }
     }
   }
@@ -566,17 +583,24 @@ library ValidationLogic {
    * @dev Only possible if the asset has non-zero LTV and the user is not in isolation mode
    * @param reservesData The state of all the reserves
    * @param reservesList The addresses of all the active reserves
+   * @param eModeCategories a mapping storing configurations for all efficiency mode categories
    * @param userConfig the user configuration
    * @param reserveConfig The reserve configuration
+   * @param asset Address of the reserve to be enabled as collateral
+   * @param categoryId The id of the users eMode category
    * @return True if the asset can be activated as collateral, false otherwise
    */
   function validateUseAsCollateral(
     mapping(address => DataTypes.ReserveData) storage reservesData,
     mapping(uint256 => address) storage reservesList,
+    mapping(uint8 => DataTypes.EModeCategory) storage eModeCategories,
     DataTypes.UserConfigurationMap storage userConfig,
-    DataTypes.ReserveConfigurationMap memory reserveConfig
+    DataTypes.ReserveConfigurationMap memory reserveConfig,
+    address asset,
+    uint8 categoryId
   ) internal view returns (bool) {
-    if (reserveConfig.getLtv() == 0) {
+    // asset must have a non zero ltv to be activated as collateral
+    if (getUserReserveLtv(reservesData[asset], eModeCategories[categoryId], categoryId) == 0) {
       return false;
     }
     if (!userConfig.isUsingAsCollateralAny()) {
@@ -593,30 +617,63 @@ library ValidationLogic {
    * @dev This is used to ensure that isolated assets are not enabled as collateral automatically
    * @param reservesData The state of all the reserves
    * @param reservesList The addresses of all the active reserves
+   * @param eModeCategories a mapping storing configurations for all efficiency mode categories
    * @param userConfig the user configuration
    * @param reserveConfig The reserve configuration
+   * @param asset Address of the reserve to be enabled as collateral
+   * @param categoryId The id of the users eMode category
    * @return True if the asset can be activated as collateral, false otherwise
    */
   function validateAutomaticUseAsCollateral(
-    address sender,
     mapping(address => DataTypes.ReserveData) storage reservesData,
     mapping(uint256 => address) storage reservesList,
+    mapping(uint8 => DataTypes.EModeCategory) storage eModeCategories,
     DataTypes.UserConfigurationMap storage userConfig,
     DataTypes.ReserveConfigurationMap memory reserveConfig,
-    address aTokenAddress
+    address asset,
+    uint8 categoryId
   ) internal view returns (bool) {
     if (reserveConfig.getDebtCeiling() != 0) {
-      // ensures only the ISOLATED_COLLATERAL_SUPPLIER_ROLE can enable collateral as side-effect of an action
-      IPoolAddressesProvider addressesProvider = IncentivizedERC20(aTokenAddress)
-        .POOL()
-        .ADDRESSES_PROVIDER();
-      if (
-        !IAccessControl(addressesProvider.getACLManager()).hasRole(
-          ISOLATED_COLLATERAL_SUPPLIER_ROLE,
-          sender
-        )
-      ) return false;
+      return false;
     }
-    return validateUseAsCollateral(reservesData, reservesList, userConfig, reserveConfig);
+    return
+      validateUseAsCollateral(
+        reservesData,
+        reservesList,
+        eModeCategories,
+        userConfig,
+        reserveConfig,
+        asset,
+        categoryId
+      );
+  }
+
+  /**
+   * @notice Returns the ltv of the user in the particular reserve
+   * @param reserveData The reserve configuration
+   * @param eModeCategoryData The users eMode category configuration
+   * @param categoryId The id of the users eMode category
+   **/
+  function getUserReserveLtv(
+    DataTypes.ReserveData storage reserveData,
+    DataTypes.EModeCategory storage eModeCategoryData,
+    uint8 categoryId
+  ) internal view returns (uint256) {
+    if (
+      categoryId != 0 &&
+      EModeConfiguration.isReserveEnabledOnBitmap(
+        eModeCategoryData.collateralBitmap,
+        reserveData.id
+      )
+    ) {
+      if (
+        EModeConfiguration.isReserveEnabledOnBitmap(eModeCategoryData.ltvzeroBitmap, reserveData.id)
+      ) {
+        return 0;
+      } else {
+        return eModeCategoryData.ltv;
+      }
+    }
+    return reserveData.configuration.getLtv();
   }
 }

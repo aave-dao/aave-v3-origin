@@ -604,7 +604,7 @@ contract PoolTests is TestnetProcedures {
     pool.supply(tokenList.wbtc, amount, alice, 0);
     pool.borrow(tokenList.weth, borrowAmount, 2, 0, alice);
 
-    vm.expectRevert(abi.encodeWithSelector(Errors.NotBorrowableInEMode.selector));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidDebtInEmode.selector, tokenList.weth));
 
     pool.setUserEMode(ct2.id);
     vm.stopPrank();
@@ -666,10 +666,6 @@ contract PoolTests is TestnetProcedures {
 
   function test_getBorrowLogic() public view {
     assertNotEq(pool.getBorrowLogic(), address(0));
-  }
-
-  function test_getEModeLogic() public view {
-    assertNotEq(pool.getEModeLogic(), address(0));
   }
 
   function test_getLiquidationLogic() public view {

@@ -122,7 +122,7 @@ contract PoolGetters_gas_Tests is Testhelpers {
     _supplyOnReserve(user, 1 ether, tokenList.usdx);
     _supplyOnReserve(user, 1 ether, tokenList.weth);
 
-    _supplyOnReserve(address(1), 0.001e8, tokenList.wbtc);
+    _supply(tokenList.wbtc, address(1), 0.001e8);
     vm.prank(user);
     contracts.poolProxy.borrow(tokenList.wbtc, 0.001e8, 2, 0, user);
 

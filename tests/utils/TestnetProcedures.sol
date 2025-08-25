@@ -415,9 +415,19 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     vm.stopPrank();
   }
 
+  /**
+   * Supplies the specified amount of asset to the reserve, without enabeling as collateral.
+   */
+  function _supply(address asset, address user, uint256 amount) internal {
+    vm.startPrank(user);
+    deal(asset, user, amount);
+    IERC20(asset).approve(report.poolProxy, amount);
+    contracts.poolProxy.supply(asset, amount, user, 0);
+    vm.stopPrank();
+  }
+
   function _checkInterestRates(address asset) internal view {
     DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(asset);
-
     (uint256 nextLiquidityRate, uint256 nextVariableRate) = contracts
       .defaultInterestRateStrategy
       .calculateInterestRates(

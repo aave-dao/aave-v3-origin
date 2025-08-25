@@ -31,19 +31,33 @@ contract PoolHandler is BaseHandler {
     // Get one of the three assets randomly
     address asset = _getRandomBaseAsset(i);
 
-    address target = address(pool);
-
     address[] memory assets = new address[](1);
     assets[0] = asset;
 
     _before();
     (success, returnData) = actor.proxy(
-      target,
+      address(pool),
       abi.encodeWithSelector(IPool.mintToTreasury.selector, assets)
     );
 
     if (success) {
       _after();
+
+      uint256 amountToMint = snapshotGlobalVarsBefore.assetsInfo[asset].aTokenRealTotalSupply -
+        snapshotGlobalVarsBefore.assetsInfo[asset].aTokenTotalSupply;
+      assertApproxEqAbs(
+        snapshotGlobalVarsAfter
+          .usersInfo[address(contracts.treasury)]
+          .userAssetsInfo[asset]
+          .aTokenBalance,
+        snapshotGlobalVarsBefore
+          .usersInfo[address(contracts.treasury)]
+          .userAssetsInfo[asset]
+          .aTokenBalance + amountToMint,
+        4,
+        POOL_HSPOST_A
+      );
+
       assert(true);
     } else {
       revert('PoolHandler: mintToTreasury failed');
@@ -56,15 +70,9 @@ contract PoolHandler is BaseHandler {
 
     uint8 eModeCategory = _getRandomEModeCategory(i);
 
-    uint256 previousUserEModeCategory = pool.getUserEMode(address(actor));
-
-    address target = address(pool);
-
-    address[] memory assetsBorrowing = _getUserBorrowingAssets(address(actor));
-
     _before();
     (success, returnData) = actor.proxy(
-      target,
+      address(pool),
       abi.encodeWithSelector(IPool.setUserEMode.selector, eModeCategory)
     );
 
@@ -72,9 +80,22 @@ contract PoolHandler is BaseHandler {
       _after();
 
       // POST-CONDITIONS
-      if (eModeCategory != previousUserEModeCategory) {
-        assertAssetsBorrowableInEmode(assetsBorrowing, eModeCategory, E_MODE_HSPOST_H);
-        assertGe(_getUserHealthFactor(address(actor)), 1, E_MODE_HSPOST_G);
+      if (eModeCategory != snapshotGlobalVarsBefore.usersInfo[address(actor)].userEModeCategory) {
+        assertTrue(snapshotGlobalVarsAfter.usersInfo[address(actor)].isHealthy, E_MODE_HSPOST_G);
+
+        for (uint256 j = 0; j < baseAssets.length; j++) {
+          if (
+            snapshotGlobalVarsAfter
+              .usersInfo[address(actor)]
+              .userAssetsInfo[baseAssets[j]]
+              .vTokenBalance > 0
+          ) {
+            assertTrue(
+              snapshotGlobalVarsAfter.eModesInfo[eModeCategory].isBorrowable[baseAssets[j]],
+              E_MODE_HSPOST_H
+            );
+          }
+        }
       }
     } else {
       revert('PoolHandler: setUserEMode failed');
@@ -103,18 +124,27 @@ contract PoolHandler is BaseHandler {
 
     assertTrue(_isReserveActive(asset), LIQUIDATION_HSPOST_O);
 
-    if (amount > reserveDeficit) {
-      amount = reserveDeficit;
-    }
-
     assertApproxEqAbs(
-      defaultVarsBefore.totalSupply - amount,
-      defaultVarsAfter.totalSupply,
-      1,
+      snapshotGlobalVarsBefore.assetsInfo[asset].aTokenTotalSupply,
+      snapshotGlobalVarsAfter.assetsInfo[asset].aTokenTotalSupply + amount,
+      2,
       DM_HSPOST_B
     );
 
-    assertEq(defaultVarsBefore.users[UMBRELLA].totalDebtBase, 0, DM_HSPOST_C);
+    assertApproxEqAbs(
+      snapshotGlobalVarsBefore.usersInfo[UMBRELLA].userAssetsInfo[asset].aTokenBalance,
+      snapshotGlobalVarsAfter.usersInfo[UMBRELLA].userAssetsInfo[asset].aTokenBalance + amount,
+      2,
+      DM_HSPOST_D
+    );
+
+    assertEq(
+      snapshotGlobalVarsBefore.assetsInfo[asset].virtualUnderlyingBalance,
+      snapshotGlobalVarsAfter.assetsInfo[asset].virtualUnderlyingBalance,
+      DM_HSPOST_E
+    );
+
+    assertEq(snapshotGlobalVarsBefore.usersInfo[UMBRELLA].totalDebtBase, 0, DM_HSPOST_C);
 
     _resetActorTargets();
   }

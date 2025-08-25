@@ -159,9 +159,6 @@ abstract contract BaseStorage {
   /// @notice Mappinng from asset to protocol tokens
   mapping(address => ProtocolTokens) internal protocolTokens;
 
-  /// @notice Target asset for the test run
-  address internal targetAsset;
-
   ///////////////////////////////////////////////////////////////////////////////////////////////
   //                                          STRUCTS                                          //
   ///////////////////////////////////////////////////////////////////////////////////////////////

@@ -19,7 +19,7 @@ import {DefaultMarketInput} from 'src/deployments/inputs/DefaultMarketInput.sol'
 import {AaveV3BatchOrchestration} from 'src/deployments/projects/aave-v3-batched/AaveV3BatchOrchestration.sol';
 import {AaveV3TestListing} from '../mocks/AaveV3TestListing.sol';
 import {MockAggregatorSetPrice} from './utils/mocks/MockAggregatorSetPrice.sol';
-import {MockFlashLoanReceiver} from './helpers/FlashLoanReceiver.sol';
+import {MockFlashLoanReceiver} from './helpers/MockFlashLoanReceiver.sol';
 
 // Interfaces
 import {IAaveV3ConfigEngine} from '../../src/contracts/extensions/v3-config-engine/AaveV3ConfigEngine.sol';

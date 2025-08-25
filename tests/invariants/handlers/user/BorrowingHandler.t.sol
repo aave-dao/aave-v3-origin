@@ -7,6 +7,8 @@ import {IPool} from 'src/contracts/interfaces/IPool.sol';
 
 // Libraries
 import 'src/contracts/protocol/libraries/types/DataTypes.sol';
+import {ReserveConfiguration} from 'src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
+import {ICreditDelegationToken} from 'src/contracts/interfaces/ICreditDelegationToken.sol';
 
 // Test Contracts
 import {Actor} from '../../utils/Actor.sol';
@@ -15,6 +17,8 @@ import {BaseHandler} from '../../base/BaseHandler.t.sol';
 /// @title BorrowingHandler
 /// @notice Handler test contract for a set of actions
 contract BorrowingHandler is BaseHandler {
+  using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
+
   ///////////////////////////////////////////////////////////////////////////////////////////////
   //                                      STATE VARIABLES                                      //
   ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -29,20 +33,11 @@ contract BorrowingHandler is BaseHandler {
 
     // Get one of the three actors randomly
     address onBehalfOf = _getRandomActor(i);
-    _setSenderActor(onBehalfOf);
+    _setReceiverActor(onBehalfOf);
 
     address asset = _getRandomBaseAsset(j);
-    Flags memory flags = _getFlags(asset);
-
-    uint256 userScaledDebtBefore = _getUserScaledDebt(onBehalfOf, asset);
-
-    uint256 onBehalfOfDebtBefore = IERC20(protocolTokens[asset].variableDebtTokenAddress).balanceOf(
-      onBehalfOf
-    );
-    uint256 actorAssetBalanceBefore = IERC20(asset).balanceOf(address(actor));
 
     _before();
-
     (success, returnData) = actor.proxy(
       address(pool),
       abi.encodeWithSelector(
@@ -55,11 +50,14 @@ contract BorrowingHandler is BaseHandler {
       )
     );
 
-    uint8 eModeCategory = _getUserEModeCategoryId(onBehalfOf);
+    uint256 eModeCategory = snapshotGlobalVarsBefore.usersInfo[onBehalfOf].userEModeCategory;
 
     if (eModeCategory != 0) {
-      if (!_isEModeBorrowableAsset(asset, eModeCategory)) {
-        assertEq(userScaledDebtBefore, _getUserScaledDebt(onBehalfOf, asset), E_MODE_GPOST_F);
+      if (!snapshotGlobalVarsBefore.eModesInfo[eModeCategory].isBorrowable[asset]) {
+        assertFalse(success, E_MODE_GPOST_F);
+      }
+    } else {
+      if (!snapshotGlobalVarsBefore.assetsInfo[asset].configuration.getBorrowingEnabled()) {
         assertFalse(success, E_MODE_GPOST_F);
       }
     }
@@ -68,31 +66,63 @@ contract BorrowingHandler is BaseHandler {
       _after();
       // POST-CONDITIONS
       if (eModeCategory != 0) {
-        assertTrue(_isEModeBorrowableAsset(asset, eModeCategory), E_MODE_HSPOST_A);
+        assertTrue(
+          snapshotGlobalVarsBefore.eModesInfo[eModeCategory].isBorrowable[asset],
+          E_MODE_HSPOST_A
+        );
+      } else {
+        assertTrue(snapshotGlobalVarsBefore.assetsInfo[asset].configuration.getBorrowingEnabled());
       }
-      assertTrue(_isBorrowableAsset(asset), E_MODE_GPOST_C);
-      assertTrue(defaultVarsBefore.users[_getTargetActor()].isHealthy, BORROWING_HSPOST_B);
-      assertTrue(assertReserveIsAbleToBorrow(flags), BORROWING_HSPOST_E);
+      assertTrue(snapshotGlobalVarsBefore.usersInfo[onBehalfOf].isHealthy, BORROWING_HSPOST_B);
+      assertTrue(snapshotGlobalVarsAfter.usersInfo[onBehalfOf].isHealthy, BORROWING_HSPOST_B);
 
       assertEq(
-        IERC20(asset).balanceOf(address(actor)),
-        actorAssetBalanceBefore + amount,
+        snapshotGlobalVarsAfter.usersInfo[onBehalfOf].userAssetsInfo[asset].underlyingBalance,
+        snapshotGlobalVarsBefore.usersInfo[onBehalfOf].userAssetsInfo[asset].underlyingBalance +
+          amount,
         BORROWING_HSPOST_I
       );
-      {
-        // Rounding tolerance
+
+      if (address(actor) != onBehalfOf) {
         assertApproxEqAbs(
-          IERC20(protocolTokens[asset].variableDebtTokenAddress).balanceOf(onBehalfOf),
-          onBehalfOfDebtBefore + amount,
-          1,
-          BORROWING_HSPOST_J
+          snapshotGlobalVarsAfter.usersInfo[onBehalfOf].userAssetsInfo[asset].borrowAllowances[
+            address(actor)
+          ] + amount,
+          snapshotGlobalVarsBefore.usersInfo[onBehalfOf].userAssetsInfo[asset].borrowAllowances[
+            address(actor)
+          ],
+          2
         );
-        assertGe(
-          IERC20(protocolTokens[asset].variableDebtTokenAddress).balanceOf(onBehalfOf),
-          onBehalfOfDebtBefore + amount,
-          BORROWING_HSPOST_J
+        assertLe(
+          snapshotGlobalVarsAfter.usersInfo[onBehalfOf].userAssetsInfo[asset].borrowAllowances[
+            address(actor)
+          ] + amount,
+          snapshotGlobalVarsBefore.usersInfo[onBehalfOf].userAssetsInfo[asset].borrowAllowances[
+            address(actor)
+          ],
+          ''
         );
       }
+
+      assertApproxEqAbs(
+        snapshotGlobalVarsAfter.usersInfo[onBehalfOf].userAssetsInfo[asset].vTokenBalance,
+        snapshotGlobalVarsBefore.usersInfo[onBehalfOf].userAssetsInfo[asset].vTokenBalance + amount,
+        2,
+        BORROWING_HSPOST_J
+      );
+      assertGe(
+        snapshotGlobalVarsAfter.usersInfo[onBehalfOf].userAssetsInfo[asset].vTokenBalance,
+        snapshotGlobalVarsBefore.usersInfo[onBehalfOf].userAssetsInfo[asset].vTokenBalance + amount,
+        BORROWING_HSPOST_J
+      );
+
+      assertEq(
+        snapshotGlobalVarsBefore.assetsInfo[asset].virtualUnderlyingBalance,
+        snapshotGlobalVarsAfter.assetsInfo[asset].virtualUnderlyingBalance + amount,
+        BORROWING_HSPOST_N
+      );
+    } else {
+      revert('BorrowingHandler: borrow action reverted');
     }
   }
 
@@ -105,18 +135,13 @@ contract BorrowingHandler is BaseHandler {
     _setReceiverActor(onBehalfOf);
 
     address asset = _getRandomBaseAsset(j);
-    Flags memory flags = _getFlags(asset);
 
-    address target = address(pool);
-
-    uint256 onBehalfOfDebtBefore = IERC20(protocolTokens[asset].variableDebtTokenAddress).balanceOf(
-      onBehalfOf
-    );
-    uint256 actorAssetBalanceBefore = IERC20(asset).balanceOf(address(actor));
+    _before();
+    _mintAndApprove({token: asset, owner: address(actor), spender: address(pool), amount: amount});
 
     _before();
     (success, returnData) = actor.proxy(
-      target,
+      address(pool),
       abi.encodeWithSelector(
         IPool.repay.selector,
         asset,
@@ -129,33 +154,32 @@ contract BorrowingHandler is BaseHandler {
     if (success) {
       _after();
 
-      amount = amount > onBehalfOfDebtBefore ? onBehalfOfDebtBefore : amount;
-
       // POST-CONDITIONS
-      assertTrue(assertReserveIsActiveAndNotPaused(flags), BORROWING_HSPOST_F);
-      assertLe(
-        defaultVarsAfter.users[receiverActor].totalDebtBase,
-        defaultVarsBefore.users[receiverActor].totalDebtBase,
-        BORROWING_HSPOST_A
-      );
-
       assertEq(
-        IERC20(asset).balanceOf(address(actor)),
-        actorAssetBalanceBefore - amount,
+        snapshotGlobalVarsAfter.usersInfo[address(actor)].userAssetsInfo[asset].underlyingBalance +
+          amount,
+        snapshotGlobalVarsBefore.usersInfo[address(actor)].userAssetsInfo[asset].underlyingBalance,
         BORROWING_HSPOST_K
       );
 
       assertApproxEqAbs(
-        IERC20(protocolTokens[asset].variableDebtTokenAddress).balanceOf(onBehalfOf),
-        onBehalfOfDebtBefore - amount,
-        1,
-        BORROWING_HSPOST_L
+        snapshotGlobalVarsAfter.usersInfo[onBehalfOf].userAssetsInfo[asset].vTokenBalance,
+        snapshotGlobalVarsBefore.usersInfo[onBehalfOf].userAssetsInfo[asset].vTokenBalance + amount,
+        2
       );
       assertGe(
-        IERC20(protocolTokens[asset].variableDebtTokenAddress).balanceOf(onBehalfOf),
-        onBehalfOfDebtBefore - amount,
-        BORROWING_HSPOST_L
+        snapshotGlobalVarsAfter.usersInfo[onBehalfOf].userAssetsInfo[asset].vTokenBalance,
+        snapshotGlobalVarsBefore.usersInfo[onBehalfOf].userAssetsInfo[asset].vTokenBalance + amount,
+        ''
       );
+
+      assertEq(
+        snapshotGlobalVarsAfter.assetsInfo[asset].virtualUnderlyingBalance,
+        snapshotGlobalVarsBefore.assetsInfo[asset].virtualUnderlyingBalance + amount,
+        BORROWING_HSPOST_O
+      );
+    } else {
+      revert('BorrowingHandler: repay action reverted');
     }
   }
 
@@ -164,20 +188,13 @@ contract BorrowingHandler is BaseHandler {
     bytes memory returnData;
 
     address asset = _getRandomBaseAsset(i);
-    Flags memory flags = _getFlags(asset);
 
-    address target = address(pool);
-
-    uint256 actorDebtBefore = IERC20(protocolTokens[asset].variableDebtTokenAddress).balanceOf(
-      address(actor)
-    );
-    uint256 actorATokenBalanceBefore = IERC20(protocolTokens[asset].aTokenAddress).balanceOf(
-      address(actor)
-    );
+    _before();
+    _approve({token: asset, actor_: actor, spender: address(pool), amount: amount});
 
     _before();
     (success, returnData) = actor.proxy(
-      target,
+      address(pool),
       abi.encodeWithSelector(
         IPool.repayWithATokens.selector,
         asset,
@@ -190,18 +207,46 @@ contract BorrowingHandler is BaseHandler {
       _after();
 
       // POST-CONDITIONS
-      assertTrue(assertReserveIsActiveAndNotPaused(flags), BORROWING_HSPOST_F);
-      uint256 actorDebtAfter = IERC20(protocolTokens[asset].variableDebtTokenAddress).balanceOf(
-        address(actor)
+      assertEq(
+        snapshotGlobalVarsAfter.usersInfo[address(actor)].userAssetsInfo[asset].underlyingBalance,
+        snapshotGlobalVarsBefore.usersInfo[address(actor)].userAssetsInfo[asset].underlyingBalance,
+        BORROWING_HSPOST_K
       );
-      uint256 actorATokenBalanceAfter = IERC20(protocolTokens[asset].aTokenAddress).balanceOf(
-        address(actor)
+
+      assertApproxEqAbs(
+        snapshotGlobalVarsAfter.usersInfo[address(actor)].userAssetsInfo[asset].vTokenBalance,
+        snapshotGlobalVarsBefore.usersInfo[address(actor)].userAssetsInfo[asset].vTokenBalance +
+          amount,
+        2
       );
       assertGe(
-        actorATokenBalanceBefore - actorATokenBalanceAfter,
-        actorDebtBefore - actorDebtAfter,
-        BORROWING_HSPOST_M
+        snapshotGlobalVarsAfter.usersInfo[address(actor)].userAssetsInfo[asset].vTokenBalance,
+        snapshotGlobalVarsBefore.usersInfo[address(actor)].userAssetsInfo[asset].vTokenBalance +
+          amount,
+        ''
       );
+
+      assertApproxEqAbs(
+        snapshotGlobalVarsBefore.usersInfo[address(actor)].userAssetsInfo[asset].aTokenBalance,
+        snapshotGlobalVarsAfter.usersInfo[address(actor)].userAssetsInfo[asset].aTokenBalance +
+          amount,
+        2,
+        BORROWING_HSPOST_P
+      );
+      assertGe(
+        snapshotGlobalVarsBefore.usersInfo[address(actor)].userAssetsInfo[asset].aTokenBalance,
+        snapshotGlobalVarsAfter.usersInfo[address(actor)].userAssetsInfo[asset].aTokenBalance +
+          amount,
+        BORROWING_HSPOST_P
+      );
+
+      assertEq(
+        snapshotGlobalVarsAfter.assetsInfo[asset].virtualUnderlyingBalance,
+        snapshotGlobalVarsBefore.assetsInfo[asset].virtualUnderlyingBalance,
+        BORROWING_HSPOST_O
+      );
+    } else {
+      revert('BorrowingHandler: repay with aTokens action reverted');
     }
   }
 
@@ -211,52 +256,18 @@ contract BorrowingHandler is BaseHandler {
 
     address asset = _getRandomBaseAsset(i);
 
-    address target = address(pool);
-
     _before();
     (success, returnData) = actor.proxy(
-      target,
+      address(pool),
       abi.encodeWithSelector(IPool.setUserUseReserveAsCollateral.selector, asset, useAsCollateral)
     );
 
     if (success) {
       _after();
       assert(true);
+    } else {
+      revert('BorrowingHandler: setUserUseReserveAsCollateral action reverted');
     }
-  }
-
-  ///////////////////////////////////////////////////////////////////////////////////////////////
-  //                                         HANDLER INVARIANTS                                //
-  ///////////////////////////////////////////////////////////////////////////////////////////////
-
-  function assert_BORROWING_HSPOST_C(uint8 j) external setup {
-    bool success;
-    bytes memory returnData;
-
-    address asset = _getRandomBaseAsset(j);
-
-    address target = address(pool);
-
-    Flags memory flags = _getFlags(asset);
-
-    uint256 totalOwed = IERC20(protocolTokens[asset].variableDebtTokenAddress).balanceOf(
-      address(actor)
-    );
-
-    require(totalOwed != 0, 'totalOwed is 0');
-
-    require(assertReserveIsActiveAndNotPaused(flags), 'reserve is not active or paused');
-
-    (success, returnData) = actor.proxy(
-      target,
-      abi.encodeWithSelector(
-        IPool.repay.selector,
-        asset,
-        totalOwed,
-        DataTypes.InterestRateMode.VARIABLE,
-        address(actor)
-      )
-    );
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////

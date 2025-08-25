@@ -693,6 +693,8 @@ contract PoolFlashLoansTests is TestnetProcedures {
       underlyingBalance / 2
     );
     vm.stopPrank();
+    vm.prank(address(receiver));
+    contracts.poolProxy.setUserUseReserveAsCollateral(asset, true);
 
     underlyingBalance = contracts.poolProxy.getVirtualUnderlyingBalance(asset);
     uint256 amount = (underlyingBalance * 9) / 10;
@@ -747,6 +749,8 @@ contract PoolFlashLoansTests is TestnetProcedures {
         underlyingBalances[i] / 2
       );
       vm.stopPrank();
+      vm.prank(address(receiver));
+      contracts.poolProxy.setUserUseReserveAsCollateral(assets[i], true);
 
       underlyingBalances[i] = contracts.poolProxy.getVirtualUnderlyingBalance(assets[i]);
 

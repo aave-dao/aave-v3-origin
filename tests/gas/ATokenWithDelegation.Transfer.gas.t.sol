@@ -59,10 +59,10 @@ contract ATokenWithDelegation_gas_Tests is Testhelpers {
 
     transferAmount = 100 * 10 ** IERC20Metadata(tokenList.usdx).decimals();
 
-    _supplyOnReserve(user1, transferAmount * 2);
-    _supplyOnReserve(user2, transferAmount * 3);
+    _supply(tokenList.usdx, user1, transferAmount * 2);
+    _supply(tokenList.usdx, user2, transferAmount * 3);
 
-    _supplyOnReserve(sender, transferAmount);
+    _supply(tokenList.usdx, sender, transferAmount);
   }
 
   function _updateATokens() private {
@@ -195,9 +195,5 @@ contract ATokenWithDelegation_gas_Tests is Testhelpers {
       'ATokenWithDelegation.transfer',
       'full amount; sender: without delegations, ->disableCollateral; receiver: with delegations, ->enableCollateral'
     );
-  }
-
-  function _supplyOnReserve(address user, uint256 amount) internal {
-    _supplyOnReserve(user, amount, token);
   }
 }

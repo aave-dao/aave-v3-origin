@@ -75,10 +75,7 @@ contract LibraryPreCompileOne is FfiUtils, Script, DeployUtils {
           vm.toString(report.borrowLogic),
           ',',
           'src/contracts/protocol/libraries/logic/ConfiguratorLogic.sol:ConfiguratorLogic:',
-          vm.toString(report.configuratorLogic),
-          ',',
-          'src/contracts/protocol/libraries/logic/EModeLogic.sol:EModeLogic:',
-          vm.toString(report.eModeLogic)
+          vm.toString(report.configuratorLogic)
         )
       );
   }

@@ -185,7 +185,8 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
             liquidationBonus: cfg.liquidationBonus,
             label: pool.getEModeCategoryLabel(i),
             collateralBitmap: pool.getEModeCategoryCollateralBitmap(i),
-            borrowableBitmap: pool.getEModeCategoryBorrowableBitmap(i)
+            borrowableBitmap: pool.getEModeCategoryBorrowableBitmap(i),
+            ltvzeroBitmap: pool.getEModeCategoryLtvzeroBitmap(i)
           }),
           id: i
         });

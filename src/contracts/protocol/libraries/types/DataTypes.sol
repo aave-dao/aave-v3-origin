@@ -145,6 +145,7 @@ library DataTypes {
     uint128 collateralBitmap;
     string label;
     uint128 borrowableBitmap;
+    uint128 ltvzeroBitmap; // if true, the asset will be treated as ltv0 and ltv0 rules apply
   }
 
   enum InterestRateMode {
@@ -189,6 +190,7 @@ library DataTypes {
     uint256 amount;
     address onBehalfOf;
     uint16 referralCode;
+    uint8 supplierEModeCategory;
   }
 
   struct ExecuteBorrowParams {
@@ -240,9 +242,9 @@ library DataTypes {
     address to;
     uint256 scaledAmount;
     uint256 scaledBalanceFromBefore;
-    uint256 scaledBalanceToBefore;
     address oracle;
     uint8 fromEModeCategory;
+    uint8 toEModeCategory;
   }
 
   struct FlashloanParams {

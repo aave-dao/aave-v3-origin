@@ -32,10 +32,22 @@ contract ATokenTransfer_gas_Tests is Testhelpers {
     _skip(100);
 
     aToken.transfer(receiver, aToken.balanceOf(sender));
+
     vm.snapshotGasLastCall(
       'AToken.transfer',
       'full amount; sender: ->disableCollateral; receiver: ->enableCollateral'
     );
+  }
+
+  function test_transfer_fullAmount_senderCollateralDisabled_receiverDirty() external {
+    _supplyAndEnableAsCollateral(sender, 1 ether, tokenList.usdx);
+    _supply(tokenList.usdx, receiver, 1 ether);
+    vm.startPrank(sender);
+
+    _skip(100);
+
+    aToken.transfer(receiver, aToken.balanceOf(sender));
+    vm.snapshotGasLastCall('AToken.transfer', 'full amount; sender: ->disableCollateral;');
   }
 
   function test_transferFrom_fullAmount() external {

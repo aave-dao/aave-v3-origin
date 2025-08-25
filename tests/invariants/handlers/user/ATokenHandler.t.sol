@@ -52,12 +52,14 @@ contract ATokenHandler is BaseHandler {
 
     // Get one of the three actors randomly
     address recipient = _getRandomActor(i);
+    _setReceiverActor(recipient);
 
-    address target = _getRandomAToken(j);
+    address underlyingToken = _getRandomBaseAsset(j);
+    address aToken = _getRandomAToken(j);
 
     _before();
     (success, returnData) = actor.proxy(
-      target,
+      aToken,
       abi.encodeWithSelector(IERC20.transfer.selector, recipient, amount)
     );
 
@@ -66,11 +68,34 @@ contract ATokenHandler is BaseHandler {
 
       if (
         (amount != 0 && address(actor) != recipient) &&
-        _isUsingAsCollateral(_getRandomBaseAsset(j), address(actor))
+        _isUsingAsCollateral(underlyingToken, address(actor))
       ) {
-        assertTrue(defaultVarsAfter.users[address(actor)].isHealthy, ERC20_HSPOST_A);
-        assertTrue(defaultVarsBefore.users[address(actor)].isHealthy, ERC20_HSPOST_B);
+        assertTrue(snapshotGlobalVarsAfter.usersInfo[address(actor)].isHealthy, ERC20_HSPOST_A);
+        assertTrue(snapshotGlobalVarsBefore.usersInfo[address(actor)].isHealthy, ERC20_HSPOST_B);
       }
+
+      assertApproxEqAbs(
+        snapshotGlobalVarsAfter
+          .usersInfo[address(actor)]
+          .userAssetsInfo[underlyingToken]
+          .aTokenBalance + amount,
+        snapshotGlobalVarsBefore
+          .usersInfo[address(actor)]
+          .userAssetsInfo[underlyingToken]
+          .aTokenBalance,
+        2,
+        ERC20_HSPOST_E
+      );
+
+      assertApproxEqAbs(
+        snapshotGlobalVarsBefore
+          .usersInfo[recipient]
+          .userAssetsInfo[underlyingToken]
+          .aTokenBalance + amount,
+        snapshotGlobalVarsAfter.usersInfo[recipient].userAssetsInfo[underlyingToken].aTokenBalance,
+        2,
+        ERC20_HSPOST_F
+      );
     } else {
       revert('ATokenHandler: transfer failed');
     }
@@ -80,72 +105,103 @@ contract ATokenHandler is BaseHandler {
     bool success;
     bytes memory returnData;
 
-    // Get one of the three actors randomly
-    address sender = _getRandomActor(i);
-    _setSenderActor(sender);
+    address owner = _getRandomActor(i);
 
-    // Get one of the three actors randomly
     address recipient = _getRandomActor(u);
 
-    address target = _getRandomAToken(j);
+    address underlyingToken = _getRandomBaseAsset(j);
+    address aToken = _getRandomAToken(j);
 
     _before();
     (success, returnData) = actor.proxy(
-      target,
-      abi.encodeWithSelector(IERC20.transferFrom.selector, sender, recipient, amount)
+      aToken,
+      abi.encodeWithSelector(IERC20.transferFrom.selector, owner, recipient, amount)
     );
 
     if (success) {
       _after();
 
-      if (amount != 0 && sender != recipient) {
-        assertTrue(defaultVarsAfter.users[sender].isHealthy, ERC20_HSPOST_C);
-        assertTrue(defaultVarsBefore.users[sender].isHealthy, ERC20_HSPOST_D);
+      if (
+        amount != 0 &&
+        owner != recipient &&
+        snapshotGlobalVarsAfter.usersInfo[owner].userAssetsInfo[underlyingToken].isUsingAsCollateral
+      ) {
+        assertTrue(snapshotGlobalVarsAfter.usersInfo[owner].isHealthy, ERC20_HSPOST_C);
+        assertTrue(snapshotGlobalVarsBefore.usersInfo[owner].isHealthy, ERC20_HSPOST_D);
       }
+
+      if (
+        snapshotGlobalVarsBefore
+          .usersInfo[owner]
+          .userAssetsInfo[underlyingToken]
+          .underlyingAllowances[address(actor)] != type(uint256).max
+      ) {
+        assertApproxEqAbs(
+          snapshotGlobalVarsAfter
+            .usersInfo[owner]
+            .userAssetsInfo[underlyingToken]
+            .underlyingAllowances[address(actor)] + amount,
+          snapshotGlobalVarsBefore
+            .usersInfo[owner]
+            .userAssetsInfo[underlyingToken]
+            .underlyingAllowances[address(actor)],
+          2,
+          ERC20_HSPOST_E
+        );
+        assertLe(
+          snapshotGlobalVarsAfter
+            .usersInfo[owner]
+            .userAssetsInfo[underlyingToken]
+            .underlyingAllowances[address(actor)] + amount,
+          snapshotGlobalVarsBefore
+            .usersInfo[owner]
+            .userAssetsInfo[underlyingToken]
+            .underlyingAllowances[address(actor)],
+          ERC20_HSPOST_E
+        );
+      } else {
+        assertEq(
+          snapshotGlobalVarsAfter
+            .usersInfo[owner]
+            .userAssetsInfo[underlyingToken]
+            .underlyingAllowances[address(actor)],
+          type(uint256).max
+        );
+      }
+
+      assertApproxEqAbs(
+        snapshotGlobalVarsAfter.usersInfo[owner].userAssetsInfo[underlyingToken].aTokenBalance +
+          amount,
+        snapshotGlobalVarsBefore.usersInfo[owner].userAssetsInfo[underlyingToken].aTokenBalance,
+        2,
+        ERC20_HSPOST_E
+      );
+      assertLe(
+        snapshotGlobalVarsAfter.usersInfo[owner].userAssetsInfo[underlyingToken].aTokenBalance +
+          amount,
+        snapshotGlobalVarsBefore.usersInfo[owner].userAssetsInfo[underlyingToken].aTokenBalance,
+        ERC20_HSPOST_E
+      );
+
+      assertApproxEqAbs(
+        snapshotGlobalVarsBefore
+          .usersInfo[recipient]
+          .userAssetsInfo[underlyingToken]
+          .aTokenBalance + amount,
+        snapshotGlobalVarsAfter.usersInfo[recipient].userAssetsInfo[underlyingToken].aTokenBalance,
+        2,
+        ERC20_HSPOST_F
+      );
+      assertGe(
+        snapshotGlobalVarsBefore
+          .usersInfo[recipient]
+          .userAssetsInfo[underlyingToken]
+          .aTokenBalance + amount,
+        snapshotGlobalVarsAfter.usersInfo[recipient].userAssetsInfo[underlyingToken].aTokenBalance,
+        ERC20_HSPOST_F
+      );
     } else {
       revert('ATokenHandler: transferFrom failed');
-    }
-  }
-
-  function increaseAllowance(uint256 addedValue, uint8 i, uint8 j) external setup {
-    bool success;
-    bytes memory returnData;
-
-    // Get one of the three actors randomly
-    address spender = _getRandomActor(i);
-
-    address target = _getRandomAToken(j);
-
-    (success, returnData) = actor.proxy(
-      target,
-      abi.encodeWithSelector(IncentivizedERC20.increaseAllowance.selector, spender, addedValue)
-    );
-
-    if (success) {
-      assert(true);
-    } else {
-      revert('ATokenHandler: increaseAllowance failed');
-    }
-  }
-
-  function decreaseAllowance(uint256 subtractedValue, uint8 i, uint8 j) external setup {
-    bool success;
-    bytes memory returnData;
-
-    // Get one of the three actors randomly
-    address spender = _getRandomActor(i);
-
-    address target = _getRandomAToken(j);
-
-    (success, returnData) = actor.proxy(
-      target,
-      abi.encodeWithSelector(IncentivizedERC20.decreaseAllowance.selector, spender, subtractedValue)
-    );
-
-    if (success) {
-      assert(true);
-    } else {
-      revert('ATokenHandler: decreaseAllowance failed');
     }
   }
 

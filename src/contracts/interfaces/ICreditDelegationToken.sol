@@ -39,6 +39,12 @@ interface ICreditDelegationToken {
   function approveDelegation(address delegatee, uint256 amount) external;
 
   /**
+   * @notice Allows a delegatee to revoke the borrowing power delegated to them by a specific delegator.
+   * @param delegator The address of the user who delegated borrowing power to the caller.
+   */
+  function renounceDelegation(address delegator) external;
+
+  /**
    * @notice Returns the borrow allowance of the user
    * @param fromUser The user to giving allowance
    * @param toUser The user to give allowance to
