@@ -327,10 +327,7 @@ contract ATokenTransferTests is TestnetProcedures {
 
     uint256 previousIndex = 1e27;
     uint256 expectedIndex = 1.0001e27;
-    uint256 expectedScaledTransferAmount = transferAmount.rayDiv(
-      expectedIndex,
-      WadRayMath.Rounding.Ceil
-    );
+    uint256 expectedScaledTransferAmount = transferAmount.rayDivCeil(expectedIndex);
 
     mockAToken.setStorage(
       alice,
@@ -340,14 +337,10 @@ contract ATokenTransferTests is TestnetProcedures {
       bobScaledBalanceBefore
     );
 
-    uint256 senderBalanceIncrease = aliceScaledBalanceBefore.rayMul(
-      expectedIndex,
-      WadRayMath.Rounding.Floor
-    ) - aliceScaledBalanceBefore.rayMul(previousIndex, WadRayMath.Rounding.Floor);
-    uint256 recipientBalanceIncrease = bobScaledBalanceBefore.rayMul(
-      expectedIndex,
-      WadRayMath.Rounding.Floor
-    ) - bobScaledBalanceBefore.rayMul(previousIndex, WadRayMath.Rounding.Floor);
+    uint256 senderBalanceIncrease = aliceScaledBalanceBefore.rayMulFloor(expectedIndex) -
+      aliceScaledBalanceBefore.rayMulFloor(previousIndex);
+    uint256 recipientBalanceIncrease = bobScaledBalanceBefore.rayMulFloor(expectedIndex) -
+      bobScaledBalanceBefore.rayMulFloor(previousIndex);
 
     vm.expectEmit(address(mockAToken));
     emit IERC20.Transfer(address(0), alice, senderBalanceIncrease);

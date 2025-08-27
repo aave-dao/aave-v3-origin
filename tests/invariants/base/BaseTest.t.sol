@@ -151,10 +151,8 @@ abstract contract BaseTest is BaseStorage, PropertiesConstants, StdAsserts, StdU
     uint256 scaledATokenTotalSupply = IAToken(protocolTokens[asset].aTokenAddress)
       .scaledTotalSupply();
 
-    totalSupply = (scaledATokenTotalSupply + pool.getReserveData(asset).accruedToTreasury).rayMul(
-      _getReserveNormalizedIncome(asset),
-      WadRayMath.Rounding.Floor
-    );
+    totalSupply = (scaledATokenTotalSupply + pool.getReserveData(asset).accruedToTreasury)
+      .rayMulFloor(_getReserveNormalizedIncome(asset));
   }
 
   function _getRealTotalSupply(
@@ -163,10 +161,7 @@ abstract contract BaseTest is BaseStorage, PropertiesConstants, StdAsserts, StdU
     uint256 accruedToTreasury
   ) internal view returns (uint256) {
     return
-      (scaledATokenTotalSupply + accruedToTreasury).rayMul(
-        _getReserveNormalizedIncome(asset),
-        WadRayMath.Rounding.Floor
-      );
+      (scaledATokenTotalSupply + accruedToTreasury).rayMulFloor(_getReserveNormalizedIncome(asset));
   }
 
   function _isBorrowingAny(address user) internal view returns (bool) {

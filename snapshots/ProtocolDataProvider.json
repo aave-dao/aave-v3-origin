@@ -1,5 +1,7 @@
 {
   "getATokenTotalSupply": "30080",
+  "getAllATokens": "63841",
+  "getAllReservesTokens": "43072",
   "getFlashLoanEnabled": "11346",
   "getInterestRateStrategyAddress": "8811",
   "getIsVirtualAccActive": "463",
@@ -7,6 +9,7 @@
   "getPaused": "11462",
   "getReserveCaps": "11383",
   "getReserveConfigurationData": "11819",
+  "getReserveDeficit": "10973",
   "getReserveTokensAddresses": "14934",
   "getSiloedBorrowing": "11399",
   "getTotalDebt": "30080",
