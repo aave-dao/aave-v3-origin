@@ -37,10 +37,16 @@ jobs:
         run: |
           sudo apt-get -y install lcov
           lcov --remove ./lcov/lcov.info -o ./lcov/lcov.info \
+          # UI-only helper contracts
           'src/contracts/helpers/UiIncentiveDataProviderV3.sol' \
           'src/contracts/helpers/UiPoolDataProviderV3.sol' \
           'src/contracts/helpers/WalletBalanceProvider.sol' \
-          'src/contracts/dependencies/*'
+          # External dependencies assumed to be tested outside of this repository
+          'src/contracts/dependencies/*' \
+          # Instances don't contain any testing relevant code
+          'src/contracts/instances/PoolInstance.sol' \
+          'src/contracts/instances/VariableDebtTokenMainnetInstanceGHO.sol' \
+          'src/contracts/instances/PoolConfiguratorInstance.sol'
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@ea99328d1c4d5f39fda7cbffe104afd6906c50b0
