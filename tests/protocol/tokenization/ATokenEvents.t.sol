@@ -53,9 +53,7 @@ contract ATokenEventsTests is TestnetProcedures {
     {
       uint256 scaledBalance = IAToken(aTokenAddress).scaledBalanceOf(onBehalfOf);
       uint256 scaledMintAmount = amount.rayDivFloor(newIndex);
-      uint256 nextBalance = (scaledBalance + scaledMintAmount).rayMulFloor(
-        newIndex
-      );
+      uint256 nextBalance = (scaledBalance + scaledMintAmount).rayMulFloor(newIndex);
       uint256 previousBalance = scaledBalance.rayMulFloor(oldIndex);
       balanceIncrease = scaledBalance.rayMulFloor(newIndex) - previousBalance;
       mintAmount = nextBalance - previousBalance;
@@ -106,9 +104,7 @@ contract ATokenEventsTests is TestnetProcedures {
     {
       uint256 scaledBalance = IAToken(aTokenAddress).scaledBalanceOf(user);
       uint256 scaledBurnAmount = amount.rayDivCeil(newIndex);
-      uint256 nextBalance = (scaledBalance - scaledBurnAmount).rayMulFloor(
-        newIndex
-      );
+      uint256 nextBalance = (scaledBalance - scaledBurnAmount).rayMulFloor(newIndex);
       uint256 previousBalance = scaledBalance.rayMulFloor(oldIndex);
       balanceIncrease = scaledBalance.rayMulFloor(newIndex) - previousBalance;
       deltaAmount = int256(nextBalance) - int256(previousBalance);

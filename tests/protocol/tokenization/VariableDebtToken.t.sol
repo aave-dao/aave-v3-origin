@@ -192,12 +192,9 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     vm.prank(report.poolProxy);
     debtToken.mint(alice, alice, amount, amount.rayDivCeil(supplyIndex), supplyIndex);
 
-    uint256 nextBalance = (balanceScaled - repaymentScaled).rayMulCeil(
-      newIndex
-    );
+    uint256 nextBalance = (balanceScaled - repaymentScaled).rayMulCeil(newIndex);
     uint256 previousBalance = balanceScaled.rayMulCeil(supplyIndex);
-    uint256 balanceIncrease = balanceScaled.rayMulCeil(newIndex) -
-      previousBalance;
+    uint256 balanceIncrease = balanceScaled.rayMulCeil(newIndex) - previousBalance;
 
     vm.expectEmit(address(debtToken));
     emit IScaledBalanceToken.Burn(
@@ -236,12 +233,9 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     vm.prank(report.poolProxy);
     debtToken.mint(alice, alice, amount, amount.rayDivCeil(supplyIndex), supplyIndex);
 
-    uint256 nextBalance = (balanceScaled - repaymentScaled).rayMulCeil(
-      newIndex
-    );
+    uint256 nextBalance = (balanceScaled - repaymentScaled).rayMulCeil(newIndex);
     uint256 previousBalance = balanceScaled.rayMulCeil(supplyIndex);
-    uint256 balanceIncrease = balanceScaled.rayMulCeil(newIndex) -
-      previousBalance;
+    uint256 balanceIncrease = balanceScaled.rayMulCeil(newIndex) - previousBalance;
 
     vm.expectEmit(address(debtToken));
     emit IScaledBalanceToken.Burn(
@@ -288,8 +282,7 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     uint256 previousIndex = contracts.poolProxy.getReserveNormalizedVariableDebt(tokenList.usdx);
     vm.warp(vm.getBlockTimestamp() + 30 days);
     uint256 newIndex = contracts.poolProxy.getReserveNormalizedVariableDebt(tokenList.usdx);
-    uint256 balanceIncrease = amount.rayMulCeil(newIndex) -
-      amount.rayMulCeil(previousIndex);
+    uint256 balanceIncrease = amount.rayMulCeil(newIndex) - amount.rayMulCeil(previousIndex);
 
     assertEq(variableDebtToken.balanceOf(alice), amount + balanceIncrease);
   }
@@ -348,8 +341,7 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
 
     assertEq(
       variableDebtToken.scaledBalanceOf(alice),
-      aliceAmount1.rayDivCeil(index1) +
-        aliceAmount2.rayDivCeil(index2)
+      aliceAmount1.rayDivCeil(index1) + aliceAmount2.rayDivCeil(index2)
     );
   }
 
