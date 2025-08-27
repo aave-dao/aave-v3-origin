@@ -71,11 +71,6 @@ library WadRayMath {
     }
   }
 
-  function rayMul(uint256 a, uint256 b, Rounding rounding) internal pure returns (uint256 c) {
-    if (rounding == Rounding.Floor) return rayMulFloor(a, b);
-    return rayMulCeil(a, b);
-  }
-
   function rayMulFloor(uint256 a, uint256 b) internal pure returns (uint256 c) {
     assembly {
       // Overflow check: Ensure a * b does not exceed uint256 max
@@ -114,11 +109,6 @@ library WadRayMath {
       }
       c := div(add(mul(a, RAY), div(b, 2)), b)
     }
-  }
-
-  function rayDiv(uint256 a, uint256 b, Rounding rounding) internal pure returns (uint256 c) {
-    if (rounding == Rounding.Floor) return rayDivFloor(a, b);
-    return rayDivCeil(a, b);
   }
 
   function rayDivCeil(uint256 a, uint256 b) internal pure returns (uint256 c) {

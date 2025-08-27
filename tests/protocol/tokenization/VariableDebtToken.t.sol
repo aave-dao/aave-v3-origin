@@ -176,15 +176,15 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     uint256 amount = 1200 * 10 ** decimals;
     uint256 repayment = amount / 2;
     uint256 supplyIndex = 1.001e27;
-    uint256 balanceScaled = amount.rayDiv(supplyIndex, WadRayMath.Rounding.Ceil);
+    uint256 balanceScaled = amount.rayDivCeil(supplyIndex);
     uint256 newIndex = 1.003e27;
-    uint256 repaymentScaled = repayment.rayDiv(newIndex, WadRayMath.Rounding.Floor);
+    uint256 repaymentScaled = repayment.rayDivFloor(newIndex);
 
     vm.expectEmit(address(debtToken));
     emit IScaledBalanceToken.Mint(
       alice,
       alice,
-      balanceScaled.rayMul(supplyIndex, WadRayMath.Rounding.Ceil),
+      balanceScaled.rayMulCeil(supplyIndex),
       0,
       supplyIndex
     );
@@ -192,12 +192,11 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     vm.prank(report.poolProxy);
     debtToken.mint(alice, alice, amount, amount.rayDivCeil(supplyIndex), supplyIndex);
 
-    uint256 nextBalance = (balanceScaled - repaymentScaled).rayMul(
-      newIndex,
-      WadRayMath.Rounding.Ceil
+    uint256 nextBalance = (balanceScaled - repaymentScaled).rayMulCeil(
+      newIndex
     );
-    uint256 previousBalance = balanceScaled.rayMul(supplyIndex, WadRayMath.Rounding.Ceil);
-    uint256 balanceIncrease = balanceScaled.rayMul(newIndex, WadRayMath.Rounding.Ceil) -
+    uint256 previousBalance = balanceScaled.rayMulCeil(supplyIndex);
+    uint256 balanceIncrease = balanceScaled.rayMulCeil(newIndex) -
       previousBalance;
 
     vm.expectEmit(address(debtToken));
@@ -221,15 +220,15 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     uint256 amount = 1200 * 10 ** decimals;
     uint256 supplyIndex = 1.001e27;
     uint256 newIndex = 1.003e27;
-    uint256 balanceScaled = amount.rayDiv(supplyIndex, WadRayMath.Rounding.Ceil);
+    uint256 balanceScaled = amount.rayDivCeil(supplyIndex);
     uint256 repayment = amount;
-    uint256 repaymentScaled = repayment.rayDiv(newIndex, WadRayMath.Rounding.Floor);
+    uint256 repaymentScaled = repayment.rayDivFloor(newIndex);
 
     vm.expectEmit(address(debtToken));
     emit IScaledBalanceToken.Mint(
       alice,
       alice,
-      balanceScaled.rayMul(supplyIndex, WadRayMath.Rounding.Ceil),
+      balanceScaled.rayMulCeil(supplyIndex),
       0,
       supplyIndex
     );
@@ -237,12 +236,11 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     vm.prank(report.poolProxy);
     debtToken.mint(alice, alice, amount, amount.rayDivCeil(supplyIndex), supplyIndex);
 
-    uint256 nextBalance = (balanceScaled - repaymentScaled).rayMul(
-      newIndex,
-      WadRayMath.Rounding.Ceil
+    uint256 nextBalance = (balanceScaled - repaymentScaled).rayMulCeil(
+      newIndex
     );
-    uint256 previousBalance = balanceScaled.rayMul(supplyIndex, WadRayMath.Rounding.Ceil);
-    uint256 balanceIncrease = balanceScaled.rayMul(newIndex, WadRayMath.Rounding.Ceil) -
+    uint256 previousBalance = balanceScaled.rayMulCeil(supplyIndex);
+    uint256 balanceIncrease = balanceScaled.rayMulCeil(newIndex) -
       previousBalance;
 
     vm.expectEmit(address(debtToken));
@@ -290,8 +288,8 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     uint256 previousIndex = contracts.poolProxy.getReserveNormalizedVariableDebt(tokenList.usdx);
     vm.warp(vm.getBlockTimestamp() + 30 days);
     uint256 newIndex = contracts.poolProxy.getReserveNormalizedVariableDebt(tokenList.usdx);
-    uint256 balanceIncrease = amount.rayMul(newIndex, WadRayMath.Rounding.Ceil) -
-      amount.rayMul(previousIndex, WadRayMath.Rounding.Ceil);
+    uint256 balanceIncrease = amount.rayMulCeil(newIndex) -
+      amount.rayMulCeil(previousIndex);
 
     assertEq(variableDebtToken.balanceOf(alice), amount + balanceIncrease);
   }
@@ -350,8 +348,8 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
 
     assertEq(
       variableDebtToken.scaledBalanceOf(alice),
-      aliceAmount1.rayDiv(index1, WadRayMath.Rounding.Ceil) +
-        aliceAmount2.rayDiv(index2, WadRayMath.Rounding.Ceil)
+      aliceAmount1.rayDivCeil(index1) +
+        aliceAmount2.rayDivCeil(index2)
     );
   }
 

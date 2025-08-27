@@ -20,6 +20,26 @@ contract ProtocolDataProvider_gas_Tests is Testhelpers {
     vm.snapshotGasLastCall('ProtocolDataProvider', 'getReserveConfigurationData');
   }
 
+  function test_getAllReservesTokens() external {
+    contracts.protocolDataProvider.getAllReservesTokens();
+    vm.snapshotGasLastCall('ProtocolDataProvider', 'getAllReservesTokens');
+  }
+
+  function test_getAllATokens() external {
+    contracts.protocolDataProvider.getAllATokens();
+    vm.snapshotGasLastCall('ProtocolDataProvider', 'getAllATokens');
+  }
+
+  function test_getReserveData() external {
+    contracts.protocolDataProvider.getReserveData(tokenList.usdx);
+    vm.snapshotGasLastCall('ProtocolDataProvider', 'getReserveData');
+  }
+
+  function test_getReserveDeficit() external {
+    contracts.protocolDataProvider.getReserveDeficit(tokenList.usdx);
+    vm.snapshotGasLastCall('ProtocolDataProvider', 'getReserveDeficit');
+  }
+
   function test_getReserveCaps() external {
     contracts.protocolDataProvider.getReserveCaps(tokenList.usdx);
     vm.snapshotGasLastCall('ProtocolDataProvider', 'getReserveCaps');

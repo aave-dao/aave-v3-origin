@@ -2,7 +2,7 @@
 
 ![Aave v3.1 Origin_banner](./resources/v3-1-banner.jpeg)
 
-Aave v3.3 complete codebase, Foundry-based.
+Aave v3.5 complete codebase, Foundry-based.
 
 [![codecov](https://codecov.io/gh/aave-dao/aave-v3-origin/graph/badge.svg?token=6HX4NXCNIQ)](https://codecov.io/gh/aave-dao/aave-v3-origin)
 <br>
@@ -18,8 +18,10 @@ If you're interested in contributing, please read the [contributing docs](/.gith
 - [Aave v3 technical Paper](./docs/Aave_V3_Technical_Paper.pdf)
 - [v3 to v3.0.2 production upgrade](https://github.com/bgd-labs/proposal-3.0.2-upgrade/blob/main/README.md)
 - [Aave v3.1 features](./docs/3.1/Aave-v3.1-features.md)
-- [Aave v3.2 features](./docs/3.2/Aave-3.2-features.md)
+- [Aave v3.2 features](./docs/3.2/Aave-v3.2-features.md)
 - [Aave v3.3 features](./docs/3.3/Aave-v3.3-features.md)
+- [Aave v3.4 features](./docs/3.3/Aave-v3.4-features.md)
+- [Aave v3.5 features](./docs/3.3/Aave-v3.5-features.md)
 - [v3.1 to v3.2 production upgrade](https://github.com/bgd-labs/protocol-3.2.0-upgrade/blob/main/README.md)
 - [v3.2 to v3.3 production upgrade](https://github.com/bgd-labs/protocol-3.3.0-upgrade/blob/main/README.md)
 - [Set Ltv to 0 on Freeze Feature State diagram](./docs/freeze-ltv0-states.png)
