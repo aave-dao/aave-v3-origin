@@ -20,8 +20,8 @@ If you're interested in contributing, please read the [contributing docs](/.gith
 - [Aave v3.1 features](./docs/3.1/Aave-v3.1-features.md)
 - [Aave v3.2 features](./docs/3.2/Aave-v3.2-features.md)
 - [Aave v3.3 features](./docs/3.3/Aave-v3.3-features.md)
-- [Aave v3.4 features](./docs/3.3/Aave-v3.4-features.md)
-- [Aave v3.5 features](./docs/3.3/Aave-v3.5-features.md)
+- [Aave v3.4 features](./docs/3.4/Aave-v3.4-features.md)
+- [Aave v3.5 features](./docs/3.5/Aave-v3.5-features.md)
 - [v3.1 to v3.2 production upgrade](https://github.com/bgd-labs/protocol-3.2.0-upgrade/blob/main/README.md)
 - [v3.2 to v3.3 production upgrade](https://github.com/bgd-labs/protocol-3.3.0-upgrade/blob/main/README.md)
 - [Set Ltv to 0 on Freeze Feature State diagram](./docs/freeze-ltv0-states.png)
@@ -127,7 +127,7 @@ This repository will be subjected to [this bug bounty](https://immunefi.com/boun
 
 ## License
 
-Copyright © 2024, Aave DAO, represented by its governance smart contracts.
+Copyright © 2025, Aave DAO, represented by its governance smart contracts.
 
 The [BUSL1.1](./LICENSE) license of this repository allows for any usage of the software, if respecting the Additional Use Grant limitations, forbidding any use case damaging anyhow the Aave DAO's interests.
 Interfaces and other components required for integrations are explicitly MIT licensed.
