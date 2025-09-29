@@ -59,12 +59,12 @@ library MathUtils {
       return WadRayMath.RAY;
     }
 
-    // calculations compound interest using the ideal formula - e^(rate per year * number of years)
-    // 100_000% per year = 1_000 * 100, passed 10_000 years:
-    // e^(1_000 * 10_000) = 6.5922325346184394895608861310659088446667722661221381641234330770... × 10^4342944
+    // calculations compound interest using the ideal formula - e^(ln(rate per year) * number of years)
+    // (e^100_000)% per year = 100_000, passed 10_000 years:
+    // e^(100_000 * 10_000) = 8.0029817706609725330419093743650006887823149971763745653564454733413869655349877175229050148235369720236308309302665604705274245550310494659832404505993314589723276010849849958051150690036965010709788 * 10^434294481
 
     // The current formula in the contract returns:
-    // 1.66666716666676666667 × 10^20
+    // 1.66666667166666667666666667.666 * 10^26
     // This happens because the contract uses a polynomial approximation of the ideal formula
     // and on big numbers the ideal formula with exponential function has much more speed.
     // Used approximation in contracts is not precise enough on such big numbers.
