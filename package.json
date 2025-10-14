@@ -1,6 +1,6 @@
 {
   "name": "@aave-dao/aave-v3-origin",
-  "version": "3.3.0",
+  "version": "3.5.0",
   "scripts": {
     "lint": "prettier . --check",
     "lint:fix": "prettier . --write",
@@ -32,7 +32,6 @@
     "prettier-plugin-solidity": "^1.1.1"
   },
   "dependencies": {
-    "@bgd-labs/aave-cli": "^1.1.17",
     "@bgd-labs/solidity-utils": "1.1.2",
     "catapulta-verify": "^1.3.0"
   }

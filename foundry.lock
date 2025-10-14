@@ -1,0 +1,8 @@
+{
+  "lib/forge-std": {
+    "rev": "999be66ec94c78090087f674bbf52ce1cca12b75"
+  },
+  "lib/solidity-utils": {
+    "rev": "d9cfaf61dc2b498a15ff60944606a7320a6cdb58"
+  }
+}

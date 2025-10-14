@@ -85,6 +85,8 @@ contract PoolRepayTests is TestnetProcedures {
       ),
       false
     );
+
+    _checkInterestRates(tokenList.usdx);
   }
 
   function test_revert_repay_full_stable_borrow() public {
@@ -129,13 +131,15 @@ contract PoolRepayTests is TestnetProcedures {
     uint256 debtBalanceAfter = varDebtUSDX.scaledBalanceOf(alice);
 
     assertEq(debtBalanceAfter, 0);
-    assertEq(IERC20(aUSDX).balanceOf(alice), tokenBalanceBefore - debtBalanceBefore);
+    assertLe(IERC20(aUSDX).balanceOf(alice), tokenBalanceBefore - debtBalanceBefore);
     assertEq(
       contracts.poolProxy.getUserConfiguration(alice).isBorrowing(
         contracts.poolProxy.getReserveData(tokenList.usdx).id
       ),
       false
     );
+
+    _checkInterestRates(tokenList.usdx);
   }
 
   function test_repayWithATokens_full_collateral_variable_borrow() public {
@@ -174,6 +178,23 @@ contract PoolRepayTests is TestnetProcedures {
       ),
       false
     );
+
+    _checkInterestRates(tokenList.usdx);
+  }
+
+  function test_repayWithATokens_shouldRevertIfUnhealthyAfterRepayment() external {
+    uint256 amount = 2000e6;
+    uint256 borrowAmount = 1600e6;
+    vm.startPrank(alice);
+    // supply enough collateral to borrow out everything
+    contracts.poolProxy.supply(tokenList.usdx, amount, alice, 0);
+    contracts.poolProxy.borrow(tokenList.usdx, borrowAmount, 2, 0, alice);
+    vm.warp(vm.getBlockTimestamp() + 365 days * 100);
+
+    vm.expectRevert(
+      abi.encodeWithSelector(Errors.HealthFactorLowerThanLiquidationThreshold.selector)
+    );
+    contracts.poolProxy.repayWithATokens(tokenList.usdx, 2, 2);
   }
 
   function test_repayWithATokens_fuzz_collateral_variable_borrow(
@@ -181,7 +202,7 @@ contract PoolRepayTests is TestnetProcedures {
     uint32 timeDelta
   ) public {
     uint256 amount = 2000e6;
-    vm.assume(repayAmount <= amount && repayAmount > 0);
+    vm.assume(repayAmount <= amount && repayAmount > 1);
     uint256 borrowAmount = 2000e6;
     vm.startPrank(alice);
     // supply enough collateral to borrow out everything
@@ -201,7 +222,7 @@ contract PoolRepayTests is TestnetProcedures {
     uint256 debtBalanceAfter = IERC20(address(varDebtUSDX)).balanceOf(alice);
     uint256 collateralBalanceAfter = IERC20(aUSDX).balanceOf(alice);
 
-    assertApproxEqAbs(debtBalanceAfter, debtBalanceBefore - repayAmount, 1);
+    assertApproxEqAbs(debtBalanceAfter, debtBalanceBefore - repayAmount, 2);
     assertEq(
       contracts.poolProxy.getUserConfiguration(alice).isBorrowing(
         contracts.poolProxy.getReserveData(tokenList.usdx).id
@@ -214,6 +235,8 @@ contract PoolRepayTests is TestnetProcedures {
       ),
       collateralBalanceAfter == 0 ? false : true
     );
+
+    _checkInterestRates(tokenList.usdx);
   }
 
   function test_repayWithPermit(
@@ -224,10 +247,10 @@ contract PoolRepayTests is TestnetProcedures {
     uint128 repayAmount
   ) public {
     vm.assume(userPk != 0);
-    underlyingBalance = uint128(bound(underlyingBalance, 2, type(uint120).max));
-    supplyAmount = uint128(bound(supplyAmount, 2, underlyingBalance));
-    borrowAmount = uint128(bound(borrowAmount, 1, supplyAmount / 2));
-    repayAmount = uint128(bound(repayAmount, 1, borrowAmount));
+    underlyingBalance = uint128(bound(underlyingBalance, 4, type(uint120).max));
+    supplyAmount = uint128(bound(supplyAmount, 4, underlyingBalance));
+    borrowAmount = uint128(bound(borrowAmount, 2, supplyAmount / 2));
+    repayAmount = uint128(bound(repayAmount, 2, borrowAmount));
     address user = vm.addr(userPk);
     deal(tokenList.usdx, user, underlyingBalance);
     vm.startPrank(user);
@@ -277,6 +300,8 @@ contract PoolRepayTests is TestnetProcedures {
       debtBalanceBefore - repayAmount,
       1
     );
+
+    _checkInterestRates(tokenList.usdx);
   }
 
   function test_repayWithPermit_not_failing_if_permit_was_used(
@@ -287,10 +312,10 @@ contract PoolRepayTests is TestnetProcedures {
     uint128 repayAmount
   ) public {
     vm.assume(userPk != 0);
-    underlyingBalance = uint128(bound(underlyingBalance, 2, type(uint120).max));
-    supplyAmount = uint128(bound(supplyAmount, 2, underlyingBalance));
-    borrowAmount = uint128(bound(borrowAmount, 1, supplyAmount / 2));
-    repayAmount = uint128(bound(repayAmount, 1, borrowAmount));
+    underlyingBalance = uint128(bound(underlyingBalance, 4, type(uint120).max));
+    supplyAmount = uint128(bound(supplyAmount, 4, underlyingBalance));
+    borrowAmount = uint128(bound(borrowAmount, 2, supplyAmount / 2));
+    repayAmount = uint128(bound(repayAmount, 2, borrowAmount));
     address user = vm.addr(userPk);
     deal(tokenList.usdx, user, underlyingBalance);
     vm.startPrank(user);
@@ -342,6 +367,8 @@ contract PoolRepayTests is TestnetProcedures {
       debtBalanceBefore - repayAmount,
       1
     );
+
+    _checkInterestRates(tokenList.usdx);
   }
 
   function test_repayWithPermit_should_revert_if_permit_is_less_then_repay_amount(
@@ -352,10 +379,10 @@ contract PoolRepayTests is TestnetProcedures {
     uint128 repayAmount
   ) public {
     vm.assume(userPk != 0);
-    underlyingBalance = uint128(bound(underlyingBalance, 2, type(uint120).max));
-    supplyAmount = uint128(bound(supplyAmount, 2, underlyingBalance));
-    borrowAmount = uint128(bound(borrowAmount, 1, supplyAmount / 2));
-    repayAmount = uint128(bound(repayAmount, 1, borrowAmount));
+    underlyingBalance = uint128(bound(underlyingBalance, 4, type(uint120).max));
+    supplyAmount = uint128(bound(supplyAmount, 4, underlyingBalance));
+    borrowAmount = uint128(bound(borrowAmount, 2, supplyAmount / 2));
+    repayAmount = uint128(bound(repayAmount, 2, borrowAmount));
     address user = vm.addr(userPk);
     deal(tokenList.usdx, user, underlyingBalance);
     vm.startPrank(user);
@@ -441,6 +468,8 @@ contract PoolRepayTests is TestnetProcedures {
       ),
       false
     );
+
+    _checkInterestRates(tokenList.usdx);
   }
 
   function test_partial_repay_borrow_variable_in_isolation() public {
@@ -497,6 +526,8 @@ contract PoolRepayTests is TestnetProcedures {
       contracts.poolProxy.getReserveData(tokenList.wbtc).isolationModeTotalDebt,
       isolationModeTotalDebt - isolationDebtRepaid
     );
+
+    _checkInterestRates(tokenList.usdx);
   }
 
   function test_reverts_borrow_invalidAmount() public {

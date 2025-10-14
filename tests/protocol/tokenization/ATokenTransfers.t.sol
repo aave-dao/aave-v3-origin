@@ -291,12 +291,12 @@ contract ATokenTransferTests is TestnetProcedures {
   }
 
   function test_atoken_transfer_sets_enabled_as_collateral(
-    uint56 timePassed,
+    uint256 timePassed,
     uint256 amount
   ) public {
     uint256 aliceBalance = IERC20(aToken).balanceOf(alice);
-    vm.assume(amount <= aliceBalance);
-    vm.assume(timePassed > 0);
+    amount = bound(amount, 1, aliceBalance);
+    timePassed = uint56(bound(timePassed, 1, (365 days) * 50));
     address mockReceiver = vm.addr(42);
 
     // borrow all available usdx
@@ -327,7 +327,7 @@ contract ATokenTransferTests is TestnetProcedures {
 
     uint256 previousIndex = 1e27;
     uint256 expectedIndex = 1.0001e27;
-    uint256 expectedScaledTransferAmount = transferAmount.rayDiv(expectedIndex);
+    uint256 expectedScaledTransferAmount = transferAmount.rayDivCeil(expectedIndex);
 
     mockAToken.setStorage(
       alice,
@@ -337,10 +337,10 @@ contract ATokenTransferTests is TestnetProcedures {
       bobScaledBalanceBefore
     );
 
-    uint256 senderBalanceIncrease = aliceScaledBalanceBefore.rayMul(expectedIndex) -
-      aliceScaledBalanceBefore.rayMul(previousIndex);
-    uint256 recipientBalanceIncrease = bobScaledBalanceBefore.rayMul(expectedIndex) -
-      bobScaledBalanceBefore.rayMul(previousIndex);
+    uint256 senderBalanceIncrease = aliceScaledBalanceBefore.rayMulFloor(expectedIndex) -
+      aliceScaledBalanceBefore.rayMulFloor(previousIndex);
+    uint256 recipientBalanceIncrease = bobScaledBalanceBefore.rayMulFloor(expectedIndex) -
+      bobScaledBalanceBefore.rayMulFloor(previousIndex);
 
     vm.expectEmit(address(mockAToken));
     emit IERC20.Transfer(address(0), alice, senderBalanceIncrease);
@@ -378,19 +378,5 @@ contract ATokenTransferTests is TestnetProcedures {
       aliceScaledBalanceBefore - expectedScaledTransferAmount,
       'alice scaled balance should be minus scaled transfer amount'
     );
-    assertEq(
-      getBalanceOf(mockAToken.scaledBalanceOf(alice), expectedIndex),
-      aliceScaledBalanceBefore - transferAmount + senderBalanceIncrease,
-      'alice atoken balance'
-    );
-    assertEq(
-      getBalanceOf(mockAToken.scaledBalanceOf(bob), expectedIndex),
-      bobScaledBalanceBefore + transferAmount + recipientBalanceIncrease,
-      'bob atoken balance'
-    );
-  }
-
-  function getBalanceOf(uint256 scaledBalance, uint256 index) internal pure returns (uint256) {
-    return scaledBalance.rayMul(index);
   }
 }

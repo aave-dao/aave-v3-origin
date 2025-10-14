@@ -5,6 +5,7 @@ import 'forge-std/Test.sol';
 
 import {MathUtils} from '../../../../src/contracts/protocol/libraries/math/MathUtils.sol';
 
+/// forge-config: default.allow_internal_expect_revert = true
 contract MathUtilsTests is Test {
   function test_constants() public pure {
     assertEq(MathUtils.SECONDS_PER_YEAR, 365 days);
@@ -60,7 +61,7 @@ contract MathUtilsTests is Test {
     );
   }
 
-  function test_calculateCompoundInterest_shouldNotOverflow() public {
+  function test_calculateCompoundInterest_shouldNotOverflow() public view {
     uint40 currentTimestamp = uint40(vm.getBlockTimestamp());
     uint40 calculationTimestamp = currentTimestamp + 365 days * 10_000;
 
@@ -81,5 +82,29 @@ contract MathUtilsTests is Test {
       MathUtils.calculateCompoundedInterest(1_000e27, currentTimestamp, calculationTimestamp),
       166666716666676666667666666666666600000000000000
     );
+  }
+
+  function testMulDivCeil_WithRemainder() external pure {
+    assertEq(MathUtils.mulDivCeil(5, 5, 3), 9); // 25 / 3 = 8.333 -> ceil -> 9
+  }
+
+  function testMulDivCeil_NoRemainder() external pure {
+    assertEq(MathUtils.mulDivCeil(12, 6, 4), 18); // 72 / 4 = 18, no ceil
+  }
+
+  function testMulDivCeil_ZeroAOrB() external pure {
+    assertEq(MathUtils.mulDivCeil(0, 10, 5), 0);
+    assertEq(MathUtils.mulDivCeil(10, 0, 5), 0);
+  }
+
+  function testMulDivCeil_RevertOnDivByZero() external {
+    vm.expectRevert();
+    MathUtils.mulDivCeil(10, 10, 0);
+  }
+
+  function testMulDivCeil_RevertOnOverflow() external {
+    uint256 max = type(uint256).max;
+    vm.expectRevert();
+    MathUtils.mulDivCeil(max, 2, 1); // max * 2 will overflow
   }
 }

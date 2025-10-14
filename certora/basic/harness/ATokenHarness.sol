@@ -35,8 +35,8 @@ contract ATokenHarness is ATokenInstance {
     return _userState[user].additionalData;
   }
 
-  function scaledBalanceOfToBalanceOf(uint256 bal) public view returns (uint256) {
-    return bal.rayMul(POOL.getReserveNormalizedIncome(_underlyingAsset));
+  function scaledBalance_to_balance(uint256 scaledBal) public view returns (uint256) {
+    return scaledBal.rayMul(POOL.getReserveNormalizedIncome(_underlyingAsset));
   }
 
   function ATokenBalanceOf(address user) public view returns (uint256) {

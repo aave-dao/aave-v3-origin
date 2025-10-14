@@ -535,17 +535,17 @@ interface IPool {
    * @param asset The address of the underlying asset of the aToken
    * @param from The user from which the aTokens are transferred
    * @param to The user receiving the aTokens
-   * @param amount The amount being transferred/withdrawn
-   * @param balanceFromBefore The aToken balance of the `from` user before the transfer
-   * @param balanceToBefore The aToken balance of the `to` user before the transfer
+   * @param scaledAmount The scaled amount being transferred/withdrawn
+   * @param scaledBalanceFromBefore The aToken scaled balance of the `from` user before the transfer
+   * @param scaledBalanceToBefore The aToken scaled balance of the `to` user before the transfer
    */
   function finalizeTransfer(
     address asset,
     address from,
     address to,
-    uint256 amount,
-    uint256 balanceFromBefore,
-    uint256 balanceToBefore
+    uint256 scaledAmount,
+    uint256 scaledBalanceFromBefore,
+    uint256 scaledBalanceToBefore
   ) external;
 
   /**
@@ -745,8 +745,9 @@ interface IPool {
    * @dev The deficit of a reserve can occur due to situations where borrowed assets are not repaid, leading to bad debt.
    * @param asset The address of the underlying asset to cover the deficit.
    * @param amount The amount to be covered, in aToken
+   * @return The amount of tokens burned
    */
-  function eliminateReserveDeficit(address asset, uint256 amount) external;
+  function eliminateReserveDeficit(address asset, uint256 amount) external returns (uint256);
 
   /**
    * @notice Approves or disapproves a position manager. This position manager will be able

@@ -213,6 +213,8 @@ library DataTypes {
     InterestRateMode interestRateMode;
     address onBehalfOf;
     bool useATokens;
+    address oracle;
+    uint8 userEModeCategory;
   }
 
   struct ExecuteWithdrawParams {
@@ -236,9 +238,9 @@ library DataTypes {
     address asset;
     address from;
     address to;
-    uint256 amount;
-    uint256 balanceFromBefore;
-    uint256 balanceToBefore;
+    uint256 scaledAmount;
+    uint256 scaledBalanceFromBefore;
+    uint256 scaledBalanceToBefore;
     address oracle;
     uint8 fromEModeCategory;
   }
@@ -293,7 +295,7 @@ library DataTypes {
     UserConfigurationMap userConfig;
     address asset;
     address userAddress;
-    uint256 amount;
+    uint256 amountScaled;
     InterestRateMode interestRateMode;
     address oracle;
     uint8 userEModeCategory;

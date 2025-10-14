@@ -37,6 +37,8 @@ contract PoolSupplyTests is TestnetProcedures {
 
     assertEq(IERC20(tokenList.wbtc).balanceOf(alice), underlyingBalanceBefore - supplyAmount);
     assertEq(IAToken(aWBTC).scaledBalanceOf(alice), supplyAmount);
+
+    _checkInterestRates(tokenList.wbtc);
   }
 
   function test_first_supply_on_behalf() public {
@@ -53,6 +55,8 @@ contract PoolSupplyTests is TestnetProcedures {
 
     assertEq(IERC20(tokenList.wbtc).balanceOf(alice), underlyingBalanceBefore - supplyAmount);
     assertEq(IAToken(aWBTC).scaledBalanceOf(bob), supplyAmount);
+
+    _checkInterestRates(tokenList.wbtc);
   }
 
   function test_supply_after_collateral_enabled() public {
@@ -69,6 +73,8 @@ contract PoolSupplyTests is TestnetProcedures {
 
     assertEq(IERC20(tokenList.wbtc).balanceOf(alice), underlyingBalanceBefore - supplyAmount);
     assertEq(IAToken(aWBTC).scaledBalanceOf(alice), scaledBalanceTokenBase + supplyAmount);
+
+    _checkInterestRates(tokenList.wbtc);
   }
 
   function test_supplyWithPermit(
@@ -116,6 +122,8 @@ contract PoolSupplyTests is TestnetProcedures {
 
     assertEq(IERC20(tokenList.wbtc).balanceOf(user), underlyingBalance - supplyAmount);
     assertEq(IAToken(aWBTC).scaledBalanceOf(user), supplyAmount);
+
+    _checkInterestRates(tokenList.wbtc);
   }
 
   function test_supplyWithPermit_not_failing_if_permit_was_used(
@@ -160,6 +168,8 @@ contract PoolSupplyTests is TestnetProcedures {
 
     assertEq(IERC20(tokenList.wbtc).balanceOf(user), underlyingBalance - supplyAmount);
     assertEq(IAToken(aWBTC).scaledBalanceOf(user), supplyAmount);
+
+    _checkInterestRates(tokenList.wbtc);
   }
 
   function test_supplyWithPermit_should_revert_if_permit_is_less_then_supply_amount(
@@ -215,6 +225,8 @@ contract PoolSupplyTests is TestnetProcedures {
 
     assertEq(IERC20(tokenList.wbtc).balanceOf(alice), underlyingBalanceBefore - supplyAmount);
     assertEq(IAToken(aWBTC).scaledBalanceOf(alice), supplyAmount);
+
+    _checkInterestRates(tokenList.wbtc);
   }
 
   function test_reverts_supply_invalidAmount() public {

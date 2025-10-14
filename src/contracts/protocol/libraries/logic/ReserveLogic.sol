@@ -11,6 +11,7 @@ import {MathUtils} from '../math/MathUtils.sol';
 import {WadRayMath} from '../math/WadRayMath.sol';
 import {PercentageMath} from '../math/PercentageMath.sol';
 import {Errors} from '../helpers/Errors.sol';
+import {TokenMath} from '../helpers/TokenMath.sol';
 import {DataTypes} from '../types/DataTypes.sol';
 import {SafeCast} from 'openzeppelin-contracts/contracts/utils/math/SafeCast.sol';
 
@@ -21,6 +22,7 @@ import {SafeCast} from 'openzeppelin-contracts/contracts/utils/math/SafeCast.sol
  */
 library ReserveLogic {
   using WadRayMath for uint256;
+  using TokenMath for uint256;
   using PercentageMath for uint256;
   using SafeCast for uint256;
   using GPv2SafeERC20 for IERC20;
@@ -133,7 +135,7 @@ library ReserveLogic {
     uint256 liquidityTaken,
     address interestRateStrategyAddress
   ) internal {
-    uint256 totalVariableDebt = reserveCache.nextScaledVariableDebt.rayMul(
+    uint256 totalVariableDebt = reserveCache.nextScaledVariableDebt.getVTokenBalance(
       reserveCache.nextVariableBorrowIndex
     );
 
@@ -186,23 +188,18 @@ library ReserveLogic {
       return;
     }
 
-    //calculate the total variable debt at moment of the last interaction
-    uint256 prevTotalVariableDebt = reserveCache.currScaledVariableDebt.rayMul(
-      reserveCache.currVariableBorrowIndex
+    // debt accrued is the sum of the current debt minus the sum of the debt at the last update
+    // Rounding down to undermint to the treasury and keep the invariant healthy.
+    uint256 totalDebtAccrued = reserveCache.currScaledVariableDebt.rayMulFloor(
+      reserveCache.nextVariableBorrowIndex - reserveCache.currVariableBorrowIndex
     );
-
-    //calculate the new total variable debt after accumulation of the interest on the index
-    uint256 currTotalVariableDebt = reserveCache.currScaledVariableDebt.rayMul(
-      reserveCache.nextVariableBorrowIndex
-    );
-
-    //debt accrued is the sum of the current debt minus the sum of the debt at the last update
-    uint256 totalDebtAccrued = currTotalVariableDebt - prevTotalVariableDebt;
 
     uint256 amountToMint = totalDebtAccrued.percentMul(reserveCache.reserveFactor);
 
     if (amountToMint != 0) {
-      reserve.accruedToTreasury += amountToMint.rayDiv(reserveCache.nextLiquidityIndex).toUint128();
+      reserve.accruedToTreasury += amountToMint
+        .getATokenMintScaledAmount(reserveCache.nextLiquidityIndex)
+        .toUint128();
     }
   }
 

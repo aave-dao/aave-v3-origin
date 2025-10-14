@@ -82,7 +82,7 @@ contract ATokenWithDelegation_Harness is ATokenWithDelegationInstance {
     return _userState[user].additionalData;
   }
 
-  function scaledBalanceOfToBalanceOf(uint256 bal) public view returns (uint256) {
+  function scaledBalance_to_balance(uint256 bal) public view returns (uint256) {
     return bal.rayMul(POOL.getReserveNormalizedIncome(_underlyingAsset));
   }
 

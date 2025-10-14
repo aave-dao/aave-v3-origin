@@ -32,6 +32,18 @@ abstract contract BaseInvariants is HandlerAggregator {
     assertEq(debtToken.totalSupply(), sumOfUserBalances, BASE_INVARIANT_A);
   }
 
+  function assert_BASE_INVARIANT_A_EXACT(IERC20 debtToken) internal {
+    uint256 sumOfUserBalances;
+    for (uint256 i; i < NUMBER_OF_ACTORS; i++) {
+      sumOfUserBalances += IAToken(address(debtToken)).scaledBalanceOf(actorAddresses[i]);
+    }
+    assertEq(
+      IAToken(address(debtToken)).scaledTotalSupply(),
+      sumOfUserBalances,
+      BASE_INVARIANT_A_EXACT
+    );
+  }
+
   function assert_BASE_INVARIANT_B(IERC20 aToken) internal {
     uint256 sumOfUserBalances;
     for (uint256 i; i < NUMBER_OF_ACTORS; i++) {
@@ -39,6 +51,19 @@ abstract contract BaseInvariants is HandlerAggregator {
     }
     sumOfUserBalances += aToken.balanceOf(address(contracts.treasury));
     assertApproxEqAbs(aToken.totalSupply(), sumOfUserBalances, NUMBER_OF_ACTORS, BASE_INVARIANT_B);
+  }
+
+  function assert_BASE_INVARIANT_B_EXACT(IERC20 aToken) internal {
+    uint256 sumOfUserBalances;
+    for (uint256 i; i < NUMBER_OF_ACTORS; i++) {
+      sumOfUserBalances += IAToken(address(aToken)).scaledBalanceOf(actorAddresses[i]);
+    }
+    sumOfUserBalances += IAToken(address(aToken)).scaledBalanceOf(address(contracts.treasury));
+    assertEq(
+      IAToken(address(aToken)).scaledTotalSupply(),
+      sumOfUserBalances,
+      BASE_INVARIANT_B_EXACT
+    );
   }
 
   function assert_BASE_INVARIANT_C(address asset) internal {

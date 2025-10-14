@@ -69,19 +69,19 @@ rule index_equals_one(method f) filtered {f-> f.contract == currentContract && !
     mintToTreasury(e,amount,index_);
   }
   else if (f.selector == sig:mint(address,address,uint256,uint256).selector) {
-    address caller; address onBehalfOf; uint256 amount; uint256 index_;
+    address caller; address onBehalfOf; uint256 scaledAmount; uint256 index_;
     require index_==RAY();
-    mint(e,caller,onBehalfOf,amount,index_);
+    mint(e,caller,onBehalfOf,scaledAmount,index_);
   }
-  else if (f.selector == sig:burn(address,address,uint256,uint256).selector) {
-    address caller; address onBehalfOf; uint256 amount; uint256 index_;
+  else if (f.selector == sig:burn(address,address,uint256,uint256,uint256).selector) {
+    address caller; address onBehalfOf; uint256 amount; uint256 scaledAmount; uint256 index_;
     require index_==RAY();
-    burn(e,caller,onBehalfOf,amount,index_);
+    burn(e,caller,onBehalfOf,amount,scaledAmount,index_);
   }
-  else if (f.selector == sig:transferOnLiquidation(address,address,uint256,uint256).selector) {
-    address caller; address onBehalfOf; uint256 amount; uint256 index_;
+  else if (f.selector == sig:transferOnLiquidation(address,address,uint256,uint256,uint256).selector) {
+    address caller; address onBehalfOf; uint256 amount; uint256 scaledAmount; uint256 index_;
     require index_==RAY();
-    transferOnLiquidation(e,caller,onBehalfOf,amount,index_);
+    transferOnLiquidation(e,caller,onBehalfOf,amount,scaledAmount,index_);
   }
   else
     f(e,args);
@@ -97,13 +97,13 @@ invariant additionalData_EQ_RAY()
   preserved mintToTreasury(uint256 amount, uint256 index_) with (env e1) {
     require index_==RAY();
   }
-  preserved mint(address caller, address onBehalfOf, uint256 amount, uint256 index_) with (env e2) {
+  preserved mint(address caller, address onBehalfOf, uint256 scaledAmount, uint256 index_) with (env e2) {
     require index_==RAY();
   }
-  preserved burn(address caller, address onBehalfOf, uint256 amount, uint256 index_) with (env e3) {
+  preserved burn(address caller, address onBehalfOf, uint256 amount, uint256 scaledAmount, uint256 index_) with (env e3) {
     require index_==RAY();
   }
-  preserved transferOnLiquidation(address caller, address onBehalfOf, uint256 amount, uint256 index_) with (env e4) {
+  preserved transferOnLiquidation(address caller, address onBehalfOf, uint256 amount, uint256 scaledAmount, uint256 index_) with (env e4) {
     require index_==RAY();
   }
 }

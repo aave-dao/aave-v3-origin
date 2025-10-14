@@ -82,9 +82,10 @@ ghost rayDiv_MI(mathint , mathint) returns uint256 {
 */
 
 rule transferFromCorrect(address from, address to, uint256 amount) {
-    // We run this rule under the assumption that index==1.
-    // The reasons are rounding errors due to calculations that involves the index.
-    require (_SymbolicLendingPoolL1.getReserveNormalizedIncome(Underlying) == RAY());
+  // We run this rule under the assumption that index==1.
+  // The reasons are rounding errors due to calculations that involves the index.
+  // This is OK because ATokenWithDelegation is going to be used only this way.
+  require (_SymbolicLendingPoolL1.getReserveNormalizedIncome(Underlying) == RAY());
     
     env e;
     require e.msg.value == 0;
@@ -148,13 +149,13 @@ invariant ZeroAddressNoBalance()
 
 */
 rule NoChangeTotalSupply(method f)
-    filtered {f ->
-        f.selector != sig:burn(address,address,uint256,uint256).selector &&
-        f.selector != sig:mint(address,address,uint256,uint256).selector &&
-        f.selector != sig:mintToTreasury(uint256,uint256).selector &&
-        !f.isView &&
-        f.contract == currentContract
-        }
+  filtered {f ->
+    f.selector != sig:burn(address,address,uint256,uint256,uint256).selector &&
+    f.selector != sig:mint(address,address,uint256,uint256).selector &&
+    f.selector != sig:mintToTreasury(uint256,uint256).selector &&
+    !f.isView &&
+    f.contract == currentContract
+    }
 {
     //    require f.selector != sig:burn(uint256).selector && f.selector != sig:mint(address, uint256).selector;
     env e;
@@ -193,56 +194,64 @@ rule NoChangeTotalSupply(method f)
     @Link:
 
 */
-rule ChangingAllowance(method f, address from, address spender) {
-    uint256 allowanceBefore = allowance(from, spender);
-    env e;
-    if (f.selector == sig:approve(address, uint256).selector) {
-        address spender_;
-        uint256 amount;
-        approve(e, spender_, amount);
-        if (from == e.msg.sender && spender == spender_) {
-            assert allowance(from, spender) == amount;
-        } else {
-            assert allowance(from, spender) == allowanceBefore;
-        }
-    } else if (f.selector == sig:transferFrom(address,address,uint256).selector) {
-        address from_;
-        address to;
-        uint256 amount;
-        transferFrom(e, from_, to, amount);
-        mathint allowanceAfter = allowance(from, spender);
-        if (from == from_ && spender == e.msg.sender) {
-            assert from == to || allowanceBefore == max_uint256 || allowanceAfter == allowanceBefore - amount;
-        } else {
-            assert allowance(from, spender) == allowanceBefore;
-        }
-    } else if (f.selector == sig:decreaseAllowance(address, uint256).selector) {
-        address spender_;
-        uint256 amount;
-        require amount <= allowanceBefore;
-        decreaseAllowance(e, spender_, amount);
-        if (from == e.msg.sender && spender == spender_) {
-            assert to_mathint(allowance(from, spender)) == allowanceBefore - amount;
-        } else {
-            assert allowance(from, spender) == allowanceBefore;
-        }
-    } else if (f.selector == sig:increaseAllowance(address, uint256).selector) {
-        address spender_;
-        uint256 amount;
-        require amount + allowanceBefore < max_uint256;
-        increaseAllowance(e, spender_, amount);
-        if (from == e.msg.sender && spender == spender_) {
-            assert to_mathint(allowance(from, spender)) == allowanceBefore + amount;
-        } else {
-            assert allowance(from, spender) == allowanceBefore;
-        }
-    } 
-    else
+rule ChangingAllowance(method f, address from, address spender) filtered {f -> f.contract == currentContract}
+{
+  // We run this rule under the assumption that index==1.
+  // This is OK because ATokenWithDelegation is going to be used only this way.
+  require (_SymbolicLendingPoolL1.getReserveNormalizedIncome(Underlying) == RAY());
+  
+  uint256 allowanceBefore = allowance(from, spender);
+  env e;
+  if (f.selector == sig:approve(address, uint256).selector) {
+    address spender_;
+    uint256 amount;
+    approve(e, spender_, amount);
+    if (from == e.msg.sender && spender == spender_) {
+      assert allowance(from, spender) == amount;
+    } else {
+      assert allowance(from, spender) == allowanceBefore;
+    }
+  } else if (f.selector == sig:transferFrom(address,address,uint256).selector) {
+    address from_;
+    address to;
+    uint256 amount;
+    transferFrom(e, from_, to, amount);
+    mathint allowanceAfter = allowance(from, spender);
+    if (from == from_ && spender == e.msg.sender) {
+      uint256 index = _SymbolicLendingPoolL1.getReserveNormalizedIncome(Underlying);
+      assert from == to ||
+        allowanceBefore == max_uint256 ||
+        allowanceAfter == allowanceBefore - amount; 
+    } else {
+      assert allowance(from, spender) == allowanceBefore;
+    }
+  } else if (f.selector == sig:decreaseAllowance(address, uint256).selector) {
+    address spender_;
+    uint256 amount;
+    require amount <= allowanceBefore;
+    decreaseAllowance(e, spender_, amount);
+    if (from == e.msg.sender && spender == spender_) {
+      assert to_mathint(allowance(from, spender)) == allowanceBefore - amount;
+    } else {
+      assert allowance(from, spender) == allowanceBefore;
+    }
+  } else if (f.selector == sig:increaseAllowance(address, uint256).selector) {
+    address spender_;
+    uint256 amount;
+    require amount + allowanceBefore < max_uint256;
+    increaseAllowance(e, spender_, amount);
+    if (from == e.msg.sender && spender == spender_) {
+      assert to_mathint(allowance(from, spender)) == allowanceBefore + amount;
+    } else {
+      assert allowance(from, spender) == allowanceBefore;
+    }
+  } 
+  else
     {
-        calldataarg args;
-        f(e, args);
-        assert allowance(from, spender) == allowanceBefore ||
-            f.selector == sig:permit(address,address,uint256,uint256,uint8,bytes32,bytes32).selector;
+      calldataarg args;
+      f(e, args);
+      assert allowance(from, spender) == allowanceBefore ||
+        f.selector == sig:permit(address,address,uint256,uint256,uint8,bytes32,bytes32).selector;
     }
 }
 
@@ -401,8 +410,8 @@ rule TransferFromDoesntChangeOtherBalance(address from, address to, uint256 amou
 */
 rule OtherBalanceOnlyGoesUp(address other, method f)
     filtered {f ->
-        f.selector != sig:burn(address,address,uint256,uint256).selector &&
-        f.selector != sig:transferOnLiquidation(address,address,uint256,uint256).selector
+        f.selector != sig:burn(address,address,uint256,uint256,uint256).selector &&
+        f.selector != sig:transferOnLiquidation(address,address,uint256,uint256,uint256).selector
         }
 {
     

@@ -38,6 +38,38 @@ library PercentageMath {
     }
   }
 
+  function percentMulCeil(
+    uint256 value,
+    uint256 percentage
+  ) internal pure returns (uint256 result) {
+    // to avoid overflow, value <= type(uint256).max / percentage
+    assembly {
+      if iszero(or(iszero(percentage), iszero(gt(value, div(not(0), percentage))))) {
+        revert(0, 0)
+      }
+
+      let product := mul(value, percentage)
+      result := add(
+        div(product, PERCENTAGE_FACTOR),
+        iszero(iszero(mod(product, PERCENTAGE_FACTOR)))
+      )
+    }
+  }
+
+  function percentMulFloor(
+    uint256 value,
+    uint256 percentage
+  ) internal pure returns (uint256 result) {
+    // to avoid overflow, value <= type(uint256).max / percentage
+    assembly {
+      if iszero(or(iszero(percentage), iszero(gt(value, div(not(0), percentage))))) {
+        revert(0, 0)
+      }
+
+      result := div(mul(value, percentage), PERCENTAGE_FACTOR)
+    }
+  }
+
   /**
    * @notice Executes a percentage division
    * @dev assembly optimized for improved gas savings, see https://twitter.com/transmissions11/status/1451131036377571328
@@ -56,6 +88,20 @@ library PercentageMath {
       }
 
       result := div(add(mul(value, PERCENTAGE_FACTOR), div(percentage, 2)), percentage)
+    }
+  }
+
+  function percentDivCeil(
+    uint256 value,
+    uint256 percentage
+  ) internal pure returns (uint256 result) {
+    // to avoid overflow, value <= type(uint256).max / PERCENTAGE_FACTOR
+    assembly {
+      if or(iszero(percentage), iszero(iszero(gt(value, div(not(0), PERCENTAGE_FACTOR))))) {
+        revert(0, 0)
+      }
+      let val := mul(value, PERCENTAGE_FACTOR)
+      result := add(div(val, percentage), iszero(iszero(mod(val, percentage))))
     }
   }
 }

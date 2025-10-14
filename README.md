@@ -1,8 +1,8 @@
-# Aave V3.3 Origin
+# Aave V3.5 Origin
 
 ![Aave v3.1 Origin_banner](./resources/v3-1-banner.jpeg)
 
-Aave v3.3 complete codebase, Foundry-based.
+Aave v3.5 complete codebase, Foundry-based.
 
 [![codecov](https://codecov.io/gh/aave-dao/aave-v3-origin/graph/badge.svg?token=6HX4NXCNIQ)](https://codecov.io/gh/aave-dao/aave-v3-origin)
 <br>
@@ -18,8 +18,10 @@ If you're interested in contributing, please read the [contributing docs](/.gith
 - [Aave v3 technical Paper](./docs/Aave_V3_Technical_Paper.pdf)
 - [v3 to v3.0.2 production upgrade](https://github.com/bgd-labs/proposal-3.0.2-upgrade/blob/main/README.md)
 - [Aave v3.1 features](./docs/3.1/Aave-v3.1-features.md)
-- [Aave v3.2 features](./docs/3.2/Aave-3.2-features.md)
+- [Aave v3.2 features](./docs/3.2/Aave-v3.2-features.md)
 - [Aave v3.3 features](./docs/3.3/Aave-v3.3-features.md)
+- [Aave v3.4 features](./docs/3.4/Aave-v3.4-features.md)
+- [Aave v3.5 features](./docs/3.5/Aave-v3.5-features.md)
 - [v3.1 to v3.2 production upgrade](https://github.com/bgd-labs/protocol-3.2.0-upgrade/blob/main/README.md)
 - [v3.2 to v3.3 production upgrade](https://github.com/bgd-labs/protocol-3.3.0-upgrade/blob/main/README.md)
 - [Set Ltv to 0 on Freeze Feature State diagram](./docs/freeze-ltv0-states.png)
@@ -106,6 +108,17 @@ In addition, Enigma Dark has adapted the Foundry-based fuzzing [invariant suite]
 
 <br>
 
+**-> Aave v3.5 - July 2025**
+
+#### Predictable rounding
+
+- [Certora](./audits/2025-07-14_Certora_AaveV3.5.pdf)
+- [StErMi](./audits/2025-07-17_StErMi_Aave-v3.5.md)
+- [Mixbytes](./audits/2025-07-18_MixBytes_AaveV3.5.pdf)
+- [ABDK](./audits/2025-07-17_ABDK_Aave-v3.5.pdf)
+
+<br>
+
 ### Bug bounty
 
 This repository will be subjected to [this bug bounty](https://immunefi.com/bounty/aave/) once the Aave Governance upgrades the smart contracts in the applicable production instances.
@@ -114,7 +127,7 @@ This repository will be subjected to [this bug bounty](https://immunefi.com/boun
 
 ## License
 
-Copyright © 2024, Aave DAO, represented by its governance smart contracts.
+Copyright © 2025, Aave DAO, represented by its governance smart contracts.
 
 The [BUSL1.1](./LICENSE) license of this repository allows for any usage of the software, if respecting the Additional Use Grant limitations, forbidding any use case damaging anyhow the Aave DAO's interests.
 Interfaces and other components required for integrations are explicitly MIT licensed.

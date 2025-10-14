@@ -27,13 +27,6 @@ contract StataTokenV2Harness is StataTokenV2 {
     return rewardTokens().length;
   }
 
-  // returns a user's reward index on last interaction for a given reward
-  // function getRewardsIndexOnLastInteraction(address user, address reward)
-  // external view returns (uint128) {
-  //     UserRewardsData memory currentUserRewardsData = _userRewardsData[user][reward];
-  //     return currentUserRewardsData.rewardsIndexOnLastInteraction;
-  // }
-
   // claims rewards for a user on the static aToken.
   // the method builds the rewards array with a single reward and calls the internal claim function with it
   function claimSingleRewardOnBehalf(

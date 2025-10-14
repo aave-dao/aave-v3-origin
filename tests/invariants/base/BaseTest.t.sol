@@ -151,9 +151,8 @@ abstract contract BaseTest is BaseStorage, PropertiesConstants, StdAsserts, StdU
     uint256 scaledATokenTotalSupply = IAToken(protocolTokens[asset].aTokenAddress)
       .scaledTotalSupply();
 
-    totalSupply = (scaledATokenTotalSupply + pool.getReserveData(asset).accruedToTreasury).rayMul(
-      _getReserveNormalizedIncome(asset)
-    );
+    totalSupply = (scaledATokenTotalSupply + pool.getReserveData(asset).accruedToTreasury)
+      .rayMulFloor(_getReserveNormalizedIncome(asset));
   }
 
   function _getRealTotalSupply(
@@ -161,7 +160,8 @@ abstract contract BaseTest is BaseStorage, PropertiesConstants, StdAsserts, StdU
     uint256 scaledATokenTotalSupply,
     uint256 accruedToTreasury
   ) internal view returns (uint256) {
-    return (scaledATokenTotalSupply + accruedToTreasury).rayMul(_getReserveNormalizedIncome(asset));
+    return
+      (scaledATokenTotalSupply + accruedToTreasury).rayMulFloor(_getReserveNormalizedIncome(asset));
   }
 
   function _isBorrowingAny(address user) internal view returns (bool) {
@@ -262,6 +262,7 @@ abstract contract BaseTest is BaseStorage, PropertiesConstants, StdAsserts, StdU
     uint128 isBorrowableBitmap = pool.getEModeCategoryBorrowableBitmap(categoryId);
     return EModeConfiguration.isReserveEnabledOnBitmap(isBorrowableBitmap, reserveId);
   }
+
   function _isEModeCollateralAsset(address asset, uint8 categoryId) internal view returns (bool) {
     uint256 reserveId = protocolTokens[asset].id;
     uint128 isCollateralBitmap = pool.getEModeCategoryCollateralBitmap(categoryId);

@@ -73,5 +73,7 @@ maxValue: 1e+23 # 100000 eth
 #quiet produces (much) less verbose output
 quiet: false
 
+format: "text"
+
 # concurrent workers
-workers: 96
+workers: 12

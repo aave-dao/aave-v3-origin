@@ -64,6 +64,11 @@ contract LendingHandler is BaseHandler {
         1,
         LENDING_HPOST_E
       );
+      assertLe(
+        IERC20(protocolTokens[asset].aTokenAddress).balanceOf(onBehalfOf),
+        onBehalfOfATokenBalanceBefore + amount,
+        LENDING_HPOST_E
+      );
     } else {
       revert('LendingHandler: supply failed');
     }
@@ -101,6 +106,7 @@ contract LendingHandler is BaseHandler {
       /// @dev LENDING_HPOST_F
       uint256 aTokenBalance = IERC20(protocolTokens[asset].aTokenAddress).balanceOf(address(actor));
       assertApproxEqAbs(aTokenBalance, actorATokenBalanceBefore - amount, 1, LENDING_HPOST_F);
+      assertLe(aTokenBalance, actorATokenBalanceBefore - amount, LENDING_HPOST_F);
 
       /// @dev LENDING_HPOST_G
       assertEq(IERC20(asset).balanceOf(to), toUnderlyingBalanceBefore + amount, LENDING_HPOST_G);

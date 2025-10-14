@@ -35,7 +35,6 @@ library Errors {
   error BorrowingNotEnabled(); // 'Borrowing is not enabled'
   error NotEnoughAvailableUserBalance(); // 'User cannot withdraw more than the available balance'
   error InvalidInterestRateModeSelected(); // 'Invalid interest rate mode selected'
-  error CollateralBalanceIsZero(); // 'The collateral balance is 0'
   error HealthFactorLowerThanLiquidationThreshold(); // 'Health factor is below the liquidation threshold'
   error CollateralCannotCoverNewBorrow(); // 'There is not enough collateral to cover a new borrow'
   error NoDebtOfSelectedType(); // 'For repayment of a specific type of debt, the user needs to have debt that type'

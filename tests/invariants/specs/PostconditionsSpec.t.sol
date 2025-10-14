@@ -15,11 +15,11 @@ abstract contract PostconditionsSpec {
 
     ///   - There are two types of POSTCONDITIONS:
 
-    ///     - GLOBAL POSTCONDITIONS (GPOST): 
+    ///     - GLOBAL POSTCONDITIONS (GPOST):
     ///       - Properties that should always hold true after any action is executed.
     ///       - Checked in the `_checkPostConditions` function within the HookAggregator contract.
 
-    ///     - HANDLER-SPECIFIC POSTCONDITIONS (HSPOST): 
+    ///     - HANDLER-SPECIFIC POSTCONDITIONS (HSPOST):
     ///       - Properties that should hold true after a specific action is executed in a specific context.
     ///       - Implemented within each handler function, under the HANDLER-SPECIFIC POSTCONDITIONS section.
 
@@ -111,6 +111,9 @@ abstract contract PostconditionsSpec {
 
   string constant BORROWING_HSPOST_L =
     'BORROWING_HSPOST_L: After a successful repay the onBehalf debt balance should decrease by the amount repaid';
+
+  string constant BORROWING_HSPOST_M =
+    'BORROWING_HSPOST_M: After a successful repayWithAToken debt balance should decrease by maximum of the amount repaid';
 
   ///////////////////////////////////////////////////////////////////////////////////////////////
   //                                       LIQUIDATION                                         //

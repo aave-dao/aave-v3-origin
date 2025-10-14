@@ -38,10 +38,8 @@ jobs:
 
       - uses: Certora/certora-run-action@v1
         with:
-          cli-version: 7.28.0
+          cli-version: 7.31.0
           configurations: |-
-            certora/atoken-with-delegation/conf/AToken.conf 
-            certora/atoken-with-delegation/conf/AToken-problematic-rules.conf --rule totalSupplyEqualsSumAllBalance additiveBurn additiveTransfer 
             certora/atoken-with-delegation/conf/token-v3-general.conf 
             certora/atoken-with-delegation/conf/token-v3-erc20.conf 
             certora/atoken-with-delegation/conf/token-v3-delegate-basic.conf 

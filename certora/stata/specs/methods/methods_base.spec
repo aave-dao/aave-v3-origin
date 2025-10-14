@@ -11,96 +11,96 @@ using DummyERC20_rewardToken as _DummyERC20_rewardToken;
 
 /////////////////// Methods ////////////////////////
 
-    methods {
-        // static aToken
-        // -------------
-            function asset() external returns (address) envfree;
-            function totalAssets() external returns (uint256) envfree;
-            function maxWithdraw(address owner) external returns (uint256) envfree;
-            function maxRedeem(address owner) external returns (uint256) envfree;
-            function previewWithdraw(uint256) external returns (uint256) envfree;
-            function previewRedeem(uint256) external returns (uint256) envfree;
-            function maxDeposit(address) external returns (uint256);
-            function previewMint(uint256) external returns (uint256) envfree;
-            function maxMint(address) external returns (uint256);
-            function rate() external returns (uint256) envfree;
-            function getUnclaimedRewards(address, address) external returns (uint256) envfree;
-            function rewardTokens() external returns (address[]) envfree;
-            function isRegisteredRewardToken(address) external returns (bool) envfree;
-
-        // static aToken harness
-        // ---------------------
-            function getRewardTokensLength() external returns (uint256) envfree;
-            function getRewardToken(uint256) external returns (address) envfree;
-
-        // erc20
-        // -----
-            function _.transferFrom(address,address,uint256) external => DISPATCHER(true);
-
-        // pool
-        // ----
-            function _SymbolicLendingPool.getReserveNormalizedIncome(address) external returns (uint256) envfree;
-            function _SymbolicLendingPool.getReserveData(address) external returns (DataTypes.ReserveDataLegacy);
-            function _SymbolicLendingPool.getReserveDataExtended(address) external returns (DataTypes.ReserveData);
-        
-        // rewards controller
-        // ------------------
-            // In RewardsDistributor.sol called by RewardsController.sol
-            function _.getAssetIndex(address, address) external=> DISPATCHER(true);
-            // In ScaledBalanceTokenBase.sol called by getAssetIndex
-            function _.scaledTotalSupply() external => DISPATCHER(true);
-            // Called by RewardsController._transferRewards()
-            // Defined in TransferStrategyHarness as simple transfer() 
-            function _.performTransfer(address,address,uint256) external  =>  DISPATCHER(true);
-
-            // harness methods of the rewards controller
-            function _RewardsController.getRewardsIndex(address,address) external returns (uint256) envfree;
-            function _RewardsController.getAvailableRewardsCount(address) external returns (uint128) envfree;
-            function _RewardsController.getRewardsByAsset(address, uint128) external returns (address) envfree;
-            function _RewardsController.getAssetListLength() external returns (uint256) envfree;
-            function _RewardsController.getAssetByIndex(uint256) external returns (address) envfree;
-            function _RewardsController.getDistributionEnd(address, address)  external returns (uint256) envfree;
-            function _RewardsController.getUserAccruedRewards(address, address) external returns (uint256) envfree;
-            function _RewardsController.getUserAccruedReward(address, address, address) external returns (uint256) envfree;
-            function _RewardsController.getAssetDecimals(address) external returns (uint8) envfree;
-            function _RewardsController.getRewardsData(address,address) external returns (uint256,uint256,uint256,uint256) envfree;
-            function _RewardsController.getUserAssetIndex(address,address, address) external returns (uint256) envfree;
-
-        // underlying token
-        // ----------------
-            function _DummyERC20_aTokenUnderlying.balanceOf(address) external returns(uint256) envfree;
+methods {
+  // static aToken
+  // -------------
+  function asset() external returns (address) envfree;
+  function totalAssets() external returns (uint256) envfree;
+  function maxWithdraw(address owner) external returns (uint256) envfree;
+  function maxRedeem(address owner) external returns (uint256) envfree;
+  function previewWithdraw(uint256) external returns (uint256) envfree;
+  function previewRedeem(uint256) external returns (uint256) envfree;
+  function maxDeposit(address) external returns (uint256);
+  function previewMint(uint256) external returns (uint256) envfree;
+  function maxMint(address) external returns (uint256);
+  function rate() external returns (uint256) envfree;
+  function getUnclaimedRewards(address, address) external returns (uint256) envfree;
+  function rewardTokens() external returns (address[]) envfree;
+  function isRegisteredRewardToken(address) external returns (bool) envfree;
+  
+  // static aToken harness
+  // ---------------------
+  function getRewardTokensLength() external returns (uint256) envfree;
+  function getRewardToken(uint256) external returns (address) envfree;
             
-            function _.permit(address,address,uint256,uint256,uint8,bytes32,bytes32) external => NONDET;
+  // erc20
+  // -----
+  function _.transferFrom(address,address,uint256) external => DISPATCHER(true);
 
-        // aToken
-        // ------
-            function _AToken.balanceOf(address) external returns (uint256) envfree;
-            function _AToken.totalSupply() external returns (uint256) envfree;
-            function _AToken.allowance(address, address) external returns (uint256) envfree;
-            function _AToken.UNDERLYING_ASSET_ADDRESS() external returns (address) envfree;
-            function _.RESERVE_TREASURY_ADDRESS() external => CONSTANT;
-            function _AToken.scaledBalanceOf(address) external returns (uint256) envfree;
-            function _AToken.scaledTotalSupply() external returns (uint256) envfree;
+  // pool
+  // ----
+  function _SymbolicLendingPool.getReserveNormalizedIncome(address) external returns (uint256) envfree;
+  function _SymbolicLendingPool.getReserveData(address) external returns (DataTypes.ReserveDataLegacy);
+  function _SymbolicLendingPool.getReserveDataExtended(address) external returns (DataTypes.ReserveData);
+  
+  // rewards controller
+  // ------------------
+  // In RewardsDistributor.sol called by RewardsController.sol
+  function _.getAssetIndex(address, address) external=> DISPATCHER(true);
+  // In ScaledBalanceTokenBase.sol called by getAssetIndex
+  function _.scaledTotalSupply() external => DISPATCHER(true);
+  // Called by RewardsController._transferRewards()
+  // Defined in TransferStrategyHarness as simple transfer() 
+  function _.performTransfer(address,address,uint256) external  =>  DISPATCHER(true);
+  
+  // harness methods of the rewards controller
+  function _RewardsController.getRewardsIndex(address,address) external returns (uint256) envfree;
+  function _RewardsController.getAvailableRewardsCount(address) external returns (uint128) envfree;
+  function _RewardsController.getRewardsByAsset(address, uint128) external returns (address) envfree;
+  function _RewardsController.getAssetListLength() external returns (uint256) envfree;
+  function _RewardsController.getAssetByIndex(uint256) external returns (address) envfree;
+  function _RewardsController.getDistributionEnd(address, address)  external returns (uint256) envfree;
+  function _RewardsController.getUserAccruedRewards(address, address) external returns (uint256) envfree;
+  function _RewardsController.getUserAccruedReward(address, address, address) external returns (uint256) envfree;
+  function _RewardsController.getAssetDecimals(address) external returns (uint8) envfree;
+  function _RewardsController.getRewardsData(address,address) external returns (uint256,uint256,uint256,uint256) envfree;
+  function _RewardsController.getUserAssetIndex(address,address, address) external returns (uint256) envfree;
+
+  // underlying token
+  // ----------------
+  function _DummyERC20_aTokenUnderlying.balanceOf(address) external returns(uint256) envfree;
+  
+  function _.permit(address,address,uint256,uint256,uint8,bytes32,bytes32) external => NONDET;
             
-            // called in aToken
-            function _.finalizeTransfer(address, address, address, uint256, uint256, uint256) external => NONDET;
-            // Called by rewardscontroller.sol
-            // Defined in scaledbalancetokenbase.sol
-            function _.getScaledUserBalanceAndSupply(address) external => DISPATCHER(true);
+  // aToken
+  // ------
+  function _AToken.balanceOf(address) external returns (uint256) envfree;
+  function _AToken.totalSupply() external returns (uint256) envfree;
+  function _AToken.allowance(address, address) external returns (uint256) envfree;
+  function _AToken.UNDERLYING_ASSET_ADDRESS() external returns (address) envfree;
+  function _.RESERVE_TREASURY_ADDRESS() external => CONSTANT;
+  function _AToken.scaledBalanceOf(address) external returns (uint256) envfree;
+  function _AToken.scaledTotalSupply() external returns (uint256) envfree;
+            
+  // called in aToken
+  function _.finalizeTransfer(address, address, address, uint256, uint256, uint256) external => NONDET;
+  // Called by rewardscontroller.sol
+  // Defined in scaledbalancetokenbase.sol
+  function _.getScaledUserBalanceAndSupply(address) external => DISPATCHER(true);
+  
+  // reward token
+  // ------------
+  function _DummyERC20_rewardToken.balanceOf(address) external returns (uint256) envfree;
+  function _DummyERC20_rewardToken.totalSupply() external returns (uint256) envfree;
+  
+  function _.UNDERLYING_ASSET_ADDRESS() external => CONSTANT UNRESOLVED;
+            
+  function RAY() external returns (uint256) envfree;
 
-        // reward token
-        // ------------
-            function _DummyERC20_rewardToken.balanceOf(address) external returns (uint256) envfree;
-            function _DummyERC20_rewardToken.totalSupply() external returns (uint256) envfree;
-
-            function _.UNDERLYING_ASSET_ADDRESS() external => CONSTANT UNRESOLVED;
-
-            function RAY() external returns (uint256) envfree;
-
-        // math lib
-        // ------------
-            function _.mulDiv(uint256 x, uint256 y, uint256 denominator, Math.Rounding rounding) internal => mulDivCVL(x, y, denominator, rounding) expect (uint256);
-    }
+  // math lib
+  // ------------
+  function _.mulDiv(uint256 x, uint256 y, uint256 denominator, Math.Rounding rounding) internal => mulDivCVL(x, y, denominator, rounding) expect (uint256);
+}
 
 ///////////////// DEFINITIONS //////////////////////
 
