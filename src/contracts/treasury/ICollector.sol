@@ -131,6 +131,29 @@ interface ICollector {
   function isFundsAdmin(address admin) external view returns (bool);
 
   /**
+   * @dev Grants `role` to `account`.
+   *
+   * If `account` had not been already granted `role`, emits a {RoleGranted}
+   * event.
+   *
+   * Requirements:
+   *
+   * - the caller must have ``role``'s admin role.
+   */
+  function grantRole(bytes32 role, address account) external;
+
+  /**
+   * @dev Revokes `role` from `account`.
+   *
+   * If `account` had been granted `role`, emits a {RoleRevoked} event.
+   *
+   * Requirements:
+   *
+   * - the caller must have ``role``'s admin role.
+   */
+  function revokeRole(bytes32 role, address account) external;
+
+  /**
    * @notice Returns the available funds for the given stream id and address.
    * @param streamId The id of the stream for which to query the balance.
    * @param who The address for which to query the balance.
