@@ -289,7 +289,6 @@ library ValidationLogic {
     bool collateralReservePaused;
     bool principalReserveActive;
     bool principalReservePaused;
-    bool isCollateralEnabled;
   }
 
   /**
@@ -339,12 +338,11 @@ library ValidationLogic {
       Errors.HealthFactorNotBelowThreshold()
     );
 
-    vars.isCollateralEnabled =
-      collateralReserve.configuration.getLiquidationThreshold() != 0 &&
-      borrowerConfig.isUsingAsCollateral(collateralReserve.id);
-
     //if collateral isn't enabled as collateral by user, it cannot be liquidated
-    require(vars.isCollateralEnabled, Errors.CollateralCannotBeLiquidated());
+    require(
+      borrowerConfig.isUsingAsCollateral(collateralReserve.id),
+      Errors.CollateralCannotBeLiquidated()
+    );
     require(params.totalDebt != 0, Errors.SpecifiedCurrencyNotBorrowedByUser());
   }
 

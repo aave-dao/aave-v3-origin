@@ -73,10 +73,10 @@ When switching an eMode it must be ensured that all previously described rules a
 
 - When entering an eMode != 0 it must be ensured that:
   - All currently borrowed assets can be borrowed in the selected eMode.
-  - All enabled collaterals are not considered ltv0 based on the rules described above.
+  - All enabled collaterals are not considered `ltv0` based on the rules described above.
 - When leaving eModes (entering eMode 0), it must be ensured that:
   - All currently borrowed assets can be borrowed on the reserve configuration.
-  - All enabled collaterals are not considered ltv0 on the reserve configuration.
+  - All enabled collaterals are not considered `ltv0` on the reserve configuration. Implicitly this also means the collaterals are not `lt=0` as the configurator enforces `lt >= ltv`.
 
 ### OpenZeppelin alignment
 

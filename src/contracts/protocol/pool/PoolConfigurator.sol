@@ -306,7 +306,7 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
     DataTypes.ReserveConfigurationMap memory currentConfig = _pool.getConfiguration(asset);
 
     uint256 oldDebtCeiling = currentConfig.getDebtCeiling();
-    if (currentConfig.getLiquidationThreshold() != 0 && oldDebtCeiling == 0) {
+    if (_checkAssetIsCollateral(asset) && oldDebtCeiling == 0) {
       _checkNoSuppliers(asset);
     }
     currentConfig.setDebtCeiling(newDebtCeiling);
@@ -587,6 +587,23 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
     ltvzeroBitmap = EModeConfiguration.setReserveBitmapBit(ltvzeroBitmap, reserveId, ltvzero);
     _pool.configureEModeCategoryLtvzeroBitmap(eModeCategoryId, ltvzeroBitmap);
     emit AssetLtvzeroInEModeChanged(reserve, eModeCategoryId, ltvzero);
+  }
+
+  function _checkAssetIsCollateral(address asset) internal view returns (bool) {
+    DataTypes.ReserveDataLegacy memory reserveData = _pool.getReserveData(asset);
+    DataTypes.ReserveConfigurationMap memory currentConfig = reserveData.configuration;
+
+    if (currentConfig.getLiquidationThreshold() != 0) return true;
+    uint128 collateralEnabledBitmap;
+    // The loop will worst case do 255 SLOADs, which should be around ~550k gas.
+    // uint256 to not overflow when `j = type(uint8).max + 1`
+    for (uint256 j = 1; j <= type(uint8).max; j++) {
+      collateralEnabledBitmap = _pool.getEModeCategoryCollateralBitmap(uint8(j));
+      if (EModeConfiguration.isReserveEnabledOnBitmap(collateralEnabledBitmap, reserveData.id)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   function _checkNoSuppliers(address asset) internal view {
