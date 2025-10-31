@@ -1,8 +1,8 @@
 {
-  "full amount; sender: with delegations, ->disableCollateral; receiver: without delegations, ->enableCollateral": "135700",
-  "full amount; sender: with delegations, delegatee, ->disableCollateral; receiver: with delegations, delegatee, ->enableCollateral": "131638",
-  "full amount; sender: with delegations, not delegatee, ->disableCollateral; receiver: with delegations, not delegatee, ->enableCollateral": "131638",
-  "full amount; sender: without delegations, ->disableCollateral; receiver: with delegations, ->enableCollateral": "118600",
-  "full amount; sender: without delegations, delegatee, ->disableCollateral; receiver: without delegations, delegatee, ->enableCollateral": "122663",
-  "full amount; sender: without delegations, not delegatee, ->disableCollateral; receiver: without delegations, not delegatee, ->enableCollateral": "122663"
+  "full amount; sender: with delegations, ->disableCollateral; receiver: without delegations, ->enableCollateral": "133137",
+  "full amount; sender: with delegations, delegatee, ->disableCollateral; receiver: with delegations, delegatee, ->enableCollateral": "129075",
+  "full amount; sender: with delegations, not delegatee, ->disableCollateral; receiver: with delegations, not delegatee, ->enableCollateral": "129075",
+  "full amount; sender: without delegations, ->disableCollateral; receiver: with delegations, ->enableCollateral": "116037",
+  "full amount; sender: without delegations, delegatee, ->disableCollateral; receiver: without delegations, delegatee, ->enableCollateral": "120100",
+  "full amount; sender: without delegations, not delegatee, ->disableCollateral; receiver: without delegations, not delegatee, ->enableCollateral": "120100"
 }

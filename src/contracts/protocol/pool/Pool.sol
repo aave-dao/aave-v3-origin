@@ -596,8 +596,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
         scaledAmount: scaledAmount,
         scaledBalanceFromBefore: scaledBalanceFromBefore,
         oracle: ADDRESSES_PROVIDER.getPriceOracle(),
-        fromEModeCategory: _usersEModeCategory[from],
-        toEModeCategory: _usersEModeCategory[to]
+        fromEModeCategory: _usersEModeCategory[from]
       })
     );
   }
