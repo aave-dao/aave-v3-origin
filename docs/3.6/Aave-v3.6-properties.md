@@ -7,7 +7,7 @@ Formal properties in natural language describing the v3.6 features.
 **ltv0 rules**: `ltv` usually describes the loan to value ratio. If ltv is set to **exact** 0, additional rules apply, namely:
 
 1. The asset can no longer be enabled as collateral.
-2. ltv0 asset(s) must be withdrawn before withdrawing any other asset.
+2. If the user is borrowing something, ltv0 asset(s) must be withdrawn first.
 
 ## Properties
 
