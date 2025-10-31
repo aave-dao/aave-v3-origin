@@ -213,7 +213,7 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
     vm.prank(poolAdmin);
 
     contracts.poolConfiguratorProxy.configureReserveAsCollateral(tokenList.usdx, 0, 0, 0);
-    _supply(tokenList.usdx, address(this), 1);
+    _supply(tokenList.usdx, 1, address(this));
     vm.prank(poolAdmin);
     vm.expectRevert(abi.encodeWithSelector(Errors.ReserveLiquidityNotZero.selector));
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, prevCt.id, false);

@@ -40,7 +40,7 @@ contract PoolRoundingTests is TestnetProcedures {
   }
 
   function test_debtBalanceInBaseCurrencyShouldRoundUp() external {
-    _supplyAndEnableAsCollateral({user: user, amount: 100 ether, asset: asset});
+    _supplyAndEnableAsCollateral(asset, 100 ether, user);
 
     vm.prank(user);
     contracts.poolProxy.borrow({
@@ -150,7 +150,7 @@ contract PoolRoundingTests is TestnetProcedures {
   }
 
   function test_borrowCapShouldRoundUp() external {
-    _supplyAndEnableAsCollateral({user: user, amount: 100 ether, asset: asset});
+    _supplyAndEnableAsCollateral(asset, 100 ether, user);
 
     AaveSetters.setVariableBorrowIndex(report.poolProxy, asset, 2e27 + 1);
 

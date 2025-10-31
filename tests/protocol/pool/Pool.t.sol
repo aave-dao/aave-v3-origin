@@ -156,7 +156,7 @@ contract PoolTests is TestnetProcedures {
   }
 
   function test_setUserUseReserveAsCollateralOnBehalfOf_false() public {
-    _supplyAndEnableAsCollateral(alice, 1e6, tokenList.usdx);
+    _supplyAndEnableAsCollateral(tokenList.usdx, 1e6, alice);
 
     vm.prank(alice);
     pool.approvePositionManager(address(this), true);
@@ -189,7 +189,7 @@ contract PoolTests is TestnetProcedures {
   ) public {
     vm.assume(caller != address(this) && caller != report.poolAddressesProvider);
 
-    _supplyAndEnableAsCollateral(alice, 1e6, tokenList.usdx);
+    _supplyAndEnableAsCollateral(tokenList.usdx, 1e6, alice);
 
     vm.prank(alice);
     pool.approvePositionManager(address(this), true);
@@ -681,7 +681,6 @@ contract PoolTests is TestnetProcedures {
   }
 
   function _seedUsdxLiquidity() internal {
-    vm.prank(carol);
-    pool.supply(tokenList.usdx, 50_000e6, carol, 0);
+    _supply(tokenList.usdx, 50_000e6, carol);
   }
 }

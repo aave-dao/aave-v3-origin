@@ -59,10 +59,10 @@ contract ATokenWithDelegation_gas_Tests is Testhelpers {
 
     transferAmount = 100 * 10 ** IERC20Metadata(tokenList.usdx).decimals();
 
-    _supply(tokenList.usdx, user1, transferAmount * 2);
-    _supply(tokenList.usdx, user2, transferAmount * 3);
+    _supply(tokenList.usdx, transferAmount * 2, user1);
+    _supply(tokenList.usdx, transferAmount * 3, user2);
 
-    _supply(tokenList.usdx, sender, transferAmount);
+    _supply(tokenList.usdx, transferAmount, sender);
   }
 
   function _updateATokens() private {

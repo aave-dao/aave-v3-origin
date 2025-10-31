@@ -42,7 +42,7 @@ contract PoolGetters_gas_Tests is Testhelpers {
   }
 
   function test_getUserAccountData_oneSupplies() external {
-    _supplyOnReserve(user, 1 ether, tokenList.usdx);
+    _supplyAndEnableAsCollateral(tokenList.usdx, 1 ether, user);
     contracts.poolProxy.getUserAccountData(user);
     vm.snapshotGasLastCall('Pool.Getters', 'getUserAccountData: supplies: 1, borrows: 0');
   }
@@ -57,7 +57,7 @@ contract PoolGetters_gas_Tests is Testhelpers {
     vm.prank(user);
     contracts.poolProxy.setUserEMode(ct1.id);
 
-    _supplyOnReserve(user, 1 ether, tokenList.usdx);
+    _supplyAndEnableAsCollateral(tokenList.usdx, 1 ether, user);
 
     contracts.poolProxy.getUserAccountData(user);
     vm.snapshotGasLastCall(
@@ -67,8 +67,8 @@ contract PoolGetters_gas_Tests is Testhelpers {
   }
 
   function test_getUserAccountData_twoSupplies() external {
-    _supplyOnReserve(user, 1 ether, tokenList.usdx);
-    _supplyOnReserve(user, 1 ether, tokenList.weth);
+    _supplyAndEnableAsCollateral(tokenList.usdx, 1 ether, user);
+    _supplyAndEnableAsCollateral(tokenList.weth, 1 ether, user);
 
     contracts.poolProxy.getUserAccountData(user);
     vm.snapshotGasLastCall('Pool.Getters', 'getUserAccountData: supplies: 2, borrows: 0');
@@ -85,8 +85,8 @@ contract PoolGetters_gas_Tests is Testhelpers {
     vm.prank(user);
     contracts.poolProxy.setUserEMode(ct1.id);
 
-    _supplyOnReserve(user, 1 ether, tokenList.usdx);
-    _supplyOnReserve(user, 1 ether, tokenList.weth);
+    _supplyAndEnableAsCollateral(tokenList.usdx, 1 ether, user);
+    _supplyAndEnableAsCollateral(tokenList.weth, 1 ether, user);
 
     contracts.poolProxy.getUserAccountData(user);
     vm.snapshotGasLastCall(
@@ -96,10 +96,10 @@ contract PoolGetters_gas_Tests is Testhelpers {
   }
 
   function test_getUserAccountData_twoSupplies_oneBorrows() external {
-    _supplyOnReserve(user, 1 ether, tokenList.usdx);
-    _supplyOnReserve(user, 1 ether, tokenList.weth);
+    _supplyAndEnableAsCollateral(tokenList.usdx, 1 ether, user);
+    _supplyAndEnableAsCollateral(tokenList.weth, 1 ether, user);
 
-    _supplyOnReserve(address(1), 0.001e8, tokenList.wbtc);
+    _supplyAndEnableAsCollateral(tokenList.wbtc, 0.001e8, address(1));
     vm.prank(user);
     contracts.poolProxy.borrow(tokenList.wbtc, 0.001e8, 2, 0, user);
 
@@ -119,10 +119,10 @@ contract PoolGetters_gas_Tests is Testhelpers {
     vm.prank(user);
     contracts.poolProxy.setUserEMode(ct1.id);
 
-    _supplyOnReserve(user, 1 ether, tokenList.usdx);
-    _supplyOnReserve(user, 1 ether, tokenList.weth);
+    _supplyAndEnableAsCollateral(tokenList.usdx, 1 ether, user);
+    _supplyAndEnableAsCollateral(tokenList.weth, 1 ether, user);
 
-    _supply(tokenList.wbtc, address(1), 0.001e8);
+    _supply(tokenList.wbtc, 0.001e8, address(1));
     vm.prank(user);
     contracts.poolProxy.borrow(tokenList.wbtc, 0.001e8, 2, 0, user);
 

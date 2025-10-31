@@ -28,7 +28,7 @@ contract VariableDebtTokenRoundingTest is TestnetProcedures {
 
     user = alice;
 
-    _supplyAndEnableAsCollateral({user: user, amount: 100 ether, asset: asset});
+    _supplyAndEnableAsCollateral(asset, 100 ether, user);
   }
 
   function test_balanceShouldRoundUp() external {

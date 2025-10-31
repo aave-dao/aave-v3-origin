@@ -48,7 +48,7 @@ abstract contract BaseATokenDelegationTest is TestnetProcedures {
 
     supplyAmount = 1_000_000 * 10 ** IERC20Metadata(underlyingAsset).decimals();
 
-    _supplyAndEnableAsCollateral({user: alice, amount: supplyAmount, asset: underlyingAsset});
+    _supplyAndEnableAsCollateral(underlyingAsset, supplyAmount, alice);
   }
 
   function _updateATokens() private {
@@ -137,19 +137,19 @@ abstract contract BaseATokenDelegationTest is TestnetProcedures {
   }
 
   function test_transfer() public {
-    _supplyAndEnableAsCollateral({user: bob, amount: supplyAmount * 2, asset: underlyingAsset});
+    _supplyAndEnableAsCollateral(underlyingAsset, supplyAmount * 2, bob);
 
     _performTransfersAndChecks({caller: alice, from: alice, to: bob});
   }
 
   function test_transferFrom() public {
-    _supplyAndEnableAsCollateral({user: bob, amount: supplyAmount * 2, asset: underlyingAsset});
+    _supplyAndEnableAsCollateral(underlyingAsset, supplyAmount * 2, bob);
 
     _performTransfersAndChecks({caller: carol, from: alice, to: bob});
   }
 
   function test_transferOnLiquidation() public {
-    _supplyAndEnableAsCollateral({user: bob, amount: supplyAmount * 2, asset: underlyingAsset});
+    _supplyAndEnableAsCollateral(underlyingAsset, supplyAmount * 2, bob);
 
     _performTransfersAndChecks({caller: report.poolProxy, from: alice, to: bob});
   }
@@ -165,7 +165,7 @@ abstract contract BaseATokenDelegationTest is TestnetProcedures {
     address user4 = address(12345678);
 
     // increase index
-    _supplyAndEnableAsCollateral({user: carol, amount: supplyAmount * 2, asset: underlyingAsset});
+    _supplyAndEnableAsCollateral(underlyingAsset, supplyAmount * 2, carol);
     vm.prank(carol);
     contracts.poolProxy.borrow({
       asset: underlyingAsset,
@@ -311,8 +311,8 @@ abstract contract BaseATokenDelegationTest is TestnetProcedures {
     uint256 bobBalance = supplyAmount / 2;
     uint256 carolBalance = supplyAmount * 3;
 
-    _supplyAndEnableAsCollateral({user: bob, amount: bobBalance, asset: underlyingAsset});
-    _supplyAndEnableAsCollateral({user: carol, amount: carolBalance, asset: underlyingAsset});
+    _supplyAndEnableAsCollateral(underlyingAsset, bobBalance, bob);
+    _supplyAndEnableAsCollateral(underlyingAsset, carolBalance, carol);
 
     // alice delegates both types
     _delegate({from: alice, to: bob});
@@ -404,7 +404,7 @@ abstract contract BaseATokenDelegationTest is TestnetProcedures {
     uint256 bobIndexEnter = contracts.poolProxy.getReserveNormalizedIncome(underlyingAsset);
     assertGt(bobIndexEnter, 1e27);
 
-    _supplyAndEnableAsCollateral({user: bob, amount: bobBalance, asset: underlyingAsset});
+    _supplyAndEnableAsCollateral(underlyingAsset, bobBalance, bob);
 
     // increase index by waiting
     vm.warp(vm.getBlockTimestamp() + 100 days);
@@ -413,7 +413,7 @@ abstract contract BaseATokenDelegationTest is TestnetProcedures {
     uint256 carolIndexEnter = contracts.poolProxy.getReserveNormalizedIncome(underlyingAsset);
     assertGt(carolIndexEnter, bobIndexEnter);
 
-    _supplyAndEnableAsCollateral({user: carol, amount: carolBalance, asset: underlyingAsset});
+    _supplyAndEnableAsCollateral(underlyingAsset, carolBalance, carol);
 
     // carol delegates only voting
     _delegateByType({from: carol, to: bob, powerType: IBaseDelegation.GovernancePowerType.VOTING});
@@ -491,9 +491,9 @@ abstract contract BaseATokenDelegationTest is TestnetProcedures {
 
     uint256 _supplyAmount = 151413121110987654321;
 
-    _supplyAndEnableAsCollateral({user: bob, amount: _supplyAmount, asset: tokenList.usdx});
-    _supplyAndEnableAsCollateral({user: bob, amount: _supplyAmount, asset: tokenList.wbtc});
-    _supplyAndEnableAsCollateral({user: bob, amount: _supplyAmount, asset: tokenList.weth});
+    _supplyAndEnableAsCollateral(tokenList.usdx, _supplyAmount, bob);
+    _supplyAndEnableAsCollateral(tokenList.wbtc, _supplyAmount, bob);
+    _supplyAndEnableAsCollateral(tokenList.weth, _supplyAmount, bob);
 
     vm.startPrank(bob);
 
@@ -657,7 +657,7 @@ abstract contract BaseATokenDelegationTest is TestnetProcedures {
     if (caller != from) {
       if (caller == report.poolProxy) {
         if (from == address(0)) {
-          _supplyAndEnableAsCollateral({user: to, amount: amount, asset: underlyingAsset});
+          _supplyAndEnableAsCollateral(underlyingAsset, amount, to);
         } else if (to == address(0)) {
           vm.prank(from);
           contracts.poolProxy.withdraw({asset: underlyingAsset, amount: amount, to: from});

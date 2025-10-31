@@ -48,7 +48,7 @@ contract PoolEModeCollateralsTests is TestnetProcedures {
   }
 
   function test_shouldApplyEmodeLtvLt() external {
-    _supplyAndEnableAsCollateral(alice, 30_000e6, tokenList.usdx);
+    _supplyAndEnableAsCollateral(tokenList.usdx, 30_000e6, alice);
 
     // in eMode 0 the default parameters should apply
     (, , , uint256 ltBefore, uint256 ltvBefore, ) = contracts.poolProxy.getUserAccountData(alice);
@@ -74,7 +74,7 @@ contract PoolEModeCollateralsTests is TestnetProcedures {
    * @dev You should be able to enter and leave eModes if all your collateral assets are supported.
    */
   function test_shouldAllow_switchingEmodesIfAssetAllowedInTargetEmode() external {
-    _supplyAndEnableAsCollateral(alice, 30_000e6, tokenList.usdx);
+    _supplyAndEnableAsCollateral(tokenList.usdx, 30_000e6, alice);
     vm.startPrank(alice);
 
     // all eModes support usdx collateral
@@ -89,7 +89,7 @@ contract PoolEModeCollateralsTests is TestnetProcedures {
   function test_shouldRevert_switchingEmodesIfAssetNotAllowedInTargetEmode() external {
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.configureReserveAsCollateral(tokenList.wbtc, 0, 0, 0);
-    _supply(tokenList.wbtc, alice, 30_000e6);
+    _supply(tokenList.wbtc, 30_000e6, alice);
     vm.startPrank(alice);
 
     /**

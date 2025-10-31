@@ -38,7 +38,7 @@ contract PoolDeficitTests is TestnetProcedures {
     );
 
     // +1 to account for imprecision on supply
-    _mintATokens(tokenList.usdx, coverageAdmin, currentDeficit);
+    _supply(tokenList.usdx, currentDeficit, coverageAdmin);
 
     vm.startPrank(coverageAdmin);
     IERC20(tokenList.usdx).approve(report.poolProxy, UINT256_MAX);
@@ -71,7 +71,7 @@ contract PoolDeficitTests is TestnetProcedures {
       tokenList.usdx
     );
 
-    _mintATokens(tokenList.usdx, coverageAdmin, currentDeficit / 2);
+    _supply(tokenList.usdx, currentDeficit / 2, coverageAdmin);
 
     vm.startPrank(coverageAdmin);
     IERC20(tokenList.usdx).approve(report.poolProxy, UINT256_MAX);
@@ -101,7 +101,7 @@ contract PoolDeficitTests is TestnetProcedures {
     vm.prank(poolAdmin);
     contracts.poolAddressesProvider.setAddress(bytes32('UMBRELLA'), coverageAdmin);
 
-    _mintATokens(tokenList.usdx, coverageAdmin, currentDeficit + 1000);
+    _supply(tokenList.usdx, currentDeficit + 1000, coverageAdmin);
 
     // eliminate deficit
     vm.startPrank(coverageAdmin);
@@ -133,7 +133,7 @@ contract PoolDeficitTests is TestnetProcedures {
     vm.prank(poolAdmin);
     contracts.poolAddressesProvider.setAddress(bytes32('UMBRELLA'), coverageAdmin);
 
-    _mintATokens(tokenList.usdx, coverageAdmin, currentDeficit);
+    _supply(tokenList.usdx, currentDeficit, coverageAdmin);
 
     // eliminate deficit
     vm.startPrank(coverageAdmin);
@@ -157,7 +157,7 @@ contract PoolDeficitTests is TestnetProcedures {
     vm.prank(poolAdmin);
     contracts.poolAddressesProvider.setAddress(bytes32('UMBRELLA'), coverageAdmin);
 
-    _mintATokens(tokenList.usdx, coverageAdmin, currentDeficit);
+    _supply(tokenList.usdx, currentDeficit, coverageAdmin);
     vm.startPrank(coverageAdmin);
     IERC20(tokenList.usdx).approve(report.poolProxy, UINT256_MAX);
     contracts.poolProxy.borrow(tokenList.usdx, cAdminBorrowAmount, 2, 0, coverageAdmin);
@@ -210,7 +210,7 @@ contract PoolDeficitTests is TestnetProcedures {
     address coverageAdmin = makeAddr('covAdmin');
     vm.prank(poolAdmin);
     contracts.poolAddressesProvider.setAddress(bytes32('UMBRELLA'), coverageAdmin);
-    _mintATokens(tokenList.usdx, bob, 1_000_000 ether);
+    _supply(tokenList.usdx, 1_000_000 ether, bob);
     vm.prank(bob);
 
     contracts.poolProxy.borrow(tokenList.usdx, 200_000 ether, 2, 0, bob);
@@ -219,7 +219,7 @@ contract PoolDeficitTests is TestnetProcedures {
     uint256 deficit = _createReserveDeficit(500_000 ether, tokenList.usdx, false);
     _checkIrInvariant(tokenList.usdx);
 
-    _mintATokens(tokenList.usdx, coverageAdmin, deficit);
+    _supply(tokenList.usdx, deficit, coverageAdmin);
     vm.startPrank(coverageAdmin);
     IERC20(tokenList.usdx).approve(report.poolProxy, deficit);
     contracts.poolProxy.eliminateReserveDeficit(tokenList.usdx, deficit);
@@ -243,11 +243,11 @@ contract PoolDeficitTests is TestnetProcedures {
     bool mintBorrowableAssets
   ) internal returns (uint256) {
     borrowAmount = bound(borrowAmount, 1e18, type(uint120).max);
-    _mintATokens(tokenList.wbtc, alice, 10);
+    _supply(tokenList.wbtc, 10, alice);
 
     if (mintBorrowableAssets) {
       // setup available amount to borrow
-      _mintATokens(borrowAsset, carol, borrowAmount);
+      _supply(borrowAsset, borrowAmount, carol);
     }
 
     _borrowArbitraryAmount(borrowAsset, alice, borrowAmount);
@@ -290,15 +290,6 @@ contract PoolDeficitTests is TestnetProcedures {
     vm.assume(user != contracts.poolProxy.getReserveAToken(tokenList.wbtc));
     vm.assume(user != contracts.poolProxy.getReserveAToken(tokenList.weth));
     vm.assume(user != report.poolConfiguratorProxy);
-  }
-
-  // we reinvent these helpers on each contract and should move them somewhere common
-  function _mintATokens(address underlying, address receiver, uint256 amount) internal {
-    deal(underlying, receiver, amount);
-    vm.startPrank(receiver);
-    IERC20(underlying).approve(address(contracts.poolProxy), amount);
-    contracts.poolProxy.deposit(underlying, amount, receiver, 0);
-    vm.stopPrank();
   }
 
   // assumes that the caller has at least one unit of collateralAsset that is not the borrowAsset

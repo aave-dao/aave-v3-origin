@@ -404,7 +404,7 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
    * In is not ensures the a supply will automatically enable as collateral as there are multiple edge cases preventing that.
    * This helper function ensures it is enabled by performing the explicit action.
    */
-  function _supplyAndEnableAsCollateral(address user, uint256 amount, address asset) internal {
+  function _supplyAndEnableAsCollateral(address asset, uint256 amount, address user) internal {
     vm.startPrank(user);
     deal(asset, user, amount);
     IERC20(asset).approve(report.poolProxy, amount);
@@ -418,7 +418,7 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
   /**
    * Supplies the specified amount of asset to the reserve, without enabeling as collateral.
    */
-  function _supply(address asset, address user, uint256 amount) internal {
+  function _supply(address asset, uint256 amount, address user) internal {
     vm.startPrank(user);
     deal(asset, user, amount);
     IERC20(asset).approve(report.poolProxy, amount);

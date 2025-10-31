@@ -50,7 +50,7 @@ contract PoolEModeLtvzeroTests is TestnetProcedures {
   }
 
   function test_shouldApplyEmodeLtv0Lt() external {
-    _supplyAndEnableAsCollateral(alice, 30_000e6, tokenList.usdx);
+    _supplyAndEnableAsCollateral(tokenList.usdx, 30_000e6, alice);
 
     (, , , uint256 ltBefore, , ) = contracts.poolProxy.getUserAccountData(alice);
 
@@ -71,7 +71,7 @@ contract PoolEModeLtvzeroTests is TestnetProcedures {
    * @dev You should be able to enter and leave eModes as long as the ltv0asset is not enabled as collateral.
    */
   function test_shouldAllow_enteringEmodeWhenLtv0AssetIsNoCollateral() external {
-    _supply(tokenList.usdx, alice, 30_000e6);
+    _supply(tokenList.usdx, 30_000e6, alice);
     vm.startPrank(alice);
     contracts.poolProxy.setUserUseReserveAsCollateral(tokenList.usdx, false);
 
@@ -85,7 +85,7 @@ contract PoolEModeLtvzeroTests is TestnetProcedures {
    * @dev You should be able to enter and leave eModes as long as the ltv0asset is not enabled as collateral.
    */
   function test_shouldRevert_enteringEmodeWhenLtv0AssetIsCollateral() external {
-    _supplyAndEnableAsCollateral(alice, 30_000e6, tokenList.usdx);
+    _supplyAndEnableAsCollateral(tokenList.usdx, 30_000e6, alice);
     vm.startPrank(alice);
 
     // will revert when entering eMode 2, because it's ltvzero there
@@ -98,7 +98,7 @@ contract PoolEModeLtvzeroTests is TestnetProcedures {
   }
 
   function test_shouldAllow_leavingEmodeToANonLtv0Emode() external {
-    _supplyAndEnableAsCollateral(alice, 30_000e6, tokenList.usdx);
+    _supplyAndEnableAsCollateral(tokenList.usdx, 30_000e6, alice);
     vm.prank(alice);
     contracts.poolProxy.setUserEMode(1);
 
@@ -119,7 +119,7 @@ contract PoolEModeLtvzeroTests is TestnetProcedures {
   }
 
   function test_shouldRevert_leavingToEmode0IfLtv0() external {
-    _supplyAndEnableAsCollateral(alice, 30_000e6, tokenList.usdx);
+    _supplyAndEnableAsCollateral(tokenList.usdx, 30_000e6, alice);
     vm.prank(alice);
     contracts.poolProxy.setUserEMode(1);
 
@@ -143,8 +143,8 @@ contract PoolEModeLtvzeroTests is TestnetProcedures {
    * When a user has multiple collaterals, he must withdraw the ltv0 first
    */
   function test_ltvzero_shouldEnforcePriorityWithdrawal() external {
-    _supplyAndEnableAsCollateral(alice, 30_000e6, tokenList.usdx);
-    _supplyAndEnableAsCollateral(alice, 1e8, tokenList.wbtc);
+    _supplyAndEnableAsCollateral(tokenList.usdx, 30_000e6, alice);
+    _supplyAndEnableAsCollateral(tokenList.wbtc, 1e8, alice);
     vm.prank(alice);
     contracts.poolProxy.setUserEMode(1);
 

@@ -82,7 +82,7 @@ contract ProtocolDataProvider_gas_Tests is Testhelpers {
   }
 
   function test_getUserReserveData() external {
-    _supply(tokenList.usdx, user, 1e6);
+    _supply(tokenList.usdx, 1e6, user);
 
     contracts.protocolDataProvider.getUserReserveData(tokenList.usdx, user);
     vm.snapshotGasLastCall('ProtocolDataProvider', 'getUserReserveData');

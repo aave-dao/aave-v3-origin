@@ -46,16 +46,16 @@ contract PoolEModeBorrowableTests is TestnetProcedures {
     contracts.poolConfiguratorProxy.setAssetBorrowableInEMode(tokenList.wbtc, 2, true);
     vm.stopPrank();
 
-    _supplyAndEnableAsCollateral(rando, 100 ether, tokenList.weth);
-    _supplyAndEnableAsCollateral(rando, 1_000_000e6, tokenList.usdx);
-    _supplyAndEnableAsCollateral(rando, 100e8, tokenList.wbtc);
+    _supplyAndEnableAsCollateral(tokenList.weth, 100 ether, rando);
+    _supplyAndEnableAsCollateral(tokenList.usdx, 1_000_000e6, rando);
+    _supplyAndEnableAsCollateral(tokenList.wbtc, 100e8, rando);
   }
 
   /**
    * @dev You should be able to enter and leave eModes if all your borrowed assets are supported.
    */
   function test_shouldAllow_switchingEmodesIfAssetAllowedInTargetEmode() external {
-    _supplyAndEnableAsCollateral(alice, 30_000e6, tokenList.usdx);
+    _supplyAndEnableAsCollateral(tokenList.usdx, 30_000e6, alice);
     vm.startPrank(alice);
 
     // both eMode 1 and 2 allow wbtc borrowing
@@ -71,7 +71,7 @@ contract PoolEModeBorrowableTests is TestnetProcedures {
   function test_shouldRevert_switchingEmodesIfAssetNotAllowedInTargetEmode() external {
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setReserveBorrowing(tokenList.usdx, false);
-    _supplyAndEnableAsCollateral(alice, 30_000e6, tokenList.usdx);
+    _supplyAndEnableAsCollateral(tokenList.usdx, 30_000e6, alice);
     vm.startPrank(alice);
 
     contracts.poolProxy.setUserEMode(1);
@@ -88,7 +88,7 @@ contract PoolEModeBorrowableTests is TestnetProcedures {
    * @dev You should only be able to borrow assets allowed in your eMode.
    */
   function test_shouldRevert_BorrowingIfNotBorrowableInEmode() external {
-    _supplyAndEnableAsCollateral(alice, 30_000e6, tokenList.usdx);
+    _supplyAndEnableAsCollateral(tokenList.usdx, 30_000e6, alice);
     vm.startPrank(alice);
 
     contracts.poolProxy.setUserEMode(2);
@@ -104,7 +104,7 @@ contract PoolEModeBorrowableTests is TestnetProcedures {
   function test_shouldAllow_borrowingWithinEmodeWhenNotBorrowablOutside() external {
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setReserveBorrowing(tokenList.wbtc, false);
-    _supplyAndEnableAsCollateral(alice, 30_000e6, tokenList.usdx);
+    _supplyAndEnableAsCollateral(tokenList.usdx, 30_000e6, alice);
     vm.startPrank(alice);
 
     // reverts outside eMode
@@ -121,7 +121,7 @@ contract PoolEModeBorrowableTests is TestnetProcedures {
    * it should be impossible to increase exposure.
    */
   function test_shouldRevert_borrowingAssetThatIsNoLongerBorrowable() external {
-    _supplyAndEnableAsCollateral(alice, 30_000e6, tokenList.usdx);
+    _supplyAndEnableAsCollateral(tokenList.usdx, 30_000e6, alice);
     vm.startPrank(alice);
     contracts.poolProxy.setUserEMode(1);
     contracts.poolProxy.borrow(tokenList.wbtc, 0.2e8, 2, 0, alice);

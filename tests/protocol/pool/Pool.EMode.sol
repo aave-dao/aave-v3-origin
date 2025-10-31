@@ -61,7 +61,7 @@ contract PoolEModeTests is TestnetProcedures {
     pool.setUserEMode(ct1.id);
     // supply some dust so the eMode asset is the only collateral
     _mintTestnetToken(tokenList.usdx, alice, 1);
-    _supply(tokenList.usdx, alice, 1);
+    _supply(tokenList.usdx, 1, alice);
 
     (, , , uint256 emodeLT, uint256 emodeLTV, ) = contracts.poolProxy.getUserAccountData(alice);
     assertEq(emodeLT, ct1.lt);
@@ -88,10 +88,10 @@ contract PoolEModeTests is TestnetProcedures {
     pool.setUserEMode(ct1.id);
     // supply some dust so the eMode asset is the only collateral
     _mintTestnetToken(tokenList.usdx, alice, 1e6);
-    _supply(tokenList.usdx, alice, 1e6);
+    _supply(tokenList.usdx, 1e6, alice);
     // supply some non eMode asset
     _mintTestnetToken(tokenList.wbtc, alice, 1e8);
-    _supply(tokenList.wbtc, alice, 1e8);
+    _supply(tokenList.wbtc, 1e8, alice);
 
     (, , , uint256 realLT, uint256 realLTV, ) = contracts.poolProxy.getUserAccountData(alice);
     assertLt(realLT, ct1.lt);
@@ -134,7 +134,7 @@ contract PoolEModeTests is TestnetProcedures {
     vm.prank(alice);
     pool.setUserEMode(1);
     _mintTestnetToken(tokenList.usdx, alice, amount);
-    _supply(tokenList.usdx, alice, amount);
+    _supply(tokenList.usdx, amount, alice);
     _borrowMaxLt(tokenList.wbtc, alice);
 
     (, , , , , uint256 hfBefore) = contracts.poolProxy.getUserAccountData(alice);
@@ -158,7 +158,7 @@ contract PoolEModeTests is TestnetProcedures {
     vm.prank(alice);
     pool.setUserEMode(2);
     _mintTestnetToken(tokenList.usdx, alice, amount);
-    _supply(tokenList.usdx, alice, amount);
+    _supply(tokenList.usdx, amount, alice);
     _borrowMaxLt(tokenList.wbtc, alice);
 
     vm.prank(alice);
@@ -181,7 +181,7 @@ contract PoolEModeTests is TestnetProcedures {
     vm.prank(alice);
     pool.setUserEMode(1);
     _mintTestnetToken(tokenList.usdx, alice, amount);
-    _supply(tokenList.usdx, alice, amount);
+    _supply(tokenList.usdx, amount, alice);
     _borrowMaxLt(tokenList.wbtc, alice);
 
     vm.prank(alice);
@@ -208,7 +208,7 @@ contract PoolEModeTests is TestnetProcedures {
     vm.prank(alice);
     pool.setUserEMode(1);
     _mintTestnetToken(tokenList.usdx, alice, amount);
-    _supply(tokenList.usdx, alice, amount);
+    _supply(tokenList.usdx, amount, alice);
     _borrowMaxLt(tokenList.wbtc, alice);
   }
 
@@ -230,7 +230,7 @@ contract PoolEModeTests is TestnetProcedures {
     contracts.poolConfiguratorProxy.setAssetBorrowableInEMode(tokenList.wbtc, 1, true);
     vm.stopPrank();
 
-    _supplyAndEnableAsCollateral(alice, amount, tokenList.usdx);
+    _supplyAndEnableAsCollateral(tokenList.usdx, amount, alice);
     vm.expectRevert(abi.encodeWithSelector(Errors.BorrowingNotEnabled.selector));
     vm.prank(alice);
     contracts.poolProxy.borrow(tokenList.wbtc, 1, 2, 0, alice);
@@ -254,7 +254,7 @@ contract PoolEModeTests is TestnetProcedures {
     vm.prank(alice);
     pool.setUserEMode(1);
     _mintTestnetToken(tokenList.usdx, alice, amount);
-    _supply(tokenList.usdx, alice, amount);
+    _supply(tokenList.usdx, amount, alice);
     (uint256 totalCollateralBase, , , , , ) = contracts.poolProxy.getUserAccountData(alice);
     uint256 debtPrice = contracts.aaveOracle.getAssetPrice(tokenList.wbtc);
     uint256 borrowAmount = (totalCollateralBase * 1e8) / debtPrice;
@@ -300,7 +300,7 @@ contract PoolEModeTests is TestnetProcedures {
 
   function _borrowArbitraryAmount(address erc20, address user, uint256 amount) internal {
     _mintTestnetToken(erc20, bob, amount); // todo: better not bob
-    _supply(erc20, bob, amount);
+    _supply(erc20, amount, bob);
 
     vm.mockCall(
       address(contracts.aaveOracle),

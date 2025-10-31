@@ -61,7 +61,7 @@ contract StataToken_gas_Tests is Testhelpers {
 
   function test_depositATokens() external {
     uint256 amountToDeposit = 1000e8;
-    _supply(tokenList.usdx, address(this), amountToDeposit);
+    _supply(tokenList.usdx, amountToDeposit, address(this));
     DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
       tokenList.usdx
     );
@@ -76,7 +76,7 @@ contract StataToken_gas_Tests is Testhelpers {
 
   function test_claimRewards() external {
     uint256 amountToDeposit = 1000e8;
-    _supply(tokenList.usdx, address(this), amountToDeposit);
+    _supply(tokenList.usdx, amountToDeposit, address(this));
     DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
       tokenList.usdx
     );

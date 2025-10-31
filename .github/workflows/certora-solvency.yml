@@ -15,6 +15,9 @@ on:
 
   workflow_dispatch:
 
+permissions:
+  id-token: write
+
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -36,31 +39,31 @@ jobs:
           touch applyHarness.patch
           make munged
 
-      - uses: Certora/certora-run-action@v1
+      - uses: Certora/certora-run-action@v2
         with:
           cli-version: 7.31.0
           configurations: |-
-            certora/solvency/confs/rayMulDiv-CVL-check.conf 
-            certora/solvency/confs/aToken-check.conf 
-            certora/solvency/confs/variableDebtToken-check.conf 
-            certora/solvency/confs/solvency/supply.conf 
-            certora/solvency/confs/solvency/withdraw.conf 
-            certora/solvency/confs/solvency/borrow.conf 
-            certora/solvency/confs/solvency/flashloan.conf 
-            certora/solvency/confs/solvency/repay-lemma.conf 
-            certora/solvency/confs/solvency/repay-main.conf 
-            certora/solvency/confs/solvency/repayWithATokens-lemma.conf 
-            certora/solvency/confs/solvency/repayWithATokens-main.conf --rule_sanity "none" 
-            certora/solvency/confs/solvency/liquidationCall/lemma-revertsIF_totDbt_of_DBTasset_is0.conf 
-            certora/solvency/confs/solvency/liquidationCall/lemma-DBTasset.conf 
-            certora/solvency/confs/solvency/liquidationCall/main-DBTasset.conf 
-            certora/solvency/confs/solvency/liquidationCall/main-COLasset.conf 
-            certora/solvency/confs/solvency/liquidationCall/lemma-COLasset.conf --rule_sanity "none" 
-            certora/solvency/confs/solvency/liquidationCall/main-COLasset-totSUP0.conf --rule_sanity "none" 
-            certora/solvency/confs/solvency/liquidationCall/lemma-COLasset-totSUP0.conf 
-            certora/solvency/confs/solvency/liquidationCall/burnBadDebt-assetINloop.conf 
-            certora/solvency/confs/solvency/liquidationCall/burnBadDebt-assetNOTINloop.conf 
-            certora/solvency/confs/solvency/liquidationCall/main-SAMEasset.conf 
+            certora/solvency/confs/rayMulDiv-CVL-check.conf
+            certora/solvency/confs/aToken-check.conf
+            certora/solvency/confs/variableDebtToken-check.conf
+            certora/solvency/confs/solvency/supply.conf
+            certora/solvency/confs/solvency/withdraw.conf
+            certora/solvency/confs/solvency/borrow.conf
+            certora/solvency/confs/solvency/flashloan.conf
+            certora/solvency/confs/solvency/repay-lemma.conf
+            certora/solvency/confs/solvency/repay-main.conf
+            certora/solvency/confs/solvency/repayWithATokens-lemma.conf
+            certora/solvency/confs/solvency/repayWithATokens-main.conf --rule_sanity "none"
+            certora/solvency/confs/solvency/liquidationCall/lemma-revertsIF_totDbt_of_DBTasset_is0.conf
+            certora/solvency/confs/solvency/liquidationCall/lemma-DBTasset.conf
+            certora/solvency/confs/solvency/liquidationCall/main-DBTasset.conf
+            certora/solvency/confs/solvency/liquidationCall/main-COLasset.conf
+            certora/solvency/confs/solvency/liquidationCall/lemma-COLasset.conf --rule_sanity "none"
+            certora/solvency/confs/solvency/liquidationCall/main-COLasset-totSUP0.conf --rule_sanity "none"
+            certora/solvency/confs/solvency/liquidationCall/lemma-COLasset-totSUP0.conf
+            certora/solvency/confs/solvency/liquidationCall/burnBadDebt-assetINloop.conf
+            certora/solvency/confs/solvency/liquidationCall/burnBadDebt-assetNOTINloop.conf
+            certora/solvency/confs/solvency/liquidationCall/main-SAMEasset.conf
             certora/solvency/confs/solvency/liquidationCall/lemma-SAMEasset.conf
           solc-versions: 0.8.27
           comment-fail-only: false
@@ -72,4 +75,3 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 # Put back the following rule after ticket 8889 is closed
 # certora/basic/conf/NEW-pool-no-summarizations.conf ##### waiting for
-
