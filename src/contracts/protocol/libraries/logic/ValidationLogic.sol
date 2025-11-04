@@ -470,9 +470,8 @@ library ValidationLogic {
       oracle
     );
 
-    // User must either:
-    // 1. not have any ltvzero collateral or
-    // 2. interact with asset that have 0 ltv on their position
+    // If the user has an ltvzero asset, the selected asset must be the ltv0 asset.
+    // This mechanism ensures that a multi-collateral position needs to withdraw/transfer the ltv0 asset first.
     if (hasZeroLtvCollateral) {
       require(
         getUserReserveLtv(
