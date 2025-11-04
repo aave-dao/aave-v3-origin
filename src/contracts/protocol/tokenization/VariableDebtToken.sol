@@ -81,9 +81,8 @@ abstract contract VariableDebtToken is DebtTokenBase, ScaledBalanceTokenBase, IV
     uint256 scaledAmount,
     uint256 index
   ) external virtual override onlyPool returns (uint256) {
-    uint256 scaledBalanceOfUser = super.balanceOf(user);
-
     if (user != onBehalfOf) {
+      uint256 scaledBalanceOfOnBehalfOf = super.balanceOf(onBehalfOf);
       // This comment explains the logic behind the borrow allowance spent calculation.
       //
       // Problem:
@@ -109,14 +108,14 @@ abstract contract VariableDebtToken is DebtTokenBase, ScaledBalanceTokenBase, IV
       // even if the calculated `debt_increase` is 101 wei. In that specific scenario, the allowance consumed will be 100 wei (since that is the `currentAllowance`),
       // and the transaction will not revert. But if the allowance is 101 wei, then the allowance consumed will be 101 wei.
       //
-      // uint256 debt_increase = balanceAfter - balanceBefore = (scaledBalanceOfUser + scaledAmount).getVTokenBalance(index) - scaledBalanceOfUser.getVTokenBalance(index);
+      // uint256 debt_increase = balanceAfter - balanceBefore = (scaledBalanceOfOnBehalfOf + scaledAmount).getVTokenBalance(index) - scaledBalanceOfOnBehalfOf.getVTokenBalance(index);
       // Due to limitations of the solidity compiler, the calculation is inlined for gas efficiency.
       _decreaseBorrowAllowance(
         onBehalfOf,
         user,
         amount,
-        (scaledBalanceOfUser + scaledAmount).getVTokenBalance(index) -
-          scaledBalanceOfUser.getVTokenBalance(index)
+        (scaledBalanceOfOnBehalfOf + scaledAmount).getVTokenBalance(index) -
+          scaledBalanceOfOnBehalfOf.getVTokenBalance(index)
       );
     }
     _mintScaled({
