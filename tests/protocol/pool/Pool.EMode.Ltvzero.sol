@@ -91,7 +91,7 @@ contract PoolEModeLtvzeroTests is TestnetProcedures {
     // will revert when entering eMode 2, because it's ltvzero there
     contracts.poolProxy.setUserEMode(1);
     vm.expectRevert(
-      abi.encodeWithSelector(Errors.InvalidCollateralInEmode.selector, tokenList.usdx)
+      abi.encodeWithSelector(Errors.InvalidCollateralInEmode.selector, tokenList.usdx, 2)
     );
     contracts.poolProxy.setUserEMode(2);
     contracts.poolProxy.setUserEMode(0);
@@ -113,7 +113,7 @@ contract PoolEModeLtvzeroTests is TestnetProcedures {
     contracts.poolProxy.setUserEMode(0);
     // reentering is not
     vm.expectRevert(
-      abi.encodeWithSelector(Errors.InvalidCollateralInEmode.selector, tokenList.usdx)
+      abi.encodeWithSelector(Errors.InvalidCollateralInEmode.selector, tokenList.usdx, 1)
     );
     contracts.poolProxy.setUserEMode(1);
   }
@@ -130,11 +130,11 @@ contract PoolEModeLtvzeroTests is TestnetProcedures {
 
     vm.startPrank(alice);
     vm.expectRevert(
-      abi.encodeWithSelector(Errors.InvalidCollateralInEmode.selector, tokenList.usdx)
+      abi.encodeWithSelector(Errors.InvalidCollateralInEmode.selector, tokenList.usdx, 2)
     );
     contracts.poolProxy.setUserEMode(2);
     vm.expectRevert(
-      abi.encodeWithSelector(Errors.InvalidCollateralInEmode.selector, tokenList.usdx)
+      abi.encodeWithSelector(Errors.InvalidCollateralInEmode.selector, tokenList.usdx, 0)
     );
     contracts.poolProxy.setUserEMode(0);
   }
@@ -192,7 +192,9 @@ contract PoolEModeLtvzeroTests is TestnetProcedures {
     contracts.poolConfiguratorProxy.setAssetLtvzeroInEMode(tokenList.usdx, 1, false);
     vm.expectRevert(abi.encodeWithSelector(Errors.ReserveFrozen.selector));
     contracts.poolConfiguratorProxy.setAssetLtvzeroInEMode(tokenList.usdx, 2, false);
-    vm.expectRevert(abi.encodeWithSelector(Errors.MustBeEmodeCollateral.selector, tokenList.usdx));
+    vm.expectRevert(
+      abi.encodeWithSelector(Errors.MustBeEmodeCollateral.selector, tokenList.usdx, 3)
+    );
     contracts.poolConfiguratorProxy.setAssetLtvzeroInEMode(tokenList.usdx, 3, false);
 
     // enabeling as collateral should revert

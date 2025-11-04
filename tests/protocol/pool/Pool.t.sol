@@ -604,7 +604,9 @@ contract PoolTests is TestnetProcedures {
     pool.supply(tokenList.wbtc, amount, alice, 0);
     pool.borrow(tokenList.weth, borrowAmount, 2, 0, alice);
 
-    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidDebtInEmode.selector, tokenList.weth));
+    vm.expectRevert(
+      abi.encodeWithSelector(Errors.InvalidDebtInEmode.selector, tokenList.weth, ct2.id)
+    );
 
     pool.setUserEMode(ct2.id);
     vm.stopPrank();

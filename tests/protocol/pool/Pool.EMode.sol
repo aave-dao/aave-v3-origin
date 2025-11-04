@@ -185,7 +185,7 @@ contract PoolEModeTests is TestnetProcedures {
     _borrowMaxLt(tokenList.wbtc, alice);
 
     vm.prank(alice);
-    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidDebtInEmode.selector, tokenList.wbtc));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidDebtInEmode.selector, tokenList.wbtc, 2));
     pool.setUserEMode(2);
   }
 

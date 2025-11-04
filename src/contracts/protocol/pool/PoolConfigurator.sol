@@ -483,7 +483,7 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
     uint128 collateralBitmap = _pool.getEModeCategoryCollateralBitmap(categoryId);
     require(
       EModeConfiguration.isReserveEnabledOnBitmap(collateralBitmap, reserveData.id),
-      Errors.MustBeEmodeCollateral(asset)
+      Errors.MustBeEmodeCollateral(asset, categoryId)
     );
     // ltvzero can only be removed on non frozen reserves
     if (!ltvzero) {

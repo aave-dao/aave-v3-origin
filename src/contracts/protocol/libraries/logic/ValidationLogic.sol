@@ -560,14 +560,14 @@ library ValidationLogic {
             categoryId != 0
               ? EModeConfiguration.isReserveEnabledOnBitmap(eModeCategory.borrowableBitmap, i)
               : reservesData[reservesList[i]].configuration.getBorrowingEnabled(),
-            Errors.InvalidDebtInEmode(reservesList[i])
+            Errors.InvalidDebtInEmode(reservesList[i], categoryId)
           );
         }
         // the asset must either be collateral inside or outside of eMode
         if (isEnabledAsCollateral) {
           require(
             getUserReserveLtv(reservesData[reservesList[i]], eModeCategory, categoryId) != 0,
-            Errors.InvalidCollateralInEmode(reservesList[i])
+            Errors.InvalidCollateralInEmode(reservesList[i], categoryId)
           );
         }
         ++i;

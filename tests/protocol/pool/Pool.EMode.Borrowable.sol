@@ -77,10 +77,10 @@ contract PoolEModeBorrowableTests is TestnetProcedures {
     contracts.poolProxy.setUserEMode(1);
     contracts.poolProxy.borrow(tokenList.usdx, 100e6, 2, 0, alice);
     // not borrowable insode eMode 2
-    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidDebtInEmode.selector, tokenList.usdx));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidDebtInEmode.selector, tokenList.usdx, 2));
     contracts.poolProxy.setUserEMode(2);
     // not borrowable outside eMode
-    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidDebtInEmode.selector, tokenList.usdx));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidDebtInEmode.selector, tokenList.usdx, 0));
     contracts.poolProxy.setUserEMode(0);
   }
 

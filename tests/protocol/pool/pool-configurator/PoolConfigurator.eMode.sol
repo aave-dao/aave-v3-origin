@@ -255,7 +255,9 @@ contract PoolConfiguratorEModeConfigTests is TestnetProcedures {
     test_configureEmodeCategory();
 
     vm.prank(poolAdmin);
-    vm.expectRevert(abi.encodeWithSelector(Errors.MustBeEmodeCollateral.selector, tokenList.usdx));
+    vm.expectRevert(
+      abi.encodeWithSelector(Errors.MustBeEmodeCollateral.selector, tokenList.usdx, input.id)
+    );
     contracts.poolConfiguratorProxy.setAssetLtvzeroInEMode(tokenList.usdx, input.id, true);
   }
 

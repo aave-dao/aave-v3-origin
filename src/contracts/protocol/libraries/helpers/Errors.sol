@@ -96,7 +96,7 @@ library Errors {
   error UserCannotHaveDebt(); // Thrown when a user tries to interact with a method that requires a position without debt
   error SelfLiquidation(); // Thrown when a user tries to liquidate themselves
   error CallerNotPositionManager(); // Thrown when the caller has not been enabled as a position manager of the on-behalf-of user
-  error InvalidCollateralInEmode(address reserve); /// Thrown when trying to enter an eMode with an invalid collateral asset
-  error InvalidDebtInEmode(address reserve); /// Thrown when trying to enter an eMode with an invalid debt asset
-  error MustBeEmodeCollateral(address reserve); /// Thrown when trying to configure an asset as eMode-ltvzero that is not an eMode collateral
+  error InvalidCollateralInEmode(address reserve, uint256 categoryId); /// Thrown when trying to enter an eMode with an invalid collateral asset
+  error InvalidDebtInEmode(address reserve, uint256 categoryId); /// Thrown when trying to enter an eMode with an invalid debt asset
+  error MustBeEmodeCollateral(address reserve, uint256 categoryId); /// Thrown when trying to configure an asset as eMode-ltvzero that is not an eMode collateral
 }

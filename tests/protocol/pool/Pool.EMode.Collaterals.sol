@@ -104,12 +104,12 @@ contract PoolEModeCollateralsTests is TestnetProcedures {
 
     // not collateral inside eMode 2
     vm.expectRevert(
-      abi.encodeWithSelector(Errors.InvalidCollateralInEmode.selector, tokenList.wbtc)
+      abi.encodeWithSelector(Errors.InvalidCollateralInEmode.selector, tokenList.wbtc, 2)
     );
     contracts.poolProxy.setUserEMode(2);
     // not collateral outside eMode
     vm.expectRevert(
-      abi.encodeWithSelector(Errors.InvalidCollateralInEmode.selector, tokenList.wbtc)
+      abi.encodeWithSelector(Errors.InvalidCollateralInEmode.selector, tokenList.wbtc, 0)
     );
     contracts.poolProxy.setUserEMode(0);
   }
