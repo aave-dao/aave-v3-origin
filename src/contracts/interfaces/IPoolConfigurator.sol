@@ -444,7 +444,6 @@ interface IPoolConfigurator {
 
   /**
    * @notice Enables/disables an asset to be borrowable in a selected eMode.
-   * - eMode.borrowable always has less priority then reserve.borrowable
    * @param asset The address of the underlying asset of the reserve
    * @param categoryId The eMode categoryId
    * @param borrowable True if the asset should be borrowable in the given eMode category, false otherwise.
