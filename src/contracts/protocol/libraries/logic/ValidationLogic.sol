@@ -610,9 +610,8 @@ library ValidationLogic {
   }
 
   /**
-   * @notice Validates if an asset should be automatically activated as collateral in the following actions: supply,
-   * transfer, and liquidate
-   * @dev This is used to ensure that isolated assets are not enabled as collateral automatically
+   * @notice Validates if an asset should be automatically activated as collateral in the following actions: supply, transfer.
+   * @dev This is used to ensure that isolated assets are not enabled as collateral automatically.
    * @param reservesData The state of all the reserves
    * @param reservesList The addresses of all the active reserves
    * @param eModeCategories a mapping storing configurations for all efficiency mode categories
