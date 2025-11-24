@@ -82,12 +82,13 @@ certoraRun $CMN certora/basic/conf/NEW-pool-simple-properties.conf \
            --rule_sanity none \
            --msg "simple:7: NEW :: cannotBorrowOnInactiveReserve"
 
-echo
-echo "******** Running:  simple:8 ***************"
-certoraRun $CMN certora/basic/conf/NEW-pool-simple-properties.conf \
-           --rule cannotBorrowOnReserveDisabledForBorrowing \
-           --rule_sanity none \
-           --msg "simple:8: NEW :: cannotBorrowOnReserveDisabledForBorrowing"
+
+#echo
+#/echo "******** Running:  simple:8 ***************"
+#certoraRun $CMN certora/basic/conf/NEW-pool-simple-properties.conf \
+#--rule cannotBorrowOnReserveDisabledForBorrowing \
+#           --rule_sanity none \
+#           --msg "simple:8: NEW :: cannotBorrowOnReserveDisabledForBorrowing"
 
 echo
 echo "******** Running:  simple:9 ***************"

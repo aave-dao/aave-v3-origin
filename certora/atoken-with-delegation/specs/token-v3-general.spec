@@ -17,7 +17,7 @@ using SymbolicLendingPoolL1 as _SymbolicLendingPoolL1;
 
 methods {
     // called by AToken.sol::224. A method of IPool.
-    function _.finalizeTransfer(address, address, address, uint256, uint256, uint256) external => NONDET;
+    function _.finalizeTransfer(address, address, address, uint256, uint256) external => NONDET;
 
     // called from: IncentivizedERC20.sol::29.
     function _.getACLManager() external => NONDET;

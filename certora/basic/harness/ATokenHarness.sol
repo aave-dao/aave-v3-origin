@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.19;
 
-import {Pool} from '../munged/contracts/protocol/pool/Pool.sol';
-import {ATokenInstance} from '../munged/contracts/instances/ATokenInstance.sol';
-import {WadRayMath} from '../munged/contracts/protocol/libraries/math/WadRayMath.sol';
-import {ScaledBalanceTokenBase} from '../munged/contracts/protocol/tokenization/base/ScaledBalanceTokenBase.sol';
-import {IScaledBalanceToken} from '../munged/contracts/interfaces/IScaledBalanceToken.sol';
+import {Pool} from '../munged/src/contracts/protocol/pool/Pool.sol';
+import {ATokenInstance} from '../munged/src/contracts/instances/ATokenInstance.sol';
+import {WadRayMath} from '../munged/src/contracts/protocol/libraries/math/WadRayMath.sol';
+import {ScaledBalanceTokenBase} from '../munged/src/contracts/protocol/tokenization/base/ScaledBalanceTokenBase.sol';
+import {IScaledBalanceToken} from '../munged/src/contracts/interfaces/IScaledBalanceToken.sol';
 
 /*
  * @title Certora harness for Aave ERC20 AToken

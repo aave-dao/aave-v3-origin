@@ -1,4 +1,4 @@
-#CMN="--compilation_steps_only"
+#CMN="--compilation_steps_only" 
 
 echo "******** 1. Running: token-v3-general.conf   ****************"
 certoraRun $CMN certora/atoken-with-delegation/conf/token-v3-general.conf \

@@ -17,12 +17,13 @@ methods {
   ) internal => NONDET;
   
   function ValidationLogic.validateAutomaticUseAsCollateral(
-    address sender,
     mapping(address => DataTypes.ReserveData) storage reservesData,
     mapping(uint256 => address) storage reservesList,
+    mapping(uint8 => DataTypes.EModeCategory) storage eModeCategories,
     DataTypes.UserConfigurationMap storage userConfig,
     DataTypes.ReserveConfigurationMap memory reserveConfig,
-    address aTokenAddress
+    address asset,
+    uint8 categoryId
   ) internal returns (bool) => NONDET;
    
   function ValidationLogic.validateSupply(

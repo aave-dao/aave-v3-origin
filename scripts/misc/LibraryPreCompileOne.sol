@@ -22,7 +22,7 @@ contract LibraryPreCompileOne is FfiUtils, Script, DeployUtils {
     bool found = _librariesPathExists();
 
     if (found) {
-      address lastLib = _getLatestLibraryAddress();
+      address lastLib = _getBorrowLibraryAddress();
       if (lastLib.code.length > 0) {
         console.log('[LibraryPreCompileOne] Library detected. Skipping re-deployment.');
         return;

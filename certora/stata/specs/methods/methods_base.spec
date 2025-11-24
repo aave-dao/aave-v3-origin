@@ -83,7 +83,7 @@ methods {
   function _AToken.scaledTotalSupply() external returns (uint256) envfree;
             
   // called in aToken
-  function _.finalizeTransfer(address, address, address, uint256, uint256, uint256) external => NONDET;
+  function _.finalizeTransfer(address, address, address, uint256, uint256) external => NONDET;
   // Called by rewardscontroller.sol
   // Defined in scaledbalancetokenbase.sol
   function _.getScaledUserBalanceAndSupply(address) external => DISPATCHER(true);
