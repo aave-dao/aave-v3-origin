@@ -161,7 +161,10 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
 
       emit PendingLtvChanged(asset, ltv);
     } else {
-      if (_pendingLtv[asset] != 0) delete _pendingLtv[asset];
+      if (_pendingLtv[asset] != 0) {
+        delete _pendingLtv[asset];
+        emit PendingLtvChanged(asset, 0);
+      }
       currentConfig.setLtv(ltv);
     }
 

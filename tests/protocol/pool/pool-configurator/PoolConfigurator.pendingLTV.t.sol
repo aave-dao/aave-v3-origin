@@ -68,6 +68,8 @@ contract PoolConfiguratorPendingLtvTests is TestnetProcedures {
     uint256 snapshot = vm.snapshotState();
 
     // once unfrozen, setting the ltv should remove the pending ltv
+    vm.expectEmit(address(contracts.poolConfiguratorProxy));
+    emit IPoolConfigurator.PendingLtvChanged(tokenList.usdx, 0);
     contracts.poolConfiguratorProxy.configureReserveAsCollateral(tokenList.usdx, 500, lt, lb);
     (ltv, , , ) = _getReserveParams();
     assertEq(ltv, 500);
