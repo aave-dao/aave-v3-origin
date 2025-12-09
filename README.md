@@ -128,6 +128,7 @@ In addition, Enigma Dark has adapted the Foundry-based fuzzing [invariant suite]
 - [Certora](./audits/2025-11-18_Certora_Aave-v3.6.pdf)
 - [MixBytes](./audits/2025-11-18_MixBytes_Aave-v3.6.pdf)
 - [Savant](./audits/2025-11-18_Savant_Aave-v3.6.pdf)
+- [Pashov](./audits/2025-11-29_Pashov_Aave-v3.6.pdf)
 
 <br>
 
