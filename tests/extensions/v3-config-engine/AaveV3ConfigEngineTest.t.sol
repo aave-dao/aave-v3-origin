@@ -877,9 +877,10 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
     DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(asset);
     uint128 collateralBitmap = contracts.poolProxy.getEModeCategoryCollateralBitmap(1);
     uint128 borrowableBitmap = contracts.poolProxy.getEModeCategoryBorrowableBitmap(1);
+    uint128 ltvzeroBitmap = contracts.poolProxy.getEModeCategoryLtvzeroBitmap(1);
     assertEq(EModeConfiguration.isReserveEnabledOnBitmap(collateralBitmap, reserveData.id), false);
     assertEq(EModeConfiguration.isReserveEnabledOnBitmap(borrowableBitmap, reserveData.id), true);
-
+    assertEq(EModeConfiguration.isReserveEnabledOnBitmap(ltvzeroBitmap, reserveData.id), false);
     DataTypes.ReserveDataLegacy memory reserveDataAsset2 = contracts.poolProxy.getReserveData(
       asset2
     );
@@ -890,6 +891,10 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
     assertEq(
       EModeConfiguration.isReserveEnabledOnBitmap(borrowableBitmap, reserveDataAsset2.id),
       false
+    );
+    assertEq(
+      EModeConfiguration.isReserveEnabledOnBitmap(ltvzeroBitmap, reserveDataAsset2.id),
+      true
     );
   }
 }
