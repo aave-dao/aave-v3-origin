@@ -1,5 +1,13 @@
 # @aave-dao/aave-v3-origin
 
+## 3.6.0
+
+### Minor Changes
+
+- c4857cf: Aave v3.6
+
+  You can find a full summary of the new features in [docs](docs/3.6/Aave-v3.6-features.md)
+
 ## 3.5.0
 
 ### Minor Changes
