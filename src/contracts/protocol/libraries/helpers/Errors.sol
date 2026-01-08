@@ -88,6 +88,7 @@ library Errors {
   error LiquidationGraceSentinelCheckFailed(); // 'Liquidation grace sentinel validation failed'
   error InvalidGracePeriod(); // Grace period above a valid range
   error InvalidFreezeState(); // Reserve is already in the passed freeze state
+  error InvalidLtvzeroState(); // Reserve is already in the passed ltvzero state
   error NotBorrowableInEMode(); // Asset not borrowable in eMode
   error CallerNotUmbrella(); // The caller of the function is not the umbrella contract
   error ReserveNotInDeficit(); // The reserve is not in deficit
@@ -95,4 +96,7 @@ library Errors {
   error UserCannotHaveDebt(); // Thrown when a user tries to interact with a method that requires a position without debt
   error SelfLiquidation(); // Thrown when a user tries to liquidate themselves
   error CallerNotPositionManager(); // Thrown when the caller has not been enabled as a position manager of the on-behalf-of user
+  error InvalidCollateralInEmode(address reserve, uint256 categoryId); /// Thrown when trying to enter an eMode with an invalid collateral asset
+  error InvalidDebtInEmode(address reserve, uint256 categoryId); /// Thrown when trying to enter an eMode with an invalid debt asset
+  error MustBeEmodeCollateral(address reserve, uint256 categoryId); /// Thrown when trying to configure an asset as eMode-ltvzero that is not an eMode collateral
 }

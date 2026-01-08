@@ -23,7 +23,7 @@ contract AaveSettersTest is TestnetProcedures {
     vToken = contracts.poolProxy.getReserveVariableDebtToken(asset);
 
     // make supply rate not zero
-    _supplyAndEnableAsCollateral({user: user, amount: 100 ether, asset: asset});
+    _supplyAndEnableAsCollateral(asset, 100 ether, user);
 
     // make borrow rate not zero
     vm.prank(user);

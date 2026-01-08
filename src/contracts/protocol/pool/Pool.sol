@@ -7,7 +7,6 @@ import {Errors} from '../libraries/helpers/Errors.sol';
 import {ReserveConfiguration} from '../libraries/configuration/ReserveConfiguration.sol';
 import {PoolLogic} from '../libraries/logic/PoolLogic.sol';
 import {ReserveLogic} from '../libraries/logic/ReserveLogic.sol';
-import {EModeLogic} from '../libraries/logic/EModeLogic.sol';
 import {SupplyLogic} from '../libraries/logic/SupplyLogic.sol';
 import {FlashLoanLogic} from '../libraries/logic/FlashLoanLogic.sol';
 import {BorrowLogic} from '../libraries/logic/BorrowLogic.sol';
@@ -125,6 +124,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
     SupplyLogic.executeSupply(
       _reserves,
       _reservesList,
+      _eModeCategories,
       _usersConfig[onBehalfOf],
       DataTypes.ExecuteSupplyParams({
         user: _msgSender(),
@@ -132,7 +132,8 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
         interestRateStrategyAddress: RESERVE_INTEREST_RATE_STRATEGY,
         amount: amount,
         onBehalfOf: onBehalfOf,
-        referralCode: referralCode
+        referralCode: referralCode,
+        supplierEModeCategory: _usersEModeCategory[onBehalfOf]
       })
     );
   }
@@ -162,6 +163,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
     SupplyLogic.executeSupply(
       _reserves,
       _reservesList,
+      _eModeCategories,
       _usersConfig[onBehalfOf],
       DataTypes.ExecuteSupplyParams({
         user: _msgSender(),
@@ -169,7 +171,8 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
         interestRateStrategyAddress: RESERVE_INTEREST_RATE_STRATEGY,
         amount: amount,
         onBehalfOf: onBehalfOf,
-        referralCode: referralCode
+        referralCode: referralCode,
+        supplierEModeCategory: _usersEModeCategory[onBehalfOf]
       })
     );
   }
@@ -578,8 +581,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
     address from,
     address to,
     uint256 scaledAmount,
-    uint256 scaledBalanceFromBefore,
-    uint256 scaledBalanceToBefore
+    uint256 scaledBalanceFromBefore
   ) external virtual override {
     require(_msgSender() == _reserves[asset].aTokenAddress, Errors.CallerNotAToken());
     SupplyLogic.executeFinalizeTransfer(
@@ -593,7 +595,6 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
         to: to,
         scaledAmount: scaledAmount,
         scaledBalanceFromBefore: scaledBalanceFromBefore,
-        scaledBalanceToBefore: scaledBalanceToBefore,
         oracle: ADDRESSES_PROVIDER.getPriceOracle(),
         fromEModeCategory: _usersEModeCategory[from]
       })
@@ -689,6 +690,16 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
   }
 
   /// @inheritdoc IPool
+  function configureEModeCategoryLtvzeroBitmap(
+    uint8 id,
+    uint128 ltvzeroBitmap
+  ) external virtual override onlyPoolConfigurator {
+    // category 0 is reserved for volatile heterogeneous assets and it's always disabled
+    require(id != 0, Errors.EModeCategoryReserved());
+    _eModeCategories[id].ltvzeroBitmap = ltvzeroBitmap;
+  }
+
+  /// @inheritdoc IPool
   function getEModeCategoryData(
     uint8 id
   ) external view virtual override returns (DataTypes.EModeCategoryLegacy memory) {
@@ -728,8 +739,13 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
   }
 
   /// @inheritdoc IPool
+  function getEModeCategoryLtvzeroBitmap(uint8 id) external view returns (uint128) {
+    return _eModeCategories[id].ltvzeroBitmap;
+  }
+
+  /// @inheritdoc IPool
   function setUserEMode(uint8 categoryId) external virtual override {
-    EModeLogic.executeSetUserEMode(
+    SupplyLogic.executeSetUserEMode(
       _reserves,
       _reservesList,
       _eModeCategories,
@@ -789,6 +805,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
     SupplyLogic.executeSupply(
       _reserves,
       _reservesList,
+      _eModeCategories,
       _usersConfig[onBehalfOf],
       DataTypes.ExecuteSupplyParams({
         user: _msgSender(),
@@ -796,7 +813,8 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
         interestRateStrategyAddress: RESERVE_INTEREST_RATE_STRATEGY,
         amount: amount,
         onBehalfOf: onBehalfOf,
-        referralCode: referralCode
+        referralCode: referralCode,
+        supplierEModeCategory: _usersEModeCategory[onBehalfOf]
       })
     );
   }
@@ -862,7 +880,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
     uint8 categoryId,
     address onBehalfOf
   ) external override onlyPositionManager(onBehalfOf) {
-    EModeLogic.executeSetUserEMode(
+    SupplyLogic.executeSetUserEMode(
       _reserves,
       _reservesList,
       _eModeCategories,
@@ -905,11 +923,6 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
   /// @inheritdoc IPool
   function getBorrowLogic() external pure returns (address) {
     return address(BorrowLogic);
-  }
-
-  /// @inheritdoc IPool
-  function getEModeLogic() external pure returns (address) {
-    return address(EModeLogic);
   }
 
   /// @inheritdoc IPool

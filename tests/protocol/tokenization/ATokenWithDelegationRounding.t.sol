@@ -60,8 +60,8 @@ contract ATokenWithDelegationRoundingTest is TestnetProcedures {
 
     AaveSetters.setLiquidityIndex(report.poolProxy, underlyingAsset, 1e27);
 
-    _supplyAndEnableAsCollateral({user: alice, amount: aliceSupplyAmount, asset: underlyingAsset});
-    _supplyAndEnableAsCollateral({user: bob, amount: bobSupplyAmount, asset: underlyingAsset});
+    _supplyAndEnableAsCollateral(underlyingAsset, aliceSupplyAmount, alice);
+    _supplyAndEnableAsCollateral(underlyingAsset, bobSupplyAmount, bob);
 
     aliceScaledBalance = aliceSupplyAmount;
     bobScaledBalance = bobSupplyAmount;

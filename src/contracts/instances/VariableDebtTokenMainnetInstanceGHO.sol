@@ -10,7 +10,7 @@ import {VariableDebtToken, IPool, IInitializableDebtToken, Errors} from '../prot
  * @notice Instance of the variable debt token for the Aave protocol for GHO token in Mainnet
  */
 contract VariableDebtTokenMainnetInstanceGHO is VariableDebtToken {
-  uint256 public constant DEBT_TOKEN_REVISION = 5;
+  uint256 public constant DEBT_TOKEN_REVISION = 6;
 
   constructor(IPool pool, address rewardsController) VariableDebtToken(pool, rewardsController) {}
 

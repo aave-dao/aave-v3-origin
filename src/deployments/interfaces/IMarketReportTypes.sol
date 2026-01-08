@@ -91,7 +91,6 @@ struct MarketReport {
 struct LibrariesReport {
   address borrowLogic;
   address configuratorLogic;
-  address eModeLogic;
   address flashLoanLogic;
   address liquidationLogic;
   address poolLogic;

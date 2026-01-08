@@ -17,6 +17,41 @@ abstract contract Invariants is BaseInvariants {
   //                                     BASE INVARIANTS                                       //
   ///////////////////////////////////////////////////////////////////////////////////////////////
 
+  function echidna_BASE_INVARIANT_A() public returns (bool) {
+    for (uint256 i; i < debtTokens.length; ++i) {
+      assert_BASE_INVARIANT_A(IERC20(debtTokens[i]));
+    }
+    return true;
+  }
+
+  function echidna_BASE_INVARIANT_A_EXACT() public returns (bool) {
+    for (uint256 i; i < debtTokens.length; ++i) {
+      assert_BASE_INVARIANT_A_EXACT(IERC20(debtTokens[i]));
+    }
+    return true;
+  }
+
+  function echidna_BASE_INVARIANT_B() public returns (bool) {
+    for (uint256 i; i < aTokens.length; ++i) {
+      assert_BASE_INVARIANT_B(IERC20(aTokens[i]));
+    }
+    return true;
+  }
+
+  function echidna_BASE_INVARIANT_B_EXACT() public returns (bool) {
+    for (uint256 i; i < aTokens.length; ++i) {
+      assert_BASE_INVARIANT_B_EXACT(IERC20(aTokens[i]));
+    }
+    return true;
+  }
+
+  function echidna_BASE_INVARIANT_C() public returns (bool) {
+    for (uint256 i; i < baseAssets.length; ++i) {
+      assert_BASE_INVARIANT_C(baseAssets[i]);
+    }
+    return true;
+  }
+
   function echidna_BASE_INVARIANT_D() public returns (bool) {
     for (uint256 i; i < baseAssets.length; ++i) {
       assert_BASE_INVARIANT_D(baseAssets[i]);
@@ -27,6 +62,13 @@ abstract contract Invariants is BaseInvariants {
   function echidna_BASE_INVARIANT_E() public returns (bool) {
     for (uint256 i; i < baseAssets.length; ++i) {
       assert_BASE_INVARIANT_E(baseAssets[i]);
+    }
+    return true;
+  }
+
+  function echidna_BASE_INVARIANT_F() public returns (bool) {
+    for (uint256 i; i < baseAssets.length; ++i) {
+      assert_BASE_INVARIANT_F(baseAssets[i]);
     }
     return true;
   }
@@ -49,10 +91,31 @@ abstract contract Invariants is BaseInvariants {
     return true;
   }
 
+  function echidna_BORROWING_INVARIANT_C() public returns (bool) {
+    for (uint256 i; i < baseAssets.length; ++i) {
+      assert_BORROWING_INVARIANT_C(baseAssets[i]);
+    }
+    return true;
+  }
+
   function echidna_BORROWING_INVARIANT_D() public returns (bool) {
     for (uint256 i; i < baseAssets.length; ++i) {
       assert_BORROWING_INVARIANT_D(baseAssets[i]);
     }
+    return true;
+  }
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////
+  //                                         ORACLE                                            //
+  ///////////////////////////////////////////////////////////////////////////////////////////////
+
+  function echidna_ORACLE_INVARIANT_A() public returns (bool) {
+    assert_ORACLE_INVARIANT_A();
+    return true;
+  }
+
+  function echidna_ORACLE_INVARIANT_B() public returns (bool) {
+    assert_ORACLE_INVARIANT_B();
     return true;
   }
 

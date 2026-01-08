@@ -86,7 +86,7 @@ contract RateStrategyBaseTests is RateStrategyBase {
     vm.prank(carol);
     contracts.poolProxy.supply(tokenList.usdx, 100_000e6, carol, 0);
 
-    _supplyAndEnableAsCollateral(alice, 1e8, tokenList.wbtc);
+    _supplyAndEnableAsCollateral(tokenList.wbtc, 1e8, alice);
 
     vm.mockCall(
       address(rateStrategy),

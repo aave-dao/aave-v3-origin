@@ -50,7 +50,7 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     assertEq(address(varDebtToken.POOL()), address(report.poolProxy));
     assertEq(address(varDebtToken.getIncentivesController()), report.rewardsControllerProxy);
     assertEq(varDebtToken.UNDERLYING_ASSET_ADDRESS(), address(0));
-    assertEq(varDebtToken.DEBT_TOKEN_REVISION(), 0x4);
+    assertEq(varDebtToken.DEBT_TOKEN_REVISION(), 0x5);
 
     return varDebtToken;
   }
@@ -101,7 +101,7 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     assertEq(address(varDebtToken.POOL()), address(report.poolProxy));
     assertEq(address(varDebtToken.getIncentivesController()), report.rewardsControllerProxy);
     assertEq(varDebtToken.UNDERLYING_ASSET_ADDRESS(), listing.underlyingAsset);
-    assertEq(varDebtToken.DEBT_TOKEN_REVISION(), 0x4);
+    assertEq(varDebtToken.DEBT_TOKEN_REVISION(), 0x5);
 
     return varDebtToken;
   }
@@ -131,6 +131,36 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
         listing.params
       )
     );
+  }
+
+  function test_renounceDelegation() public {
+    uint256 approveDelegationAmount = 1e18;
+
+    vm.expectEmit(address(variableDebtToken));
+    emit ICreditDelegationToken.BorrowAllowanceDelegated(
+      alice,
+      bob,
+      variableDebtToken.UNDERLYING_ASSET_ADDRESS(),
+      approveDelegationAmount
+    );
+
+    vm.prank(alice);
+    variableDebtToken.approveDelegation(bob, approveDelegationAmount);
+
+    assertEq(variableDebtToken.borrowAllowance(alice, bob), approveDelegationAmount);
+
+    vm.expectEmit(address(variableDebtToken));
+    emit ICreditDelegationToken.BorrowAllowanceDelegated(
+      alice,
+      bob,
+      variableDebtToken.UNDERLYING_ASSET_ADDRESS(),
+      0
+    );
+
+    vm.prank(bob);
+    variableDebtToken.renounceDelegation(alice);
+
+    assertEq(variableDebtToken.borrowAllowance(alice, bob), 0);
   }
 
   function test_mint_variableDebt_caller_alice(TestVars memory t) public {
@@ -265,6 +295,9 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
 
     vm.expectRevert(abi.encodeWithSelector(Errors.OperationNotSupported.selector));
     varDebtToken.transferFrom(address(0), address(0), 0);
+
+    vm.expectRevert(abi.encodeWithSelector(Errors.OperationNotSupported.selector));
+    varDebtToken.renounceAllowance(address(0));
 
     vm.expectRevert(abi.encodeWithSelector(Errors.OperationNotSupported.selector));
     varDebtToken.increaseAllowance(address(0), 0);

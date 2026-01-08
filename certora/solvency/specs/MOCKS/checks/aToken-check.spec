@@ -104,13 +104,10 @@ function run_parametric_with_cvl_equivalent(method f, env e) {
         uint256 u1; uint256 u2; uint256 u3;
         aTokenBurnCVL(aToken, a1, a2, u1, u2, u3);
         aToken.burn(e, a1, a2, u1, u2, u3);
-        /*    } else if (f.selector == sig:handleRepayment(address,address,uint256).selector) {
-        // it's literally a no-op
-        address a1;
-        address a2;
-        uint256 u1;
-        aTokenHandleRepaymentCVL(aToken, a1, a2, u1);
-        aToken.handleRepayment(e, a1, a2, u1);*/
+    } else if (f.selector == sig:renounceAllowance(address).selector) {
+        address a; 
+        aTokenRenounceAllowanceCVL(aToken, a, e);
+        aToken.renounceAllowance(e, a);
     } else if (f.selector == initialize_method_sig()) {
         // we're running all of our equivalence rules on an 'initialized' state of the AToken
         dont_care();

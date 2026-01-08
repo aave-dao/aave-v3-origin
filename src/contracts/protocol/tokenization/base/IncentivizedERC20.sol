@@ -150,7 +150,7 @@ abstract contract IncentivizedERC20 is Context, IERC20Detailed {
 
   /// @inheritdoc IERC20
   function approve(address spender, uint256 amount) external virtual override returns (bool) {
-    _approve(_msgSender(), spender, amount);
+    _approve({owner: _msgSender(), spender: spender, amount: amount, emitEvent: true});
     return true;
   }
 
@@ -161,24 +161,46 @@ abstract contract IncentivizedERC20 is Context, IERC20Detailed {
     uint256 amount
   ) external virtual override returns (bool) {
     uint120 castAmount = amount.toUint120();
-    _approve(sender, _msgSender(), _allowances[sender][_msgSender()] - castAmount);
+    _spendAllowance({
+      owner: sender,
+      spender: _msgSender(),
+      amount: castAmount,
+      correctedAmount: castAmount
+    });
     _transfer(sender, recipient, castAmount);
     return true;
   }
 
   /**
+   * @notice Sets the allowance of the caller to spend `owner`'s tokens to 0.
+   * @param owner The address whose tokens are being renounced.
+   */
+  function renounceAllowance(address owner) external virtual {
+    _approve({owner: owner, spender: _msgSender(), amount: 0, emitEvent: true});
+  }
+
+  /**
    * @notice Increases the allowance of spender to spend _msgSender() tokens
+   * @dev This function is deprecated and will be removed in a future version.
+   * @custom:deprecated
    * @param spender The user allowed to spend on behalf of _msgSender()
    * @param addedValue The amount being added to the allowance
    * @return `true`
    */
   function increaseAllowance(address spender, uint256 addedValue) external virtual returns (bool) {
-    _approve(_msgSender(), spender, _allowances[_msgSender()][spender] + addedValue);
+    _approve({
+      owner: _msgSender(),
+      spender: spender,
+      amount: _allowances[_msgSender()][spender] + addedValue,
+      emitEvent: true
+    });
     return true;
   }
 
   /**
    * @notice Decreases the allowance of spender to spend _msgSender() tokens
+   * @dev This function is deprecated and will be removed in a future version.
+   * @custom:deprecated
    * @param spender The user allowed to spend on behalf of _msgSender()
    * @param subtractedValue The amount being subtracted to the allowance
    * @return `true`
@@ -187,7 +209,14 @@ abstract contract IncentivizedERC20 is Context, IERC20Detailed {
     address spender,
     uint256 subtractedValue
   ) external virtual returns (bool) {
-    _approve(_msgSender(), spender, _allowances[_msgSender()][spender] - subtractedValue);
+    uint256 currentAllowance = _allowances[_msgSender()][spender];
+
+    _approve({
+      owner: _msgSender(),
+      spender: spender,
+      amount: currentAllowance - subtractedValue,
+      emitEvent: true
+    });
     return true;
   }
 
@@ -195,6 +224,8 @@ abstract contract IncentivizedERC20 is Context, IERC20Detailed {
    * @dev Updates `owner`'s allowance for `spender` based on spent `value`.
    *
    * Revert if not enough allowance is available.
+   *
+   * Doesn't emit the Approval event.
    *
    * @param owner The owner of the tokens
    * @param spender The user allowed to spend on behalf of owner
@@ -212,8 +243,18 @@ abstract contract IncentivizedERC20 is Context, IERC20Detailed {
       revert ERC20InsufficientAllowance(spender, currentAllowance, amount);
     }
 
+    if (currentAllowance == type(uint256).max) {
+      return;
+    }
+
     uint256 consumption = currentAllowance >= correctedAmount ? correctedAmount : currentAllowance;
-    _approve(owner, spender, currentAllowance - consumption);
+
+    _approve({
+      owner: owner,
+      spender: spender,
+      amount: currentAllowance - consumption,
+      emitEvent: false
+    });
   }
 
   /**
@@ -242,10 +283,19 @@ abstract contract IncentivizedERC20 is Context, IERC20Detailed {
    * @param owner The address owning the tokens
    * @param spender The address approved for spending
    * @param amount The amount of tokens to approve spending of
+   * @param emitEvent Whether to emit the Approval event
    */
-  function _approve(address owner, address spender, uint256 amount) internal virtual {
+  function _approve(
+    address owner,
+    address spender,
+    uint256 amount,
+    bool emitEvent
+  ) internal virtual {
     _allowances[owner][spender] = amount;
-    emit Approval(owner, spender, amount);
+
+    if (emitEvent) {
+      emit Approval(owner, spender, amount);
+    }
   }
 
   /**

@@ -5,6 +5,7 @@ import {SafeCast} from 'openzeppelin-contracts/contracts/utils/math/SafeCast.sol
 import {EngineFlags} from '../EngineFlags.sol';
 import {DataTypes} from '../../../protocol/libraries/types/DataTypes.sol';
 import {PercentageMath} from '../../../protocol/libraries/math/PercentageMath.sol';
+import {EModeConfiguration} from '../../../protocol/libraries/configuration/EModeConfiguration.sol';
 import {IAaveV3ConfigEngine as IEngine, IPoolConfigurator, IPool} from '../IAaveV3ConfigEngine.sol';
 
 library EModeEngine {
@@ -90,6 +91,24 @@ library EModeEngine {
           updates[i].asset,
           updates[i].eModeCategory,
           EngineFlags.toBool(updates[i].borrowable)
+        );
+      }
+      if (updates[i].ltvzero != EngineFlags.KEEP_CURRENT) {
+        if (updates[i].ltvzero == EngineFlags.DISABLED) {
+          // Disabling an already disabled asset, will revert.
+          // To still allow configuring DISABLED instead of KEEP_CURRENT, which can make sense e.g. in the initial creation pr,
+          // This checks skips the update.
+          uint128 ltvzeroBitmap = pool.getEModeCategoryLtvzeroBitmap(updates[i].eModeCategory);
+          DataTypes.ReserveDataLegacy memory reserveData = pool.getReserveData(updates[i].asset);
+          if (!EModeConfiguration.isReserveEnabledOnBitmap(ltvzeroBitmap, reserveData.id)) {
+            continue;
+          }
+        }
+
+        poolConfigurator.setAssetLtvzeroInEMode(
+          updates[i].asset,
+          updates[i].eModeCategory,
+          EngineFlags.toBool(updates[i].ltvzero)
         );
       }
     }

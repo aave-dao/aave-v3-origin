@@ -12,7 +12,7 @@ methods {
   function _.getReserveNormalizedIncome(address u) external => INDEX_ray expect uint256 ALL;
   function balanceOf(address) external returns (uint256) envfree;
   function additionalData(address) external returns uint128 envfree;
-  function _.finalizeTransfer(address, address, address, uint256, uint256, uint256) external => NONDET;
+  function _.finalizeTransfer(address, address, address, uint256, uint256) external => NONDET;
 
   function scaledTotalSupply() external returns (uint256) envfree;
   function scaledBalanceOf(address) external returns (uint256) envfree;

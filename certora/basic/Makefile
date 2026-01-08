@@ -2,6 +2,9 @@ default: help
 
 PATCH         = applyHarness.patch
 CONTRACTS_DIR = ../../src/
+LIB_DIR       = ../../lib
+MUNGED_SRC    = munged/src
+MUNGED_LIB    = munged/lib
 MUNGED_DIR    = munged
 
 help:
@@ -12,13 +15,18 @@ help:
 
 munged:  $(wildcard $(CONTRACTS_DIR)/*.sol) $(PATCH)
 	rm -rf $@
-	cp -r $(CONTRACTS_DIR) $@
+	mkdir $@
+	cp -r ../../lib $@
+	cp -r ../../src $@
 	patch -p0 -d $@ < $(PATCH)
 
 record:
-	diff -ruN $(CONTRACTS_DIR) $(MUNGED_DIR) | sed 's+\.\./src/++g' | sed 's+munged/++g' > $(PATCH)
+	mkdir tmp_make_r
+	cp -r $(LIB_DIR) tmp_make_r
+	cp -r $(CONTRACTS_DIR) tmp_make_r
+	diff -ruN tmp_make_r $(MUNGED_DIR) | sed 's+tmp_make_r/++g' | sed 's+$(MUNGED_DIR)/++g' > $(PATCH)
+	rm -rf tmp_make_r
 
 clean:
 	git clean -fdX
 	touch $(PATCH)
-

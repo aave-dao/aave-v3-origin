@@ -7,16 +7,11 @@ import {DefaultBeforeAfterHooks} from './DefaultBeforeAfterHooks.t.sol';
 /// @title HookAggregator
 /// @notice Helper contract to aggregate all before / after hook contracts, inherited on each handler
 abstract contract HookAggregator is DefaultBeforeAfterHooks {
-  /// @notice Initializer for the hooks
-  function _setUpHooks() internal {
-    _setUpDefaultHooks();
-  }
-
   /// @notice Modular hook selector, per module
   function _before() internal {
     // RESET
-    _resetHookValues(defaultVarsBefore);
-    _resetHookValues(defaultVarsAfter);
+    _resetSnapshot(snapshotGlobalVarsBefore);
+    _resetSnapshot(snapshotGlobalVarsAfter);
 
     _defaultHooksBefore();
   }
@@ -27,9 +22,6 @@ abstract contract HookAggregator is DefaultBeforeAfterHooks {
 
     // POST-CONDITIONS
     _checkPostConditions();
-
-    // RESET
-    _resetTargetAsset();
   }
 
   /// @notice Postconditions for the handlers
@@ -58,15 +50,5 @@ abstract contract HookAggregator is DefaultBeforeAfterHooks {
 
     // DEFICIT
     assert_DM_GPOST_A();
-  }
-
-  /// @notice cleanup certain values on hook structs
-  function _resetHookValues(DefaultVars storage _defaultVars) internal {
-    delete _defaultVars.totalSupply;
-    delete _defaultVars.scaledTotalSupply;
-    delete _defaultVars.supplyCap;
-    delete _defaultVars.borrowCap;
-    delete _defaultVars.accruedToTreasury;
-    delete _defaultVars.reserveDeficit;
   }
 }

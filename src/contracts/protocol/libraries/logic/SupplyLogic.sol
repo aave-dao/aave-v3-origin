@@ -41,6 +41,7 @@ library SupplyLogic {
   function executeSupply(
     mapping(address => DataTypes.ReserveData) storage reservesData,
     mapping(uint256 => address) storage reservesList,
+    mapping(uint8 => DataTypes.EModeCategory) storage eModeCategories,
     DataTypes.UserConfigurationMap storage userConfig,
     DataTypes.ExecuteSupplyParams memory params
   ) external {
@@ -73,12 +74,13 @@ library SupplyLogic {
     if (isFirstSupply) {
       if (
         ValidationLogic.validateAutomaticUseAsCollateral(
-          params.user,
           reservesData,
           reservesList,
+          eModeCategories,
           userConfig,
           reserveCache.reserveConfiguration,
-          reserveCache.aTokenAddress
+          params.asset,
+          params.supplierEModeCategory
         )
       ) {
         userConfig.setUsingAsCollateral(reserve.id, params.asset, params.onBehalfOf, true);
@@ -181,8 +183,6 @@ library SupplyLogic {
   /**
    * @notice Validates a transfer of aTokens. The sender is subjected to health factor validation to avoid
    * collateralization constraints violation.
-   * @dev Emits the `ReserveUsedAsCollateralEnabled()` event for the `to` account, if the asset is being activated as
-   * collateral.
    * @dev In case the `from` user transfers everything, `ReserveUsedAsCollateralDisabled()` is emitted for `from`.
    * @param reservesData The state of all the reserves
    * @param reservesList The addresses of all the active reserves
@@ -223,22 +223,6 @@ library SupplyLogic {
           );
         }
       }
-
-      if (params.scaledBalanceToBefore == 0) {
-        DataTypes.UserConfigurationMap storage toConfig = usersConfig[params.to];
-        if (
-          ValidationLogic.validateAutomaticUseAsCollateral(
-            params.from,
-            reservesData,
-            reservesList,
-            toConfig,
-            reserve.configuration,
-            reserve.aTokenAddress
-          )
-        ) {
-          toConfig.setUsingAsCollateral(reserveId, params.asset, params.to, true);
-        }
-      }
     }
   }
 
@@ -277,7 +261,7 @@ library SupplyLogic {
     if (useAsCollateral == userConfig.isUsingAsCollateral(reserve.id)) return;
 
     if (useAsCollateral) {
-      // When enabeling a reserve as collateral, we want to ensure the user has at least some collateral
+      // When enabling a reserve as collateral, we want to ensure the user has at least some collateral
       require(
         IAToken(reserve.aTokenAddress).scaledBalanceOf(user) != 0,
         Errors.UnderlyingBalanceZero()
@@ -287,8 +271,11 @@ library SupplyLogic {
         ValidationLogic.validateUseAsCollateral(
           reservesData,
           reservesList,
+          eModeCategories,
           userConfig,
-          reserveConfigCached
+          reserveConfigCached,
+          asset,
+          userEModeCategory
         ),
         Errors.UserInIsolationModeOrLtvZero()
       );
@@ -307,5 +294,52 @@ library SupplyLogic {
         userEModeCategory
       );
     }
+  }
+
+  /**
+   * @notice Updates the user efficiency mode category
+   * @dev Will revert if user is borrowing non-compatible asset or change will drop HF < HEALTH_FACTOR_LIQUIDATION_THRESHOLD
+   * @dev Emits the `UserEModeSet` event
+   * @param reservesData The state of all the reserves
+   * @param reservesList The addresses of all the active reserves
+   * @param eModeCategories The configuration of all the efficiency mode categories
+   * @param usersEModeCategory The state of all users efficiency mode category
+   * @param userConfig The user configuration mapping that tracks the supplied/borrowed assets
+   * @param user The selected user
+   * @param oracle The address of the oracle
+   * @param categoryId The selected eMode categoryId
+   */
+  function executeSetUserEMode(
+    mapping(address => DataTypes.ReserveData) storage reservesData,
+    mapping(uint256 => address) storage reservesList,
+    mapping(uint8 => DataTypes.EModeCategory) storage eModeCategories,
+    mapping(address => uint8) storage usersEModeCategory,
+    DataTypes.UserConfigurationMap storage userConfig,
+    address user,
+    address oracle,
+    uint8 categoryId
+  ) external {
+    if (usersEModeCategory[user] == categoryId) return;
+
+    ValidationLogic.validateSetUserEMode(
+      reservesData,
+      reservesList,
+      eModeCategories,
+      userConfig,
+      categoryId
+    );
+
+    usersEModeCategory[user] = categoryId;
+
+    ValidationLogic.validateHealthFactor(
+      reservesData,
+      reservesList,
+      eModeCategories,
+      userConfig,
+      user,
+      categoryId,
+      oracle
+    );
+    emit IPool.UserEModeSet(user, categoryId);
   }
 }

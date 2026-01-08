@@ -498,11 +498,7 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
   }
 
   function _fundAToken(uint256 assets, address receiver) internal {
-    _fundUnderlying(assets, receiver);
-    vm.startPrank(receiver);
-    IERC20(underlying).approve(address(contracts.poolProxy), assets);
-    contracts.poolProxy.deposit(underlying, assets, receiver, 0);
-    vm.stopPrank();
+    _supply(underlying, assets, receiver);
   }
 
   function _fund4626(uint256 assets, address receiver) internal returns (uint256) {

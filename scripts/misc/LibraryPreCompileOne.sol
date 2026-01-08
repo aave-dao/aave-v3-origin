@@ -22,7 +22,7 @@ contract LibraryPreCompileOne is FfiUtils, Script, DeployUtils {
     bool found = _librariesPathExists();
 
     if (found) {
-      address lastLib = _getLatestLibraryAddress();
+      address lastLib = _getBorrowLibraryAddress();
       if (lastLib.code.length > 0) {
         console.log('[LibraryPreCompileOne] Library detected. Skipping re-deployment.');
         return;
@@ -75,10 +75,7 @@ contract LibraryPreCompileOne is FfiUtils, Script, DeployUtils {
           vm.toString(report.borrowLogic),
           ',',
           'src/contracts/protocol/libraries/logic/ConfiguratorLogic.sol:ConfiguratorLogic:',
-          vm.toString(report.configuratorLogic),
-          ',',
-          'src/contracts/protocol/libraries/logic/EModeLogic.sol:EModeLogic:',
-          vm.toString(report.eModeLogic)
+          vm.toString(report.configuratorLogic)
         )
       );
   }

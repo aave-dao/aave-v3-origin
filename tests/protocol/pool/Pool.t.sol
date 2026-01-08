@@ -156,7 +156,7 @@ contract PoolTests is TestnetProcedures {
   }
 
   function test_setUserUseReserveAsCollateralOnBehalfOf_false() public {
-    _supplyAndEnableAsCollateral(alice, 1e6, tokenList.usdx);
+    _supplyAndEnableAsCollateral(tokenList.usdx, 1e6, alice);
 
     vm.prank(alice);
     pool.approvePositionManager(address(this), true);
@@ -189,7 +189,7 @@ contract PoolTests is TestnetProcedures {
   ) public {
     vm.assume(caller != address(this) && caller != report.poolAddressesProvider);
 
-    _supplyAndEnableAsCollateral(alice, 1e6, tokenList.usdx);
+    _supplyAndEnableAsCollateral(tokenList.usdx, 1e6, alice);
 
     vm.prank(alice);
     pool.approvePositionManager(address(this), true);
@@ -604,7 +604,9 @@ contract PoolTests is TestnetProcedures {
     pool.supply(tokenList.wbtc, amount, alice, 0);
     pool.borrow(tokenList.weth, borrowAmount, 2, 0, alice);
 
-    vm.expectRevert(abi.encodeWithSelector(Errors.NotBorrowableInEMode.selector));
+    vm.expectRevert(
+      abi.encodeWithSelector(Errors.InvalidDebtInEmode.selector, tokenList.weth, ct2.id)
+    );
 
     pool.setUserEMode(ct2.id);
     vm.stopPrank();
@@ -668,10 +670,6 @@ contract PoolTests is TestnetProcedures {
     assertNotEq(pool.getBorrowLogic(), address(0));
   }
 
-  function test_getEModeLogic() public view {
-    assertNotEq(pool.getEModeLogic(), address(0));
-  }
-
   function test_getLiquidationLogic() public view {
     assertNotEq(pool.getLiquidationLogic(), address(0));
   }
@@ -685,7 +683,6 @@ contract PoolTests is TestnetProcedures {
   }
 
   function _seedUsdxLiquidity() internal {
-    vm.prank(carol);
-    pool.supply(tokenList.usdx, 50_000e6, carol, 0);
+    _supply(tokenList.usdx, 50_000e6, carol);
   }
 }

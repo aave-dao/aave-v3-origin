@@ -57,7 +57,7 @@ contract PoolLiquidationCloseFactorTests is TestnetProcedures {
   function test_hf_helper(uint256 desiredHf) public {
     // bounding to 0.01 as otherwise required amount spiral out of control
     desiredHf = bound(desiredHf, 0.01 ether, 1 ether);
-    _supplyToPool(tokenList.weth, bob, 10 ether);
+    _supply(tokenList.weth, 10 ether, bob);
     _borrowToBeBelowHf(bob, tokenList.usdx, desiredHf);
     (, , , , , uint256 hf) = contracts.poolProxy.getUserAccountData(bob);
     assertLt(hf, desiredHf);
@@ -78,7 +78,7 @@ contract PoolLiquidationCloseFactorTests is TestnetProcedures {
       10 ** IERC20Detailed(collateralAsset).decimals()) / oraclePrice;
     supplyAmount = bound(supplyAmount, lowerBound, 1_000 ether);
     desiredHf = bound(desiredHf, 0.01 ether, 0.95 ether);
-    _supplyToPool(collateralAsset, bob, supplyAmount);
+    _supply(collateralAsset, supplyAmount, bob);
     _borrowToBeBelowHf(bob, tokenList.usdx, desiredHf);
     _liquidateAndValidateCloseFactor(collateralAsset, tokenList.usdx, type(uint256).max, 1e4);
   }
@@ -96,7 +96,7 @@ contract PoolLiquidationCloseFactorTests is TestnetProcedures {
       10 ** IERC20Detailed(collateralAsset).decimals()) / oraclePrice;
     supplyAmount = bound(supplyAmount, 0.01 ether, upperBound);
     desiredHf = bound(desiredHf, 0.96 ether, 0.99 ether);
-    _supplyToPool(collateralAsset, bob, supplyAmount);
+    _supply(collateralAsset, supplyAmount, bob);
     _borrowToBeBelowHf(bob, tokenList.usdx, desiredHf);
     _liquidateAndValidateCloseFactor(collateralAsset, tokenList.usdx, type(uint256).max, 1e4);
   }
@@ -114,7 +114,7 @@ contract PoolLiquidationCloseFactorTests is TestnetProcedures {
       10 ** IERC20Detailed(collateralAsset).decimals()) / oraclePrice;
     supplyAmount = bound(supplyAmount, lowerBound * 2, 10_000 ether);
     desiredHf = bound(desiredHf, 0.96 ether, 0.99 ether);
-    _supplyToPool(collateralAsset, bob, supplyAmount);
+    _supply(collateralAsset, supplyAmount, bob);
     _borrowToBeBelowHf(bob, tokenList.usdx, desiredHf);
     _liquidateAndValidateCloseFactor(collateralAsset, tokenList.usdx, type(uint256).max, 0.5e4);
   }
@@ -136,15 +136,15 @@ contract PoolLiquidationCloseFactorTests is TestnetProcedures {
     external
   {
     // supply slightly less then threshold as usdx and weth collateral
-    _supplyToPool(
+    _supply(
       tokenList.usdx,
-      bob,
-      (LiquidationLogic.MIN_BASE_MAX_CLOSE_FACTOR_THRESHOLD - 1e8) / 1e2
+      (LiquidationLogic.MIN_BASE_MAX_CLOSE_FACTOR_THRESHOLD - 1e8) / 1e2,
+      bob
     );
     uint256 oraclePrice = contracts.aaveOracle.getAssetPrice(tokenList.weth);
     uint256 supplyLtThreshold = ((LiquidationLogic.MIN_BASE_MAX_CLOSE_FACTOR_THRESHOLD - 1e8) *
       10 ** IERC20Detailed(tokenList.weth).decimals()) / oraclePrice;
-    _supplyToPool(tokenList.weth, bob, supplyLtThreshold);
+    _supply(tokenList.weth, supplyLtThreshold, bob);
     // borrow above threshold
     _borrowToBeBelowHf(bob, tokenList.usdx, 0.97 ether);
     (, uint256 debtInBaseCurrency, , , , uint256 hf) = contracts.poolProxy.getUserAccountData(bob);
@@ -156,9 +156,9 @@ contract PoolLiquidationCloseFactorTests is TestnetProcedures {
   function test_shouldRevertIfCloseFactorIs100ButCollateralIsBelowThreshold() external {
     uint256 usdxSupply = LiquidationLogic.MIN_BASE_MAX_CLOSE_FACTOR_THRESHOLD / 1e2;
     // supply collateral below threshold
-    _supplyToPool(tokenList.usdx, bob, usdxSupply);
+    _supply(tokenList.usdx, usdxSupply, bob);
     // supply differe collateral to increase borrowing power
-    _supplyToPool(tokenList.weth, bob, 4 ether);
+    _supply(tokenList.weth, 4 ether, bob);
     // borrow enough so close factor is at 100%
     _borrowToBeBelowHf(bob, tokenList.usdx, 0.93 ether);
 
@@ -181,7 +181,7 @@ contract PoolLiquidationCloseFactorTests is TestnetProcedures {
   // the liquidationprovider should always return valid values
   function test_liquidationdataprovider_edge_range() external {
     // borrow supply 4k
-    _supplyToPool(tokenList.usdx, bob, 8000e6);
+    _supply(tokenList.usdx, 8000e6, bob);
     vm.prank(bob);
     contracts.poolProxy.borrow(tokenList.usdx, 4200e6, 2, 0, bob);
     _borrowToBeBelowHf(bob, tokenList.weth, 0.98 ether);
@@ -214,10 +214,10 @@ contract PoolLiquidationCloseFactorTests is TestnetProcedures {
   // the liquidationprovider should always return valid values
   function test_liquidationdataprovider_edge_range_reverse() external {
     // borrow supply 4k
-    _supplyToPool(tokenList.usdx, bob, 4200e6);
+    _supply(tokenList.usdx, 4200e6, bob);
     uint256 amount = (4000e8 * (10 ** IERC20Detailed(tokenList.weth).decimals())) /
       contracts.aaveOracle.getAssetPrice(tokenList.weth);
-    _supplyToPool(tokenList.weth, bob, amount);
+    _supply(tokenList.weth, amount, bob);
     vm.prank(bob);
     _borrowToBeBelowHf(bob, tokenList.usdx, 0.98 ether);
 
@@ -300,23 +300,15 @@ contract PoolLiquidationCloseFactorTests is TestnetProcedures {
   }
 
   function _addBorrowableLiquidity() internal {
-    _supplyToPool(tokenList.weth, whale, 1_000_000e18);
-    _supplyToPool(tokenList.usdx, whale, 1_000_000_000e6);
-    _supplyToPool(tokenList.wbtc, whale, 10_000e8);
+    _supply(tokenList.weth, 1_000_000e18, whale);
+    _supply(tokenList.usdx, 1_000_000_000e6, whale);
+    _supply(tokenList.wbtc, 10_000e8, whale);
   }
 
   function _fundLiquidator() internal {
     deal(tokenList.weth, liquidator, 1_000_000e18);
     deal(tokenList.usdx, liquidator, 1_000_000_000e6);
     deal(tokenList.wbtc, liquidator, 10_000e8);
-  }
-
-  function _supplyToPool(address erc20, address user, uint256 amount) internal {
-    deal(erc20, user, amount);
-    vm.startPrank(user);
-    IERC20(erc20).approve(address(contracts.poolProxy), amount);
-    contracts.poolProxy.supply(erc20, amount, user, 0);
-    vm.stopPrank();
   }
 
   /**
