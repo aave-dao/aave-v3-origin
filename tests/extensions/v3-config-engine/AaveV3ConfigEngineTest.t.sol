@@ -74,8 +74,6 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
       IPool(address(contracts.poolProxy))
     );
 
-    diffReports('preTestEngineListing', 'postTestEngineListing');
-
     ReserveConfig memory expectedAssetConfig = ReserveConfig({
       symbol: '1INCH',
       underlying: asset,
@@ -171,8 +169,6 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
       IPool(address(contracts.poolProxy))
     );
 
-    diffReports('preTestEngineListingCustom', 'postTestEngineListingCustom');
-
     ReserveConfig memory expectedAssetConfig = ReserveConfig({
       symbol: 'PSP',
       underlying: asset,
@@ -259,8 +255,6 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
 
     ReserveConfig memory expectedAssetConfig = _findReserveConfig(allConfigsBefore, asset);
 
-    diffReports('preTestEngineCaps', 'postTestEngineCaps');
-
     expectedAssetConfig.supplyCap = 1_000_000;
     _validateReserveConfig(expectedAssetConfig, allConfigsAfter);
   }
@@ -286,8 +280,6 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
     );
 
     ReserveConfig memory expectedAssetConfig = _findReserveConfig(allConfigsBefore, asset);
-
-    diffReports('preTestEngineCollateral', 'postTestEngineCollateral');
 
     expectedAssetConfig.ltv = 62_00;
     expectedAssetConfig.liquidationThreshold = 72_00;
@@ -343,8 +335,6 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
       IPool(address(contracts.poolProxy))
     );
 
-    diffReports('preTestEngineCollateralNoChange', 'postTestEngineCollateralNoChange');
-
     ReserveConfig memory expectedAssetConfig = _findReserveConfig(allConfigsBefore, asset);
 
     _validateReserveConfig(expectedAssetConfig, allConfigsAfter);
@@ -386,8 +376,6 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
       IPool(address(contracts.poolProxy))
     );
 
-    diffReports('preTestEngineCollateralEdgeBonus', 'postTestEngineCollateralEdgeBonus');
-
     ReserveConfig memory expectedAssetConfig = _findReserveConfig(allConfigsBefore, asset);
     expectedAssetConfig.ltv = 62_00;
     expectedAssetConfig.liquidationThreshold = 90_00;
@@ -414,8 +402,6 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
       'postTestEngineBorrow',
       IPool(address(contracts.poolProxy))
     );
-
-    diffReports('preTestEngineBorrow', 'postTestEngineBorrow');
 
     ReserveConfig memory expectedAssetConfig = _findReserveConfig(allConfigsBefore, asset);
     expectedAssetConfig.reserveFactor = 15_00;
@@ -447,8 +433,6 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
       IPool(address(contracts.poolProxy))
     );
 
-    diffReports('preTestEngineBorrowNoChange', 'postTestEngineBorrowNoChange');
-
     ReserveConfig memory expectedAssetConfig = _findReserveConfig(allConfigsBefore, asset);
 
     _validateReserveConfig(expectedAssetConfig, allConfigsAfter);
@@ -466,8 +450,6 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
     payload.execute();
 
     createConfigurationSnapshot('postTestEngineRates', IPool(address(contracts.poolProxy)));
-
-    diffReports('preTestEngineRates', 'postTestEngineRates');
 
     _validateInterestRateStrategy(
       asset,
@@ -498,8 +480,6 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
 
     createConfigurationSnapshot('postTestEnginePriceFeed', IPool(address(contracts.poolProxy)));
 
-    diffReports('preTestEnginePriceFeed', 'postTestEnginePriceFeed');
-
     _validateAssetSourceOnOracle(
       IPoolAddressesProvider(address(contracts.poolAddressesProvider)),
       asset,
@@ -526,8 +506,6 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
       'postTestEngineEModeCategoryUpdate',
       IPool(address(contracts.poolProxy))
     );
-
-    diffReports('preTestEngineEModeCategoryUpdate', 'postTestEngineEModeCategoryUpdate');
 
     DataTypes.EModeCategory memory prevEmodeCategoryData;
     prevEmodeCategoryData.ltv = 97_40;
@@ -594,8 +572,6 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
       IPool(address(contracts.poolProxy))
     );
 
-    diffReports('preTestEngineEModeCategoryNoChange', 'postTestEngineEModeCategoryNoChange');
-
     DataTypes.EModeCategory memory prevEmodeCategoryData;
     prevEmodeCategoryData.ltv = eModeCategoryDataBefore.ltv;
     prevEmodeCategoryData.liquidationThreshold = eModeCategoryDataBefore.liquidationThreshold;
@@ -640,8 +616,6 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
       'postTestEngineAssetEModeUpdate',
       IPool(address(contracts.poolProxy))
     );
-
-    diffReports('preTestEngineAssetEModeUpdate', 'postTestEngineAssetEModeUpdate');
 
     DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(asset);
     uint128 collateralBitmap = contracts.poolProxy.getEModeCategoryCollateralBitmap(1);
