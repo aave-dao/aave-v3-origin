@@ -14,6 +14,7 @@ import {WadRayMath} from '../../../src/contracts/protocol/libraries/math/WadRayM
 import {IBaseDelegation} from '../../../src/contracts/protocol/tokenization/delegation/interfaces/IBaseDelegation.sol';
 
 import {TestnetProcedures} from '../../utils/TestnetProcedures.sol';
+import {EIP712SigUtils} from '../../utils/EIP712SigUtils.sol';
 
 contract ATokenWithDelegationInstanceNext is ATokenWithDelegationInstance {
   constructor(
@@ -27,7 +28,7 @@ contract ATokenWithDelegationInstanceNext is ATokenWithDelegationInstance {
   }
 }
 
-contract ATokenDelegationTest is TestnetProcedures {
+abstract contract BaseATokenDelegationTest is TestnetProcedures {
   using WadRayMath for uint256;
 
   address public underlyingAsset;
@@ -35,7 +36,9 @@ contract ATokenDelegationTest is TestnetProcedures {
 
   uint256 public supplyAmount;
 
-  function setUp() public {
+  bool public usePermits;
+
+  function setUp() public virtual {
     initTestEnvironment();
 
     _updateATokens();
@@ -45,7 +48,7 @@ contract ATokenDelegationTest is TestnetProcedures {
 
     supplyAmount = 1_000_000 * 10 ** IERC20Metadata(underlyingAsset).decimals();
 
-    _supplyAndEnableAsCollateral({user: alice, amount: supplyAmount, asset: underlyingAsset});
+    _supplyAndEnableAsCollateral(underlyingAsset, supplyAmount, alice);
   }
 
   function _updateATokens() private {
@@ -134,19 +137,19 @@ contract ATokenDelegationTest is TestnetProcedures {
   }
 
   function test_transfer() public {
-    _supplyAndEnableAsCollateral({user: bob, amount: supplyAmount * 2, asset: underlyingAsset});
+    _supplyAndEnableAsCollateral(underlyingAsset, supplyAmount * 2, bob);
 
     _performTransfersAndChecks({caller: alice, from: alice, to: bob});
   }
 
   function test_transferFrom() public {
-    _supplyAndEnableAsCollateral({user: bob, amount: supplyAmount * 2, asset: underlyingAsset});
+    _supplyAndEnableAsCollateral(underlyingAsset, supplyAmount * 2, bob);
 
     _performTransfersAndChecks({caller: carol, from: alice, to: bob});
   }
 
   function test_transferOnLiquidation() public {
-    _supplyAndEnableAsCollateral({user: bob, amount: supplyAmount * 2, asset: underlyingAsset});
+    _supplyAndEnableAsCollateral(underlyingAsset, supplyAmount * 2, bob);
 
     _performTransfersAndChecks({caller: report.poolProxy, from: alice, to: bob});
   }
@@ -162,7 +165,7 @@ contract ATokenDelegationTest is TestnetProcedures {
     address user4 = address(12345678);
 
     // increase index
-    _supplyAndEnableAsCollateral({user: carol, amount: supplyAmount * 2, asset: underlyingAsset});
+    _supplyAndEnableAsCollateral(underlyingAsset, supplyAmount * 2, carol);
     vm.prank(carol);
     contracts.poolProxy.borrow({
       asset: underlyingAsset,
@@ -179,18 +182,26 @@ contract ATokenDelegationTest is TestnetProcedures {
 
     // from delegates to user1 and user2
     if (from != address(0)) {
-      vm.prank(from);
-      aToken.delegateByType(user1, IBaseDelegation.GovernancePowerType.VOTING);
-      vm.prank(from);
-      aToken.delegateByType(user2, IBaseDelegation.GovernancePowerType.PROPOSITION);
+      _delegateByType({
+        from: from,
+        to: user1,
+        powerType: IBaseDelegation.GovernancePowerType.VOTING
+      });
+      _delegateByType({
+        from: from,
+        to: user2,
+        powerType: IBaseDelegation.GovernancePowerType.PROPOSITION
+      });
     }
 
     // to delegates to user3 and user4
     if (to != address(0)) {
-      vm.prank(to);
-      aToken.delegateByType(user3, IBaseDelegation.GovernancePowerType.VOTING);
-      vm.prank(to);
-      aToken.delegateByType(user4, IBaseDelegation.GovernancePowerType.PROPOSITION);
+      _delegateByType({from: to, to: user3, powerType: IBaseDelegation.GovernancePowerType.VOTING});
+      _delegateByType({
+        from: to,
+        to: user4,
+        powerType: IBaseDelegation.GovernancePowerType.PROPOSITION
+      });
     }
 
     // increase index
@@ -202,10 +213,16 @@ contract ATokenDelegationTest is TestnetProcedures {
 
     // from delegates to user3 and user4
     if (from != address(0)) {
-      vm.prank(from);
-      aToken.delegateByType(user3, IBaseDelegation.GovernancePowerType.VOTING);
-      vm.prank(from);
-      aToken.delegateByType(user4, IBaseDelegation.GovernancePowerType.PROPOSITION);
+      _delegateByType({
+        from: from,
+        to: user3,
+        powerType: IBaseDelegation.GovernancePowerType.VOTING
+      });
+      _delegateByType({
+        from: from,
+        to: user4,
+        powerType: IBaseDelegation.GovernancePowerType.PROPOSITION
+      });
     }
 
     // increase index
@@ -217,10 +234,16 @@ contract ATokenDelegationTest is TestnetProcedures {
 
     // from delegates to user3 and user4
     if (from != address(0)) {
-      vm.prank(from);
-      aToken.delegateByType(user4, IBaseDelegation.GovernancePowerType.VOTING);
-      vm.prank(from);
-      aToken.delegateByType(user3, IBaseDelegation.GovernancePowerType.PROPOSITION);
+      _delegateByType({
+        from: from,
+        to: user4,
+        powerType: IBaseDelegation.GovernancePowerType.VOTING
+      });
+      _delegateByType({
+        from: from,
+        to: user3,
+        powerType: IBaseDelegation.GovernancePowerType.PROPOSITION
+      });
     }
 
     // increase index
@@ -232,8 +255,7 @@ contract ATokenDelegationTest is TestnetProcedures {
 
     // to removes delegations
     if (to != address(0)) {
-      vm.prank(to);
-      aToken.delegate(address(0));
+      _delegate({from: to, to: address(0)});
     }
 
     // increase index
@@ -252,8 +274,7 @@ contract ATokenDelegationTest is TestnetProcedures {
     assertEq(propositionDelegatee, address(0));
 
     // both to the same non zero
-    vm.prank(alice);
-    aToken.delegate(bob);
+    _delegate({from: alice, to: bob});
 
     (votingDelegatee, propositionDelegatee) = aToken.getDelegates(alice);
 
@@ -261,8 +282,11 @@ contract ATokenDelegationTest is TestnetProcedures {
     assertEq(propositionDelegatee, bob);
 
     // both to different non zero
-    vm.prank(alice);
-    aToken.delegateByType(carol, IBaseDelegation.GovernancePowerType.VOTING);
+    _delegateByType({
+      from: alice,
+      to: carol,
+      powerType: IBaseDelegation.GovernancePowerType.VOTING
+    });
 
     (votingDelegatee, propositionDelegatee) = aToken.getDelegates(alice);
 
@@ -270,8 +294,11 @@ contract ATokenDelegationTest is TestnetProcedures {
     assertEq(propositionDelegatee, bob);
 
     // one to non zero and one to zero
-    vm.prank(alice);
-    aToken.delegateByType(address(0), IBaseDelegation.GovernancePowerType.PROPOSITION);
+    _delegateByType({
+      from: alice,
+      to: address(0),
+      powerType: IBaseDelegation.GovernancePowerType.PROPOSITION
+    });
 
     (votingDelegatee, propositionDelegatee) = aToken.getDelegates(alice);
 
@@ -284,16 +311,14 @@ contract ATokenDelegationTest is TestnetProcedures {
     uint256 bobBalance = supplyAmount / 2;
     uint256 carolBalance = supplyAmount * 3;
 
-    _supplyAndEnableAsCollateral({user: bob, amount: bobBalance, asset: underlyingAsset});
-    _supplyAndEnableAsCollateral({user: carol, amount: carolBalance, asset: underlyingAsset});
+    _supplyAndEnableAsCollateral(underlyingAsset, bobBalance, bob);
+    _supplyAndEnableAsCollateral(underlyingAsset, carolBalance, carol);
 
     // alice delegates both types
-    vm.prank(alice);
-    aToken.delegate(bob);
+    _delegate({from: alice, to: bob});
 
     // carol delegates only voting
-    vm.prank(carol);
-    aToken.delegateByType(bob, IBaseDelegation.GovernancePowerType.VOTING);
+    _delegateByType({from: carol, to: bob, powerType: IBaseDelegation.GovernancePowerType.VOTING});
 
     (uint256 votingPower, uint256 propositionPower) = aToken.getPowersCurrent(bob);
 
@@ -306,8 +331,7 @@ contract ATokenDelegationTest is TestnetProcedures {
     );
 
     // bob delegates voting to carol
-    vm.prank(bob);
-    aToken.delegateByType(carol, IBaseDelegation.GovernancePowerType.VOTING);
+    _delegateByType({from: bob, to: carol, powerType: IBaseDelegation.GovernancePowerType.VOTING});
 
     (votingPower, propositionPower) = aToken.getPowersCurrent(bob);
 
@@ -320,8 +344,11 @@ contract ATokenDelegationTest is TestnetProcedures {
     );
 
     // bob delegates proposition to carol
-    vm.prank(bob);
-    aToken.delegateByType(carol, IBaseDelegation.GovernancePowerType.PROPOSITION);
+    _delegateByType({
+      from: bob,
+      to: carol,
+      powerType: IBaseDelegation.GovernancePowerType.PROPOSITION
+    });
 
     (votingPower, propositionPower) = aToken.getPowersCurrent(bob);
 
@@ -334,8 +361,11 @@ contract ATokenDelegationTest is TestnetProcedures {
     );
 
     // bob un-delegates voting
-    vm.prank(bob);
-    aToken.delegateByType(address(0), IBaseDelegation.GovernancePowerType.VOTING);
+    _delegateByType({
+      from: bob,
+      to: address(0),
+      powerType: IBaseDelegation.GovernancePowerType.VOTING
+    });
 
     (votingPower, propositionPower) = aToken.getPowersCurrent(bob);
 
@@ -357,8 +387,7 @@ contract ATokenDelegationTest is TestnetProcedures {
     assertEq(contracts.poolProxy.getReserveNormalizedIncome(underlyingAsset), 1e27);
 
     // alice delegates both types
-    vm.prank(alice);
-    aToken.delegate(bob);
+    _delegate({from: alice, to: bob});
 
     // increase index by borrowing and waiting
     vm.prank(alice);
@@ -375,7 +404,7 @@ contract ATokenDelegationTest is TestnetProcedures {
     uint256 bobIndexEnter = contracts.poolProxy.getReserveNormalizedIncome(underlyingAsset);
     assertGt(bobIndexEnter, 1e27);
 
-    _supplyAndEnableAsCollateral({user: bob, amount: bobBalance, asset: underlyingAsset});
+    _supplyAndEnableAsCollateral(underlyingAsset, bobBalance, bob);
 
     // increase index by waiting
     vm.warp(vm.getBlockTimestamp() + 100 days);
@@ -384,11 +413,10 @@ contract ATokenDelegationTest is TestnetProcedures {
     uint256 carolIndexEnter = contracts.poolProxy.getReserveNormalizedIncome(underlyingAsset);
     assertGt(carolIndexEnter, bobIndexEnter);
 
-    _supplyAndEnableAsCollateral({user: carol, amount: carolBalance, asset: underlyingAsset});
+    _supplyAndEnableAsCollateral(underlyingAsset, carolBalance, carol);
 
     // carol delegates only voting
-    vm.prank(carol);
-    aToken.delegateByType(bob, IBaseDelegation.GovernancePowerType.VOTING);
+    _delegateByType({from: carol, to: bob, powerType: IBaseDelegation.GovernancePowerType.VOTING});
 
     (uint256 votingPower, uint256 propositionPower) = aToken.getPowersCurrent(bob);
 
@@ -463,9 +491,9 @@ contract ATokenDelegationTest is TestnetProcedures {
 
     uint256 _supplyAmount = 151413121110987654321;
 
-    _supplyAndEnableAsCollateral({user: bob, amount: _supplyAmount, asset: tokenList.usdx});
-    _supplyAndEnableAsCollateral({user: bob, amount: _supplyAmount, asset: tokenList.wbtc});
-    _supplyAndEnableAsCollateral({user: bob, amount: _supplyAmount, asset: tokenList.weth});
+    _supplyAndEnableAsCollateral(tokenList.usdx, _supplyAmount, bob);
+    _supplyAndEnableAsCollateral(tokenList.wbtc, _supplyAmount, bob);
+    _supplyAndEnableAsCollateral(tokenList.weth, _supplyAmount, bob);
 
     vm.startPrank(bob);
 
@@ -524,8 +552,7 @@ contract ATokenDelegationTest is TestnetProcedures {
 
     uint256 delegatorBalance = aToken.balanceOf(delegator);
 
-    vm.prank(delegator);
-    aToken.delegate(newDelegatee);
+    _delegate({from: delegator, to: newDelegatee});
 
     address votingDelegatee = aToken.getDelegateeByType(
       delegator,
@@ -630,7 +657,7 @@ contract ATokenDelegationTest is TestnetProcedures {
     if (caller != from) {
       if (caller == report.poolProxy) {
         if (from == address(0)) {
-          _supplyAndEnableAsCollateral({user: to, amount: amount, asset: underlyingAsset});
+          _supplyAndEnableAsCollateral(underlyingAsset, amount, to);
         } else if (to == address(0)) {
           vm.prank(from);
           contracts.poolProxy.withdraw({asset: underlyingAsset, amount: amount, to: from});
@@ -769,5 +796,97 @@ contract ATokenDelegationTest is TestnetProcedures {
     uint256 POWER_SCALE_FACTOR = aToken.POWER_SCALE_FACTOR();
 
     return (scaledBalance / POWER_SCALE_FACTOR) * POWER_SCALE_FACTOR;
+  }
+
+  function _delegate(address from, address to) private {
+    if (usePermits) {
+      EIP712SigUtils.Delegate memory delegation = EIP712SigUtils.Delegate({
+        delegator: from,
+        delegatee: to,
+        nonce: aToken.nonces(from),
+        deadline: block.timestamp
+      });
+
+      bytes32 digest = EIP712SigUtils.getDelegateTypedDataHash(
+        delegation,
+        bytes(aToken.name()),
+        bytes('1'),
+        address(aToken)
+      );
+
+      (uint8 v, bytes32 r, bytes32 s) = vm.sign(_getPrivateKey(from), digest);
+
+      aToken.metaDelegate({
+        delegator: from,
+        delegatee: to,
+        deadline: block.timestamp,
+        v: v,
+        r: r,
+        s: s
+      });
+    } else {
+      vm.prank(from);
+      aToken.delegate(to);
+    }
+  }
+
+  function _delegateByType(
+    address from,
+    address to,
+    IBaseDelegation.GovernancePowerType powerType
+  ) private {
+    if (usePermits) {
+      EIP712SigUtils.DelegateByType memory delegation = EIP712SigUtils.DelegateByType({
+        delegator: from,
+        delegatee: to,
+        delegationType: uint8(powerType),
+        nonce: aToken.nonces(from),
+        deadline: block.timestamp
+      });
+
+      bytes32 digest = EIP712SigUtils.getDelegateByTypeTypedDataHash(
+        delegation,
+        bytes(aToken.name()),
+        bytes('1'),
+        address(aToken)
+      );
+
+      (uint8 v, bytes32 r, bytes32 s) = vm.sign(_getPrivateKey(from), digest);
+
+      aToken.metaDelegateByType({
+        delegator: from,
+        delegatee: to,
+        delegationType: powerType,
+        deadline: block.timestamp,
+        v: v,
+        r: r,
+        s: s
+      });
+    } else {
+      vm.prank(from);
+      aToken.delegateByType(to, powerType);
+    }
+  }
+
+  function _getPrivateKey(address user) private view returns (uint256) {
+    if (user == alice) {
+      return alicePrivateKey;
+    } else if (user == bob) {
+      return bobPrivateKey;
+    } else if (user == carol) {
+      return carolPrivateKey;
+    } else {
+      revert("This user doesn't have any PK");
+    }
+  }
+}
+
+contract ATokenDelegationTest is BaseATokenDelegationTest {}
+
+contract ATokenDelegationTestWithPermits is BaseATokenDelegationTest {
+  function setUp() public override {
+    super.setUp();
+
+    usePermits = true;
   }
 }

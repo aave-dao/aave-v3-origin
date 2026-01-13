@@ -18,7 +18,7 @@ import "common/validation_functions.spec";
 
   Status: PASS
   =====================================================================================*/
-rule supply__solvency(env e, address _asset) {
+rule supply__solvency(env e, address _asset) { 
   init_state();
 
   address _atoken = currentContract._reserves[_asset].aTokenAddress;

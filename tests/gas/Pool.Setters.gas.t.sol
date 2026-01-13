@@ -22,9 +22,9 @@ contract PoolSetters_gas_Tests is Testhelpers {
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, ct1.id, true);
     contracts.poolConfiguratorProxy.setAssetBorrowableInEMode(tokenList.weth, ct1.id, true);
     vm.stopPrank();
-    _supplyOnReserve(address(this), 0.5 ether, tokenList.weth);
+    _supplyAndEnableAsCollateral(tokenList.weth, 0.5 ether, address(this));
 
-    _supplyOnReserve(user, 5000e6, tokenList.usdx);
+    _supplyAndEnableAsCollateral(tokenList.usdx, 5000e6, user);
     vm.startPrank(user);
     contracts.poolProxy.borrow(tokenList.weth, 0.5 ether, 2, 0, user);
 
@@ -47,7 +47,7 @@ contract PoolSetters_gas_Tests is Testhelpers {
     contracts.poolConfiguratorProxy.setAssetBorrowableInEMode(tokenList.weth, ct1.id, true);
     vm.stopPrank();
 
-    _supplyAndEnableAsCollateral(user, 5000e6, tokenList.usdx);
+    _supplyAndEnableAsCollateral(tokenList.usdx, 5000e6, user);
 
     vm.startPrank(user);
     contracts.poolProxy.borrow(tokenList.weth, 0.5 ether, 2, 0, user);
@@ -73,7 +73,7 @@ contract PoolSetters_gas_Tests is Testhelpers {
   }
 
   function test_setUserUseReserveAsCollateral() external {
-    _supplyOnReserve(address(this), 5000e6, tokenList.usdx);
+    _supply(tokenList.usdx, 5000e6, address(this));
 
     contracts.poolProxy.setUserUseReserveAsCollateral(tokenList.usdx, false);
     vm.snapshotGasLastCall(
@@ -89,7 +89,7 @@ contract PoolSetters_gas_Tests is Testhelpers {
   }
 
   function test_setUserUseReserveAsCollateralonBehalfOf() external {
-    _supplyOnReserve(user, 5000e6, tokenList.usdx);
+    _supply(tokenList.usdx, 5000e6, user);
 
     vm.prank(user);
     contracts.poolProxy.approvePositionManager(address(this), true);

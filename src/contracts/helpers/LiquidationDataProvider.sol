@@ -119,12 +119,10 @@ contract LiquidationDataProvider is ILiquidationDataProvider {
     if (
       !_isReserveReadyForLiquidations({
         reserveAsset: collateralAsset,
-        isCollateral: true,
         reserveConfiguration: collateralReserveData.configuration
       }) ||
       !_isReserveReadyForLiquidations({
         reserveAsset: debtAsset,
-        isCollateral: false,
         reserveConfiguration: debtReserveData.configuration
       })
     ) {
@@ -400,7 +398,6 @@ contract LiquidationDataProvider is ILiquidationDataProvider {
 
   function _isReserveReadyForLiquidations(
     address reserveAsset,
-    bool isCollateral,
     DataTypes.ReserveConfigurationMap memory reserveConfiguration
   ) private view returns (bool) {
     bool isReserveActive = reserveConfiguration.getActive();
@@ -409,11 +406,7 @@ contract LiquidationDataProvider is ILiquidationDataProvider {
     bool areLiquidationsAllowed = POOL.getLiquidationGracePeriod(reserveAsset) <
       uint40(block.timestamp);
 
-    return
-      isReserveActive &&
-      !isReservePaused &&
-      areLiquidationsAllowed &&
-      (isCollateral ? reserveConfiguration.getLiquidationThreshold() != 0 : true);
+    return isReserveActive && !isReservePaused && areLiquidationsAllowed;
   }
 
   function _getCollateralFullInfo(

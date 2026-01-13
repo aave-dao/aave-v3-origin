@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.19;
 
-import {IERC20} from '../munged/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {IERC20} from '../munged/src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
 
 /**
 A simple ERC implementation used as the underlying_asset for the verification process.

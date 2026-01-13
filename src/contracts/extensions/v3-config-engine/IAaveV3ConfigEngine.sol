@@ -191,6 +191,7 @@ interface IAaveV3ConfigEngine {
    *   eModeCategory: 1, // ETH correlated
    *   borrowable: EngineFlags.ENABLED,
    *   collateral: EngineFlags.KEEP_CURRENT,
+   *   ltvzero: EngineFlags.KEEP_CURRENT
    * })
    */
   struct AssetEModeUpdate {
@@ -198,6 +199,7 @@ interface IAaveV3ConfigEngine {
     uint8 eModeCategory;
     uint256 borrowable;
     uint256 collateral;
+    uint256 ltvzero;
   }
 
   /**

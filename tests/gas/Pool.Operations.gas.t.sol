@@ -21,27 +21,27 @@ contract PoolOperations_gas_Tests is Testhelpers {
 
   function test_supply() external {
     // borrow some, so hf checks are not skipped
-    _supplyOnReserve(supplier, 1 ether, tokenList.weth);
+    _supply(tokenList.weth, 1 ether, supplier);
     _borrowArbitraryAmount(supplier, 1e5, tokenList.wbtc);
 
-    _supplyOnReserve(supplier, 100e6, tokenList.usdx);
+    _supply(tokenList.usdx, 100e6, supplier);
     vm.snapshotGasLastCall('Pool.Operations', 'supply: first supply->collateralEnabled');
 
     _skip(100);
 
-    _supplyOnReserve(supplier, 100e6, tokenList.usdx);
+    _supply(tokenList.usdx, 100e6, supplier);
     vm.snapshotGasLastCall('Pool.Operations', 'supply: collateralEnabled');
     vm.prank(supplier);
     contracts.poolProxy.setUserUseReserveAsCollateral(tokenList.usdx, false);
 
     _skip(100);
 
-    _supplyOnReserve(supplier, 100e6, tokenList.usdx);
+    _supply(tokenList.usdx, 100e6, supplier);
     vm.snapshotGasLastCall('Pool.Operations', 'supply: collateralDisabled');
   }
 
   function test_withdraw() external {
-    _supplyOnReserve(supplier, 100e6, tokenList.usdx);
+    _supplyAndEnableAsCollateral(tokenList.usdx, 100e6, supplier);
     vm.startPrank(supplier);
     _skip(100);
 
@@ -55,7 +55,7 @@ contract PoolOperations_gas_Tests is Testhelpers {
   }
 
   function test_withdraw_with_active_borrows() external {
-    _supplyOnReserve(borrower, 100 ether, tokenList.weth);
+    _supplyAndEnableAsCollateral(tokenList.weth, 100 ether, borrower);
     uint256 amountToBorrow = 1000e6;
     vm.startPrank(borrower);
     contracts.poolProxy.borrow(tokenList.usdx, amountToBorrow, 2, 0, borrower);
@@ -66,7 +66,7 @@ contract PoolOperations_gas_Tests is Testhelpers {
   }
 
   function test_borrow() external {
-    _supplyOnReserve(borrower, 100 ether, tokenList.weth);
+    _supplyAndEnableAsCollateral(tokenList.weth, 100 ether, borrower);
     uint256 amountToBorrow = 1000e6;
     vm.startPrank(borrower);
     contracts.poolProxy.borrow(tokenList.usdx, amountToBorrow, 2, 0, borrower);
@@ -79,7 +79,7 @@ contract PoolOperations_gas_Tests is Testhelpers {
   }
 
   function test_borrow_onBehalfOf() external {
-    _supplyOnReserve(borrower, 100 ether, tokenList.weth);
+    _supplyAndEnableAsCollateral(tokenList.weth, 100 ether, borrower);
     uint256 amountToBorrow = 1000e6;
     vm.startPrank(borrower);
     ICreditDelegationToken(contracts.poolProxy.getReserveVariableDebtToken(tokenList.usdx))
@@ -97,7 +97,7 @@ contract PoolOperations_gas_Tests is Testhelpers {
   }
 
   function test_repay() external {
-    _supplyOnReserve(borrower, 100 ether, tokenList.weth);
+    _supplyAndEnableAsCollateral(tokenList.weth, 100 ether, borrower);
     uint256 amountToBorrow = 1000e6;
     deal(tokenList.usdx, borrower, amountToBorrow);
     vm.startPrank(borrower);
@@ -116,7 +116,7 @@ contract PoolOperations_gas_Tests is Testhelpers {
   }
 
   function test_repay_with_ATokens() external {
-    _supplyOnReserve(borrower, 1_000_000e6, tokenList.usdx);
+    _supplyAndEnableAsCollateral(tokenList.usdx, 1_000_000e6, borrower);
     uint256 amountToBorrow = 1000e6;
     deal(tokenList.usdx, borrower, amountToBorrow);
     vm.startPrank(borrower);
@@ -138,10 +138,10 @@ contract PoolOperations_gas_Tests is Testhelpers {
     // on v3.3 the amounts need to be adjusted to not cause error 103 (min leftover) issues
     uint256 scalingFactor = 10;
     uint256 price = contracts.aaveOracle.getAssetPrice(tokenList.weth);
-    _supplyOnReserve(
-      borrower,
+    _supplyAndEnableAsCollateral(
+      tokenList.usdx,
       ((((price * 1e6) / 1e8) * 90) / 100) * scalingFactor,
-      tokenList.usdx
+      borrower
     );
     _borrowArbitraryAmount(borrower, 1 ether * scalingFactor, tokenList.weth);
     deal(tokenList.weth, liquidator, 0.5 ether);
@@ -156,7 +156,7 @@ contract PoolOperations_gas_Tests is Testhelpers {
 
   function test_liquidationCall_full() external {
     uint256 price = contracts.aaveOracle.getAssetPrice(tokenList.weth);
-    _supplyOnReserve(borrower, (((price * 1e6) / 1e8) * 90) / 100, tokenList.usdx);
+    _supplyAndEnableAsCollateral(tokenList.usdx, (((price * 1e6) / 1e8) * 90) / 100, borrower);
     _borrowArbitraryAmount(borrower, 1 ether, tokenList.weth);
     deal(tokenList.weth, liquidator, 2 ether);
     vm.startPrank(liquidator);
@@ -176,7 +176,7 @@ contract PoolOperations_gas_Tests is Testhelpers {
 
   function test_liquidationCall_receive_ATokens_partial() external {
     uint256 price = contracts.aaveOracle.getAssetPrice(tokenList.weth);
-    _supplyOnReserve(borrower, (((price * 3e6) / 1e8) * 90) / 100, tokenList.usdx);
+    _supplyAndEnableAsCollateral(tokenList.usdx, (((price * 3e6) / 1e8) * 90) / 100, borrower);
     _borrowArbitraryAmount(borrower, 3 ether, tokenList.weth);
     deal(tokenList.weth, liquidator, 0.5 ether);
     vm.startPrank(liquidator);
@@ -193,7 +193,7 @@ contract PoolOperations_gas_Tests is Testhelpers {
 
   function test_liquidationCall_receive_ATokens_full() external {
     uint256 price = contracts.aaveOracle.getAssetPrice(tokenList.weth);
-    _supplyOnReserve(borrower, (((price * 1e6) / 1e8) * 90) / 100, tokenList.usdx);
+    _supplyAndEnableAsCollateral(tokenList.usdx, (((price * 1e6) / 1e8) * 90) / 100, borrower);
     _borrowArbitraryAmount(borrower, 1 ether, tokenList.weth);
     deal(tokenList.weth, liquidator, 2 ether);
     vm.startPrank(liquidator);
@@ -216,7 +216,7 @@ contract PoolOperations_gas_Tests is Testhelpers {
 
   function test_liquidationCall_deficit() external {
     uint256 price = contracts.aaveOracle.getAssetPrice(tokenList.weth);
-    _supplyOnReserve(borrower, (price * 1e6) / 1e8, tokenList.usdx);
+    _supplyAndEnableAsCollateral(tokenList.usdx, (price * 1e6) / 1e8, borrower);
     _borrowArbitraryAmount(borrower, 1 ether, tokenList.weth);
     deal(tokenList.weth, liquidator, 2 ether);
     vm.startPrank(liquidator);
@@ -236,7 +236,7 @@ contract PoolOperations_gas_Tests is Testhelpers {
 
   function test_liquidationCall_deficitInAdditionalReserve() external {
     uint256 price = contracts.aaveOracle.getAssetPrice(tokenList.weth);
-    _supplyOnReserve(borrower, (price * 1e6) / 1e8, tokenList.usdx);
+    _supplyAndEnableAsCollateral(tokenList.usdx, (price * 1e6) / 1e8, borrower);
     _borrowArbitraryAmount(borrower, 1e5, tokenList.wbtc); // additional deficit
     _borrowArbitraryAmount(borrower, 1 ether, tokenList.weth);
     deal(tokenList.weth, liquidator, 2 ether);
@@ -339,7 +339,7 @@ contract PoolOperations_gas_Tests is Testhelpers {
       contracts.poolAddressesProvider
     );
 
-    _supplyOnReserve(address(flashLoanReceiver), flashLoanAmount * 5, tokenList.weth);
+    _supplyAndEnableAsCollateral(tokenList.weth, flashLoanAmount * 5, address(flashLoanReceiver));
 
     deal(tokenList.weth, address(flashLoanReceiver), flashLoanFee);
 
@@ -378,8 +378,16 @@ contract PoolOperations_gas_Tests is Testhelpers {
       contracts.poolAddressesProvider
     );
 
-    _supplyOnReserve(address(flashLoanReceiver), flashLoanAmountWeth * 5, tokenList.weth);
-    _supplyOnReserve(address(flashLoanReceiver), flashLoanAmountWbtc * 5, tokenList.wbtc);
+    _supplyAndEnableAsCollateral(
+      tokenList.weth,
+      flashLoanAmountWeth * 5,
+      address(flashLoanReceiver)
+    );
+    _supplyAndEnableAsCollateral(
+      tokenList.wbtc,
+      flashLoanAmountWbtc * 5,
+      address(flashLoanReceiver)
+    );
 
     deal(tokenList.weth, address(flashLoanReceiver), flashLoanFeeWeth);
     deal(tokenList.wbtc, address(flashLoanReceiver), flashLoanFeeWbtc);
@@ -434,7 +442,7 @@ contract PoolOperations_gas_Tests is Testhelpers {
     uint256 supplyAmount = 10e18;
     uint256 borrowAmount = supplyAmount / 10;
 
-    _supplyOnReserve(borrower, supplyAmount, tokenList.weth);
+    _supplyAndEnableAsCollateral(tokenList.weth, supplyAmount, borrower);
     vm.startPrank(borrower);
     contracts.poolProxy.borrow({
       asset: tokenList.weth,
@@ -470,8 +478,8 @@ contract PoolOperations_gas_Tests is Testhelpers {
     uint256 borrowAmountWeth = supplyAmountWeth / 10;
     uint256 borrowAmountWbtc = supplyAmountWbtc / 10;
 
-    _supplyOnReserve(borrower, supplyAmountWeth, tokenList.weth);
-    _supplyOnReserve(borrower, supplyAmountWbtc, tokenList.wbtc);
+    _supplyAndEnableAsCollateral(tokenList.weth, supplyAmountWeth, borrower);
+    _supplyAndEnableAsCollateral(tokenList.wbtc, supplyAmountWbtc, borrower);
     vm.startPrank(borrower);
     contracts.poolProxy.borrow({
       asset: tokenList.weth,

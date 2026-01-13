@@ -13,7 +13,7 @@ import {TokenMath} from '../helpers/TokenMath.sol';
 import {MathUtils} from '../math/MathUtils.sol';
 import {DataTypes} from '../types/DataTypes.sol';
 import {ReserveLogic} from './ReserveLogic.sol';
-import {EModeLogic} from './EModeLogic.sol';
+import {ValidationLogic} from './ValidationLogic.sol';
 
 /**
  * @title GenericLogic library
@@ -32,7 +32,8 @@ library GenericLogic {
     uint256 assetPrice;
     uint256 assetUnit;
     uint256 userBalanceInBaseCurrency;
-    uint256 decimals;
+    uint256 unsafe_cachedUserConfig;
+    DataTypes.ReserveConfigurationMap configurationCache;
     uint256 ltv;
     uint256 liquidationThreshold;
     uint256 i;
@@ -41,12 +42,10 @@ library GenericLogic {
     uint256 totalDebtInBaseCurrency;
     uint256 avgLtv;
     uint256 avgLiquidationThreshold;
-    uint256 eModeLtv;
     uint256 eModeLiqThreshold;
     uint128 eModeCollateralBitmap;
     address currentReserveAddress;
     bool hasZeroLtvCollateral;
-    bool isInEModeCategory;
   }
 
   /**
@@ -77,38 +76,33 @@ library GenericLogic {
     CalculateUserAccountDataVars memory vars;
 
     if (params.userEModeCategory != 0) {
-      vars.eModeLtv = eModeCategories[params.userEModeCategory].ltv;
       vars.eModeLiqThreshold = eModeCategories[params.userEModeCategory].liquidationThreshold;
       vars.eModeCollateralBitmap = eModeCategories[params.userEModeCategory].collateralBitmap;
     }
 
-    uint256 userConfigCache = params.userConfig.data;
+    vars.unsafe_cachedUserConfig = params.userConfig.data;
     bool isBorrowed = false;
     bool isEnabledAsCollateral = false;
 
-    while (userConfigCache != 0) {
-      (userConfigCache, isBorrowed, isEnabledAsCollateral) = UserConfiguration.getNextFlags(
-        userConfigCache
-      );
+    while (vars.unsafe_cachedUserConfig != 0) {
+      (vars.unsafe_cachedUserConfig, isBorrowed, isEnabledAsCollateral) = UserConfiguration
+        .getNextFlags(vars.unsafe_cachedUserConfig);
       if (isEnabledAsCollateral || isBorrowed) {
         vars.currentReserveAddress = reservesList[vars.i];
 
         if (vars.currentReserveAddress != address(0)) {
           DataTypes.ReserveData storage currentReserve = reservesData[vars.currentReserveAddress];
-
-          (vars.ltv, vars.liquidationThreshold, , vars.decimals, ) = currentReserve
-            .configuration
-            .getParams();
+          vars.configurationCache = currentReserve.configuration;
 
           unchecked {
-            vars.assetUnit = 10 ** vars.decimals;
+            vars.assetUnit = 10 ** vars.configurationCache.getDecimals();
           }
 
           vars.assetPrice = IPriceOracleGetter(params.oracle).getAssetPrice(
             vars.currentReserveAddress
           );
 
-          if (vars.liquidationThreshold != 0 && isEnabledAsCollateral) {
+          if (isEnabledAsCollateral) {
             vars.userBalanceInBaseCurrency = _getUserBalanceInBaseCurrency(
               params.user,
               currentReserve,
@@ -118,21 +112,29 @@ library GenericLogic {
 
             vars.totalCollateralInBaseCurrency += vars.userBalanceInBaseCurrency;
 
-            vars.isInEModeCategory =
-              params.userEModeCategory != 0 &&
-              EModeConfiguration.isReserveEnabledOnBitmap(vars.eModeCollateralBitmap, vars.i);
-
-            if (vars.ltv != 0) {
-              vars.avgLtv +=
-                vars.userBalanceInBaseCurrency *
-                (vars.isInEModeCategory ? vars.eModeLtv : vars.ltv);
-            } else {
+            vars.ltv = ValidationLogic.getUserReserveLtv(
+              currentReserve,
+              eModeCategories[params.userEModeCategory],
+              params.userEModeCategory
+            );
+            if (vars.ltv == 0) {
               vars.hasZeroLtvCollateral = true;
+            } else {
+              vars.avgLtv += vars.userBalanceInBaseCurrency * vars.ltv;
+            }
+
+            if (
+              params.userEModeCategory != 0 &&
+              EModeConfiguration.isReserveEnabledOnBitmap(vars.eModeCollateralBitmap, vars.i)
+            ) {
+              vars.liquidationThreshold = vars.eModeLiqThreshold;
+            } else {
+              vars.liquidationThreshold = vars.configurationCache.getLiquidationThreshold();
             }
 
             vars.avgLiquidationThreshold +=
               vars.userBalanceInBaseCurrency *
-              (vars.isInEModeCategory ? vars.eModeLiqThreshold : vars.liquidationThreshold);
+              vars.liquidationThreshold;
           }
 
           if (isBorrowed) {

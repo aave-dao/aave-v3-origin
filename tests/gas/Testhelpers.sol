@@ -16,26 +16,15 @@ contract Testhelpers is TestnetProcedures {
 
     // supply and borrow some on reserve with a random user as "some" interest accrual
     // is the realistic use case we want to check in gas snapshots
-    _supplyOnReserve(rando, 100 ether, tokenList.weth);
-    _supplyOnReserve(rando, 1_000_000e6, tokenList.usdx);
-    _supplyOnReserve(rando, 100e8, tokenList.wbtc);
+    _supplyAndEnableAsCollateral(tokenList.weth, 100 ether, rando);
+    _supplyAndEnableAsCollateral(tokenList.usdx, 1_000_000e6, rando);
+    _supplyAndEnableAsCollateral(tokenList.wbtc, 100e8, rando);
     vm.startPrank(rando);
     contracts.poolProxy.borrow(tokenList.weth, 1 ether, 2, 0, rando);
     contracts.poolProxy.borrow(tokenList.usdx, 1000e6, 2, 0, rando);
     contracts.poolProxy.borrow(tokenList.wbtc, 1e8, 2, 0, rando);
     vm.stopPrank();
     _skip(100); // skip some blocks to allow interest to accrue & the block to be not cached
-  }
-
-  /**
-   * Supplies the specified amount of asset to the reserve.
-   */
-  function _supplyOnReserve(address user, uint256 amount, address asset) internal {
-    vm.startPrank(user);
-    deal(asset, user, amount);
-    IERC20(asset).approve(report.poolProxy, amount);
-    contracts.poolProxy.supply(asset, amount, user, 0);
-    vm.stopPrank();
   }
 
   // assumes that the caller has at least one unit of collateralAsset that is not the borrowAsset

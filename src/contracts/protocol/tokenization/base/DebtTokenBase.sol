@@ -42,6 +42,11 @@ abstract contract DebtTokenBase is
   }
 
   /// @inheritdoc ICreditDelegationToken
+  function renounceDelegation(address delegator) external override {
+    _approveDelegation(delegator, _msgSender(), 0);
+  }
+
+  /// @inheritdoc ICreditDelegationToken
   function delegationWithSig(
     address delegator,
     address delegatee,
@@ -112,7 +117,5 @@ abstract contract DebtTokenBase is
     uint256 newAllowance = oldBorrowAllowance - consumption;
 
     _borrowAllowances[delegator][delegatee] = newAllowance;
-
-    emit BorrowAllowanceDelegated(delegator, delegatee, _underlyingAsset, newAllowance);
   }
 }

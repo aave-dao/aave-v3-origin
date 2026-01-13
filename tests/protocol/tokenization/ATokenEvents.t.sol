@@ -9,6 +9,7 @@ import {ReserveLogic} from '../../../src/contracts/protocol/libraries/logic/Rese
 import {MathUtils} from '../../../src/contracts/protocol/libraries/math/MathUtils.sol';
 import {WadRayMath} from '../../../src/contracts/protocol/libraries/math/WadRayMath.sol';
 import {DataTypes} from '../../../src/contracts/protocol/libraries/types/DataTypes.sol';
+import {IncentivizedERC20} from '../../../src/contracts/protocol/tokenization/base/IncentivizedERC20.sol';
 
 contract ATokenEventsTests is TestnetProcedures {
   using WadRayMath for uint256;
@@ -315,5 +316,103 @@ contract ATokenEventsTests is TestnetProcedures {
 
     vm.prank(address(contracts.poolProxy));
     aToken.mintToTreasury(amountToMint, 1e27);
+  }
+
+  function test_allowance_events_in_approve_function() public {
+    vm.expectEmit(address(aToken));
+    emit IERC20.Approval(alice, bob, 1e18);
+    vm.prank(alice);
+    aToken.approve(bob, 1e18);
+
+    vm.expectEmit(address(aToken));
+    emit IERC20.Approval(alice, bob, 0);
+    vm.prank(alice);
+    aToken.approve(bob, 0);
+
+    vm.expectEmit(address(aToken));
+    emit IERC20.Approval(alice, bob, type(uint256).max);
+    vm.prank(alice);
+    aToken.approve(bob, type(uint256).max);
+  }
+
+  function test_allowance_events_in_transferFrom_function() public {
+    uint256 amountToMint = 1e18;
+
+    vm.prank(address(contracts.poolProxy));
+    aToken.mint({caller: alice, onBehalfOf: alice, scaledAmount: 1e18, index: 1e18});
+
+    uint256 approveAmount = amountToMint / 2;
+    uint256 transferFromAmount = amountToMint / 5;
+
+    vm.prank(alice);
+    aToken.approve(bob, approveAmount);
+
+    // Check that `count: 0` for the `Approval` event
+    // that no `Approval` event was emitted
+    vm.expectEmit({
+      checkTopic1: false,
+      checkTopic2: false,
+      checkTopic3: false,
+      checkData: false,
+      emitter: address(aToken),
+      count: 0
+    });
+    emit IERC20.Approval(alice, bob, 0);
+    vm.prank(bob);
+    aToken.transferFrom(alice, carol, transferFromAmount);
+
+    vm.prank(alice);
+    aToken.approve(bob, type(uint256).max);
+
+    // Check that `count: 0` for the `Approval` event
+    // that no `Approval` event was emitted
+    vm.expectEmit({
+      checkTopic1: false,
+      checkTopic2: false,
+      checkTopic3: false,
+      checkData: false,
+      emitter: address(aToken),
+      count: 0
+    });
+    emit IERC20.Approval(alice, bob, 0);
+    vm.prank(bob);
+    aToken.transferFrom(alice, carol, transferFromAmount);
+  }
+
+  function test_allowance_events_in_renounceAllowance_function() public {
+    vm.prank(alice);
+    aToken.approve(bob, 1e18);
+
+    vm.expectEmit(address(aToken));
+    emit IERC20.Approval(alice, bob, 0);
+    vm.prank(bob);
+    IncentivizedERC20(address(aToken)).renounceAllowance(alice);
+  }
+
+  function test_allowance_events_in_increaseAllowance_function() public {
+    vm.expectEmit(address(aToken));
+    emit IERC20.Approval(alice, bob, 1e18);
+    vm.prank(alice);
+    IncentivizedERC20(address(aToken)).increaseAllowance(bob, 1e18);
+
+    vm.expectEmit(address(aToken));
+    emit IERC20.Approval(alice, bob, 1e18 + 0.5e18);
+    vm.prank(alice);
+    IncentivizedERC20(address(aToken)).increaseAllowance(bob, 0.5e18);
+  }
+
+  function test_allowance_events_in_decreaseAllowance_function() public {
+    vm.prank(alice);
+    aToken.approve(bob, 2e18);
+
+    vm.expectEmit(address(aToken));
+    emit IERC20.Approval(alice, bob, 1e18 + 0.5e18);
+    vm.prank(alice);
+    IncentivizedERC20(address(aToken)).decreaseAllowance(bob, 0.5e18);
+
+    vm.expectEmit(address(aToken));
+    emit IERC20.Approval(alice, bob, 0.5e18);
+    vm.prank(alice);
+    IncentivizedERC20(address(aToken)).decreaseAllowance(bob, 1e18);
   }
 }

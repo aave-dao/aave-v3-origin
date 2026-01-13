@@ -106,10 +106,6 @@ abstract contract BaseTest is BaseStorage, PropertiesConstants, StdAsserts, StdU
     return (user == receiverActor || user == senderActor);
   }
 
-  function _resetTargetAsset() internal {
-    delete targetAsset;
-  }
-
   /// @notice Get a random address
   function _makeAddr(string memory name) internal pure returns (address addr) {
     uint256 privateKey = uint256(keccak256(abi.encodePacked(name)));

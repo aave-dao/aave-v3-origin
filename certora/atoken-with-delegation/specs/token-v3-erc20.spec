@@ -20,7 +20,7 @@ methods {
     function _SymbolicLendingPoolL1.getReserveNormalizedIncome(address) external returns (uint256) envfree;
     
     // called by AToken.sol::224. A method of IPool.
-    function _.finalizeTransfer(address, address, address, uint256, uint256, uint256) external => NONDET;
+    function _.finalizeTransfer(address, address, address, uint256, uint256) external => NONDET;
 
     // called from: IncentivizedERC20.sol::29.
     function _.getACLManager() external => NONDET;
@@ -228,7 +228,7 @@ rule ChangingAllowance(method f, address from, address spender) filtered {f -> f
   } else if (f.selector == sig:decreaseAllowance(address, uint256).selector) {
     address spender_;
     uint256 amount;
-    require amount <= allowanceBefore;
+    //    require amount <= allowanceBefore;
     decreaseAllowance(e, spender_, amount);
     if (from == e.msg.sender && spender == spender_) {
       assert to_mathint(allowance(from, spender)) == allowanceBefore - amount;
@@ -238,10 +238,18 @@ rule ChangingAllowance(method f, address from, address spender) filtered {f -> f
   } else if (f.selector == sig:increaseAllowance(address, uint256).selector) {
     address spender_;
     uint256 amount;
-    require amount + allowanceBefore < max_uint256;
+    //    require amount + allowanceBefore < max_uint256;
     increaseAllowance(e, spender_, amount);
     if (from == e.msg.sender && spender == spender_) {
       assert to_mathint(allowance(from, spender)) == allowanceBefore + amount;
+    } else {
+      assert allowance(from, spender) == allowanceBefore;
+    }
+  } else if (f.selector == sig:renounceAllowance(address).selector) {
+    address owner;
+    renounceAllowance(e, owner);
+    if (spender == e.msg.sender && owner == from) {
+      assert allowance(from, spender) == 0;
     } else {
       assert allowance(from, spender) == allowanceBefore;
     }

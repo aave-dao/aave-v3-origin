@@ -178,6 +178,10 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
     for (uint8 i = 1; i < 256; i++) {
       DataTypes.CollateralConfig memory cfg = pool.getEModeCategoryCollateralConfig(i);
       if (cfg.liquidationThreshold != 0) {
+        uint128 ltvzeroBitmap;
+        try pool.getEModeCategoryLtvzeroBitmap(i) returns (uint128 _ltvzeroBitmap) {
+          ltvzeroBitmap = _ltvzeroBitmap;
+        } catch (bytes memory /*lowLevelData*/) {}
         tempCategories[eModesFound] = Emode({
           eMode: DataTypes.EModeCategory({
             ltv: cfg.ltv,
@@ -185,7 +189,8 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
             liquidationBonus: cfg.liquidationBonus,
             label: pool.getEModeCategoryLabel(i),
             collateralBitmap: pool.getEModeCategoryCollateralBitmap(i),
-            borrowableBitmap: pool.getEModeCategoryBorrowableBitmap(i)
+            borrowableBitmap: pool.getEModeCategoryBorrowableBitmap(i),
+            ltvzeroBitmap: ltvzeroBitmap
           }),
           id: i
         });

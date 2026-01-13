@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {Pool} from '../munged/contracts/protocol/pool/Pool.sol';
-import {IPoolAddressesProvider} from '../munged/contracts/interfaces/IPoolAddressesProvider.sol';
-import {PoolInstance} from '../munged/contracts/instances/PoolInstance.sol';
-import {DataTypes} from '../munged/contracts/protocol/libraries/types/DataTypes.sol';
-import {ReserveLogic} from '../munged/contracts/protocol/libraries/logic/ReserveLogic.sol';
-import {WadRayMath} from '../munged/contracts/protocol/libraries/math/WadRayMath.sol';
-import {IReserveInterestRateStrategy} from '../munged/contracts/interfaces/IReserveInterestRateStrategy.sol';
+import {Pool} from '../munged/src/contracts/protocol/pool/Pool.sol';
+import {IPoolAddressesProvider} from '../munged/src/contracts/interfaces/IPoolAddressesProvider.sol';
+import {PoolInstance} from '../munged/src/contracts/instances/PoolInstance.sol';
+import {DataTypes} from '../munged/src/contracts/protocol/libraries/types/DataTypes.sol';
+import {ReserveLogic} from '../munged/src/contracts/protocol/libraries/logic/ReserveLogic.sol';
+import {WadRayMath} from '../munged/src/contracts/protocol/libraries/math/WadRayMath.sol';
+import {IReserveInterestRateStrategy} from '../munged/src/contracts/interfaces/IReserveInterestRateStrategy.sol';
 
 import {DummyContract} from './DummyContract.sol';
 

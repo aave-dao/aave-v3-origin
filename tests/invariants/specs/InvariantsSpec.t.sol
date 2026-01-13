@@ -20,28 +20,25 @@ abstract contract InvariantsSpec {
   ///////////////////////////////////////////////////////////////////////////////////////////////
 
   string constant BASE_INVARIANT_A =
-    'BASE_INVARIANT_A: debtToken totalSupply should be equal to the sum of all user balances (user debt)';
+    'BASE_INVARIANT_A: debtToken totalSupply should be almost equal to (due to rounding) and not less than the sum of all user balances';
 
   string constant BASE_INVARIANT_A_EXACT =
-    'BASE_INVARIANT_A_EXACT: debtToken totalScaledSupply should be equal to the sum of all scaled user balances (user debt)';
+    'BASE_INVARIANT_A_EXACT: debtToken totalScaledSupply should be equal to the sum of all scaled user balances';
 
   string constant BASE_INVARIANT_B =
-    'BASE_INVARIANT_B: aToken totalSupply should be equal to the sum of all user balances)';
+    'BASE_INVARIANT_B: aToken totalSupply should be almost equal to (due to rounding) and not more than the sum of all user balances';
 
   string constant BASE_INVARIANT_B_EXACT =
-    'BASE_INVARIANT_B_EXACT: aToken totalScaledSupply should be equal to the sum of all scaled user balances)';
+    'BASE_INVARIANT_B_EXACT: aToken totalScaledSupply should be equal to the sum of all scaled user balances';
 
   string constant BASE_INVARIANT_C =
-    'BASE_INVARIANT_C: The total amount of underlying in the protocol should be greater or equal than the aToken totalSuuply - debtToken totalSupply';
+    'BASE_INVARIANT_C: The total amount of underlying asset liquidity in the protocol after all repayments should be greater or equal than the aToken totalSupply';
 
   string constant BASE_INVARIANT_D =
     'BASE_INVARIANT_D: The total amount of underlying in the protocol should greater or equal to the reserve virtualUnderlyingBalance';
 
-  string constant BASE_INVARIANT_E =
-    'BASE_INVARIANT_E: If reserve is frozen pending ltv cannot be 0';
-
   string constant BASE_INVARIANT_F =
-    'BASE_INVARIANT_F: virtualBalance + currentDebt = (scaledATokenTotalSupply + accrueToTreasury) * liquidityIndexRightNow';
+    'BASE_INVARIANT_F: If reserve is enabled on eMode LtvZero bitmap, collateral bitmap must be enabled';
 
   ///////////////////////////////////////////////////////////////////////////////////////////////
   //                                        BORROWING                                          //
@@ -50,17 +47,14 @@ abstract contract InvariantsSpec {
   string constant BORROWING_INVARIANT_A =
     'BORROWING_INVARIANT_A: sum of all user debt == 0 <=> totalBorrowed == 0';
 
-  string constant BORROWING_INVARIANT_B =
-    'BORROWING_INVARIANT_B: if a user does not have debt, configuration.isBorrowing -> false'; // Discarded
+  string constant BORROWING_INVARIANT_B1 =
+    'BORROWING_INVARIANT_B: if a user does not have debt, configuration.isBorrowing -> false';
 
   string constant BORROWING_INVARIANT_B2 =
     'BORROWING_INVARIANT_B: if a user has any debt, configuration.isBorrowing -> true';
 
   string constant BORROWING_INVARIANT_C =
     'BORROWING_INVARIANT_C: if a user does not have collateral supplied, configuration.isCollateral -> false';
-
-  string constant BORROWING_INVARIANT_C2 =
-    'BORROWING_INVARIANT_C: if a user does has any collateral, configuration.isCollateral -> true'; // Discarded
 
   string constant BORROWING_INVARIANT_D =
     'BORROWING_INVARIANT_D: The grace period must not exceed the defined maximum limit of 4 hours';

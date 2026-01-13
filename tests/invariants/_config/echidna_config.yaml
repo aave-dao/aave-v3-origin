@@ -76,4 +76,4 @@ quiet: false
 format: "text"
 
 # concurrent workers
-workers: 12
+workers: 6

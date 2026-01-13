@@ -26,7 +26,26 @@ abstract contract FfiUtils {
   }
 
   function _getSupplyLibraryAddress() internal returns (address) {
-    string memory getLibraryAddress = "sed -nr 's/.*SupplyLogic:(.*)/\\1/p' .env";
+    string memory getLibraryAddress = "sed -nr 's/.*SupplyLogic:([^,]*).*/\\1/p' .env";
+    string[] memory getAddressCommand = new string[](3);
+
+    getAddressCommand[0] = 'bash';
+    getAddressCommand[1] = '-c';
+    getAddressCommand[2] = string(
+      abi.encodePacked(
+        'response="$(',
+        getLibraryAddress,
+        ')"; [ -z "$response" ] && cast abi-encode "response(address)" 0x0000000000000000000000000000000000000000 || cast abi-encode "response(address)" $response'
+      )
+    );
+
+    bytes memory res2 = vm.ffi(getAddressCommand);
+    address lastLib = abi.decode(res2, (address));
+    return lastLib;
+  }
+
+  function _getBorrowLibraryAddress() internal returns (address) {
+    string memory getLibraryAddress = "sed -nr 's/.*ConfiguratorLogic:([^,]*).*/\\1/p' .env";
     string[] memory getAddressCommand = new string[](3);
 
     getAddressCommand[0] = 'bash';

@@ -444,6 +444,32 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     assertEq(contracts.protocolDataProvider.getDebtCeiling(tokenList.usdx), 100);
   }
 
+  function test_setDebtCeiling_suppliers_ltZero_nonltzeroEmode_shouldRevert() public {
+    EModeCategoryInput memory ct = _genCategoryOne();
+
+    vm.startPrank(poolAdmin);
+    contracts.poolConfiguratorProxy.setEModeCategory(ct.id, ct.ltv, ct.lt, ct.lb, ct.label);
+    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, 1, true);
+    contracts.poolConfiguratorProxy.configureReserveAsCollateral(tokenList.usdx, 0, 0, 0);
+    vm.stopPrank();
+
+    vm.prank(alice);
+    contracts.poolProxy.supply(tokenList.usdx, 10e6, alice, 0);
+
+    vm.startPrank(poolAdmin);
+    // should revert as you cannot increase the ceiling of an asset that has ceiling = 0, and is collateral somewhere
+    vm.expectRevert(abi.encodeWithSelector(Errors.ReserveLiquidityNotZero.selector));
+    contracts.poolConfiguratorProxy.setDebtCeiling(tokenList.usdx, 100);
+
+    // should revert because you cannot disable collateral inside eMode as it's not collateral outside
+    vm.expectRevert(abi.encodeWithSelector(Errors.ReserveLiquidityNotZero.selector));
+    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, 1, false);
+
+    // should work as now it's enabled as collateral outside
+    contracts.poolConfiguratorProxy.configureReserveAsCollateral(tokenList.usdx, 0, 100, 10010);
+    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, 1, false);
+  }
+
   function test_setDebtCeiling() public {
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
     emit IPoolConfigurator.DebtCeilingChanged(tokenList.usdx, 0, 100);

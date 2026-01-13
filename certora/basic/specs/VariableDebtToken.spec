@@ -32,12 +32,13 @@ persistent ghost uint8 INDEX {
 }
 
 
-
+// THe following are reverting functions in variableDebtToken
 definition disAllowedFunctions(method f) returns bool =
   f.selector == sig:transfer(address, uint256).selector ||
   f.selector == sig:allowance(address, address).selector ||
   f.selector == sig:approve(address, uint256).selector ||
   f.selector == sig:transferFrom(address, address, uint256).selector ||
+  f.selector == sig:renounceAllowance(address).selector ||
   f.selector == sig:increaseAllowance(address, uint256).selector ||
   f.selector == sig:decreaseAllowance(address, uint256).selector;
 

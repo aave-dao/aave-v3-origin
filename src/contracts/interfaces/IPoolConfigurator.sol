@@ -154,6 +154,14 @@ interface IPoolConfigurator {
   event AssetBorrowableInEModeChanged(address indexed asset, uint8 categoryId, bool borrowable);
 
   /**
+   * @dev Emitted when the ltvzero configuration of an asset in an eMode changed.
+   * @param asset The address of the underlying asset of the reserve
+   * @param categoryId The eMode category
+   * @param ltvzero True if the asset is enabled as ltvzero in the eMode, false otherwise.
+   */
+  event AssetLtvzeroInEModeChanged(address indexed asset, uint8 categoryId, bool ltvzero);
+
+  /**
    * @dev Emitted when a new eMode category is added or an existing category is altered.
    * @param categoryId The new eMode category id
    * @param ltv The ltv for the asset category in eMode
@@ -326,10 +334,19 @@ interface IPoolConfigurator {
   /**
    * @notice Freeze or unfreeze a reserve. A frozen reserve doesn't allow any new supply, borrow
    * or rate swap but allows repayments, liquidations, rate rebalances and withdrawals.
+   * Also sets ltvzero on affected eModes and reserve ltv to 0.
+   * Stores the current reserve ltv in pendingLtv[asset].
    * @param asset The address of the underlying asset of the reserve
    * @param freeze True if the reserve needs to be frozen, false otherwise
    */
   function setReserveFreeze(address asset, bool freeze) external;
+
+  /**
+   * @notice Restores the pending ltv for a reserve in non-emode (emode 0), if it is non-zero.
+   * @param asset The address of the underlying asset of the reserve
+   * @param ltvzero True if the reserve should be flagged as ltvzero, false otherwise
+   */
+  function setReserveLtvzero(address asset, bool ltvzero) external;
 
   /**
    * @notice Sets the borrowable in isolation flag for the reserve.
@@ -427,7 +444,6 @@ interface IPoolConfigurator {
 
   /**
    * @notice Enables/disables an asset to be borrowable in a selected eMode.
-   * - eMode.borrowable always has less priority then reserve.borrowable
    * @param asset The address of the underlying asset of the reserve
    * @param categoryId The eMode categoryId
    * @param borrowable True if the asset should be borrowable in the given eMode category, false otherwise.
@@ -441,6 +457,14 @@ interface IPoolConfigurator {
    * @param collateral True if the asset should be collateral in the given eMode category, false otherwise.
    */
   function setAssetCollateralInEMode(address asset, uint8 categoryId, bool collateral) external;
+
+  /**
+   * @notice Enables/disables an asset to be collateral in a selected eMode.
+   * @param asset The address of the underlying asset of the reserve
+   * @param categoryId The eMode categoryId
+   * @param ltvzero True if the asset should be ltvzero in the given eMode category, false otherwise.
+   */
+  function setAssetLtvzeroInEMode(address asset, uint8 categoryId, bool ltvzero) external;
 
   /**
    * @notice Adds a new efficiency mode (eMode) category or alters a existing one.

@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 
+import {IncentivizedERC20} from '../../../src/contracts/protocol/tokenization/base/IncentivizedERC20.sol';
 import {IAToken, IERC20} from '../../../src/contracts/interfaces/IAToken.sol';
 import {IScaledBalanceToken} from '../../../src/contracts/interfaces/IScaledBalanceToken.sol';
 import {IVariableDebtToken} from '../../../src/contracts/interfaces/IVariableDebtToken.sol';
@@ -87,8 +88,6 @@ contract ATokenTransferTests is TestnetProcedures {
     uint256 bobBalanceBefore = aToken.balanceOf(bob);
     vm.expectEmit(address(aToken));
     emit IERC20.Transfer(alice, bob, transferAmount);
-    vm.expectEmit(report.poolProxy);
-    emit IPool.ReserveUsedAsCollateralEnabled(tokenList.usdx, bob);
 
     vm.prank(alice);
     aToken.transfer(bob, transferAmount);
@@ -118,8 +117,6 @@ contract ATokenTransferTests is TestnetProcedures {
     emit IAToken.BalanceTransfer(alice, bob, transferAmount, 1e27);
     vm.expectEmit(report.poolProxy);
     emit IPool.ReserveUsedAsCollateralDisabled(tokenList.usdx, alice);
-    vm.expectEmit(report.poolProxy);
-    emit IPool.ReserveUsedAsCollateralEnabled(tokenList.usdx, bob);
 
     vm.prank(alice);
     aToken.transfer(bob, transferAmount);
@@ -173,6 +170,8 @@ contract ATokenTransferTests is TestnetProcedures {
 
     vm.prank(alice);
     aToken.transfer(bob, transferAmount);
+    vm.prank(bob);
+    contracts.poolProxy.setUserUseReserveAsCollateral(tokenList.usdx, true);
 
     (uint256 bobCollateralBalance, , , , , , , , ) = contracts
       .protocolDataProvider
@@ -195,6 +194,8 @@ contract ATokenTransferTests is TestnetProcedures {
     aToken.transfer(bob, 50_000e6);
 
     vm.prank(bob);
+    contracts.poolProxy.setUserUseReserveAsCollateral(tokenList.usdx, true);
+    vm.prank(bob);
     contracts.poolProxy.borrow(tokenList.wbtc, 1e8, 2, 0, bob);
 
     uint256 transferAmount = aToken.balanceOf(bob);
@@ -212,6 +213,8 @@ contract ATokenTransferTests is TestnetProcedures {
 
     vm.prank(alice);
     aToken.transfer(bob, 50_000e6);
+    vm.prank(bob);
+    contracts.poolProxy.setUserUseReserveAsCollateral(tokenList.usdx, true);
 
     (uint256 bobCollateralBalance, , , , , , , , ) = contracts
       .protocolDataProvider
@@ -310,14 +313,11 @@ contract ATokenTransferTests is TestnetProcedures {
     aToken.transfer(mockReceiver, amount);
 
     // check flag correctness
-    (uint256 collateralBalance, , , , , , , , bool collateralEnabled) = contracts
-      .protocolDataProvider
-      .getUserReserveData(tokenList.usdx, mockReceiver);
-    if (collateralBalance == 0) {
-      assertEq(collateralEnabled, false);
-    } else {
-      assertEq(collateralEnabled, true);
-    }
+    (, , , , , , , , bool collateralEnabled) = contracts.protocolDataProvider.getUserReserveData(
+      tokenList.usdx,
+      mockReceiver
+    );
+    assertEq(collateralEnabled, false);
   }
 
   function test_scaled_balance_token_base_alice_transfer_to_bob_accrues_interests() public {
@@ -378,5 +378,25 @@ contract ATokenTransferTests is TestnetProcedures {
       aliceScaledBalanceBefore - expectedScaledTransferAmount,
       'alice scaled balance should be minus scaled transfer amount'
     );
+  }
+
+  function test_approve_and_renounceAllowance() public {
+    uint256 approveAmount = 1e18;
+
+    vm.expectEmit(address(aToken));
+    emit IERC20.Approval(alice, bob, approveAmount);
+
+    vm.prank(alice);
+    aToken.approve(bob, approveAmount);
+
+    assertEq(aToken.allowance(alice, bob), approveAmount);
+
+    vm.expectEmit(address(aToken));
+    emit IERC20.Approval(alice, bob, 0);
+
+    vm.prank(bob);
+    IncentivizedERC20(address(aToken)).renounceAllowance(alice);
+
+    assertEq(aToken.allowance(alice, bob), 0);
   }
 }

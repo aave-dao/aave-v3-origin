@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.19;
 
-import {PoolInstance} from '../munged/contracts/instances/PoolInstance.sol';
-import {DataTypes} from '../munged/contracts/protocol/libraries/types/DataTypes.sol';
-import {ReserveLogic} from '../munged/contracts/protocol/libraries/logic/ReserveLogic.sol';
-import {IPoolAddressesProvider} from '../munged/contracts/interfaces/IPoolAddressesProvider.sol';
-import {IReserveInterestRateStrategy} from '../munged/contracts/interfaces/IReserveInterestRateStrategy.sol';
+import {PoolInstance} from '../munged/src/contracts/instances/PoolInstance.sol';
+import {DataTypes} from '../munged/src/contracts/protocol/libraries/types/DataTypes.sol';
+import {ReserveLogic} from '../munged/src/contracts/protocol/libraries/logic/ReserveLogic.sol';
+import {IPoolAddressesProvider} from '../munged/src/contracts/interfaces/IPoolAddressesProvider.sol';
+import {IReserveInterestRateStrategy} from '../munged/src/contracts/interfaces/IReserveInterestRateStrategy.sol';
 
-import {IERC20} from '../../../src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
-import {ReserveConfiguration} from '../munged/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
+import {IERC20} from '../munged/src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {ReserveConfiguration} from '../munged/src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
 
 contract PoolHarness is PoolInstance {
   using ReserveLogic for DataTypes.ReserveData;

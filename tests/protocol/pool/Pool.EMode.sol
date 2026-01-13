@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 import 'forge-std/StdStorage.sol';
+import {Vm} from 'forge-std/Vm.sol';
 
 import {IPriceOracleGetter} from '../../../src/contracts/interfaces/IPriceOracleGetter.sol';
 import {IAToken, IERC20} from '../../../src/contracts/interfaces/IAToken.sol';
@@ -28,6 +29,11 @@ contract PoolEModeTests is TestnetProcedures {
 
   function setUp() public virtual {
     initTestEnvironment(false);
+    vm.startPrank(poolAdmin);
+    EModeCategoryInput memory ct1 = _genCategoryOne();
+    contracts.poolConfiguratorProxy.setEModeCategory(ct1.id, ct1.ltv, ct1.lt, ct1.lb, ct1.label);
+    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, ct1.id, true);
+    vm.stopPrank();
 
     pool = PoolInstance(report.poolProxy);
   }
@@ -35,45 +41,27 @@ contract PoolEModeTests is TestnetProcedures {
   function test_setUserEMode_shouldRevertForNonExistingEmode() public {
     vm.prank(alice);
     vm.expectRevert(abi.encodeWithSelector(Errors.InconsistentEModeCategory.selector));
-    pool.setUserEMode(1);
+    contracts.poolProxy.setUserEMode(2);
   }
 
   function test_getUserEMode_shouldReflectEMode() public {
-    vm.startPrank(poolAdmin);
-    EModeCategoryInput memory ct1 = _genCategoryOne();
-    contracts.poolConfiguratorProxy.setEModeCategory(ct1.id, ct1.ltv, ct1.lt, ct1.lb, ct1.label);
-    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, ct1.id, true);
-    vm.stopPrank();
-
     vm.expectEmit(address(pool));
-    emit IPool.UserEModeSet(alice, ct1.id);
-    vm.prank(alice);
-    pool.setUserEMode(ct1.id);
-
-    assertEq(pool.getUserEMode(alice), ct1.id);
-  }
-
-  function test_reenterSameEmode_shouldSucceed() public {
-    test_getUserEMode_shouldReflectEMode();
-
-    assertEq(pool.getUserEMode(alice), 1);
+    emit IPool.UserEModeSet(alice, 1);
     vm.prank(alice);
     pool.setUserEMode(1);
     assertEq(pool.getUserEMode(alice), 1);
   }
 
-  function test_getUserAccountData_shouldReflectEmodeParams() public {
-    vm.startPrank(poolAdmin);
+  function test_reenterSameEmode_shouldSucceedAndDoNothing() public {
+    test_getUserEMode_shouldReflectEMode();
     EModeCategoryInput memory ct1 = _genCategoryOne();
-    contracts.poolConfiguratorProxy.setEModeCategory(ct1.id, ct1.ltv, ct1.lt, ct1.lb, ct1.label);
-    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, ct1.id, true);
-    vm.stopPrank();
 
+    vm.recordLogs();
     vm.prank(alice);
     pool.setUserEMode(ct1.id);
     // supply some dust so the eMode asset is the only collateral
     _mintTestnetToken(tokenList.usdx, alice, 1);
-    _supplyToPool(tokenList.usdx, alice, 1);
+    _supply(tokenList.usdx, 1, alice);
 
     (, , , uint256 emodeLT, uint256 emodeLTV, ) = contracts.poolProxy.getUserAccountData(alice);
     assertEq(emodeLT, ct1.lt);
@@ -100,10 +88,10 @@ contract PoolEModeTests is TestnetProcedures {
     pool.setUserEMode(ct1.id);
     // supply some dust so the eMode asset is the only collateral
     _mintTestnetToken(tokenList.usdx, alice, 1e6);
-    _supplyToPool(tokenList.usdx, alice, 1e6);
+    _supply(tokenList.usdx, 1e6, alice);
     // supply some non eMode asset
     _mintTestnetToken(tokenList.wbtc, alice, 1e8);
-    _supplyToPool(tokenList.wbtc, alice, 1e8);
+    _supply(tokenList.wbtc, 1e8, alice);
 
     (, , , uint256 realLT, uint256 realLTV, ) = contracts.poolProxy.getUserAccountData(alice);
     assertLt(realLT, ct1.lt);
@@ -146,7 +134,7 @@ contract PoolEModeTests is TestnetProcedures {
     vm.prank(alice);
     pool.setUserEMode(1);
     _mintTestnetToken(tokenList.usdx, alice, amount);
-    _supplyToPool(tokenList.usdx, alice, amount);
+    _supply(tokenList.usdx, amount, alice);
     _borrowMaxLt(tokenList.wbtc, alice);
 
     (, , , , , uint256 hfBefore) = contracts.poolProxy.getUserAccountData(alice);
@@ -170,7 +158,7 @@ contract PoolEModeTests is TestnetProcedures {
     vm.prank(alice);
     pool.setUserEMode(2);
     _mintTestnetToken(tokenList.usdx, alice, amount);
-    _supplyToPool(tokenList.usdx, alice, amount);
+    _supply(tokenList.usdx, amount, alice);
     _borrowMaxLt(tokenList.wbtc, alice);
 
     vm.prank(alice);
@@ -193,15 +181,15 @@ contract PoolEModeTests is TestnetProcedures {
     vm.prank(alice);
     pool.setUserEMode(1);
     _mintTestnetToken(tokenList.usdx, alice, amount);
-    _supplyToPool(tokenList.usdx, alice, amount);
+    _supply(tokenList.usdx, amount, alice);
     _borrowMaxLt(tokenList.wbtc, alice);
 
     vm.prank(alice);
-    vm.expectRevert(abi.encodeWithSelector(Errors.NotBorrowableInEMode.selector));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidDebtInEmode.selector, tokenList.wbtc, 2));
     pool.setUserEMode(2);
   }
 
-  function test_borrowing_shouldRevert_ifNonBorrowableOutsideEmode(uint256 amount) public {
+  function test_borrowing_nonBorrowableOutsideEmode(uint256 amount) public {
     amount = bound(amount, 1 ether, type(uint104).max);
     vm.startPrank(poolAdmin);
     uint16 liquidationBonus = 10050;
@@ -220,10 +208,31 @@ contract PoolEModeTests is TestnetProcedures {
     vm.prank(alice);
     pool.setUserEMode(1);
     _mintTestnetToken(tokenList.usdx, alice, amount);
-    _supplyToPool(tokenList.usdx, alice, amount);
+    _supply(tokenList.usdx, amount, alice);
+    _borrowMaxLt(tokenList.wbtc, alice);
+  }
 
-    vm.prank(alice);
+  function test_borrowing_nonBorrowableOutsideEmode_shouldRevertIfNotInsideEmode(
+    uint256 amount
+  ) public {
+    amount = bound(amount, 1 ether, type(uint104).max);
+    vm.startPrank(poolAdmin);
+    uint16 liquidationBonus = 10050;
+    contracts.poolConfiguratorProxy.setEModeCategory(
+      1,
+      9000,
+      9200,
+      liquidationBonus,
+      'usdx eMode low'
+    );
+    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, 1, true);
+    contracts.poolConfiguratorProxy.setReserveBorrowing(tokenList.wbtc, false);
+    contracts.poolConfiguratorProxy.setAssetBorrowableInEMode(tokenList.wbtc, 1, true);
+    vm.stopPrank();
+
+    _supplyAndEnableAsCollateral(tokenList.usdx, amount, alice);
     vm.expectRevert(abi.encodeWithSelector(Errors.BorrowingNotEnabled.selector));
+    vm.prank(alice);
     contracts.poolProxy.borrow(tokenList.wbtc, 1, 2, 0, alice);
   }
 
@@ -245,7 +254,7 @@ contract PoolEModeTests is TestnetProcedures {
     vm.prank(alice);
     pool.setUserEMode(1);
     _mintTestnetToken(tokenList.usdx, alice, amount);
-    _supplyToPool(tokenList.usdx, alice, amount);
+    _supply(tokenList.usdx, amount, alice);
     (uint256 totalCollateralBase, , , , , ) = contracts.poolProxy.getUserAccountData(alice);
     uint256 debtPrice = contracts.aaveOracle.getAssetPrice(tokenList.wbtc);
     uint256 borrowAmount = (totalCollateralBase * 1e8) / debtPrice;
@@ -279,13 +288,6 @@ contract PoolEModeTests is TestnetProcedures {
     TestnetERC20(erc20).mint(user, amount);
   }
 
-  function _supplyToPool(address erc20, address user, uint256 amount) internal {
-    vm.startPrank(user);
-    IERC20(erc20).approve(address(contracts.poolProxy), amount);
-    contracts.poolProxy.supply(erc20, amount, user, 0);
-    vm.stopPrank();
-  }
-
   function _borrowMaxLt(address erc20, address user) internal {
     (uint256 totalCollateralBase, , , uint256 currentLt, , ) = contracts
       .poolProxy
@@ -298,7 +300,7 @@ contract PoolEModeTests is TestnetProcedures {
 
   function _borrowArbitraryAmount(address erc20, address user, uint256 amount) internal {
     _mintTestnetToken(erc20, bob, amount); // todo: better not bob
-    _supplyToPool(erc20, bob, amount);
+    _supply(erc20, amount, bob);
 
     vm.mockCall(
       address(contracts.aaveOracle),

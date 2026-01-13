@@ -80,10 +80,19 @@ function run_parametric_with_cvl_equivalent(method f, env e) {
         address a1;
         // no CVL implementation, so nop
         aToken.setIncentivesController(e, a1);*/
+    } else if (f.selector == sig:renounceAllowance(address).selector) {
+        address a; 
+        aTokenRenounceAllowanceCVL(aToken, a, e);
+        aToken.renounceAllowance(e, a);
     } else if (f.selector == initialize_method_sig()) {
         // we're running all of our equivalence rules on an 'initialized' state of the AToken
         dont_care();
     } else if (f.selector == sig:approveDelegation(address,uint256).selector) {
+        address a1;
+        uint256 u1;
+        // no CVL implementation, so nop
+        aToken.approveDelegation(e, a1, u1); // sol implementation to see if it's nop-equivalent for our purposes    
+    } else if (f.selector == sig:renounceDelegation(address).selector) {
         address a1;
         uint256 u1;
         // no CVL implementation, so nop
@@ -120,6 +129,7 @@ definition unimplemented(method f) returns bool =
     || f.selector == sig:increaseAllowance(address,uint256).selector
     || f.selector == sig:transfer(address,uint256).selector
     || f.selector == sig:transferFrom(address,address,uint256).selector
+    || f.selector == sig:renounceAllowance(address).selector
 ;
     
 use rule alwaysRevert filtered { f -> 

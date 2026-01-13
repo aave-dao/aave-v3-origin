@@ -2,9 +2,9 @@
 pragma solidity ^0.8.19;
 pragma experimental ABIEncoderV2;
 
-import {UserConfiguration} from '../munged/contracts/protocol/libraries/configuration/UserConfiguration.sol';
-import {DataTypes} from '../munged/contracts/protocol/libraries/types/DataTypes.sol';
-import {PoolStorage} from '../munged/contracts/protocol/pool/PoolStorage.sol';
+import {UserConfiguration} from '../munged/src/contracts/protocol/libraries/configuration/UserConfiguration.sol';
+import {DataTypes} from '../munged/src/contracts/protocol/libraries/types/DataTypes.sol';
+import {PoolStorage} from '../munged/src/contracts/protocol/pool/PoolStorage.sol';
 
 /*
 A wrapper contract for calling functions from the library UserConfiguration.

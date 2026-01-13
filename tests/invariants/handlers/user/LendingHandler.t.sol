@@ -32,18 +32,12 @@ contract LendingHandler is BaseHandler {
     _setReceiverActor(onBehalfOf);
 
     address asset = _getRandomBaseAsset(j);
-    Flags memory flags = _getFlags(asset);
 
-    address target = address(pool);
-
-    uint256 senderUnderlyingBalanceBefore = IERC20(asset).balanceOf(address(actor));
-    uint256 onBehalfOfATokenBalanceBefore = IERC20(protocolTokens[asset].aTokenAddress).balanceOf(
-      onBehalfOf
-    );
+    _mintAndApprove({token: asset, owner: address(actor), spender: address(pool), amount: amount});
 
     _before();
     (success, returnData) = actor.proxy(
-      target,
+      address(pool),
       abi.encodeWithSelector(IPool.supply.selector, asset, amount, onBehalfOf, 0)
     );
 
@@ -51,22 +45,27 @@ contract LendingHandler is BaseHandler {
       _after();
 
       // POST-CONDITIONS
-      assertTrue(assertReserveIsAbleToDeposit(flags), LENDING_HPOST_A);
       assertEq(
-        IERC20(asset).balanceOf(address(actor)),
-        senderUnderlyingBalanceBefore - amount,
+        snapshotGlobalVarsBefore.usersInfo[address(actor)].userAssetsInfo[asset].underlyingBalance,
+        snapshotGlobalVarsAfter.usersInfo[address(actor)].userAssetsInfo[asset].underlyingBalance +
+          amount,
         LENDING_HPOST_D
       );
 
+      assertEq(
+        snapshotGlobalVarsBefore.assetsInfo[asset].virtualUnderlyingBalance + amount,
+        snapshotGlobalVarsAfter.assetsInfo[asset].virtualUnderlyingBalance
+      );
+
       assertApproxEqAbs(
-        IERC20(protocolTokens[asset].aTokenAddress).balanceOf(onBehalfOf),
-        onBehalfOfATokenBalanceBefore + amount,
-        1,
+        snapshotGlobalVarsBefore.usersInfo[onBehalfOf].userAssetsInfo[asset].aTokenBalance + amount,
+        snapshotGlobalVarsAfter.usersInfo[onBehalfOf].userAssetsInfo[asset].aTokenBalance,
+        2,
         LENDING_HPOST_E
       );
-      assertLe(
-        IERC20(protocolTokens[asset].aTokenAddress).balanceOf(onBehalfOf),
-        onBehalfOfATokenBalanceBefore + amount,
+      assertGe(
+        snapshotGlobalVarsBefore.usersInfo[onBehalfOf].userAssetsInfo[asset].aTokenBalance + amount,
+        snapshotGlobalVarsAfter.usersInfo[onBehalfOf].userAssetsInfo[asset].aTokenBalance,
         LENDING_HPOST_E
       );
     } else {
@@ -82,14 +81,6 @@ contract LendingHandler is BaseHandler {
     address to = _getRandomActor(i);
 
     address asset = _getRandomBaseAsset(j);
-    Flags memory flags = _getFlags(asset);
-
-    bool isCollateral = _isUsingAsCollateral(asset, address(actor));
-
-    uint256 toUnderlyingBalanceBefore = IERC20(asset).balanceOf(to);
-    uint256 actorATokenBalanceBefore = IERC20(protocolTokens[asset].aTokenAddress).balanceOf(
-      address(actor)
-    );
 
     _before();
     (success, returnData) = actor.proxy(
@@ -101,20 +92,28 @@ contract LendingHandler is BaseHandler {
       _after();
 
       // POST-CONDITIONS
-      assertTrue(assertReserveIsActiveAndNotPaused(flags), LENDING_HPOST_A);
+      assertEq(
+        snapshotGlobalVarsBefore.usersInfo[to].userAssetsInfo[asset].underlyingBalance + amount,
+        snapshotGlobalVarsAfter.usersInfo[to].userAssetsInfo[asset].underlyingBalance
+      );
 
-      /// @dev LENDING_HPOST_F
-      uint256 aTokenBalance = IERC20(protocolTokens[asset].aTokenAddress).balanceOf(address(actor));
-      assertApproxEqAbs(aTokenBalance, actorATokenBalanceBefore - amount, 1, LENDING_HPOST_F);
-      assertLe(aTokenBalance, actorATokenBalanceBefore - amount, LENDING_HPOST_F);
+      assertEq(
+        snapshotGlobalVarsAfter.assetsInfo[asset].virtualUnderlyingBalance + amount,
+        snapshotGlobalVarsBefore.assetsInfo[asset].virtualUnderlyingBalance
+      );
 
-      /// @dev LENDING_HPOST_G
-      assertEq(IERC20(asset).balanceOf(to), toUnderlyingBalanceBefore + amount, LENDING_HPOST_G);
-
-      if (isCollateral) {
-        assertTrue(defaultVarsBefore.users[address(actor)].isHealthy, LENDING_HPOST_H1);
-        assertTrue(defaultVarsAfter.users[address(actor)].isHealthy, LENDING_HPOST_H2);
-      }
+      assertApproxEqAbs(
+        snapshotGlobalVarsAfter.usersInfo[address(actor)].userAssetsInfo[asset].aTokenBalance +
+          amount,
+        snapshotGlobalVarsBefore.usersInfo[address(actor)].userAssetsInfo[asset].aTokenBalance,
+        2
+      );
+      assertLe(
+        snapshotGlobalVarsAfter.usersInfo[address(actor)].userAssetsInfo[asset].aTokenBalance +
+          amount,
+        snapshotGlobalVarsBefore.usersInfo[address(actor)].userAssetsInfo[asset].aTokenBalance,
+        ''
+      );
     } else {
       revert('LendingHandler: withdraw failed');
     }

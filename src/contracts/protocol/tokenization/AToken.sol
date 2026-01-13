@@ -181,7 +181,7 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
     );
     require(owner == ECDSA.recover(digest, v, r, s), Errors.InvalidSignature());
     _nonces[owner] = currentValidNonce + 1;
-    _approve(owner, spender, value);
+    _approve({owner: owner, spender: spender, amount: value, emitEvent: true});
   }
 
   /// @inheritdoc IERC20
@@ -248,7 +248,6 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
     uint256 index = POOL.getReserveNormalizedIncome(underlyingAsset);
 
     uint256 scaledBalanceFromBefore = super.balanceOf(from);
-    uint256 scaledBalanceToBefore = super.balanceOf(to);
     uint256 scaledAmount = uint256(amount).getATokenTransferScaledAmount(index);
 
     _transfer({
@@ -264,8 +263,7 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
       from: from,
       to: to,
       scaledAmount: scaledAmount,
-      scaledBalanceFromBefore: scaledBalanceFromBefore,
-      scaledBalanceToBefore: scaledBalanceToBefore
+      scaledBalanceFromBefore: scaledBalanceFromBefore
     });
   }
 

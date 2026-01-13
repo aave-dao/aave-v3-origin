@@ -89,4 +89,19 @@ contract ATokenTransferFromTests is TestnetProcedures {
     );
     assertGe(upscaledDiff, amount);
   }
+
+  function test_transferFrom_max_allowance() public {
+    uint256 amountToMint = 1e18;
+
+    vm.prank(address(contracts.poolProxy));
+    aToken.mint({caller: alice, onBehalfOf: alice, scaledAmount: 1e18, index: 1e18});
+
+    vm.prank(alice);
+    aToken.approve(bob, type(uint256).max);
+
+    vm.prank(bob);
+    aToken.transferFrom(alice, carol, amountToMint);
+
+    assertEq(aToken.allowance(alice, bob), type(uint256).max);
+  }
 }

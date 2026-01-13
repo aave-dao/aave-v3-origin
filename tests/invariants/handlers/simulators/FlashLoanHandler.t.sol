@@ -26,43 +26,37 @@ contract FlashLoanHandler is BaseHandler {
 
   function flashLoan(
     uint256[3] memory amounts,
-    DataTypes.InterestRateMode[3] memory interestRateModes,
-    uint256 amountToRepay,
-    uint8
+    bool[3] memory interestRateModes,
+    uint8 i
   ) external setup {
     bool success;
     bytes memory returnData;
-
-    address target = address(pool);
 
     address[] memory assets = new address[](3);
     assets[0] = baseAssets[0];
     assets[1] = baseAssets[1];
     assets[2] = baseAssets[2];
 
-    uint256[] memory amountsMemory = new uint256[](3);
-    amountsMemory[0] = amounts[0];
-    amountsMemory[1] = amounts[1];
-    amountsMemory[2] = amounts[2];
-
     uint256[] memory interestRateModesUint = new uint256[](3);
-    interestRateModesUint[0] = uint256(interestRateModes[0]);
-    interestRateModesUint[1] = uint256(interestRateModes[1]);
-    interestRateModesUint[2] = uint256(interestRateModes[2]);
+    interestRateModesUint[0] = interestRateModes[0] ? 2 : 0;
+    interestRateModesUint[1] = interestRateModes[1] ? 2 : 0;
+    interestRateModesUint[2] = interestRateModes[2] ? 2 : 0;
+
+    address onBehalfOf = _getRandomActor(i);
 
     bytes memory calldata_ = abi.encodeWithSelector(
       IPool.flashLoan.selector,
       flashLoanReceiver,
       assets,
-      amountsMemory,
+      amounts,
       interestRateModesUint,
-      address(actor),
-      abi.encode(amountToRepay, address(actor)),
+      onBehalfOf,
+      '',
       0
     );
 
     _before();
-    (success, returnData) = actor.proxy(target, calldata_);
+    (success, returnData) = actor.proxy(address(pool), calldata_);
 
     if (success) {
       _after();
@@ -71,26 +65,21 @@ contract FlashLoanHandler is BaseHandler {
     }
   }
 
-  function flashLoanSimple(uint256 amount, uint256 amountToRepay, uint8 i) external setup {
+  function flashLoanSimple(uint256 amount, uint8 i) external setup {
     bool success;
     bytes memory returnData;
 
-    address target = address(pool);
-
     address asset = _getRandomBaseAsset(i);
-
-    uint256[] memory amountsToRepay = new uint256[](1);
-    amountsToRepay[0] = amountToRepay;
 
     _before();
     (success, returnData) = actor.proxy(
-      target,
+      address(pool),
       abi.encodeWithSelector(
         IPool.flashLoanSimple.selector,
         flashLoanReceiver,
         asset,
         amount,
-        abi.encode(amountsToRepay, address(actor)),
+        '',
         0
       )
     );

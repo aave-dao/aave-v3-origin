@@ -22,9 +22,6 @@ ffi = true
 runs = 1000
 max_test_rejects = 20000
 
-[profile.linea]
-evm_version = 'london'
-
 [profile.zksync]
 src = 'zksync'
 test = 'zksync'
@@ -66,6 +63,8 @@ linea = "${RPC_LINEA}"
 sonic = "${RPC_SONIC}"
 soneium = "${RPC_SONEIUM}"
 zksync = "${RPC_ZKSYNC}"
+ink = "${RPC_INK}"
+plasma = "${RPC_PLASMA}"
 
 [etherscan]
 mainnet = { key = "${ETHERSCAN_API_KEY_MAINNET}", chainId = 1 }

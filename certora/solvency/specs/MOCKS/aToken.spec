@@ -28,6 +28,9 @@ methods {
   function _.transferFrom(address from, address to, uint256 amount) external with (env e)
     => transferFromCVL(calledContract, from, to, amount, e) expect bool;
 
+  function _.renounceAllowance(address owner) external with (env e)
+    => aTokenRenounceAllowanceCVL(calledContract, owner, e) expect void;
+
   // matches AToken only
   function _.mint(address caller, address onBehalfOf, uint256 scaledAmount, uint256 index) external
     => aTokenMintCVL(calledContract, caller, onBehalfOf, scaledAmount, index) expect bool;
@@ -248,11 +251,12 @@ function aTokenTransferFromCVL(address token, address from, address to, uint256 
     
   if (allowanceByToken[token][from][spender] < amount) return false; // The actual Solidity code reverts.
 
-  if (allowanceByToken[token][from][spender] >= corrected_amount)
-    allowanceByToken[token][from][spender] = assert_uint256(allowanceByToken[token][from][spender] - corrected_amount);
-  else
-    allowanceByToken[token][from][spender] = 0;
-    
+  if (allowanceByToken[token][from][spender] != 2^256-1) {
+    if (allowanceByToken[token][from][spender] >= corrected_amount)
+      allowanceByToken[token][from][spender] = assert_uint256(allowanceByToken[token][from][spender] - corrected_amount);
+    else
+      allowanceByToken[token][from][spender] = 0;
+  }
   // custom part:
   aTokenTransferCVLInternal(token, from, to, amount, e);
   return true;
@@ -295,6 +299,13 @@ function aTokenBurnCVL(address token, address from, address receiverOfUnderlying
   }
 
   return ret;
+}
+
+function aTokenRenounceAllowanceCVL(address token, address owner, env e) {
+  assert tokenToSort[token]==AToken_token() || tokenToSort[token]==VariableDebtToken_token();
+
+  address spender = e.msg.sender;
+  allowanceByToken[token][owner][spender]=0;
 }
 
 function aTokenTransferUnderlyingToCVL(address token, address target, uint amount) {

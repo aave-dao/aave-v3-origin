@@ -9,7 +9,7 @@ import {PoolConfigurator, IPoolAddressesProvider, IPool, VersionedInitializable}
  * @notice Instance of the PoolConfigurator of the Aave protocol
  */
 contract PoolConfiguratorInstance is PoolConfigurator {
-  uint256 public constant CONFIGURATOR_REVISION = 6;
+  uint256 public constant CONFIGURATOR_REVISION = 7;
 
   /// @inheritdoc VersionedInitializable
   function getRevision() internal pure virtual override returns (uint256) {
