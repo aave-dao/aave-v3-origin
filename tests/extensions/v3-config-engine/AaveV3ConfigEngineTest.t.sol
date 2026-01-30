@@ -12,10 +12,14 @@ import {AaveV3MockCapUpdate} from './mocks/AaveV3MockCapUpdate.sol';
 import {AaveV3MockCollateralUpdate} from './mocks/AaveV3MockCollateralUpdate.sol';
 import {AaveV3MockCollateralUpdateNoChange} from './mocks/AaveV3MockCollateralUpdateNoChange.sol';
 import {AaveV3MockCollateralUpdateWrongBonus, AaveV3MockCollateralUpdateCorrectBonus} from './mocks/AaveV3MockCollateralUpdateWrongBonus.sol';
+import {AaveV3MockCollateralUpdateLtZero} from './mocks/AaveV3MockCollateralUpdateLtZero.sol';
+import {AaveV3MockCollateralUpdateLtZeroLiqProtocolFeeOnly} from './mocks/AaveV3MockCollateralUpdateLtZeroLiqProtocolFeeOnly.sol';
 import {AaveV3MockBorrowUpdate} from './mocks/AaveV3MockBorrowUpdate.sol';
 import {AaveV3MockBorrowUpdateNoChange} from './mocks/AaveV3MockBorrowUpdateNoChange.sol';
 import {AaveV3MockRatesUpdate} from './mocks/AaveV3MockRatesUpdate.sol';
 import {AaveV3MockPriceFeedUpdate} from './mocks/AaveV3MockPriceFeedUpdate.sol';
+import {AaveV3MockPriceFeedUpdateInvalidDecimals} from './mocks/AaveV3MockPriceFeedUpdateInvalidDecimals.sol';
+import {MockAggregator18Decimals} from './mocks/MockAggregator18Decimals.sol';
 import {AaveV3MockEModeCategoryUpdate, AaveV3MockEModeCategoryUpdateEdgeBonus} from './mocks/AaveV3MockEModeCategoryUpdate.sol';
 import {AaveV3MockEModeCategoryUpdateNoChange} from './mocks/AaveV3MockEModeCategoryUpdateNoChange.sol';
 import {AaveV3MockAssetEModeUpdate} from './mocks/AaveV3MockAssetEModeUpdate.sol';
@@ -588,6 +592,99 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
     _validateReserveConfig(expectedAssetConfig, allConfigsAfter);
   }
 
+  /**
+   * @notice Tests that attempting to set debtCeiling when base liquidation threshold (lt) is zero
+   * should revert with 'DEBT_CEILING_REQUIRES_LT_NON_ZERO'.
+   * @dev Even though the asset is enabled as collateral in an eMode category, debtCeiling
+   * cannot be set when base lt=0 because debt ceiling (isolation mode) requires the asset
+   * to be collateral in base mode.
+   */
+  function testCollateralUpdateLtZeroDebtCeilingShouldRevert() public {
+    // Use existing asset and set lt to 0
+    address asset = tokenList.usdx;
+
+    // First, set the asset's lt to 0 (making it non-collateral in base mode)
+    vm.startPrank(poolAdmin);
+    contracts.poolConfiguratorProxy.configureReserveAsCollateral(asset, 0, 0, 0);
+
+    // Set an eMode category with lt != 0 to simulate the scenario where
+    // an asset has lt=0 in base mode but can be used as collateral in eMode
+    contracts.poolConfiguratorProxy.setEModeCategory(10, 80_00, 85_00, 105_00, 'Test eMode');
+
+    // Set the asset to be collateral in the eMode
+    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(asset, 10, true);
+    vm.stopPrank();
+
+    // Attempt to update both liquidationProtocolFee and debtCeiling when base lt=0
+    // This should revert because debtCeiling cannot be set when lt=0
+    AaveV3MockCollateralUpdateLtZero payload = new AaveV3MockCollateralUpdateLtZero(
+      asset,
+      configEngine
+    );
+
+    vm.prank(roleList.marketOwner);
+    contracts.aclManager.addPoolAdmin(address(payload));
+
+    // Expect revert because debtCeiling cannot be set when base lt=0
+    vm.expectRevert(bytes('DEBT_CEILING_REQUIRES_LT_NON_ZERO'));
+    payload.execute();
+  }
+
+  /**
+   * @notice Tests that liquidationProtocolFee can be configured independently even when
+   * the base liquidation threshold (lt) is zero.
+   * @dev This test verifies that liqProtocolFee updates work when base lt=0 but the asset
+   * is enabled as collateral in an eMode category.
+   */
+  function testCollateralUpdateLtZeroLiqProtocolFeeOnly() public {
+    // Use existing asset and set lt to 0
+    address asset = tokenList.wbtc;
+
+    // First, set the asset's lt to 0 (making it non-collateral in base mode)
+    vm.startPrank(poolAdmin);
+    contracts.poolConfiguratorProxy.configureReserveAsCollateral(asset, 0, 0, 0);
+
+    // Set an eMode category with lt != 0
+    contracts.poolConfiguratorProxy.setEModeCategory(11, 75_00, 80_00, 105_00, 'Test eMode 2');
+
+    // Set the asset to be collateral in the eMode
+    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(asset, 11, true);
+    vm.stopPrank();
+
+    // Now update only liquidationProtocolFee even though base lt=0
+    AaveV3MockCollateralUpdateLtZeroLiqProtocolFeeOnly payload = new AaveV3MockCollateralUpdateLtZeroLiqProtocolFeeOnly(
+        asset,
+        configEngine
+      );
+
+    vm.prank(roleList.marketOwner);
+    contracts.aclManager.addPoolAdmin(address(payload));
+
+    ReserveConfig[] memory allConfigsBefore = createConfigurationSnapshot(
+      'preTestCollateralLtZeroLiqProtocolFeeOnly',
+      IPool(address(contracts.poolProxy))
+    );
+
+    // This should succeed - liquidationProtocolFee can be set even when base lt=0
+    payload.execute();
+
+    ReserveConfig[] memory allConfigsAfter = createConfigurationSnapshot(
+      'postTestCollateralLtZeroLiqProtocolFeeOnly',
+      IPool(address(contracts.poolProxy))
+    );
+
+    ReserveConfig memory expectedAssetConfig = _findReserveConfig(allConfigsBefore, asset);
+
+    // Verify that liquidationProtocolFee was updated
+    expectedAssetConfig.liquidationProtocolFee = 20_00;
+
+    // Base LTV and LT should remain 0
+    expectedAssetConfig.ltv = 0;
+    expectedAssetConfig.liquidationThreshold = 0;
+
+    _validateReserveConfig(expectedAssetConfig, allConfigsAfter);
+  }
+
   function testBorrowsUpdates() public {
     address asset = tokenList.usdx;
     AaveV3MockBorrowUpdate payload = new AaveV3MockBorrowUpdate(asset, configEngine);
@@ -689,6 +786,31 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
       asset,
       newFeed
     );
+  }
+
+  /**
+   * @notice Tests that attempting to set a price feed with decimals != 8 reverts with
+   * 'FEED_MUST_USE_8_DECIMALS'.
+   * @dev The PriceFeedEngine validates that all price feeds must use exactly 8 decimals
+   * to ensure consistency across the protocol.
+   */
+  function testPriceFeedUpdateInvalidDecimalsShouldRevert() public {
+    address asset = tokenList.usdx;
+    // Create a mock aggregator with 18 decimals instead of 8
+    address invalidFeed = address(new MockAggregator18Decimals(int256(1.05e18)));
+
+    AaveV3MockPriceFeedUpdateInvalidDecimals payload = new AaveV3MockPriceFeedUpdateInvalidDecimals(
+      asset,
+      invalidFeed,
+      configEngine
+    );
+
+    vm.prank(roleList.marketOwner);
+    contracts.aclManager.addPoolAdmin(address(payload));
+
+    // Expect revert because price feed has 18 decimals instead of 8
+    vm.expectRevert(bytes('FEED_MUST_USE_8_DECIMALS'));
+    payload.execute();
   }
 
   function testEModeCategoryCreation() public {
