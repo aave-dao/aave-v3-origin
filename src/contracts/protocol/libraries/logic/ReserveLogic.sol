@@ -121,7 +121,7 @@ library ReserveLogic {
 
   /**
    * @notice Updates the reserve current variable borrow rate and the current liquidity rate.
-   * @param reserve The reserve reserve to be updated
+   * @param reserve The reserve to be updated
    * @param reserveCache The caching layer for the reserve data
    * @param reserveAddress The address of the reserve to be updated
    * @param liquidityAdded The amount of liquidity added to the protocol (supply or repay) in the previous action
@@ -205,7 +205,7 @@ library ReserveLogic {
 
   /**
    * @notice Updates the reserve indexes.
-   * @param reserve The reserve reserve to be updated
+   * @param reserve The reserve to be updated
    * @param reserveCache The cache layer holding the cached protocol data
    */
   function _updateIndexes(
