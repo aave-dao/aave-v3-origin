@@ -64,7 +64,7 @@ abstract contract ScaledBalanceTokenBase is MintableIncentivizedERC20, IScaledBa
    * @param amountScaled The amountScaled of tokens getting minted
    * @param index The next liquidity index of the reserve
    * @param getTokenBalance The function to get the balance of the token
-   * @return `true` if the the previous balance of the user was 0
+   * @return `true` if the previous balance of the user was 0
    */
   function _mintScaled(
     address caller,
@@ -100,7 +100,7 @@ abstract contract ScaledBalanceTokenBase is MintableIncentivizedERC20, IScaledBa
    * @param amountScaled The scaled amount getting burned
    * @param index The variable debt index of the reserve
    * @param getTokenBalance The function to get the balance of the token
-   * @return `true` if the the new balance of the user is 0
+   * @return `true` if the new balance of the user is 0
    */
   function _burnScaled(
     address user,
