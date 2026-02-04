@@ -4,3 +4,6 @@
 [submodule "lib/forge-std"]
 	path = lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
+[submodule "lib/gho-origin"]
+	path = lib/gho-origin
+	url = https://github.com/aave-dao/gho-origin

@@ -4,3 +4,5 @@ ds-test/=lib/forge-std/lib/ds-test/src/
 openzeppelin-contracts-upgradeable/=lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/
 openzeppelin-contracts/=lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/
 custom/=src/contracts/custom/
+gho-origin/=lib/gho-origin/src/contracts/
+aave-v3-origin/contracts/=lib/gho-origin/lib/aave-v3-origin/src/contracts/

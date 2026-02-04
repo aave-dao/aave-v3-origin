@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import {Test, console2} from 'forge-std/Test.sol';
+import {Test, console2, stdError} from 'forge-std/Test.sol';
 import {JUBCToken} from 'custom/jubc/JUBCToken.sol';
 
 /**
@@ -155,14 +155,14 @@ contract JUBCTokenTest is Test {
     jpyUbi.addFacilitator(facilitator1, 'Facilitator 1', DEFAULT_BUCKET_CAPACITY);
 
     // Should fail: facilitator already exists
-    vm.expectRevert(JUBCToken.FacilitatorAlreadyExists.selector);
+    vm.expectRevert('FACILITATOR_ALREADY_EXISTS');
     jpyUbi.addFacilitator(facilitator1, 'Facilitator 1 Duplicate', DEFAULT_BUCKET_CAPACITY);
     vm.stopPrank();
   }
 
   function test_removeFacilitator_revert_doesNotExist() public {
     vm.prank(facilitatorManager);
-    vm.expectRevert(JUBCToken.InvalidFacilitator.selector);
+    vm.expectRevert('FACILITATOR_DOES_NOT_EXIST');
     jpyUbi.removeFacilitator(facilitator1);
   }
 
@@ -176,13 +176,13 @@ contract JUBCTokenTest is Test {
 
     // Should fail: bucket level > 0
     vm.prank(facilitatorManager);
-    vm.expectRevert(JUBCToken.BucketLevelExceeded.selector);
+    vm.expectRevert('FACILITATOR_BUCKET_LEVEL_NOT_ZERO');
     jpyUbi.removeFacilitator(facilitator1);
   }
 
   function test_setFacilitatorBucketCapacity_revert_doesNotExist() public {
     vm.prank(bucketManager);
-    vm.expectRevert(JUBCToken.InvalidFacilitator.selector);
+    vm.expectRevert('FACILITATOR_DOES_NOT_EXIST');
     jpyUbi.setFacilitatorBucketCapacity(facilitator1, DEFAULT_BUCKET_CAPACITY);
   }
 
@@ -218,7 +218,7 @@ contract JUBCTokenTest is Test {
 
     // First attempt fails
     vm.prank(facilitatorManager);
-    vm.expectRevert(JUBCToken.BucketLevelExceeded.selector);
+    vm.expectRevert('FACILITATOR_BUCKET_LEVEL_NOT_ZERO');
     jpyUbi.removeFacilitator(facilitator1);
 
     // Transfer tokens to facilitator and burn
@@ -253,7 +253,7 @@ contract JUBCTokenTest is Test {
     jpyUbi.addFacilitator(facilitator1, 'Facilitator 1', smallCapacity);
 
     vm.prank(facilitator1);
-    vm.expectRevert(JUBCToken.BucketCapacityExceeded.selector);
+    vm.expectRevert('FACILITATOR_BUCKET_CAPACITY_EXCEEDED');
     jpyUbi.mint(user1, smallCapacity + 1);
   }
 
@@ -265,7 +265,7 @@ contract JUBCTokenTest is Test {
     jpyUbi.addFacilitator(facilitator1, 'Facilitator 1', capacity);
 
     vm.prank(facilitator1);
-    vm.expectRevert(JUBCToken.BucketCapacityExceeded.selector);
+    vm.expectRevert('FACILITATOR_BUCKET_CAPACITY_EXCEEDED');
     jpyUbi.mint(user1, mintAmount);
   }
 
@@ -297,7 +297,7 @@ contract JUBCTokenTest is Test {
 
     // Try to mint more - fails
     vm.prank(facilitator1);
-    vm.expectRevert(JUBCToken.BucketCapacityExceeded.selector);
+    vm.expectRevert('FACILITATOR_BUCKET_CAPACITY_EXCEEDED');
     jpyUbi.mint(user1, 1);
 
     // Increase capacity
@@ -335,8 +335,9 @@ contract JUBCTokenTest is Test {
     vm.prank(facilitator1);
     jpyUbi.mint(facilitator1, 1000e18);
 
+    // GhoToken burns cause arithmetic underflow when amount > bucket level
     vm.prank(facilitator1);
-    vm.expectRevert(JUBCToken.BucketLevelExceeded.selector);
+    vm.expectRevert(stdError.arithmeticError);
     jpyUbi.burn(1001e18);
   }
 
@@ -504,7 +505,7 @@ contract JUBCTokenTest is Test {
 
     // Cannot mint anything
     vm.prank(facilitator1);
-    vm.expectRevert(JUBCToken.BucketCapacityExceeded.selector);
+    vm.expectRevert('FACILITATOR_BUCKET_CAPACITY_EXCEEDED');
     jpyUbi.mint(user1, 1);
   }
 
@@ -521,7 +522,7 @@ contract JUBCTokenTest is Test {
 
     // Cannot mint more since level > capacity
     vm.prank(facilitator1);
-    vm.expectRevert(JUBCToken.BucketCapacityExceeded.selector);
+    vm.expectRevert('FACILITATOR_BUCKET_CAPACITY_EXCEEDED');
     jpyUbi.mint(user1, 1);
 
     // But burns still work
