@@ -3,3 +3,4 @@ forge-std/=lib/forge-std/src/
 ds-test/=lib/forge-std/lib/ds-test/src/
 openzeppelin-contracts-upgradeable/=lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/
 openzeppelin-contracts/=lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/
+custom/=src/contracts/custom/

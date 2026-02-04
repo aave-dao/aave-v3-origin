@@ -4,6 +4,7 @@ test = 'tests'
 script = 'scripts'
 optimizer = true
 optimizer_runs = 200
+via_ir = true
 solc = '0.8.27'
 evm_version = 'shanghai'
 bytecode_hash = 'none'
