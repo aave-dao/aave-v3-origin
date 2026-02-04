@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import '../../interfaces/IMarketReportTypes.sol';
-import {Create2Utils} from '../../contracts/utilities/Create2Utils.sol';
 import {Ownable} from '../../../contracts/dependencies/openzeppelin/contracts/Ownable.sol';
 import {ACLManager} from '../../../contracts/protocol/configuration/ACLManager.sol';
 import {IPoolConfigurator} from '../../../contracts/interfaces/IPoolConfigurator.sol';

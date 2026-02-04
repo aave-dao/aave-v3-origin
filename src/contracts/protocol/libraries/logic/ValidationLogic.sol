@@ -4,11 +4,8 @@ pragma solidity ^0.8.10;
 import {IERC20} from '../../../dependencies/openzeppelin/contracts/IERC20.sol';
 import {Address} from '../../../dependencies/openzeppelin/contracts/Address.sol';
 import {GPv2SafeERC20} from '../../../dependencies/gnosis/contracts/GPv2SafeERC20.sol';
-import {IPriceOracleGetter} from '../../../interfaces/IPriceOracleGetter.sol';
 import {IAToken} from '../../../interfaces/IAToken.sol';
 import {IPriceOracleSentinel} from '../../../interfaces/IPriceOracleSentinel.sol';
-import {IPoolAddressesProvider} from '../../../interfaces/IPoolAddressesProvider.sol';
-import {IAccessControl} from '../../../dependencies/openzeppelin/contracts/IAccessControl.sol';
 import {ReserveConfiguration} from '../configuration/ReserveConfiguration.sol';
 import {UserConfiguration} from '../configuration/UserConfiguration.sol';
 import {EModeConfiguration} from '../configuration/EModeConfiguration.sol';
@@ -19,8 +16,6 @@ import {DataTypes} from '../types/DataTypes.sol';
 import {ReserveLogic} from './ReserveLogic.sol';
 import {GenericLogic} from './GenericLogic.sol';
 import {SafeCast} from 'openzeppelin-contracts/contracts/utils/math/SafeCast.sol';
-import {IncentivizedERC20} from '../../tokenization/base/IncentivizedERC20.sol';
-import {MathUtils} from '../math/MathUtils.sol';
 
 /**
  * @title ValidationLogic library

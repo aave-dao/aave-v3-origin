@@ -5,8 +5,6 @@ import {WalletBalanceProvider} from '../../../contracts/helpers/WalletBalancePro
 import {UiPoolDataProviderV3} from '../../../contracts/helpers/UiPoolDataProviderV3.sol';
 import {UiIncentiveDataProviderV3} from '../../../contracts/helpers/UiIncentiveDataProviderV3.sol';
 import {AggregatorInterface} from '../../../contracts/dependencies/chainlink/AggregatorInterface.sol';
-import {AaveProtocolDataProvider} from '../../../contracts/helpers/AaveProtocolDataProvider.sol';
-import {IPoolAddressesProvider} from '../../../contracts/interfaces/IPoolAddressesProvider.sol';
 
 contract AaveV3GettersProcedureOne {
   struct GettersReportBatchOne {

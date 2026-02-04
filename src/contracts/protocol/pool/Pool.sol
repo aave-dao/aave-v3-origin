@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.10;
 
-import {Multicall, Context} from 'openzeppelin-contracts/contracts/utils/Multicall.sol';
+import {Multicall} from 'openzeppelin-contracts/contracts/utils/Multicall.sol';
 import {VersionedInitializable} from '../../misc/aave-upgradeability/VersionedInitializable.sol';
 import {Errors} from '../libraries/helpers/Errors.sol';
 import {ReserveConfiguration} from '../libraries/configuration/ReserveConfiguration.sol';

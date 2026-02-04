@@ -10,7 +10,6 @@ import {VersionedInitializable} from '../../misc/aave-upgradeability/VersionedIn
 import {Errors} from '../libraries/helpers/Errors.sol';
 import {IPool} from '../../interfaces/IPool.sol';
 import {IAToken} from '../../interfaces/IAToken.sol';
-import {IAaveIncentivesController} from '../../interfaces/IAaveIncentivesController.sol';
 import {IInitializableAToken} from '../../interfaces/IInitializableAToken.sol';
 import {ScaledBalanceTokenBase} from './base/ScaledBalanceTokenBase.sol';
 import {IncentivizedERC20} from './base/IncentivizedERC20.sol';

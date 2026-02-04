@@ -2,7 +2,7 @@
 pragma solidity ^0.8.10;
 
 import {ITransparentProxyFactory} from 'solidity-utils/contracts/transparent-proxy/interfaces/ITransparentProxyFactory.sol';
-import {IPool, IPoolAddressesProvider} from '../../../interfaces/IPool.sol';
+import {IPool} from '../../../interfaces/IPool.sol';
 
 interface IStataTokenFactory {
   event StataTokenCreated(address indexed stataToken, address indexed underlying);
