@@ -33,13 +33,6 @@ library MarketReportUtils {
       report.uiIncentiveDataProvider
     );
     contractsReport.uiPoolDataProvider = UiPoolDataProviderV3(report.uiPoolDataProvider);
-    contractsReport.paraSwapLiquiditySwapAdapter = ParaSwapLiquiditySwapAdapter(
-      report.paraSwapLiquiditySwapAdapter
-    );
-    contractsReport.paraSwapRepayAdapter = ParaSwapRepayAdapter(report.paraSwapRepayAdapter);
-    contractsReport.paraSwapWithdrawSwapAdapter = ParaSwapWithdrawSwapAdapter(
-      report.paraSwapWithdrawSwapAdapter
-    );
     contractsReport.l2Encoder = L2Encoder(report.l2Encoder);
     contractsReport.aToken = IAToken(report.aToken);
     contractsReport.variableDebtToken = IVariableDebtToken(report.variableDebtToken);

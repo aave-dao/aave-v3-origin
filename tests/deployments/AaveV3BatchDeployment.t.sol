@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import 'forge-std/Test.sol';
 import '../../src/deployments/interfaces/IMarketReportTypes.sol';
 
-import {AugustusRegistryMock} from '../mocks/AugustusRegistryMock.sol';
 import {BatchTestProcedures} from '../utils/BatchTestProcedures.sol';
 import {AaveV3TestListing} from '../mocks/AaveV3TestListing.sol';
 import {ACLManager} from '../../src/contracts/protocol/configuration/ACLManager.sol';
@@ -44,7 +43,6 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
       makeAddr('ethUsdOracle'),
       'Testnet Market',
       8,
-      address(new AugustusRegistryMock()),
       address(0), // l2SequencerUptimeFeed
       0, // l2PriceOracleSentinelGracePeriod
       8080,

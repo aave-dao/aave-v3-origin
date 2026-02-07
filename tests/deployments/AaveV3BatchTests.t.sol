@@ -9,13 +9,11 @@ import {AaveV3L2PoolBatch} from '../../src/deployments/projects/aave-v3-batched/
 import {AaveV3GettersBatchOne} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3GettersBatchOne.sol';
 import {AaveV3GettersBatchTwo} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3GettersBatchTwo.sol';
 import {AaveV3PeripheryBatch} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3PeripheryBatch.sol';
-import {AaveV3ParaswapBatch} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3ParaswapBatch.sol';
 import {AaveV3SetupBatch} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3SetupBatch.sol';
 import {AaveV3MiscBatch} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3MiscBatch.sol';
 import {AaveV3HelpersBatchOne} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3HelpersBatchOne.sol';
 import {AaveV3HelpersBatchTwo} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3HelpersBatchTwo.sol';
 import {WETH9} from '../../src/contracts/dependencies/weth/WETH9.sol';
-import {AugustusRegistryMock} from '../mocks/AugustusRegistryMock.sol';
 import {BatchTestProcedures} from '../utils/BatchTestProcedures.sol';
 import {AaveV3BatchOrchestration} from '../../src/deployments/projects/aave-v3-batched/AaveV3BatchOrchestration.sol';
 
@@ -38,7 +36,6 @@ contract AaveV3BatchTests is BatchTestProcedures {
   AaveV3GettersBatchTwo.GettersReportBatchTwo gettersReportTwo;
 
   PeripheryReport peripheryReportOne;
-  ParaswapReport paraswapReportOne;
   MiscReport miscReport;
   ConfigEngineReport configEngineReport;
   StaticATokenReport staticATokenReport;
@@ -60,7 +57,6 @@ contract AaveV3BatchTests is BatchTestProcedures {
       makeAddr('ethUsdOracle'),
       'Testnet Market',
       8,
-      address(new AugustusRegistryMock()),
       address(0), // l2SequencerUptimeFeed
       0, // l2PriceOracleSentinelGracePeriod
       8080,
@@ -101,7 +97,6 @@ contract AaveV3BatchTests is BatchTestProcedures {
     setupReportTwo = deployAndSetupVariables.setupReport;
     miscReport = deployAndSetupVariables.miscReport;
     tokensReport = deployAndSetupVariables.tokensReport;
-    paraswapReportOne = deployAndSetupVariables.paraswapReport;
   }
 
   function testAaveV3FullBatchOrchestration() public {
@@ -166,10 +161,6 @@ contract AaveV3BatchTests is BatchTestProcedures {
       config.l2SequencerUptimeFeed,
       config.l2PriceOracleSentinelGracePeriod
     );
-  }
-
-  function test6ParaswapRelease() public {
-    new AaveV3ParaswapBatch(roles.poolAdmin, config, marketReportOne.poolAddressesProvider);
   }
 
   function test7SetupMarket() public {

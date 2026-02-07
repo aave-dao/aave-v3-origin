@@ -16,9 +16,6 @@ import '../../contracts/helpers/UiIncentiveDataProviderV3.sol';
 import '../../contracts/rewards/interfaces/IEmissionManager.sol';
 import '../../contracts/rewards/interfaces/IRewardsController.sol';
 import '../../contracts/helpers/WalletBalanceProvider.sol';
-import '../../contracts/extensions/paraswap-adapters/ParaSwapLiquiditySwapAdapter.sol';
-import '../../contracts/extensions/paraswap-adapters/ParaSwapRepayAdapter.sol';
-import '../../contracts/extensions/paraswap-adapters/ParaSwapWithdrawSwapAdapter.sol';
 import '../../contracts/helpers/interfaces/IWrappedTokenGatewayV3.sol';
 import '../../contracts/helpers/L2Encoder.sol';
 import {ICollector} from '../../contracts/treasury/ICollector.sol';
@@ -40,9 +37,6 @@ struct ContractsReport {
   WalletBalanceProvider walletBalanceProvider;
   UiIncentiveDataProviderV3 uiIncentiveDataProvider;
   UiPoolDataProviderV3 uiPoolDataProvider;
-  ParaSwapLiquiditySwapAdapter paraSwapLiquiditySwapAdapter;
-  ParaSwapRepayAdapter paraSwapRepayAdapter;
-  ParaSwapWithdrawSwapAdapter paraSwapWithdrawSwapAdapter;
   L2Encoder l2Encoder;
   IAToken aToken;
   IVariableDebtToken variableDebtToken;
@@ -69,9 +63,6 @@ struct MarketReport {
   address walletBalanceProvider;
   address uiIncentiveDataProvider;
   address uiPoolDataProvider;
-  address paraSwapLiquiditySwapAdapter;
-  address paraSwapRepayAdapter;
-  address paraSwapWithdrawSwapAdapter;
   address l2Encoder;
   address aToken;
   address variableDebtToken;
@@ -108,7 +99,6 @@ struct MarketConfig {
   address marketReferenceCurrencyPriceInUsdProxyAggregator;
   string marketId;
   uint8 oracleDecimals;
-  address paraswapAugustusRegistry;
   address l2SequencerUptimeFeed;
   uint256 l2PriceOracleSentinelGracePeriod;
   uint256 providerId;
@@ -177,8 +167,3 @@ struct PeripheryReport {
   address dustBin;
 }
 
-struct ParaswapReport {
-  address paraSwapLiquiditySwapAdapter;
-  address paraSwapRepayAdapter;
-  address paraSwapWithdrawSwapAdapter;
-}

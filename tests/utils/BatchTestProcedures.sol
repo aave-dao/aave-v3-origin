@@ -67,7 +67,6 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
     PeripheryReport peripheryReport;
     MiscReport miscReport;
     SetupReport setupReport;
-    ParaswapReport paraswapReport;
     AaveV3GettersBatchTwo.GettersReportBatchTwo gettersReport2;
     AaveV3TokensBatch.TokensReport tokensReport;
   }
@@ -158,12 +157,6 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
       variables.miscReport.priceOracleSentinel
     );
 
-    variables.paraswapReport = AaveV3BatchOrchestration._deployParaswapAdapters(
-      roles,
-      config,
-      variables.initialReport.poolAddressesProvider
-    );
-
     variables.gettersReport2 = AaveV3BatchOrchestration._deployGettersBatch2(
       variables.setupReport.poolProxy,
       roles.poolAdmin,
@@ -213,9 +206,6 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
     assertTrue(r.walletBalanceProvider != address(0), 'report.walletBalanceProvider');
     assertTrue(r.uiIncentiveDataProvider != address(0), 'report.uiIncentiveDataProvider');
     assertTrue(r.uiPoolDataProvider != address(0), 'report.uiPoolDataProvider');
-    assertTrue(r.paraSwapLiquiditySwapAdapter != address(0), 'report.paraSwapLiquiditySwapAdapter');
-    assertTrue(r.paraSwapRepayAdapter != address(0), 'report.paraSwapRepayAdapter');
-    assertTrue(r.paraSwapWithdrawSwapAdapter != address(0), 'report.paraSwapWithdrawSwapAdapter');
 
     if (flags.l2) {
       assertTrue(r.l2Encoder != address(0), 'report.l2Encoder');
