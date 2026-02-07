@@ -61,6 +61,8 @@ contract WrappedTokenGatewayV3 is IWrappedTokenGatewayV3, Ownable {
     if (amount == type(uint256).max) {
       amountToWithdraw = userBalance;
     }
+    // aWETH is trusted, disabling warning
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aWETH.transferFrom(msg.sender, address(this), amountToWithdraw);
     POOL.withdraw(address(WETH), amountToWithdraw, address(this));
     WETH.withdraw(amountToWithdraw);
@@ -140,6 +142,8 @@ contract WrappedTokenGatewayV3 is IWrappedTokenGatewayV3, Ownable {
     try
       aWETH.permit(msg.sender, address(this), amount, deadline, permitV, permitR, permitS)
     {} catch {}
+    // aWETH is trusted, disabling warning
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aWETH.transferFrom(msg.sender, address(this), amountToWithdraw);
     POOL.withdraw(address(WETH), amountToWithdraw, address(this));
     WETH.withdraw(amountToWithdraw);

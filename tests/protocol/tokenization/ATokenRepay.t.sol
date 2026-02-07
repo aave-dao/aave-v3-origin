@@ -59,6 +59,7 @@ contract ATokenRepayTests is TestnetProcedures {
 
   function test_repay_partialDebt() public {
     vm.prank(bob);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transfer(alice, 500e6);
 
     uint256 previousDebt = variableDebtToken.balanceOf(alice);
@@ -79,6 +80,7 @@ contract ATokenRepayTests is TestnetProcedures {
 
   function test_repay_allDebt() public {
     vm.prank(bob);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transfer(alice, 1200e6);
     uint256 aTokenBalance = aToken.balanceOf(alice);
     uint256 debt = variableDebtToken.balanceOf(alice);

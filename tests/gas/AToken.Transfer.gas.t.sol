@@ -31,6 +31,7 @@ contract ATokenTransfer_gas_Tests is Testhelpers {
 
     _skip(100);
 
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transfer(receiver, aToken.balanceOf(sender));
 
     vm.snapshotGasLastCall(
@@ -46,6 +47,7 @@ contract ATokenTransfer_gas_Tests is Testhelpers {
 
     _skip(100);
 
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transfer(receiver, aToken.balanceOf(sender));
     vm.snapshotGasLastCall('AToken.transfer', 'full amount; sender: ->disableCollateral;');
   }
@@ -59,6 +61,7 @@ contract ATokenTransfer_gas_Tests is Testhelpers {
     _skip(100);
 
     vm.startPrank(receiver);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transferFrom(sender, receiver, aToken.balanceOf(sender));
     vm.snapshotGasLastCall(
       'AToken.transfer',
@@ -73,6 +76,7 @@ contract ATokenTransfer_gas_Tests is Testhelpers {
 
     _skip(100);
 
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transfer(receiver, aToken.balanceOf(sender));
     vm.snapshotGasLastCall(
       'AToken.transfer',
@@ -90,6 +94,7 @@ contract ATokenTransfer_gas_Tests is Testhelpers {
     _skip(100);
 
     vm.startPrank(receiver);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transferFrom(sender, receiver, aToken.balanceOf(sender));
     vm.snapshotGasLastCall(
       'AToken.transfer',
@@ -104,6 +109,7 @@ contract ATokenTransfer_gas_Tests is Testhelpers {
 
     _skip(100);
 
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transfer(receiver, aToken.balanceOf(sender));
     vm.snapshotGasLastCall('AToken.transfer', 'full amount; receiver: ->enableCollateral');
   }
@@ -118,6 +124,7 @@ contract ATokenTransfer_gas_Tests is Testhelpers {
     _skip(100);
 
     vm.startPrank(receiver);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transferFrom(sender, receiver, aToken.balanceOf(sender));
     vm.snapshotGasLastCall(
       'AToken.transfer',
@@ -132,6 +139,7 @@ contract ATokenTransfer_gas_Tests is Testhelpers {
 
     _skip(100);
 
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transfer(receiver, aToken.balanceOf(sender));
     vm.snapshotGasLastCall('AToken.transfer', 'full amount; sender: ->disableCollateral;');
   }
@@ -146,6 +154,7 @@ contract ATokenTransfer_gas_Tests is Testhelpers {
     _skip(100);
 
     vm.startPrank(receiver);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transferFrom(sender, receiver, aToken.balanceOf(sender));
     vm.snapshotGasLastCall(
       'AToken.transfer',
@@ -161,6 +170,7 @@ contract ATokenTransfer_gas_Tests is Testhelpers {
 
     _skip(100);
 
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transfer(receiver, aToken.balanceOf(sender));
     vm.snapshotGasLastCall('AToken.transfer', 'full amount; sender: collateralDisabled');
   }
@@ -176,6 +186,7 @@ contract ATokenTransfer_gas_Tests is Testhelpers {
     _skip(100);
 
     vm.startPrank(receiver);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transferFrom(sender, receiver, aToken.balanceOf(sender));
     vm.snapshotGasLastCall(
       'AToken.transfer',
@@ -189,6 +200,7 @@ contract ATokenTransfer_gas_Tests is Testhelpers {
 
     _skip(100);
 
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transfer(receiver, 0.5 ether);
     vm.snapshotGasLastCall(
       'AToken.transfer',
@@ -205,6 +217,7 @@ contract ATokenTransfer_gas_Tests is Testhelpers {
     _skip(100);
 
     vm.startPrank(receiver);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transferFrom(sender, receiver, 0.5 ether);
     vm.snapshotGasLastCall(
       'AToken.transfer',
@@ -219,6 +232,7 @@ contract ATokenTransfer_gas_Tests is Testhelpers {
 
     _skip(100);
 
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transfer(receiver, 0.5 ether);
     vm.snapshotGasLastCall('AToken.transfer', 'partial amount; sender: collateralEnabled;');
   }
@@ -233,6 +247,7 @@ contract ATokenTransfer_gas_Tests is Testhelpers {
     _skip(100);
 
     vm.startPrank(receiver);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transferFrom(sender, receiver, 0.5 ether);
     vm.snapshotGasLastCall(
       'AToken.transfer',
@@ -248,6 +263,7 @@ contract ATokenTransfer_gas_Tests is Testhelpers {
 
     _skip(100);
 
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transfer(receiver, 0.5 ether);
     vm.snapshotGasLastCall('AToken.transfer', 'partial amount; sender: collateralDisabled;');
   }
@@ -263,6 +279,7 @@ contract ATokenTransfer_gas_Tests is Testhelpers {
     _skip(100);
 
     vm.startPrank(receiver);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transferFrom(sender, receiver, 0.5 ether);
     vm.snapshotGasLastCall(
       'AToken.transfer',
@@ -277,6 +294,7 @@ contract ATokenTransfer_gas_Tests is Testhelpers {
 
     _skip(100);
 
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transfer(receiver, 0.5 ether);
     vm.snapshotGasLastCall(
       'AToken.transfer',
@@ -294,6 +312,7 @@ contract ATokenTransfer_gas_Tests is Testhelpers {
     _skip(100);
 
     vm.startPrank(receiver);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transferFrom(sender, receiver, 0.5 ether);
     vm.snapshotGasLastCall(
       'AToken.transfer',

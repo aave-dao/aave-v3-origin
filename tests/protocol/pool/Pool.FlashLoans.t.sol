@@ -208,6 +208,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
 
     vm.startPrank(carol);
     contracts.poolProxy.withdraw(tokenList.usdx, 50_000e6, carol);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     usdx.transfer(aUSDX, 50_000e6);
     vm.stopPrank();
 
@@ -238,6 +239,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
 
     vm.startPrank(carol);
     contracts.poolProxy.withdraw(tokenList.usdx, 50_000e6, carol);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     usdx.transfer(aUSDX, 50_000e6);
     vm.stopPrank();
 
@@ -261,6 +263,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
 
     vm.startPrank(carol);
     contracts.poolProxy.withdraw(tokenList.usdx, 50_000e6, carol);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     usdx.transfer(aUSDX, 50_000e6);
     vm.stopPrank();
 
@@ -300,6 +303,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
 
     vm.startPrank(carol);
     contracts.poolProxy.withdraw(tokenList.usdx, 50_000e6, carol);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     usdx.transfer(aUSDX, 50_000e6);
     vm.stopPrank();
 
@@ -688,6 +692,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
       referralCode: 0,
       onBehalfOf: carol
     });
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     IERC20(contracts.poolProxy.getReserveAToken(asset)).transfer(
       address(receiver),
       underlyingBalance / 2
@@ -744,6 +749,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
         onBehalfOf: carol
       });
 
+      // forge-lint: disable-next-line(erc20-unchecked-transfer)
       IERC20(contracts.poolProxy.getReserveAToken(assets[i])).transfer(
         address(receiver),
         underlyingBalances[i] / 2

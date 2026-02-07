@@ -225,6 +225,7 @@ contract ATokenRoundingTest is TestnetProcedures {
     // bob balance should be rounded down
     // 3 * (3e27 - 1) / 1e27 = 8.999999999999999999999999997
 
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     IAToken(aToken).transfer(bob, transferAmount);
     vm.stopPrank();
 
@@ -247,6 +248,7 @@ contract ATokenRoundingTest is TestnetProcedures {
     // 1 * (3e27 - 1) / 1e27 = 2.999999999999999999999999999
 
     vm.startPrank(bob);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     IAToken(aToken).transfer(user, transferAmount);
 
     assertEq(IAToken(aToken).scaledBalanceOf(user), 2);

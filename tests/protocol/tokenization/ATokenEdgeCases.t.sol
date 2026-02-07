@@ -71,6 +71,7 @@ contract ATokenEdgeCasesTests is TestnetProcedures {
 
   function testTransferFromZeroAmount() public {
     vm.prank(alice);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transferFrom(alice, bob, 0);
   }
 
@@ -110,6 +111,7 @@ contract ATokenEdgeCasesTests is TestnetProcedures {
 
     emit IERC20.Transfer(address(0), alice, 0);
 
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transferFrom(address(0), alice, 0);
   }
 
@@ -161,6 +163,7 @@ contract ATokenEdgeCasesTests is TestnetProcedures {
     vm.expectRevert(
       abi.encodeWithSelector(SafeCast.SafeCastOverflowedUintDowncast.selector, 120, UINT256_MAX)
     );
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transfer(alice, UINT256_MAX);
   }
 }

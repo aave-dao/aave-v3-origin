@@ -460,6 +460,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
     // This is a temporary workaround for integrations that are broken by Aave 3.2
     // While the new pool data provider is backward compatible, some integrations hard-code an old implementation
     // To allow them to not have any infrastructural blocker, a mock must be configured in the Aave Pool Addresses Provider, returning zero on all required view methods, instead of reverting
+    // forge-lint: disable-next-line(unsafe-typecast)
     res.stableDebtTokenAddress = ADDRESSES_PROVIDER.getAddress(bytes32('MOCK_STABLE_DEBT'));
   }
 

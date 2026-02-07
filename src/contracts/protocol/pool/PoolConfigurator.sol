@@ -217,9 +217,12 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
       // In practice, a single asset will never be enabled as collateral on all eModes, so the expected gas consumption is much lower.
       // uint256 to not overflow when `j = type(uint8).max + 1`
       for (uint256 j = 1; j <= type(uint8).max; j++) {
+        // forge-lint: disable-next-line(unsafe-typecast)
         collateralEnabledBitmap = _pool.getEModeCategoryCollateralBitmap(uint8(j));
         if (EModeConfiguration.isReserveEnabledOnBitmap(collateralEnabledBitmap, reserveData.id)) {
+          // forge-lint: disable-next-line(unsafe-typecast)
           ltvzeroBitmap = _pool.getEModeCategoryLtvzeroBitmap(uint8(j));
+          // forge-lint: disable-next-line(unsafe-typecast)
           _setEmodeLtvZero(ltvzeroBitmap, asset, reserveData.id, uint8(j), true);
         }
       }
@@ -601,6 +604,7 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
     // The loop will worst case do 255 SLOADs, which should be around ~550k gas.
     // uint256 to not overflow when `j = type(uint8).max + 1`
     for (uint256 j = 1; j <= type(uint8).max; j++) {
+      // forge-lint: disable-next-line(unsafe-typecast)
       collateralEnabledBitmap = _pool.getEModeCategoryCollateralBitmap(uint8(j));
       if (EModeConfiguration.isReserveEnabledOnBitmap(collateralEnabledBitmap, reserveData.id)) {
         return true;

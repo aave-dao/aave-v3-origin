@@ -161,14 +161,18 @@ abstract contract DefaultBeforeAfterHooks is BaseHooks {
 
   function _makeEModeSnapshot(EModeInfo storage _eModeSnapshot, uint256 eModeCategory) internal {
     DataTypes.EModeCategoryLegacy memory eModeData = pool.getEModeCategoryData(
+      // forge-lint: disable-next-line(unsafe-typecast)
       uint8(eModeCategory)
     );
     _eModeSnapshot.ltv = eModeData.ltv;
     _eModeSnapshot.liquidationThreshold = eModeData.liquidationThreshold;
     _eModeSnapshot.liquidationBonus = eModeData.liquidationBonus;
 
+    // forge-lint: disable-next-line(unsafe-typecast)
     _eModeSnapshot.collateralBitmap = pool.getEModeCategoryCollateralBitmap(uint8(eModeCategory));
+    // forge-lint: disable-next-line(unsafe-typecast)
     _eModeSnapshot.borrowableBitmap = pool.getEModeCategoryBorrowableBitmap(uint8(eModeCategory));
+    // forge-lint: disable-next-line(unsafe-typecast)
     _eModeSnapshot.ltvzeroBitmap = pool.getEModeCategoryLtvzeroBitmap(uint8(eModeCategory));
 
     for (uint256 i = 0; i < baseAssets.length; ++i) {

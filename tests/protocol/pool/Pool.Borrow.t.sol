@@ -178,6 +178,7 @@ contract PoolBorrowTests is TestnetProcedures {
     vm.startPrank(alice);
 
     // Transfer debt token
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     usdx.transfer(aUSDX, borrowAmount);
 
     // Supply

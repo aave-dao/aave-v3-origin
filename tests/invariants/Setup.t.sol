@@ -174,6 +174,7 @@ contract Setup is BaseTest, DefaultMarketInput {
       for (uint256 j = 0; j < tokens.length; j++) {
         if (tokens[j] == address(tokenList.weth)) {
           weth.deposit{value: INITIAL_BALANCE}();
+          // forge-lint: disable-next-line(erc20-unchecked-transfer)
           weth.transfer(_actor, INITIAL_BALANCE);
         } else {
           TestnetERC20 _token = TestnetERC20(tokens[j]);
@@ -184,6 +185,7 @@ contract Setup is BaseTest, DefaultMarketInput {
     }
 
     // Set umbrella
+    // forge-lint: disable-next-line(unsafe-typecast)
     contracts.poolAddressesProvider.setAddress(bytes32('UMBRELLA'), UMBRELLA);
   }
 

@@ -112,6 +112,7 @@ contract BaseHandler is HookAggregator {
   function _mint(address token, address receiver, uint256 amount) internal {
     if (token == address(tokenList.weth)) {
       weth.deposit{value: amount}();
+      // forge-lint: disable-next-line(erc20-unchecked-transfer)
       weth.transfer(receiver, amount);
     } else {
       TestERC20 _token = TestERC20(token);

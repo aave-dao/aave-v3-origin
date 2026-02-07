@@ -734,9 +734,11 @@ contract ProtocolV3TestBase is Test {
   ) internal view {
     address poolAddress = addressesProvider.getPool();
     DataTypes.CollateralConfig memory cfg = IPool(poolAddress).getEModeCategoryCollateralConfig(
+      // forge-lint: disable-next-line(unsafe-typecast)
       uint8(category)
     );
     require(
+      // forge-lint: disable-next-line(unsafe-typecast)
       keccak256(bytes(IPool(poolAddress).getEModeCategoryLabel(uint8(category)))) ==
         keccak256(bytes(expectedCategoryData.label)),
       '_validateEmodeCategory(): INVALID_LABEL'
@@ -751,11 +753,13 @@ contract ProtocolV3TestBase is Test {
       '_validateEmodeCategory(): INVALID_LB'
     );
     require(
+      // forge-lint: disable-next-line(unsafe-typecast)
       IPool(poolAddress).getEModeCategoryCollateralBitmap(uint8(category)) ==
         expectedCategoryData.collateralBitmap,
       '_validateEmodeCategory(): INVALID_COLLATERALS'
     );
     require(
+      // forge-lint: disable-next-line(unsafe-typecast)
       IPool(poolAddress).getEModeCategoryBorrowableBitmap(uint8(category)) ==
         expectedCategoryData.borrowableBitmap,
       '_validateEmodeCategory(): INVALID_BORROWABLES'

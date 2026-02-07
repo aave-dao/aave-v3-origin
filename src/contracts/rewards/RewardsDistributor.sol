@@ -293,6 +293,7 @@ abstract contract RewardsDistributor is IRewardsDistributor {
       indexUpdated = true;
 
       //optimization: storing one after another saves one SSTORE
+      // forge-lint: disable-next-line(unsafe-typecast)
       rewardData.index = uint104(newIndex);
       rewardData.lastUpdateTimestamp = block.timestamp.toUint32();
     } else {
@@ -323,6 +324,7 @@ abstract contract RewardsDistributor is IRewardsDistributor {
     bool dataUpdated;
     if ((dataUpdated = userIndex != newAssetIndex)) {
       // already checked for overflow in _updateRewardData
+      // forge-lint: disable-next-line(unsafe-typecast)
       rewardData.usersData[user].index = uint104(newAssetIndex);
       if (userBalance != 0) {
         rewardsAccrued = _getRewards(userBalance, newAssetIndex, userIndex, assetUnit);

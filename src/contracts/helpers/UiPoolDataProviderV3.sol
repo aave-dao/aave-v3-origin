@@ -158,6 +158,8 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
 
     try oracle.BASE_CURRENCY_UNIT() returns (uint256 baseCurrencyUnit) {
       baseCurrencyInfo.marketReferenceCurrencyUnit = baseCurrencyUnit;
+      // Safe to cast, assuming the price feed always returns positive, also on protocol
+      // forge-lint: disable-next-line(unsafe-typecast)
       baseCurrencyInfo.marketReferenceCurrencyPriceInUsd = int256(baseCurrencyUnit);
     } catch (bytes memory /*lowLevelData*/) {
       baseCurrencyInfo.marketReferenceCurrencyUnit = ETH_CURRENCY_UNIT;
