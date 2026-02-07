@@ -166,4 +166,3 @@ struct PeripheryReport {
   address emptyImplementation;
   address dustBin;
 }
-
