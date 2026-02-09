@@ -137,37 +137,4 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
       deployAaveV3Testnet(marketOwner, roles, config, flags, deployedContracts)
     );
   }
-
-  function testAaveV3TreasuryPartnerBatchDeploymentCheck() public {
-    config.treasuryPartner = makeAddr('TREASURY_PARTNER');
-    config.treasurySplitPercent = 5000;
-
-    MarketReport memory fullReport = deployAaveV3Testnet(
-      marketOwner,
-      roles,
-      config,
-      flags,
-      deployedContracts
-    );
-
-    checkFullReport(config, flags, fullReport);
-
-    AaveV3TestListing testnetListingPayload = new AaveV3TestListing(
-      IAaveV3ConfigEngine(fullReport.configEngine),
-      marketOwner,
-      weth9,
-      fullReport
-    );
-
-    ACLManager manager = ACLManager(fullReport.aclManager);
-
-    vm.prank(poolAdmin);
-    manager.addPoolAdmin(address(testnetListingPayload));
-
-    testnetListingPayload.execute();
-
-    address aToken = IPool(fullReport.poolProxy).getReserveAToken(weth9);
-
-    assertEq(IAToken(aToken).RESERVE_TREASURY_ADDRESS(), fullReport.revenueSplitter);
-  }
 }

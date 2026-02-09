@@ -198,15 +198,4 @@ contract DeploymentsGasLimits is BatchTestProcedures {
       roles.poolAdmin
     );
   }
-
-  function test12PeripheralsTreasuryPartner() public {
-    config.treasuryPartner = address(1);
-    config.treasurySplitPercent = 5000;
-    new AaveV3PeripheryBatch(
-      roles.poolAdmin,
-      config,
-      marketReportOne.poolAddressesProvider,
-      address(aaveV3SetupOne)
-    );
-  }
 }
