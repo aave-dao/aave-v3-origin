@@ -179,6 +179,13 @@ interface IPoolConfigurator {
   );
 
   /**
+   * @dev Emitted when the isolated flag of an eMode category is changed.
+   * @param categoryId The eMode category id
+   * @param isolated True if the eMode is isolated (only eMode collateral contributes LTV)
+   */
+  event EModeCategoryIsolationChanged(uint8 indexed categoryId, bool isolated);
+
+  /**
    * @dev Emitted when a reserve interest strategy contract is updated.
    * @param asset The address of the underlying asset of the reserve
    * @param oldStrategy The address of the old interest strategy contract
@@ -466,19 +473,30 @@ interface IPoolConfigurator {
   function setAssetLtvzeroInEMode(address asset, uint8 categoryId, bool ltvzero) external;
 
   /**
+   * @notice Sets the isolated flag of an eMode category.
+   * @param categoryId The eMode category id
+   * @param isolated When true, users with non-eMode collateral enabled cannot enter the eMode,
+   *  and non-eMode assets get LTV=0 (liquidation threshold is unaffected, preserving health factor of existing positions)
+   */
+  function setEModeCategoryIsolated(uint8 categoryId, bool isolated) external;
+
+  /**
    * @notice Adds a new efficiency mode (eMode) category or alters a existing one.
    * @param categoryId The id of the category to be configured
    * @param ltv The ltv associated with the category
    * @param liquidationThreshold The liquidation threshold associated with the category
    * @param liquidationBonus The liquidation bonus associated with the category
    * @param label A label identifying the category
+   * @param isolated When true, users with non-eMode collateral enabled cannot enter the eMode,
+   *  and non-eMode assets get LTV=0 (liquidation threshold is unaffected, preserving health factor of existing positions)
    */
   function setEModeCategory(
     uint8 categoryId,
     uint16 ltv,
     uint16 liquidationThreshold,
     uint16 liquidationBonus,
-    string calldata label
+    string calldata label,
+    bool isolated
   ) external;
 
   /**

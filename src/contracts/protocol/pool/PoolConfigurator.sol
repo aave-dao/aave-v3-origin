@@ -387,7 +387,8 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
     uint16 ltv,
     uint16 liquidationThreshold,
     uint16 liquidationBonus,
-    string calldata label
+    string calldata label,
+    bool isolated
   ) external override onlyRiskOrPoolAdmins {
     require(ltv != 0, Errors.InvalidEmodeCategoryParams());
     require(liquidationThreshold != 0, Errors.InvalidEmodeCategoryParams());
@@ -413,6 +414,7 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
     categoryData.ltv = ltv;
     categoryData.liquidationThreshold = liquidationThreshold;
     categoryData.liquidationBonus = liquidationBonus;
+    categoryData.isolated = isolated;
     categoryData.label = label;
 
     _pool.configureEModeCategory(categoryId, categoryData);
@@ -424,6 +426,7 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
       address(0),
       label
     );
+    emit EModeCategoryIsolationChanged(categoryId, isolated);
   }
 
   /// @inheritdoc IPoolConfigurator
@@ -496,6 +499,15 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
       require(!reserveData.configuration.getFrozen(), Errors.ReserveFrozen());
     }
     _setEmodeLtvZero(ltvzeroBitmap, asset, reserveData.id, categoryId, ltvzero);
+  }
+
+  /// @inheritdoc IPoolConfigurator
+  function setEModeCategoryIsolated(
+    uint8 categoryId,
+    bool isolated
+  ) external onlyRiskOrPoolOrEmergencyAdmins {
+    _pool.configureEModeCategoryIsolated(categoryId, isolated);
+    emit EModeCategoryIsolationChanged(categoryId, isolated);
   }
 
   /// @inheritdoc IPoolConfigurator

@@ -307,7 +307,14 @@ contract PoolBorrowTests is TestnetProcedures {
     EModeCategoryInput memory ct = _genCategoryOne();
 
     vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(ct.id, ct.ltv, ct.lt, ct.lb, ct.label);
+    contracts.poolConfiguratorProxy.setEModeCategory(
+      ct.id,
+      ct.ltv,
+      ct.lt,
+      ct.lb,
+      ct.label,
+      ct.isolated
+    );
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.wbtc, ct.id, true);
     vm.stopPrank();
 

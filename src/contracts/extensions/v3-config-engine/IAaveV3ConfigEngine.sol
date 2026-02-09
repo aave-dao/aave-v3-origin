@@ -218,6 +218,7 @@ interface IAaveV3ConfigEngine {
     uint256 liqThreshold;
     uint256 liqBonus;
     string label;
+    uint256 isolated;
   }
 
   /**
@@ -238,6 +239,7 @@ interface IAaveV3ConfigEngine {
     string label;
     address[] borrowables;
     address[] collaterals;
+    bool isolated;
   }
 
   /**

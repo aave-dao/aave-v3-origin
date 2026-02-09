@@ -199,7 +199,8 @@ contract PoolPermissionedHandler is BaseHandler {
     uint8 categoryId,
     uint16 ltv,
     uint16 liquidationThreshold,
-    uint16 liquidationBonus
+    uint16 liquidationBonus,
+    bool isolated
   ) external {
     _before();
     contracts.poolConfiguratorProxy.setEModeCategory(
@@ -207,7 +208,8 @@ contract PoolPermissionedHandler is BaseHandler {
       uint16(ltv),
       uint16(liquidationThreshold),
       uint16(liquidationBonus),
-      ''
+      '',
+      isolated
     );
     _after();
 
@@ -269,6 +271,16 @@ contract PoolPermissionedHandler is BaseHandler {
       categoryId: categoryId,
       ltvzero: ltvzero
     });
+    _after();
+
+    assert(true);
+  }
+
+  function setEModeCategoryIsolated(uint8 j, bool isolated) external {
+    uint8 categoryId = _getRandomEModeCategory(j);
+
+    _before();
+    contracts.poolConfiguratorProxy.setEModeCategoryIsolated(categoryId, isolated);
     _after();
 
     assert(true);

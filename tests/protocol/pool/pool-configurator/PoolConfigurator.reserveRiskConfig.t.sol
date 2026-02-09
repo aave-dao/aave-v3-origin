@@ -448,7 +448,14 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     EModeCategoryInput memory ct = _genCategoryOne();
 
     vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(ct.id, ct.ltv, ct.lt, ct.lb, ct.label);
+    contracts.poolConfiguratorProxy.setEModeCategory(
+      ct.id,
+      ct.ltv,
+      ct.lt,
+      ct.lb,
+      ct.label,
+      ct.isolated
+    );
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, 1, true);
     contracts.poolConfiguratorProxy.configureReserveAsCollateral(tokenList.usdx, 0, 0, 0);
     vm.stopPrank();

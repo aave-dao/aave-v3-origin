@@ -667,6 +667,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
     _eModeCategories[id].ltv = category.ltv;
     _eModeCategories[id].liquidationThreshold = category.liquidationThreshold;
     _eModeCategories[id].liquidationBonus = category.liquidationBonus;
+    _eModeCategories[id].isolated = category.isolated;
     _eModeCategories[id].label = category.label;
   }
 
@@ -698,6 +699,15 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
     // category 0 is reserved for volatile heterogeneous assets and it's always disabled
     require(id != 0, Errors.EModeCategoryReserved());
     _eModeCategories[id].ltvzeroBitmap = ltvzeroBitmap;
+  }
+
+  /// @inheritdoc IPool
+  function configureEModeCategoryIsolated(
+    uint8 id,
+    bool isolated
+  ) external virtual override onlyPoolConfigurator {
+    require(id != 0, Errors.EModeCategoryReserved());
+    _eModeCategories[id].isolated = isolated;
   }
 
   /// @inheritdoc IPool
@@ -742,6 +752,11 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
   /// @inheritdoc IPool
   function getEModeCategoryLtvzeroBitmap(uint8 id) external view returns (uint128) {
     return _eModeCategories[id].ltvzeroBitmap;
+  }
+
+  /// @inheritdoc IPool
+  function getIsEModeCategoryIsolated(uint8 id) external view returns (bool) {
+    return _eModeCategories[id].isolated;
   }
 
   /// @inheritdoc IPool

@@ -3,17 +3,17 @@
   "getAllATokens": "63750",
   "getAllReservesTokens": "43116",
   "getFlashLoanEnabled": "11281",
-  "getInterestRateStrategyAddress": "8855",
+  "getInterestRateStrategyAddress": "8789",
   "getIsVirtualAccActive": "463",
   "getLiquidationProtocolFee": "11308",
   "getPaused": "11397",
   "getReserveCaps": "11318",
   "getReserveConfigurationData": "11754",
   "getReserveDeficit": "11017",
-  "getReserveTokensAddresses": "14933",
+  "getReserveTokensAddresses": "14955",
   "getSiloedBorrowing": "11334",
   "getTotalDebt": "29990",
   "getUnbackedMintCap": "413",
-  "getUserReserveData": "70439",
-  "getVirtualUnderlyingBalance": "11188"
+  "getUserReserveData": "70505",
+  "getVirtualUnderlyingBalance": "11121"
 }

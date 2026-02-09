@@ -197,7 +197,22 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
     vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotRiskOrPoolAdmin.selector));
 
     vm.prank(caller);
-    contracts.poolConfiguratorProxy.setEModeCategory(1, 1, 1, 1, '');
+    contracts.poolConfiguratorProxy.setEModeCategory(1, 1, 1, 1, '', false);
+  }
+
+  function test_reverts_notRiskOrPoolOrEmergencyAdmin_setEModeCategoryIsolated(
+    address caller
+  ) public {
+    vm.assume(
+      !contracts.aclManager.isPoolAdmin(caller) &&
+        !contracts.aclManager.isRiskAdmin(caller) &&
+        !contracts.aclManager.isEmergencyAdmin(caller) &&
+        caller != address(contracts.poolAddressesProvider)
+    );
+    vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotRiskOrPoolOrEmergencyAdmin.selector));
+
+    vm.prank(caller);
+    contracts.poolConfiguratorProxy.setEModeCategoryIsolated(1, true);
   }
 
   function test_reverts_notRiskAdmin_setAssetCollateralInEMode(address caller) public {

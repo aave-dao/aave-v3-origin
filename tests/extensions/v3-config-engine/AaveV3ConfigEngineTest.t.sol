@@ -609,7 +609,7 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
 
     // Set an eMode category with lt != 0 to simulate the scenario where
     // an asset has lt=0 in base mode but can be used as collateral in eMode
-    contracts.poolConfiguratorProxy.setEModeCategory(10, 80_00, 85_00, 105_00, 'Test eMode');
+    contracts.poolConfiguratorProxy.setEModeCategory(10, 80_00, 85_00, 105_00, 'Test eMode', false);
 
     // Set the asset to be collateral in the eMode
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(asset, 10, true);
@@ -645,7 +645,14 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
     contracts.poolConfiguratorProxy.configureReserveAsCollateral(asset, 0, 0, 0);
 
     // Set an eMode category with lt != 0
-    contracts.poolConfiguratorProxy.setEModeCategory(11, 75_00, 80_00, 105_00, 'Test eMode 2');
+    contracts.poolConfiguratorProxy.setEModeCategory(
+      11,
+      75_00,
+      80_00,
+      105_00,
+      'Test eMode 2',
+      false
+    );
 
     // Set the asset to be collateral in the eMode
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(asset, 11, true);
@@ -859,7 +866,14 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
   function testEModeCategoryUpdates() public {
     EModeCategoryInput memory ct = _genCategoryOne();
     vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(ct.id, ct.ltv, ct.lt, ct.lb, ct.label);
+    contracts.poolConfiguratorProxy.setEModeCategory(
+      ct.id,
+      ct.ltv,
+      ct.lt,
+      ct.lb,
+      ct.label,
+      ct.isolated
+    );
 
     AaveV3MockEModeCategoryUpdate payload = new AaveV3MockEModeCategoryUpdate(configEngine);
 
@@ -894,7 +908,14 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
   function testEModeCategoryUpdatesWrongBonus() public {
     EModeCategoryInput memory ct = _genCategoryOne();
     vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(ct.id, ct.ltv, ct.lt, ct.lb, ct.label);
+    contracts.poolConfiguratorProxy.setEModeCategory(
+      ct.id,
+      ct.ltv,
+      ct.lt,
+      ct.lb,
+      ct.label,
+      ct.isolated
+    );
 
     AaveV3MockEModeCategoryUpdateEdgeBonus payload = new AaveV3MockEModeCategoryUpdateEdgeBonus(
       configEngine
@@ -911,7 +932,14 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
   function testEModeCategoryUpdatesNoChangeShouldNotEmit() public {
     EModeCategoryInput memory ct = _genCategoryOne();
     vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(ct.id, ct.ltv, ct.lt, ct.lb, ct.label);
+    contracts.poolConfiguratorProxy.setEModeCategory(
+      ct.id,
+      ct.ltv,
+      ct.lt,
+      ct.lb,
+      ct.label,
+      ct.isolated
+    );
 
     AaveV3MockEModeCategoryUpdateNoChange payload = new AaveV3MockEModeCategoryUpdateNoChange(
       configEngine
@@ -930,7 +958,14 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
   function testEModeCategoryUpdatesNoChange() public {
     EModeCategoryInput memory ct = _genCategoryOne();
     vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(ct.id, ct.ltv, ct.lt, ct.lb, ct.label);
+    contracts.poolConfiguratorProxy.setEModeCategory(
+      ct.id,
+      ct.ltv,
+      ct.lt,
+      ct.lb,
+      ct.label,
+      ct.isolated
+    );
     AaveV3MockEModeCategoryUpdateNoChange payload = new AaveV3MockEModeCategoryUpdateNoChange(
       configEngine
     );
@@ -969,7 +1004,14 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
 
   function testAssetEModeUpdates() public {
     vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(1, 97_40, 97_60, 101_50, 'ETH Correlated');
+    contracts.poolConfiguratorProxy.setEModeCategory(
+      1,
+      97_40,
+      97_60,
+      101_50,
+      'ETH Correlated',
+      false
+    );
 
     address asset = tokenList.usdx;
     address asset2 = tokenList.wbtc;

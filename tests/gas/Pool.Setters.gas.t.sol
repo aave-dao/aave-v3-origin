@@ -18,7 +18,14 @@ contract PoolSetters_gas_Tests is Testhelpers {
   function test_setUserEMode() external {
     vm.startPrank(poolAdmin);
     EModeCategoryInput memory ct1 = _genCategoryOne();
-    contracts.poolConfiguratorProxy.setEModeCategory(ct1.id, ct1.ltv, ct1.lt, ct1.lb, ct1.label);
+    contracts.poolConfiguratorProxy.setEModeCategory(
+      ct1.id,
+      ct1.ltv,
+      ct1.lt,
+      ct1.lb,
+      ct1.label,
+      ct1.isolated
+    );
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, ct1.id, true);
     contracts.poolConfiguratorProxy.setAssetBorrowableInEMode(tokenList.weth, ct1.id, true);
     vm.stopPrank();
@@ -42,7 +49,14 @@ contract PoolSetters_gas_Tests is Testhelpers {
   function test_setUserEModeOnBehalfOf() external {
     vm.startPrank(poolAdmin);
     EModeCategoryInput memory ct1 = _genCategoryOne();
-    contracts.poolConfiguratorProxy.setEModeCategory(ct1.id, ct1.ltv, ct1.lt, ct1.lb, ct1.label);
+    contracts.poolConfiguratorProxy.setEModeCategory(
+      ct1.id,
+      ct1.ltv,
+      ct1.lt,
+      ct1.lb,
+      ct1.label,
+      ct1.isolated
+    );
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, ct1.id, true);
     contracts.poolConfiguratorProxy.setAssetBorrowableInEMode(tokenList.weth, ct1.id, true);
     vm.stopPrank();

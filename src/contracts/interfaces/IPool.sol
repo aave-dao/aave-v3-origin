@@ -621,6 +621,13 @@ interface IPool {
   function configureEModeCategoryLtvzeroBitmap(uint8 id, uint128 ltvzeroBitmap) external;
 
   /**
+   * @notice Sets the isolated flag of an eMode category.
+   * @param id The id of the category
+   * @param isolated True if the eMode should be isolated
+   */
+  function configureEModeCategoryIsolated(uint8 id, bool isolated) external;
+
+  /**
    * @notice Returns the data of an eMode category
    * @dev DEPRECATED use independent getters instead
    * @param id The id of the category
@@ -668,6 +675,13 @@ interface IPool {
    * @return The ltvzeroBitmap of the category
    */
   function getEModeCategoryLtvzeroBitmap(uint8 id) external view returns (uint128);
+
+  /**
+   * @notice Returns the isolated flag of an eMode category
+   * @param id The id of the category
+   * @return True if the eMode category is isolated
+   */
+  function getIsEModeCategoryIsolated(uint8 id) external view returns (bool);
 
   /**
    * @notice Allows a user to use the protocol in eMode

@@ -39,8 +39,22 @@ contract PoolEModeCollateralsTests is TestnetProcedures {
     EModeCategoryInput memory ct1 = _genCategoryOne();
     EModeCategoryInput memory ct2 = _genCategoryTwo();
 
-    contracts.poolConfiguratorProxy.setEModeCategory(ct1.id, ct1.ltv, ct1.lt, ct1.lb, ct1.label);
-    contracts.poolConfiguratorProxy.setEModeCategory(ct2.id, ct2.ltv, ct2.lt, ct2.lb, ct2.label);
+    contracts.poolConfiguratorProxy.setEModeCategory(
+      ct1.id,
+      ct1.ltv,
+      ct1.lt,
+      ct1.lb,
+      ct1.label,
+      ct1.isolated
+    );
+    contracts.poolConfiguratorProxy.setEModeCategory(
+      ct2.id,
+      ct2.ltv,
+      ct2.lt,
+      ct2.lb,
+      ct2.label,
+      ct2.isolated
+    );
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, 1, true);
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.wbtc, 1, true);
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, 2, true);

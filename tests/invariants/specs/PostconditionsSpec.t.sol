@@ -194,6 +194,9 @@ abstract contract PostconditionsSpec {
   string constant E_MODE_HSPOST_H =
     'E_MODE_HSPOST_H: All borrowed assets must be borrowable in the new enabled eMode';
 
+  string constant E_MODE_HSPOST_I =
+    'E_MODE_HSPOST_I: When emode is isolated, all enabled collateral assets must be in the emode collateralBitmap';
+
   ///////////////////////////////////////////////////////////////////////////////////////////////
   //                                          ERC20                                            //
   ///////////////////////////////////////////////////////////////////////////////////////////////

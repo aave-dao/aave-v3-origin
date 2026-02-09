@@ -91,7 +91,7 @@ contract CryticToFoundry is Invariants, Setup {
   function test_replay_v33_supply() public {
     Tester.supply(2774, 0, 2); // supply actor 0, reserve 2
     Tester.borrow(1, 0, 2); // borrow actor 0, reserve 2
-    Tester.setEModeCategory(1, 1, 1, 10796); // create eMODE
+    Tester.setEModeCategory(1, 1, 1, 10796, false); // create eMODE
     Tester.setAssetBorrowableInEMode(true, 2, 0); // set reserve 2 as borrowable in eMODE
     Tester.setUserEMode(0); // activate eMode for user 0
     Tester.setAssetCollateralInEMode(true, 0, 0); // set reserve 0 as collateral in eMODE

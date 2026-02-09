@@ -500,7 +500,14 @@ contract PoolTests is TestnetProcedures {
   function test_setUserEmode() public {
     EModeCategoryInput memory ct = _genCategoryOne();
     vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(ct.id, ct.ltv, ct.lt, ct.lb, ct.label);
+    contracts.poolConfiguratorProxy.setEModeCategory(
+      ct.id,
+      ct.ltv,
+      ct.lt,
+      ct.lb,
+      ct.label,
+      ct.isolated
+    );
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.wbtc, ct.id, true);
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.weth, ct.id, true);
     vm.stopPrank();
@@ -514,7 +521,14 @@ contract PoolTests is TestnetProcedures {
   function test_setUserEModeOnBehalfOf() public {
     EModeCategoryInput memory ct = _genCategoryOne();
     vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(ct.id, ct.ltv, ct.lt, ct.lb, ct.label);
+    contracts.poolConfiguratorProxy.setEModeCategory(
+      ct.id,
+      ct.ltv,
+      ct.lt,
+      ct.lb,
+      ct.label,
+      ct.isolated
+    );
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.wbtc, ct.id, true);
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.weth, ct.id, true);
     vm.stopPrank();
@@ -533,7 +547,14 @@ contract PoolTests is TestnetProcedures {
 
     EModeCategoryInput memory ct = _genCategoryOne();
     vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(ct.id, ct.ltv, ct.lt, ct.lb, ct.label);
+    contracts.poolConfiguratorProxy.setEModeCategory(
+      ct.id,
+      ct.ltv,
+      ct.lt,
+      ct.lb,
+      ct.label,
+      ct.isolated
+    );
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.wbtc, ct.id, true);
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.weth, ct.id, true);
     vm.stopPrank();
@@ -551,8 +572,22 @@ contract PoolTests is TestnetProcedures {
     EModeCategoryInput memory ct1 = _genCategoryOne();
     EModeCategoryInput memory ct2 = _genCategoryTwo();
     vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(ct1.id, ct1.ltv, ct1.lt, ct1.lb, ct1.label);
-    contracts.poolConfiguratorProxy.setEModeCategory(ct2.id, ct2.ltv, ct2.lt, ct2.lb, ct2.label);
+    contracts.poolConfiguratorProxy.setEModeCategory(
+      ct1.id,
+      ct1.ltv,
+      ct1.lt,
+      ct1.lb,
+      ct1.label,
+      ct1.isolated
+    );
+    contracts.poolConfiguratorProxy.setEModeCategory(
+      ct2.id,
+      ct2.ltv,
+      ct2.lt,
+      ct2.lb,
+      ct2.label,
+      ct2.isolated
+    );
 
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.wbtc, ct1.id, true);
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.weth, ct1.id, true);
@@ -582,8 +617,22 @@ contract PoolTests is TestnetProcedures {
     EModeCategoryInput memory ct1 = _genCategoryOne();
     EModeCategoryInput memory ct2 = _genCategoryTwo();
     vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(ct1.id, ct1.ltv, ct1.lt, ct1.lb, ct1.label);
-    contracts.poolConfiguratorProxy.setEModeCategory(ct2.id, ct2.ltv, ct2.lt, ct2.lb, ct2.label);
+    contracts.poolConfiguratorProxy.setEModeCategory(
+      ct1.id,
+      ct1.ltv,
+      ct1.lt,
+      ct1.lb,
+      ct1.label,
+      ct1.isolated
+    );
+    contracts.poolConfiguratorProxy.setEModeCategory(
+      ct2.id,
+      ct2.ltv,
+      ct2.lt,
+      ct2.lb,
+      ct2.label,
+      ct2.isolated
+    );
 
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.wbtc, ct1.id, true);
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.weth, ct1.id, true);
@@ -620,7 +669,14 @@ contract PoolTests is TestnetProcedures {
 
     EModeCategoryInput memory ct1 = _genCategoryOne();
     vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(ct1.id, ct1.ltv, ct1.lt, ct1.lb, ct1.label);
+    contracts.poolConfiguratorProxy.setEModeCategory(
+      ct1.id,
+      ct1.ltv,
+      ct1.lt,
+      ct1.lb,
+      ct1.label,
+      ct1.isolated
+    );
 
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.wbtc, ct1.id, true);
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.weth, ct1.id, true);

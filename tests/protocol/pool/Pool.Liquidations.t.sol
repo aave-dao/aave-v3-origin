@@ -676,7 +676,14 @@ contract PoolLiquidationTests is TestnetProcedures {
     EModeCategoryInput memory ct = _genCategoryOne();
 
     vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(ct.id, ct.ltv, ct.lt, ct.lb, ct.label);
+    contracts.poolConfiguratorProxy.setEModeCategory(
+      ct.id,
+      ct.ltv,
+      ct.lt,
+      ct.lb,
+      ct.label,
+      ct.isolated
+    );
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.wbtc, ct.id, true);
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.weth, ct.id, true);
     contracts.poolConfiguratorProxy.setAssetBorrowableInEMode(tokenList.weth, ct.id, true);
@@ -745,7 +752,14 @@ contract PoolLiquidationTests is TestnetProcedures {
 
     vm.startPrank(poolAdmin);
     contracts.poolConfiguratorProxy.configureReserveAsCollateral(tokenList.wbtc, 0, 0, 0);
-    contracts.poolConfiguratorProxy.setEModeCategory(ct.id, ct.ltv, ct.lt, ct.lb, ct.label);
+    contracts.poolConfiguratorProxy.setEModeCategory(
+      ct.id,
+      ct.ltv,
+      ct.lt,
+      ct.lb,
+      ct.label,
+      ct.isolated
+    );
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.wbtc, ct.id, true);
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.weth, ct.id, true);
     contracts.poolConfiguratorProxy.setAssetBorrowableInEMode(tokenList.weth, ct.id, true);

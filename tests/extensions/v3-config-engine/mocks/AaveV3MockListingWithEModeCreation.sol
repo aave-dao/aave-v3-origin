@@ -65,7 +65,8 @@ contract AaveV3MockListingWithEModeCreation is AaveV3Payload {
       liqBonus: 1_50,
       label: 'Listed Asset EMode',
       borrowables: borrowables,
-      collaterals: collaterals
+      collaterals: collaterals,
+      isolated: false
     });
 
     return eModeUpdates;

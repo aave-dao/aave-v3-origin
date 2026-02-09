@@ -134,6 +134,7 @@ library DataTypes {
     uint16 ltv;
     uint16 liquidationThreshold;
     uint16 liquidationBonus;
+    bool isolated;
     string label;
   }
 
@@ -143,6 +144,7 @@ library DataTypes {
     uint16 liquidationThreshold;
     uint16 liquidationBonus;
     uint128 collateralBitmap;
+    bool isolated; // if true, only assets in collateralBitmap can be used as collateral, and all others will have ltv0 rules applying
     string label;
     uint128 borrowableBitmap;
     uint128 ltvzeroBitmap; // if true, the asset will be treated as ltv0 and ltv0 rules apply

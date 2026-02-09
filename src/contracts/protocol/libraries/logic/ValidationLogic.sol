@@ -665,6 +665,10 @@ library ValidationLogic {
         return eModeCategoryData.ltv;
       }
     }
+    // If eMode is isolated and asset is NOT in collateralBitmap, return 0
+    if (categoryId != 0 && eModeCategoryData.isolated) {
+      return 0;
+    }
     return reserveData.configuration.getLtv();
   }
 }
