@@ -52,9 +52,7 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
       weth9,
       0.0005e4,
       address(0),
-      address(0),
-      address(0),
-      0
+      address(0)
     );
   }
 
