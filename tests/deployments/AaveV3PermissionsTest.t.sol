@@ -8,7 +8,6 @@ import '../../src/deployments/interfaces/IMarketReportTypes.sol';
 import {ACLManager} from '../../src/contracts/protocol/configuration/ACLManager.sol';
 import {RewardsController} from '../../src/contracts/rewards/RewardsController.sol';
 import {EmissionManager} from '../../src/contracts/rewards/EmissionManager.sol';
-import {AugustusRegistryMock} from '../mocks/AugustusRegistryMock.sol';
 import {WETH9} from '../../src/contracts/dependencies/weth/WETH9.sol';
 import {BatchTestProcedures} from '../utils/BatchTestProcedures.sol';
 
@@ -37,7 +36,6 @@ contract AaveV3PermissionsTest is BatchTestProcedures {
     roles.emergencyAdmin = emergencyAdmin;
     roles.poolAdmin = poolAdmin;
 
-    config.paraswapAugustusRegistry = address(new AugustusRegistryMock());
     config.wrappedNativeToken = address(new WETH9());
 
     MarketReport memory report = deployAaveV3Testnet(
@@ -102,26 +100,6 @@ contract AaveV3PermissionsTest is BatchTestProcedures {
     {
       bool isDeployerAssetListAdmin = aclManager.isAssetListingAdmin(deployer);
       assertFalse(isDeployerAssetListAdmin, 'Deployer should not be listing admin');
-    }
-    {
-      address paraswapSwapAdapterOwner = Ownable(report.paraSwapLiquiditySwapAdapter).owner();
-      address paraswapRepayAdapterOwner = Ownable(report.paraSwapRepayAdapter).owner();
-      address paraswapWithdrawSwapOwner = Ownable(report.paraSwapWithdrawSwapAdapter).owner();
-      assertEq(
-        paraswapRepayAdapterOwner,
-        roles.poolAdmin,
-        'roles.poolAdmin must be paraswap repay owner'
-      );
-      assertEq(
-        paraswapSwapAdapterOwner,
-        roles.poolAdmin,
-        'roles.poolAdmin must be paraswap liquidity swap owner'
-      );
-      assertEq(
-        paraswapWithdrawSwapOwner,
-        roles.poolAdmin,
-        'roles.poolAdmin must be paraswap withdraw swap owner'
-      );
     }
     {
       address wethGatewayOwner = Ownable(report.wrappedTokenGateway).owner();
