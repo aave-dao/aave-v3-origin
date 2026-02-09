@@ -28,10 +28,6 @@ contract PoolConfiguratorUpgradeabilityTests is TestnetProcedures {
     initTestEnvironment();
   }
 
-  function test_getConfiguratorLogic() public view {
-    assertNotEq(contracts.poolConfiguratorProxy.getConfiguratorLogic(), address(0));
-  }
-
   function test_setReserveInterestRateData() public {
     address currentInterestRateStrategy = contracts
       .protocolDataProvider

@@ -80,7 +80,6 @@ struct MarketReport {
 
 struct LibrariesReport {
   address borrowLogic;
-  address configuratorLogic;
   address flashLoanLogic;
   address liquidationLogic;
   address poolLogic;

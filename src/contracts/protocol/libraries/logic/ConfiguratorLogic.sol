@@ -30,7 +30,7 @@ library ConfiguratorLogic {
   function executeInitReserve(
     IPool pool,
     ConfiguratorInputTypes.InitReserveInput calldata input
-  ) external {
+  ) internal {
     // It is an assumption that the asset listed is non-malicious, and the external call doesn't create re-entrancies
     uint8 underlyingAssetDecimals = IERC20Metadata(input.underlyingAsset).decimals();
     require(underlyingAssetDecimals > 5, Errors.InvalidDecimals());
@@ -98,7 +98,7 @@ library ConfiguratorLogic {
   function executeUpdateAToken(
     IPool cachedPool,
     ConfiguratorInputTypes.UpdateATokenInput calldata input
-  ) external {
+  ) internal {
     address aTokenAddress = cachedPool.getReserveAToken(input.asset);
 
     uint256 decimals = cachedPool.getConfiguration(input.asset).getDecimals();
@@ -127,7 +127,7 @@ library ConfiguratorLogic {
   function executeUpdateVariableDebtToken(
     IPool cachedPool,
     ConfiguratorInputTypes.UpdateDebtTokenInput calldata input
-  ) external {
+  ) internal {
     address variableDebtTokenAddress = cachedPool.getReserveVariableDebtToken(input.asset);
 
     uint256 decimals = cachedPool.getConfiguration(input.asset).getDecimals();

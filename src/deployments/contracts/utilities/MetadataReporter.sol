@@ -93,13 +93,7 @@ contract MetadataReporter is IMetadataReporter {
     (factoryV3Commit, factoryV3Branch) = getGitModuleVersion();
 
     string memory jsonReport = 'lib-report-1';
-
-    vm.serializeAddress(jsonReport, 'borrowLogic', libraries.borrowLogic);
-    string memory output = vm.serializeAddress(
-      jsonReport,
-      'configuratorLogic',
-      libraries.configuratorLogic
-    );
+    string memory output = vm.serializeAddress(jsonReport, 'borrowLogic', libraries.borrowLogic);
 
     vm.writeJson(output, string.concat('./reports/', timestamp, '-library-1-deployment.json'));
   }

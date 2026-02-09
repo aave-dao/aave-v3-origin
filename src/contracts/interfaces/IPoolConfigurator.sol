@@ -533,11 +533,6 @@ interface IPoolConfigurator {
   function getPendingLtv(address asset) external view returns (uint256);
 
   /**
-   * @notice Gets the address of the external ConfiguratorLogic
-   */
-  function getConfiguratorLogic() external view returns (address);
-
-  /**
    * @notice Gets the maximum liquidations grace period allowed, in seconds
    */
   function MAX_GRACE_PERIOD() external view returns (uint40);

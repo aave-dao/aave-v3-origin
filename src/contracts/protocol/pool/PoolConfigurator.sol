@@ -561,11 +561,6 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
     return _pendingLtv[asset];
   }
 
-  /// @inheritdoc IPoolConfigurator
-  function getConfiguratorLogic() external pure returns (address) {
-    return address(ConfiguratorLogic);
-  }
-
   function _setReserveLtvzero(
     address asset,
     bool ltvZero,
