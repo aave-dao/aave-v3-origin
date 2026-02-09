@@ -83,7 +83,6 @@ struct MarketReport {
   address staticATokenFactoryImplementation;
   address staticATokenFactoryProxy;
   address staticATokenImplementation;
-  address revenueSplitter;
   address dustBin;
   address emptyImplementation;
 }
@@ -170,7 +169,6 @@ struct PeripheryReport {
   address treasuryImplementation;
   address emissionManager;
   address rewardsControllerImplementation;
-  address revenueSplitter;
   address emptyImplementation;
   address dustBin;
 }
