@@ -74,7 +74,6 @@ struct MarketReport {
   address staticATokenFactoryImplementation;
   address staticATokenFactoryProxy;
   address staticATokenImplementation;
-  address revenueSplitter;
   address dustBin;
   address emptyImplementation;
 }
@@ -107,8 +106,6 @@ struct MarketConfig {
   uint128 flashLoanPremium;
   address incentivesProxy;
   address treasury; // let empty for deployment of collector, otherwise reuse treasury address
-  address treasuryPartner; // let empty for single treasury, or add treasury partner for revenue split between two organizations.
-  uint16 treasurySplitPercent; // ignored if treasuryPartner is empty, otherwise the split percent for the first treasury (recipientA, values between 00_01 and 100_00)
 }
 
 struct DeployFlags {
@@ -162,7 +159,6 @@ struct PeripheryReport {
   address treasuryImplementation;
   address emissionManager;
   address rewardsControllerImplementation;
-  address revenueSplitter;
   address emptyImplementation;
   address dustBin;
 }

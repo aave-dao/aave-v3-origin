@@ -246,10 +246,6 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
     assertTrue(r.staticATokenFactoryProxy != address(0), 'report.staticATokenFactoryProxy');
     assertTrue(r.staticATokenImplementation != address(0), 'report.staticATokenImplementation');
     assertTrue(r.transparentProxyFactory != address(0), 'report.transparentProxyFactory');
-
-    if (config.treasuryPartner != address(0)) {
-      assertTrue(r.revenueSplitter != address(0), 'report.revenueSplitter');
-    }
   }
 
   function deployAaveV3Testnet(
