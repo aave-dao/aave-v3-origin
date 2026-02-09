@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import {ConfiguratorInputTypes} from '../protocol/libraries/types/ConfiguratorInputTypes.sol';
-import {IDefaultInterestRateStrategyV2} from './IDefaultInterestRateStrategyV2.sol';
 
 /**
  * @title IPoolConfigurator

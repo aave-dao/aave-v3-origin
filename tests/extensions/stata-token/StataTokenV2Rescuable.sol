@@ -3,7 +3,6 @@ pragma solidity ^0.8.10;
 
 import {IRescuable} from 'solidity-utils/contracts/utils/Rescuable.sol';
 import {IRescuableBase} from 'solidity-utils/contracts/utils/interfaces/IRescuableBase.sol';
-import {IAToken} from '../../../src/contracts/extensions/stata-token/StataTokenV2.sol';
 import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import {BaseTest} from './TestBase.sol';
 

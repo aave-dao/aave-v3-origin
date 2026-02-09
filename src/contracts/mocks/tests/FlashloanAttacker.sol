@@ -9,7 +9,6 @@ import {IPoolAddressesProvider} from '../../interfaces/IPoolAddressesProvider.so
 import {FlashLoanSimpleReceiverBase} from '../../misc/flashloan/base/FlashLoanSimpleReceiverBase.sol';
 import {MintableERC20} from '../tokens/MintableERC20.sol';
 import {IPool} from '../../interfaces/IPool.sol';
-import {DataTypes} from '../../protocol/libraries/types/DataTypes.sol';
 
 contract FlashloanAttacker is FlashLoanSimpleReceiverBase {
   using GPv2SafeERC20 for IERC20;

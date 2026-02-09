@@ -5,7 +5,6 @@ import {MessageHashUtils} from 'openzeppelin-contracts/contracts/utils/cryptogra
 import {ECDSA} from 'openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol';
 import {SafeCast} from 'openzeppelin-contracts/contracts/utils/math/SafeCast.sol';
 
-import {WadRayMath} from '../../libraries/math/WadRayMath.sol';
 import {Errors} from '../../libraries/helpers/Errors.sol';
 
 import {IBaseDelegation} from './interfaces/IBaseDelegation.sol';

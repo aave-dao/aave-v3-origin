@@ -13,7 +13,6 @@ import {AaveV3HelpersBatchOne} from './batches/AaveV3HelpersBatchOne.sol';
 import {AaveV3HelpersBatchTwo} from './batches/AaveV3HelpersBatchTwo.sol';
 import {AaveV3MiscBatch} from './batches/AaveV3MiscBatch.sol';
 import '../../interfaces/IMarketReportTypes.sol';
-import {IMarketReportStorage} from '../../interfaces/IMarketReportStorage.sol';
 import {IPoolReport} from '../../interfaces/IPoolReport.sol';
 
 /**
