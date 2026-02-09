@@ -204,18 +204,13 @@ library AaveV3BatchOrchestration {
     PeripheryReport memory peripheryReport,
     AaveV3TokensBatch.TokensReport memory tokensReport
   ) internal returns (ConfigEngineReport memory) {
-    address treasury = peripheryReport.treasury;
-    if (peripheryReport.revenueSplitter != address(0)) {
-      treasury = peripheryReport.revenueSplitter;
-    }
-
     AaveV3HelpersBatchOne helpersBatchOne = new AaveV3HelpersBatchOne(
       setupReport.poolProxy,
       setupReport.poolConfiguratorProxy,
       miscReport.defaultInterestRateStrategy,
       peripheryReport.aaveOracle,
       setupReport.rewardsControllerProxy,
-      treasury,
+      peripheryReport.treasury,
       tokensReport.aToken,
       tokensReport.variableDebtToken
     );
@@ -312,14 +307,10 @@ library AaveV3BatchOrchestration {
     address rewardsControllerProxy,
     PeripheryReport memory peripheryReport
   ) internal returns (AaveV3TokensBatch.TokensReport memory) {
-    address treasury = peripheryReport.treasury;
-    if (peripheryReport.revenueSplitter != address(0)) {
-      treasury = peripheryReport.revenueSplitter;
-    }
     AaveV3TokensBatch tokensBatch = new AaveV3TokensBatch(
       poolProxy,
       rewardsControllerProxy,
-      treasury
+      peripheryReport.treasury
     );
 
     return tokensBatch.getTokensReport();
@@ -373,7 +364,6 @@ library AaveV3BatchOrchestration {
     report.staticATokenFactoryProxy = staticATokenReport.staticATokenFactoryProxy;
     report.staticATokenImplementation = staticATokenReport.staticATokenImplementation;
     report.transparentProxyFactory = staticATokenReport.transparentProxyFactory;
-    report.revenueSplitter = peripheryReport.revenueSplitter;
 
     return report;
   }

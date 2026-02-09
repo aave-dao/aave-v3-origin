@@ -8,7 +8,6 @@ import {AaveV3DefaultRateStrategyProcedure} from '../../../contracts/procedures/
 import {Ownable} from '../../../../contracts/dependencies/openzeppelin/contracts/Ownable.sol';
 import '../../../interfaces/IMarketReportTypes.sol';
 import {IRewardsController} from '../../../../contracts/rewards/interfaces/IRewardsController.sol';
-import {RevenueSplitter} from '../../../../contracts/treasury/RevenueSplitter.sol';
 
 contract AaveV3PeripheryBatch is
   AaveV3TreasuryProcedure,
@@ -35,16 +34,6 @@ contract AaveV3PeripheryBatch is
       _report.emptyImplementation = treasuryReport.emptyImplementation;
     } else {
       _report.treasury = config.treasury;
-    }
-
-    if (
-      config.treasuryPartner != address(0) &&
-      config.treasurySplitPercent > 0 &&
-      config.treasurySplitPercent < 100_00
-    ) {
-      _report.revenueSplitter = address(
-        new RevenueSplitter(_report.treasury, config.treasuryPartner, config.treasurySplitPercent)
-      );
     }
 
     if (config.incentivesProxy == address(0)) {
