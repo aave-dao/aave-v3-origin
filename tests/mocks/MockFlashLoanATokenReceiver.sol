@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.10;
 
-import {IERC20} from '../../src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
 import {IPoolAddressesProvider} from '../../src/contracts/interfaces/IPoolAddressesProvider.sol';
 import {IPool} from '../../src/contracts/interfaces/IPool.sol';
 import {FlashLoanSimpleReceiverBase} from '../../src/contracts/mocks/flashloan/MockSimpleFlashLoanReceiver.sol';

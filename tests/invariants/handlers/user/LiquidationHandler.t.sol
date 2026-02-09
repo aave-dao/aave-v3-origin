@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 // Interfaces
-import {IERC20Detailed, IERC20} from 'src/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
+import {IERC20Metadata} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import {IPool} from 'src/contracts/interfaces/IPool.sol';
 import {PercentageMath} from 'src/contracts/protocol/libraries/math/PercentageMath.sol';
 import {ReserveConfiguration} from 'src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';

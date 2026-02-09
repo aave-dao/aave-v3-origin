@@ -41,6 +41,8 @@ interface AggregatorInterface {
 
   function getTimestamp(uint256 roundId) external view returns (uint256);
 
+  function aggregator() external view returns (address);
+
   event AnswerUpdated(int256 indexed current, uint256 indexed roundId, uint256 updatedAt);
 
   event NewRound(uint256 indexed roundId, address indexed startedBy, uint256 startedAt);

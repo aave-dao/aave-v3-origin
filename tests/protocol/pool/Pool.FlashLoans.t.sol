@@ -16,7 +16,7 @@ import {IPoolAddressesProvider} from '../../../src/contracts/interfaces/IPoolAdd
 import {IPool} from '../../../src/contracts/interfaces/IPool.sol';
 import {IReserveInterestRateStrategy} from '../../../src/contracts/interfaces/IReserveInterestRateStrategy.sol';
 import {DataTypes} from '../../../src/contracts/protocol/libraries/types/DataTypes.sol';
-import {IERC20} from '../../../src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
 import {MockFlashLoanATokenReceiver} from '../../mocks/MockFlashLoanATokenReceiver.sol';
 import {MockFlashLoanBorrowInsideFlashLoan} from '../../mocks/MockFlashLoanBorrowInsideFlashLoan.sol';
 import {TestnetProcedures, TestReserveConfig} from '../../utils/TestnetProcedures.sol';

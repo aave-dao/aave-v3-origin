@@ -2,7 +2,7 @@
 pragma solidity >=0.7.5 <0.9.0;
 
 import {AggregatorInterface} from '../../src/contracts/dependencies/chainlink/AggregatorInterface.sol';
-import {IERC20Detailed} from '../../src/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
+import {IERC20Metadata} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import {IDefaultInterestRateStrategyV2} from '../../src/contracts/interfaces/IDefaultInterestRateStrategyV2.sol';
 import {ReserveConfiguration} from '../../src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
 import {IPoolAddressesProvider} from '../../src/contracts/interfaces/IPoolAddressesProvider.sol';
@@ -235,17 +235,17 @@ contract ProtocolV3TestBase is Test {
       vm.serializeAddress(key, 'underlying', config.underlying);
       vm.serializeAddress(key, 'aToken', config.aToken);
       vm.serializeAddress(key, 'variableDebtToken', config.variableDebtToken);
-      vm.serializeString(key, 'aTokenSymbol', IERC20Detailed(config.aToken).symbol());
-      vm.serializeString(key, 'aTokenName', IERC20Detailed(config.aToken).name());
+      vm.serializeString(key, 'aTokenSymbol', IERC20Metadata(config.aToken).symbol());
+      vm.serializeString(key, 'aTokenName', IERC20Metadata(config.aToken).name());
       vm.serializeString(
         key,
         'variableDebtTokenSymbol',
-        IERC20Detailed(config.variableDebtToken).symbol()
+        IERC20Metadata(config.variableDebtToken).symbol()
       );
       vm.serializeString(
         key,
         'variableDebtTokenName',
-        IERC20Detailed(config.variableDebtToken).name()
+        IERC20Metadata(config.variableDebtToken).name()
       );
       vm.serializeAddress(key, 'oracle', address(assetOracle));
       if (address(assetOracle) != address(0)) {
@@ -356,7 +356,7 @@ contract ProtocolV3TestBase is Test {
     if (reserve == 0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2) {
       localConfig.symbol = 'MKR';
     } else {
-      localConfig.symbol = IERC20Detailed(reserve).symbol();
+      localConfig.symbol = IERC20Metadata(reserve).symbol();
     }
     localConfig.usageAsCollateralEnabled = localConfig.liquidationThreshold != 0;
     localConfig.isSiloed = configuration.getSiloedBorrowing();
@@ -368,7 +368,7 @@ contract ProtocolV3TestBase is Test {
     localConfig.isFlashloanable = configuration.getFlashLoanEnabled();
 
     localConfig.virtualBalance = pool.getVirtualUnderlyingBalance(reserve);
-    localConfig.aTokenUnderlyingBalance = IERC20Detailed(reserve).balanceOf(localConfig.aToken);
+    localConfig.aTokenUnderlyingBalance = IERC20Metadata(reserve).balanceOf(localConfig.aToken);
 
     return localConfig;
   }
