@@ -304,6 +304,7 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
       TestnetERC20 listingToken = new TestnetERC20(
         _concatStr('Token', x),
         _concatStr('T', x),
+        // forge-lint: disable-next-line(unsafe-typecast)
         uint8(10 + x),
         poolAdminUser
       );

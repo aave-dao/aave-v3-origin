@@ -67,8 +67,10 @@ contract PoolOperationsComposition_gas_Tests is Testhelpers {
 
   function test_batchLiquidation() external {
     uint256 price = contracts.aaveOracle.getAssetPrice(tokenList.weth);
+    // forge-lint: disable-next-line(divide-before-multiply)
     _supplyAndEnableAsCollateral(tokenList.usdx, (((price * 1e6) / 1e8) * 90) / 100, borrower);
     _borrowArbitraryAmount(borrower, 1 ether, tokenList.weth);
+    // forge-lint: disable-next-line(divide-before-multiply)
     _supplyAndEnableAsCollateral(tokenList.usdx, (((price * 1e6) / 1e8) * 90) / 100, supplier);
     _borrowArbitraryAmount(supplier, 1 ether, tokenList.weth);
     deal(tokenList.weth, liquidator, 4 ether);

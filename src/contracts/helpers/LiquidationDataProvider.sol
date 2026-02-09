@@ -353,6 +353,8 @@ contract LiquidationDataProvider is ILiquidationDataProvider {
   ) private view returns (uint256) {
     uint256 userEModeCategory = POOL.getUserEMode(user);
 
+    // There is an explicit assumption on the protocol when of the uint8(userEModeCategory) being safe
+    // forge-lint: disable-next-line(unsafe-typecast)
     uint128 collateralBitmap = POOL.getEModeCategoryCollateralBitmap(uint8(userEModeCategory));
 
     if (
@@ -360,6 +362,7 @@ contract LiquidationDataProvider is ILiquidationDataProvider {
       EModeConfiguration.isReserveEnabledOnBitmap(collateralBitmap, collateralId)
     ) {
       DataTypes.EModeCategoryLegacy memory eModeCategory = POOL.getEModeCategoryData(
+        // forge-lint: disable-next-line(unsafe-typecast)
         uint8(userEModeCategory)
       );
 

@@ -148,6 +148,7 @@ contract PoolWithdrawTests is TestnetProcedures {
     contracts.poolProxy.borrow(tokenList.usdx, amount, 2, 0, alice);
     assertEq(IERC20(tokenList.usdx).balanceOf(aUSDX), 0);
 
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     IERC20(tokenList.usdx).transfer(aUSDX, amount);
 
     vm.expectRevert(stdError.arithmeticError);

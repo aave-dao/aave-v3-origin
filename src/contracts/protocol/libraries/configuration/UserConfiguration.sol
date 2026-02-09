@@ -32,6 +32,7 @@ library UserConfiguration {
   ) internal {
     unchecked {
       require(reserveIndex < ReserveConfiguration.MAX_RESERVES_COUNT, Errors.InvalidReserveIndex());
+      // forge-lint: disable-next-line(incorrect-shift)
       uint256 bit = 1 << (reserveIndex << 1);
       if (borrowing) {
         self.data |= bit;
@@ -58,6 +59,7 @@ library UserConfiguration {
   ) internal {
     unchecked {
       require(reserveIndex < ReserveConfiguration.MAX_RESERVES_COUNT, Errors.InvalidReserveIndex());
+      // forge-lint: disable-next-line(incorrect-shift)
       uint256 bit = 1 << ((reserveIndex << 1) + 1);
       if (usingAsCollateral) {
         self.data |= bit;

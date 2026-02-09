@@ -27,6 +27,7 @@ contract MockFlashLoanATokenReceiver is FlashLoanSimpleReceiverBase {
     //check the contract has the specified balance
     require(amount <= IERC20(asset).balanceOf(address(this)), 'Invalid balance for the contract');
 
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     IERC20(asset).transfer(ATOKEN, amount);
 
     // This should revert with an arithmetic underflow
@@ -47,6 +48,7 @@ contract MockFlashLoanATokenReceiver is FlashLoanSimpleReceiverBase {
         'Invalid balance for the contract'
       );
 
+      // forge-lint: disable-next-line(erc20-unchecked-transfer)
       IERC20(assets[i]).transfer(ATOKEN, amounts[i]);
 
       // This should revert with an arithmetic underflow

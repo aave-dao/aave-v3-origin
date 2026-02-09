@@ -29,6 +29,7 @@ contract DonationAttackHandler is BaseHandler {
 
     _token.mint(address(this), amount);
 
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     _token.transfer(protocolTokens[address(_token)].aTokenAddress, amount);
   }
 
@@ -37,6 +38,7 @@ contract DonationAttackHandler is BaseHandler {
 
     _token.mint(address(this), amount);
 
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     _token.transfer(address(pool), amount);
   }
 

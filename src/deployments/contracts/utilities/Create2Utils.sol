@@ -15,8 +15,9 @@ library Create2Utils {
       return computed;
     } else {
       bytes memory creationBytecode = abi.encodePacked(salt, bytecode);
-      bytes memory returnData;
-      (, returnData) = CREATE2_FACTORY.call(creationBytecode);
+      (bool success, bytes memory returnData) = CREATE2_FACTORY.call(creationBytecode);
+      require(success, 'failure at create2 deployment');
+      // forge-lint: disable-next-line(unsafe-typecast)
       address deployedAt = address(uint160(bytes20(returnData)));
       require(deployedAt == computed, 'failure at create2 address derivation');
       return deployedAt;

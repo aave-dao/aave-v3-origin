@@ -140,6 +140,7 @@ contract PoolOperations_gas_Tests is Testhelpers {
     uint256 price = contracts.aaveOracle.getAssetPrice(tokenList.weth);
     _supplyAndEnableAsCollateral(
       tokenList.usdx,
+      // forge-lint: disable-next-line(divide-before-multiply)
       ((((price * 1e6) / 1e8) * 90) / 100) * scalingFactor,
       borrower
     );
@@ -156,6 +157,7 @@ contract PoolOperations_gas_Tests is Testhelpers {
 
   function test_liquidationCall_full() external {
     uint256 price = contracts.aaveOracle.getAssetPrice(tokenList.weth);
+    // forge-lint: disable-next-line(divide-before-multiply)
     _supplyAndEnableAsCollateral(tokenList.usdx, (((price * 1e6) / 1e8) * 90) / 100, borrower);
     _borrowArbitraryAmount(borrower, 1 ether, tokenList.weth);
     deal(tokenList.weth, liquidator, 2 ether);
@@ -176,6 +178,7 @@ contract PoolOperations_gas_Tests is Testhelpers {
 
   function test_liquidationCall_receive_ATokens_partial() external {
     uint256 price = contracts.aaveOracle.getAssetPrice(tokenList.weth);
+    // forge-lint: disable-next-line(divide-before-multiply)
     _supplyAndEnableAsCollateral(tokenList.usdx, (((price * 3e6) / 1e8) * 90) / 100, borrower);
     _borrowArbitraryAmount(borrower, 3 ether, tokenList.weth);
     deal(tokenList.weth, liquidator, 0.5 ether);
@@ -193,6 +196,7 @@ contract PoolOperations_gas_Tests is Testhelpers {
 
   function test_liquidationCall_receive_ATokens_full() external {
     uint256 price = contracts.aaveOracle.getAssetPrice(tokenList.weth);
+    // forge-lint: disable-next-line(divide-before-multiply)
     _supplyAndEnableAsCollateral(tokenList.usdx, (((price * 1e6) / 1e8) * 90) / 100, borrower);
     _borrowArbitraryAmount(borrower, 1 ether, tokenList.weth);
     deal(tokenList.weth, liquidator, 2 ether);
