@@ -26,7 +26,7 @@ interface IAToken is IERC20, IScaledBalanceToken, IInitializableAToken {
    * @param onBehalfOf The address of the user that will receive the minted aTokens
    * @param scaledAmount The scaled amount of tokens getting minted
    * @param index The next liquidity index of the reserve
-   * @return `true` if the the previous balance of the user was 0
+   * @return `true` if the previous balance of the user was 0
    */
   function mint(
     address caller,
@@ -45,7 +45,7 @@ interface IAToken is IERC20, IScaledBalanceToken, IInitializableAToken {
    * @param amount The amount of underlying to be burned (non scaled)
    * @param scaledAmount The scaled amount of aTokens to be burned (scaled)
    * @param index The next liquidity index of the reserve
-   * @return `true` if the the new balance of the user is 0
+   * @return `true` if the new balance of the user is 0
    */
   function burn(
     address from,
