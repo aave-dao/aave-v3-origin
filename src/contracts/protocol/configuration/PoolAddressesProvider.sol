@@ -191,7 +191,7 @@ contract PoolAddressesProvider is Ownable, IPoolAddressesProvider {
   }
 
   /**
-   * @notice Returns the the implementation contract of the proxy contract by its identifier.
+   * @notice Returns the implementation contract of the proxy contract by its identifier.
    * @dev It returns ZERO if there is no registered address with the given id
    * @dev It reverts if the registered address with the given id is not `InitializableImmutableAdminUpgradeabilityProxy`
    * @param id The id
