@@ -222,8 +222,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
         referralCode: referralCode,
         releaseUnderlying: true,
         oracle: ADDRESSES_PROVIDER.getPriceOracle(),
-        userEModeCategory: _usersEModeCategory[onBehalfOf],
-        priceOracleSentinel: ADDRESSES_PROVIDER.getPriceOracleSentinel()
+        userEModeCategory: _usersEModeCategory[onBehalfOf]
       })
     );
   }
@@ -367,7 +366,6 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
         receiveAToken: receiveAToken,
         priceOracle: ADDRESSES_PROVIDER.getPriceOracle(),
         borrowerEModeCategory: _usersEModeCategory[borrower],
-        priceOracleSentinel: ADDRESSES_PROVIDER.getPriceOracleSentinel(),
         interestRateStrategyAddress: RESERVE_INTEREST_RATE_STRATEGY
       })
     );

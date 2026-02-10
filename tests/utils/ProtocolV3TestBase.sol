@@ -287,11 +287,6 @@ contract ProtocolV3TestBase is Test {
 
     // oracles
     vm.serializeAddress(poolConfigKey, 'oracle', addressesProvider.getPriceOracle());
-    vm.serializeAddress(
-      poolConfigKey,
-      'priceOracleSentinel',
-      addressesProvider.getPriceOracleSentinel()
-    );
 
     // pool configurator
     IPoolConfigurator configurator = IPoolConfigurator(addressesProvider.getPoolConfigurator());

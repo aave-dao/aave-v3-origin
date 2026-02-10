@@ -7,12 +7,9 @@ import {IERC20Errors} from 'openzeppelin-contracts/contracts/interfaces/draft-IE
 import {IVariableDebtToken} from '../../../src/contracts/interfaces/IVariableDebtToken.sol';
 import {IPoolAddressesProvider} from '../../../src/contracts/interfaces/IPoolAddressesProvider.sol';
 import {IPool} from '../../../src/contracts/interfaces/IPool.sol';
-import {ISequencerOracle} from '../../../src/contracts/interfaces/ISequencerOracle.sol';
 import {Errors} from '../../../src/contracts/protocol/libraries/helpers/Errors.sol';
 import {TestnetERC20} from '../../../src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
 import {UserConfiguration} from '../../../src/contracts/protocol/libraries/configuration/UserConfiguration.sol';
-import {PriceOracleSentinel} from '../../../src/contracts/misc/PriceOracleSentinel.sol';
-import {SequencerOracle} from '../../../src/contracts/mocks/oracle/SequencerOracle.sol';
 import {BorrowLogic, IERC20} from '../../../src/contracts/protocol/libraries/logic/BorrowLogic.sol';
 import {DataTypes} from '../../../src/contracts/protocol/libraries/types/DataTypes.sol';
 import {TestnetProcedures} from '../../utils/TestnetProcedures.sol';
@@ -23,9 +20,6 @@ contract PoolRepayTests is TestnetProcedures {
 
   IVariableDebtToken internal varDebtUSDX;
   address internal aUSDX;
-
-  PriceOracleSentinel internal priceOracleSentinel;
-  SequencerOracle internal sequencerOracleMock;
 
   function setUp() public {
     initTestEnvironment();
@@ -39,16 +33,6 @@ contract PoolRepayTests is TestnetProcedures {
     vm.startPrank(carol);
     contracts.poolProxy.supply(tokenList.usdx, 100_000e6, carol, 0);
     vm.stopPrank();
-
-    sequencerOracleMock = new SequencerOracle(poolAdmin);
-    priceOracleSentinel = new PriceOracleSentinel(
-      IPoolAddressesProvider(report.poolAddressesProvider),
-      ISequencerOracle(address(sequencerOracleMock)),
-      1 days
-    );
-
-    vm.prank(poolAdmin);
-    sequencerOracleMock.setAnswer(false, 0);
   }
 
   function test_repay_full_variable_borrow() public {

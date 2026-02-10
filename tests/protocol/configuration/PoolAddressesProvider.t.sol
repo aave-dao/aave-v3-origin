@@ -100,9 +100,6 @@ contract PoolAddressesProviderTests is TestnetProcedures {
     provider.setPriceOracle(contractAddress);
 
     vm.expectRevert(bytes(CALLER_NOT_OWNER));
-    provider.setPriceOracleSentinel(contractAddress);
-
-    vm.expectRevert(bytes(CALLER_NOT_OWNER));
     provider.setACLManager(contractAddress);
 
     vm.expectRevert(bytes(CALLER_NOT_OWNER));
@@ -397,42 +394,6 @@ contract PoolAddressesProviderTests is TestnetProcedures {
     provider.setACLManager(contractAddress);
 
     assertEq(provider.getACLManager(), contractAddress);
-
-    return (provider, contractAddress);
-  }
-
-  function test_setPriceOracleSentinel() public returns (PoolAddressesProvider, address) {
-    PoolAddressesProvider provider = new PoolAddressesProvider('test', alice);
-
-    address contractAddress = makeAddr('PriceOracleSentinel');
-    vm.expectEmit(address(provider));
-    emit IPoolAddressesProvider.PriceOracleSentinelUpdated(address(0), contractAddress);
-
-    assertEq(provider.getPriceOracleSentinel(), address(0));
-
-    vm.prank(alice);
-    provider.setPriceOracleSentinel(contractAddress);
-
-    assertEq(provider.getPriceOracleSentinel(), contractAddress);
-
-    return (provider, contractAddress);
-  }
-
-  function test_setPriceOracleSentinel_changeContract()
-    public
-    returns (PoolAddressesProvider, address)
-  {
-    (PoolAddressesProvider provider, address previousAddress) = test_setPriceOracleSentinel();
-    address contractAddress = makeAddr('PriceOracleSentinel_V2');
-    vm.expectEmit(address(provider));
-    emit IPoolAddressesProvider.PriceOracleSentinelUpdated(previousAddress, contractAddress);
-
-    assertEq(provider.getPriceOracleSentinel(), previousAddress);
-
-    vm.prank(alice);
-    provider.setPriceOracleSentinel(contractAddress);
-
-    assertEq(provider.getPriceOracleSentinel(), contractAddress);
 
     return (provider, contractAddress);
   }

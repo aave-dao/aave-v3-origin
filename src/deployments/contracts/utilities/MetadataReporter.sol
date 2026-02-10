@@ -63,7 +63,6 @@ contract MetadataReporter is IMetadataReporter {
       'defaultInterestRateStrategy',
       report.defaultInterestRateStrategy
     );
-    vm.serializeAddress(jsonReport, 'priceOracleSentinel', report.priceOracleSentinel);
     vm.serializeAddress(jsonReport, 'configEngine', report.configEngine);
     vm.serializeAddress(
       jsonReport,

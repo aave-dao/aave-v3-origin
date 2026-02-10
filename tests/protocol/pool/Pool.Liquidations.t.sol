@@ -14,8 +14,6 @@ import {Errors} from '../../../src/contracts/protocol/libraries/helpers/Errors.s
 import {UserConfiguration} from '../../../src/contracts/protocol/libraries/configuration/UserConfiguration.sol';
 import {ReserveLogic, IERC20} from '../../../src/contracts/protocol/libraries/logic/ReserveLogic.sol';
 import {ReserveConfiguration} from '../../../src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
-import {PriceOracleSentinel} from '../../../src/contracts/misc/PriceOracleSentinel.sol';
-import {SequencerOracle, ISequencerOracle} from '../../../src/contracts/mocks/oracle/SequencerOracle.sol';
 import {MockAggregator} from '../../../src/contracts/mocks/oracle/CLAggregators/MockAggregator.sol';
 import {LiquidationLogic} from '../../../src/contracts/protocol/libraries/logic/LiquidationLogic.sol';
 import {DataTypes} from '../../../src/contracts/protocol/libraries/types/DataTypes.sol';
@@ -39,8 +37,6 @@ contract PoolLiquidationTests is TestnetProcedures {
   address internal aUSDX;
   address[] internal badDebtAccounts;
 
-  PriceOracleSentinel internal priceOracleSentinel;
-  SequencerOracle internal sequencerOracleMock;
   LiquidationDataProvider internal liquidationDataProvider;
 
   function setUp() public {
@@ -57,19 +53,10 @@ contract PoolLiquidationTests is TestnetProcedures {
     contracts.poolProxy.supply(tokenList.weth, 100e18, carol, 0);
     vm.stopPrank();
 
-    sequencerOracleMock = new SequencerOracle(poolAdmin);
-    priceOracleSentinel = new PriceOracleSentinel(
-      IPoolAddressesProvider(report.poolAddressesProvider),
-      ISequencerOracle(address(sequencerOracleMock)),
-      1 days
-    );
     liquidationDataProvider = new LiquidationDataProvider(
       address(contracts.poolProxy),
       address(contracts.poolAddressesProvider)
     );
-
-    vm.prank(poolAdmin);
-    sequencerOracleMock.setAnswer(false, 0);
 
     badDebtAccounts.push(makeAddr('badDebtUser1'));
     badDebtAccounts.push(makeAddr('badDebtUser2'));
@@ -972,25 +959,6 @@ contract PoolLiquidationTests is TestnetProcedures {
     params.actualDebtToLiquidate = liquidationInfo.maxDebtToLiquidate;
 
     return params;
-  }
-
-  function test_reverts_liquidation_oracle_sentinel_on() public {
-    vm.prank(alice);
-    contracts.poolProxy.supply(tokenList.wbtc, 50e8, alice, 0);
-
-    vm.prank(poolAdmin);
-    IPoolAddressesProvider(report.poolAddressesProvider).setPriceOracleSentinel(
-      address(priceOracleSentinel)
-    );
-
-    vm.prank(poolAdmin);
-    sequencerOracleMock.setAnswer(true, 0);
-
-    assertEq(priceOracleSentinel.isLiquidationAllowed(), false);
-    vm.expectRevert(abi.encodeWithSelector(Errors.PriceOracleSentinelCheckFailed.selector));
-
-    vm.prank(alice);
-    contracts.poolProxy.liquidationCall(tokenList.usdx, tokenList.wbtc, bob, 100e6, false);
   }
 
   function test_reverts_liquidation_reserveInactive() public {

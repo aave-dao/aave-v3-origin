@@ -5,7 +5,6 @@ import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
 import {Address} from '../../../dependencies/openzeppelin/contracts/Address.sol';
 import {GPv2SafeERC20} from '../../../dependencies/gnosis/contracts/GPv2SafeERC20.sol';
 import {IAToken} from '../../../interfaces/IAToken.sol';
-import {IPriceOracleSentinel} from '../../../interfaces/IPriceOracleSentinel.sol';
 import {ReserveConfiguration} from '../configuration/ReserveConfiguration.sol';
 import {UserConfiguration} from '../configuration/UserConfiguration.sol';
 import {EModeConfiguration} from '../configuration/EModeConfiguration.sol';
@@ -31,14 +30,6 @@ library ValidationLogic {
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
   using UserConfiguration for DataTypes.UserConfigurationMap;
   using Address for address;
-
-  // Factor to apply to "only-variable-debt" liquidity rate to get threshold for rebalancing, expressed in bps
-  // A value of 0.9e4 results in 90%
-  uint256 public constant REBALANCE_UP_LIQUIDITY_RATE_THRESHOLD = 0.9e4;
-
-  // Minimum health factor allowed under any circumstance
-  // A value of 0.95e18 results in 0.95
-  uint256 public constant MINIMUM_HEALTH_FACTOR_LIQUIDATION_THRESHOLD = 0.95e18;
 
   /**
    * @dev Minimum health factor to consider a user position healthy
@@ -150,12 +141,6 @@ library ValidationLogic {
     require(
       IERC20(params.reserveCache.aTokenAddress).totalSupply() >= vars.amount,
       Errors.InvalidAmount()
-    );
-
-    require(
-      params.priceOracleSentinel == address(0) ||
-        IPriceOracleSentinel(params.priceOracleSentinel).isBorrowAllowed(),
-      Errors.PriceOracleSentinelCheckFailed()
     );
 
     //validate interest rate mode
@@ -295,13 +280,6 @@ library ValidationLogic {
 
     require(vars.collateralReserveActive && vars.principalReserveActive, Errors.ReserveInactive());
     require(!vars.collateralReservePaused && !vars.principalReservePaused, Errors.ReservePaused());
-
-    require(
-      params.priceOracleSentinel == address(0) ||
-        params.healthFactor < MINIMUM_HEALTH_FACTOR_LIQUIDATION_THRESHOLD ||
-        IPriceOracleSentinel(params.priceOracleSentinel).isLiquidationAllowed(),
-      Errors.PriceOracleSentinelCheckFailed()
-    );
 
     require(
       collateralReserve.liquidationGracePeriodUntil < uint40(block.timestamp) &&

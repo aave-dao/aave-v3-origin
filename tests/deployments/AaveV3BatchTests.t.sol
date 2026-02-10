@@ -57,8 +57,6 @@ contract AaveV3BatchTests is BatchTestProcedures {
       makeAddr('ethUsdOracle'),
       'Testnet Market',
       8,
-      address(0), // l2SequencerUptimeFeed
-      0, // l2PriceOracleSentinelGracePeriod
       8080,
       emptySalt,
       address(new WETH9()),
@@ -153,12 +151,7 @@ contract AaveV3BatchTests is BatchTestProcedures {
   }
 
   function test5MiscDeployment() public {
-    new AaveV3MiscBatch(
-      flags.l2,
-      marketReportOne.poolAddressesProvider,
-      config.l2SequencerUptimeFeed,
-      config.l2PriceOracleSentinelGracePeriod
-    );
+    new AaveV3MiscBatch(marketReportOne.poolAddressesProvider);
   }
 
   function test7SetupMarket() public {
@@ -169,8 +162,7 @@ contract AaveV3BatchTests is BatchTestProcedures {
       poolReportOne.poolImplementation,
       poolReportOne.poolConfiguratorImplementation,
       peripheryReportOne.aaveOracle,
-      peripheryReportOne.rewardsControllerImplementation,
-      miscReport.priceOracleSentinel
+      peripheryReportOne.rewardsControllerImplementation
     );
   }
 

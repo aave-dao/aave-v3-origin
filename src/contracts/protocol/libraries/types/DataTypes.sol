@@ -181,7 +181,6 @@ library DataTypes {
     bool receiveAToken;
     address priceOracle;
     uint8 borrowerEModeCategory;
-    address priceOracleSentinel;
     address interestRateStrategyAddress;
   }
 
@@ -206,7 +205,6 @@ library DataTypes {
     bool releaseUnderlying;
     address oracle;
     uint8 userEModeCategory;
-    address priceOracleSentinel;
   }
 
   struct ExecuteRepayParams {
@@ -299,14 +297,12 @@ library DataTypes {
     uint256 amountScaled;
     InterestRateMode interestRateMode;
     uint8 userEModeCategory;
-    address priceOracleSentinel;
   }
 
   struct ValidateLiquidationCallParams {
     ReserveCache debtReserveCache;
     uint256 totalDebt;
     uint256 healthFactor;
-    address priceOracleSentinel;
     address borrower;
     address liquidator;
   }

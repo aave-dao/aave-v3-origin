@@ -24,7 +24,6 @@ contract AaveV3SetupProcedure {
     address aaveOracle;
     address rewardsControllerProxy;
     address rewardsControllerImplementation;
-    address priceOracleSentinel;
   }
 
   function _initialDeployment(
@@ -56,8 +55,7 @@ contract AaveV3SetupProcedure {
     address poolImplementation,
     address poolConfiguratorImplementation,
     address aaveOracle,
-    address rewardsControllerImplementation,
-    address priceOracleSentinel
+    address rewardsControllerImplementation
   ) internal returns (SetupReport memory) {
     _validateMarketSetup(roles);
 
@@ -69,8 +67,7 @@ contract AaveV3SetupProcedure {
         roles.poolAdmin,
         aaveOracle,
         config.incentivesProxy,
-        rewardsControllerImplementation,
-        priceOracleSentinel
+        rewardsControllerImplementation
       )
     );
 
@@ -120,10 +117,6 @@ contract AaveV3SetupProcedure {
 
     report.poolProxy = address(provider.getPool());
     report.poolConfiguratorProxy = address(provider.getPoolConfigurator());
-
-    if (input.priceOracleSentinel != address(0)) {
-      provider.setPriceOracleSentinel(input.priceOracleSentinel);
-    }
 
     bytes32 controllerId = keccak256('INCENTIVES_CONTROLLER');
     if (input.rewardsControllerProxy == address(0)) {

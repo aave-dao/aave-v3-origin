@@ -12,7 +12,7 @@ import {IPoolAddressesProvider} from '../../src/contracts/interfaces/IPoolAddres
 import {IAaveV3ConfigEngine} from '../../src/contracts/extensions/v3-config-engine/IAaveV3ConfigEngine.sol';
 import {IPool} from '../../src/contracts/interfaces/IPool.sol';
 import {AaveV3ConfigEngine} from '../../src/contracts/extensions/v3-config-engine/AaveV3ConfigEngine.sol';
-import {SequencerOracle} from '../../src/contracts/mocks/oracle/SequencerOracle.sol';
+
 import {IPoolDataProvider} from '../../src/contracts/interfaces/IPoolDataProvider.sol';
 import {IAToken} from '../../src/contracts/interfaces/IAToken.sol';
 import {IncentivizedERC20} from '../../src/contracts/protocol/tokenization/base/IncentivizedERC20.sol';
@@ -43,8 +43,6 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
       makeAddr('ethUsdOracle'),
       'Testnet Market',
       8,
-      address(0), // l2SequencerUptimeFeed
-      0, // l2PriceOracleSentinelGracePeriod
       8080,
       emptySalt,
       weth9,
@@ -85,8 +83,6 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
 
   function testAaveV3L2BatchDeploymentCheck() public {
     flags.l2 = true;
-    config.l2SequencerUptimeFeed = address(new SequencerOracle(poolAdmin));
-    config.l2PriceOracleSentinelGracePeriod = 2 hours;
 
     MarketReport memory fullReport = deployAaveV3Testnet(
       marketOwner,

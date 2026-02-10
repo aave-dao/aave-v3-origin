@@ -62,8 +62,7 @@ library BorrowLogic {
         asset: params.asset,
         amountScaled: amountScaled,
         interestRateMode: params.interestRateMode,
-        userEModeCategory: params.userEModeCategory,
-        priceOracleSentinel: params.priceOracleSentinel
+        userEModeCategory: params.userEModeCategory
       })
     );
 

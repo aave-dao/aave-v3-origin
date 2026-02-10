@@ -5,7 +5,6 @@ import {IERC20Metadata} from 'openzeppelin-contracts/contracts/token/ERC20/exten
 
 import {IPool} from '../interfaces/IPool.sol';
 import {IPoolAddressesProvider} from '../interfaces/IPoolAddressesProvider.sol';
-import {IPriceOracleSentinel} from '../interfaces/IPriceOracleSentinel.sol';
 import {IPriceOracleGetter} from '../interfaces/IPriceOracleGetter.sol';
 
 import {ValidationLogic} from '../protocol/libraries/logic/ValidationLogic.sol';
@@ -380,22 +379,8 @@ contract LiquidationDataProvider is ILiquidationDataProvider {
     return userConfiguration.isUsingAsCollateral(collateralId);
   }
 
-  function _canLiquidateThisHealthFactor(uint256 healthFactor) private view returns (bool) {
-    address priceOracleSentinel = ADDRESSES_PROVIDER.getPriceOracleSentinel();
-
-    if (healthFactor >= ValidationLogic.HEALTH_FACTOR_LIQUIDATION_THRESHOLD) {
-      return false;
-    }
-
-    if (
-      priceOracleSentinel != address(0) &&
-      healthFactor >= ValidationLogic.MINIMUM_HEALTH_FACTOR_LIQUIDATION_THRESHOLD &&
-      !IPriceOracleSentinel(priceOracleSentinel).isLiquidationAllowed()
-    ) {
-      return false;
-    }
-
-    return true;
+  function _canLiquidateThisHealthFactor(uint256 healthFactor) private pure returns (bool) {
+    return healthFactor < ValidationLogic.HEALTH_FACTOR_LIQUIDATION_THRESHOLD;
   }
 
   function _isReserveReadyForLiquidations(

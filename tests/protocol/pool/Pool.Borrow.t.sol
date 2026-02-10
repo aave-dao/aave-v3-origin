@@ -9,10 +9,7 @@ import {Errors} from '../../../src/contracts/protocol/libraries/helpers/Errors.s
 import {IReserveInterestRateStrategy} from '../../../src/contracts/interfaces/IReserveInterestRateStrategy.sol';
 import {IPoolAddressesProvider} from '../../../src/contracts/interfaces/IPoolAddressesProvider.sol';
 import {IPool} from '../../../src/contracts/interfaces/IPool.sol';
-import {ISequencerOracle} from '../../../src/contracts/interfaces/ISequencerOracle.sol';
 import {UserConfiguration} from '../../../src/contracts/protocol/libraries/configuration/UserConfiguration.sol';
-import {PriceOracleSentinel} from '../../../src/contracts/misc/PriceOracleSentinel.sol';
-import {SequencerOracle} from '../../../src/contracts/mocks/oracle/SequencerOracle.sol';
 import {MockAggregator} from '../../../src/contracts/mocks/oracle/CLAggregators/MockAggregator.sol';
 import {DataTypes} from '../../../src/contracts/protocol/libraries/types/DataTypes.sol';
 import {ReserveConfiguration} from '../../../src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
@@ -26,9 +23,6 @@ contract PoolBorrowTests is TestnetProcedures {
   IVariableDebtToken internal varDebtUSDX;
   address internal aUSDX;
 
-  PriceOracleSentinel internal priceOracleSentinel;
-  SequencerOracle internal sequencerOracleMock;
-
   function setUp() public {
     initTestEnvironment();
 
@@ -41,16 +35,6 @@ contract PoolBorrowTests is TestnetProcedures {
     vm.startPrank(carol);
     contracts.poolProxy.supply(tokenList.usdx, 100_000e6, carol, 0);
     vm.stopPrank();
-
-    sequencerOracleMock = new SequencerOracle(poolAdmin);
-    priceOracleSentinel = new PriceOracleSentinel(
-      IPoolAddressesProvider(report.poolAddressesProvider),
-      ISequencerOracle(address(sequencerOracleMock)),
-      1 days
-    );
-
-    vm.prank(poolAdmin);
-    sequencerOracleMock.setAnswer(false, 0);
   }
 
   function test_variable_borrow() public {
@@ -188,25 +172,6 @@ contract PoolBorrowTests is TestnetProcedures {
     vm.expectRevert(abi.encodeWithSelector(Errors.BorrowCapExceeded.selector));
 
     contracts.poolProxy.borrow(tokenList.wbtc, 10e8, 2, 0, alice);
-  }
-
-  function test_reverts_borrow_sentinel_oracle_down() public {
-    vm.prank(alice);
-    contracts.poolProxy.supply(tokenList.wbtc, 50e8, alice, 0);
-
-    vm.prank(poolAdmin);
-    IPoolAddressesProvider(report.poolAddressesProvider).setPriceOracleSentinel(
-      address(priceOracleSentinel)
-    );
-
-    vm.prank(poolAdmin);
-    sequencerOracleMock.setAnswer(true, 0);
-
-    assertEq(priceOracleSentinel.isBorrowAllowed(), false);
-    vm.expectRevert(abi.encodeWithSelector(Errors.PriceOracleSentinelCheckFailed.selector));
-
-    vm.prank(alice);
-    contracts.poolProxy.borrow(tokenList.wbtc, 100, 2, 0, alice);
   }
 
   function test_reverts_borrow_InconsistentEModeCategory() public {

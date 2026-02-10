@@ -214,7 +214,6 @@ library LiquidationLogic {
         debtReserveCache: vars.debtReserveCache,
         totalDebt: vars.borrowerReserveDebt,
         healthFactor: vars.healthFactor,
-        priceOracleSentinel: params.priceOracleSentinel,
         borrower: params.borrower,
         liquidator: params.liquidator
       })

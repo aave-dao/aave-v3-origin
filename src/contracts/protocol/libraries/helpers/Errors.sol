@@ -48,7 +48,6 @@ library Errors {
   error SupplyCapExceeded(); // 'Supply cap is exceeded'
   error LtvValidationFailed(); // 'Ltv validation failed'
   error InconsistentEModeCategory(); // 'Inconsistent eMode category'
-  error PriceOracleSentinelCheckFailed(); // 'Price oracle sentinel validation failed'
   error ReserveAlreadyInitialized(); // 'Reserve has already been initialized'
   error UserHasAssetWithZeroLtv(); // 'User has asset with ltv being zero'
   error InvalidLtv(); // 'Invalid ltv parameter for the reserve'
