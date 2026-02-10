@@ -93,7 +93,7 @@ interface IPoolDataProvider {
   /**
    * @notice Returns the siloed borrowing flag
    * @param asset The address of the underlying asset of the reserve
-   * @return True if the asset is siloed for borrowing
+   * @return false, DEPRECATED in v3.7.0
    */
   function getSiloedBorrowing(address asset) external view returns (bool);
 
@@ -114,13 +114,13 @@ interface IPoolDataProvider {
   /**
    * @notice Returns the debt ceiling of the reserve
    * @param asset The address of the underlying asset of the reserve
-   * @return The debt ceiling of the reserve
+   * @return 0, DEPRECATED in v3.7.0
    */
   function getDebtCeiling(address asset) external view returns (uint256);
 
   /**
    * @notice Returns the debt ceiling decimals
-   * @return The debt ceiling decimals
+   * @return 0, DEPRECATED in v3.7.0
    */
   function getDebtCeilingDecimals() external pure returns (uint256);
 

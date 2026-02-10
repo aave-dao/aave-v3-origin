@@ -18,8 +18,8 @@ import {EngineFlags} from './EngineFlags.sol';
  *   - Updates of caps (supply cap, borrow cap).
  *   - Updates of price feeds
  *   - Updates of interest rate strategies
- *   - Updates of borrow parameters (flashloanable, borrowableInIsolation, withSiloedBorrowing, reserveFactor)
- *   - Updates of collateral parameters (ltv, liq threshold, liq bonus, liq protocol fee, debt ceiling)
+ *   - Updates of borrow parameters (flashloanable, reserveFactor)
+ *   - Updates of collateral parameters (ltv, liq threshold, liq bonus, liq protocol fee)
  *   - Updates of emode category parameters (ltv, liq threshold, liq bonus, price source, label)
  *   - Updates of emode category of assets (e-mode id)
  * @author BGD Labs

@@ -228,19 +228,6 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(address(0), 1, true);
   }
 
-  function test_reverts_setDebtCeiling(address caller) public {
-    vm.assume(
-      !contracts.aclManager.isPoolAdmin(caller) &&
-        !contracts.aclManager.isRiskAdmin(caller) &&
-        caller != address(contracts.poolAddressesProvider)
-    );
-
-    vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotRiskOrPoolAdmin.selector));
-
-    vm.prank(caller);
-    contracts.poolConfiguratorProxy.setDebtCeiling(address(0), 1);
-  }
-
   function test_reverts_setReservePause_on_unauth(
     address caller,
     address asset,

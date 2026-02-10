@@ -35,7 +35,7 @@ library DataTypes {
     uint128 accruedToTreasury;
     // DEPRECATED on v3.4.0
     uint128 unbacked;
-    //the outstanding debt borrowed against this asset in isolation mode
+    // DEPRECATED on v3.7.0
     uint128 isolationModeTotalDebt;
   }
 
@@ -72,7 +72,7 @@ library DataTypes {
     // In aave 3.3.0 this storage slot contained the `unbacked`
     uint128 virtualUnderlyingBalance;
     //the outstanding debt borrowed against this asset in isolation mode
-    uint128 isolationModeTotalDebt;
+    uint128 __deprecatedIsolationModeTotalDebt;
     //the amount of underlying accounted for by the protocol
     // DEPRECATED on v3.4.0. Moved into the same slot as accruedToTreasury for optimized storage access.
     uint128 __deprecatedVirtualUnderlyingBalance;
@@ -88,8 +88,8 @@ library DataTypes {
     //bit 58: borrowing is enabled
     //bit 59: DEPRECATED: stable rate borrowing enabled
     //bit 60: asset is paused
-    //bit 61: borrowing in isolation mode is enabled
-    //bit 62: siloed borrowing enabled
+    //bit 61: DEPRECATED: borrowing in isolation mode is enabled
+    //bit 62: DEPRECATED: siloed borrowing enabled
     //bit 63: flashloaning enabled
     //bit 64-79: reserve factor
     //bit 80-115: borrow cap in whole tokens, borrowCap == 0 => no cap
@@ -97,7 +97,7 @@ library DataTypes {
     //bit 152-167: liquidation protocol fee
     //bit 168-175: DEPRECATED: eMode category
     //bit 176-211: DEPRECATED: unbacked mint cap
-    //bit 212-251: debt ceiling for isolation mode with (ReserveConfiguration::DEBT_CEILING_DECIMALS) decimals
+    //bit 212-251: DEPRECATED: debt ceiling for isolation mode with (ReserveConfiguration::DEBT_CEILING_DECIMALS) decimals
     //bit 252: DEPRECATED: virtual accounting is enabled for the reserve
     //bit 253-255 unused
 
@@ -295,12 +295,9 @@ library DataTypes {
 
   struct ValidateBorrowParams {
     ReserveCache reserveCache;
-    UserConfigurationMap userConfig;
     address asset;
-    address userAddress;
     uint256 amountScaled;
     InterestRateMode interestRateMode;
-    address oracle;
     uint8 userEModeCategory;
     address priceOracleSentinel;
   }

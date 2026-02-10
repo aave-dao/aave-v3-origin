@@ -12,7 +12,6 @@ import {AaveV3MockCapUpdate} from './mocks/AaveV3MockCapUpdate.sol';
 import {AaveV3MockCollateralUpdate} from './mocks/AaveV3MockCollateralUpdate.sol';
 import {AaveV3MockCollateralUpdateNoChange} from './mocks/AaveV3MockCollateralUpdateNoChange.sol';
 import {AaveV3MockCollateralUpdateWrongBonus, AaveV3MockCollateralUpdateCorrectBonus} from './mocks/AaveV3MockCollateralUpdateWrongBonus.sol';
-import {AaveV3MockCollateralUpdateLtZero} from './mocks/AaveV3MockCollateralUpdateLtZero.sol';
 import {AaveV3MockCollateralUpdateLtZeroLiqProtocolFeeOnly} from './mocks/AaveV3MockCollateralUpdateLtZeroLiqProtocolFeeOnly.sol';
 import {AaveV3MockBorrowUpdate} from './mocks/AaveV3MockBorrowUpdate.sol';
 import {AaveV3MockBorrowUpdateNoChange} from './mocks/AaveV3MockBorrowUpdateNoChange.sol';
@@ -83,12 +82,9 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
       isPaused: false,
       isActive: true,
       isFrozen: false,
-      isSiloed: false,
-      isBorrowableInIsolation: false,
       isFlashloanable: false,
       supplyCap: 85_000,
       borrowCap: 60_000,
-      debtCeiling: 0,
       virtualBalance: 0,
       aTokenUnderlyingBalance: 0
     });
@@ -172,12 +168,9 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
       isPaused: false,
       isActive: true,
       isFrozen: false,
-      isSiloed: false,
-      isBorrowableInIsolation: false,
       isFlashloanable: false,
       supplyCap: 85_000,
       borrowCap: 60_000,
-      debtCeiling: 0,
       virtualBalance: 0,
       aTokenUnderlyingBalance: 0
     });
@@ -284,12 +277,9 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
       isPaused: false,
       isActive: true,
       isFrozen: false,
-      isSiloed: false,
-      isBorrowableInIsolation: false,
       isFlashloanable: false,
       supplyCap: 85_000,
       borrowCap: 60_000,
-      debtCeiling: 0,
       virtualBalance: 0,
       aTokenUnderlyingBalance: 0
     });
@@ -381,12 +371,9 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
       isPaused: false,
       isActive: true,
       isFrozen: false,
-      isSiloed: false,
-      isBorrowableInIsolation: false,
       isFlashloanable: false,
       supplyCap: 85_000,
       borrowCap: 60_000,
-      debtCeiling: 0,
       virtualBalance: 0,
       aTokenUnderlyingBalance: 0
     });
@@ -590,44 +577,6 @@ contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
     expectedAssetConfig.liquidationBonus = 111_00; // 100_00 + 11_00
 
     _validateReserveConfig(expectedAssetConfig, allConfigsAfter);
-  }
-
-  /**
-   * @notice Tests that attempting to set debtCeiling when base liquidation threshold (lt) is zero
-   * should revert with 'DEBT_CEILING_REQUIRES_LT_NON_ZERO'.
-   * @dev Even though the asset is enabled as collateral in an eMode category, debtCeiling
-   * cannot be set when base lt=0 because debt ceiling (isolation mode) requires the asset
-   * to be collateral in base mode.
-   */
-  function testCollateralUpdateLtZeroDebtCeilingShouldRevert() public {
-    // Use existing asset and set lt to 0
-    address asset = tokenList.usdx;
-
-    // First, set the asset's lt to 0 (making it non-collateral in base mode)
-    vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.configureReserveAsCollateral(asset, 0, 0, 0);
-
-    // Set an eMode category with lt != 0 to simulate the scenario where
-    // an asset has lt=0 in base mode but can be used as collateral in eMode
-    contracts.poolConfiguratorProxy.setEModeCategory(10, 80_00, 85_00, 105_00, 'Test eMode', false);
-
-    // Set the asset to be collateral in the eMode
-    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(asset, 10, true);
-    vm.stopPrank();
-
-    // Attempt to update both liquidationProtocolFee and debtCeiling when base lt=0
-    // This should revert because debtCeiling cannot be set when lt=0
-    AaveV3MockCollateralUpdateLtZero payload = new AaveV3MockCollateralUpdateLtZero(
-      asset,
-      configEngine
-    );
-
-    vm.prank(roleList.marketOwner);
-    contracts.aclManager.addPoolAdmin(address(payload));
-
-    // Expect revert because debtCeiling cannot be set when base lt=0
-    vm.expectRevert(bytes('DEBT_CEILING_REQUIRES_LT_NON_ZERO'));
-    payload.execute();
   }
 
   /**

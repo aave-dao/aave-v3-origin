@@ -206,33 +206,10 @@ contract PoolTests is TestnetProcedures {
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.configureReserveAsCollateral(tokenList.usdx, 0, 70_00, 105_00);
 
-    vm.expectRevert(abi.encodeWithSelector(Errors.UserInIsolationModeOrLtvZero.selector));
+    vm.expectRevert(abi.encodeWithSelector(Errors.UserHasAssetWithZeroLtv.selector));
 
     vm.prank(alice);
     pool.setUserUseReserveAsCollateral(tokenList.usdx, true);
-  }
-
-  function test_reverts_setUserUseReserveAsCollateral_true_user_isolation_mode() public {
-    _seedUsdxLiquidity();
-
-    test_setUserUseReserveAsCollateral_false();
-
-    vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setDebtCeiling(tokenList.wbtc, 10_000);
-    contracts.poolConfiguratorProxy.setBorrowableInIsolation(tokenList.usdx, true);
-    vm.stopPrank();
-
-    vm.startPrank(alice);
-    pool.supply(tokenList.wbtc, 0.5e8, alice, 0);
-
-    pool.setUserUseReserveAsCollateral(tokenList.wbtc, true);
-
-    pool.borrow(tokenList.usdx, 10e6, 2, 0, alice);
-
-    vm.expectRevert(abi.encodeWithSelector(Errors.UserInIsolationModeOrLtvZero.selector));
-
-    pool.setUserUseReserveAsCollateral(tokenList.usdx, true);
-    vm.stopPrank();
   }
 
   function test_reverts_setUserUseReserveAsCollateral_true_user_balance_zero() public {
@@ -308,9 +285,6 @@ contract PoolTests is TestnetProcedures {
     pool.configureEModeCategory(1, category);
 
     vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotPoolConfigurator.selector));
-    pool.resetIsolationModeTotalDebt(address(0));
-
-    vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotPoolConfigurator.selector));
     pool.setLiquidationGracePeriod(address(0), uint40(vm.getBlockTimestamp() + 3 hours));
   }
 
@@ -382,35 +356,6 @@ contract PoolTests is TestnetProcedures {
     pool.rescueTokens(address(usdx), poolAdmin, rescueAmount);
 
     assertEq(usdx.balanceOf(poolAdmin), rescueAmount);
-  }
-
-  function test_resetIsolationModeTotalDebt() public {
-    _seedUsdxLiquidity();
-
-    vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setDebtCeiling(tokenList.wbtc, 10_000);
-    contracts.poolConfiguratorProxy.setBorrowableInIsolation(tokenList.usdx, true);
-    vm.stopPrank();
-
-    vm.startPrank(alice);
-    pool.supply(tokenList.wbtc, 0.5e8, alice, 0);
-    pool.setUserUseReserveAsCollateral(tokenList.wbtc, true);
-    pool.borrow(tokenList.usdx, 10e6, 2, 0, alice);
-    vm.stopPrank();
-
-    assertGt(pool.getReserveData(tokenList.wbtc).isolationModeTotalDebt, 0);
-
-    vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setDebtCeiling(tokenList.wbtc, 0);
-
-    vm.expectEmit(report.poolProxy);
-    emit IPool.IsolationModeTotalDebtUpdated(tokenList.wbtc, 0);
-    vm.stopPrank();
-
-    vm.prank(report.poolConfiguratorProxy);
-    pool.resetIsolationModeTotalDebt(tokenList.wbtc);
-
-    assertEq(pool.getReserveData(tokenList.wbtc).isolationModeTotalDebt, 0);
   }
 
   function test_getters_getUserAccountData() public {

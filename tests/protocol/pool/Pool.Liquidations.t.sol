@@ -576,69 +576,6 @@ contract PoolLiquidationTests is TestnetProcedures {
     _checkInterestRates(params.debtAsset);
   }
 
-  function test_liquidate_isolated_position() public {
-    uint256 borrowAmount = 11000e6;
-    vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setDebtCeiling(tokenList.wbtc, 12_000_00);
-    contracts.poolConfiguratorProxy.setBorrowableInIsolation(tokenList.usdx, true);
-    vm.stopPrank();
-
-    vm.startPrank(alice);
-    contracts.poolProxy.supply(tokenList.wbtc, 0.5e8, alice, 0);
-    contracts.poolProxy.setUserUseReserveAsCollateral(tokenList.wbtc, true);
-    contracts.poolProxy.borrow(tokenList.usdx, borrowAmount, 2, 0, alice);
-    vm.stopPrank();
-
-    LiquidationInput memory params = _loadLiquidationInput(
-      alice,
-      tokenList.wbtc,
-      tokenList.usdx,
-      UINT256_MAX,
-      tokenList.wbtc,
-      12_00
-    );
-
-    address varDebtToken = contracts.poolProxy.getReserveVariableDebtToken(params.debtAsset);
-
-    uint256 userDebtBefore = IERC20(varDebtToken).balanceOf(params.user);
-    uint256 liquidatorBalanceBefore;
-    if (params.receiveAToken) {
-      address atoken = contracts.poolProxy.getReserveAToken(params.collateralAsset);
-
-      liquidatorBalanceBefore = IERC20(atoken).balanceOf(bob);
-    } else {
-      liquidatorBalanceBefore = IERC20(params.collateralAsset).balanceOf(bob);
-    }
-
-    vm.expectEmit();
-    emit IPool.IsolationModeTotalDebtUpdated(params.collateralAsset, 0);
-
-    vm.expectEmit(address(contracts.poolProxy));
-    emit IPool.LiquidationCall(
-      params.collateralAsset,
-      params.debtAsset,
-      params.user,
-      params.actualDebtToLiquidate,
-      params.actualCollateralToLiquidate,
-      bob,
-      params.receiveAToken
-    );
-    // Liquidate
-    vm.prank(bob);
-    contracts.poolProxy.liquidationCall(
-      params.collateralAsset,
-      params.debtAsset,
-      params.user,
-      params.liquidationAmountInput,
-      params.receiveAToken
-    );
-
-    _afterLiquidationChecksVariable(params, bob, liquidatorBalanceBefore, userDebtBefore);
-
-    _checkInterestRates(params.collateralAsset);
-    _checkInterestRates(params.debtAsset);
-  }
-
   function test_self_liquidate_position_shouldRevert() public {
     uint256 borrowAmount = 11000e6;
 

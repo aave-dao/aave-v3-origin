@@ -522,7 +522,7 @@ contract PoolEModeIsolatedEdgeCaseTests is TestnetProcedures {
     _mintAndSupply(tokenList.usdx, 1_000e6, alice);
 
     // Try to enable as collateral — should fail because LTV=0
-    vm.expectRevert(abi.encodeWithSelector(Errors.UserInIsolationModeOrLtvZero.selector));
+    vm.expectRevert(abi.encodeWithSelector(Errors.UserHasAssetWithZeroLtv.selector));
     vm.prank(alice);
     pool.setUserUseReserveAsCollateral(tokenList.usdx, true);
   }
@@ -564,75 +564,11 @@ contract PoolEModeIsolatedEdgeCaseTests is TestnetProcedures {
     assertTrue(userConfig.isUsingAsCollateral(usdxData.id));
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // 5. RESERVE ISOLATION MODE (DEBT CEILING) + EMODE ISOLATION COMBO
-  // ─────────────────────────────────────────────────────────────────────────
-
   /**
-   * @notice User in isolated eMode uses an asset with a debt ceiling (reserve isolation mode).
-   *         Both isolation modes should work orthogonally — eMode isolation limits collateral LTV,
-   *         while reserve isolation mode limits borrowable assets.
-   */
-  function test_reserveIsolation_plus_emodeIsolation_borrowableInBoth() public {
-    // Setup: set wbtc debt ceiling (reserve isolation mode)
-    vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setDebtCeiling(tokenList.wbtc, 50_000_00);
-    contracts.poolConfiguratorProxy.setBorrowableInIsolation(tokenList.usdx, true);
-    vm.stopPrank();
-
-    // Setup liquidity
-    _mintAndSupply(tokenList.usdx, 100_000e6, carol);
-
-    // Alice enters isolated eMode with wbtc as collateral (which has a debt ceiling)
-    _mintAndSupplyAndEnable(tokenList.wbtc, 1e8, alice);
-    vm.prank(alice);
-    pool.setUserEMode(EMODE_ISOLATED);
-
-    // wbtc is in collateralBitmap → gets eMode LTV (95%)
-    // wbtc has debt ceiling → reserve isolation mode restricts borrowable assets
-    // usdx is borrowable in isolation + borrowable in eMode 3 → should work
-
-    vm.prank(alice);
-    pool.borrow(tokenList.usdx, 1_000e6, 2, 0, alice);
-
-    (, uint256 debt, , , , uint256 hf) = pool.getUserAccountData(alice);
-    assertGt(debt, 0, 'Should have borrowed successfully');
-    assertGt(hf, 1e18, 'Should be healthy');
-  }
-
-  /**
-   * @notice User in isolated eMode with debt-ceiling collateral tries to borrow an asset
-   *         that is NOT borrowable in isolation. Should revert due to reserve isolation rules.
-   */
-  function test_reserveIsolation_plus_emodeIsolation_notBorrowableInReserveIsolation() public {
-    // Setup: set wbtc debt ceiling but usdx is NOT borrowable in isolation for this test
-    vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setDebtCeiling(tokenList.wbtc, 50_000_00);
-    // Do NOT set usdx as borrowableInIsolation
-    vm.stopPrank();
-
-    // Setup liquidity
-    _mintAndSupply(tokenList.usdx, 100_000e6, carol);
-
-    // Alice enters isolated eMode with wbtc collateral (has debt ceiling)
-    _mintAndSupplyAndEnable(tokenList.wbtc, 1e8, alice);
-    vm.prank(alice);
-    pool.setUserEMode(EMODE_ISOLATED);
-
-    // Try to borrow usdx — borrowable in eMode but NOT in reserve isolation mode
-    // Because wbtc has a debt ceiling and usdx is not set as borrowableInIsolation,
-    // the error is AssetNotBorrowableInIsolation
-    vm.expectRevert(abi.encodeWithSelector(Errors.AssetNotBorrowableInIsolation.selector));
-    vm.prank(alice);
-    pool.borrow(tokenList.usdx, 1_000e6, 2, 0, alice);
-  }
-
-  /**
-   * @notice User in isolated eMode with non-debt-ceiling collateral. Reserve isolation mode
-   *         should NOT apply (only eMode isolation applies). User should be able to borrow
+   * @notice User in isolated eMode with non-debt-ceiling collateral. User should be able to borrow
    *         any asset borrowable in the eMode.
    */
-  function test_emodeIsolation_withoutReserveIsolation_canBorrowFreely() public {
+  function test_emodeIsolation_canBorrowFreely() public {
     // usdx has NO debt ceiling — no reserve isolation mode
     // But user is in isolated eMode 3
 
@@ -650,46 +586,6 @@ contract PoolEModeIsolatedEdgeCaseTests is TestnetProcedures {
 
     (, uint256 debt, , , , ) = pool.getUserAccountData(alice);
     assertGt(debt, 0, 'Should have borrowed');
-  }
-
-  /**
-   * @notice Liquidation of a position that is both in reserve isolation mode (debt ceiling)
-   *         and eMode isolation. Verify the IsolationModeTotalDebt is correctly updated.
-   */
-  function test_reserveIsolation_plus_emodeIsolation_liquidation() public {
-    // Setup: wbtc has debt ceiling
-    vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setDebtCeiling(tokenList.wbtc, 50_000_00);
-    contracts.poolConfiguratorProxy.setBorrowableInIsolation(tokenList.usdx, true);
-    vm.stopPrank();
-
-    // Setup liquidity
-    _mintAndSupply(tokenList.usdx, 100_000e6, carol);
-
-    // Alice enters isolated eMode with wbtc collateral
-    _mintAndSupplyAndEnable(tokenList.wbtc, 0.5e8, alice);
-    vm.prank(alice);
-    pool.setUserEMode(EMODE_ISOLATED);
-
-    // Borrow near max
-    vm.prank(alice);
-    pool.borrow(tokenList.usdx, 11_000e6, 2, 0, alice);
-
-    // Drop wbtc price to make liquidatable
-    _dropPrice(tokenList.wbtc, 20_00); // 20% drop
-
-    (, , , , , uint256 hf) = pool.getUserAccountData(alice);
-    assertLt(hf, 1e18, 'Should be liquidatable');
-
-    // Liquidate
-    _mintToken(tokenList.usdx, bob, 20_000e6);
-    vm.startPrank(bob);
-    IERC20(tokenList.usdx).approve(address(pool), type(uint256).max);
-    pool.liquidationCall(tokenList.wbtc, tokenList.usdx, alice, type(uint256).max, false);
-    vm.stopPrank();
-
-    // Verify liquidation happened — bob should have wbtc
-    assertGt(IERC20(tokenList.wbtc).balanceOf(bob), 0, 'Liquidator should have received wbtc');
   }
 
   // ─────────────────────────────────────────────────────────────────────────

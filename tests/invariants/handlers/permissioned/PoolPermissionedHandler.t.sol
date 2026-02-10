@@ -28,16 +28,6 @@ contract PoolPermissionedHandler is BaseHandler {
   // 2. updateAToken
   // 3. updateVariableDebtToken
 
-  function setDebtCeiling(uint256 debtCeiling, uint8 i) external {
-    address asset = _getRandomBaseAsset(i);
-
-    _before();
-    contracts.poolConfiguratorProxy.setDebtCeiling(asset, debtCeiling);
-    _after();
-
-    assert(true);
-  }
-
   function setReservePause(bool paused, uint40 gracePeriod, uint8 i) external {
     address asset = _getRandomBaseAsset(i);
 
@@ -124,26 +114,6 @@ contract PoolPermissionedHandler is BaseHandler {
 
     _before();
     contracts.poolConfiguratorProxy.setReserveFreeze(asset, freeze);
-    _after();
-
-    assert(true);
-  }
-
-  function setBorrowableInIsolation(bool borrowable, uint8 i) external {
-    address asset = _getRandomBaseAsset(i);
-
-    _before();
-    contracts.poolConfiguratorProxy.setBorrowableInIsolation(asset, borrowable);
-    _after();
-
-    assert(true);
-  }
-
-  function setSiloedBorrowing(bool siloed, uint8 i) external {
-    address asset = _getRandomBaseAsset(i);
-
-    _before();
-    contracts.poolConfiguratorProxy.setSiloedBorrowing(asset, siloed);
     _after();
 
     assert(true);

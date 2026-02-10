@@ -4,7 +4,7 @@
   "setUserEModeOnBehalfOf: enter eMode, 1 borrow, 1 supply": "140383",
   "setUserEModeOnBehalfOf: leave eMode, 1 borrow, 1 supply": "112607",
   "setUserUseReserveAsCollateral: disableCollateral, 1 supply": "46366",
-  "setUserUseReserveAsCollateral: enableCollateral, 1 supply": "81136",
+  "setUserUseReserveAsCollateral: enableCollateral, 1 supply": "80929",
   "setUserUseReserveAsCollateralOnBehalfOf: disableCollateral, 1 supply": "49223",
-  "setUserUseReserveAsCollateralOnBehalfOf: enableCollateral, 1 supply": "83993"
+  "setUserUseReserveAsCollateralOnBehalfOf: enableCollateral, 1 supply": "83786"
 }

@@ -105,7 +105,7 @@ contract PoolEModeIsolatedTests is TestnetProcedures {
     pool.supply(tokenList.weth, 1 ether, alice, 0);
 
     // Trying to enable weth as collateral should revert (LTV=0 for non-emode asset in isolated emode)
-    vm.expectRevert(abi.encodeWithSelector(Errors.UserInIsolationModeOrLtvZero.selector));
+    vm.expectRevert(abi.encodeWithSelector(Errors.UserHasAssetWithZeroLtv.selector));
     pool.setUserUseReserveAsCollateral(tokenList.weth, true);
     vm.stopPrank();
   }

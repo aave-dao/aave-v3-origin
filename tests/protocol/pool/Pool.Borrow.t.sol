@@ -106,66 +106,6 @@ contract PoolBorrowTests is TestnetProcedures {
     _checkInterestRates(tokenList.usdx);
   }
 
-  function test_borrow_variable_in_isolation() public {
-    uint256 borrowAmount = 100e6;
-    vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setDebtCeiling(tokenList.wbtc, 10_000_00);
-    contracts.poolConfiguratorProxy.setBorrowableInIsolation(tokenList.usdx, true);
-    vm.stopPrank();
-
-    vm.startPrank(alice);
-    contracts.poolProxy.supply(tokenList.wbtc, 0.5e8, alice, 0);
-
-    contracts.poolProxy.setUserUseReserveAsCollateral(tokenList.wbtc, true);
-
-    uint256 balanceBefore = usdx.balanceOf(alice);
-    DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
-      tokenList.usdx
-    );
-    IReserveInterestRateStrategy rateStrategy = IReserveInterestRateStrategy(
-      reserveData.interestRateStrategyAddress
-    );
-
-    DataTypes.CalculateInterestRatesParams memory input = DataTypes.CalculateInterestRatesParams({
-      unbacked: 0,
-      liquidityAdded: 0,
-      liquidityTaken: borrowAmount,
-      totalDebt: borrowAmount,
-      reserveFactor: 1000,
-      reserve: tokenList.usdx,
-      usingVirtualBalance: true,
-      virtualUnderlyingBalance: contracts.poolProxy.getVirtualUnderlyingBalance(tokenList.usdx)
-    });
-
-    (, uint256 expectedVariableBorrowRate) = rateStrategy.calculateInterestRates(input);
-
-    vm.expectEmit(address(contracts.poolProxy));
-    emit IPool.IsolationModeTotalDebtUpdated(tokenList.wbtc, 100_00);
-    vm.expectEmit(true, true, true, true, address(contracts.poolProxy));
-    emit IPool.Borrow(
-      tokenList.usdx,
-      alice,
-      alice,
-      borrowAmount,
-      DataTypes.InterestRateMode.VARIABLE,
-      expectedVariableBorrowRate,
-      0
-    );
-
-    // Perform borrow in isolated position
-    contracts.poolProxy.borrow(tokenList.usdx, borrowAmount, 2, 0, alice);
-    vm.stopPrank();
-
-    uint256 balanceAfter = usdx.balanceOf(alice);
-    uint256 debtBalanceAfter = varDebtUSDX.scaledBalanceOf(alice);
-
-    assertEq(balanceAfter, balanceBefore + borrowAmount);
-    assertEq(debtBalanceAfter, borrowAmount);
-    assertEq(contracts.poolProxy.getUserConfiguration(alice).isBorrowing(reserveData.id), true);
-
-    _checkInterestRates(tokenList.usdx);
-  }
-
   function test_reverts_variable_borrow_transferred_funds() public {
     uint256 collateralAmount = 5 ether;
     uint256 borrowAmount = 800e6;
@@ -269,40 +209,6 @@ contract PoolBorrowTests is TestnetProcedures {
     contracts.poolProxy.borrow(tokenList.wbtc, 100, 2, 0, alice);
   }
 
-  function test_reverts_borrow_not_borrowable_isolation() public {
-    uint256 borrowAmount = 100e6;
-    vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setDebtCeiling(tokenList.wbtc, 10_000_00);
-    vm.stopPrank();
-
-    vm.startPrank(alice);
-    contracts.poolProxy.supply(tokenList.wbtc, 0.5e8, alice, 0);
-
-    contracts.poolProxy.setUserUseReserveAsCollateral(tokenList.wbtc, true);
-
-    // Perform borrow in isolated position
-    vm.expectRevert(abi.encodeWithSelector(Errors.AssetNotBorrowableInIsolation.selector));
-    contracts.poolProxy.borrow(tokenList.usdx, borrowAmount, 2, 0, alice);
-    vm.stopPrank();
-  }
-
-  function test_reverts_borrow_DebtCeilingExceeded() public {
-    vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setDebtCeiling(tokenList.wbtc, 10_000_00);
-    contracts.poolConfiguratorProxy.setBorrowableInIsolation(tokenList.usdx, true);
-    vm.stopPrank();
-
-    vm.startPrank(alice);
-    contracts.poolProxy.supply(tokenList.wbtc, 0.5e8, alice, 0);
-
-    contracts.poolProxy.setUserUseReserveAsCollateral(tokenList.wbtc, true);
-
-    // Perform borrow in isolated position
-    vm.expectRevert(abi.encodeWithSelector(Errors.DebtCeilingExceeded.selector));
-    contracts.poolProxy.borrow(tokenList.usdx, 10001e6, 2, 0, alice);
-    vm.stopPrank();
-  }
-
   function test_reverts_borrow_InconsistentEModeCategory() public {
     EModeCategoryInput memory ct = _genCategoryOne();
 
@@ -369,52 +275,5 @@ contract PoolBorrowTests is TestnetProcedures {
 
     vm.prank(alice);
     contracts.poolProxy.borrow(tokenList.usdx, 10001e6, 2, 0, alice);
-  }
-
-  function test_reverts_borrow_sioled_borrowing_violation() public {
-    vm.startPrank(carol);
-    contracts.poolProxy.supply(tokenList.wbtc, 100e8, carol, 0);
-    contracts.poolProxy.supply(tokenList.weth, 100e18, carol, 0);
-    vm.stopPrank();
-
-    vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setSiloedBorrowing(tokenList.wbtc, true);
-    vm.stopPrank();
-
-    vm.startPrank(alice);
-    contracts.poolProxy.supply(tokenList.weth, 10e18, alice, 0);
-
-    // Perform siloed borrow
-    contracts.poolProxy.borrow(tokenList.wbtc, 0.01e8, 2, 0, alice);
-
-    vm.expectRevert(abi.encodeWithSelector(Errors.SiloedBorrowingViolation.selector));
-    contracts.poolProxy.borrow(tokenList.weth, 1e18, 2, 0, alice);
-    vm.stopPrank();
-  }
-
-  function test_reverts_borrow_debt_ceiling() public {
-    vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setDebtCeiling(tokenList.wbtc, 10_000_00);
-    vm.stopPrank();
-
-    vm.startPrank(carol);
-    contracts.poolProxy.supply(tokenList.wbtc, 100e8, carol, 0);
-    contracts.poolProxy.supply(tokenList.weth, 100e18, carol, 0);
-    vm.stopPrank();
-
-    vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setBorrowableInIsolation(tokenList.usdx, true);
-    contracts.poolConfiguratorProxy.setBorrowableInIsolation(tokenList.weth, true);
-    vm.stopPrank();
-
-    vm.startPrank(alice);
-    contracts.poolProxy.supply(tokenList.wbtc, 0.5e8, alice, 0);
-
-    contracts.poolProxy.setUserUseReserveAsCollateral(tokenList.wbtc, true);
-
-    // Perform borrow in isolated position
-    vm.expectRevert(abi.encodeWithSelector(Errors.DebtCeilingExceeded.selector));
-    contracts.poolProxy.borrow(tokenList.usdx, 10001e6, 2, 0, alice);
-    vm.stopPrank();
   }
 }

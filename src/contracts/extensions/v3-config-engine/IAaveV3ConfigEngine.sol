@@ -67,15 +67,12 @@ interface IAaveV3ConfigEngine {
    *   }),
    *   enabledToBorrow: EngineFlags.ENABLED,
    *   flashloanable: EngineFlags.ENABLED,
-   *   borrowableInIsolation: EngineFlags.ENABLED,
-   *   withSiloedBorrowing:, EngineFlags.DISABLED,
    *   ltv: 70_50, // 70.5%
    *   liqThreshold: 76_00, // 76%
    *   liqBonus: 5_00, // 5%
    *   reserveFactor: 10_00, // 10%
    *   supplyCap: 100_000, // 100k AAVE
    *   borrowCap: 60_000, // 60k AAVE
-   *   debtCeiling: 100_000, // 100k USD
    *   liqProtocolFee: 10_00, // 10%
    * }
    */
@@ -85,8 +82,6 @@ interface IAaveV3ConfigEngine {
     address priceFeed;
     InterestRateInputData rateStrategyParams; // Mandatory, no matter if enabled for borrowing or not
     uint256 enabledToBorrow;
-    uint256 borrowableInIsolation; // Only considered is enabledToBorrow == EngineFlags.ENABLED (true)
-    uint256 withSiloedBorrowing; // Only considered if enabledToBorrow == EngineFlags.ENABLED (true)
     uint256 flashloanable; // Independent from enabled to borrow: an asset can be flashloanble and not enabled to borrow
     uint256 ltv; // Only considered if liqThreshold > 0
     uint256 liqThreshold; // If `0`, the asset will not be enabled as collateral
@@ -94,7 +89,6 @@ interface IAaveV3ConfigEngine {
     uint256 reserveFactor; // Only considered if enabledToBorrow == EngineFlags.ENABLED (true)
     uint256 supplyCap; // If passing any value distinct to EngineFlags.KEEP_CURRENT, always configured
     uint256 borrowCap; // If passing any value distinct to EngineFlags.KEEP_CURRENT, always configured
-    uint256 debtCeiling; // Only considered if liqThreshold > 0
     uint256 liqProtocolFee; // Only considered if liqThreshold > 0
   }
 
@@ -151,7 +145,6 @@ interface IAaveV3ConfigEngine {
    *   ltv: 60_00,
    *   liqThreshold: 70_00,
    *   liqBonus: EngineFlags.KEEP_CURRENT,
-   *   debtCeiling: EngineFlags.KEEP_CURRENT,
    *   liqProtocolFee: 7_00
    * })
    */
@@ -160,7 +153,6 @@ interface IAaveV3ConfigEngine {
     uint256 ltv;
     uint256 liqThreshold;
     uint256 liqBonus;
-    uint256 debtCeiling;
     uint256 liqProtocolFee;
   }
 
@@ -170,8 +162,6 @@ interface IAaveV3ConfigEngine {
    *   asset: AaveV3EthereumAssets.AAVE_UNDERLYING,
    *   enabledToBorrow: EngineFlags.ENABLED,
    *   flashloanable: EngineFlags.KEEP_CURRENT,
-   *   borrowableInIsolation: EngineFlags.KEEP_CURRENT,
-   *   withSiloedBorrowing: EngineFlags.KEEP_CURRENT,
    *   reserveFactor: 15_00, // 15%
    * })
    */
@@ -179,8 +169,6 @@ interface IAaveV3ConfigEngine {
     address asset;
     uint256 enabledToBorrow;
     uint256 flashloanable;
-    uint256 borrowableInIsolation;
-    uint256 withSiloedBorrowing;
     uint256 reserveFactor;
   }
 

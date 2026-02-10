@@ -49,12 +49,9 @@ struct ReserveConfig {
   bool isPaused;
   bool isActive;
   bool isFrozen;
-  bool isSiloed;
-  bool isBorrowableInIsolation;
   bool isFlashloanable;
   uint256 supplyCap;
   uint256 borrowCap;
-  uint256 debtCeiling;
   uint256 virtualBalance;
   uint256 aTokenUnderlyingBalance;
 }
@@ -222,14 +219,11 @@ contract ProtocolV3TestBase is Test {
       vm.serializeUint(key, 'decimals', config.decimals);
       vm.serializeUint(key, 'borrowCap', config.borrowCap);
       vm.serializeUint(key, 'supplyCap', config.supplyCap);
-      vm.serializeUint(key, 'debtCeiling', config.debtCeiling);
       vm.serializeBool(key, 'usageAsCollateralEnabled', config.usageAsCollateralEnabled);
       vm.serializeBool(key, 'borrowingEnabled', config.borrowingEnabled);
       vm.serializeBool(key, 'isPaused', config.isPaused);
       vm.serializeBool(key, 'isActive', config.isActive);
       vm.serializeBool(key, 'isFrozen', config.isFrozen);
-      vm.serializeBool(key, 'isSiloed', config.isSiloed);
-      vm.serializeBool(key, 'isBorrowableInIsolation', config.isBorrowableInIsolation);
       vm.serializeBool(key, 'isFlashloanable', config.isFlashloanable);
       vm.serializeAddress(key, 'interestRateStrategy', config.interestRateStrategy);
       vm.serializeAddress(key, 'underlying', config.underlying);
@@ -359,11 +353,8 @@ contract ProtocolV3TestBase is Test {
       localConfig.symbol = IERC20Metadata(reserve).symbol();
     }
     localConfig.usageAsCollateralEnabled = localConfig.liquidationThreshold != 0;
-    localConfig.isSiloed = configuration.getSiloedBorrowing();
     (localConfig.borrowCap, localConfig.supplyCap) = configuration.getCaps();
-    localConfig.debtCeiling = configuration.getDebtCeiling();
     localConfig.liquidationProtocolFee = configuration.getLiquidationProtocolFee();
-    localConfig.isBorrowableInIsolation = configuration.getBorrowableInIsolation();
 
     localConfig.isFlashloanable = configuration.getFlashLoanEnabled();
 
@@ -395,12 +386,9 @@ contract ProtocolV3TestBase is Test {
     configCopy.isPaused = config.isPaused;
     configCopy.isActive = config.isActive;
     configCopy.isFrozen = config.isFrozen;
-    configCopy.isSiloed = config.isSiloed;
-    configCopy.isBorrowableInIsolation = config.isBorrowableInIsolation;
     configCopy.isFlashloanable = config.isFlashloanable;
     configCopy.supplyCap = config.supplyCap;
     configCopy.borrowCap = config.borrowCap;
-    configCopy.debtCeiling = config.debtCeiling;
     configCopy.virtualBalance = config.virtualBalance;
     configCopy.aTokenUnderlyingBalance = config.aTokenUnderlyingBalance;
 
@@ -487,14 +475,6 @@ contract ProtocolV3TestBase is Test {
       '_validateReserveConfig: INVALID_IS_FROZEN'
     );
     require(
-      config.isSiloed == expectedConfig.isSiloed,
-      '_validateReserveConfig: INVALID_IS_SILOED'
-    );
-    require(
-      config.isBorrowableInIsolation == expectedConfig.isBorrowableInIsolation,
-      '_validateReserveConfig: INVALID_IS_BORROWABLE_IN_ISOLATION'
-    );
-    require(
       config.isFlashloanable == expectedConfig.isFlashloanable,
       '_validateReserveConfig: INVALID_IS_FLASHLOANABLE'
     );
@@ -505,10 +485,6 @@ contract ProtocolV3TestBase is Test {
     require(
       config.borrowCap == expectedConfig.borrowCap,
       '_validateReserveConfig: InvalidBorrowCap()'
-    );
-    require(
-      config.debtCeiling == expectedConfig.debtCeiling,
-      '_validateReserveConfig: InvalidDebtCeiling()'
     );
     require(
       config.interestRateStrategy == expectedConfig.interestRateStrategy,
@@ -659,14 +635,6 @@ contract ProtocolV3TestBase is Test {
       '_noReservesConfigsChangesApartNewListings() : UNEXPECTED_IS_FROZEN_CHANGED'
     );
     require(
-      config1.isSiloed == config2.isSiloed,
-      '_noReservesConfigsChangesApartNewListings() : UNEXPECTED_IS_SILOED_CHANGED'
-    );
-    require(
-      config1.isBorrowableInIsolation == config2.isBorrowableInIsolation,
-      '_noReservesConfigsChangesApartNewListings() : UNEXPECTED_IS_BORROWABLE_IN_ISOLATION_CHANGED'
-    );
-    require(
       config1.isFlashloanable == config2.isFlashloanable,
       '_noReservesConfigsChangesApartNewListings() : UNEXPECTED_IS_FLASHLOANABLE_CHANGED'
     );
@@ -677,10 +645,6 @@ contract ProtocolV3TestBase is Test {
     require(
       config1.borrowCap == config2.borrowCap,
       '_noReservesConfigsChangesApartNewListings() : UNEXPECTED_BORROW_CAP_CHANGED'
-    );
-    require(
-      config1.debtCeiling == config2.debtCeiling,
-      '_noReservesConfigsChangesApartNewListings() : UNEXPECTED_DEBT_CEILING_CHANGED'
     );
   }
 

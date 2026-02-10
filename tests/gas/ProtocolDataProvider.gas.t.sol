@@ -51,11 +51,6 @@ contract ProtocolDataProvider_gas_Tests is Testhelpers {
     vm.snapshotGasLastCall('ProtocolDataProvider', 'getPaused');
   }
 
-  function test_getSiloedBorrowing() external {
-    contracts.protocolDataProvider.getSiloedBorrowing(tokenList.usdx);
-    vm.snapshotGasLastCall('ProtocolDataProvider', 'getSiloedBorrowing');
-  }
-
   function test_getLiquidationProtocolFee() external {
     contracts.protocolDataProvider.getLiquidationProtocolFee(tokenList.usdx);
     vm.snapshotGasLastCall('ProtocolDataProvider', 'getLiquidationProtocolFee');
@@ -64,11 +59,6 @@ contract ProtocolDataProvider_gas_Tests is Testhelpers {
   function test_getUnbackedMintCap() external {
     contracts.protocolDataProvider.getUnbackedMintCap(tokenList.usdx);
     vm.snapshotGasLastCall('ProtocolDataProvider', 'getUnbackedMintCap');
-  }
-
-  function test_getDebtCeiling() external {
-    contracts.protocolDataProvider.getDebtCeiling(tokenList.usdx);
-    vm.snapshotGasLastCall('ProtocolDataProvider', 'getPaused');
   }
 
   function test_getATokenTotalSupply() external {

@@ -123,7 +123,6 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
   ) public virtual override {
     SupplyLogic.executeSupply(
       _reserves,
-      _reservesList,
       _eModeCategories,
       _usersConfig[onBehalfOf],
       DataTypes.ExecuteSupplyParams({
@@ -162,7 +161,6 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
     {} catch {}
     SupplyLogic.executeSupply(
       _reserves,
-      _reservesList,
       _eModeCategories,
       _usersConfig[onBehalfOf],
       DataTypes.ExecuteSupplyParams({
@@ -456,7 +454,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
     res.interestRateStrategyAddress = RESERVE_INTEREST_RATE_STRATEGY;
     res.accruedToTreasury = reserve.accruedToTreasury;
     res.unbacked = 0;
-    res.isolationModeTotalDebt = reserve.isolationModeTotalDebt;
+    res.isolationModeTotalDebt = 0;
     // This is a temporary workaround for integrations that are broken by Aave 3.2
     // While the new pool data provider is backward compatible, some integrations hard-code an old implementation
     // To allow them to not have any infrastructural blocker, a mock must be configured in the Aave Pool Addresses Provider, returning zero on all required view methods, instead of reverting
@@ -779,13 +777,6 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
   }
 
   /// @inheritdoc IPool
-  function resetIsolationModeTotalDebt(
-    address asset
-  ) external virtual override onlyPoolConfigurator {
-    PoolLogic.executeResetIsolationModeTotalDebt(_reserves, asset);
-  }
-
-  /// @inheritdoc IPool
   function getLiquidationGracePeriod(
     address asset
   ) external view virtual override returns (uint40) {
@@ -820,7 +811,6 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
   ) external virtual override {
     SupplyLogic.executeSupply(
       _reserves,
-      _reservesList,
       _eModeCategories,
       _usersConfig[onBehalfOf],
       DataTypes.ExecuteSupplyParams({

@@ -13,7 +13,6 @@ import {DataTypes} from '../types/DataTypes.sol';
 import {ReserveLogic} from './ReserveLogic.sol';
 import {ValidationLogic} from './ValidationLogic.sol';
 import {GenericLogic} from './GenericLogic.sol';
-import {IsolationModeLogic} from './IsolationModeLogic.sol';
 
 /**
  * @title PoolLogic library
@@ -131,21 +130,6 @@ library PoolLogic {
         emit IPool.MintedToTreasury(assetAddress, amountToMint);
       }
     }
-  }
-
-  /**
-   * @notice Resets the isolation mode total debt of the given asset to zero
-   * @dev It requires the given asset has zero debt ceiling
-   * @param reservesData The state of all the reserves
-   * @param asset The address of the underlying asset to reset the isolationModeTotalDebt
-   */
-  function executeResetIsolationModeTotalDebt(
-    mapping(address => DataTypes.ReserveData) storage reservesData,
-    address asset
-  ) external {
-    require(reservesData[asset].configuration.getDebtCeiling() == 0, Errors.DebtCeilingNotZero());
-
-    IsolationModeLogic.setIsolationModeTotalDebt(reservesData[asset], asset, 0);
   }
 
   /**

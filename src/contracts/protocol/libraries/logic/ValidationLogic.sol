@@ -106,24 +106,20 @@ library ValidationLogic {
     uint256 borrowCap;
     uint256 amountInBaseCurrency;
     uint256 assetUnit;
-    address siloedBorrowingAddress;
     bool isActive;
     bool isFrozen;
     bool isPaused;
     bool borrowingEnabled;
-    bool siloedBorrowingEnabled;
   }
 
   /**
    * @notice Validates a borrow action.
    * @param reservesData The state of all the reserves
-   * @param reservesList The addresses of all the active reserves
    * @param eModeCategories The configuration of all the efficiency mode categories
    * @param params Additional params needed for the validation
    */
   function validateBorrow(
     mapping(address => DataTypes.ReserveData) storage reservesData,
-    mapping(uint256 => address) storage reservesList,
     mapping(uint8 => DataTypes.EModeCategory) storage eModeCategories,
     DataTypes.ValidateBorrowParams memory params
   ) internal view {
@@ -180,21 +176,6 @@ library ValidationLogic {
 
       unchecked {
         require(vars.totalDebt <= vars.borrowCap * vars.assetUnit, Errors.BorrowCapExceeded());
-      }
-    }
-
-    if (params.userConfig.isBorrowingAny()) {
-      (vars.siloedBorrowingEnabled, vars.siloedBorrowingAddress) = params
-        .userConfig
-        .getSiloedBorrowingState(reservesData, reservesList);
-
-      if (vars.siloedBorrowingEnabled) {
-        require(vars.siloedBorrowingAddress == params.asset, Errors.SiloedBorrowingViolation());
-      } else {
-        require(
-          !params.reserveCache.reserveConfiguration.getSiloedBorrowing(),
-          Errors.SiloedBorrowingViolation()
-        );
       }
     }
   }
@@ -572,71 +553,20 @@ library ValidationLogic {
 
   /**
    * @notice Validates the action of activating the asset as collateral.
-   * @dev Only possible if the asset has non-zero LTV and the user is not in isolation mode
+   * @dev Only possible if the asset has non-zero LTV
    * @param reservesData The state of all the reserves
-   * @param reservesList The addresses of all the active reserves
    * @param eModeCategories a mapping storing configurations for all efficiency mode categories
-   * @param userConfig the user configuration
-   * @param reserveConfig The reserve configuration
    * @param asset Address of the reserve to be enabled as collateral
    * @param categoryId The id of the users eMode category
    * @return True if the asset can be activated as collateral, false otherwise
    */
   function validateUseAsCollateral(
     mapping(address => DataTypes.ReserveData) storage reservesData,
-    mapping(uint256 => address) storage reservesList,
     mapping(uint8 => DataTypes.EModeCategory) storage eModeCategories,
-    DataTypes.UserConfigurationMap storage userConfig,
-    DataTypes.ReserveConfigurationMap memory reserveConfig,
     address asset,
     uint8 categoryId
   ) internal view returns (bool) {
-    // asset must have a non zero ltv to be activated as collateral
-    if (getUserReserveLtv(reservesData[asset], eModeCategories[categoryId], categoryId) == 0) {
-      return false;
-    }
-    if (!userConfig.isUsingAsCollateralAny()) {
-      return true;
-    }
-    (bool isolationModeActive, , ) = userConfig.getIsolationModeState(reservesData, reservesList);
-
-    return (!isolationModeActive && reserveConfig.getDebtCeiling() == 0);
-  }
-
-  /**
-   * @notice Validates if an asset should be automatically activated as collateral in the following actions: supply, transfer.
-   * @dev This is used to ensure that isolated assets are not enabled as collateral automatically.
-   * @param reservesData The state of all the reserves
-   * @param reservesList The addresses of all the active reserves
-   * @param eModeCategories a mapping storing configurations for all efficiency mode categories
-   * @param userConfig the user configuration
-   * @param reserveConfig The reserve configuration
-   * @param asset Address of the reserve to be enabled as collateral
-   * @param categoryId The id of the users eMode category
-   * @return True if the asset can be activated as collateral, false otherwise
-   */
-  function validateAutomaticUseAsCollateral(
-    mapping(address => DataTypes.ReserveData) storage reservesData,
-    mapping(uint256 => address) storage reservesList,
-    mapping(uint8 => DataTypes.EModeCategory) storage eModeCategories,
-    DataTypes.UserConfigurationMap storage userConfig,
-    DataTypes.ReserveConfigurationMap memory reserveConfig,
-    address asset,
-    uint8 categoryId
-  ) internal view returns (bool) {
-    if (reserveConfig.getDebtCeiling() != 0) {
-      return false;
-    }
-    return
-      validateUseAsCollateral(
-        reservesData,
-        reservesList,
-        eModeCategories,
-        userConfig,
-        reserveConfig,
-        asset,
-        categoryId
-      );
+    return getUserReserveLtv(reservesData[asset], eModeCategories[categoryId], categoryId) != 0;
   }
 
   /**

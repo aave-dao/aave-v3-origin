@@ -13,7 +13,6 @@ import {ReserveConfiguration} from '../configuration/ReserveConfiguration.sol';
 import {DataTypes} from '../types/DataTypes.sol';
 import {ValidationLogic} from './ValidationLogic.sol';
 import {ReserveLogic} from './ReserveLogic.sol';
-import {IsolationModeLogic} from './IsolationModeLogic.sol';
 
 /**
  * @title BorrowLogic library
@@ -31,8 +30,7 @@ library BorrowLogic {
 
   /**
    * @notice Implements the borrow feature. Borrowing allows users that provided collateral to draw liquidity from the
-   * Aave protocol proportionally to their collateralization power. For isolated positions, it also increases the
-   * isolated debt.
+   * Aave protocol proportionally to their collateralization power.
    * @dev  Emits the `Borrow()` event
    * @param reservesData The state of all the reserves
    * @param reservesList The addresses of all the active reserves
@@ -58,16 +56,12 @@ library BorrowLogic {
 
     ValidationLogic.validateBorrow(
       reservesData,
-      reservesList,
       eModeCategories,
       DataTypes.ValidateBorrowParams({
         reserveCache: reserveCache,
-        userConfig: userConfig,
         asset: params.asset,
-        userAddress: params.onBehalfOf,
         amountScaled: amountScaled,
         interestRateMode: params.interestRateMode,
-        oracle: params.oracle,
         userEModeCategory: params.userEModeCategory,
         priceOracleSentinel: params.priceOracleSentinel
       })
@@ -86,14 +80,6 @@ library BorrowLogic {
     if (!userConfig.isBorrowing(cachedReserveId)) {
       userConfig.setBorrowing(cachedReserveId, true);
     }
-
-    IsolationModeLogic.increaseIsolatedDebtIfIsolated(
-      reservesData,
-      reservesList,
-      userConfig,
-      reserveCache,
-      params.amount
-    );
 
     reserve.updateInterestRatesAndVirtualBalance(
       reserveCache,
@@ -130,8 +116,7 @@ library BorrowLogic {
 
   /**
    * @notice Implements the repay feature. Repaying transfers the underlying back to the aToken and clears the
-   * equivalent amount of debt for the user by burning the corresponding debt token. For isolated positions, it also
-   * reduces the isolated debt.
+   * equivalent amount of debt for the user by burning the corresponding debt token.
    * @dev  Emits the `Repay()` event
    * @param reservesData The state of all the reserves
    * @param reservesList The addresses of all the active reserves
@@ -195,14 +180,6 @@ library BorrowLogic {
     if (noMoreDebt) {
       onBehalfOfConfig.setBorrowing(reserve.id, false);
     }
-
-    IsolationModeLogic.reduceIsolatedDebtIfIsolated(
-      reservesData,
-      reservesList,
-      onBehalfOfConfig,
-      reserveCache,
-      paybackAmount
-    );
 
     // in case of aToken repayment the sender must always repay on behalf of itself
     if (params.useATokens) {

@@ -162,10 +162,7 @@ contract PoolConfiguratorUpgradeabilityTests is TestnetProcedures {
     tempReserveData.id = reserveDataLegacy.id;
     tempReserveData.aTokenAddress = reserveDataLegacy.aTokenAddress;
     tempReserveData.variableDebtTokenAddress = reserveDataLegacy.variableDebtTokenAddress;
-    tempReserveData.__deprecatedInterestRateStrategyAddress = reserveDataLegacy
-      .interestRateStrategyAddress;
     tempReserveData.accruedToTreasury = reserveDataLegacy.accruedToTreasury;
-    tempReserveData.isolationModeTotalDebt = reserveDataLegacy.isolationModeTotalDebt;
     tempReserveData.virtualUnderlyingBalance = uint128(
       contracts.poolProxy.getVirtualUnderlyingBalance(asset)
     );

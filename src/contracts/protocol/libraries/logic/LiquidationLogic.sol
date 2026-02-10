@@ -10,7 +10,6 @@ import {DataTypes} from '../../libraries/types/DataTypes.sol';
 import {ReserveLogic} from './ReserveLogic.sol';
 import {ValidationLogic} from './ValidationLogic.sol';
 import {GenericLogic} from './GenericLogic.sol';
-import {IsolationModeLogic} from './IsolationModeLogic.sol';
 import {UserConfiguration} from '../../libraries/configuration/UserConfiguration.sol';
 import {ReserveConfiguration} from '../../libraries/configuration/ReserveConfiguration.sol';
 import {EModeConfiguration} from '../../libraries/configuration/EModeConfiguration.sol';
@@ -350,21 +349,6 @@ library LiquidationLogic {
       hasNoCollateralLeft,
       params.interestRateStrategyAddress
     );
-
-    // An asset can only be ceiled if it has no supply or if it was not a collateral previously.
-    // Therefore we can be sure that no inconsistent state can be reached in which a user has multiple collaterals, with one being ceiled.
-    // This allows for the implicit assumption that: if the asset was a collateral & the asset was ceiled, the user must have been in isolation.
-    if (vars.collateralReserveCache.reserveConfiguration.getDebtCeiling() != 0) {
-      // IsolationModeTotalDebt only discounts `actualDebtToLiquidate`, not the fully burned amount in case of deficit creation.
-      // This is by design as otherwise the debt ceiling would render ineffective if a collateral asset faces bad debt events.
-      // The governance can decide the raise the ceiling to discount manifested deficit.
-      IsolationModeLogic.updateIsolatedDebt(
-        reservesData,
-        vars.debtReserveCache,
-        vars.actualDebtToLiquidate,
-        params.collateralAsset
-      );
-    }
 
     if (params.receiveAToken) {
       IAToken(vars.collateralReserveCache.aTokenAddress).transferOnLiquidation(

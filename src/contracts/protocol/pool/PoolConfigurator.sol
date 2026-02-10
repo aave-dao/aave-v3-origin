@@ -243,17 +243,6 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
   }
 
   /// @inheritdoc IPoolConfigurator
-  function setBorrowableInIsolation(
-    address asset,
-    bool borrowable
-  ) external override onlyRiskOrPoolAdmins {
-    DataTypes.ReserveConfigurationMap memory currentConfig = _pool.getConfiguration(asset);
-    currentConfig.setBorrowableInIsolation(borrowable);
-    _pool.setConfiguration(asset, currentConfig);
-    emit BorrowableInIsolationChanged(asset, borrowable);
-  }
-
-  /// @inheritdoc IPoolConfigurator
   function setReservePause(
     address asset,
     bool paused,
@@ -302,46 +291,6 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
     emit ReserveFactorChanged(asset, oldReserveFactor, newReserveFactor);
 
     _pool.syncRatesState(asset);
-  }
-
-  /// @inheritdoc IPoolConfigurator
-  function setDebtCeiling(
-    address asset,
-    uint256 newDebtCeiling
-  ) external override onlyRiskOrPoolAdmins {
-    DataTypes.ReserveConfigurationMap memory currentConfig = _pool.getConfiguration(asset);
-
-    uint256 oldDebtCeiling = currentConfig.getDebtCeiling();
-    if (_checkAssetIsCollateral(asset) && oldDebtCeiling == 0) {
-      _checkNoSuppliers(asset);
-    }
-    currentConfig.setDebtCeiling(newDebtCeiling);
-    _pool.setConfiguration(asset, currentConfig);
-
-    if (newDebtCeiling == 0) {
-      _pool.resetIsolationModeTotalDebt(asset);
-    }
-
-    emit DebtCeilingChanged(asset, oldDebtCeiling, newDebtCeiling);
-  }
-
-  /// @inheritdoc IPoolConfigurator
-  function setSiloedBorrowing(
-    address asset,
-    bool newSiloed
-  ) external override onlyRiskOrPoolAdmins {
-    if (newSiloed) {
-      _checkNoBorrowers(asset);
-    }
-    DataTypes.ReserveConfigurationMap memory currentConfig = _pool.getConfiguration(asset);
-
-    bool oldSiloed = currentConfig.getSiloedBorrowing();
-
-    currentConfig.setSiloedBorrowing(newSiloed);
-
-    _pool.setConfiguration(asset, currentConfig);
-
-    emit SiloedBorrowingChanged(asset, oldSiloed, newSiloed);
   }
 
   /// @inheritdoc IPoolConfigurator

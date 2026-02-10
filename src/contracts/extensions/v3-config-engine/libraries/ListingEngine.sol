@@ -97,8 +97,6 @@ library ListingEngine {
         asset: listings[i].base.asset,
         enabledToBorrow: listings[i].base.enabledToBorrow,
         flashloanable: listings[i].base.flashloanable,
-        borrowableInIsolation: listings[i].base.borrowableInIsolation,
-        withSiloedBorrowing: listings[i].base.withSiloedBorrowing,
         reserveFactor: listings[i].base.reserveFactor
       });
       collateralsUpdates[i] = IEngine.CollateralUpdate({
@@ -106,7 +104,6 @@ library ListingEngine {
         ltv: listings[i].base.ltv,
         liqThreshold: listings[i].base.liqThreshold,
         liqBonus: listings[i].base.liqBonus,
-        debtCeiling: listings[i].base.debtCeiling,
         liqProtocolFee: listings[i].base.liqProtocolFee
       });
       capsUpdates[i] = IEngine.CapsUpdate({

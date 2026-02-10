@@ -111,7 +111,7 @@ contract PoolEModeCollateralsTests is TestnetProcedures {
      * even if it is not possible to enable the asset as collateral outside.
      * This behavior was introduced in Aave v3.4
      */
-    vm.expectRevert(abi.encodeWithSelector(Errors.UserInIsolationModeOrLtvZero.selector));
+    vm.expectRevert(abi.encodeWithSelector(Errors.UserHasAssetWithZeroLtv.selector));
     contracts.poolProxy.setUserUseReserveAsCollateral(tokenList.wbtc, true);
     contracts.poolProxy.setUserEMode(1);
     contracts.poolProxy.setUserUseReserveAsCollateral(tokenList.wbtc, true);

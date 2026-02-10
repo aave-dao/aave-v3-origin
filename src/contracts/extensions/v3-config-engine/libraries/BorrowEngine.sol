@@ -34,20 +34,6 @@ library BorrowEngine {
         updates[i].enabledToBorrow = EngineFlags.fromBool(borrowingEnabled);
       }
 
-      if (updates[i].borrowableInIsolation != EngineFlags.KEEP_CURRENT) {
-        poolConfigurator.setBorrowableInIsolation(
-          updates[i].asset,
-          EngineFlags.toBool(updates[i].borrowableInIsolation)
-        );
-      }
-
-      if (updates[i].withSiloedBorrowing != EngineFlags.KEEP_CURRENT) {
-        poolConfigurator.setSiloedBorrowing(
-          updates[i].asset,
-          EngineFlags.toBool(updates[i].withSiloedBorrowing)
-        );
-      }
-
       // The reserve factor should always be > 0
       require(
         (updates[i].reserveFactor > 0 && updates[i].reserveFactor <= 100_00) ||
