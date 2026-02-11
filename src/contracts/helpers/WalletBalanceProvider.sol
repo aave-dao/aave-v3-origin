@@ -2,7 +2,7 @@
 pragma solidity ^0.8.10;
 
 import {Address} from '../dependencies/openzeppelin/contracts/Address.sol';
-import {IERC20} from '../dependencies/openzeppelin/contracts/IERC20.sol';
+import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
 
 import {IPoolAddressesProvider} from '../interfaces/IPoolAddressesProvider.sol';
 import {IPool} from '../interfaces/IPool.sol';

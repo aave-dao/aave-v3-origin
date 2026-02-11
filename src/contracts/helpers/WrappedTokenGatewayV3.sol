@@ -2,7 +2,7 @@
 pragma solidity ^0.8.10;
 
 import {Ownable} from '../dependencies/openzeppelin/contracts/Ownable.sol';
-import {IERC20} from '../dependencies/openzeppelin/contracts/IERC20.sol';
+import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
 import {GPv2SafeERC20} from '../dependencies/gnosis/contracts/GPv2SafeERC20.sol';
 import {IWETH} from './interfaces/IWETH.sol';
 import {IPool} from '../interfaces/IPool.sol';

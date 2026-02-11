@@ -2,9 +2,8 @@
 pragma solidity ^0.8.10;
 
 import {SafeMath} from '../../dependencies/openzeppelin/contracts/SafeMath.sol';
-import {IERC20} from '../../dependencies/openzeppelin/contracts/IERC20.sol';
+import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
 import {GPv2SafeERC20} from '../../dependencies/gnosis/contracts/GPv2SafeERC20.sol';
-import {SafeMath} from '../../dependencies/openzeppelin/contracts/SafeMath.sol';
 import {IPoolAddressesProvider} from '../../interfaces/IPoolAddressesProvider.sol';
 import {FlashLoanSimpleReceiverBase} from '../../misc/flashloan/base/FlashLoanSimpleReceiverBase.sol';
 import {MintableERC20} from '../tokens/MintableERC20.sol';

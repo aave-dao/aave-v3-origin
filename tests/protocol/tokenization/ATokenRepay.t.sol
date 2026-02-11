@@ -6,10 +6,10 @@ import 'forge-std/Test.sol';
 import {IAToken} from '../../../src/contracts/interfaces/IAToken.sol';
 import {IPool} from '../../../src/contracts/interfaces/IPool.sol';
 import {IVariableDebtToken} from '../../../src/contracts/interfaces/IVariableDebtToken.sol';
-import {IERC20Detailed} from '../../../src/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
+import {IERC20Metadata} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import {TestnetProcedures} from '../../utils/TestnetProcedures.sol';
 
-interface IVariableDebtTokenWithERC20 is IVariableDebtToken, IERC20Detailed {}
+interface IVariableDebtTokenWithERC20 is IVariableDebtToken, IERC20Metadata {}
 
 contract ATokenRepayTests is TestnetProcedures {
   IAToken public aToken;

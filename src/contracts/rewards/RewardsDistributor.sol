@@ -2,7 +2,7 @@
 pragma solidity ^0.8.10;
 
 import {IScaledBalanceToken} from '../interfaces/IScaledBalanceToken.sol';
-import {IERC20Detailed} from '../dependencies/openzeppelin/contracts/IERC20Detailed.sol';
+import {IERC20Metadata} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import {SafeCast} from 'openzeppelin-contracts/contracts/utils/math/SafeCast.sol';
 import {IRewardsDistributor} from './interfaces/IRewardsDistributor.sol';
 import {RewardsDataTypes} from './libraries/RewardsDataTypes.sol';
@@ -226,7 +226,7 @@ abstract contract RewardsDistributor is IRewardsDistributor {
         _assetsList.push(rewardsInput[i].asset);
       }
 
-      uint256 decimals = _assets[rewardsInput[i].asset].decimals = IERC20Detailed(
+      uint256 decimals = _assets[rewardsInput[i].asset].decimals = IERC20Metadata(
         rewardsInput[i].asset
       ).decimals();
 

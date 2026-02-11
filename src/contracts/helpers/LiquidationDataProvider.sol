@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.10;
 
-import {IERC20Detailed} from '../dependencies/openzeppelin/contracts/IERC20Detailed.sol';
+import {IERC20Metadata} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 
 import {IPool} from '../interfaces/IPool.sol';
 import {IPoolAddressesProvider} from '../interfaces/IPoolAddressesProvider.sol';
@@ -419,12 +419,12 @@ contract LiquidationDataProvider is ILiquidationDataProvider {
   ) private view returns (CollateralFullInfo memory) {
     CollateralFullInfo memory collateralInfo;
 
-    collateralInfo.assetUnit = 10 ** IERC20Detailed(reserveAsset).decimals();
+    collateralInfo.assetUnit = 10 ** IERC20Metadata(reserveAsset).decimals();
     collateralInfo.price = IPriceOracleGetter(oracle).getAssetPrice(reserveAsset);
 
     collateralInfo.aToken = POOL.getReserveAToken(reserveAsset);
 
-    collateralInfo.collateralBalance = IERC20Detailed(collateralInfo.aToken).balanceOf(user);
+    collateralInfo.collateralBalance = IERC20Metadata(collateralInfo.aToken).balanceOf(user);
 
     collateralInfo.collateralBalanceInBaseCurrency =
       (collateralInfo.collateralBalance * collateralInfo.price) /
@@ -440,12 +440,12 @@ contract LiquidationDataProvider is ILiquidationDataProvider {
   ) private view returns (DebtFullInfo memory) {
     DebtFullInfo memory debtInfo;
 
-    debtInfo.assetUnit = 10 ** IERC20Detailed(reserveAsset).decimals();
+    debtInfo.assetUnit = 10 ** IERC20Metadata(reserveAsset).decimals();
     debtInfo.price = IPriceOracleGetter(oracle).getAssetPrice(reserveAsset);
 
     debtInfo.variableDebtToken = POOL.getReserveVariableDebtToken(reserveAsset);
 
-    debtInfo.debtBalance = IERC20Detailed(debtInfo.variableDebtToken).balanceOf(user);
+    debtInfo.debtBalance = IERC20Metadata(debtInfo.variableDebtToken).balanceOf(user);
 
     debtInfo.debtBalanceInBaseCurrency =
       (debtInfo.debtBalance * debtInfo.price) /

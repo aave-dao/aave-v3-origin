@@ -11,7 +11,7 @@ import {IAToken, IERC20} from '../../../src/contracts/interfaces/IAToken.sol';
 import {Errors} from '../../../src/contracts/protocol/libraries/helpers/Errors.sol';
 import {UserConfiguration} from '../../../src/contracts/protocol/libraries/configuration/UserConfiguration.sol';
 import {ReserveLogic} from '../../../src/contracts/protocol/libraries/logic/ReserveLogic.sol';
-import {IERC20Detailed} from '../../../src/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
+import {IERC20Metadata} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import {ReserveConfiguration} from '../../../src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
 import {PriceOracleSentinel} from '../../../src/contracts/misc/PriceOracleSentinel.sol';
 import {SequencerOracle, ISequencerOracle} from '../../../src/contracts/mocks/oracle/SequencerOracle.sol';
@@ -75,7 +75,7 @@ contract PoolLiquidationCloseFactorTests is TestnetProcedures {
     address collateralAsset = tokenList.weth;
     uint256 oraclePrice = contracts.aaveOracle.getAssetPrice(collateralAsset);
     uint256 lowerBound = (LiquidationLogic.MIN_BASE_MAX_CLOSE_FACTOR_THRESHOLD *
-      10 ** IERC20Detailed(collateralAsset).decimals()) / oraclePrice;
+      10 ** IERC20Metadata(collateralAsset).decimals()) / oraclePrice;
     supplyAmount = bound(supplyAmount, lowerBound, 1_000 ether);
     desiredHf = bound(desiredHf, 0.01 ether, 0.95 ether);
     _supply(collateralAsset, supplyAmount, bob);
@@ -93,7 +93,7 @@ contract PoolLiquidationCloseFactorTests is TestnetProcedures {
     address collateralAsset = tokenList.weth;
     uint256 oraclePrice = contracts.aaveOracle.getAssetPrice(collateralAsset);
     uint256 upperBound = (LiquidationLogic.MIN_BASE_MAX_CLOSE_FACTOR_THRESHOLD *
-      10 ** IERC20Detailed(collateralAsset).decimals()) / oraclePrice;
+      10 ** IERC20Metadata(collateralAsset).decimals()) / oraclePrice;
     supplyAmount = bound(supplyAmount, 0.01 ether, upperBound);
     desiredHf = bound(desiredHf, 0.96 ether, 0.99 ether);
     _supply(collateralAsset, supplyAmount, bob);
@@ -111,7 +111,7 @@ contract PoolLiquidationCloseFactorTests is TestnetProcedures {
     address collateralAsset = tokenList.weth;
     uint256 oraclePrice = contracts.aaveOracle.getAssetPrice(collateralAsset);
     uint256 lowerBound = (LiquidationLogic.MIN_BASE_MAX_CLOSE_FACTOR_THRESHOLD *
-      10 ** IERC20Detailed(collateralAsset).decimals()) / oraclePrice;
+      10 ** IERC20Metadata(collateralAsset).decimals()) / oraclePrice;
     supplyAmount = bound(supplyAmount, lowerBound * 2, 10_000 ether);
     desiredHf = bound(desiredHf, 0.96 ether, 0.99 ether);
     _supply(collateralAsset, supplyAmount, bob);
@@ -143,7 +143,7 @@ contract PoolLiquidationCloseFactorTests is TestnetProcedures {
     );
     uint256 oraclePrice = contracts.aaveOracle.getAssetPrice(tokenList.weth);
     uint256 supplyLtThreshold = ((LiquidationLogic.MIN_BASE_MAX_CLOSE_FACTOR_THRESHOLD - 1e8) *
-      10 ** IERC20Detailed(tokenList.weth).decimals()) / oraclePrice;
+      10 ** IERC20Metadata(tokenList.weth).decimals()) / oraclePrice;
     _supply(tokenList.weth, supplyLtThreshold, bob);
     // borrow above threshold
     _borrowToBeBelowHf(bob, tokenList.usdx, 0.97 ether);
@@ -165,7 +165,7 @@ contract PoolLiquidationCloseFactorTests is TestnetProcedures {
     // this test is a bit fragile as it's implicitly assuming that 44e6 is the bonus, without the fee
     uint256 liquidationAmount = (usdxSupply / 2) - 44e6;
     vm.prank(liquidator);
-    IERC20Detailed(tokenList.usdx).approve(address(contracts.poolProxy), type(uint256).max);
+    IERC20Metadata(tokenList.usdx).approve(address(contracts.poolProxy), type(uint256).max);
     vm.prank(liquidator);
     vm.expectRevert(abi.encodeWithSelector(Errors.MustNotLeaveDust.selector));
     contracts.poolProxy.liquidationCall(
@@ -187,7 +187,7 @@ contract PoolLiquidationCloseFactorTests is TestnetProcedures {
     _borrowToBeBelowHf(bob, tokenList.weth, 0.98 ether);
 
     vm.startPrank(liquidator);
-    IERC20Detailed(tokenList.usdx).approve(address(contracts.poolProxy), type(uint256).max);
+    IERC20Metadata(tokenList.usdx).approve(address(contracts.poolProxy), type(uint256).max);
 
     vm.expectRevert(abi.encodeWithSelector(Errors.MustNotLeaveDust.selector));
     contracts.poolProxy.liquidationCall(
@@ -215,14 +215,14 @@ contract PoolLiquidationCloseFactorTests is TestnetProcedures {
   function test_liquidationdataprovider_edge_range_reverse() external {
     // borrow supply 4k
     _supply(tokenList.usdx, 4200e6, bob);
-    uint256 amount = (4000e8 * (10 ** IERC20Detailed(tokenList.weth).decimals())) /
+    uint256 amount = (4000e8 * (10 ** IERC20Metadata(tokenList.weth).decimals())) /
       contracts.aaveOracle.getAssetPrice(tokenList.weth);
     _supply(tokenList.weth, amount, bob);
     vm.prank(bob);
     _borrowToBeBelowHf(bob, tokenList.usdx, 0.98 ether);
 
     vm.startPrank(liquidator);
-    IERC20Detailed(tokenList.usdx).approve(address(contracts.poolProxy), type(uint256).max);
+    IERC20Metadata(tokenList.usdx).approve(address(contracts.poolProxy), type(uint256).max);
 
     vm.expectRevert(abi.encodeWithSelector(Errors.MustNotLeaveDust.selector));
     contracts.poolProxy.liquidationCall(
@@ -260,18 +260,18 @@ contract PoolLiquidationCloseFactorTests is TestnetProcedures {
       debtAsset,
       amountToLiquidate,
       // assuming all debt is the asset we wanna liquidate
-      (debtInBaseCurrency * 10 ** IERC20Detailed(debtAsset).decimals()) /
+      (debtInBaseCurrency * 10 ** IERC20Metadata(debtAsset).decimals()) /
         contracts.aaveOracle.getAssetPrice(debtAsset)
     );
     // then we calculate the exact amounts
     LiquidationDataProvider.LiquidationInfo memory liquidationInfo = liquidationDataProvider
       .getLiquidationInfo(bob, collateralAsset, debtAsset, amountToLiquidate);
-    uint256 balanceBefore = IERC20Detailed(collateralAsset).balanceOf(liquidator);
+    uint256 balanceBefore = IERC20Metadata(collateralAsset).balanceOf(liquidator);
     vm.prank(liquidator);
-    IERC20Detailed(debtAsset).approve(address(contracts.poolProxy), type(uint256).max);
+    IERC20Metadata(debtAsset).approve(address(contracts.poolProxy), type(uint256).max);
     vm.prank(liquidator);
     contracts.poolProxy.liquidationCall(collateralAsset, debtAsset, bob, amountToLiquidate, false);
-    uint256 balanceAfter = IERC20Detailed(collateralAsset).balanceOf(liquidator);
+    uint256 balanceAfter = IERC20Metadata(collateralAsset).balanceOf(liquidator);
     assertEq(
       balanceAfter - balanceBefore,
       liquidationInfo.maxCollateralToLiquidate,
@@ -287,7 +287,7 @@ contract PoolLiquidationCloseFactorTests is TestnetProcedures {
 
   function _borrowToBeBelowHf(address user, address assetToBorrow, uint256 desiredhf) internal {
     uint256 requiredBorrowsInBase = _getRequiredBorrowsForHfBelow(user, desiredhf);
-    uint256 amount = (requiredBorrowsInBase * (10 ** IERC20Detailed(assetToBorrow).decimals())) /
+    uint256 amount = (requiredBorrowsInBase * (10 ** IERC20Metadata(assetToBorrow).decimals())) /
       contracts.aaveOracle.getAssetPrice(assetToBorrow);
     vm.mockCall(
       address(contracts.aaveOracle),

@@ -5,8 +5,8 @@ import 'forge-std/Test.sol';
 import 'forge-std/StdStorage.sol';
 
 import {IPriceOracleGetter} from '../../../src/contracts/interfaces/IPriceOracleGetter.sol';
-import {IERC20} from '../../../src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
-import {IERC20Detailed} from '../../../src/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
+import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
+import {IERC20Metadata} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import {IPool, DataTypes} from '../../../src/contracts/interfaces/IPool.sol';
 import {Errors} from '../../../src/contracts/protocol/libraries/helpers/Errors.sol';
 import {IAaveOracle} from '../../../src/contracts/interfaces/IAaveOracle.sol';

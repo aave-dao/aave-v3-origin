@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 // Interfaces
 import {IScaledBalanceToken} from 'src/contracts/interfaces/IScaledBalanceToken.sol';
 import {IAToken} from 'src/contracts/interfaces/IAToken.sol';
-import {IERC20Detailed as IERC20} from 'src/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
+import {IERC20Metadata as IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 
 // Libraries
 import {Vm} from 'forge-std/Base.sol';

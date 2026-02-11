@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.10;
 
-import {IERC20Detailed} from '../dependencies/openzeppelin/contracts/IERC20Detailed.sol';
+import {IERC20Metadata} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import {IPoolAddressesProvider} from '../interfaces/IPoolAddressesProvider.sol';
 import {IPool} from '../interfaces/IPool.sol';
 import {IAaveOracle} from '../interfaces/IAaveOracle.sol';
@@ -79,7 +79,7 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
         reserveData.underlyingAsset
       );
       reserveData.priceOracle = oracle.getSourceOfAsset(reserveData.underlyingAsset);
-      reserveData.availableLiquidity = IERC20Detailed(reserveData.underlyingAsset).balanceOf(
+      reserveData.availableLiquidity = IERC20Metadata(reserveData.underlyingAsset).balanceOf(
         reserveData.aTokenAddress
       );
       reserveData.totalScaledVariableDebt = IVariableDebtToken(reserveData.variableDebtTokenAddress)
@@ -92,8 +92,8 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
         reserveData.symbol = bytes32ToString(symbol);
         reserveData.name = bytes32ToString(name);
       } else {
-        reserveData.symbol = IERC20Detailed(reserveData.underlyingAsset).symbol();
-        reserveData.name = IERC20Detailed(reserveData.underlyingAsset).name();
+        reserveData.symbol = IERC20Metadata(reserveData.underlyingAsset).symbol();
+        reserveData.name = IERC20Metadata(reserveData.underlyingAsset).name();
       }
 
       //stores the reserve configuration

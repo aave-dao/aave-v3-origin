@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 
+import {IERC20Errors} from 'openzeppelin-contracts/contracts/interfaces/draft-IERC6093.sol';
 import {IVariableDebtToken} from '../../../src/contracts/interfaces/IVariableDebtToken.sol';
 import {IPoolAddressesProvider} from '../../../src/contracts/interfaces/IPoolAddressesProvider.sol';
 import {IPool} from '../../../src/contracts/interfaces/IPool.sol';
@@ -408,7 +409,14 @@ contract PoolRepayTests is TestnetProcedures {
 
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(userPk, digest);
 
-    vm.expectRevert(bytes('ERC20: transfer amount exceeds allowance'));
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        IERC20Errors.ERC20InsufficientAllowance.selector,
+        address(contracts.poolProxy),
+        0,
+        repayAmount
+      )
+    );
     contracts.poolProxy.repayWithPermit(
       tokenList.usdx,
       repayAmount,
