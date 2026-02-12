@@ -72,22 +72,6 @@ library UserConfiguration {
   }
 
   /**
-   * @notice Returns if a user has been using the reserve for borrowing or as collateral
-   * @param self The configuration object
-   * @param reserveIndex The index of the reserve in the bitmap
-   * @return True if the user has been using a reserve for borrowing or as collateral, false otherwise
-   */
-  function isUsingAsCollateralOrBorrowing(
-    DataTypes.UserConfigurationMap memory self,
-    uint256 reserveIndex
-  ) internal pure returns (bool) {
-    unchecked {
-      require(reserveIndex < ReserveConfiguration.MAX_RESERVES_COUNT, Errors.InvalidReserveIndex());
-      return (self.data >> (reserveIndex << 1)) & 3 != 0;
-    }
-  }
-
-  /**
    * @notice Validate a user has been using the reserve for borrowing
    * @param self The configuration object
    * @param reserveIndex The index of the reserve in the bitmap
