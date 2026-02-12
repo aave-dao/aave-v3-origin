@@ -1,7 +1,6 @@
 methods {
   function setBorrowing(uint256, bool) external envfree;
   function setUsingAsCollateral(uint256, address, address, bool) external envfree;
-  function isUsingAsCollateralOrBorrowing(uint256) external returns bool envfree;
   function isBorrowing(uint256) external returns bool envfree;
   function isUsingAsCollateral(uint256) external returns bool envfree;
   function isUsingAsCollateralOne() external returns bool envfree;
@@ -65,10 +64,6 @@ rule setCollateralNoChangeToOther(uint256 reserveIndex, address asset, address u
       otherReserveCollateralAfter == otherReserveCollateralBefore));
 }
 
-invariant isUsingAsCollateralOrBorrowing(uint256 reserveIndex )
-  (isUsingAsCollateral(reserveIndex) || isBorrowing(reserveIndex)) <=>
-  isUsingAsCollateralOrBorrowing(reserveIndex);
-
 invariant integrityOfisUsingAsCollateralOne(uint256 reserveIndex, uint256 reserveIndexOther)
   isUsingAsCollateral(reserveIndex) && isUsingAsCollateralOne() =>
   !isUsingAsCollateral(reserveIndexOther) || reserveIndexOther == reserveIndex;
@@ -83,7 +78,7 @@ invariant integrityOfisBorrowingAny(uint256 reserveIndex)
   isBorrowing(reserveIndex) => isBorrowingAny();
 
 invariant integrityOfEmpty(uint256 reserveIndex)
-  isEmpty() => !isBorrowingAny() && !isUsingAsCollateralOrBorrowing(reserveIndex);
+  isEmpty() => !isBorrowingAny() && !isUsingAsCollateral(reserveIndex) && !isBorrowing(reserveIndex);
 
 // if IsolationModeState is active then there must be exactly one asset register as collateral.
 // note that this is a necessary requirement, but it is not sufficient.

@@ -37,35 +37,36 @@ The following are the security procedures historically applied to Aave v3.X vers
 
 **-> Aave v3**
 
-- [ABDK](./audits/27-01-2022_ABDK_AaveV3.pdf)
-- [OpenZeppelin](./audits/01-11-2021_OpenZeppelin_AaveV3.pdf)
-- [Trail of Bits](./audits/07-01-2022_TrailOfBits_AaveV3.pdf)
-- [Peckshield](./audits/14-01-2022_PeckShield_AaveV3.pdf)
-- [SigmaPrime](./audits/27-01-2022_SigmaPrime_AaveV3.pdf)
-- [Certora](./certora/Aave_V3_Formal_Verification_Report_Jan2022.pdf)
+- [ABDK](./audits/2022-01-27_ABDK_AaveV3.pdf)
+- [OpenZeppelin](./audits/2021-11-01_OpenZeppelin_AaveV3.pdf)
+- [Trail of Bits](./audits/2022-01-07_TrailOfBits_AaveV3.pdf)
+- [Peckshield](./audits/2022-01-14_PeckShield_AaveV3.pdf)
+- [SigmaPrime](./audits/2022-01-27_SigmaPrime_AaveV3.pdf)
+- [Certora](./audits/2022-01-24_Certora_AaveV3.pdf)
 
 <br>
 
 **-> Aave v3.0.1 - December 2022**
 
-- [PeckShield](./audits/09-12-2022_PeckShield_AaveV3-0-1.pdf)
-- [SigmaPrime](./audits/23-12-2022_SigmaPrime_AaveV3-0-1.pdf)
+- [PeckShield](./audits/2022-12-09_PeckShield_AaveV3-0-1.pdf)
+- [SigmaPrime](./audits/2022-12-23_SigmaPrime_AaveV3-0-1.pdf)
+- [Certora](./audits/2022-12-25_Certora_AaveV3.0.1.pdf)
 
 <br>
 
 **-> Aave v3.0.2 - April 2023**
 
-- [SigmaPrime](./audits/19-04-2023_SigmaPrime_AaveV3-0-2.pdf)
-- [Certora](./audits/03-2023_2023_Certora_AaveV3-0-2.pdf)
+- [SigmaPrime](./audits/2023-04-19_SigmaPrime_AaveV3-0-2.pdf)
+- [Certora](./audits/2023-03_Certora_AaveV3-0-2.pdf)
 
 <br>
 
 **-> Aave v3.1 - April 2024**
 
-- [Certora](./audits/30-04-2024_Certora_AaveV3.1.pdf)
-- [MixBytes](./audits/02-05-2024_MixBytes_AaveV3.1.pdf)
+- [Certora](./audits/2024-04-30_Certora_AaveV3.1.pdf)
+- [MixBytes](./audits/2024-05-02_MixBytes_AaveV3.1.pdf)
 - An internal review by [SterMi](https://twitter.com/stermi) on the virtual accounting feature was conducted on an initial phase of the codebase.
-- [Cantina competition report](./audits/02-06-2024-Cantina-contest-AaveV3.1.pdf)
+- [Cantina competition report](./audits/2024-06-02_Cantina-contest-AaveV3.1.pdf)
 - Additionally, Certora properties have been improved over time since the Aave v3 release. More details [HERE](./certora/basic/README.md).
 
 <br>
