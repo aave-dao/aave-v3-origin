@@ -44,6 +44,25 @@ contract PercentageMathTests is Test {
     }
   }
 
+  function test_percentMul_revertOnOverflow() public {
+    uint256 max = type(uint256).max;
+    // percentage != 0 and value > (max - HALF_PERCENTAGE_FACTOR) / percentage
+    vm.expectRevert();
+    PercentageMath.percentMul(max, 2);
+  }
+
+  function test_percentDiv_revertOnDivByZero() public {
+    vm.expectRevert();
+    PercentageMath.percentDiv(1e18, 0);
+  }
+
+  function test_percentDiv_revertOnOverflow() public {
+    uint256 max = type(uint256).max;
+    // value > (max - percentage/2) / PERCENTAGE_FACTOR
+    vm.expectRevert();
+    PercentageMath.percentDiv(max, 1);
+  }
+
   function test_percentMul() external pure {
     assertEq(PercentageMath.percentMul(1e18, 50_00), 0.5e18);
     assertEq(PercentageMath.percentMul(14.2515e18, 74_42), 10.605966300000000000e18);
