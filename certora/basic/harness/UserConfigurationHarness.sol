@@ -33,11 +33,6 @@ contract UserConfigurationHarness is PoolStorage {
     );
   }
 
-  // Returns if a user has been using the reserve for borrowing or as collateral
-  function isUsingAsCollateralOrBorrowing(uint256 reserveIndex) public view returns (bool) {
-    return UserConfiguration.isUsingAsCollateralOrBorrowing(usersConfig, reserveIndex);
-  }
-
   // Validate a user has been using the reserve for borrowing
   function isBorrowing(uint256 reserveIndex) public view returns (bool) {
     return UserConfiguration.isBorrowing(usersConfig, reserveIndex);
