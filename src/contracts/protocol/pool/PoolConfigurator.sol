@@ -93,12 +93,6 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
   }
 
   /// @inheritdoc IPoolConfigurator
-  function dropReserve(address asset) external override onlyPoolAdmin {
-    _pool.dropReserve(asset);
-    emit ReserveDropped(asset);
-  }
-
-  /// @inheritdoc IPoolConfigurator
   function updateAToken(
     ConfiguratorInputTypes.UpdateATokenInput calldata input
   ) external override onlyPoolAdmin {

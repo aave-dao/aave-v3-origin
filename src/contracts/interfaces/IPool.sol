@@ -435,14 +435,6 @@ interface IPool {
   function initReserve(address asset, address aTokenAddress, address variableDebtAddress) external;
 
   /**
-   * @notice Drop a reserve
-   * @dev Only callable by the PoolConfigurator contract
-   * @dev Does not reset eMode flags, which must be considered when reusing the same reserve id for a different reserve.
-   * @param asset The address of the underlying asset of the reserve
-   */
-  function dropReserve(address asset) external;
-
-  /**
    * @notice Accumulates interest to all indexes of the reserve
    * @dev Only callable by the PoolConfigurator contract
    * @dev To be used when required by the configurator, for example when updating interest rates strategy data

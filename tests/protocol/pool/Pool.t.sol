@@ -273,9 +273,6 @@ contract PoolTests is TestnetProcedures {
     pool.initReserve(address(0), address(0), address(0));
 
     vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotPoolConfigurator.selector));
-    pool.dropReserve(address(0));
-
-    vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotPoolConfigurator.selector));
     pool.setConfiguration(address(0), configuration);
 
     vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotPoolConfigurator.selector));
@@ -286,48 +283,6 @@ contract PoolTests is TestnetProcedures {
 
     vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotPoolConfigurator.selector));
     pool.setLiquidationGracePeriod(address(0), uint40(vm.getBlockTimestamp() + 3 hours));
-  }
-
-  function test_dropReserve() public {
-    (address pA, address pS, address pV) = contracts.protocolDataProvider.getReserveTokensAddresses(
-      tokenList.usdx
-    );
-    assertTrue(pA != address(0));
-    assertTrue(pS == address(0));
-    assertTrue(pV != address(0));
-
-    vm.prank(report.poolConfiguratorProxy);
-    pool.dropReserve(tokenList.usdx);
-
-    (address a, address s, address v) = contracts.protocolDataProvider.getReserveTokensAddresses(
-      tokenList.usdx
-    );
-
-    (
-      uint256 decimals,
-      uint256 ltv,
-      uint256 liquidationThreshold,
-      uint256 liquidationBonus,
-      uint256 reserveFactor,
-      bool usageAsCollateralEnabled,
-      bool borrowingEnabled,
-      ,
-      bool isActive,
-      bool isFrozen
-    ) = contracts.protocolDataProvider.getReserveConfigurationData(tokenList.usdx);
-
-    assertEq(a, address(0));
-    assertEq(s, address(0));
-    assertEq(v, address(0));
-    assertEq(decimals, 0);
-    assertEq(ltv, 0);
-    assertEq(liquidationThreshold, 0);
-    assertEq(liquidationBonus, 0);
-    assertEq(reserveFactor, 0);
-    assertEq(usageAsCollateralEnabled, false);
-    assertEq(borrowingEnabled, false);
-    assertEq(isActive, false);
-    assertEq(isFrozen, false);
   }
 
   function test_setLiquidationGracePeriod(uint40 liquidationGracePeriod) public {

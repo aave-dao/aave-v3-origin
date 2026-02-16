@@ -469,29 +469,6 @@ library ValidationLogic {
   }
 
   /**
-   * @notice Validates a drop reserve action.
-   * @param reservesList The addresses of all the active reserves
-   * @param reserve The reserve object
-   * @param asset The address of the reserve's underlying asset
-   */
-  function validateDropReserve(
-    mapping(uint256 => address) storage reservesList,
-    DataTypes.ReserveData storage reserve,
-    address asset
-  ) internal view {
-    require(asset != address(0), Errors.ZeroAddressNotValid());
-    require(reserve.id != 0 || reservesList[0] == asset, Errors.AssetNotListed());
-    require(
-      IERC20(reserve.variableDebtTokenAddress).totalSupply() == 0,
-      Errors.VariableDebtSupplyNotZero()
-    );
-    require(
-      IERC20(reserve.aTokenAddress).totalSupply() == 0 && reserve.accruedToTreasury == 0,
-      Errors.UnderlyingClaimableRightsNotZero()
-    );
-  }
-
-  /**
    * @notice Validates the action of setting efficiency mode.
    * @param reservesData The state of all the reserves
    * @param reservesList The addresses of all the active reserves

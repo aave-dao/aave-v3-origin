@@ -623,6 +623,7 @@ library LiquidationLogic {
       );
       if (isBorrowed) {
         address reserveAddress = reservesList[i];
+        // @dev legacy check from when dropReserve could leave gaps; see docs/3.7/drop-reserve-removal.md
         if (reserveAddress != address(0)) {
           DataTypes.ReserveCache memory reserveCache = reservesData[reserveAddress].cache();
           if (reserveCache.reserveConfiguration.getActive()) {

@@ -82,12 +82,6 @@ interface IPoolConfigurator {
   event ReservePaused(address indexed asset, bool paused);
 
   /**
-   * @dev Emitted when a reserve is dropped.
-   * @param asset The address of the underlying asset of the reserve
-   */
-  event ReserveDropped(address indexed asset);
-
-  /**
    * @dev Emitted when a reserve factor is updated.
    * @param asset The address of the underlying asset of the reserve
    * @param oldReserveFactor The old reserve factor, expressed in bps
@@ -464,12 +458,6 @@ interface IPoolConfigurator {
     string calldata label,
     bool isolated
   ) external;
-
-  /**
-   * @notice Drops a reserve entirely.
-   * @param asset The address of the reserve to drop
-   */
-  function dropReserve(address asset) external;
 
   /**
    * @notice Updates the flash loan premium. All this premium

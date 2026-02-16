@@ -31,18 +31,6 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
     contracts.poolConfiguratorProxy.initReserves(input);
   }
 
-  function test_reverts_notAdmin_dropReserve(address caller) public {
-    vm.assume(
-      !contracts.aclManager.isPoolAdmin(caller) &&
-        caller != address(contracts.poolAddressesProvider)
-    );
-
-    vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotPoolAdmin.selector));
-
-    vm.prank(caller);
-    contracts.poolConfiguratorProxy.dropReserve(tokenList.usdx);
-  }
-
   function test_reverts_notAdmin_updateAToken(address caller) public {
     ConfiguratorInputTypes.UpdateATokenInput memory input;
     vm.assume(

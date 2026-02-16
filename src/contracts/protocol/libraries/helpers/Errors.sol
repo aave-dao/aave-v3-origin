@@ -46,8 +46,6 @@ library Errors {
   error InconsistentFlashloanParams(); // 'Inconsistent flashloan parameters'
   error BorrowCapExceeded(); // 'Borrow cap is exceeded'
   error SupplyCapExceeded(); // 'Supply cap is exceeded'
-  error UnderlyingClaimableRightsNotZero(); // 'Claimable rights over underlying not zero (aToken supply or accruedToTreasury)'
-  error VariableDebtSupplyNotZero(); // 'Variable debt supply is not zero'
   error LtvValidationFailed(); // 'Ltv validation failed'
   error InconsistentEModeCategory(); // 'Inconsistent eMode category'
   error PriceOracleSentinelCheckFailed(); // 'Price oracle sentinel validation failed'

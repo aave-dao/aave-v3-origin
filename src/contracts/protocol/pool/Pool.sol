@@ -535,6 +535,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
     address[] memory reservesList = new address[](reservesListCount);
 
     for (uint256 i = 0; i < reservesListCount; i++) {
+      // @dev legacy check from when dropReserve could leave gaps; see docs/3.7/drop-reserve-removal.md
       if (_reservesList[i] != address(0)) {
         reservesList[i - droppedReservesCount] = _reservesList[i];
       } else {
@@ -621,11 +622,6 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
     ) {
       _reservesCount++;
     }
-  }
-
-  /// @inheritdoc IPool
-  function dropReserve(address asset) external virtual override onlyPoolConfigurator {
-    PoolLogic.executeDropReserve(_reserves, _reservesList, asset);
   }
 
   /// @inheritdoc IPool

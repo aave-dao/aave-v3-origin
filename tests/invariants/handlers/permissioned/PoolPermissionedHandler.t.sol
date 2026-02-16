@@ -24,9 +24,8 @@ contract PoolPermissionedHandler is BaseHandler {
   ///////////////////////////////////////////////////////////////////////////////////////////////
 
   // Not included actions:
-  // 1. dropReserve
-  // 2. updateAToken
-  // 3. updateVariableDebtToken
+  // 1. updateAToken
+  // 2. updateVariableDebtToken
 
   function setReservePause(bool paused, uint40 gracePeriod, uint8 i) external {
     address asset = _getRandomBaseAsset(i);
