@@ -10,9 +10,9 @@ library BorrowEngine {
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
 
   function executeBorrowSide(
-    IEngine.EngineConstants calldata engineConstants,
+    IEngine.EngineConstants memory engineConstants,
     IEngine.BorrowUpdate[] memory updates
-  ) external {
+  ) internal {
     require(updates.length != 0, 'AT_LEAST_ONE_UPDATE_REQUIRED');
 
     _configBorrowSide(engineConstants.poolConfigurator, engineConstants.pool, updates);

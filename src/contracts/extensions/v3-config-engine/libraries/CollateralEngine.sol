@@ -12,9 +12,9 @@ library CollateralEngine {
   using PercentageMath for uint256;
 
   function executeCollateralSide(
-    IEngine.EngineConstants calldata engineConstants,
+    IEngine.EngineConstants memory engineConstants,
     IEngine.CollateralUpdate[] memory updates
-  ) external {
+  ) internal {
     require(updates.length != 0, 'AT_LEAST_ONE_UPDATE_REQUIRED');
 
     _configCollateralSide(engineConstants.poolConfigurator, engineConstants.pool, updates);

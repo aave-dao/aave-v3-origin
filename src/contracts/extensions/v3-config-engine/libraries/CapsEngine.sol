@@ -6,9 +6,9 @@ import {IAaveV3ConfigEngine as IEngine, IPoolConfigurator} from '../IAaveV3Confi
 
 library CapsEngine {
   function executeCapsUpdate(
-    IEngine.EngineConstants calldata engineConstants,
+    IEngine.EngineConstants memory engineConstants,
     IEngine.CapsUpdate[] memory updates
-  ) external {
+  ) internal {
     require(updates.length != 0, 'AT_LEAST_ONE_UPDATE_REQUIRED');
 
     _configureCaps(engineConstants.poolConfigurator, updates);

@@ -15,18 +15,18 @@ library EModeEngine {
   error NoAvailableEmodeCategory();
 
   function executeAssetsEModeUpdate(
-    IEngine.EngineConstants calldata engineConstants,
+    IEngine.EngineConstants memory engineConstants,
     IEngine.AssetEModeUpdate[] memory updates
-  ) external {
+  ) internal {
     require(updates.length != 0, 'AT_LEAST_ONE_UPDATE_REQUIRED');
 
     _configAssetsEMode(engineConstants.poolConfigurator, engineConstants.pool, updates);
   }
 
   function executeEModeCategoriesCreate(
-    IEngine.EngineConstants calldata engineConstants,
+    IEngine.EngineConstants memory engineConstants,
     IEngine.EModeCategoryCreation[] memory creations
-  ) external {
+  ) internal {
     for (uint256 i; i < creations.length; i++) {
       require(
         keccak256(abi.encode(creations[i].label)) !=
@@ -62,9 +62,9 @@ library EModeEngine {
   }
 
   function executeEModeCategoriesUpdate(
-    IEngine.EngineConstants calldata engineConstants,
+    IEngine.EngineConstants memory engineConstants,
     IEngine.EModeCategoryUpdate[] memory updates
-  ) external {
+  ) internal {
     require(updates.length != 0, 'AT_LEAST_ONE_UPDATE_REQUIRED');
 
     _configEModeCategories(engineConstants.poolConfigurator, engineConstants.pool, updates);

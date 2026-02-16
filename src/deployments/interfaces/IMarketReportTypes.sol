@@ -123,13 +123,6 @@ struct MiscReport {
 
 struct ConfigEngineReport {
   address configEngine;
-  address listingEngine;
-  address eModeEngine;
-  address borrowEngine;
-  address collateralEngine;
-  address priceFeedEngine;
-  address rateEngine;
-  address capsEngine;
 }
 
 struct StaticATokenReport {
