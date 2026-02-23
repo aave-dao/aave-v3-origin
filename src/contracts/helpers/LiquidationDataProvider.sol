@@ -251,9 +251,8 @@ contract LiquidationDataProvider is ILiquidationDataProvider {
 
           collateralAmountToLiquidate = ((debtInfo.price *
             debtAmountToLiquidate *
-            collateralInfo.assetUnit) / (collateralInfo.price * debtInfo.assetUnit)).percentMul(
-              liquidationBonus
-            );
+            collateralInfo.assetUnit) / (collateralInfo.price * debtInfo.assetUnit))
+            .percentMulFloor(liquidationBonus);
         }
 
         localVars.liquidationProtocolFeePercentage = collateralConfiguration
@@ -262,9 +261,9 @@ contract LiquidationDataProvider is ILiquidationDataProvider {
         if (localVars.liquidationProtocolFeePercentage != 0) {
           localVars.bonusCollateral =
             collateralAmountToLiquidate -
-            collateralAmountToLiquidate.percentDiv(liquidationBonus);
+            collateralAmountToLiquidate.percentDivFloor(liquidationBonus);
 
-          liquidationProtocolFee = localVars.bonusCollateral.percentMul(
+          liquidationProtocolFee = localVars.bonusCollateral.percentMulCeil(
             localVars.liquidationProtocolFeePercentage
           );
 
@@ -288,7 +287,7 @@ contract LiquidationDataProvider is ILiquidationDataProvider {
     uint256 maxBaseCollateral = (debtInfo.price * maxDebtToLiquidate * collateralInfo.assetUnit) /
       (collateralInfo.price * debtInfo.assetUnit);
 
-    uint256 maxCollateralToLiquidate = maxBaseCollateral.percentMul(liquidationBonus);
+    uint256 maxCollateralToLiquidate = maxBaseCollateral.percentMulFloor(liquidationBonus);
 
     uint256 collateralAmountToLiquidate;
     uint256 debtAmountToLiquidate;
@@ -308,9 +307,9 @@ contract LiquidationDataProvider is ILiquidationDataProvider {
     uint256 liquidationProtocolFee;
     if (liquidationProtocolFeePercentage != 0) {
       uint256 bonusCollateral = collateralAmountToLiquidate -
-        collateralAmountToLiquidate.percentDiv(liquidationBonus);
+        collateralAmountToLiquidate.percentDivFloor(liquidationBonus);
 
-      liquidationProtocolFee = bonusCollateral.percentMul(liquidationProtocolFeePercentage);
+      liquidationProtocolFee = bonusCollateral.percentMulCeil(liquidationProtocolFeePercentage);
 
       collateralAmountToLiquidate -= liquidationProtocolFee;
     }

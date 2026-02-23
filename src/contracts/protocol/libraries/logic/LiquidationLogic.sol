@@ -565,7 +565,7 @@ library LiquidationLogic {
       (debtAssetPrice * debtToCover * collateralAssetUnit) /
       (vars.collateralAssetPrice * debtAssetUnit);
 
-    vars.maxCollateralToLiquidate = vars.baseCollateral.percentMul(liquidationBonus);
+    vars.maxCollateralToLiquidate = vars.baseCollateral.percentMulFloor(liquidationBonus);
 
     if (vars.maxCollateralToLiquidate > borrowerCollateralBalance) {
       vars.collateralAmount = borrowerCollateralBalance;
@@ -583,9 +583,9 @@ library LiquidationLogic {
     if (vars.liquidationProtocolFeePercentage != 0) {
       vars.bonusCollateral =
         vars.collateralAmount -
-        vars.collateralAmount.percentDiv(liquidationBonus);
+        vars.collateralAmount.percentDivFloor(liquidationBonus);
 
-      vars.liquidationProtocolFee = vars.bonusCollateral.percentMul(
+      vars.liquidationProtocolFee = vars.bonusCollateral.percentMulCeil(
         vars.liquidationProtocolFeePercentage
       );
       vars.collateralAmount -= vars.liquidationProtocolFee;
