@@ -213,7 +213,7 @@ interface IPoolConfigurator {
    * @dev Emitted when the implementation of a variable debt token is upgraded.
    * @param asset The address of the underlying asset of the reserve
    * @param proxy The variable debt token proxy address
-   * @param implementation The new aToken implementation
+   * @param implementation The new variable debt token implementation
    */
   event VariableDebtTokenUpgraded(
     address indexed asset,
@@ -230,7 +230,7 @@ interface IPoolConfigurator {
   event DebtCeilingChanged(address indexed asset, uint256 oldDebtCeiling, uint256 newDebtCeiling);
 
   /**
-   * @dev Emitted when the the siloed borrowing state for an asset is changed.
+   * @dev Emitted when the siloed borrowing state for an asset is changed.
    * @param asset The address of the underlying asset of the reserve
    * @param oldState The old siloed borrowing state
    * @param newState The new siloed borrowing state
