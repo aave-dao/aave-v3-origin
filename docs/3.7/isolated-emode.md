@@ -114,7 +114,6 @@ Since `EModeCategory` is stored in a mapping (`mapping(uint8 => EModeCategory)`)
 
 - Existing eModes will read `isolated = false` by default (zero-initialized), preserving their current non-isolated behavior. The activation proposal of Aave v3.7 can also set `isolated = true` for the e-Modes desired.
 - No existing storage slots are shifted or reinterpreted.
-- Reading `isolated` incurs no extra SLOAD since it shares a slot with `ltv`, `liquidationThreshold`, `liquidationBonus`, and `collateralBitmap`.
 
 ### Changelog
 
