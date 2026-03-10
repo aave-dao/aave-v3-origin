@@ -90,12 +90,9 @@ library ValidationLogic {
 
   struct ValidateBorrowLocalVars {
     uint256 amount;
-    uint256 userDebtInBaseCurrency;
-    uint256 availableLiquidity;
     uint256 totalDebt;
     uint256 reserveDecimals;
     uint256 borrowCap;
-    uint256 amountInBaseCurrency;
     uint256 assetUnit;
     bool isActive;
     bool isFrozen;

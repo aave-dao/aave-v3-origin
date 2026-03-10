@@ -259,7 +259,6 @@ library DataTypes {
     uint256 flashLoanPremium;
     address addressesProvider;
     address pool;
-    uint8 userEModeCategory;
     bool isAuthorizedFlashBorrower;
   }
 

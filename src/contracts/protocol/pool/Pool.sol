@@ -394,7 +394,6 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
       flashLoanPremium: _flashLoanPremium,
       addressesProvider: address(ADDRESSES_PROVIDER),
       pool: address(this),
-      userEModeCategory: _usersEModeCategory[onBehalfOf],
       isAuthorizedFlashBorrower: IACLManager(ADDRESSES_PROVIDER.getACLManager()).isFlashBorrower(
         _msgSender()
       )
