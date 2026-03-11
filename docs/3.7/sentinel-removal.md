@@ -33,7 +33,7 @@ These false positives can, in the worst case, lead to the following problems:
 
 1. **Borrows** -- No longer gated by sequencer status. Borrows succeed as long as standard validations pass (active, not frozen, not paused, sufficient collateral, within caps).
 
-2. **Liquidations** -- No longer gated by sequencer status. Liquidations succeed whenever health factor < 1.0 and the liquidation grace period has elapsed. The `MINIMUM_HEALTH_FACTOR_LIQUIDATION_THRESHOLD` constant (0.95 HF) is no longer needed for sentinel bypass logic but remains in `ValidationLogic` as it is still referenced by `LiquidationDataProvider`.
+2. **Liquidations** -- No longer gated by sequencer status. Liquidations succeed whenever health factor < 1.0 and the liquidation grace period has elapsed. The `MINIMUM_HEALTH_FACTOR_LIQUIDATION_THRESHOLD` constant (0.95 HF) is removed from `ValidationLogic` as it was only needed for the sentinel bypass carve-out.
 
 3. **Gas savings** -- Removing the sentinel check eliminates an external call to `PoolAddressesProvider.getPriceOracleSentinel()` and a potential further external call to `PriceOracleSentinel.isBorrowAllowed()` / `isLiquidationAllowed()` (which itself calls `SequencerOracle.latestRoundData()`). This saves gas on every borrow and liquidation.
 
