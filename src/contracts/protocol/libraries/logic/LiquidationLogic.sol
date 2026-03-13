@@ -176,8 +176,10 @@ library LiquidationLogic {
     DataTypes.ReserveData storage debtReserve = reservesData[params.debtAsset];
     DataTypes.UserConfigurationMap storage borrowerConfig = usersConfig[params.borrower];
     vars.debtReserveCache = debtReserve.cache();
-    vars.collateralReserveCache = collateralReserve.cache();
     debtReserve.updateState(vars.debtReserveCache);
+    // caching of the collateral happens after debtReserveCache is updated
+    // this ensures a non stale cache is used
+    vars.collateralReserveCache = collateralReserve.cache();
     collateralReserve.updateState(vars.collateralReserveCache);
 
     (
