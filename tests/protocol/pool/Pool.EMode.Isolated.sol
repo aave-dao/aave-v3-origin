@@ -250,6 +250,73 @@ contract PoolEModeIsolatedTests is TestnetProcedures {
     pool.borrow(tokenList.usdx, 100e6, 2, 0, alice);
   }
 
+  function test_isolatedEmode_supplyAutoEnablesBitmapCollateral() public {
+    // Alice enters isolated eMode 3 first (no positions)
+    vm.prank(alice);
+    pool.setUserEMode(EMODE_ISOLATED);
+
+    // Alice first-time supplies usdx (which IS in the eMode collateralBitmap)
+    // It should be auto-enabled as collateral since validateUseAsCollateral returns true for bitmap assets
+    vm.startPrank(alice);
+    deal(tokenList.usdx, alice, 1000e6);
+    IERC20(tokenList.usdx).approve(address(pool), 1000e6);
+    pool.supply(tokenList.usdx, 1000e6, alice, 0);
+    vm.stopPrank();
+
+    DataTypes.UserConfigurationMap memory userConfig = pool.getUserConfiguration(alice);
+    DataTypes.ReserveDataLegacy memory usdxData = pool.getReserveData(tokenList.usdx);
+    assertTrue(
+      userConfig.isUsingAsCollateral(usdxData.id),
+      'Bitmap asset should be auto-enabled as collateral on first supply in isolated eMode'
+    );
+  }
+
+  function test_isolatedEmode_switchBetweenIsolatedEmodes() public {
+    // Create eMode 4 (isolated) with ONLY wbtc as collateral (different bitmap from eMode 3)
+    vm.startPrank(poolAdmin);
+    contracts.poolConfiguratorProxy.setEModeCategory(
+      4,
+      93_00,
+      94_00,
+      101_00,
+      'ISOLATED_GROUP_B',
+      true
+    );
+    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.wbtc, 4, true);
+    contracts.poolConfiguratorProxy.setAssetBorrowableInEMode(tokenList.usdx, 4, true);
+    vm.stopPrank();
+
+    // Alice supplies both usdx and wbtc, enables both as collateral
+    _supplyAndEnableAsCollateral(tokenList.usdx, 1000e6, alice);
+    _supplyAndEnableAsCollateral(tokenList.wbtc, 1e8, alice);
+
+    // Alice enters isolated eMode 3 (usdx+wbtc in bitmap) — should succeed
+    vm.prank(alice);
+    pool.setUserEMode(EMODE_ISOLATED);
+    assertEq(pool.getUserEMode(alice), EMODE_ISOLATED);
+
+    // Switching to isolated eMode 4 (only wbtc in bitmap) should REVERT
+    // because usdx is enabled as collateral but NOT in eMode 4's bitmap
+    vm.expectRevert(
+      abi.encodeWithSelector(Errors.InvalidCollateralInEmode.selector, tokenList.usdx, 4)
+    );
+    vm.prank(alice);
+    pool.setUserEMode(4);
+
+    // Alice disables usdx as collateral, then switching should succeed
+    vm.prank(alice);
+    pool.setUserUseReserveAsCollateral(tokenList.usdx, false);
+
+    vm.prank(alice);
+    pool.setUserEMode(4);
+    assertEq(pool.getUserEMode(alice), 4);
+
+    // Verify: in eMode 4, usdx (not in bitmap) has LTV=0 and wbtc (in bitmap) has eMode LTV
+    (, , , , uint256 ltv, ) = pool.getUserAccountData(alice);
+    // LTV should reflect only wbtc's eMode 4 LTV (93_00) since usdx collateral is disabled
+    assertEq(ltv, 93_00, 'LTV should equal eMode 4 LTV with only wbtc collateral');
+  }
+
   function test_isolatedEmode_disabledNonEmodeCollateralAllowsEntry() public {
     // Alice supplies weth but does NOT enable it as collateral
     vm.prank(alice);

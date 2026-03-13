@@ -386,9 +386,7 @@ library LiquidationLogic {
     // This check uses the actual post-transfer scaled balance rather than the unscaled
     // arithmetic, which can miss full consumption due to rayDivCeil rounding in the
     // burn/transfer paths independently rounding up and jointly exceeding the scaled balance.
-    if (
-      IAToken(vars.collateralReserveCache.aTokenAddress).scaledBalanceOf(params.borrower) == 0
-    ) {
+    if (IAToken(vars.collateralReserveCache.aTokenAddress).scaledBalanceOf(params.borrower) == 0) {
       borrowerConfig.setUsingAsCollateral(
         collateralReserve.id,
         params.collateralAsset,
