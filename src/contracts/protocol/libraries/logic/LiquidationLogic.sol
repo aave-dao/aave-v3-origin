@@ -321,20 +321,6 @@ library LiquidationLogic {
       );
     }
 
-    // If the collateral being liquidated is equal to the user balance,
-    // we set the currency as not being used as collateral anymore
-    if (
-      vars.actualCollateralToLiquidate + vars.liquidationProtocolFeeAmount ==
-      vars.borrowerCollateralBalance
-    ) {
-      borrowerConfig.setUsingAsCollateral(
-        collateralReserve.id,
-        params.collateralAsset,
-        params.borrower,
-        false
-      );
-    }
-
     bool hasNoCollateralLeft = vars.totalCollateralInBaseCurrency ==
       vars.collateralToLiquidateInBaseCurrency;
     _burnDebtTokens(
@@ -394,6 +380,21 @@ library LiquidationLogic {
         scaledAmount: scaledDownLiquidationProtocolFee,
         index: vars.collateralReserveCache.nextLiquidityIndex
       });
+    }
+
+    // Clear collateral bit if borrower's scaled balance was fully consumed.
+    // This check uses the actual post-transfer scaled balance rather than the unscaled
+    // arithmetic, which can miss full consumption due to rayDivCeil rounding in the
+    // burn/transfer paths independently rounding up and jointly exceeding the scaled balance.
+    if (
+      IAToken(vars.collateralReserveCache.aTokenAddress).scaledBalanceOf(params.borrower) == 0
+    ) {
+      borrowerConfig.setUsingAsCollateral(
+        collateralReserve.id,
+        params.collateralAsset,
+        params.borrower,
+        false
+      );
     }
 
     // burn bad debt if necessary

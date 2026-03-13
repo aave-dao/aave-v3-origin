@@ -1240,4 +1240,90 @@ contract PoolLiquidationTests is TestnetProcedures {
     }
     vm.stopPrank();
   }
+
+  // Regression test for L-08: Collateral bit may remain set after collateral is fully consumed
+  // due to rayDivCeil rounding in scaled domain consuming all shares while the unscaled equality
+  // check fails to detect full consumption.
+  //
+  // Setup:
+  //   scaledBalance = 3, liquidityIndex = 1.5e27
+  //   borrowerCollateralBalance = rayMulFloor(3, 1.5e27) = floor(4.5) = 4
+  //   debt = 3 (full repayment, so dust check is skipped)
+  //   With 5% bonus and 100% protocol fee:
+  //     maxCollateralToLiquidate = floor(3 * 1.05) = 3
+  //     actualCollateralToLiquidate = 2, fee = 1
+  //     Unscaled check: 2 + 1 = 3 != 4 => collateral bit NOT cleared
+  //   But in scaled domain:
+  //     rayDivCeil(2, 1.5e27) = 2, rayDivCeil(1, 1.5e27) = 1 => total = 3 = scaledBalance
+  //     All scaled shares consumed, yet collateral bit remains set.
+  function test_collateral_bit_remains_after_full_scaled_consumption() public {
+    // Configure USDX with low liquidation threshold so small debt makes HF < 1
+    vm.startPrank(poolAdmin);
+    contracts.poolConfiguratorProxy.configureReserveAsCollateral(
+      tokenList.usdx,
+      40_00, // ltv (40%)
+      50_00, // liquidation threshold (50%)
+      105_00 // liquidation bonus (5%)
+    );
+    // 100% protocol fee: all bonus goes to treasury
+    contracts.poolConfiguratorProxy.setLiquidationProtocolFee(tokenList.usdx, 100_00);
+    vm.stopPrank();
+
+    // Alice supplies 3 units USDX (scaledBalance = 3 at initial index 1.0e27)
+    vm.startPrank(alice);
+    contracts.poolProxy.supply(tokenList.usdx, 3, alice, 0);
+    // Borrow 1 unit (within 40% LTV of 3)
+    contracts.poolProxy.borrow(tokenList.usdx, 1, 2, 0, alice);
+    vm.stopPrank();
+
+    // Manipulate indexes:
+    //   liquidityIndex = 1.5e27 => collateral = floor(3 * 1.5) = 4
+    //   variableBorrowIndex = 3e27 => debt = ceil(1 * 3) = 3
+    //   HF = 4 * 50% / 3 = 0.667 < 1 (liquidatable)
+    AaveSetters.setLiquidityIndex(address(contracts.poolProxy), tokenList.usdx, 1.5e27);
+    AaveSetters.setVariableBorrowIndex(address(contracts.poolProxy), tokenList.usdx, 3e27);
+    AaveSetters.setLastUpdateTimestamp(
+      address(contracts.poolProxy),
+      tokenList.usdx,
+      uint40(block.timestamp)
+    );
+
+    address aToken = contracts.poolProxy.getReserveAToken(tokenList.usdx);
+    DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
+      tokenList.usdx
+    );
+
+    // Verify pre-conditions
+    assertEq(IAToken(aToken).scaledBalanceOf(alice), 3, 'pre: scaled balance should be 3');
+    assertTrue(
+      contracts.poolProxy.getUserConfiguration(alice).isUsingAsCollateral(reserveData.id),
+      'pre: should be using USDX as collateral'
+    );
+
+    // Bob liquidates alice's full debt
+    vm.prank(bob);
+    contracts.poolProxy.liquidationCall(
+      tokenList.usdx, // collateral
+      tokenList.usdx, // debt
+      alice,
+      type(uint256).max,
+      false
+    );
+
+    // After liquidation: scaled balance is 0 (all shares consumed by rounding)
+    assertEq(
+      IAToken(aToken).scaledBalanceOf(alice),
+      0,
+      'post: scaled balance should be 0 after liquidation'
+    );
+
+    // After fix: collateral bit should be cleared by the post-transfer scaled balance check
+    DataTypes.UserConfigurationMap memory configAfter = contracts.poolProxy.getUserConfiguration(
+      alice
+    );
+    assertFalse(
+      configAfter.isUsingAsCollateral(reserveData.id),
+      'collateral bit should be cleared when scaled balance is zero'
+    );
+  }
 }
