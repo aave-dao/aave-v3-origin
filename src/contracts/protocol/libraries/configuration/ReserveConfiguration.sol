@@ -46,7 +46,7 @@ library ReserveConfiguration {
   uint256 internal constant LIQUIDATION_PROTOCOL_FEE_START_BIT_POSITION = 152;
   //@notice there is an unoccupied hole of 8 bits from 168 to 175 left from pre 3.2 eModeCategory
   //@notice there is an unoccupied hole of 34 bits from 176 to 211 left from pre 3.4 unbackedMintCap
-  //@notice there is an unoccupied hole of 40 bits from 212 to 251 left from pre 3.4 unbackedMintCap
+  //@notice there is an unoccupied hole of 40 bits from 212 to 251 left from pre 3.7 debtCeiling
   //@notice DEPRECATED: in v3.4 all reserves have virtual accounting enabled
   uint256 internal constant VIRTUAL_ACC_START_BIT_POSITION = 252;
 
