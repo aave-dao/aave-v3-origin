@@ -1,6 +1,6 @@
 
 // aave imports
-import "aux/aToken.spec";
+import "auxiliary/aToken.spec";
 
 methods {
   //  function getReserveDataExtended(address) external returns (DataTypes.ReserveData memory) envfree;
