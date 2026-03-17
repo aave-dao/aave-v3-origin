@@ -89,12 +89,7 @@ contract ProtocolV3TestBase is Test {
     bool poolConfigs
   ) public virtual returns (ReserveConfig[] memory) {
     string memory path = string(abi.encodePacked('./reports/', reportName, '.json'));
-    // overwrite with empty json to later be extended as foundry does not currently support adding new keys
-    vm.writeFile(
-      path,
-      '{ "eModes": {}, "reserves": {}, "strategies": {}, "poolConfiguration": {}, "raw": {} }'
-    );
-    vm.serializeUint('root', 'chainId', block.chainid);
+    vm.writeJson(vm.serializeUint('root', 'chainId', block.chainid), path);
     ReserveConfig[] memory configs = _getReservesConfigs(pool);
     if (reserveConfigs) _writeReserveConfigs(path, configs, pool);
     if (strategyConfigs) _writeStrategyConfigs(path, configs);
@@ -105,7 +100,6 @@ contract ProtocolV3TestBase is Test {
   }
 
   function _writeEModeConfigs(string memory path, IPool pool) internal virtual {
-    // keys for json stringification
     string memory eModesKey = 'emodes';
     string memory content = '{}';
     vm.serializeJson(eModesKey, '{}');
@@ -136,15 +130,13 @@ contract ProtocolV3TestBase is Test {
         emptyCounter = 0;
       }
     }
-    string memory output = vm.serializeString('root', 'eModes', content);
-    vm.writeJson(output, path);
+    vm.writeJson(content, path, '.eModes');
   }
 
   function _writeStrategyConfigs(
     string memory path,
     ReserveConfig[] memory configs
   ) internal virtual {
-    // keys for json stringification
     string memory strategiesKey = 'strategies';
     string memory content = '{}';
     vm.serializeJson(strategiesKey, '{}');
@@ -185,8 +177,7 @@ contract ProtocolV3TestBase is Test {
 
       content = vm.serializeString(strategiesKey, key, object);
     }
-    string memory output = vm.serializeString('root', 'strategies', content);
-    vm.writeJson(output, path);
+    vm.writeJson(content, path, '.strategies');
   }
 
   function _writeReserveConfigs(
@@ -194,7 +185,6 @@ contract ProtocolV3TestBase is Test {
     ReserveConfig[] memory configs,
     IPool pool
   ) internal virtual {
-    // keys for json stringification
     string memory reservesKey = 'reserves';
     string memory content = '{}';
     vm.serializeJson(reservesKey, '{}');
@@ -273,34 +263,20 @@ contract ProtocolV3TestBase is Test {
       );
       content = vm.serializeString(reservesKey, key, out);
     }
-    string memory output = vm.serializeString('root', 'reserves', content);
-    vm.writeJson(output, path);
+    vm.writeJson(content, path, '.reserves');
   }
 
   function _writePoolConfiguration(string memory path, IPool pool) internal virtual {
-    // keys for json stringification
     string memory poolConfigKey = 'poolConfig';
-
-    // addresses provider
     IPoolAddressesProvider addressesProvider = IPoolAddressesProvider(pool.ADDRESSES_PROVIDER());
     vm.serializeAddress(poolConfigKey, 'poolAddressesProvider', address(addressesProvider));
-
-    // oracles
     vm.serializeAddress(poolConfigKey, 'oracle', addressesProvider.getPriceOracle());
-
-    // pool configurator
     IPoolConfigurator configurator = IPoolConfigurator(addressesProvider.getPoolConfigurator());
     vm.serializeAddress(poolConfigKey, 'poolConfigurator', address(configurator));
-
-    // PoolDataProvider
     IPoolDataProvider pdp = IPoolDataProvider(addressesProvider.getPoolDataProvider());
     vm.serializeAddress(poolConfigKey, 'protocolDataProvider', address(pdp));
-
-    // pool
     string memory content = vm.serializeAddress(poolConfigKey, 'pool', address(pool));
-
-    string memory output = vm.serializeString('root', 'poolConfig', content);
-    vm.writeJson(output, path);
+    vm.writeJson(content, path, '.poolConfig');
   }
 
   function _getReservesConfigs(IPool pool) internal view virtual returns (ReserveConfig[] memory) {
