@@ -223,13 +223,6 @@ interface IPoolConfigurator {
   );
 
   /**
-   * @dev Emitted when the bridge protocol fee is updated.
-   * @param oldBridgeProtocolFee The old protocol fee, expressed in bps
-   * @param newBridgeProtocolFee The new protocol fee, expressed in bps
-   */
-  event BridgeProtocolFeeUpdated(uint256 oldBridgeProtocolFee, uint256 newBridgeProtocolFee);
-
-  /**
    * @dev Emitted when the total premium on flashloans is updated.
    * @param oldFlashloanPremiumTotal The old premium, expressed in bps
    * @param newFlashloanPremiumTotal The new premium, expressed in bps
@@ -425,7 +418,7 @@ interface IPoolConfigurator {
   function setAssetCollateralInEMode(address asset, uint8 categoryId, bool collateral) external;
 
   /**
-   * @notice Enables/disables an asset to be collateral in a selected eMode.
+   * @notice Enables/disables an asset to be ltvzero in a selected eMode.
    * @param asset The address of the underlying asset of the reserve
    * @param categoryId The eMode categoryId
    * @param ltvzero True if the asset should be ltvzero in the given eMode category, false otherwise.

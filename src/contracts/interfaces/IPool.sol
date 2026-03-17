@@ -789,7 +789,7 @@ interface IPool {
    */
   function setUserEModeOnBehalfOf(uint8 categoryId, address onBehalfOf) external;
 
-  /*
+  /**
    * @notice Returns true if the `positionManager` address is approved to use the position manager role on behalf of the user.
    * @param user The address of the user
    * @param positionManager The address of the position manager

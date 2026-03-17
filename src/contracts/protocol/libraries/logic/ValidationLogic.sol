@@ -2,8 +2,6 @@
 pragma solidity ^0.8.10;
 
 import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
-import {Address} from '../../../dependencies/openzeppelin/contracts/Address.sol';
-import {GPv2SafeERC20} from '../../../dependencies/gnosis/contracts/GPv2SafeERC20.sol';
 import {IAToken} from '../../../interfaces/IAToken.sol';
 import {ReserveConfiguration} from '../configuration/ReserveConfiguration.sol';
 import {UserConfiguration} from '../configuration/UserConfiguration.sol';
@@ -14,7 +12,6 @@ import {PercentageMath} from '../math/PercentageMath.sol';
 import {DataTypes} from '../types/DataTypes.sol';
 import {ReserveLogic} from './ReserveLogic.sol';
 import {GenericLogic} from './GenericLogic.sol';
-import {SafeCast} from 'openzeppelin-contracts/contracts/utils/math/SafeCast.sol';
 
 /**
  * @title ValidationLogic library
@@ -25,11 +22,8 @@ library ValidationLogic {
   using ReserveLogic for DataTypes.ReserveData;
   using TokenMath for uint256;
   using PercentageMath for uint256;
-  using SafeCast for uint256;
-  using GPv2SafeERC20 for IERC20;
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
   using UserConfiguration for DataTypes.UserConfigurationMap;
-  using Address for address;
 
   /**
    * @dev Minimum health factor to consider a user position healthy

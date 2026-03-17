@@ -187,7 +187,8 @@ interface IAaveV3ConfigEngine {
    *   ltv: 60_00,
    *   liqThreshold: 70_00,
    *   liqBonus: EngineFlags.KEEP_CURRENT,
-   *   label: EngineFlags.KEEP_CURRENT_STRING
+   *   label: EngineFlags.KEEP_CURRENT_STRING,
+   *   isolated: EngineFlags.ENABLED
    * })
    */
   struct EModeCategoryUpdate {
