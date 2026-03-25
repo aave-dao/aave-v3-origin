@@ -249,7 +249,7 @@ contract PoolLiquidationCloseFactorTests is TestnetProcedures {
   ) internal {
     (, uint256 debtInBaseCurrency, , , , ) = contracts.poolProxy.getUserAccountData(bob);
     // first we calculate the maximal possible liquidatable
-    (, uint256 debtAmountAt100, , ) = LiquidationHelper._getLiquidationParams(
+    (, uint256 debtAmountAt100, ) = LiquidationHelper._getLiquidationParams(
       contracts.poolProxy,
       bob,
       collateralAsset,

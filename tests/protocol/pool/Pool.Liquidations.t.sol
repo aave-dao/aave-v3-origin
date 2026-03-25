@@ -403,6 +403,13 @@ contract PoolLiquidationTests is TestnetProcedures {
 
     _checkInterestRates(params.collateralAsset);
     _checkInterestRates(params.debtAsset);
+
+    // Only USDX debt is fully liquidated — BTC collateral is partially consumed, flag stays on
+    uint16 collateralId = contracts.poolProxy.getReserveData(params.collateralAsset).id;
+    assertTrue(
+      contracts.poolProxy.getUserConfiguration(params.user).isUsingAsCollateral(collateralId),
+      'collateral flag should remain after partial collateral consumption'
+    );
   }
 
   function test_full_liquidate_atokens_edgecase_collateral_not_enough_to_cover_fee() public {
@@ -427,6 +434,13 @@ contract PoolLiquidationTests is TestnetProcedures {
 
     address atoken = contracts.poolProxy.getReserveAToken(tokenList.usdx);
     assertEq(IERC20(atoken).balanceOf(alice), 0);
+
+    // All collateral consumed → flag should be cleared
+    uint16 usdxId = contracts.poolProxy.getReserveData(tokenList.usdx).id;
+    assertFalse(
+      contracts.poolProxy.getUserConfiguration(alice).isUsingAsCollateral(usdxId),
+      'collateral flag should be cleared when all collateral consumed'
+    );
   }
 
   function test_full_liquidate_multiple_variable_borrows() public {
@@ -477,6 +491,13 @@ contract PoolLiquidationTests is TestnetProcedures {
 
     _checkInterestRates(params.collateralAsset);
     _checkInterestRates(params.debtAsset);
+
+    // Only USDX debt is fully liquidated — BTC collateral is partially consumed, flag stays on
+    uint16 collateralId = contracts.poolProxy.getReserveData(params.collateralAsset).id;
+    assertTrue(
+      contracts.poolProxy.getUserConfiguration(params.user).isUsingAsCollateral(collateralId),
+      'collateral flag should remain after partial collateral consumption (receiveAToken)'
+    );
   }
 
   function test_full_liquidate_multiple_supplies_and_variable_borrows() public {
@@ -561,6 +582,19 @@ contract PoolLiquidationTests is TestnetProcedures {
 
     _checkInterestRates(params.collateralAsset);
     _checkInterestRates(params.debtAsset);
+
+    // WETH collateral fully consumed → flag cleared
+    uint16 wethId = contracts.poolProxy.getReserveData(tokenList.weth).id;
+    assertFalse(
+      contracts.poolProxy.getUserConfiguration(params.user).isUsingAsCollateral(wethId),
+      'WETH collateral flag should be cleared after full liquidation'
+    );
+    // WBTC collateral still present → flag stays on
+    uint16 wbtcId = contracts.poolProxy.getReserveData(tokenList.wbtc).id;
+    assertTrue(
+      contracts.poolProxy.getUserConfiguration(params.user).isUsingAsCollateral(wbtcId),
+      'WBTC collateral flag should remain (not liquidated)'
+    );
   }
 
   function test_self_liquidate_position_shouldRevert() public {
@@ -1324,6 +1358,250 @@ contract PoolLiquidationTests is TestnetProcedures {
     assertFalse(
       configAfter.isUsingAsCollateral(reserveData.id),
       'collateral bit should be cleared when scaled balance is zero'
+    );
+  }
+
+  // Regression: `hasNoCollateralLeft` must account for ceil rounding in burn/transfer
+  // paths that can fully deplete the scaled balance even when unscaled arithmetic
+  // predicts a leftover. When the position is fully consumed, the bad-debt path
+  // must fire so remaining debt is converted to deficit.
+  function test_hasNoCollateralLeft_accounts_for_ceil_rounding_single_debt() public {
+    vm.startPrank(poolAdmin);
+    contracts.poolConfiguratorProxy.configureReserveAsCollateral(
+      tokenList.usdx,
+      80_00, // ltv (80%)
+      85_00, // liquidation threshold (85%)
+      105_00 // liquidation bonus (5%)
+    );
+    contracts.poolConfiguratorProxy.setLiquidationProtocolFee(tokenList.usdx, 10_00);
+    vm.stopPrank();
+
+    vm.startPrank(alice);
+    contracts.poolProxy.supply(tokenList.usdx, 3, alice, 0);
+    contracts.poolProxy.borrow(tokenList.usdx, 2, 2, 0, alice);
+    vm.stopPrank();
+
+    stdstore
+      .target(IAaveOracle(report.aaveOracle).getSourceOfAsset(tokenList.usdx))
+      .sig('_latestAnswer()')
+      .checked_write(1e17);
+
+    AaveSetters.setLiquidityIndex(address(contracts.poolProxy), tokenList.usdx, 1.5e27);
+    AaveSetters.setVariableBorrowIndex(address(contracts.poolProxy), tokenList.usdx, 2.5e27);
+    AaveSetters.setLastUpdateTimestamp(
+      address(contracts.poolProxy),
+      tokenList.usdx,
+      uint40(block.timestamp)
+    );
+
+    address aToken = contracts.poolProxy.getReserveAToken(tokenList.usdx);
+    address varDebtToken = contracts.poolProxy.getReserveVariableDebtToken(tokenList.usdx);
+
+    assertEq(IAToken(aToken).scaledBalanceOf(alice), 3, 'pre: scaled collateral should be 3');
+    assertGt(IERC20(varDebtToken).balanceOf(alice), 0, 'pre: debt should be non-zero');
+
+    vm.prank(bob);
+    contracts.poolProxy.liquidationCall(tokenList.usdx, tokenList.usdx, alice, 3, false);
+
+    assertEq(IAToken(aToken).scaledBalanceOf(alice), 0, 'post: scaled collateral should be 0');
+    assertEq(
+      IERC20(varDebtToken).balanceOf(alice),
+      0,
+      'post: all debt should be burned (bad debt path should have fired)'
+    );
+    assertGt(
+      contracts.poolProxy.getReserveDeficit(tokenList.usdx),
+      0,
+      'post: deficit should be created for the outstanding debt'
+    );
+  }
+
+  // Regression: scaledCollateralConsumed can exceed scaledBalance when the two
+  // rayDivCeil operations (liquidator + fee) independently round up beyond the
+  // original scaled balance. The >= check must catch this.
+  // Here: scaledBalance=2, index=3e27, actual=4, fee=1 → rayDivCeil(4,3e27)+rayDivCeil(1,3e27) = 2+1 = 3 > 2
+  function test_hasNoCollateralLeft_accounts_for_ceil_rounding_sum_exceeds_scaled() public {
+    // Target state: scaledCollateral=2, scaledDebt=1, liqIndex=5e27, borrowIndex=9e27
+    // → balance = rayMulFloor(2, 5e27) = 10
+    // → debt = rayMulCeil(1, 9e27) = 9
+    // → maxCollateral = floor(9*1.05) = 9, bonusCollateral = 9-floor(9*10000/10500) = 9-8 = 1
+    // → fee = percentMulCeil(1, 1000) = 1, actual = 9-1 = 8, leftover = 10-9 = 1
+    // → rayDivCeil(8, 5e27) = ceil(8/5) = 2, rayDivCeil(1, 5e27) = ceil(1/5) = 1
+    // → scaledConsumed = 3 > scaledBalance = 2
+    _supplyAndEnableAsCollateral(tokenList.usdx, 2, alice);
+
+    vm.prank(alice);
+    contracts.poolProxy.borrow(tokenList.usdx, 1, 2, 0, alice);
+
+    vm.startPrank(poolAdmin);
+    contracts.poolConfiguratorProxy.configureReserveAsCollateral(
+      tokenList.usdx,
+      80_00,
+      85_00,
+      105_00
+    );
+    contracts.poolConfiguratorProxy.setLiquidationProtocolFee(tokenList.usdx, 10_00);
+    vm.stopPrank();
+
+    stdstore
+      .target(IAaveOracle(report.aaveOracle).getSourceOfAsset(tokenList.usdx))
+      .sig('_latestAnswer()')
+      .checked_write(1e17);
+
+    AaveSetters.setLiquidityIndex(address(contracts.poolProxy), tokenList.usdx, 5e27);
+    AaveSetters.setVariableBorrowIndex(address(contracts.poolProxy), tokenList.usdx, 9e27);
+    AaveSetters.setLastUpdateTimestamp(
+      address(contracts.poolProxy),
+      tokenList.usdx,
+      uint40(block.timestamp)
+    );
+
+    address aToken = contracts.poolProxy.getReserveAToken(tokenList.usdx);
+    address varDebtToken = contracts.poolProxy.getReserveVariableDebtToken(tokenList.usdx);
+
+    assertEq(IAToken(aToken).scaledBalanceOf(alice), 2, 'pre: scaled collateral should be 2');
+    assertEq(IERC20(varDebtToken).balanceOf(alice), 9, 'pre: debt should be 9');
+
+    vm.prank(bob);
+    contracts.poolProxy.liquidationCall(tokenList.usdx, tokenList.usdx, alice, 9, false);
+
+    assertEq(IAToken(aToken).scaledBalanceOf(alice), 0, 'post: scaled collateral should be 0');
+    assertEq(IERC20(varDebtToken).balanceOf(alice), 0, 'post: debt should be fully repaid');
+    assertFalse(
+      contracts.poolProxy.getUserConfiguration(alice).isUsingAsCollateral(
+        contracts.poolProxy.getReserveData(tokenList.usdx).id
+      ),
+      'post: collateral bit should be cleared despite scaledConsumed > scaledBalance'
+    );
+  }
+
+  // Regression: when ceil rounding depletes a user's only collateral and they have
+  // debt in a second reserve, _burnBadDebt must run so that debt is also handled.
+  function test_hasNoCollateralLeft_accounts_for_ceil_rounding_multi_debt() public {
+    IPool pool = contracts.poolProxy;
+    address collateralAsset = tokenList.usdx;
+    address secondDebtAsset = tokenList.weth;
+    uint16 reserveId = pool.getReserveData(collateralAsset).id;
+
+    {
+      uint256 collateralSupply = 5;
+      uint256 liquidityIndex = 1.3e27;
+      uint256 variableBorrowIndex = 1.5e27;
+      uint256 firstDebtBeforeIndexUpdate = 3;
+      uint256 firstDebtAfterIndexUpdate = 5;
+      uint256 residualWethDebt = 555_555_556;
+
+      _supplyAndEnableAsCollateral(collateralAsset, collateralSupply, alice);
+
+      vm.startPrank(alice);
+      pool.borrow(collateralAsset, firstDebtBeforeIndexUpdate, 2, 0, alice);
+      pool.borrow(secondDebtAsset, residualWethDebt, 2, 0, alice);
+      vm.stopPrank();
+
+      vm.startPrank(poolAdmin);
+      contracts.poolConfiguratorProxy.configureReserveAsCollateral(
+        collateralAsset,
+        40_00,
+        50_00,
+        105_00
+      );
+      contracts.poolConfiguratorProxy.setLiquidationProtocolFee(collateralAsset, 100_00);
+      vm.stopPrank();
+
+      AaveSetters.setLiquidityIndex(address(pool), collateralAsset, liquidityIndex);
+      AaveSetters.setVariableBorrowIndex(address(pool), collateralAsset, variableBorrowIndex);
+      AaveSetters.setLastUpdateTimestamp(
+        address(pool),
+        collateralAsset,
+        uint40(block.timestamp)
+      );
+
+      deal(collateralAsset, bob, firstDebtAfterIndexUpdate);
+      vm.prank(bob);
+      IERC20(collateralAsset).approve(address(pool), type(uint256).max);
+
+      vm.prank(bob);
+      pool.liquidationCall(collateralAsset, collateralAsset, alice, type(uint256).max, false);
+    }
+
+    address aToken = pool.getReserveAToken(collateralAsset);
+    address secondDebtToken = pool.getReserveVariableDebtToken(secondDebtAsset);
+
+    assertEq(
+      IAToken(aToken).scaledBalanceOf(alice),
+      0,
+      'post: scaled collateral should be 0'
+    );
+    assertFalse(
+      pool.getUserConfiguration(alice).isUsingAsCollateral(reserveId),
+      'post: collateral bit should be cleared'
+    );
+    assertEq(
+      IERC20(secondDebtToken).balanceOf(alice),
+      0,
+      'post: second reserve debt should be burned via _burnBadDebt'
+    );
+    assertGt(
+      pool.getReserveDeficit(secondDebtAsset),
+      0,
+      'post: deficit should be created for the second reserve debt'
+    );
+  }
+
+  // Regression: 3 wei of WETH dust leftover rounds to $0 in base currency.
+  // The leftoverWorthless check catches this and fires _burnBadDebt for the secondary WETH debt.
+  function test_weth_dust_leftover_rounds_to_zero_in_base_currency() public {
+    IPool pool = contracts.poolProxy;
+    address collateralAsset = tokenList.weth;
+    address debtAsset = tokenList.usdx;
+
+    uint256 wethSupply = 0.525e18 + 3;
+
+    _supplyAndEnableAsCollateral(collateralAsset, wethSupply, alice);
+
+    vm.startPrank(alice);
+    pool.borrow(debtAsset, 360e6, 2, 0, alice);
+    pool.borrow(collateralAsset, 1e12, 2, 0, alice);
+    vm.stopPrank();
+
+    vm.startPrank(poolAdmin);
+    contracts.poolConfiguratorProxy.configureReserveAsCollateral(
+      collateralAsset,
+      80_00,
+      85_00,
+      105_00
+    );
+    contracts.poolConfiguratorProxy.setLiquidationProtocolFee(collateralAsset, 10_00);
+    vm.stopPrank();
+
+    AaveSetters.setVariableBorrowIndex(address(pool), debtAsset, 2.5e27);
+    AaveSetters.setLiquidityIndex(address(pool), debtAsset, 1e27);
+    AaveSetters.setLastUpdateTimestamp(address(pool), debtAsset, uint40(block.timestamp));
+    AaveSetters.setLastUpdateTimestamp(address(pool), collateralAsset, uint40(block.timestamp));
+
+    address aToken = pool.getReserveAToken(collateralAsset);
+    address debtToken = pool.getReserveVariableDebtToken(debtAsset);
+    address wethDebtToken = pool.getReserveVariableDebtToken(collateralAsset);
+
+    assertEq(IERC20(debtToken).balanceOf(alice), 900e6, 'pre: USDX debt should be 900');
+    assertGt(IERC20(wethDebtToken).balanceOf(alice), 0, 'pre: WETH debt should exist');
+
+    vm.prank(bob);
+    pool.liquidationCall(collateralAsset, debtAsset, alice, type(uint256).max, false);
+
+    assertEq(IERC20(debtToken).balanceOf(alice), 0, 'post: USDX debt should be fully repaid');
+
+    assertFalse(
+      pool.getUserConfiguration(alice).isUsingAsCollateral(
+        pool.getReserveData(collateralAsset).id
+      ),
+      'post: collateral bit should be cleared (leftover worthless)'
+    );
+
+    assertGt(
+      pool.getReserveDeficit(collateralAsset),
+      0,
+      'post: WETH deficit should be created via _burnBadDebt'
     );
   }
 }
