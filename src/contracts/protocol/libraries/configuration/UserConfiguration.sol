@@ -32,6 +32,7 @@ library UserConfiguration {
   ) internal {
     unchecked {
       require(reserveIndex < ReserveConfiguration.MAX_RESERVES_COUNT, Errors.InvalidReserveIndex());
+      // forge-lint: disable-next-line(incorrect-shift)
       uint256 bit = 1 << (reserveIndex << 1);
       if (borrowing) {
         self.data |= bit;
@@ -58,6 +59,7 @@ library UserConfiguration {
   ) internal {
     unchecked {
       require(reserveIndex < ReserveConfiguration.MAX_RESERVES_COUNT, Errors.InvalidReserveIndex());
+      // forge-lint: disable-next-line(incorrect-shift)
       uint256 bit = 1 << ((reserveIndex << 1) + 1);
       if (usingAsCollateral) {
         self.data |= bit;
@@ -66,22 +68,6 @@ library UserConfiguration {
         self.data &= ~bit;
         emit IPool.ReserveUsedAsCollateralDisabled(asset, user);
       }
-    }
-  }
-
-  /**
-   * @notice Returns if a user has been using the reserve for borrowing or as collateral
-   * @param self The configuration object
-   * @param reserveIndex The index of the reserve in the bitmap
-   * @return True if the user has been using a reserve for borrowing or as collateral, false otherwise
-   */
-  function isUsingAsCollateralOrBorrowing(
-    DataTypes.UserConfigurationMap memory self,
-    uint256 reserveIndex
-  ) internal pure returns (bool) {
-    unchecked {
-      require(reserveIndex < ReserveConfiguration.MAX_RESERVES_COUNT, Errors.InvalidReserveIndex());
-      return (self.data >> (reserveIndex << 1)) & 3 != 0;
     }
   }
 

@@ -53,6 +53,3 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: ${{ github.repository }}
           files: ./lcov/lcov.info
-# only when the repo has zksync code
-#  test-zk:
-#    uses: bgd-labs/github-workflows/.github/workflows/foundry-test-zk.yml@main

@@ -5,8 +5,8 @@ import 'forge-std/Test.sol';
 import 'forge-std/StdStorage.sol';
 
 import {IPriceOracleGetter} from '../../../src/contracts/interfaces/IPriceOracleGetter.sol';
-import {IERC20} from '../../../src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
-import {IERC20Detailed} from '../../../src/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
+import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
+import {IERC20Metadata} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import {IPool, DataTypes} from '../../../src/contracts/interfaces/IPool.sol';
 import {Errors} from '../../../src/contracts/protocol/libraries/helpers/Errors.sol';
 import {IAaveOracle} from '../../../src/contracts/interfaces/IAaveOracle.sol';
@@ -31,6 +31,7 @@ contract PoolDeficitTests is TestnetProcedures {
     uint256 currentDeficit = _createReserveDeficit(borrowAmount, tokenList.usdx);
 
     vm.prank(poolAdmin);
+    // forge-lint: disable-next-line(unsafe-typecast)
     contracts.poolAddressesProvider.setAddress(bytes32('UMBRELLA'), coverageAdmin);
 
     DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
@@ -65,6 +66,7 @@ contract PoolDeficitTests is TestnetProcedures {
     uint256 currentDeficit = _createReserveDeficit(borrowAmount, tokenList.usdx);
 
     vm.prank(poolAdmin);
+    // forge-lint: disable-next-line(unsafe-typecast)
     contracts.poolAddressesProvider.setAddress(bytes32('UMBRELLA'), coverageAdmin);
 
     DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
@@ -99,6 +101,7 @@ contract PoolDeficitTests is TestnetProcedures {
     uint256 currentDeficit = _createReserveDeficit(borrowAmount, tokenList.usdx);
 
     vm.prank(poolAdmin);
+    // forge-lint: disable-next-line(unsafe-typecast)
     contracts.poolAddressesProvider.setAddress(bytes32('UMBRELLA'), coverageAdmin);
 
     _supply(tokenList.usdx, currentDeficit + 1000, coverageAdmin);
@@ -131,6 +134,7 @@ contract PoolDeficitTests is TestnetProcedures {
     amountToCover = uint120(bound(amountToCover, 1, currentDeficit));
 
     vm.prank(poolAdmin);
+    // forge-lint: disable-next-line(unsafe-typecast)
     contracts.poolAddressesProvider.setAddress(bytes32('UMBRELLA'), coverageAdmin);
 
     _supply(tokenList.usdx, currentDeficit, coverageAdmin);
@@ -155,6 +159,7 @@ contract PoolDeficitTests is TestnetProcedures {
     cAdminBorrowAmount = uint120(bound(cAdminBorrowAmount, 1, currentDeficit / 2));
 
     vm.prank(poolAdmin);
+    // forge-lint: disable-next-line(unsafe-typecast)
     contracts.poolAddressesProvider.setAddress(bytes32('UMBRELLA'), coverageAdmin);
 
     _supply(tokenList.usdx, currentDeficit, coverageAdmin);
@@ -187,6 +192,7 @@ contract PoolDeficitTests is TestnetProcedures {
     _createReserveDeficit(borrowAmount, tokenList.usdx);
 
     vm.prank(poolAdmin);
+    // forge-lint: disable-next-line(unsafe-typecast)
     contracts.poolAddressesProvider.setAddress(bytes32('UMBRELLA'), coverageAdmin);
 
     vm.startPrank(coverageAdmin);
@@ -198,6 +204,7 @@ contract PoolDeficitTests is TestnetProcedures {
     _filterAddresses(coverageAdmin);
 
     vm.prank(poolAdmin);
+    // forge-lint: disable-next-line(unsafe-typecast)
     contracts.poolAddressesProvider.setAddress(bytes32('UMBRELLA'), coverageAdmin);
 
     vm.startPrank(coverageAdmin);
@@ -209,6 +216,7 @@ contract PoolDeficitTests is TestnetProcedures {
   function test_interestRate() external {
     address coverageAdmin = makeAddr('covAdmin');
     vm.prank(poolAdmin);
+    // forge-lint: disable-next-line(unsafe-typecast)
     contracts.poolAddressesProvider.setAddress(bytes32('UMBRELLA'), coverageAdmin);
     _supply(tokenList.usdx, 1_000_000 ether, bob);
     vm.prank(bob);

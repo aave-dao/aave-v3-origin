@@ -1,7 +1,6 @@
 # build and cache
 cache/
 out/
-zkout/
 
 # general
 .env
@@ -10,8 +9,6 @@ zkout/
 
 # artifacts
 reports/
-diffs/
-downloads/
 
 # editors
 .idea

@@ -39,6 +39,41 @@ contract WadRayMathTests is Test {
     assertEq(WadRayMath.wadDiv(a, b), ((a * WadRayMath.WAD) + (b / 2)) / b);
   }
 
+  function test_wadMul_revertOnOverflow() public {
+    vm.expectRevert();
+    WadRayMath.wadMul(type(uint256).max, 2);
+  }
+
+  function test_wadDiv_revertOnDivByZero() public {
+    vm.expectRevert();
+    WadRayMath.wadDiv(1e18, 0);
+  }
+
+  function test_wadDiv_revertOnOverflow() public {
+    vm.expectRevert();
+    WadRayMath.wadDiv(type(uint256).max, 1);
+  }
+
+  function test_rayMul_revertOnOverflow() public {
+    vm.expectRevert();
+    WadRayMath.rayMul(type(uint256).max, 2);
+  }
+
+  function test_rayDiv_revertOnDivByZero() public {
+    vm.expectRevert();
+    WadRayMath.rayDiv(1e27, 0);
+  }
+
+  function test_rayDiv_revertOnOverflow() public {
+    vm.expectRevert();
+    WadRayMath.rayDiv(type(uint256).max, 1);
+  }
+
+  function test_wadToRay_revertOnOverflow() public {
+    vm.expectRevert();
+    WadRayMath.wadToRay(type(uint256).max);
+  }
+
   function test_wadMul() public pure {
     assertEq(WadRayMath.wadMul(2.5e18, 0.5e18), 1.25e18);
     assertEq(WadRayMath.wadMul(412.2e18, 1e18), 412.2e18);

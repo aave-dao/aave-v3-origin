@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.10;
 
-import {Multicall, Context} from 'openzeppelin-contracts/contracts/utils/Multicall.sol';
+import {Multicall} from 'openzeppelin-contracts/contracts/utils/Multicall.sol';
 import {VersionedInitializable} from '../../misc/aave-upgradeability/VersionedInitializable.sol';
 import {Errors} from '../libraries/helpers/Errors.sol';
 import {ReserveConfiguration} from '../libraries/configuration/ReserveConfiguration.sol';
@@ -460,6 +460,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
     // This is a temporary workaround for integrations that are broken by Aave 3.2
     // While the new pool data provider is backward compatible, some integrations hard-code an old implementation
     // To allow them to not have any infrastructural blocker, a mock must be configured in the Aave Pool Addresses Provider, returning zero on all required view methods, instead of reverting
+    // forge-lint: disable-next-line(unsafe-typecast)
     res.stableDebtTokenAddress = ADDRESSES_PROVIDER.getAddress(bytes32('MOCK_STABLE_DEBT'));
   }
 

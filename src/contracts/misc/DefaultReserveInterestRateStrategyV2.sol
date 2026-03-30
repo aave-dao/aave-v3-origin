@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {IERC20} from '../dependencies/openzeppelin/contracts/IERC20.sol';
 import {WadRayMath} from '../protocol/libraries/math/WadRayMath.sol';
 import {PercentageMath} from '../protocol/libraries/math/PercentageMath.sol';
 import {DataTypes} from '../protocol/libraries/types/DataTypes.sol';

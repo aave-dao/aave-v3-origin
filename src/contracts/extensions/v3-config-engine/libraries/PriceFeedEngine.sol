@@ -24,6 +24,10 @@ library PriceFeedEngine {
         AggregatorInterface(updates[i].priceFeed).latestAnswer() > 0,
         'FEED_SHOULD_RETURN_POSITIVE_PRICE'
       );
+      require(
+        AggregatorInterface(updates[i].priceFeed).decimals() == 8,
+        'FEED_MUST_USE_8_DECIMALS'
+      );
       assets[i] = updates[i].asset;
       sources[i] = updates[i].priceFeed;
     }

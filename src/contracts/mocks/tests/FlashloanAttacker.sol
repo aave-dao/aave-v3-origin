@@ -1,19 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import {SafeMath} from '../../dependencies/openzeppelin/contracts/SafeMath.sol';
-import {IERC20} from '../../dependencies/openzeppelin/contracts/IERC20.sol';
+import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
 import {GPv2SafeERC20} from '../../dependencies/gnosis/contracts/GPv2SafeERC20.sol';
-import {SafeMath} from '../../dependencies/openzeppelin/contracts/SafeMath.sol';
 import {IPoolAddressesProvider} from '../../interfaces/IPoolAddressesProvider.sol';
 import {FlashLoanSimpleReceiverBase} from '../../misc/flashloan/base/FlashLoanSimpleReceiverBase.sol';
 import {MintableERC20} from '../tokens/MintableERC20.sol';
 import {IPool} from '../../interfaces/IPool.sol';
-import {DataTypes} from '../../protocol/libraries/types/DataTypes.sol';
 
 contract FlashloanAttacker is FlashLoanSimpleReceiverBase {
   using GPv2SafeERC20 for IERC20;
-  using SafeMath for uint256;
 
   IPoolAddressesProvider internal _provider;
   IPool internal _pool;
@@ -43,7 +39,7 @@ contract FlashloanAttacker is FlashLoanSimpleReceiverBase {
     bytes memory // params
   ) public override returns (bool) {
     MintableERC20 token = MintableERC20(asset);
-    uint256 amountToReturn = amount.add(premium);
+    uint256 amountToReturn = amount + premium;
 
     // Also do a normal borrow here in the middle
     _innerBorrow(asset);

@@ -108,6 +108,7 @@ contract AaveOracle is IAaveOracle {
     } else {
       int256 price = source.latestAnswer();
       if (price > 0) {
+        // forge-lint: disable-next-line(unsafe-typecast)
         return uint256(price);
       } else {
         return _fallbackOracle.getAssetPrice(asset);

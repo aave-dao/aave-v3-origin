@@ -78,17 +78,26 @@ library CollateralEngine {
           );
         }
 
-        if (updates[i].liqProtocolFee != EngineFlags.KEEP_CURRENT) {
-          require(updates[i].liqProtocolFee < 100_00, 'INVALID_LIQ_PROTOCOL_FEE');
-          poolConfigurator.setLiquidationProtocolFee(updates[i].asset, updates[i].liqProtocolFee);
-        }
-
         if (updates[i].debtCeiling != EngineFlags.KEEP_CURRENT) {
+          // Debt ceiling should only be set when liquidation threshold is non-zero
+          // Fetch current value since any updates above would already be applied
+          DataTypes.ReserveConfigurationMap memory configuration = pool.getConfiguration(
+            updates[i].asset
+          );
+          (, uint256 currentLiqThreshold, , , ) = configuration.getParams();
+
+          require(currentLiqThreshold != 0, 'DEBT_CEILING_REQUIRES_LT_NON_ZERO');
+
           // For reference, this is to simplify the interactions with the Aave protocol,
           // as there the definition is with 2 decimals. We don't see any reason to set
           // a debt ceiling involving .something USD, so we simply don't allow to do it
           poolConfigurator.setDebtCeiling(updates[i].asset, updates[i].debtCeiling * 100);
         }
+      }
+
+      if (updates[i].liqProtocolFee != EngineFlags.KEEP_CURRENT) {
+        require(updates[i].liqProtocolFee < 100_00, 'INVALID_LIQ_PROTOCOL_FEE');
+        poolConfigurator.setLiquidationProtocolFee(updates[i].asset, updates[i].liqProtocolFee);
       }
     }
   }

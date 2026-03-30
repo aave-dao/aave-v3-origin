@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.10;
 
-import {IERC20Detailed} from '../dependencies/openzeppelin/contracts/IERC20Detailed.sol';
+import {IERC20Metadata} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import {IPoolAddressesProvider} from '../interfaces/IPoolAddressesProvider.sol';
 import {IPool} from '../interfaces/IPool.sol';
 import {IncentivizedERC20} from '../protocol/tokenization/base/IncentivizedERC20.sol';
@@ -74,10 +74,10 @@ contract UiIncentiveDataProviderV3 is IUiIncentiveDataProviderV3 {
           rewardInformation.precision = aTokenIncentiveController.getAssetDecimals(
             baseData.aTokenAddress
           );
-          rewardInformation.rewardTokenDecimals = IERC20Detailed(
+          rewardInformation.rewardTokenDecimals = IERC20Metadata(
             rewardInformation.rewardTokenAddress
           ).decimals();
-          rewardInformation.rewardTokenSymbol = IERC20Detailed(rewardInformation.rewardTokenAddress)
+          rewardInformation.rewardTokenSymbol = IERC20Metadata(rewardInformation.rewardTokenAddress)
             .symbol();
 
           // Get price of reward token from Chainlink Proxy Oracle
@@ -128,10 +128,10 @@ contract UiIncentiveDataProviderV3 is IUiIncentiveDataProviderV3 {
           rewardInformation.precision = vTokenIncentiveController.getAssetDecimals(
             baseData.variableDebtTokenAddress
           );
-          rewardInformation.rewardTokenDecimals = IERC20Detailed(
+          rewardInformation.rewardTokenDecimals = IERC20Metadata(
             rewardInformation.rewardTokenAddress
           ).decimals();
-          rewardInformation.rewardTokenSymbol = IERC20Detailed(rewardInformation.rewardTokenAddress)
+          rewardInformation.rewardTokenSymbol = IERC20Metadata(rewardInformation.rewardTokenAddress)
             .symbol();
 
           // Get price of reward token from Chainlink Proxy Oracle
@@ -207,10 +207,10 @@ contract UiIncentiveDataProviderV3 is IUiIncentiveDataProviderV3 {
 
           userRewardInformation.userUnclaimedRewards = aTokenIncentiveController
             .getUserAccruedRewards(user, userRewardInformation.rewardTokenAddress);
-          userRewardInformation.rewardTokenDecimals = IERC20Detailed(
+          userRewardInformation.rewardTokenDecimals = IERC20Metadata(
             userRewardInformation.rewardTokenAddress
           ).decimals();
-          userRewardInformation.rewardTokenSymbol = IERC20Detailed(
+          userRewardInformation.rewardTokenSymbol = IERC20Metadata(
             userRewardInformation.rewardTokenAddress
           ).symbol();
 
@@ -260,10 +260,10 @@ contract UiIncentiveDataProviderV3 is IUiIncentiveDataProviderV3 {
 
           userRewardInformation.userUnclaimedRewards = vTokenIncentiveController
             .getUserAccruedRewards(user, userRewardInformation.rewardTokenAddress);
-          userRewardInformation.rewardTokenDecimals = IERC20Detailed(
+          userRewardInformation.rewardTokenDecimals = IERC20Metadata(
             userRewardInformation.rewardTokenAddress
           ).decimals();
-          userRewardInformation.rewardTokenSymbol = IERC20Detailed(
+          userRewardInformation.rewardTokenSymbol = IERC20Metadata(
             userRewardInformation.rewardTokenAddress
           ).symbol();
 

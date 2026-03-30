@@ -3,8 +3,8 @@ pragma solidity ^0.8.0;
 
 import {ECDSA} from 'openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol';
 
-import {Ownable} from '../../dependencies/openzeppelin/contracts/Ownable.sol';
-import {ERC20} from '../../dependencies/openzeppelin/contracts/ERC20.sol';
+import {Ownable} from 'openzeppelin-contracts/contracts/access/Ownable.sol';
+import {ERC20} from 'openzeppelin-contracts/contracts/token/ERC20/ERC20.sol';
 import {IERC20WithPermit} from '../../interfaces/IERC20WithPermit.sol';
 
 /**
@@ -21,14 +21,16 @@ contract TestnetERC20 is IERC20WithPermit, ERC20, Ownable {
   // Map of address nonces (address => nonce)
   mapping(address => uint256) internal _nonces;
 
+  uint8 private _decimals;
+
   bytes32 public DOMAIN_SEPARATOR;
 
   constructor(
     string memory name,
     string memory symbol,
-    uint8 decimals,
+    uint8 decimals_,
     address owner
-  ) ERC20(name, symbol) {
+  ) ERC20(name, symbol) Ownable(owner) {
     uint256 chainId = block.chainid;
 
     DOMAIN_SEPARATOR = keccak256(
@@ -40,9 +42,11 @@ contract TestnetERC20 is IERC20WithPermit, ERC20, Ownable {
         address(this)
       )
     );
-    _setupDecimals(decimals);
-    require(owner != address(0));
-    transferOwnership(owner);
+    _decimals = decimals_;
+  }
+
+  function decimals() public view override returns (uint8) {
+    return _decimals;
   }
 
   /// @inheritdoc IERC20WithPermit

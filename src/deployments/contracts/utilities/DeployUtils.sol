@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/StdJson.sol';
 import 'forge-std/Vm.sol';
-import {IMetadataReporter} from '../../interfaces/IMetadataReporter.sol';
 import '../../interfaces/IMarketReportTypes.sol';
 import 'solidity-utils/contracts/transparent-proxy/TransparentProxyFactory.sol';
 

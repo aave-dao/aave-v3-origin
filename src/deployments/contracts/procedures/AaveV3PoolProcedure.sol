@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import {PoolInstance} from '../../../contracts/instances/PoolInstance.sol';
 import {IPoolAddressesProvider} from '../../../contracts/interfaces/IPoolAddressesProvider.sol';
 import {IReserveInterestRateStrategy} from '../../../contracts/interfaces/IReserveInterestRateStrategy.sol';
-import {IPool} from '../../../contracts/interfaces/IPool.sol';
 import {AaveV3PoolConfigProcedure} from './AaveV3PoolConfigProcedure.sol';
 import {IErrors} from '../../interfaces/IErrors.sol';
 import '../../interfaces/IMarketReportTypes.sol';

@@ -10,7 +10,7 @@ import {DataTypes} from 'src/contracts/protocol/libraries/types/DataTypes.sol';
 import {EModeConfiguration} from 'src/contracts/protocol/libraries/configuration/EModeConfiguration.sol';
 
 // Interfaces
-import {IERC20} from 'src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
 import {IAToken} from 'src/contracts/interfaces/IAToken.sol';
 
 // Contracts

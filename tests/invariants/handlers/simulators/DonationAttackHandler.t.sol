@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 // Interfaces
-import {IERC20} from 'src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
 
 // Libraries
 
@@ -29,6 +29,7 @@ contract DonationAttackHandler is BaseHandler {
 
     _token.mint(address(this), amount);
 
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     _token.transfer(protocolTokens[address(_token)].aTokenAddress, amount);
   }
 
@@ -37,6 +38,7 @@ contract DonationAttackHandler is BaseHandler {
 
     _token.mint(address(this), amount);
 
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     _token.transfer(address(pool), amount);
   }
 

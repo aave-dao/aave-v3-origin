@@ -2,7 +2,7 @@
 pragma solidity ^0.8.10;
 
 import {IScaledBalanceToken} from '../interfaces/IScaledBalanceToken.sol';
-import {IERC20Detailed} from '../dependencies/openzeppelin/contracts/IERC20Detailed.sol';
+import {IERC20Metadata} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import {SafeCast} from 'openzeppelin-contracts/contracts/utils/math/SafeCast.sol';
 import {IRewardsDistributor} from './interfaces/IRewardsDistributor.sol';
 import {RewardsDataTypes} from './libraries/RewardsDataTypes.sol';
@@ -226,7 +226,7 @@ abstract contract RewardsDistributor is IRewardsDistributor {
         _assetsList.push(rewardsInput[i].asset);
       }
 
-      uint256 decimals = _assets[rewardsInput[i].asset].decimals = IERC20Detailed(
+      uint256 decimals = _assets[rewardsInput[i].asset].decimals = IERC20Metadata(
         rewardsInput[i].asset
       ).decimals();
 
@@ -293,6 +293,7 @@ abstract contract RewardsDistributor is IRewardsDistributor {
       indexUpdated = true;
 
       //optimization: storing one after another saves one SSTORE
+      // forge-lint: disable-next-line(unsafe-typecast)
       rewardData.index = uint104(newIndex);
       rewardData.lastUpdateTimestamp = block.timestamp.toUint32();
     } else {
@@ -323,6 +324,7 @@ abstract contract RewardsDistributor is IRewardsDistributor {
     bool dataUpdated;
     if ((dataUpdated = userIndex != newAssetIndex)) {
       // already checked for overflow in _updateRewardData
+      // forge-lint: disable-next-line(unsafe-typecast)
       rewardData.usersData[user].index = uint104(newAssetIndex);
       if (userBalance != 0) {
         rewardsAccrued = _getRewards(userBalance, newAssetIndex, userIndex, assetUnit);

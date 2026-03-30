@@ -294,6 +294,7 @@ contract PoolEModeTests is TestnetProcedures {
       .getUserAccountData(user);
     uint256 maxBorrowInBase = (totalCollateralBase * currentLt) / 1e4;
     uint256 debtPrice = contracts.aaveOracle.getAssetPrice(erc20);
+    // forge-lint: disable-next-line(divide-before-multiply)
     uint256 borrowAmount = (maxBorrowInBase / debtPrice) * 10 ** TestnetERC20(erc20).decimals();
     _borrowArbitraryAmount(erc20, user, borrowAmount);
   }

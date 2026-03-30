@@ -2,7 +2,7 @@
 pragma solidity ^0.8.10;
 
 import {Ownable} from '../dependencies/openzeppelin/contracts/Ownable.sol';
-import {IERC20} from '../dependencies/openzeppelin/contracts/IERC20.sol';
+import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
 import {GPv2SafeERC20} from '../dependencies/gnosis/contracts/GPv2SafeERC20.sol';
 import {IWETH} from './interfaces/IWETH.sol';
 import {IPool} from '../interfaces/IPool.sol';
@@ -61,6 +61,8 @@ contract WrappedTokenGatewayV3 is IWrappedTokenGatewayV3, Ownable {
     if (amount == type(uint256).max) {
       amountToWithdraw = userBalance;
     }
+    // aWETH is trusted, disabling warning
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aWETH.transferFrom(msg.sender, address(this), amountToWithdraw);
     POOL.withdraw(address(WETH), amountToWithdraw, address(this));
     WETH.withdraw(amountToWithdraw);
@@ -140,6 +142,8 @@ contract WrappedTokenGatewayV3 is IWrappedTokenGatewayV3, Ownable {
     try
       aWETH.permit(msg.sender, address(this), amount, deadline, permitV, permitR, permitS)
     {} catch {}
+    // aWETH is trusted, disabling warning
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aWETH.transferFrom(msg.sender, address(this), amountToWithdraw);
     POOL.withdraw(address(WETH), amountToWithdraw, address(this));
     WETH.withdraw(amountToWithdraw);

@@ -108,6 +108,7 @@ contract ATokenEventsTests is TestnetProcedures {
       uint256 nextBalance = (scaledBalance - scaledBurnAmount).rayMulFloor(newIndex);
       uint256 previousBalance = scaledBalance.rayMulFloor(oldIndex);
       balanceIncrease = scaledBalance.rayMulFloor(newIndex) - previousBalance;
+      // forge-lint: disable-next-line(unsafe-typecast)
       deltaAmount = int256(nextBalance) - int256(previousBalance);
     }
 
@@ -131,15 +132,19 @@ contract ATokenEventsTests is TestnetProcedures {
     }
     if (deltaAmount > 0) {
       vm.expectEmit(address(aToken));
+      // forge-lint: disable-next-line(unsafe-typecast)
       emit IERC20.Transfer(address(0), user, uint256(deltaAmount));
       vm.expectEmit(address(aToken));
+      // forge-lint: disable-next-line(unsafe-typecast)
       emit IScaledBalanceToken.Mint(user, user, uint256(deltaAmount), balanceIncrease, newIndex);
       vm.expectEmit(address(underlyingToken));
       emit IERC20.Transfer(aTokenAddress, user, amount);
     } else {
       vm.expectEmit(address(aToken));
+      // forge-lint: disable-next-line(unsafe-typecast)
       emit IERC20.Transfer(user, address(0), uint256(-deltaAmount));
       vm.expectEmit(address(aToken));
+      // forge-lint: disable-next-line(unsafe-typecast)
       emit IScaledBalanceToken.Burn(user, target, uint256(-deltaAmount), balanceIncrease, newIndex);
       vm.expectEmit(address(underlyingToken));
       emit IERC20.Transfer(aTokenAddress, user, amount);
@@ -359,6 +364,7 @@ contract ATokenEventsTests is TestnetProcedures {
     });
     emit IERC20.Approval(alice, bob, 0);
     vm.prank(bob);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transferFrom(alice, carol, transferFromAmount);
 
     vm.prank(alice);
@@ -376,6 +382,7 @@ contract ATokenEventsTests is TestnetProcedures {
     });
     emit IERC20.Approval(alice, bob, 0);
     vm.prank(bob);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transferFrom(alice, carol, transferFromAmount);
   }
 

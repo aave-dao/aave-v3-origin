@@ -6,7 +6,6 @@ import {IPool} from '../../interfaces/IPool.sol';
 
 import {AToken} from './AToken.sol';
 
-import {DelegationMode} from './base/DelegationMode.sol';
 import {BaseDelegation} from './delegation/BaseDelegation.sol';
 
 /**

@@ -8,13 +8,11 @@ import {AaveV3GettersBatchOne} from './batches/AaveV3GettersBatchOne.sol';
 import {AaveV3GettersBatchTwo} from './batches/AaveV3GettersBatchTwo.sol';
 import {AaveV3GettersProcedureTwo} from '../../contracts/procedures/AaveV3GettersProcedureTwo.sol';
 import {AaveV3PeripheryBatch} from './batches/AaveV3PeripheryBatch.sol';
-import {AaveV3ParaswapBatch} from './batches/AaveV3ParaswapBatch.sol';
 import {AaveV3SetupBatch} from './batches/AaveV3SetupBatch.sol';
 import {AaveV3HelpersBatchOne} from './batches/AaveV3HelpersBatchOne.sol';
 import {AaveV3HelpersBatchTwo} from './batches/AaveV3HelpersBatchTwo.sol';
 import {AaveV3MiscBatch} from './batches/AaveV3MiscBatch.sol';
 import '../../interfaces/IMarketReportTypes.sol';
-import {IMarketReportStorage} from '../../interfaces/IMarketReportStorage.sol';
 import {IPoolReport} from '../../interfaces/IPoolReport.sol';
 
 /**
@@ -31,7 +29,6 @@ library AaveV3BatchOrchestration {
     PeripheryReport peripheryReport;
     MiscReport miscReport;
     SetupReport setupReport;
-    ParaswapReport paraswapReport;
     AaveV3GettersBatchTwo.GettersReportBatchTwo gettersReport2;
     AaveV3TokensBatch.TokensReport tokensReport;
     ConfigEngineReport configEngineReport;
@@ -91,12 +88,6 @@ library AaveV3BatchOrchestration {
       variables.miscReport.priceOracleSentinel
     );
 
-    variables.paraswapReport = _deployParaswapAdapters(
-      roles,
-      config,
-      variables.initialReport.poolAddressesProvider
-    );
-
     variables.gettersReport2 = _deployGettersBatch2(
       variables.setupReport.poolProxy,
       roles.poolAdmin,
@@ -136,7 +127,6 @@ library AaveV3BatchOrchestration {
       variables.poolReport,
       variables.peripheryReport,
       variables.miscReport,
-      variables.paraswapReport,
       variables.setupReport,
       variables.tokensReport,
       variables.configEngineReport,
@@ -204,18 +194,13 @@ library AaveV3BatchOrchestration {
     PeripheryReport memory peripheryReport,
     AaveV3TokensBatch.TokensReport memory tokensReport
   ) internal returns (ConfigEngineReport memory) {
-    address treasury = peripheryReport.treasury;
-    if (peripheryReport.revenueSplitter != address(0)) {
-      treasury = peripheryReport.revenueSplitter;
-    }
-
     AaveV3HelpersBatchOne helpersBatchOne = new AaveV3HelpersBatchOne(
       setupReport.poolProxy,
       setupReport.poolConfiguratorProxy,
       miscReport.defaultInterestRateStrategy,
       peripheryReport.aaveOracle,
       setupReport.rewardsControllerProxy,
-      treasury,
+      peripheryReport.treasury,
       tokensReport.aToken,
       tokensReport.variableDebtToken
     );
@@ -285,41 +270,15 @@ library AaveV3BatchOrchestration {
     return peripheryBatch.getPeripheryReport();
   }
 
-  function _deployParaswapAdapters(
-    Roles memory roles,
-    MarketConfig memory config,
-    address poolAddressesProvider
-  ) internal returns (ParaswapReport memory) {
-    if (config.paraswapAugustusRegistry != address(0)) {
-      AaveV3ParaswapBatch parawswapBatch = new AaveV3ParaswapBatch(
-        roles.poolAdmin,
-        config,
-        poolAddressesProvider
-      );
-      return parawswapBatch.getParaswapReport();
-    }
-
-    return
-      ParaswapReport({
-        paraSwapLiquiditySwapAdapter: address(0),
-        paraSwapRepayAdapter: address(0),
-        paraSwapWithdrawSwapAdapter: address(0)
-      });
-  }
-
   function _deployTokens(
     address poolProxy,
     address rewardsControllerProxy,
     PeripheryReport memory peripheryReport
   ) internal returns (AaveV3TokensBatch.TokensReport memory) {
-    address treasury = peripheryReport.treasury;
-    if (peripheryReport.revenueSplitter != address(0)) {
-      treasury = peripheryReport.revenueSplitter;
-    }
     AaveV3TokensBatch tokensBatch = new AaveV3TokensBatch(
       poolProxy,
       rewardsControllerProxy,
-      treasury
+      peripheryReport.treasury
     );
 
     return tokensBatch.getTokensReport();
@@ -332,7 +291,6 @@ library AaveV3BatchOrchestration {
     PoolReport memory poolReport,
     PeripheryReport memory peripheryReport,
     MiscReport memory miscReport,
-    ParaswapReport memory paraswapReport,
     SetupReport memory setupReport,
     AaveV3TokensBatch.TokensReport memory tokensReport,
     ConfigEngineReport memory configEngineReport,
@@ -353,9 +311,6 @@ library AaveV3BatchOrchestration {
     report.l2Encoder = gettersReportTwo.l2Encoder;
     report.poolConfiguratorImplementation = poolReport.poolConfiguratorImplementation;
     report.aaveOracle = peripheryReport.aaveOracle;
-    report.paraSwapLiquiditySwapAdapter = paraswapReport.paraSwapLiquiditySwapAdapter;
-    report.paraSwapRepayAdapter = paraswapReport.paraSwapRepayAdapter;
-    report.paraSwapWithdrawSwapAdapter = paraswapReport.paraSwapWithdrawSwapAdapter;
     report.treasuryImplementation = peripheryReport.treasuryImplementation;
     report.treasury = peripheryReport.treasury;
     report.dustBin = peripheryReport.dustBin;
@@ -373,7 +328,6 @@ library AaveV3BatchOrchestration {
     report.staticATokenFactoryProxy = staticATokenReport.staticATokenFactoryProxy;
     report.staticATokenImplementation = staticATokenReport.staticATokenImplementation;
     report.transparentProxyFactory = staticATokenReport.transparentProxyFactory;
-    report.revenueSplitter = peripheryReport.revenueSplitter;
 
     return report;
   }

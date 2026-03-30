@@ -2,7 +2,7 @@
 pragma solidity ^0.8.10;
 
 // Test Contracts
-import {IERC20} from 'src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
 import {TestnetERC20} from 'src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
 import {PropertiesAsserts} from '../utils/PropertiesAsserts.sol';
 

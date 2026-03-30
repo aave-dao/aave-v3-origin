@@ -11,7 +11,7 @@ import {ReserveConfiguration} from '../configuration/ReserveConfiguration.sol';
 import {DataTypes} from '../types/DataTypes.sol';
 import {Errors} from '../helpers/Errors.sol';
 import {ConfiguratorInputTypes} from '../types/ConfiguratorInputTypes.sol';
-import {IERC20Detailed} from '../../../dependencies/openzeppelin/contracts/IERC20Detailed.sol';
+import {IERC20Metadata} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 
 /**
  * @title ConfiguratorLogic library
@@ -32,7 +32,7 @@ library ConfiguratorLogic {
     ConfiguratorInputTypes.InitReserveInput calldata input
   ) external {
     // It is an assumption that the asset listed is non-malicious, and the external call doesn't create re-entrancies
-    uint8 underlyingAssetDecimals = IERC20Detailed(input.underlyingAsset).decimals();
+    uint8 underlyingAssetDecimals = IERC20Metadata(input.underlyingAsset).decimals();
     require(underlyingAssetDecimals > 5, Errors.InvalidDecimals());
 
     address aTokenProxyAddress = _initTokenWithProxy(

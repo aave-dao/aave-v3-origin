@@ -39,11 +39,6 @@ abstract contract DeployAaveV3MarketBatchedBase is DeployUtils, MarketInput, Scr
   }
 
   function _loadWarnings(MarketConfig memory config, DeployFlags memory flags) internal pure {
-    if (config.paraswapAugustusRegistry == address(0)) {
-      console.log(
-        'Warning: Paraswap Adapters will be skipped at deployment due missing config.paraswapAugustusRegistry'
-      );
-    }
     if (
       (flags.l2 &&
         (config.l2SequencerUptimeFeed == address(0) ||

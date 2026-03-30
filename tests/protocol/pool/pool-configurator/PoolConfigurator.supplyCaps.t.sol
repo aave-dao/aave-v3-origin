@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import 'forge-std/Test.sol';
 
 import {Errors} from '../../../../src/contracts/protocol/libraries/helpers/Errors.sol';
-import {IERC20} from '../../../../src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
 import {IPoolConfigurator} from '../../../../src/contracts/interfaces/IPoolConfigurator.sol';
 import {TestnetProcedures} from '../../../utils/TestnetProcedures.sol';
 

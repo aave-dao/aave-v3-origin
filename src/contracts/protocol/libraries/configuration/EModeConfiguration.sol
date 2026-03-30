@@ -25,6 +25,7 @@ library EModeConfiguration {
   ) internal pure returns (uint128) {
     unchecked {
       require(reserveIndex < ReserveConfiguration.MAX_RESERVES_COUNT, Errors.InvalidReserveIndex());
+      // forge-lint: disable-next-line(incorrect-shift, unsafe-typecast)
       uint128 bit = uint128(1 << reserveIndex);
       if (enabled) {
         return bitmap | bit;

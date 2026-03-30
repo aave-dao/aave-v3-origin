@@ -2,7 +2,7 @@
 pragma solidity ^0.8.18;
 
 import {Address} from 'openzeppelin-contracts/contracts/utils/Address.sol';
-import {IAaveV3ConfigEngine as IEngine, IPoolConfigurator, IPool, IDefaultInterestRateStrategyV2} from '../IAaveV3ConfigEngine.sol';
+import {IAaveV3ConfigEngine as IEngine, IPoolConfigurator, IDefaultInterestRateStrategyV2} from '../IAaveV3ConfigEngine.sol';
 import {PriceFeedEngine} from './PriceFeedEngine.sol';
 import {CapsEngine} from './CapsEngine.sol';
 import {BorrowEngine} from './BorrowEngine.sol';

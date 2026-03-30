@@ -449,6 +449,7 @@ contract WrappedTokenGatewayTests is TestnetProcedures {
     assertEq(usdx.balanceOf(alice), mintSize, 'The user balance should reflect the minted size');
 
     vm.prank(alice);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     usdx.transfer(address(wrappedTokenGatewayV3), mintSize);
 
     assertEq(

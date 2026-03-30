@@ -9,13 +9,11 @@ import {AaveV3L2PoolBatch} from '../../src/deployments/projects/aave-v3-batched/
 import {AaveV3GettersBatchOne} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3GettersBatchOne.sol';
 import {AaveV3GettersBatchTwo} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3GettersBatchTwo.sol';
 import {AaveV3PeripheryBatch} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3PeripheryBatch.sol';
-import {AaveV3ParaswapBatch} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3ParaswapBatch.sol';
 import {AaveV3SetupBatch} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3SetupBatch.sol';
 import {AaveV3MiscBatch} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3MiscBatch.sol';
 import {AaveV3HelpersBatchOne} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3HelpersBatchOne.sol';
 import {AaveV3HelpersBatchTwo} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3HelpersBatchTwo.sol';
 import {WETH9} from '../../src/contracts/dependencies/weth/WETH9.sol';
-import {AugustusRegistryMock} from '../mocks/AugustusRegistryMock.sol';
 import {SequencerOracle} from '../../src/contracts/mocks/oracle/SequencerOracle.sol';
 import {BatchTestProcedures} from '../utils/BatchTestProcedures.sol';
 
@@ -34,7 +32,6 @@ contract DeploymentsGasLimits is BatchTestProcedures {
   AaveV3GettersBatchTwo.GettersReportBatchTwo gettersReportTwo;
 
   PeripheryReport peripheryReportOne;
-  ParaswapReport paraswapReportOne;
   MiscReport miscReport;
   AaveV3TokensBatch.TokensReport tokensReport;
 
@@ -56,7 +53,6 @@ contract DeploymentsGasLimits is BatchTestProcedures {
       makeAddr('ethUsdOracle'),
       'Testnet Market',
       8,
-      address(new AugustusRegistryMock()), // replace with mock of augustus registry
       address(new SequencerOracle(poolAdmin)),
       2 hours, // l2PriceOracleSentinelGracePeriod
       8080,
@@ -64,9 +60,7 @@ contract DeploymentsGasLimits is BatchTestProcedures {
       address(new WETH9()),
       0.0005e4,
       address(0),
-      address(0),
-      address(0),
-      0
+      address(0)
     );
     flags = DeployFlags(true);
 
@@ -97,7 +91,6 @@ contract DeploymentsGasLimits is BatchTestProcedures {
     setupReportTwo = deployAndSetupVariables.setupReport;
     miscReport = deployAndSetupVariables.miscReport;
     tokensReport = deployAndSetupVariables.tokensReport;
-    paraswapReportOne = deployAndSetupVariables.paraswapReport;
   }
 
   function test0AaveV3SetupDeployment() public {
@@ -153,10 +146,6 @@ contract DeploymentsGasLimits is BatchTestProcedures {
     );
   }
 
-  function test7ParaswapDeployment() public {
-    new AaveV3ParaswapBatch(roles.poolAdmin, config, marketReportOne.poolAddressesProvider);
-  }
-
   function test8SetupMarket() public {
     vm.prank(roles.marketOwner);
     aaveV3SetupOne.setupAaveV3Market(
@@ -196,17 +185,6 @@ contract DeploymentsGasLimits is BatchTestProcedures {
       setupReportTwo.poolProxy,
       setupReportTwo.rewardsControllerProxy,
       roles.poolAdmin
-    );
-  }
-
-  function test12PeripheralsTreasuryPartner() public {
-    config.treasuryPartner = address(1);
-    config.treasurySplitPercent = 5000;
-    new AaveV3PeripheryBatch(
-      roles.poolAdmin,
-      config,
-      marketReportOne.poolAddressesProvider,
-      address(aaveV3SetupOne)
     );
   }
 }

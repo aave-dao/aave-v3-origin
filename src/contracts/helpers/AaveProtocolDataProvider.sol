@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import {IERC20Detailed} from '../dependencies/openzeppelin/contracts/IERC20Detailed.sol';
+import {IERC20Metadata} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import {ReserveConfiguration} from '../protocol/libraries/configuration/ReserveConfiguration.sol';
 import {UserConfiguration} from '../protocol/libraries/configuration/UserConfiguration.sol';
 import {DataTypes} from '../protocol/libraries/types/DataTypes.sol';
@@ -61,7 +61,7 @@ contract AaveProtocolDataProvider is IPoolDataProvider {
         continue;
       }
       reservesTokens[i] = TokenData({
-        symbol: IERC20Detailed(reserves[i]).symbol(),
+        symbol: IERC20Metadata(reserves[i]).symbol(),
         tokenAddress: reserves[i]
       });
     }
@@ -75,7 +75,7 @@ contract AaveProtocolDataProvider is IPoolDataProvider {
     for (uint256 i = 0; i < reserves.length; i++) {
       address aTokenAddress = POOL.getReserveAToken(reserves[i]);
       aTokens[i] = TokenData({
-        symbol: IERC20Detailed(aTokenAddress).symbol(),
+        symbol: IERC20Metadata(aTokenAddress).symbol(),
         tokenAddress: aTokenAddress
       });
     }
@@ -180,9 +180,9 @@ contract AaveProtocolDataProvider is IPoolDataProvider {
     return (
       0, // @dev unbacked is deprecated from v3.4.0, always zero, never used
       reserve.accruedToTreasury,
-      IERC20Detailed(reserve.aTokenAddress).totalSupply(),
+      IERC20Metadata(reserve.aTokenAddress).totalSupply(),
       0,
-      IERC20Detailed(reserve.variableDebtTokenAddress).totalSupply(),
+      IERC20Metadata(reserve.variableDebtTokenAddress).totalSupply(),
       reserve.currentLiquidityRate,
       reserve.currentVariableBorrowRate,
       0,
@@ -196,13 +196,13 @@ contract AaveProtocolDataProvider is IPoolDataProvider {
   /// @inheritdoc IPoolDataProvider
   function getATokenTotalSupply(address asset) external view override returns (uint256) {
     address aTokenAddress = POOL.getReserveAToken(asset);
-    return IERC20Detailed(aTokenAddress).totalSupply();
+    return IERC20Metadata(aTokenAddress).totalSupply();
   }
 
   /// @inheritdoc IPoolDataProvider
   function getTotalDebt(address asset) external view override returns (uint256) {
     address variableDebtTokenAddress = POOL.getReserveVariableDebtToken(asset);
-    return IERC20Detailed(variableDebtTokenAddress).totalSupply();
+    return IERC20Metadata(variableDebtTokenAddress).totalSupply();
   }
 
   /// @inheritdoc IPoolDataProvider
@@ -229,8 +229,8 @@ contract AaveProtocolDataProvider is IPoolDataProvider {
 
     DataTypes.UserConfigurationMap memory userConfig = POOL.getUserConfiguration(user);
 
-    currentATokenBalance = IERC20Detailed(reserve.aTokenAddress).balanceOf(user);
-    currentVariableDebt = IERC20Detailed(reserve.variableDebtTokenAddress).balanceOf(user);
+    currentATokenBalance = IERC20Metadata(reserve.aTokenAddress).balanceOf(user);
+    currentVariableDebt = IERC20Metadata(reserve.variableDebtTokenAddress).balanceOf(user);
 
     // @notice all stable debt related parameters deprecated in v3.2.0
     currentStableDebt = principalStableDebt = stableBorrowRate = stableRateLastUpdated = 0;

@@ -24,9 +24,13 @@ contract MockAToken is ATokenInstance {
     uint256 aliceScaledBalance,
     uint256 bobScaledBalance
   ) public {
+    // forge-lint: disable-next-line(unsafe-typecast)
     _userState[alice].additionalData = uint128(previousIndex);
+    // forge-lint: disable-next-line(unsafe-typecast)
     _userState[bob].additionalData = uint128(previousIndex);
+    // forge-lint: disable-next-line(unsafe-typecast)
     _userState[alice].balance = uint120(aliceScaledBalance);
+    // forge-lint: disable-next-line(unsafe-typecast)
     _userState[bob].balance = uint120(bobScaledBalance);
   }
 

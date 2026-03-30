@@ -16,7 +16,7 @@ import {IPoolAddressesProvider} from '../../../src/contracts/interfaces/IPoolAdd
 import {IPool} from '../../../src/contracts/interfaces/IPool.sol';
 import {IReserveInterestRateStrategy} from '../../../src/contracts/interfaces/IReserveInterestRateStrategy.sol';
 import {DataTypes} from '../../../src/contracts/protocol/libraries/types/DataTypes.sol';
-import {IERC20} from '../../../src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
 import {MockFlashLoanATokenReceiver} from '../../mocks/MockFlashLoanATokenReceiver.sol';
 import {MockFlashLoanBorrowInsideFlashLoan} from '../../mocks/MockFlashLoanBorrowInsideFlashLoan.sol';
 import {TestnetProcedures, TestReserveConfig} from '../../utils/TestnetProcedures.sol';
@@ -208,6 +208,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
 
     vm.startPrank(carol);
     contracts.poolProxy.withdraw(tokenList.usdx, 50_000e6, carol);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     usdx.transfer(aUSDX, 50_000e6);
     vm.stopPrank();
 
@@ -238,6 +239,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
 
     vm.startPrank(carol);
     contracts.poolProxy.withdraw(tokenList.usdx, 50_000e6, carol);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     usdx.transfer(aUSDX, 50_000e6);
     vm.stopPrank();
 
@@ -261,6 +263,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
 
     vm.startPrank(carol);
     contracts.poolProxy.withdraw(tokenList.usdx, 50_000e6, carol);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     usdx.transfer(aUSDX, 50_000e6);
     vm.stopPrank();
 
@@ -300,6 +303,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
 
     vm.startPrank(carol);
     contracts.poolProxy.withdraw(tokenList.usdx, 50_000e6, carol);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     usdx.transfer(aUSDX, 50_000e6);
     vm.stopPrank();
 
@@ -688,6 +692,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
       referralCode: 0,
       onBehalfOf: carol
     });
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     IERC20(contracts.poolProxy.getReserveAToken(asset)).transfer(
       address(receiver),
       underlyingBalance / 2
@@ -744,6 +749,7 @@ contract PoolFlashLoansTests is TestnetProcedures {
         onBehalfOf: carol
       });
 
+      // forge-lint: disable-next-line(erc20-unchecked-transfer)
       IERC20(contracts.poolProxy.getReserveAToken(assets[i])).transfer(
         address(receiver),
         underlyingBalances[i] / 2

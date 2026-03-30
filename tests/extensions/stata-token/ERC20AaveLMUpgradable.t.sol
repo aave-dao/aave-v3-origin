@@ -233,6 +233,7 @@ contract ERC20AaveLMUpgradableTest is TestnetProcedures {
     uint256 claimableBefore = lmUpgradeable.getClaimableRewards(user, rewardToken);
     assertEq(lmUpgradeable.getUnclaimedRewards(user, rewardToken), 0);
     vm.prank(user);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     lmUpgradeable.transfer(user, env.depositAmount);
     uint256 claimableAfter = lmUpgradeable.getClaimableRewards(user, rewardToken);
     assertEq(lmUpgradeable.getUnclaimedRewards(user, rewardToken), claimableAfter);
@@ -265,6 +266,7 @@ contract ERC20AaveLMUpgradableTest is TestnetProcedures {
         )
       );
       vm.prank(user);
+      // forge-lint: disable-next-line(erc20-unchecked-transfer)
       lmUpgradeable.transfer(receiver, sendAmount);
     } else {
       _fund(env.depositAmount, receiver);
@@ -275,6 +277,7 @@ contract ERC20AaveLMUpgradableTest is TestnetProcedures {
       uint256 receiverClaimableBefore = lmUpgradeable.getClaimableRewards(receiver, rewardToken);
 
       vm.prank(user);
+      // forge-lint: disable-next-line(erc20-unchecked-transfer)
       lmUpgradeable.transfer(receiver, sendAmount);
       // rewards should remain the same, but move to unclaimed
       assertEq(lmUpgradeable.getUnclaimedRewards(user, rewardToken), senderClaimableBefore);
@@ -404,6 +407,7 @@ contract ERC20AaveLMUpgradableTest is TestnetProcedures {
     underlying.mint(receiver, amount);
     lmUpgradeable.mint(receiver, amount);
     vm.prank(receiver);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     underlying.transfer(address(lmUpgradeable), amount);
   }
 }

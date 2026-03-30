@@ -39,6 +39,7 @@ contract ATokenTransferFromTests is TestnetProcedures {
 
     vm.expectRevert(abi.encodeWithSelector(ERC20InsufficientAllowance.selector, sender, 0, amount));
     vm.prank(sender);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transferFrom(owner, sender, amount);
   }
 
@@ -56,6 +57,7 @@ contract ATokenTransferFromTests is TestnetProcedures {
       abi.encodeWithSelector(ERC20InsufficientAllowance.selector, sender, amount - 1, amount)
     );
     vm.prank(sender);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transferFrom(owner, sender, amount);
   }
 
@@ -75,6 +77,7 @@ contract ATokenTransferFromTests is TestnetProcedures {
     uint256 senderBalanceBefore = aToken.balanceOf(sender);
 
     vm.prank(sender);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transferFrom(owner, sender, amount);
 
     uint256 ownerScaledBalanceAfter = aToken.scaledBalanceOf(owner);
@@ -100,6 +103,7 @@ contract ATokenTransferFromTests is TestnetProcedures {
     aToken.approve(bob, type(uint256).max);
 
     vm.prank(bob);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transferFrom(alice, carol, amountToMint);
 
     assertEq(aToken.allowance(alice, bob), type(uint256).max);

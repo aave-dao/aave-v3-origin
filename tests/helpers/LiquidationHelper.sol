@@ -8,7 +8,7 @@ import {ReserveConfiguration} from '../../src/contracts/protocol/libraries/confi
 import {EModeConfiguration} from '../../src/contracts/protocol/libraries/configuration/EModeConfiguration.sol';
 import {DataTypes} from '../../src/contracts/protocol/libraries/types/DataTypes.sol';
 import {PercentageMath} from '../../src/contracts/protocol/libraries/math/PercentageMath.sol';
-import {IERC20Detailed} from '../../src/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
+import {IERC20Metadata} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 
 /**
  * @title LiquidationHelper
@@ -60,11 +60,11 @@ library LiquidationHelper {
       LiquidationLogic._calculateAvailableCollateralToLiquidate(
         collateralReserveData.configuration,
         IAaveOracle(local.oracle).getAssetPrice(collateralAsset),
-        10 ** IERC20Detailed(collateralReserveData.aTokenAddress).decimals(),
+        10 ** IERC20Metadata(collateralReserveData.aTokenAddress).decimals(),
         IAaveOracle(local.oracle).getAssetPrice(debtAsset),
-        10 ** IERC20Detailed(local.vToken).decimals(),
+        10 ** IERC20Metadata(local.vToken).decimals(),
         maxLiquidatableDebt,
-        IERC20Detailed(collateralReserveData.aTokenAddress).balanceOf(local.user),
+        IERC20Metadata(collateralReserveData.aTokenAddress).balanceOf(local.user),
         local.liquidationBonus
       );
   }

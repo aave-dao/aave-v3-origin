@@ -285,6 +285,7 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     VariableDebtTokenInstance varDebtToken = test_new_VariableDebtToken_implementation();
 
     vm.expectRevert(abi.encodeWithSelector(Errors.OperationNotSupported.selector));
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     varDebtToken.transfer(address(0), 0);
 
     vm.expectRevert(abi.encodeWithSelector(Errors.OperationNotSupported.selector));
@@ -294,6 +295,7 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     varDebtToken.approve(address(0), 0);
 
     vm.expectRevert(abi.encodeWithSelector(Errors.OperationNotSupported.selector));
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     varDebtToken.transferFrom(address(0), address(0), 0);
 
     vm.expectRevert(abi.encodeWithSelector(Errors.OperationNotSupported.selector));

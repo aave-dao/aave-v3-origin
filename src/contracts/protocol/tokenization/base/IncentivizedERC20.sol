@@ -2,8 +2,8 @@
 pragma solidity ^0.8.10;
 
 import {Context} from '../../../dependencies/openzeppelin/contracts/Context.sol';
-import {IERC20} from '../../../dependencies/openzeppelin/contracts/IERC20.sol';
-import {IERC20Detailed} from '../../../dependencies/openzeppelin/contracts/IERC20Detailed.sol';
+import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
+import {IERC20Metadata} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import {SafeCast} from 'openzeppelin-contracts/contracts/utils/math/SafeCast.sol';
 import {WadRayMath} from '../../libraries/math/WadRayMath.sol';
 import {Errors} from '../../libraries/helpers/Errors.sol';
@@ -18,7 +18,7 @@ import {DelegationMode} from './DelegationMode.sol';
  * @author Aave, inspired by the Openzeppelin ERC20 implementation
  * @notice Basic ERC20 implementation
  */
-abstract contract IncentivizedERC20 is Context, IERC20Detailed {
+abstract contract IncentivizedERC20 is Context, IERC20Metadata {
   using WadRayMath for uint256;
   using SafeCast for uint256;
 
@@ -100,17 +100,17 @@ abstract contract IncentivizedERC20 is Context, IERC20Detailed {
     REWARDS_CONTROLLER = IAaveIncentivesController(rewardsController);
   }
 
-  /// @inheritdoc IERC20Detailed
+  /// @inheritdoc IERC20Metadata
   function name() public view override returns (string memory) {
     return _name;
   }
 
-  /// @inheritdoc IERC20Detailed
+  /// @inheritdoc IERC20Metadata
   function symbol() external view override returns (string memory) {
     return _symbol;
   }
 
-  /// @inheritdoc IERC20Detailed
+  /// @inheritdoc IERC20Metadata
   function decimals() external view override returns (uint8) {
     return _decimals;
   }

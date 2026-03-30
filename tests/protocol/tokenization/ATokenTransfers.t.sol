@@ -71,6 +71,7 @@ contract ATokenTransferTests is TestnetProcedures {
     emit IERC20.Transfer(alice, alice, 120e6);
 
     vm.prank(alice);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transfer(alice, 120e6);
   }
 
@@ -79,6 +80,7 @@ contract ATokenTransferTests is TestnetProcedures {
     emit IERC20.Transfer(alice, alice, 0);
 
     vm.prank(alice);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transfer(alice, 0);
   }
 
@@ -90,6 +92,7 @@ contract ATokenTransferTests is TestnetProcedures {
     emit IERC20.Transfer(alice, bob, transferAmount);
 
     vm.prank(alice);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transfer(bob, transferAmount);
 
     (uint256 bobCollateralBalance, , , , , , , , ) = contracts
@@ -119,6 +122,7 @@ contract ATokenTransferTests is TestnetProcedures {
     emit IPool.ReserveUsedAsCollateralDisabled(tokenList.usdx, alice);
 
     vm.prank(alice);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transfer(bob, transferAmount);
 
     assertEq(
@@ -135,6 +139,7 @@ contract ATokenTransferTests is TestnetProcedures {
     emit IERC20.Transfer(alice, bob, 0);
 
     vm.prank(alice);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transfer(bob, 0);
 
     (uint256 bobCollateralBalance, , , , , , , , ) = contracts
@@ -148,18 +153,21 @@ contract ATokenTransferTests is TestnetProcedures {
     emit IERC20.Transfer(alice, bob, 10_000e6);
 
     vm.prank(alice);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transfer(bob, 10_000e6);
 
     vm.expectEmit(address(aToken));
     emit IERC20.Transfer(bob, alice, 444e6);
 
     vm.prank(bob);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transfer(alice, 444e6);
 
     vm.expectEmit(address(aToken));
     emit IERC20.Transfer(bob, carol, 555e6);
 
     vm.prank(bob);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transfer(carol, 555e6);
   }
 
@@ -169,6 +177,7 @@ contract ATokenTransferTests is TestnetProcedures {
     emit IERC20.Transfer(alice, bob, transferAmount);
 
     vm.prank(alice);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transfer(bob, transferAmount);
     vm.prank(bob);
     contracts.poolProxy.setUserUseReserveAsCollateral(tokenList.usdx, true);
@@ -191,6 +200,7 @@ contract ATokenTransferTests is TestnetProcedures {
     emit IERC20.Transfer(alice, bob, 50_000e6);
 
     vm.prank(alice);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transfer(bob, 50_000e6);
 
     vm.prank(bob);
@@ -204,6 +214,7 @@ contract ATokenTransferTests is TestnetProcedures {
       abi.encodeWithSelector(Errors.HealthFactorLowerThanLiquidationThreshold.selector)
     );
     vm.prank(bob);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transfer(alice, transferAmount);
   }
 
@@ -212,6 +223,7 @@ contract ATokenTransferTests is TestnetProcedures {
     emit IERC20.Transfer(alice, bob, 50_000e6);
 
     vm.prank(alice);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transfer(bob, 50_000e6);
     vm.prank(bob);
     contracts.poolProxy.setUserUseReserveAsCollateral(tokenList.usdx, true);
@@ -236,6 +248,7 @@ contract ATokenTransferTests is TestnetProcedures {
       .getUserReserveData(tokenList.usdx, carol);
 
     vm.prank(bob);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transfer(carol, transferAmount);
 
     (uint256 carolCollateralBalance, , , , , , , , ) = contracts
@@ -272,6 +285,7 @@ contract ATokenTransferTests is TestnetProcedures {
     emit IERC20.Transfer(alice, carol, transferAmount);
 
     vm.prank(alice);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transfer(carol, transferAmount);
 
     (uint256 carolCollateralBalance, , , , , , , , ) = contracts
@@ -310,6 +324,7 @@ contract ATokenTransferTests is TestnetProcedures {
     vm.warp(vm.getBlockTimestamp() + timePassed);
     // transfer the usdx
     vm.prank(alice);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transfer(mockReceiver, amount);
 
     // check flag correctness

@@ -84,6 +84,7 @@ contract StataTokenV2PausableTest is BaseTest {
     _setPausedAsAclAdmin(true);
     vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
     vm.prank(user);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     stataTokenV2.transfer(user1, amountToDeposit);
   }
 

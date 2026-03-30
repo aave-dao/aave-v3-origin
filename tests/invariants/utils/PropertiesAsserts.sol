@@ -437,6 +437,7 @@ abstract contract PropertiesAsserts {
 /// @dev Name of the library is modified to prevent collisions with contract-under-test uses of LibString
 library PropertiesLibString {
   function toString(int256 value) internal pure returns (string memory str) {
+    // forge-lint: disable-next-line(unsafe-typecast)
     uint256 absValue = value >= 0 ? uint256(value) : uint256(-value);
     str = toString(absValue);
 
@@ -497,6 +498,7 @@ library PropertiesLibString {
   function toString(address value) internal pure returns (string memory str) {
     bytes memory s = new bytes(40);
     for (uint256 i = 0; i < 20; i++) {
+      // forge-lint: disable-next-line(unsafe-typecast)
       bytes1 b = bytes1(uint8(uint256(uint160(value)) / (2 ** (8 * (19 - i)))));
       bytes1 hi = bytes1(uint8(b) / 16);
       bytes1 lo = bytes1(uint8(b) - 16 * uint8(hi));

@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import {ATokenInstance} from '../../../contracts/instances/ATokenInstance.sol';
 import {VariableDebtTokenInstance} from '../../../contracts/instances/VariableDebtTokenInstance.sol';
 import {IPool} from '../../../contracts/interfaces/IPool.sol';
-import {IAaveIncentivesController} from '../../../contracts/interfaces/IAaveIncentivesController.sol';
 
 contract AaveV3TokensProcedure {
   struct TokensReport {

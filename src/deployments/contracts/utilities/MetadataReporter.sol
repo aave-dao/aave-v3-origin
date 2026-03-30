@@ -60,16 +60,6 @@ contract MetadataReporter is IMetadataReporter {
 
     vm.serializeAddress(
       jsonReport,
-      'paraSwapLiquiditySwapAdapter',
-      report.paraSwapLiquiditySwapAdapter
-    );
-    vm.serializeAddress(
-      jsonReport,
-      'paraSwapWithdrawSwapAdapter',
-      report.paraSwapWithdrawSwapAdapter
-    );
-    vm.serializeAddress(
-      jsonReport,
       'defaultInterestRateStrategy',
       report.defaultInterestRateStrategy
     );
@@ -86,12 +76,10 @@ contract MetadataReporter is IMetadataReporter {
       'staticATokenImplementation',
       report.staticATokenImplementation
     );
-    vm.serializeAddress(jsonReport, 'transparentProxyFactory', report.transparentProxyFactory);
-
     string memory output = vm.serializeAddress(
       jsonReport,
-      'paraSwapRepayAdapter',
-      report.paraSwapRepayAdapter
+      'transparentProxyFactory',
+      report.transparentProxyFactory
     );
 
     vm.writeJson(output, string.concat('./reports/', timestamp, '-market-deployment.json'));

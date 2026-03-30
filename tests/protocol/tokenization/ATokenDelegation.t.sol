@@ -679,10 +679,12 @@ abstract contract BaseATokenDelegationTest is TestnetProcedures {
         aToken.approve(caller, amount);
 
         vm.prank(caller);
+        // forge-lint: disable-next-line(erc20-unchecked-transfer)
         aToken.transferFrom(from, to, amount);
       }
     } else {
       vm.prank(from);
+      // forge-lint: disable-next-line(erc20-unchecked-transfer)
       aToken.transfer(to, amount);
     }
 
@@ -795,6 +797,7 @@ abstract contract BaseATokenDelegationTest is TestnetProcedures {
 
     uint256 POWER_SCALE_FACTOR = aToken.POWER_SCALE_FACTOR();
 
+    // forge-lint: disable-next-line(divide-before-multiply)
     return (scaledBalance / POWER_SCALE_FACTOR) * POWER_SCALE_FACTOR;
   }
 

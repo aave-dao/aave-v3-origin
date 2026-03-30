@@ -16,7 +16,7 @@ import {SequencerOracle} from '../../../src/contracts/mocks/oracle/SequencerOrac
 import {MockAggregator} from '../../../src/contracts/mocks/oracle/CLAggregators/MockAggregator.sol';
 import {DataTypes} from '../../../src/contracts/protocol/libraries/types/DataTypes.sol';
 import {ReserveConfiguration} from '../../../src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
-import {IERC20} from '../../../src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
 import {TestnetProcedures} from '../../utils/TestnetProcedures.sol';
 
 contract PoolBorrowTests is TestnetProcedures {
@@ -178,6 +178,7 @@ contract PoolBorrowTests is TestnetProcedures {
     vm.startPrank(alice);
 
     // Transfer debt token
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     usdx.transfer(aUSDX, borrowAmount);
 
     // Supply

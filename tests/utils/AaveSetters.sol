@@ -13,6 +13,7 @@ library AaveSetters {
   function setLiquidityIndex(address pool, address reserve, uint256 index) internal {
     uint256 reserveSlot = uint256(keccak256(abi.encode(reserve, 52))) + 1;
     uint256 currentValue = uint256(vm.load(pool, bytes32(reserveSlot)));
+    // forge-lint: disable-next-line(unsafe-typecast)
     uint128 existingRate = uint128(currentValue >> 128);
     bytes32 newPackedValue = bytes32(
       (uint256(existingRate) << 128) | uint256(index) // Keep upper 128 bits // Overwrite lower 128 bits
@@ -23,6 +24,7 @@ library AaveSetters {
   function setVariableBorrowIndex(address pool, address reserve, uint256 index) internal {
     uint256 reserveSlot = uint256(keccak256(abi.encode(reserve, 52))) + 2;
     uint256 currentValue = uint256(vm.load(pool, bytes32(reserveSlot)));
+    // forge-lint: disable-next-line(unsafe-typecast)
     uint128 existingRate = uint128(currentValue >> 128);
     bytes32 newPackedValue = bytes32(
       (uint256(existingRate) << 128) | uint256(index) // Keep upper 128 bits // Overwrite lower 128 bits

@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import 'forge-std/Test.sol';
 import '../../src/deployments/interfaces/IMarketReportTypes.sol';
 
-import {AugustusRegistryMock} from '../mocks/AugustusRegistryMock.sol';
 import {BatchTestProcedures} from '../utils/BatchTestProcedures.sol';
 import {AaveV3TestListing} from '../mocks/AaveV3TestListing.sol';
 import {ACLManager} from '../../src/contracts/protocol/configuration/ACLManager.sol';
@@ -44,7 +43,6 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
       makeAddr('ethUsdOracle'),
       'Testnet Market',
       8,
-      address(new AugustusRegistryMock()),
       address(0), // l2SequencerUptimeFeed
       0, // l2PriceOracleSentinelGracePeriod
       8080,
@@ -52,9 +50,7 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
       weth9,
       0.0005e4,
       address(0),
-      address(0),
-      address(0),
-      0
+      address(0)
     );
   }
 
@@ -136,38 +132,5 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
       flags,
       deployAaveV3Testnet(marketOwner, roles, config, flags, deployedContracts)
     );
-  }
-
-  function testAaveV3TreasuryPartnerBatchDeploymentCheck() public {
-    config.treasuryPartner = makeAddr('TREASURY_PARTNER');
-    config.treasurySplitPercent = 5000;
-
-    MarketReport memory fullReport = deployAaveV3Testnet(
-      marketOwner,
-      roles,
-      config,
-      flags,
-      deployedContracts
-    );
-
-    checkFullReport(config, flags, fullReport);
-
-    AaveV3TestListing testnetListingPayload = new AaveV3TestListing(
-      IAaveV3ConfigEngine(fullReport.configEngine),
-      marketOwner,
-      weth9,
-      fullReport
-    );
-
-    ACLManager manager = ACLManager(fullReport.aclManager);
-
-    vm.prank(poolAdmin);
-    manager.addPoolAdmin(address(testnetListingPayload));
-
-    testnetListingPayload.execute();
-
-    address aToken = IPool(fullReport.poolProxy).getReserveAToken(weth9);
-
-    assertEq(IAToken(aToken).RESERVE_TREASURY_ADDRESS(), fullReport.revenueSplitter);
   }
 }

@@ -16,8 +16,8 @@ import {ILendingHandler} from '../handlers/interfaces/ILendingHandler.sol';
 import {IBorrowingHandler} from '../handlers/interfaces/IBorrowingHandler.sol';
 import {ILiquidationHandler} from '../handlers/interfaces/ILiquidationHandler.sol';
 import {IPoolHandler} from '../handlers/interfaces/IPoolHandler.sol';
-import {IERC20} from 'src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
-import {IERC20Detailed} from 'src/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
+import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
+import {IERC20Metadata} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import {IAToken} from 'src/contracts/interfaces/IAToken.sol';
 import {ICreditDelegationToken} from 'src/contracts/interfaces/ICreditDelegationToken.sol';
 import {IVariableDebtToken} from 'src/contracts/interfaces/IVariableDebtToken.sol';
@@ -161,14 +161,18 @@ abstract contract DefaultBeforeAfterHooks is BaseHooks {
 
   function _makeEModeSnapshot(EModeInfo storage _eModeSnapshot, uint256 eModeCategory) internal {
     DataTypes.EModeCategoryLegacy memory eModeData = pool.getEModeCategoryData(
+      // forge-lint: disable-next-line(unsafe-typecast)
       uint8(eModeCategory)
     );
     _eModeSnapshot.ltv = eModeData.ltv;
     _eModeSnapshot.liquidationThreshold = eModeData.liquidationThreshold;
     _eModeSnapshot.liquidationBonus = eModeData.liquidationBonus;
 
+    // forge-lint: disable-next-line(unsafe-typecast)
     _eModeSnapshot.collateralBitmap = pool.getEModeCategoryCollateralBitmap(uint8(eModeCategory));
+    // forge-lint: disable-next-line(unsafe-typecast)
     _eModeSnapshot.borrowableBitmap = pool.getEModeCategoryBorrowableBitmap(uint8(eModeCategory));
+    // forge-lint: disable-next-line(unsafe-typecast)
     _eModeSnapshot.ltvzeroBitmap = pool.getEModeCategoryLtvzeroBitmap(uint8(eModeCategory));
 
     for (uint256 i = 0; i < baseAssets.length; ++i) {
@@ -328,7 +332,7 @@ abstract contract DefaultBeforeAfterHooks is BaseHooks {
     address user,
     address asset
   ) internal {
-    uint256 assetUnit = 10 ** IERC20Detailed(asset).decimals();
+    uint256 assetUnit = 10 ** IERC20Metadata(asset).decimals();
     uint256 assetPrice = contracts.aaveOracle.getAssetPrice(asset);
 
     _userAssetSnapshot.underlyingBalance = IERC20(asset).balanceOf(user);
@@ -495,7 +499,7 @@ abstract contract DefaultBeforeAfterHooks is BaseHooks {
 
         assertLe(
           snapshotGlobalVarsAfter.assetsInfo[baseAssets[i]].aTokenRealTotalSupply,
-          supplyCap * 10 ** IERC20Detailed(baseAssets[i]).decimals(),
+          supplyCap * 10 ** IERC20Metadata(baseAssets[i]).decimals(),
           LENDING_GPOST_C
         );
       }
@@ -522,7 +526,7 @@ abstract contract DefaultBeforeAfterHooks is BaseHooks {
 
         assertLe(
           snapshotGlobalVarsAfter.assetsInfo[baseAssets[i]].vTokenTotalSupply,
-          borrowCap * 10 ** IERC20Detailed(baseAssets[i]).decimals(),
+          borrowCap * 10 ** IERC20Metadata(baseAssets[i]).decimals(),
           BORROWING_GPOST_H
         );
       }
