@@ -1510,11 +1510,7 @@ contract PoolLiquidationTests is TestnetProcedures {
 
       AaveSetters.setLiquidityIndex(address(pool), collateralAsset, liquidityIndex);
       AaveSetters.setVariableBorrowIndex(address(pool), collateralAsset, variableBorrowIndex);
-      AaveSetters.setLastUpdateTimestamp(
-        address(pool),
-        collateralAsset,
-        uint40(block.timestamp)
-      );
+      AaveSetters.setLastUpdateTimestamp(address(pool), collateralAsset, uint40(block.timestamp));
 
       deal(collateralAsset, bob, firstDebtAfterIndexUpdate);
       vm.prank(bob);
@@ -1527,11 +1523,7 @@ contract PoolLiquidationTests is TestnetProcedures {
     address aToken = pool.getReserveAToken(collateralAsset);
     address secondDebtToken = pool.getReserveVariableDebtToken(secondDebtAsset);
 
-    assertEq(
-      IAToken(aToken).scaledBalanceOf(alice),
-      0,
-      'post: scaled collateral should be 0'
-    );
+    assertEq(IAToken(aToken).scaledBalanceOf(alice), 0, 'post: scaled collateral should be 0');
     assertFalse(
       pool.getUserConfiguration(alice).isUsingAsCollateral(reserveId),
       'post: collateral bit should be cleared'
@@ -1592,9 +1584,7 @@ contract PoolLiquidationTests is TestnetProcedures {
     assertEq(IERC20(debtToken).balanceOf(alice), 0, 'post: USDX debt should be fully repaid');
 
     assertFalse(
-      pool.getUserConfiguration(alice).isUsingAsCollateral(
-        pool.getReserveData(collateralAsset).id
-      ),
+      pool.getUserConfiguration(alice).isUsingAsCollateral(pool.getReserveData(collateralAsset).id),
       'post: collateral bit should be cleared (leftover worthless)'
     );
 

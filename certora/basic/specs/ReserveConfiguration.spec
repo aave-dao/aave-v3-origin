@@ -13,10 +13,6 @@ methods {
   function getFrozen() external returns (bool) envfree;
   function setPaused(bool) external envfree;
   function getPaused() external returns (bool) envfree;
-  function setBorrowableInIsolation(bool) external envfree;
-  function getBorrowableInIsolation() external returns (bool) envfree;
-  function setSiloedBorrowing(bool) external envfree;
-  function getSiloedBorrowing() external returns (bool) envfree;
   function setBorrowingEnabled(bool) external envfree;
   function getBorrowingEnabled() external returns (bool) envfree;
   function setReserveFactor(uint256) external envfree;
@@ -25,8 +21,6 @@ methods {
   function getBorrowCap() external returns (uint256) envfree;
   function setSupplyCap(uint256) external envfree;
   function getSupplyCap() external returns (uint256) envfree;
-  function setDebtCeiling(uint256) external envfree;
-  function getDebtCeiling() external returns (uint256) envfree;
   function setLiquidationProtocolFee(uint256) external envfree;
   function getLiquidationProtocolFee() external returns (uint256) envfree;
   function setFlashLoanEnabled(bool) external envfree;
@@ -80,18 +74,6 @@ rule setPausedIntegrity(bool paused) {
   assert getPaused() == paused;
 }
 
-// checks the integrity of set BorrowableInIsolation function and correct retrieval of the corresponding getter.
-rule setBorrowableInIsolationIntegrity(bool borrowable) {
-  setBorrowableInIsolation(borrowable);
-  assert getBorrowableInIsolation() == borrowable;
-}
-
-// checks the integrity of set SiloedBorrowing function and correct retrieval of the corresponding getter.
-rule setSiloedBorrowingIntegrity(bool siloed) {
-  setSiloedBorrowing(siloed);
-  assert getSiloedBorrowing() == siloed;
-}
-
 // checks the integrity of set BorrowingEnabled function and correct retrieval of the corresponding getter.
 rule setBorrowingEnabledIntegrity(bool enabled) {
   setBorrowingEnabled(enabled);
@@ -116,12 +98,6 @@ rule setSupplyCapIntegrity(uint256 supplyCap) {
   assert getSupplyCap() == supplyCap;
 }
 
-// checks the integrity of set DebtCeiling function and correct retrieval of the corresponding getter.
-rule setDebtCeilingIntegrity(uint256 ceiling) {
-  setDebtCeiling(ceiling);
-  assert getDebtCeiling() == ceiling;
-}
-
 // checks the integrity of set LiquidationProtocolFee function and correct retrieval of the corresponding getter.
 rule setLiquidationProtocolFeeIntegrity(uint256 liquidationProtocolFee) {
   setLiquidationProtocolFee(liquidationProtocolFee);
@@ -131,8 +107,8 @@ rule setLiquidationProtocolFeeIntegrity(uint256 liquidationProtocolFee) {
 
 // checks for independence of int parameters - if one parameter is being set, non of the others is being changed
 rule integrityAndIndependencyOfIntSetters(uint256 funcId, uint256 otherFuncId, uint256 val) {
-  require 0 <= funcId && funcId <= 8;
-  require 0 <= otherFuncId && otherFuncId <= 8;
+  require 0 <= funcId && funcId <= 7;
+  require 0 <= otherFuncId && otherFuncId <= 7;
   uint256 valueBefore = executeIntGetterById(funcId);
   uint256 otherValueBefore = executeIntGetterById(otherFuncId);
 

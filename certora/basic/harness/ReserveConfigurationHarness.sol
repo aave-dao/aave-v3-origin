@@ -95,30 +95,6 @@ contract ReserveConfigurationHarness {
     return ReserveConfiguration.getPaused(reservesConfig);
   }
 
-  // Sets the borrowable in isolation flag for the reserve.
-  function setBorrowableInIsolation(bool borrowable) public {
-    DataTypes.ReserveConfigurationMap memory configNew = reservesConfig;
-    ReserveConfiguration.setBorrowableInIsolation(configNew, borrowable);
-    reservesConfig.data = configNew.data;
-  }
-
-  // Gets the borrowable in isolation flag for the reserve.
-  function getBorrowableInIsolation() public view returns (bool) {
-    return ReserveConfiguration.getBorrowableInIsolation(reservesConfig);
-  }
-
-  // Sets the siloed borrowing flag for the reserve.
-  function setSiloedBorrowing(bool siloed) public {
-    DataTypes.ReserveConfigurationMap memory configNew = reservesConfig;
-    ReserveConfiguration.setSiloedBorrowing(configNew, siloed);
-    reservesConfig.data = configNew.data;
-  }
-
-  // Gets the siloed borrowing flag for the reserve.
-  function getSiloedBorrowing() public view returns (bool) {
-    return ReserveConfiguration.getSiloedBorrowing(reservesConfig);
-  }
-
   // Enables or disables borrowing on the reserve
   function setBorrowingEnabled(bool enabled) public {
     DataTypes.ReserveConfigurationMap memory configNew = reservesConfig;
@@ -167,18 +143,6 @@ contract ReserveConfigurationHarness {
     return ReserveConfiguration.getSupplyCap(reservesConfig);
   }
 
-  // Sets the debt ceiling in isolation mode for the asset
-  function setDebtCeiling(uint256 ceiling) public {
-    DataTypes.ReserveConfigurationMap memory configNew = reservesConfig;
-    ReserveConfiguration.setDebtCeiling(configNew, ceiling);
-    reservesConfig.data = configNew.data;
-  }
-
-  // Gets the debt ceiling for the asset if the asset is in isolation mode
-  function getDebtCeiling() public view returns (uint256) {
-    return ReserveConfiguration.getDebtCeiling(reservesConfig);
-  }
-
   // Sets the liquidation protocol fee of the reserve
   function setLiquidationProtocolFee(uint256 liquidationProtocolFee) public {
     DataTypes.ReserveConfigurationMap memory configNew = reservesConfig;
@@ -222,7 +186,7 @@ contract ReserveConfigurationHarness {
 
   // Executes a setter of an int parameter according to the given id
   function executeIntSetterById(uint256 id, uint256 val) public {
-    require(id >= 0 && id <= 8);
+    require(id >= 0 && id <= 7);
     if (id == 0) {
       setLtv(val);
     } else if (id == 1) {
@@ -237,18 +201,14 @@ contract ReserveConfigurationHarness {
       setBorrowCap(val);
     } else if (id == 6) {
       setSupplyCap(val);
-    } else if (id == 7) {
-      setLiquidationProtocolFee(val);
-      //    } else if (id == 8) {
-      // setUnbackedMintCap(val);
     } else {
-      setDebtCeiling(val);
+      setLiquidationProtocolFee(val);
     }
   }
 
   // Executes a getter of an int parameter according to the given id
   function executeIntGetterById(uint256 id) public view returns (uint256) {
-    require(id >= 0 && id <= 8);
+    require(id >= 0 && id <= 7);
     if (id == 0) {
       return getLtv();
     } else if (id == 1) {
@@ -263,12 +223,8 @@ contract ReserveConfigurationHarness {
       return getBorrowCap();
     } else if (id == 6) {
       return getSupplyCap();
-    } else if (id == 7) {
-      return getLiquidationProtocolFee();
-      //    } else if (id == 8) {
-      //return getUnbackedMintCap();
     } else {
-      return getDebtCeiling();
+      return getLiquidationProtocolFee();
     }
   }
 
@@ -284,7 +240,7 @@ contract ReserveConfigurationHarness {
     } else if (id == 3) {
       setPaused(val);
     } else {
-      setBorrowableInIsolation(val);
+      setFlashLoanEnabled(val);
     }
   }
 
@@ -300,7 +256,7 @@ contract ReserveConfigurationHarness {
     } else if (id == 3) {
       return getPaused();
     } else {
-      return getBorrowableInIsolation();
+      return getFlashLoanEnabled();
     }
   }
 }

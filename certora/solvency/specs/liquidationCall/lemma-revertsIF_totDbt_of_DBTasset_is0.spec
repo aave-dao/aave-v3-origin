@@ -12,14 +12,6 @@ persistent ghost address _DBT_asset; persistent ghost address _DBT_atoken; persi
   Summarizations
   ================================================================================================*/
 methods {
-  function IsolationModeLogic.reduceIsolatedDebtIfIsolated(
-    mapping(address => DataTypes.ReserveData) storage reservesData,
-    mapping(uint256 => address) storage reservesList,
-    DataTypes.UserConfigurationMap storage userConfig,
-    DataTypes.ReserveCache memory reserveCache,
-    uint256 repayAmount
-  ) internal => reduceIsolatedDebtIfIsolatedCVL();
-
   function LiquidationLogic._calculateAvailableCollateralToLiquidate(
     DataTypes.ReserveConfigurationMap memory collateralReserveConfiguration,
     uint256 collateralAssetPrice,
@@ -41,13 +33,6 @@ function _calculateAvailableCollateralToLiquidateCVL() returns (uint256,uint256,
   uint256 a; uint256 b; uint256 c; uint256 d;
   return (a,b,c,d);
 }
-
-// The function reduceIsolatedDebtIfIsolated(...) only writes to the field isolationModeTotalDebt.
-function reduceIsolatedDebtIfIsolatedCVL() {
-  address asset;
-  havoc currentContract._reserves[asset].isolationModeTotalDebt;
-}
-
 
 methods {
   function LiquidationLogic.HOOK_liquidation_before_validateLiquidationCall(uint256 userTotalDebt)

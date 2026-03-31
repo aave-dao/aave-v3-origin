@@ -341,8 +341,8 @@ library LiquidationLogic {
     bool hasNoCollateralLeft;
     {
       uint256 scaledCollateralConsumed = vars.actualCollateralToLiquidate.getATokenBurnScaledAmount(
-          vars.collateralReserveCache.nextLiquidityIndex
-        ) +
+        vars.collateralReserveCache.nextLiquidityIndex
+      ) +
         vars.liquidationProtocolFeeAmount.getATokenTransferScaledAmount(
           vars.collateralReserveCache.nextLiquidityIndex
         );
@@ -358,8 +358,8 @@ library LiquidationLogic {
       // When reserveFullyConsumed, this equals the reserve's full base value.
       // When not, a few-wei leftover that rounds to $0 makes consumed$ == totalCollateral$ too.
       uint256 consumedInBaseCurrency = (scaledCollateralConsumed.getATokenBalance(
-          vars.collateralReserveCache.nextLiquidityIndex
-        ) * vars.collateralAssetPrice) / vars.collateralAssetUnit;
+        vars.collateralReserveCache.nextLiquidityIndex
+      ) * vars.collateralAssetPrice) / vars.collateralAssetUnit;
 
       hasNoCollateralLeft = consumedInBaseCurrency == vars.totalCollateralInBaseCurrency;
 

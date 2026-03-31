@@ -114,6 +114,7 @@ contract ProtocolV3TestBase is Test {
         vm.serializeUint(key, 'eModeCategory', i);
         vm.serializeString(key, 'label', pool.getEModeCategoryLabel(i));
         vm.serializeUint(key, 'ltv', cfg.ltv);
+        vm.serializeBool(key, 'isolated', pool.getIsEModeCategoryIsolated(i));
         vm.serializeString(
           key,
           'collateralBitmap',
