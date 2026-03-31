@@ -13,6 +13,7 @@ import {ReserveConfiguration} from '../protocol/libraries/configuration/ReserveC
 import {UserConfiguration} from '../protocol/libraries/configuration/UserConfiguration.sol';
 import {EModeConfiguration} from '../protocol/libraries/configuration/EModeConfiguration.sol';
 import {DataTypes} from '../protocol/libraries/types/DataTypes.sol';
+import {MathUtils} from '../protocol/libraries/math/MathUtils.sol';
 import {PercentageMath} from '../protocol/libraries/math/PercentageMath.sol';
 
 import {ILiquidationDataProvider} from './interfaces/ILiquidationDataProvider.sol';
@@ -208,9 +209,11 @@ contract LiquidationDataProvider is ILiquidationDataProvider {
           collateralInfo.price) /
         collateralInfo.assetUnit;
 
-      localVars.debtLeftoverInBaseCurrency =
-        ((debtInfo.debtBalance - debtAmountToLiquidate) * debtInfo.price) /
-        debtInfo.assetUnit;
+      localVars.debtLeftoverInBaseCurrency = MathUtils.mulDivCeil(
+        debtInfo.debtBalance - debtAmountToLiquidate,
+        debtInfo.price,
+        debtInfo.assetUnit
+      );
 
       if (
         localVars.collateralLeftoverInBaseCurrency < LiquidationLogic.MIN_LEFTOVER_BASE ||
@@ -431,9 +434,11 @@ contract LiquidationDataProvider is ILiquidationDataProvider {
 
     debtInfo.debtBalance = IERC20Metadata(debtInfo.variableDebtToken).balanceOf(user);
 
-    debtInfo.debtBalanceInBaseCurrency =
-      (debtInfo.debtBalance * debtInfo.price) /
-      debtInfo.assetUnit;
+    debtInfo.debtBalanceInBaseCurrency = MathUtils.mulDivCeil(
+      debtInfo.debtBalance,
+      debtInfo.price,
+      debtInfo.assetUnit
+    );
 
     return debtInfo;
   }
