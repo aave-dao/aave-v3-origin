@@ -23,8 +23,38 @@ max_test_rejects = 20000
 
 [rpc_endpoints]
 mainnet = "${RPC_MAINNET}"
+celo="${RPC_CELO}"
+polygon="${RPC_POLYGON}"
+polygon_amoy="${RPC_POLYGON_AMOY}"
+avalanche="${RPC_AVALANCHE}"
+avalanche_fuji="${RPC_AVALANCHE_FUJI}"
+arbitrum="${RPC_ARBITRUM}"
+arbitrum_sepolia="${RPC_ARBITRUM_SEPOLIA}"
+fantom="${RPC_FANTOM}"
+fantom_testnet="${RPC_FANTOM_TESTNET}"
+optimism="${RPC_OPTIMISM}"
+optimism_sepolia="${RPC_OPTIMISM_SEPOLIA}"
+harmony="${RPC_HARMONY}"
+sepolia="${RPC_SEPOLIA}"
+scroll="${RPC_SCROLL}"
+scroll_sepolia="${RPC_SCROLL_SEPOLIA}"
+sonic="${RPC_SONIC}"
+mantle="${RPC_MANTLE}"
+metis="${RPC_METIS}"
+base="${RPC_BASE}"
+base_sepolia="${RPC_BASE_SEPOLIA}"
+bnb="${RPC_BNB}"
+gnosis="${RPC_GNOSIS}"
+zkEVM="${RPC_ZKEVM}"
+zksync="${RPC_ZKSYNC}"
+linea="${RPC_LINEA}"
+ink="${RPC_INK}"
+soneium="${RPC_SONEIUM}"
+bob="${RPC_BOB}"
+plasma="${RPC_PLASMA}"
+xLayer="${RPC_XLAYER}"
+megaeth="${RPC_MEGAETH}"
 
 [etherscan]
 mainnet = { key = "${ETHERSCAN_API_KEY_MAINNET}", chainId = 1 }
-
 # See more config options https://github.com/gakonst/foundry/tree/master/config
