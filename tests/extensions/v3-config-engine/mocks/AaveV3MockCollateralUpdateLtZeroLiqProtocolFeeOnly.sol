@@ -25,7 +25,6 @@ contract AaveV3MockCollateralUpdateLtZeroLiqProtocolFeeOnly is AaveV3Payload {
       ltv: EngineFlags.KEEP_CURRENT,
       liqThreshold: EngineFlags.KEEP_CURRENT,
       liqBonus: EngineFlags.KEEP_CURRENT,
-      debtCeiling: EngineFlags.KEEP_CURRENT,
       liqProtocolFee: 20_00 // Set liquidation protocol fee even with lt=0
     });
 

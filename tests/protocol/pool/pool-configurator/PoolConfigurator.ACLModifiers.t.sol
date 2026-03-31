@@ -31,18 +31,6 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
     contracts.poolConfiguratorProxy.initReserves(input);
   }
 
-  function test_reverts_notAdmin_dropReserve(address caller) public {
-    vm.assume(
-      !contracts.aclManager.isPoolAdmin(caller) &&
-        caller != address(contracts.poolAddressesProvider)
-    );
-
-    vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotPoolAdmin.selector));
-
-    vm.prank(caller);
-    contracts.poolConfiguratorProxy.dropReserve(tokenList.usdx);
-  }
-
   function test_reverts_notAdmin_updateAToken(address caller) public {
     ConfiguratorInputTypes.UpdateATokenInput memory input;
     vm.assume(
@@ -197,7 +185,22 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
     vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotRiskOrPoolAdmin.selector));
 
     vm.prank(caller);
-    contracts.poolConfiguratorProxy.setEModeCategory(1, 1, 1, 1, '');
+    contracts.poolConfiguratorProxy.setEModeCategory(1, 1, 1, 1, '', false);
+  }
+
+  function test_reverts_notRiskOrPoolOrEmergencyAdmin_setEModeCategoryIsolated(
+    address caller
+  ) public {
+    vm.assume(
+      !contracts.aclManager.isPoolAdmin(caller) &&
+        !contracts.aclManager.isRiskAdmin(caller) &&
+        !contracts.aclManager.isEmergencyAdmin(caller) &&
+        caller != address(contracts.poolAddressesProvider)
+    );
+    vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotRiskOrPoolOrEmergencyAdmin.selector));
+
+    vm.prank(caller);
+    contracts.poolConfiguratorProxy.setEModeCategoryIsolated(1, true);
   }
 
   function test_reverts_notRiskAdmin_setAssetCollateralInEMode(address caller) public {
@@ -211,19 +214,6 @@ contract PoolConfiguratorACLModifiersTest is TestnetProcedures {
 
     vm.prank(caller);
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(address(0), 1, true);
-  }
-
-  function test_reverts_setDebtCeiling(address caller) public {
-    vm.assume(
-      !contracts.aclManager.isPoolAdmin(caller) &&
-        !contracts.aclManager.isRiskAdmin(caller) &&
-        caller != address(contracts.poolAddressesProvider)
-    );
-
-    vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotRiskOrPoolAdmin.selector));
-
-    vm.prank(caller);
-    contracts.poolConfiguratorProxy.setDebtCeiling(address(0), 1);
   }
 
   function test_reverts_setReservePause_on_unauth(

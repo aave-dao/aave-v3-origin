@@ -13,8 +13,6 @@ import {UserConfiguration} from '../../../src/contracts/protocol/libraries/confi
 import {ReserveLogic} from '../../../src/contracts/protocol/libraries/logic/ReserveLogic.sol';
 import {IERC20Metadata} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import {ReserveConfiguration} from '../../../src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
-import {PriceOracleSentinel} from '../../../src/contracts/misc/PriceOracleSentinel.sol';
-import {SequencerOracle, ISequencerOracle} from '../../../src/contracts/mocks/oracle/SequencerOracle.sol';
 import {MockAggregator} from '../../../src/contracts/mocks/oracle/CLAggregators/MockAggregator.sol';
 import {LiquidationLogic} from '../../../src/contracts/protocol/libraries/logic/LiquidationLogic.sol';
 import {DataTypes} from '../../../src/contracts/protocol/libraries/types/DataTypes.sol';
@@ -37,8 +35,6 @@ contract PoolLiquidationCloseFactorTests is TestnetProcedures {
   address internal whale = makeAddr('whale');
   address internal liquidator = makeAddr('liquidator');
 
-  PriceOracleSentinel internal priceOracleSentinel;
-  SequencerOracle internal sequencerOracleMock;
   LiquidationDataProvider internal liquidationDataProvider;
 
   function setUp() public {
@@ -253,7 +249,7 @@ contract PoolLiquidationCloseFactorTests is TestnetProcedures {
   ) internal {
     (, uint256 debtInBaseCurrency, , , , ) = contracts.poolProxy.getUserAccountData(bob);
     // first we calculate the maximal possible liquidatable
-    (, uint256 debtAmountAt100, , ) = LiquidationHelper._getLiquidationParams(
+    (, uint256 debtAmountAt100, ) = LiquidationHelper._getLiquidationParams(
       contracts.poolProxy,
       bob,
       collateralAsset,

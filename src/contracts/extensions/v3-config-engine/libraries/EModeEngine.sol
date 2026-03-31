@@ -15,18 +15,18 @@ library EModeEngine {
   error NoAvailableEmodeCategory();
 
   function executeAssetsEModeUpdate(
-    IEngine.EngineConstants calldata engineConstants,
+    IEngine.EngineConstants memory engineConstants,
     IEngine.AssetEModeUpdate[] memory updates
-  ) external {
+  ) internal {
     require(updates.length != 0, 'AT_LEAST_ONE_UPDATE_REQUIRED');
 
     _configAssetsEMode(engineConstants.poolConfigurator, engineConstants.pool, updates);
   }
 
   function executeEModeCategoriesCreate(
-    IEngine.EngineConstants calldata engineConstants,
+    IEngine.EngineConstants memory engineConstants,
     IEngine.EModeCategoryCreation[] memory creations
-  ) external {
+  ) internal {
     for (uint256 i; i < creations.length; i++) {
       require(
         keccak256(abi.encode(creations[i].label)) !=
@@ -41,7 +41,8 @@ library EModeEngine {
         // For reference, this is to simplify the interaction with the Aave protocol,
         // as there the definition is as e.g. 105% (5% bonus for liquidators)
         (100_00 + creations[i].liqBonus).toUint16(),
-        creations[i].label
+        creations[i].label,
+        creations[i].isolated
       );
       for (uint256 j; j < creations[i].collaterals.length; j++) {
         engineConstants.poolConfigurator.setAssetCollateralInEMode(
@@ -61,9 +62,9 @@ library EModeEngine {
   }
 
   function executeEModeCategoriesUpdate(
-    IEngine.EngineConstants calldata engineConstants,
+    IEngine.EngineConstants memory engineConstants,
     IEngine.EModeCategoryUpdate[] memory updates
-  ) external {
+  ) internal {
     require(updates.length != 0, 'AT_LEAST_ONE_UPDATE_REQUIRED');
 
     _configEModeCategories(engineConstants.poolConfigurator, engineConstants.pool, updates);
@@ -123,12 +124,14 @@ library EModeEngine {
       bool atLeastOneKeepCurrent = updates[i].ltv == EngineFlags.KEEP_CURRENT ||
         updates[i].liqThreshold == EngineFlags.KEEP_CURRENT ||
         updates[i].liqBonus == EngineFlags.KEEP_CURRENT ||
+        updates[i].isolated == EngineFlags.KEEP_CURRENT ||
         keccak256(abi.encode(updates[i].label)) ==
         keccak256(abi.encode(EngineFlags.KEEP_CURRENT_STRING));
 
       bool notAllKeepCurrent = updates[i].ltv != EngineFlags.KEEP_CURRENT ||
         updates[i].liqThreshold != EngineFlags.KEEP_CURRENT ||
         updates[i].liqBonus != EngineFlags.KEEP_CURRENT ||
+        updates[i].isolated != EngineFlags.KEEP_CURRENT ||
         keccak256(abi.encode(updates[i].label)) !=
         keccak256(abi.encode(EngineFlags.KEEP_CURRENT_STRING));
 
@@ -158,6 +161,12 @@ library EModeEngine {
         ) {
           updates[i].label = pool.getEModeCategoryLabel(updates[i].eModeCategory);
         }
+
+        if (updates[i].isolated == EngineFlags.KEEP_CURRENT) {
+          updates[i].isolated = EngineFlags.fromBool(
+            pool.getIsEModeCategoryIsolated(updates[i].eModeCategory)
+          );
+        }
       }
 
       if (notAllKeepCurrent) {
@@ -174,7 +183,8 @@ library EModeEngine {
           // For reference, this is to simplify the interaction with the Aave protocol,
           // as there the definition is as e.g. 105% (5% bonus for liquidators)
           (100_00 + updates[i].liqBonus).toUint16(),
-          updates[i].label
+          updates[i].label,
+          EngineFlags.toBool(updates[i].isolated)
         );
       }
     }

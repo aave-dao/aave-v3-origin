@@ -117,6 +117,27 @@ contract PercentageMathTests is Test {
     PercentageMath.percentMulFloor(max, 2);
   }
 
+  function testPercentDivFloor_Exact() external pure {
+    uint256 result = PercentageMath.percentDivFloor(100 ether, PercentageMath.PERCENTAGE_FACTOR);
+    assertEq(result, 100 ether);
+  }
+
+  function testPercentDivFloor_WithTruncation() external pure {
+    uint256 result = PercentageMath.percentDivFloor(5, 3); // (5 * 10_000) / 3 = 16666.6... => floor to 16666
+    assertEq(result, 16666);
+  }
+
+  function testPercentDivFloor_RevertOnDivByZero() public {
+    vm.expectRevert();
+    PercentageMath.percentDivFloor(1234, 0);
+  }
+
+  function testPercentDivFloor_RevertOnOverflow() public {
+    uint256 max = type(uint256).max;
+    vm.expectRevert();
+    PercentageMath.percentDivFloor(max, 1);
+  }
+
   function testPercentDivCeil_Exact() external pure {
     uint256 result = PercentageMath.percentDivCeil(100 ether, PercentageMath.PERCENTAGE_FACTOR); // 100%
     assertEq(result, 100 ether);

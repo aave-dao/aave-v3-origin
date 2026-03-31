@@ -86,7 +86,7 @@ interface IDefaultInterestRateStrategyV2 is IReserveInterestRateStrategy {
   function MAX_OPTIMAL_POINT() external view returns (uint256);
 
   /**
-   * notice Returns the full InterestRateData object for the given reserve, in ray
+   * @notice Returns the full InterestRateData object for the given reserve, in ray
    *
    * @param reserve The reserve to get the data of
    *
@@ -95,7 +95,7 @@ interface IDefaultInterestRateStrategyV2 is IReserveInterestRateStrategy {
   function getInterestRateData(address reserve) external view returns (InterestRateDataRay memory);
 
   /**
-   * notice Returns the full InterestRateDataRay object for the given reserve, in bps
+   * @notice Returns the full InterestRateData object for the given reserve, in bps
    *
    * @param reserve The reserve to get the data of
    *

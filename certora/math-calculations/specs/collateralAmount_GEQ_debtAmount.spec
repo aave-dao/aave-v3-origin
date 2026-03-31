@@ -60,8 +60,8 @@ rule collateralAmount_GEQ_debtAmount_same_units_prices() {
   //  require __liquidationBonus == 10100;
   require PROTOCOL_FEE <= 10000;
   
-  uint256 collateralAmount; uint256 debtAmountNeeded; uint256 liquidationProtocolFee; uint256 collateralToLiquidateInBaseCurrency;
-  (collateralAmount, debtAmountNeeded, liquidationProtocolFee, collateralToLiquidateInBaseCurrency) = 
+  uint256 collateralAmount; uint256 debtAmountNeeded; uint256 liquidationProtocolFee;
+  (collateralAmount, debtAmountNeeded, liquidationProtocolFee) =
   WRP_calculateAvailableCollateralToLiquidate(e,
                                               collateralReserveConfiguration,
                                               __collateralAssetPrice,
@@ -93,8 +93,8 @@ rule collateralAmount_GEQ_debtAmount_general() {
 
   require PROTOCOL_FEE <= 10000;
   
-  uint256 collateralAmount; uint256 debtAmountNeeded; uint256 liquidationProtocolFee; uint256 collateralToLiquidateInBaseCurrency;
-  (collateralAmount, debtAmountNeeded, liquidationProtocolFee, collateralToLiquidateInBaseCurrency) = 
+  uint256 collateralAmount; uint256 debtAmountNeeded; uint256 liquidationProtocolFee;
+  (collateralAmount, debtAmountNeeded, liquidationProtocolFee) =
   WRP_calculateAvailableCollateralToLiquidate(e,
                                               collateralReserveConfiguration,
                                               __collateralAssetPrice, __collateralAssetUnit,

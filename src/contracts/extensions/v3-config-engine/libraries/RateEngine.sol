@@ -10,9 +10,9 @@ library RateEngine {
   using SafeCast for uint256;
 
   function executeRateStrategiesUpdate(
-    IEngine.EngineConstants calldata engineConstants,
+    IEngine.EngineConstants memory engineConstants,
     IEngine.RateStrategyUpdate[] memory updates
-  ) external {
+  ) internal {
     require(updates.length != 0, 'AT_LEAST_ONE_UPDATE_REQUIRED');
 
     (address[] memory ids, IEngine.InterestRateInputData[] memory rates) = _unpackRatesUpdate(

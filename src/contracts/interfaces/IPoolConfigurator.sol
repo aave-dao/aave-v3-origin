@@ -82,12 +82,6 @@ interface IPoolConfigurator {
   event ReservePaused(address indexed asset, bool paused);
 
   /**
-   * @dev Emitted when a reserve is dropped.
-   * @param asset The address of the underlying asset of the reserve
-   */
-  event ReserveDropped(address indexed asset);
-
-  /**
    * @dev Emitted when a reserve factor is updated.
    * @param asset The address of the underlying asset of the reserve
    * @param oldReserveFactor The old reserve factor, expressed in bps
@@ -179,6 +173,13 @@ interface IPoolConfigurator {
   );
 
   /**
+   * @dev Emitted when the isolated flag of an eMode category is changed.
+   * @param categoryId The eMode category id
+   * @param isolated True if the eMode is isolated (only eMode collateral contributes LTV)
+   */
+  event EModeCategoryIsolationChanged(uint8 indexed categoryId, bool isolated);
+
+  /**
    * @dev Emitted when a reserve interest strategy contract is updated.
    * @param asset The address of the underlying asset of the reserve
    * @param oldStrategy The address of the old interest strategy contract
@@ -222,29 +223,6 @@ interface IPoolConfigurator {
   );
 
   /**
-   * @dev Emitted when the debt ceiling of an asset is set.
-   * @param asset The address of the underlying asset of the reserve
-   * @param oldDebtCeiling The old debt ceiling
-   * @param newDebtCeiling The new debt ceiling
-   */
-  event DebtCeilingChanged(address indexed asset, uint256 oldDebtCeiling, uint256 newDebtCeiling);
-
-  /**
-   * @dev Emitted when the the siloed borrowing state for an asset is changed.
-   * @param asset The address of the underlying asset of the reserve
-   * @param oldState The old siloed borrowing state
-   * @param newState The new siloed borrowing state
-   */
-  event SiloedBorrowingChanged(address indexed asset, bool oldState, bool newState);
-
-  /**
-   * @dev Emitted when the bridge protocol fee is updated.
-   * @param oldBridgeProtocolFee The old protocol fee, expressed in bps
-   * @param newBridgeProtocolFee The new protocol fee, expressed in bps
-   */
-  event BridgeProtocolFeeUpdated(uint256 oldBridgeProtocolFee, uint256 newBridgeProtocolFee);
-
-  /**
    * @dev Emitted when the total premium on flashloans is updated.
    * @param oldFlashloanPremiumTotal The old premium, expressed in bps
    * @param newFlashloanPremiumTotal The new premium, expressed in bps
@@ -265,13 +243,6 @@ interface IPoolConfigurator {
     uint128 oldFlashloanPremiumToProtocol,
     uint128 newFlashloanPremiumToProtocol
   );
-
-  /**
-   * @dev Emitted when the reserve is set as borrowable/non borrowable in isolation mode.
-   * @param asset The address of the underlying asset of the reserve
-   * @param borrowable True if the reserve is borrowable in isolation, false otherwise
-   */
-  event BorrowableInIsolationChanged(address asset, bool borrowable);
 
   /**
    * @notice Initializes multiple reserves.
@@ -346,17 +317,6 @@ interface IPoolConfigurator {
    * @param ltvzero True if the reserve should be flagged as ltvzero, false otherwise
    */
   function setReserveLtvzero(address asset, bool ltvzero) external;
-
-  /**
-   * @notice Sets the borrowable in isolation flag for the reserve.
-   * @dev When this flag is set to true, the asset will be borrowable against isolated collaterals and the
-   * borrowed amount will be accumulated in the isolated collateral's total debt exposure
-   * @dev Only assets of the same family (e.g. USD stablecoins) should be borrowable in isolation mode to keep
-   * consistency in the debt ceiling calculations
-   * @param asset The address of the underlying asset of the reserve
-   * @param borrowable True if the asset should be borrowable in isolation, false otherwise
-   */
-  function setBorrowableInIsolation(address asset, bool borrowable) external;
 
   /**
    * @notice Pauses a reserve. A paused reserve does not allow any interaction (supply, borrow, repay,
@@ -458,12 +418,20 @@ interface IPoolConfigurator {
   function setAssetCollateralInEMode(address asset, uint8 categoryId, bool collateral) external;
 
   /**
-   * @notice Enables/disables an asset to be collateral in a selected eMode.
+   * @notice Enables/disables an asset to be ltvzero in a selected eMode.
    * @param asset The address of the underlying asset of the reserve
    * @param categoryId The eMode categoryId
    * @param ltvzero True if the asset should be ltvzero in the given eMode category, false otherwise.
    */
   function setAssetLtvzeroInEMode(address asset, uint8 categoryId, bool ltvzero) external;
+
+  /**
+   * @notice Sets the isolated flag of an eMode category.
+   * @param categoryId The eMode category id
+   * @param isolated When true, users with non-eMode collateral enabled cannot enter the eMode,
+   *  and non-eMode assets get LTV=0 (liquidation threshold is unaffected, preserving health factor of existing positions)
+   */
+  function setEModeCategoryIsolated(uint8 categoryId, bool isolated) external;
 
   /**
    * @notice Adds a new efficiency mode (eMode) category or alters a existing one.
@@ -472,20 +440,17 @@ interface IPoolConfigurator {
    * @param liquidationThreshold The liquidation threshold associated with the category
    * @param liquidationBonus The liquidation bonus associated with the category
    * @param label A label identifying the category
+   * @param isolated When true, users with non-eMode collateral enabled cannot enter the eMode,
+   *  and non-eMode assets get LTV=0 (liquidation threshold is unaffected, preserving health factor of existing positions)
    */
   function setEModeCategory(
     uint8 categoryId,
     uint16 ltv,
     uint16 liquidationThreshold,
     uint16 liquidationBonus,
-    string calldata label
+    string calldata label,
+    bool isolated
   ) external;
-
-  /**
-   * @notice Drops a reserve entirely.
-   * @param asset The address of the reserve to drop
-   */
-  function dropReserve(address asset) external;
 
   /**
    * @notice Updates the flash loan premium. All this premium
@@ -497,27 +462,10 @@ interface IPoolConfigurator {
   function updateFlashloanPremium(uint128 newFlashloanPremium) external;
 
   /**
-   * @notice Sets the debt ceiling for an asset.
-   * @param newDebtCeiling The new debt ceiling
-   */
-  function setDebtCeiling(address asset, uint256 newDebtCeiling) external;
-
-  /**
-   * @notice Sets siloed borrowing for an asset
-   * @param siloed The new siloed borrowing state
-   */
-  function setSiloedBorrowing(address asset, bool siloed) external;
-
-  /**
    * @notice Gets pending ltv value
-   * @param asset The new siloed borrowing state
+   * @param asset The address of the underlying asset of the reserve
    */
   function getPendingLtv(address asset) external view returns (uint256);
-
-  /**
-   * @notice Gets the address of the external ConfiguratorLogic
-   */
-  function getConfiguratorLogic() external view returns (address);
 
   /**
    * @notice Gets the maximum liquidations grace period allowed, in seconds

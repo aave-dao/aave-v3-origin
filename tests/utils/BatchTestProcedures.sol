@@ -113,10 +113,7 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
     );
 
     variables.miscReport = AaveV3BatchOrchestration._deployMisc(
-      flags.l2,
-      variables.initialReport.poolAddressesProvider,
-      config.l2SequencerUptimeFeed,
-      config.l2PriceOracleSentinelGracePeriod
+      variables.initialReport.poolAddressesProvider
     );
 
     return (
@@ -153,8 +150,7 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
       variables.poolReport.poolImplementation,
       variables.poolReport.poolConfiguratorImplementation,
       variables.peripheryReport.aaveOracle,
-      variables.peripheryReport.rewardsControllerImplementation,
-      variables.miscReport.priceOracleSentinel
+      variables.peripheryReport.rewardsControllerImplementation
     );
 
     variables.gettersReport2 = AaveV3BatchOrchestration._deployGettersBatch2(
@@ -209,7 +205,6 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
 
     if (flags.l2) {
       assertTrue(r.l2Encoder != address(0), 'report.l2Encoder');
-      assertTrue(r.priceOracleSentinel != address(0), 'report.priceOracleSentinel');
     }
 
     assertTrue(r.aToken != address(0), 'report.aToken');

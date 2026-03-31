@@ -128,8 +128,8 @@ contract AaveProtocolDataProvider is IPoolDataProvider {
   }
 
   /// @inheritdoc IPoolDataProvider
-  function getSiloedBorrowing(address asset) external view override returns (bool) {
-    return POOL.getConfiguration(asset).getSiloedBorrowing();
+  function getSiloedBorrowing(address) external pure override returns (bool) {
+    return false;
   }
 
   /// @inheritdoc IPoolDataProvider
@@ -143,13 +143,13 @@ contract AaveProtocolDataProvider is IPoolDataProvider {
   }
 
   /// @inheritdoc IPoolDataProvider
-  function getDebtCeiling(address asset) external view override returns (uint256) {
-    return POOL.getConfiguration(asset).getDebtCeiling();
+  function getDebtCeiling(address) external pure override returns (uint256) {
+    return 0;
   }
 
   /// @inheritdoc IPoolDataProvider
   function getDebtCeilingDecimals() external pure override returns (uint256) {
-    return ReserveConfiguration.DEBT_CEILING_DECIMALS;
+    return 0;
   }
 
   /// @inheritdoc IPoolDataProvider

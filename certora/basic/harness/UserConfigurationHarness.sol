@@ -67,14 +67,4 @@ contract UserConfigurationHarness is PoolStorage {
   function isEmpty() public view returns (bool) {
     return UserConfiguration.isEmpty(usersConfig);
   }
-
-  // Returns the Isolation Mode state of the user
-  function getIsolationModeState() public view returns (bool, address, uint256) {
-    return UserConfiguration.getIsolationModeState(usersConfig, _reserves, _reservesList);
-  }
-
-  // Returns the siloed borrowing state for the user
-  function getSiloedBorrowingState() public view returns (bool, address) {
-    return UserConfiguration.getSiloedBorrowingState(usersConfig, _reserves, _reservesList);
-  }
 }

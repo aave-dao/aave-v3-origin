@@ -14,7 +14,6 @@ import {AaveV3MiscBatch} from '../../src/deployments/projects/aave-v3-batched/ba
 import {AaveV3HelpersBatchOne} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3HelpersBatchOne.sol';
 import {AaveV3HelpersBatchTwo} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3HelpersBatchTwo.sol';
 import {WETH9} from '../../src/contracts/dependencies/weth/WETH9.sol';
-import {SequencerOracle} from '../../src/contracts/mocks/oracle/SequencerOracle.sol';
 import {BatchTestProcedures} from '../utils/BatchTestProcedures.sol';
 
 contract DeploymentsGasLimits is BatchTestProcedures {
@@ -53,8 +52,6 @@ contract DeploymentsGasLimits is BatchTestProcedures {
       makeAddr('ethUsdOracle'),
       'Testnet Market',
       8,
-      address(new SequencerOracle(poolAdmin)),
-      2 hours, // l2PriceOracleSentinelGracePeriod
       8080,
       empty,
       address(new WETH9()),
@@ -138,12 +135,7 @@ contract DeploymentsGasLimits is BatchTestProcedures {
   }
 
   function test6MiscDeployment() public {
-    new AaveV3MiscBatch(
-      flags.l2,
-      marketReportOne.poolAddressesProvider,
-      config.l2SequencerUptimeFeed,
-      config.l2PriceOracleSentinelGracePeriod
-    );
+    new AaveV3MiscBatch(marketReportOne.poolAddressesProvider);
   }
 
   function test8SetupMarket() public {
@@ -154,8 +146,7 @@ contract DeploymentsGasLimits is BatchTestProcedures {
       poolReportOne.poolImplementation,
       poolReportOne.poolConfiguratorImplementation,
       peripheryReportOne.aaveOracle,
-      peripheryReportOne.rewardsControllerImplementation,
-      miscReport.priceOracleSentinel
+      peripheryReportOne.rewardsControllerImplementation
     );
   }
 

@@ -2,10 +2,7 @@
 pragma solidity ^0.8.10;
 
 import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
-import {Address} from '../../../dependencies/openzeppelin/contracts/Address.sol';
-import {GPv2SafeERC20} from '../../../dependencies/gnosis/contracts/GPv2SafeERC20.sol';
 import {IAToken} from '../../../interfaces/IAToken.sol';
-import {IPriceOracleSentinel} from '../../../interfaces/IPriceOracleSentinel.sol';
 import {ReserveConfiguration} from '../configuration/ReserveConfiguration.sol';
 import {UserConfiguration} from '../configuration/UserConfiguration.sol';
 import {EModeConfiguration} from '../configuration/EModeConfiguration.sol';
@@ -15,7 +12,6 @@ import {PercentageMath} from '../math/PercentageMath.sol';
 import {DataTypes} from '../types/DataTypes.sol';
 import {ReserveLogic} from './ReserveLogic.sol';
 import {GenericLogic} from './GenericLogic.sol';
-import {SafeCast} from 'openzeppelin-contracts/contracts/utils/math/SafeCast.sol';
 
 /**
  * @title ValidationLogic library
@@ -26,19 +22,8 @@ library ValidationLogic {
   using ReserveLogic for DataTypes.ReserveData;
   using TokenMath for uint256;
   using PercentageMath for uint256;
-  using SafeCast for uint256;
-  using GPv2SafeERC20 for IERC20;
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
   using UserConfiguration for DataTypes.UserConfigurationMap;
-  using Address for address;
-
-  // Factor to apply to "only-variable-debt" liquidity rate to get threshold for rebalancing, expressed in bps
-  // A value of 0.9e4 results in 90%
-  uint256 public constant REBALANCE_UP_LIQUIDITY_RATE_THRESHOLD = 0.9e4;
-
-  // Minimum health factor allowed under any circumstance
-  // A value of 0.95e18 results in 0.95
-  uint256 public constant MINIMUM_HEALTH_FACTOR_LIQUIDATION_THRESHOLD = 0.95e18;
 
   /**
    * @dev Minimum health factor to consider a user position healthy
@@ -99,31 +84,24 @@ library ValidationLogic {
 
   struct ValidateBorrowLocalVars {
     uint256 amount;
-    uint256 userDebtInBaseCurrency;
-    uint256 availableLiquidity;
     uint256 totalDebt;
     uint256 reserveDecimals;
     uint256 borrowCap;
-    uint256 amountInBaseCurrency;
     uint256 assetUnit;
-    address siloedBorrowingAddress;
     bool isActive;
     bool isFrozen;
     bool isPaused;
     bool borrowingEnabled;
-    bool siloedBorrowingEnabled;
   }
 
   /**
    * @notice Validates a borrow action.
    * @param reservesData The state of all the reserves
-   * @param reservesList The addresses of all the active reserves
    * @param eModeCategories The configuration of all the efficiency mode categories
    * @param params Additional params needed for the validation
    */
   function validateBorrow(
     mapping(address => DataTypes.ReserveData) storage reservesData,
-    mapping(uint256 => address) storage reservesList,
     mapping(uint8 => DataTypes.EModeCategory) storage eModeCategories,
     DataTypes.ValidateBorrowParams memory params
   ) internal view {
@@ -156,12 +134,6 @@ library ValidationLogic {
       Errors.InvalidAmount()
     );
 
-    require(
-      params.priceOracleSentinel == address(0) ||
-        IPriceOracleSentinel(params.priceOracleSentinel).isBorrowAllowed(),
-      Errors.PriceOracleSentinelCheckFailed()
-    );
-
     //validate interest rate mode
     require(
       params.interestRateMode == DataTypes.InterestRateMode.VARIABLE,
@@ -180,21 +152,6 @@ library ValidationLogic {
 
       unchecked {
         require(vars.totalDebt <= vars.borrowCap * vars.assetUnit, Errors.BorrowCapExceeded());
-      }
-    }
-
-    if (params.userConfig.isBorrowingAny()) {
-      (vars.siloedBorrowingEnabled, vars.siloedBorrowingAddress) = params
-        .userConfig
-        .getSiloedBorrowingState(reservesData, reservesList);
-
-      if (vars.siloedBorrowingEnabled) {
-        require(vars.siloedBorrowingAddress == params.asset, Errors.SiloedBorrowingViolation());
-      } else {
-        require(
-          !params.reserveCache.reserveConfiguration.getSiloedBorrowing(),
-          Errors.SiloedBorrowingViolation()
-        );
       }
     }
   }
@@ -314,13 +271,6 @@ library ValidationLogic {
 
     require(vars.collateralReserveActive && vars.principalReserveActive, Errors.ReserveInactive());
     require(!vars.collateralReservePaused && !vars.principalReservePaused, Errors.ReservePaused());
-
-    require(
-      params.priceOracleSentinel == address(0) ||
-        params.healthFactor < MINIMUM_HEALTH_FACTOR_LIQUIDATION_THRESHOLD ||
-        IPriceOracleSentinel(params.priceOracleSentinel).isLiquidationAllowed(),
-      Errors.PriceOracleSentinelCheckFailed()
-    );
 
     require(
       collateralReserve.liquidationGracePeriodUntil < uint40(block.timestamp) &&
@@ -488,29 +438,6 @@ library ValidationLogic {
   }
 
   /**
-   * @notice Validates a drop reserve action.
-   * @param reservesList The addresses of all the active reserves
-   * @param reserve The reserve object
-   * @param asset The address of the reserve's underlying asset
-   */
-  function validateDropReserve(
-    mapping(uint256 => address) storage reservesList,
-    DataTypes.ReserveData storage reserve,
-    address asset
-  ) internal view {
-    require(asset != address(0), Errors.ZeroAddressNotValid());
-    require(reserve.id != 0 || reservesList[0] == asset, Errors.AssetNotListed());
-    require(
-      IERC20(reserve.variableDebtTokenAddress).totalSupply() == 0,
-      Errors.VariableDebtSupplyNotZero()
-    );
-    require(
-      IERC20(reserve.aTokenAddress).totalSupply() == 0 && reserve.accruedToTreasury == 0,
-      Errors.UnderlyingClaimableRightsNotZero()
-    );
-  }
-
-  /**
    * @notice Validates the action of setting efficiency mode.
    * @param reservesData The state of all the reserves
    * @param reservesList The addresses of all the active reserves
@@ -572,71 +499,20 @@ library ValidationLogic {
 
   /**
    * @notice Validates the action of activating the asset as collateral.
-   * @dev Only possible if the asset has non-zero LTV and the user is not in isolation mode
+   * @dev Only possible if the asset has non-zero LTV
    * @param reservesData The state of all the reserves
-   * @param reservesList The addresses of all the active reserves
    * @param eModeCategories a mapping storing configurations for all efficiency mode categories
-   * @param userConfig the user configuration
-   * @param reserveConfig The reserve configuration
    * @param asset Address of the reserve to be enabled as collateral
    * @param categoryId The id of the users eMode category
    * @return True if the asset can be activated as collateral, false otherwise
    */
   function validateUseAsCollateral(
     mapping(address => DataTypes.ReserveData) storage reservesData,
-    mapping(uint256 => address) storage reservesList,
     mapping(uint8 => DataTypes.EModeCategory) storage eModeCategories,
-    DataTypes.UserConfigurationMap storage userConfig,
-    DataTypes.ReserveConfigurationMap memory reserveConfig,
     address asset,
     uint8 categoryId
   ) internal view returns (bool) {
-    // asset must have a non zero ltv to be activated as collateral
-    if (getUserReserveLtv(reservesData[asset], eModeCategories[categoryId], categoryId) == 0) {
-      return false;
-    }
-    if (!userConfig.isUsingAsCollateralAny()) {
-      return true;
-    }
-    (bool isolationModeActive, , ) = userConfig.getIsolationModeState(reservesData, reservesList);
-
-    return (!isolationModeActive && reserveConfig.getDebtCeiling() == 0);
-  }
-
-  /**
-   * @notice Validates if an asset should be automatically activated as collateral in the following actions: supply, transfer.
-   * @dev This is used to ensure that isolated assets are not enabled as collateral automatically.
-   * @param reservesData The state of all the reserves
-   * @param reservesList The addresses of all the active reserves
-   * @param eModeCategories a mapping storing configurations for all efficiency mode categories
-   * @param userConfig the user configuration
-   * @param reserveConfig The reserve configuration
-   * @param asset Address of the reserve to be enabled as collateral
-   * @param categoryId The id of the users eMode category
-   * @return True if the asset can be activated as collateral, false otherwise
-   */
-  function validateAutomaticUseAsCollateral(
-    mapping(address => DataTypes.ReserveData) storage reservesData,
-    mapping(uint256 => address) storage reservesList,
-    mapping(uint8 => DataTypes.EModeCategory) storage eModeCategories,
-    DataTypes.UserConfigurationMap storage userConfig,
-    DataTypes.ReserveConfigurationMap memory reserveConfig,
-    address asset,
-    uint8 categoryId
-  ) internal view returns (bool) {
-    if (reserveConfig.getDebtCeiling() != 0) {
-      return false;
-    }
-    return
-      validateUseAsCollateral(
-        reservesData,
-        reservesList,
-        eModeCategories,
-        userConfig,
-        reserveConfig,
-        asset,
-        categoryId
-      );
+    return getUserReserveLtv(reservesData[asset], eModeCategories[categoryId], categoryId) != 0;
   }
 
   /**
@@ -664,6 +540,10 @@ library ValidationLogic {
       } else {
         return eModeCategoryData.ltv;
       }
+    }
+    // If eMode is isolated and asset is NOT in collateralBitmap, return 0
+    if (categoryId != 0 && eModeCategoryData.isolated) {
+      return 0;
     }
     return reserveData.configuration.getLtv();
   }

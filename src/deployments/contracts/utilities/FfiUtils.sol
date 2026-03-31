@@ -45,7 +45,7 @@ abstract contract FfiUtils {
   }
 
   function _getBorrowLibraryAddress() internal returns (address) {
-    string memory getLibraryAddress = "sed -nr 's/.*ConfiguratorLogic:([^,]*).*/\\1/p' .env";
+    string memory getLibraryAddress = "sed -nr 's/.*BorrowLogic:([^,]*).*/\\1/p' .env";
     string[] memory getAddressCommand = new string[](3);
 
     getAddressCommand[0] = 'bash';

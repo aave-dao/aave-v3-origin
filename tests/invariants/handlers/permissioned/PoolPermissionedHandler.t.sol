@@ -24,19 +24,8 @@ contract PoolPermissionedHandler is BaseHandler {
   ///////////////////////////////////////////////////////////////////////////////////////////////
 
   // Not included actions:
-  // 1. dropReserve
-  // 2. updateAToken
-  // 3. updateVariableDebtToken
-
-  function setDebtCeiling(uint256 debtCeiling, uint8 i) external {
-    address asset = _getRandomBaseAsset(i);
-
-    _before();
-    contracts.poolConfiguratorProxy.setDebtCeiling(asset, debtCeiling);
-    _after();
-
-    assert(true);
-  }
+  // 1. updateAToken
+  // 2. updateVariableDebtToken
 
   function setReservePause(bool paused, uint40 gracePeriod, uint8 i) external {
     address asset = _getRandomBaseAsset(i);
@@ -129,26 +118,6 @@ contract PoolPermissionedHandler is BaseHandler {
     assert(true);
   }
 
-  function setBorrowableInIsolation(bool borrowable, uint8 i) external {
-    address asset = _getRandomBaseAsset(i);
-
-    _before();
-    contracts.poolConfiguratorProxy.setBorrowableInIsolation(asset, borrowable);
-    _after();
-
-    assert(true);
-  }
-
-  function setSiloedBorrowing(bool siloed, uint8 i) external {
-    address asset = _getRandomBaseAsset(i);
-
-    _before();
-    contracts.poolConfiguratorProxy.setSiloedBorrowing(asset, siloed);
-    _after();
-
-    assert(true);
-  }
-
   function setBorrowCap(uint256 newBorrowCap, uint8 i) external {
     address asset = _getRandomBaseAsset(i);
 
@@ -199,7 +168,8 @@ contract PoolPermissionedHandler is BaseHandler {
     uint8 categoryId,
     uint16 ltv,
     uint16 liquidationThreshold,
-    uint16 liquidationBonus
+    uint16 liquidationBonus,
+    bool isolated
   ) external {
     _before();
     contracts.poolConfiguratorProxy.setEModeCategory(
@@ -207,7 +177,8 @@ contract PoolPermissionedHandler is BaseHandler {
       uint16(ltv),
       uint16(liquidationThreshold),
       uint16(liquidationBonus),
-      ''
+      '',
+      isolated
     );
     _after();
 
@@ -269,6 +240,16 @@ contract PoolPermissionedHandler is BaseHandler {
       categoryId: categoryId,
       ltvzero: ltvzero
     });
+    _after();
+
+    assert(true);
+  }
+
+  function setEModeCategoryIsolated(uint8 j, bool isolated) external {
+    uint8 categoryId = _getRandomEModeCategory(j);
+
+    _before();
+    contracts.poolConfiguratorProxy.setEModeCategoryIsolated(categoryId, isolated);
     _after();
 
     assert(true);

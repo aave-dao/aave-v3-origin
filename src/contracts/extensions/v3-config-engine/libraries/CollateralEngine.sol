@@ -12,9 +12,9 @@ library CollateralEngine {
   using PercentageMath for uint256;
 
   function executeCollateralSide(
-    IEngine.EngineConstants calldata engineConstants,
+    IEngine.EngineConstants memory engineConstants,
     IEngine.CollateralUpdate[] memory updates
-  ) external {
+  ) internal {
     require(updates.length != 0, 'AT_LEAST_ONE_UPDATE_REQUIRED');
 
     _configCollateralSide(engineConstants.poolConfigurator, engineConstants.pool, updates);
@@ -76,22 +76,6 @@ library CollateralEngine {
             // as there the definition is as e.g. 105% (5% bonus for liquidators)
             100_00 + updates[i].liqBonus
           );
-        }
-
-        if (updates[i].debtCeiling != EngineFlags.KEEP_CURRENT) {
-          // Debt ceiling should only be set when liquidation threshold is non-zero
-          // Fetch current value since any updates above would already be applied
-          DataTypes.ReserveConfigurationMap memory configuration = pool.getConfiguration(
-            updates[i].asset
-          );
-          (, uint256 currentLiqThreshold, , , ) = configuration.getParams();
-
-          require(currentLiqThreshold != 0, 'DEBT_CEILING_REQUIRES_LT_NON_ZERO');
-
-          // For reference, this is to simplify the interactions with the Aave protocol,
-          // as there the definition is with 2 decimals. We don't see any reason to set
-          // a debt ceiling involving .something USD, so we simply don't allow to do it
-          poolConfigurator.setDebtCeiling(updates[i].asset, updates[i].debtCeiling * 100);
         }
       }
 

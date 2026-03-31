@@ -70,12 +70,7 @@ library AaveV3BatchOrchestration {
       address(variables.setupBatch)
     );
 
-    variables.miscReport = _deployMisc(
-      flags.l2,
-      variables.initialReport.poolAddressesProvider,
-      config.l2SequencerUptimeFeed,
-      config.l2PriceOracleSentinelGracePeriod
-    );
+    variables.miscReport = _deployMisc(variables.initialReport.poolAddressesProvider);
     variables.miscReport.defaultInterestRateStrategy = variables.initialReport.interestRateStrategy;
 
     variables.setupReport = variables.setupBatch.setupAaveV3Market(
@@ -84,8 +79,7 @@ library AaveV3BatchOrchestration {
       variables.poolReport.poolImplementation,
       variables.poolReport.poolConfiguratorImplementation,
       variables.peripheryReport.aaveOracle,
-      variables.peripheryReport.rewardsControllerImplementation,
-      variables.miscReport.priceOracleSentinel
+      variables.peripheryReport.rewardsControllerImplementation
     );
 
     variables.gettersReport2 = _deployGettersBatch2(
@@ -222,18 +216,8 @@ library AaveV3BatchOrchestration {
     return helpersBatchTwo.staticATokenReport();
   }
 
-  function _deployMisc(
-    bool l2Flag,
-    address poolAddressesProvider,
-    address sequencerUptimeOracle,
-    uint256 gracePeriod
-  ) internal returns (MiscReport memory) {
-    AaveV3MiscBatch miscBatch = new AaveV3MiscBatch(
-      l2Flag,
-      poolAddressesProvider,
-      sequencerUptimeOracle,
-      gracePeriod
-    );
+  function _deployMisc(address poolAddressesProvider) internal returns (MiscReport memory) {
+    AaveV3MiscBatch miscBatch = new AaveV3MiscBatch(poolAddressesProvider);
 
     return miscBatch.getMiscReport();
   }
@@ -321,7 +305,6 @@ library AaveV3BatchOrchestration {
     report.aclManager = setupReport.aclManager;
     report.aToken = tokensReport.aToken;
     report.variableDebtToken = tokensReport.variableDebtToken;
-    report.priceOracleSentinel = miscReport.priceOracleSentinel;
     report.defaultInterestRateStrategy = miscReport.defaultInterestRateStrategy;
     report.configEngine = configEngineReport.configEngine;
     report.staticATokenFactoryImplementation = staticATokenReport.staticATokenFactoryImplementation;

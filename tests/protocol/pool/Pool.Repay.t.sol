@@ -7,12 +7,9 @@ import {IERC20Errors} from 'openzeppelin-contracts/contracts/interfaces/draft-IE
 import {IVariableDebtToken} from '../../../src/contracts/interfaces/IVariableDebtToken.sol';
 import {IPoolAddressesProvider} from '../../../src/contracts/interfaces/IPoolAddressesProvider.sol';
 import {IPool} from '../../../src/contracts/interfaces/IPool.sol';
-import {ISequencerOracle} from '../../../src/contracts/interfaces/ISequencerOracle.sol';
 import {Errors} from '../../../src/contracts/protocol/libraries/helpers/Errors.sol';
 import {TestnetERC20} from '../../../src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
 import {UserConfiguration} from '../../../src/contracts/protocol/libraries/configuration/UserConfiguration.sol';
-import {PriceOracleSentinel} from '../../../src/contracts/misc/PriceOracleSentinel.sol';
-import {SequencerOracle} from '../../../src/contracts/mocks/oracle/SequencerOracle.sol';
 import {BorrowLogic, IERC20} from '../../../src/contracts/protocol/libraries/logic/BorrowLogic.sol';
 import {DataTypes} from '../../../src/contracts/protocol/libraries/types/DataTypes.sol';
 import {TestnetProcedures} from '../../utils/TestnetProcedures.sol';
@@ -23,9 +20,6 @@ contract PoolRepayTests is TestnetProcedures {
 
   IVariableDebtToken internal varDebtUSDX;
   address internal aUSDX;
-
-  PriceOracleSentinel internal priceOracleSentinel;
-  SequencerOracle internal sequencerOracleMock;
 
   function setUp() public {
     initTestEnvironment();
@@ -39,16 +33,6 @@ contract PoolRepayTests is TestnetProcedures {
     vm.startPrank(carol);
     contracts.poolProxy.supply(tokenList.usdx, 100_000e6, carol, 0);
     vm.stopPrank();
-
-    sequencerOracleMock = new SequencerOracle(poolAdmin);
-    priceOracleSentinel = new PriceOracleSentinel(
-      IPoolAddressesProvider(report.poolAddressesProvider),
-      ISequencerOracle(address(sequencerOracleMock)),
-      1 days
-    );
-
-    vm.prank(poolAdmin);
-    sequencerOracleMock.setAnswer(false, 0);
   }
 
   function test_repay_full_variable_borrow() public {
@@ -428,114 +412,6 @@ contract PoolRepayTests is TestnetProcedures {
       s
     );
     vm.stopPrank();
-  }
-
-  function test_full_repay_borrow_variable_in_isolation() public {
-    uint256 borrowAmount = 100e6;
-    vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setDebtCeiling(tokenList.wbtc, 10_000_00);
-    contracts.poolConfiguratorProxy.setBorrowableInIsolation(tokenList.usdx, true);
-    vm.stopPrank();
-
-    vm.startPrank(alice);
-    contracts.poolProxy.supply(tokenList.wbtc, 0.5e8, alice, 0);
-
-    contracts.poolProxy.setUserUseReserveAsCollateral(tokenList.wbtc, true);
-
-    vm.expectEmit(address(contracts.poolProxy));
-    emit IPool.IsolationModeTotalDebtUpdated(tokenList.wbtc, 100_00);
-
-    // Perform borrow in isolated position
-    contracts.poolProxy.borrow(tokenList.usdx, borrowAmount, 2, 0, alice);
-
-    uint256 balanceBefore = usdx.balanceOf(alice);
-    uint256 debtBalanceBefore = varDebtUSDX.scaledBalanceOf(alice);
-
-    vm.expectEmit(report.poolProxy);
-    emit IPool.IsolationModeTotalDebtUpdated(tokenList.wbtc, 0);
-
-    vm.expectEmit(report.poolProxy);
-    emit IPool.Repay(
-      tokenList.usdx,
-      alice,
-      alice,
-      IERC20(address(varDebtUSDX)).balanceOf(alice),
-      false
-    );
-
-    contracts.poolProxy.repay(tokenList.usdx, UINT256_MAX, 2, alice);
-    vm.stopPrank();
-
-    uint256 debtBalanceAfter = varDebtUSDX.scaledBalanceOf(alice);
-
-    assertEq(debtBalanceAfter, 0);
-    assertEq(usdx.balanceOf(alice), balanceBefore - debtBalanceBefore);
-    assertEq(
-      contracts.poolProxy.getUserConfiguration(alice).isBorrowing(
-        contracts.poolProxy.getReserveData(tokenList.usdx).id
-      ),
-      false
-    );
-
-    _checkInterestRates(tokenList.usdx);
-  }
-
-  function test_partial_repay_borrow_variable_in_isolation() public {
-    uint256 borrowAmount = 100e6;
-    vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setDebtCeiling(tokenList.wbtc, 10_000_00);
-    contracts.poolConfiguratorProxy.setBorrowableInIsolation(tokenList.usdx, true);
-    vm.stopPrank();
-
-    vm.startPrank(alice);
-    contracts.poolProxy.supply(tokenList.wbtc, 0.5e8, alice, 0);
-
-    contracts.poolProxy.setUserUseReserveAsCollateral(tokenList.wbtc, true);
-
-    vm.expectEmit(address(contracts.poolProxy));
-    emit IPool.IsolationModeTotalDebtUpdated(tokenList.wbtc, 100_00);
-
-    // Perform borrow in isolated position
-    contracts.poolProxy.borrow(tokenList.usdx, borrowAmount, 2, 0, alice);
-
-    uint256 balanceBefore = usdx.balanceOf(alice);
-    uint256 debtBalanceBefore = varDebtUSDX.scaledBalanceOf(alice);
-    uint256 repayAmount = varDebtUSDX.scaledBalanceOf(alice) / 2;
-    uint256 isolationDebtRepaid = repayAmount /
-      (10 ** (6 - contracts.protocolDataProvider.getDebtCeilingDecimals()));
-    uint256 isolationModeTotalDebt = contracts
-      .poolProxy
-      .getReserveData(tokenList.wbtc)
-      .isolationModeTotalDebt;
-
-    vm.expectEmit(report.poolProxy);
-    emit IPool.IsolationModeTotalDebtUpdated(
-      tokenList.wbtc,
-      isolationModeTotalDebt - isolationDebtRepaid
-    );
-
-    vm.expectEmit(report.poolProxy);
-    emit IPool.Repay(tokenList.usdx, alice, alice, repayAmount, false);
-
-    contracts.poolProxy.repay(tokenList.usdx, repayAmount, 2, alice);
-    vm.stopPrank();
-
-    uint256 debtBalanceAfter = varDebtUSDX.scaledBalanceOf(alice);
-
-    assertEq(debtBalanceAfter, debtBalanceBefore - repayAmount);
-    assertEq(usdx.balanceOf(alice), balanceBefore - repayAmount);
-    assertEq(
-      contracts.poolProxy.getUserConfiguration(alice).isBorrowing(
-        contracts.poolProxy.getReserveData(tokenList.usdx).id
-      ),
-      true
-    );
-    assertEq(
-      contracts.poolProxy.getReserveData(tokenList.wbtc).isolationModeTotalDebt,
-      isolationModeTotalDebt - isolationDebtRepaid
-    );
-
-    _checkInterestRates(tokenList.usdx);
   }
 
   function test_reverts_borrow_invalidAmount() public {
