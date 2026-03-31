@@ -67,7 +67,7 @@ contract ProtocolDataProvider_gas_Tests is Testhelpers {
   }
 
   function test_getTotalDebt() external {
-    contracts.protocolDataProvider.getATokenTotalSupply(tokenList.usdx);
+    contracts.protocolDataProvider.getTotalDebt(tokenList.usdx);
     vm.snapshotGasLastCall('ProtocolDataProvider', 'getTotalDebt');
   }
 

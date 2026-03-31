@@ -11,7 +11,7 @@
   "getReserveConfigurationData": "11776",
   "getReserveDeficit": "11039",
   "getReserveTokensAddresses": "14977",
-  "getTotalDebt": "30034",
+  "getTotalDebt": "30280",
   "getUnbackedMintCap": "413",
   "getUserReserveData": "68421",
   "getVirtualUnderlyingBalance": "11121"
