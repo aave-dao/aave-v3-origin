@@ -120,7 +120,7 @@ interface IPoolDataProvider {
 
   /**
    * @notice Returns the debt ceiling decimals
-   * @return 0, DEPRECATED in v3.7.0
+   * @return 2, DEPRECATED in v3.7.0
    */
   function getDebtCeilingDecimals() external pure returns (uint256);
 

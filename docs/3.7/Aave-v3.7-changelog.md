@@ -62,7 +62,8 @@
 
 ### AaveProtocolDataProvider
 
-- `getDebtCeiling`, `getSiloedBorrowing` now return hardcoded defaults (`0` / `false`) for backward compatibility. `getDebtCeilingDecimals` unchanged (was already pure).
+- `getDebtCeiling`, `getSiloedBorrowing` now return hardcoded defaults (`0` / `false`) for backward compatibility
+- `getDebtCeilingDecimals` returns `2` for backward compatibility.
 
 ## Libraries
 

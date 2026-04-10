@@ -149,7 +149,7 @@ contract AaveProtocolDataProvider is IPoolDataProvider {
 
   /// @inheritdoc IPoolDataProvider
   function getDebtCeilingDecimals() external pure override returns (uint256) {
-    return 0;
+    return 2;
   }
 
   /// @inheritdoc IPoolDataProvider

@@ -38,8 +38,8 @@ contract AaveProtocolDataProviderTests is TestnetProcedures {
   function test_getDebtCeilingDecimals_returns_zero() external view {
     assertEq(
       contracts.protocolDataProvider.getDebtCeilingDecimals(),
-      0,
-      'getDebtCeilingDecimals should always return 0 (deprecated)'
+      2,
+      'getDebtCeilingDecimals should always return 2 (deprecated)'
     );
   }
 
