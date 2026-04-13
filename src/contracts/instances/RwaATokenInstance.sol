@@ -2,10 +2,16 @@
 pragma solidity ^0.8.0;
 
 import {RwaAToken} from '../protocol/tokenization/RwaAToken.sol';
-import {IPool, IAaveIncentivesController, IInitializableAToken, Errors, VersionedInitializable} from '../protocol/tokenization/AToken.sol';
+import {
+  IPool,
+  IAaveIncentivesController,
+  IInitializableAToken,
+  Errors,
+  VersionedInitializable
+} from '../protocol/tokenization/AToken.sol';
 
 contract RwaATokenInstance is RwaAToken {
-  uint256 public constant ATOKEN_REVISION = 2;
+  uint256 public constant ATOKEN_REVISION = 3;
 
   constructor(IPool pool) RwaAToken(pool) {}
 

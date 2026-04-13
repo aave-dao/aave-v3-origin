@@ -92,6 +92,18 @@ deploy-liquidation-data-provider :;
 		--sig "run(address,address)" ${pool} ${addressesProvider} \
 		--verify --broadcast
 
+# Deploy AToken implementation. `make deploy-atoken-impl CHAIN=mainnet ACCOUNT=<account>`
+deploy-atoken-impl :;
+	FOUNDRY_PROFILE=${CHAIN} forge script scripts/misc/DeployATokenImplementations.sol:DeployATokenInstance \
+		--rpc-url ${CHAIN} --account ${ACCOUNT} --slow $(if $(dry),,--broadcast --verify) --gas-estimate-multiplier 150 \
+		--chain ${CHAIN} --verifier-url ${VERIFIER_URL}
+
+# Deploy RwaAToken implementation. `make deploy-rwa-atoken-impl CHAIN=mainnet ACCOUNT=<account>`
+deploy-rwa-atoken-impl :;
+	FOUNDRY_PROFILE=${CHAIN} forge script scripts/misc/DeployATokenImplementations.sol:DeployRwaATokenInstance \
+		--rpc-url ${CHAIN} --account ${ACCOUNT} --slow $(if $(dry),,--broadcast --verify) --gas-estimate-multiplier 150 \
+		--chain ${CHAIN} --verifier-url ${VERIFIER_URL}
+
 # Invariants
 echidna:
 	echidna tests/invariants/Tester.t.sol --contract Tester --config ./tests/invariants/_config/echidna_config.yaml --corpus-dir ./tests/invariants/_corpus/echidna/default/_data/corpus
