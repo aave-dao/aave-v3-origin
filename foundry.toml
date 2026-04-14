@@ -55,7 +55,7 @@ scroll = { key = "${ETHERSCAN_API_KEY}", chainId = 534352 }
 celo = { key = "${ETHERSCAN_API_KEY}", chainId = 42220 }
 bnb = { key = "${ETHERSCAN_API_KEY}", chainId = 56 }
 gnosis = { key = "${ETHERSCAN_API_KEY}", chainId = 100 }
-base = { key = "${ETHERSCAN_API_KEY}", chain = 8453 }
+base = { key = "${ETHERSCAN_API_KEY}", chainId = 8453 }
 metis = { key = "", chainId = 1088, url = 'https://api.routescan.io/v2/network/mainnet/evm/1088/etherscan/api' }
 linea = { key = "${ETHERSCAN_API_KEY}", chainId = 59144 }
 sepolia = { key = "${ETHERSCAN_API_KEY}", chainId = 11155111 }

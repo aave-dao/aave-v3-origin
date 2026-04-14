@@ -43,19 +43,19 @@ git-diff :
 
 # Deploy
 deploy-libs-one	:;
-	FOUNDRY_PROFILE=${CHAIN} forge script scripts/misc/LibraryPreCompileOne.sol \
-		--rpc-url ${CHAIN} --account ${ACCOUNT} --slow --broadcast --gas-estimate-multiplier 150 \
-		--verify --chain ${CHAIN}
+	FOUNDRY_PROFILE=${chain} forge script scripts/misc/LibraryPreCompileOne.sol \
+		--rpc-url ${chain} --account ${account} --slow --broadcast --gas-estimate-multiplier 150 \
+		--verify --chain ${chain}
 deploy-libs-two	:;
-	FOUNDRY_PROFILE=${CHAIN} forge script scripts/misc/LibraryPreCompileTwo.sol \
-		--rpc-url ${CHAIN} --account ${ACCOUNT} --slow --broadcast --gas-estimate-multiplier 150 \
-		--verify --chain ${CHAIN}
+	FOUNDRY_PROFILE=${chain} forge script scripts/misc/LibraryPreCompileTwo.sol \
+		--rpc-url ${chain} --account ${account} --slow --broadcast --gas-estimate-multiplier 150 \
+		--verify --chain ${chain}
 
 # STEP 1: Deploy scaled price adapters. `make deploy-scaled-price-adapter source=<PRICE_FEED_ADDRESS>`
 deploy-scaled-price-adapter :;
-	FOUNDRY_PROFILE=${CHAIN} forge script scripts/misc/DeployScaledPriceAdapter.sol:DeployScaledPriceAdapter \
-		--rpc-url ${CHAIN} --account ${ACCOUNT} --slow --broadcast --gas-estimate-multiplier 150 \
-		--verify --chain ${CHAIN} --verifier-url ${VERIFIER_URL} \
+	FOUNDRY_PROFILE=${chain} forge script scripts/misc/DeployScaledPriceAdapter.sol:DeployScaledPriceAdapter \
+		--rpc-url ${chain} --account ${account} --slow --broadcast --gas-estimate-multiplier 150 \
+		--verify --chain ${chain} --verifier-url ${verifier_url} \
 		--sig "run(address)" ${source}
 
 # STEP 2: Deploy Libraries
@@ -65,44 +65,44 @@ deploy-libs :
 
 # STEP 3: Deploy Pool Contracts once libraries are deployed and updated on .env
 deploy-v3-batched-broadcast :; 
-	FOUNDRY_PROFILE=${CHAIN} forge script scripts/DeployAaveV3MarketBatched.sol:Default \
-		--rpc-url ${CHAIN} --sender $$(cast wallet address --account ${ACCOUNT}) --account ${ACCOUNT} --slow --broadcast --gas-estimate-multiplier 150 \
-		--verify --chain ${CHAIN} --verifier-url ${VERIFIER_URL} -vvvv
+	FOUNDRY_PROFILE=${chain} forge script scripts/DeployAaveV3MarketBatched.sol:Default \
+		--rpc-url ${chain} --sender $$(cast wallet address --account ${account}) --account ${account} --slow --broadcast --gas-estimate-multiplier 150 \
+		--verify --chain ${chain} --verifier-url ${verifier_url} -vvvv
 
 # STEP 4: Deploys payload to list phase one assets. `make deploy-phase-one-payload reportPath=<PATH_TO_REPORT>`
 deploy-phase-one-payload :;
-	FOUNDRY_PROFILE=${CHAIN} forge script scripts/misc/DeployHorizonPhaseOnePayload.sol:DeployHorizonPhaseOnePayload \
-		--rpc-url ${CHAIN} --account ${ACCOUNT} --slow --broadcast --gas-estimate-multiplier 150 \
-		--verify --chain ${CHAIN} --verifier-url ${VERIFIER_URL} \
+	FOUNDRY_PROFILE=${chain} forge script scripts/misc/DeployHorizonPhaseOnePayload.sol:DeployHorizonPhaseOnePayload \
+		--rpc-url ${chain} --account ${account} --slow --broadcast --gas-estimate-multiplier 150 \
+		--verify --chain ${chain} --verifier-url ${verifier_url} \
 		--sig "run(string)" ${reportPath}
 
 # STEP 5: Deploys payload to update phase one assets. `make deploy-phase-one-update-payload`
 deploy-phase-one-update-payload :;
-	FOUNDRY_PROFILE=${CHAIN} forge script scripts/misc/DeployHorizonPhaseOneUpdatePayload.sol:DeployHorizonPhaseOneUpdatePayload \
-		--rpc-url ${CHAIN} --account ${ACCOUNT} --slow --gas-estimate-multiplier 150 \
-		--chain ${CHAIN} --verifier etherscan \
+	FOUNDRY_PROFILE=${chain} forge script scripts/misc/DeployHorizonPhaseOneUpdatePayload.sol:DeployHorizonPhaseOneUpdatePayload \
+		--rpc-url ${chain} --account ${account} --slow --gas-estimate-multiplier 150 \
+		--chain ${chain} --verifier etherscan \
 		--sig "run()" \
 		--verify --broadcast
 
-# Deploy liquidation data provider. `make deploy-liquidation-data-provider CHAIN=mainnet ACCOUNT=<account>`
+# Deploy liquidation data provider. `make deploy-liquidation-data-provider chain=mainnet account=<account>`
 deploy-liquidation-data-provider :;
-	FOUNDRY_PROFILE=${CHAIN} forge script scripts/misc/DeployLiquidationDataProvider.sol:DeployLiquidationDataProvider \
-		--rpc-url ${CHAIN} --account ${ACCOUNT} --slow --gas-estimate-multiplier 150 \
-		--chain ${CHAIN} --verifier-url ${VERIFIER_URL} \
+	FOUNDRY_PROFILE=${chain} forge script scripts/misc/DeployLiquidationDataProvider.sol:DeployLiquidationDataProvider \
+		--rpc-url ${chain} --account ${account} --slow --gas-estimate-multiplier 150 \
+		--chain ${chain} --verifier-url ${verifier_url} \
 		--sig "run(address,address)" ${pool} ${addressesProvider} \
 		--verify --broadcast
 
-# Deploy AToken implementation. `make deploy-atoken-impl CHAIN=mainnet ACCOUNT=<account>`
+# Deploy AToken implementation. `make deploy-atoken-impl chain=mainnet account=<account>`
 deploy-atoken-impl :;
-	FOUNDRY_PROFILE=${CHAIN} forge script scripts/misc/DeployATokenImplementations.sol:DeployATokenInstance \
-		--rpc-url ${CHAIN} --account ${ACCOUNT} --slow $(if $(dry),,--broadcast --verify) --gas-estimate-multiplier 150 \
-		--chain ${CHAIN} --verifier-url ${VERIFIER_URL}
+	FOUNDRY_PROFILE=${chain} forge script scripts/misc/DeployATokenImplementations.sol:DeployATokenInstance \
+		--rpc-url ${chain} --account ${account} --slow $(if $(dry),,--broadcast --verify) --gas-estimate-multiplier 150 \
+		--chain ${chain} --verifier-url ${verifier_url}
 
-# Deploy RwaAToken implementation. `make deploy-rwa-atoken-impl CHAIN=mainnet ACCOUNT=<account>`
+# Deploy RwaAToken implementation. `make deploy-rwa-atoken-impl chain=mainnet account=<account>`
 deploy-rwa-atoken-impl :;
-	FOUNDRY_PROFILE=${CHAIN} forge script scripts/misc/DeployATokenImplementations.sol:DeployRwaATokenInstance \
-		--rpc-url ${CHAIN} --account ${ACCOUNT} --slow $(if $(dry),,--broadcast --verify) --gas-estimate-multiplier 150 \
-		--chain ${CHAIN} --verifier-url ${VERIFIER_URL}
+	FOUNDRY_PROFILE=${chain} forge script scripts/misc/DeployATokenImplementations.sol:DeployRwaATokenInstance \
+		--rpc-url ${chain} --account ${account} --slow $(if $(dry),,--broadcast --verify) --gas-estimate-multiplier 150 \
+		--chain ${chain} --verifier-url ${verifier_url}
 
 # Invariants
 echidna:
