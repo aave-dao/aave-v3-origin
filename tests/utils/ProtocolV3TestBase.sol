@@ -133,6 +133,11 @@ contract ProtocolV3TestBase is Test {
           'borrowableBitmap',
           vm.toString(pool.getEModeCategoryBorrowableBitmap(i))
         );
+        vm.serializeString(
+          key,
+          'ltvzeroBitmap',
+          vm.toString(pool.getEModeCategoryLtvzeroBitmap(i))
+        );
         vm.serializeUint(key, 'liquidationThreshold', cfg.liquidationThreshold);
         string memory object = vm.serializeUint(key, 'liquidationBonus', cfg.liquidationBonus);
         content = vm.serializeString(eModesKey, key, object);
