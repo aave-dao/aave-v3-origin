@@ -14,10 +14,10 @@ This guide is intended to help you get started with contributing. By following t
 
 1. [Forking the repository](#forking-the-repository)
 2. [Installing Foundry](#installing-foundry)
-4. [Installing dependencies](#installing-dependencies)
-5. [Running the test suite](#running-the-test-suite)
-7. [Submitting a pull request](#submitting-a-pull-request)
-8. [Versioning](#versioning)
+3. [Installing dependencies](#installing-dependencies)
+4. [Running the test suite](#running-the-test-suite)
+5. [Submitting a pull request](#submitting-a-pull-request)
+6. [Versioning](#versioning)
 
 ---
 
@@ -26,6 +26,7 @@ This guide is intended to help you get started with contributing. By following t
 To start contributing to the project, [fork it](https://github.com/aave-dao/aave-v3-origin/fork) to your private github account.
 
 Once that is done, you can clone your forked repository to your local machine.
+
 ```bash
 # https
 git clone https://github.com/<user>/aave-v3-origin.git
@@ -34,6 +35,7 @@ git clone git@github.com:<user>/aave-v3-origin.git
 ```
 
 To stay up to date with the main repository, you can add it as a remote.
+
 ```bash
 # https
 git remote add upstream https://github.com/aave-dao/aave-v3-origin.git
