@@ -17,8 +17,6 @@ import {AggregatorInterface} from '../dependencies/chainlink/AggregatorInterface
 import {IERC20DetailedBytes} from './interfaces/IERC20DetailedBytes.sol';
 import {IUiPoolDataProviderV3} from './interfaces/IUiPoolDataProviderV3.sol';
 
-import {LegacyV36ReserveConfiguration} from './temp/LegacyV36ReserveConfiguration.sol';
-
 contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
   using WadRayMath for uint256;
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
@@ -130,11 +128,8 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
 
       // v3 only
       reserveData.deficit = uint128(pool.getReserveDeficit(reserveData.underlyingAsset));
-      reserveData.debtCeiling = LegacyV36ReserveConfiguration.getDebtCeiling(
-        reserveConfigurationMap
-      );
-      reserveData.debtCeilingDecimals = poolDataProvider.getDebtCeilingDecimals();
-
+      reserveData.debtCeiling = 0;
+      reserveData.debtCeilingDecimals = 0;
       (reserveData.borrowCap, reserveData.supplyCap) = reserveConfigurationMap.getCaps();
 
       try poolDataProvider.getFlashLoanEnabled(reserveData.underlyingAsset) returns (
@@ -145,15 +140,11 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
         reserveData.flashLoanEnabled = true;
       }
 
-      reserveData.isSiloedBorrowing = LegacyV36ReserveConfiguration.getSiloedBorrowing(
-        reserveConfigurationMap
-      );
-      reserveData.isolationModeTotalDebt = baseData.isolationModeTotalDebt;
+      reserveData.isSiloedBorrowing = false;
+      reserveData.isolationModeTotalDebt = 0;
       reserveData.accruedToTreasury = baseData.accruedToTreasury;
 
-      reserveData.borrowableInIsolation = LegacyV36ReserveConfiguration.getBorrowableInIsolation(
-        reserveConfigurationMap
-      );
+      reserveData.borrowableInIsolation = false;
       reserveData.virtualUnderlyingBalance = pool.getVirtualUnderlyingBalance(
         reserveData.underlyingAsset
       );
