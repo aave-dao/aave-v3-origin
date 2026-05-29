@@ -1,6 +1,6 @@
 pragma solidity ^0.8.10;
 
-import {IERC20} from '../../munged/lib/aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {IERC20} from 'openzeppelin-contracts/contracts/interfaces/IERC20.sol';
 import {TransferStrategyBase} from '../../munged/lib/aave-v3-periphery/contracts/rewards/transfer-strategies/TransferStrategyBase.sol';
 
 contract TransferStrategyMultiRewardHarness is TransferStrategyBase {
