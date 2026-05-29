@@ -7,7 +7,7 @@ import {ReserveLogic} from '../munged/src/contracts/protocol/libraries/logic/Res
 import {IPoolAddressesProvider} from '../munged/src/contracts/interfaces/IPoolAddressesProvider.sol';
 import {IReserveInterestRateStrategy} from '../munged/src/contracts/interfaces/IReserveInterestRateStrategy.sol';
 
-import {IERC20} from '../munged/src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
 import {ReserveConfiguration} from '../munged/src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
 
 contract PoolHarness is PoolInstance {

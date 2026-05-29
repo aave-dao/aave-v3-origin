@@ -17,13 +17,6 @@ methods {
   function _.rayMul(uint256 a, uint256 b) internal => mulDivDownAbstractPlus(a, b, 10^27) expect uint256 ALL;
   function _.rayDiv(uint256 a, uint256 b) internal => mulDivDownAbstractPlus(a, 10^27, b) expect uint256 ALL;
 
-  // IPriceOracleSentinel
-  function _.isBorrowAllowed() external => DISPATCHER(true);
-  function _.isLiquidationAllowed() external => DISPATCHER(true);
-  function _.setSequencerOracle(address newSequencerOracle) external => DISPATCHER(true);
-  function _.setGracePeriod(uint256 newGracePeriod) external => DISPATCHER(true);
-  function _.getGracePeriod() external => DISPATCHER(true);
-
   // Modification of index is tracked by incrementCounter:
   function _.incrementCounter() external => ghostUpdate() expect bool ALL;
 }

@@ -33,9 +33,9 @@ methods {
     uint256 debtAssetPrice,
     uint256 debtAssetUnit,
     uint256 debtToCover,
-    uint256 userCollateralBalance,
+    uint256 borrowerCollateralBalance,
     uint256 liquidationBonus
-  ) internal returns (uint256, uint256, uint256, uint256) => NONDET;
+  ) internal returns (uint256, uint256, uint256) => NONDET;
 }
 
 // For flashloan

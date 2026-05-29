@@ -15,16 +15,16 @@ methods {
     uint256 debtAssetPrice,
     uint256 debtAssetUnit,
     uint256 debtToCover,
-    uint256 userCollateralBalance,
+    uint256 borrowerCollateralBalance,
     uint256 liquidationBonus
-  ) internal returns (uint256,uint256,uint256,uint256) =>
+  ) internal returns (uint256,uint256,uint256) =>
     _calculateAvailableCollateralToLiquidateCVL();
 }
 
 
-function _calculateAvailableCollateralToLiquidateCVL() returns (uint256,uint256,uint256,uint256) {
-  uint256 a; uint256 b; uint256 c; uint256 d; // require c==0;
-  return (a,b,c,d);
+function _calculateAvailableCollateralToLiquidateCVL() returns (uint256,uint256,uint256) {
+  uint256 a; uint256 b; uint256 c; // require c==0;
+  return (a,b,c);
 }
 
 

@@ -22,9 +22,9 @@ methods {
     uint256 debtAssetPrice,
     uint256 debtAssetUnit,
     uint256 debtToCover,
-    uint256 userCollateralBalance,
+    uint256 borrowerCollateralBalance,
     uint256 liquidationBonus
-  ) internal returns (uint256,uint256,uint256,uint256) =>
+  ) internal returns (uint256,uint256,uint256) =>
     _calculateAvailableCollateralToLiquidateCVL();
 }
 
@@ -57,9 +57,9 @@ persistent ghost address _COL_asset; persistent ghost address _COL_atoken; persi
 persistent ghost uint256 _COL_liqIND; persistent ghost uint256 _COL_dbtIND;
 
 
-function _calculateAvailableCollateralToLiquidateCVL() returns (uint256,uint256,uint256,uint256) {
-  uint256 a; uint256 b; uint256 c; uint256 d;
-  return (a,b,c,d);
+function _calculateAvailableCollateralToLiquidateCVL() returns (uint256,uint256,uint256) {
+  uint256 a; uint256 b; uint256 c;
+  return (a,b,c);
 }
 
 

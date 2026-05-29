@@ -66,9 +66,9 @@ methods {
     uint256 debtAssetPrice,
     uint256 debtAssetUnit,
     uint256 debtToCover,
-    uint256 userCollateralBalance,
+    uint256 borrowerCollateralBalance,
     uint256 liquidationBonus
-  ) internal returns (uint256,uint256,uint256,uint256) =>
+  ) internal returns (uint256,uint256,uint256) =>
     _calculateAvailableCollateralToLiquidateCVL();
 
   function LiquidationLogic._burnBadDebt(
@@ -104,9 +104,9 @@ function _burnBadDebt_CVL(env e) {
 }
 
 // This is immediately after the call to updateState for the COL token
-function _calculateAvailableCollateralToLiquidateCVL() returns (uint256,uint256,uint256,uint256) {
-  uint256 a; uint256 b; uint256 c; uint256 d;
-  return (a,b,c,d);
+function _calculateAvailableCollateralToLiquidateCVL() returns (uint256,uint256,uint256) {
+  uint256 a; uint256 b; uint256 c;
+  return (a,b,c);
 }
 
 
