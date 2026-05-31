@@ -19,6 +19,7 @@ methods {
 
   // Modification of index is tracked by incrementCounter:
   function _.incrementCounter() external => ghostUpdate() expect bool ALL;
+  function _.getLastTransferResult(address) internal => NONDET;
 }
 
 ghost mathint counterUpdateIndexes;
