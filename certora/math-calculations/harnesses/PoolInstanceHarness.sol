@@ -53,13 +53,12 @@ contract PoolInstanceHarness is PoolInstance {
     uint256 debtToCover,
     uint256 borrowerCollateralBalance,
     uint256 liquidationBonus
-  ) external pure returns (uint256, uint256, uint256, uint256) {
+  ) external pure returns (uint256, uint256, uint256) {
     uint256 a;
     uint256 b;
     uint256 c;
-    uint256 d;
 
-    (a, b, c, d) = LiquidationLogic._calculateAvailableCollateralToLiquidate(
+    (a, b, c) = LiquidationLogic._calculateAvailableCollateralToLiquidate(
       collateralReserveConfiguration,
       collateralAssetPrice,
       collateralAssetUnit,
@@ -69,7 +68,7 @@ contract PoolInstanceHarness is PoolInstance {
       borrowerCollateralBalance,
       liquidationBonus
     );
-    return (a, b, c, d);
+    return (a, b, c);
   }
 
   function WRP_calculateUserAccountData_ORIG(

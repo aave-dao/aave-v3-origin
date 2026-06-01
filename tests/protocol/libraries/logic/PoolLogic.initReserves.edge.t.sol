@@ -35,41 +35,6 @@ contract PoolLogicInitReservesTests is TestnetProcedures {
     PoolLogic.executeInitReserve(reservesData, reservesList, params);
   }
 
-  function test_initReserves_return_false_after_dropped_reserve() public {
-    DataTypes.InitReserveParams memory params1 = DataTypes.InitReserveParams(
-      address(new Mock()),
-      report.aToken,
-      report.variableDebtToken,
-      0,
-      10
-    );
-
-    DataTypes.InitReserveParams memory params2 = DataTypes.InitReserveParams(
-      address(new Mock()),
-      report.aToken,
-      report.variableDebtToken,
-      1,
-      10
-    );
-
-    DataTypes.InitReserveParams memory params3 = DataTypes.InitReserveParams(
-      address(new Mock()),
-      report.aToken,
-      report.variableDebtToken,
-      2,
-      10
-    );
-
-    assertTrue(PoolLogic.executeInitReserve(reservesData, reservesList, params1));
-    assertTrue(PoolLogic.executeInitReserve(reservesData, reservesList, params2));
-    assertTrue(PoolLogic.executeInitReserve(reservesData, reservesList, params3));
-
-    PoolLogic.executeDropReserve(reservesData, reservesList, params1.asset);
-    PoolLogic.executeDropReserve(reservesData, reservesList, params2.asset);
-
-    assertFalse(PoolLogic.executeInitReserve(reservesData, reservesList, params2));
-  }
-
   function test_reverts_initReserves_max() public {
     DataTypes.InitReserveParams memory params1 = DataTypes.InitReserveParams(
       address(new Mock()),

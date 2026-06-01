@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.18;
 
-import {Address} from 'openzeppelin-contracts/contracts/utils/Address.sol';
 import {IAaveV3ConfigEngine as IEngine, IPoolConfigurator, IDefaultInterestRateStrategyV2} from '../IAaveV3ConfigEngine.sol';
 import {PriceFeedEngine} from './PriceFeedEngine.sol';
 import {CapsEngine} from './CapsEngine.sol';
@@ -11,26 +10,18 @@ import {ConfiguratorInputTypes} from '../../../protocol/libraries/types/Configur
 import {SafeCast} from 'openzeppelin-contracts/contracts/utils/math/SafeCast.sol';
 
 library ListingEngine {
-  using Address for address;
   using SafeCast for uint256;
 
   function executeCustomAssetListing(
     IEngine.PoolContext calldata context,
-    IEngine.EngineConstants calldata engineConstants,
-    IEngine.EngineLibraries calldata engineLibraries,
-    IEngine.ListingWithCustomImpl[] calldata listings
-  ) external {
+    IEngine.EngineConstants memory engineConstants,
+    IEngine.ListingWithCustomImpl[] memory listings
+  ) internal {
     require(listings.length != 0, 'AT_LEAST_ONE_ASSET_REQUIRED');
 
     IEngine.RepackedListings memory repacked = _repackListing(listings);
 
-    engineLibraries.priceFeedEngine.functionDelegateCall(
-      abi.encodeWithSelector(
-        PriceFeedEngine.executePriceFeedsUpdate.selector,
-        engineConstants,
-        repacked.priceFeedsUpdates
-      )
-    );
+    PriceFeedEngine.executePriceFeedsUpdate(engineConstants, repacked.priceFeedsUpdates);
 
     _initAssets(
       context,
@@ -40,33 +31,15 @@ library ListingEngine {
       repacked.rates
     );
 
-    engineLibraries.capsEngine.functionDelegateCall(
-      abi.encodeWithSelector(
-        CapsEngine.executeCapsUpdate.selector,
-        engineConstants,
-        repacked.capsUpdates
-      )
-    );
+    CapsEngine.executeCapsUpdate(engineConstants, repacked.capsUpdates);
 
-    engineLibraries.borrowEngine.functionDelegateCall(
-      abi.encodeWithSelector(
-        BorrowEngine.executeBorrowSide.selector,
-        engineConstants,
-        repacked.borrowsUpdates
-      )
-    );
+    BorrowEngine.executeBorrowSide(engineConstants, repacked.borrowsUpdates);
 
-    engineLibraries.collateralEngine.functionDelegateCall(
-      abi.encodeWithSelector(
-        CollateralEngine.executeCollateralSide.selector,
-        engineConstants,
-        repacked.collateralsUpdates
-      )
-    );
+    CollateralEngine.executeCollateralSide(engineConstants, repacked.collateralsUpdates);
   }
 
   function _repackListing(
-    IEngine.ListingWithCustomImpl[] calldata listings
+    IEngine.ListingWithCustomImpl[] memory listings
   ) internal pure returns (IEngine.RepackedListings memory) {
     address[] memory ids = new address[](listings.length);
     IEngine.BorrowUpdate[] memory borrowsUpdates = new IEngine.BorrowUpdate[](listings.length);
@@ -97,8 +70,6 @@ library ListingEngine {
         asset: listings[i].base.asset,
         enabledToBorrow: listings[i].base.enabledToBorrow,
         flashloanable: listings[i].base.flashloanable,
-        borrowableInIsolation: listings[i].base.borrowableInIsolation,
-        withSiloedBorrowing: listings[i].base.withSiloedBorrowing,
         reserveFactor: listings[i].base.reserveFactor
       });
       collateralsUpdates[i] = IEngine.CollateralUpdate({
@@ -106,7 +77,6 @@ library ListingEngine {
         ltv: listings[i].base.ltv,
         liqThreshold: listings[i].base.liqThreshold,
         liqBonus: listings[i].base.liqBonus,
-        debtCeiling: listings[i].base.debtCeiling,
         liqProtocolFee: listings[i].base.liqProtocolFee
       });
       capsUpdates[i] = IEngine.CapsUpdate({

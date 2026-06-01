@@ -87,6 +87,7 @@ abstract contract DefaultBeforeAfterHooks is BaseHooks {
     uint128 collateralBitmap;
     uint128 borrowableBitmap;
     uint128 ltvzeroBitmap;
+    bool isolated;
     address[] collateralAssets;
     address[] borrowableAssets;
     address[] ltvZeroAssets;
@@ -174,6 +175,7 @@ abstract contract DefaultBeforeAfterHooks is BaseHooks {
     _eModeSnapshot.borrowableBitmap = pool.getEModeCategoryBorrowableBitmap(uint8(eModeCategory));
     // forge-lint: disable-next-line(unsafe-typecast)
     _eModeSnapshot.ltvzeroBitmap = pool.getEModeCategoryLtvzeroBitmap(uint8(eModeCategory));
+    _eModeSnapshot.isolated = pool.getIsEModeCategoryIsolated(uint8(eModeCategory));
 
     for (uint256 i = 0; i < baseAssets.length; ++i) {
       address asset = baseAssets[i];
@@ -222,6 +224,7 @@ abstract contract DefaultBeforeAfterHooks is BaseHooks {
     _eModeSnapshot.collateralBitmap = 0;
     _eModeSnapshot.borrowableBitmap = 0;
     _eModeSnapshot.ltvzeroBitmap = 0;
+    _eModeSnapshot.isolated = false;
 
     for (uint256 i = 0; i < baseAssets.length; ++i) {
       address asset = baseAssets[i];

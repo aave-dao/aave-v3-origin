@@ -25,7 +25,8 @@ contract AaveV3MockEModeCategoryUpdate is AaveV3Payload {
       ltv: 97_40,
       liqThreshold: 97_60,
       liqBonus: 1_50,
-      label: 'ETH Correlated'
+      label: 'ETH Correlated',
+      isolated: EngineFlags.KEEP_CURRENT
     });
 
     return eModeUpdates;
@@ -58,7 +59,8 @@ contract AaveV3MockEModeCategoryUpdateEdgeBonus is AaveV3Payload {
       ltv: 97_40,
       liqThreshold: 97_60,
       liqBonus: 2_50,
-      label: EngineFlags.KEEP_CURRENT_STRING
+      label: EngineFlags.KEEP_CURRENT_STRING,
+      isolated: EngineFlags.KEEP_CURRENT
     });
 
     return eModeUpdates;

@@ -95,6 +95,19 @@ contract PoolHandler is BaseHandler {
               E_MODE_HSPOST_H
             );
           }
+
+          if (
+            snapshotGlobalVarsAfter.eModesInfo[eModeCategory].isolated &&
+            snapshotGlobalVarsAfter
+              .usersInfo[address(actor)]
+              .userAssetsInfo[baseAssets[j]]
+              .isUsingAsCollateral
+          ) {
+            assertTrue(
+              snapshotGlobalVarsAfter.eModesInfo[eModeCategory].isCollateral[baseAssets[j]],
+              E_MODE_HSPOST_I
+            );
+          }
         }
       }
     } else {

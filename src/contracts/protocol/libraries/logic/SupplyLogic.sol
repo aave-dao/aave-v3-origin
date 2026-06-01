@@ -34,13 +34,11 @@ library SupplyLogic {
    * @dev In the first supply action, `ReserveUsedAsCollateralEnabled()` is emitted, if the asset can be enabled as
    * collateral.
    * @param reservesData The state of all the reserves
-   * @param reservesList The addresses of all the active reserves
    * @param userConfig The user configuration mapping that tracks the supplied/borrowed assets
    * @param params The additional parameters needed to execute the supply function
    */
   function executeSupply(
     mapping(address => DataTypes.ReserveData) storage reservesData,
-    mapping(uint256 => address) storage reservesList,
     mapping(uint8 => DataTypes.EModeCategory) storage eModeCategories,
     DataTypes.UserConfigurationMap storage userConfig,
     DataTypes.ExecuteSupplyParams memory params
@@ -73,12 +71,9 @@ library SupplyLogic {
 
     if (isFirstSupply) {
       if (
-        ValidationLogic.validateAutomaticUseAsCollateral(
+        ValidationLogic.validateUseAsCollateral(
           reservesData,
-          reservesList,
           eModeCategories,
-          userConfig,
-          reserveCache.reserveConfiguration,
           params.asset,
           params.supplierEModeCategory
         )
@@ -270,14 +265,11 @@ library SupplyLogic {
       require(
         ValidationLogic.validateUseAsCollateral(
           reservesData,
-          reservesList,
           eModeCategories,
-          userConfig,
-          reserveConfigCached,
           asset,
           userEModeCategory
         ),
-        Errors.UserInIsolationModeOrLtvZero()
+        Errors.UserHasAssetWithZeroLtv()
       );
 
       userConfig.setUsingAsCollateral(reserve.id, asset, user, true);

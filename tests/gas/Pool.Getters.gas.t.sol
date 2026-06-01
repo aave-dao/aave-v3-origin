@@ -28,7 +28,14 @@ contract PoolGetters_gas_Tests is Testhelpers {
   function test_getUserAccountData_with_eMode_enabled() external {
     vm.startPrank(poolAdmin);
     EModeCategoryInput memory ct1 = _genCategoryOne();
-    contracts.poolConfiguratorProxy.setEModeCategory(ct1.id, ct1.ltv, ct1.lt, ct1.lb, ct1.label);
+    contracts.poolConfiguratorProxy.setEModeCategory(
+      ct1.id,
+      ct1.ltv,
+      ct1.lt,
+      ct1.lb,
+      ct1.label,
+      ct1.isolated
+    );
     vm.stopPrank();
 
     vm.prank(user);
@@ -50,7 +57,14 @@ contract PoolGetters_gas_Tests is Testhelpers {
   function test_getUserAccountData_oneSupplies_with_eMode_enabled() external {
     vm.startPrank(poolAdmin);
     EModeCategoryInput memory ct1 = _genCategoryOne();
-    contracts.poolConfiguratorProxy.setEModeCategory(ct1.id, ct1.ltv, ct1.lt, ct1.lb, ct1.label);
+    contracts.poolConfiguratorProxy.setEModeCategory(
+      ct1.id,
+      ct1.ltv,
+      ct1.lt,
+      ct1.lb,
+      ct1.label,
+      ct1.isolated
+    );
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, ct1.id, true);
     vm.stopPrank();
 
@@ -77,7 +91,14 @@ contract PoolGetters_gas_Tests is Testhelpers {
   function test_getUserAccountData_twoSupplies_with_eMode_enabled() external {
     vm.startPrank(poolAdmin);
     EModeCategoryInput memory ct1 = _genCategoryOne();
-    contracts.poolConfiguratorProxy.setEModeCategory(ct1.id, ct1.ltv, ct1.lt, ct1.lb, ct1.label);
+    contracts.poolConfiguratorProxy.setEModeCategory(
+      ct1.id,
+      ct1.ltv,
+      ct1.lt,
+      ct1.lb,
+      ct1.label,
+      ct1.isolated
+    );
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, ct1.id, true);
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.weth, ct1.id, true);
     vm.stopPrank();
@@ -110,7 +131,14 @@ contract PoolGetters_gas_Tests is Testhelpers {
   function test_getUserAccountData_twoSupplies_oneBorrows_with_eMode_enabled() external {
     vm.startPrank(poolAdmin);
     EModeCategoryInput memory ct1 = _genCategoryOne();
-    contracts.poolConfiguratorProxy.setEModeCategory(ct1.id, ct1.ltv, ct1.lt, ct1.lb, ct1.label);
+    contracts.poolConfiguratorProxy.setEModeCategory(
+      ct1.id,
+      ct1.ltv,
+      ct1.lt,
+      ct1.lb,
+      ct1.label,
+      ct1.isolated
+    );
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, ct1.id, true);
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.weth, ct1.id, true);
     contracts.poolConfiguratorProxy.setAssetBorrowableInEMode(tokenList.wbtc, ct1.id, true);
@@ -130,6 +158,40 @@ contract PoolGetters_gas_Tests is Testhelpers {
     vm.snapshotGasLastCall(
       'Pool.Getters',
       'getUserAccountData: supplies: 2, borrows: 1 with eMode enabled'
+    );
+  }
+
+  function test_getUserAccountData_twoSupplies_with_isolated_eMode_enabled() external {
+    vm.startPrank(poolAdmin);
+    EModeCategoryInput memory ct1 = _genCategoryOne();
+    // Create non-isolated eMode with only usdx in collateralBitmap
+    contracts.poolConfiguratorProxy.setEModeCategory(
+      ct1.id,
+      ct1.ltv,
+      ct1.lt,
+      ct1.lb,
+      ct1.label,
+      false
+    );
+    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, ct1.id, true);
+    vm.stopPrank();
+
+    // User supplies both usdx (in bitmap) and weth (NOT in bitmap)
+    _supplyAndEnableAsCollateral(tokenList.usdx, 1 ether, user);
+    _supplyAndEnableAsCollateral(tokenList.weth, 1 ether, user);
+
+    // User enters eMode (allowed: weth has non-zero base LTV)
+    vm.prank(user);
+    contracts.poolProxy.setUserEMode(ct1.id);
+
+    // Governance toggles isolation on the live eMode
+    vm.prank(poolAdmin);
+    contracts.poolConfiguratorProxy.setEModeCategoryIsolated(ct1.id, true);
+
+    contracts.poolProxy.getUserAccountData(user);
+    vm.snapshotGasLastCall(
+      'Pool.Getters',
+      'getUserAccountData: supplies: 2, borrows: 0 with isolated eMode enabled'
     );
   }
 

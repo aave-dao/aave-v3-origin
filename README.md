@@ -1,4 +1,4 @@
-# Aave V3.6 Origin
+# Aave V3.7 Origin
 
 ![Aave v3.1 Origin_banner](./resources/v3-1-banner.jpeg)
 
@@ -23,6 +23,8 @@ If you're interested in contributing, please read the [contributing docs](/.gith
 - [Aave v3.4 features](./docs/3.4/Aave-v3.4-features.md)
 - [Aave v3.5 features](./docs/3.5/Aave-v3.5-features.md)
 - [Aave v3.6 features](./docs/3.6/Aave-v3.6-features.md)
+- [Aave v3.7 isolated eMode](./docs/3.7/isolated-emode.md)
+- [Aave v3.7 liquidation rounding](./docs/3.7/liquidation-rounding.md)
 - [v3.1 to v3.2 production upgrade](https://github.com/bgd-labs/protocol-3.2.0-upgrade/blob/main/README.md)
 - [v3.2 to v3.3 production upgrade](https://github.com/bgd-labs/protocol-3.3.0-upgrade/blob/main/README.md)
 - [Set Ltv to 0 on Freeze Feature State diagram](./docs/freeze-ltv0-states.png)
@@ -133,6 +135,19 @@ In addition, Enigma Dark has adapted the Foundry-based fuzzing [invariant suite]
 
 <br>
 
+**-> Aave v3.7 - March 2026**
+
+#### Isolated eModes and cleanup
+
+- [Pashov](./audits/2026-03-27_Pashov_Aave-v3.7.pdf)
+- [Sherlock](./audits/2026-03-26_Sherlock_Aave-v3.7.pdf)
+- [Certora](./audits/2026-03-29_Certora_Aave-v3.7.pdf)
+- [MixBytes](./audits/2026-03-26_MixBytes_Aave-v3.7.pdf)
+- [Savant](./audits/2026-03-30_Savant_Aave-v3.7.pdf)
+- [Enigma](./audits/2026-03-31_Enigma_Aave-v3.7.pdf)
+
+<br>
+
 ### Bug bounty
 
 This repository will be subjected to [this bug bounty](https://immunefi.com/bounty/aave/) once the Aave Governance upgrades the smart contracts in the applicable production instances.
@@ -141,7 +156,7 @@ This repository will be subjected to [this bug bounty](https://immunefi.com/boun
 
 ## License
 
-Copyright © 2025, Aave DAO, represented by its governance smart contracts.
+Copyright © 2026, Aave DAO, represented by its governance smart contracts.
 
 The [BUSL1.1](./LICENSE) license of this repository allows for any usage of the software, if respecting the Additional Use Grant limitations, forbidding any use case damaging anyhow the Aave DAO's interests.
 Interfaces and other components required for integrations are explicitly MIT licensed.

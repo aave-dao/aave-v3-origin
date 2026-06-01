@@ -15,6 +15,8 @@ import {IScaledBalanceToken} from 'certora/atoken-with-delegation/munged/src/con
 import {WadRayMath} from 'certora/atoken-with-delegation/munged/src/contracts/protocol/libraries/math/WadRayMath.sol';
 import {DelegationMode} from 'certora/atoken-with-delegation/munged/src/contracts/protocol/tokenization/base/DelegationMode.sol';
 import {BaseDelegation} from 'certora/atoken-with-delegation/munged/src/contracts/protocol/tokenization/delegation/BaseDelegation.sol';
+import {IBaseDelegation} from 'certora/atoken-with-delegation/munged/src/contracts/protocol/tokenization/delegation/interfaces/IBaseDelegation.sol';
+import {MessageHashUtils} from 'openzeppelin-contracts/contracts/utils/cryptography/MessageHashUtils.sol';
 
 contract ATokenWithDelegation_Harness is ATokenWithDelegationInstance {
   using WadRayMath for uint256;
@@ -95,41 +97,41 @@ contract ATokenWithDelegation_Harness is ATokenWithDelegationInstance {
   ) public pure returns (address) {
     return ecrecover(hash, v, r, s);
   }
-  /*    
-    function computeMetaDelegateHash(address delegator, address delegatee, uint256 deadline, uint256 nonce)
-        public view returns (bytes32) {
-        bytes32 digest =
-            ECDSA.toTypedDataHash(
-                                  _getDomainSeparator(),
-                                  keccak256(abi.encode(DELEGATE_TYPEHASH, delegator, delegatee, nonce, deadline))
-            );
-        return digest;
-    }
+  function computeMetaDelegateHash(
+    address delegator,
+    address delegatee,
+    uint256 deadline,
+    uint256 nonce
+  ) public view returns (bytes32) {
+    return
+      MessageHashUtils.toTypedDataHash(
+        _getDomainSeparator(),
+        keccak256(abi.encode(DELEGATE_TYPEHASH, delegator, delegatee, nonce, deadline))
+      );
+  }
 
-    function computeMetaDelegateByTypeHash(
-                                           address delegator,
-                                           address delegatee,
-                                           GovernancePowerType delegationType,
-                                           uint256 deadline,
-                                           uint256 nonce
-    ) public view returns (bytes32) {
-        bytes32 digest = ECDSA.toTypedDataHash(
-                                               _getDomainSeparator(),
-                                               keccak256(
-                                                         abi.encode(
-                                                                    DELEGATE_BY_TYPE_TYPEHASH,
-                                                                    delegator,
-                                                                    delegatee,
-                                                                    delegationType,
-                                                                    nonce,
-                                                                    deadline
-                                                         )
-                                               )
-        );
-        
-        return digest;
-    }
-    */
+  function computeMetaDelegateByTypeHash(
+    address delegator,
+    address delegatee,
+    IBaseDelegation.GovernancePowerType delegationType,
+    uint256 deadline,
+    uint256 nonce
+  ) public view returns (bytes32) {
+    return
+      MessageHashUtils.toTypedDataHash(
+        _getDomainSeparator(),
+        keccak256(
+          abi.encode(
+            DELEGATE_BY_TYPE_TYPEHASH,
+            delegator,
+            delegatee,
+            delegationType,
+            nonce,
+            deadline
+          )
+        )
+      );
+  }
   function getPowerCurrent_BaseDelegation(
     address user,
     GovernancePowerType delegationType

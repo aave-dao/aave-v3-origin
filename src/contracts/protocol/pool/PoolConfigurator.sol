@@ -93,12 +93,6 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
   }
 
   /// @inheritdoc IPoolConfigurator
-  function dropReserve(address asset) external override onlyPoolAdmin {
-    _pool.dropReserve(asset);
-    emit ReserveDropped(asset);
-  }
-
-  /// @inheritdoc IPoolConfigurator
   function updateAToken(
     ConfiguratorInputTypes.UpdateATokenInput calldata input
   ) external override onlyPoolAdmin {
@@ -243,17 +237,6 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
   }
 
   /// @inheritdoc IPoolConfigurator
-  function setBorrowableInIsolation(
-    address asset,
-    bool borrowable
-  ) external override onlyRiskOrPoolAdmins {
-    DataTypes.ReserveConfigurationMap memory currentConfig = _pool.getConfiguration(asset);
-    currentConfig.setBorrowableInIsolation(borrowable);
-    _pool.setConfiguration(asset, currentConfig);
-    emit BorrowableInIsolationChanged(asset, borrowable);
-  }
-
-  /// @inheritdoc IPoolConfigurator
   function setReservePause(
     address asset,
     bool paused,
@@ -305,46 +288,6 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
   }
 
   /// @inheritdoc IPoolConfigurator
-  function setDebtCeiling(
-    address asset,
-    uint256 newDebtCeiling
-  ) external override onlyRiskOrPoolAdmins {
-    DataTypes.ReserveConfigurationMap memory currentConfig = _pool.getConfiguration(asset);
-
-    uint256 oldDebtCeiling = currentConfig.getDebtCeiling();
-    if (_checkAssetIsCollateral(asset) && oldDebtCeiling == 0) {
-      _checkNoSuppliers(asset);
-    }
-    currentConfig.setDebtCeiling(newDebtCeiling);
-    _pool.setConfiguration(asset, currentConfig);
-
-    if (newDebtCeiling == 0) {
-      _pool.resetIsolationModeTotalDebt(asset);
-    }
-
-    emit DebtCeilingChanged(asset, oldDebtCeiling, newDebtCeiling);
-  }
-
-  /// @inheritdoc IPoolConfigurator
-  function setSiloedBorrowing(
-    address asset,
-    bool newSiloed
-  ) external override onlyRiskOrPoolAdmins {
-    if (newSiloed) {
-      _checkNoBorrowers(asset);
-    }
-    DataTypes.ReserveConfigurationMap memory currentConfig = _pool.getConfiguration(asset);
-
-    bool oldSiloed = currentConfig.getSiloedBorrowing();
-
-    currentConfig.setSiloedBorrowing(newSiloed);
-
-    _pool.setConfiguration(asset, currentConfig);
-
-    emit SiloedBorrowingChanged(asset, oldSiloed, newSiloed);
-  }
-
-  /// @inheritdoc IPoolConfigurator
   function setBorrowCap(
     address asset,
     uint256 newBorrowCap
@@ -387,7 +330,8 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
     uint16 ltv,
     uint16 liquidationThreshold,
     uint16 liquidationBonus,
-    string calldata label
+    string calldata label,
+    bool isolated
   ) external override onlyRiskOrPoolAdmins {
     require(ltv != 0, Errors.InvalidEmodeCategoryParams());
     require(liquidationThreshold != 0, Errors.InvalidEmodeCategoryParams());
@@ -413,6 +357,7 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
     categoryData.ltv = ltv;
     categoryData.liquidationThreshold = liquidationThreshold;
     categoryData.liquidationBonus = liquidationBonus;
+    categoryData.isolated = isolated;
     categoryData.label = label;
 
     _pool.configureEModeCategory(categoryId, categoryData);
@@ -424,6 +369,7 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
       address(0),
       label
     );
+    emit EModeCategoryIsolationChanged(categoryId, isolated);
   }
 
   /// @inheritdoc IPoolConfigurator
@@ -499,6 +445,15 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
   }
 
   /// @inheritdoc IPoolConfigurator
+  function setEModeCategoryIsolated(
+    uint8 categoryId,
+    bool isolated
+  ) external onlyRiskOrPoolOrEmergencyAdmins {
+    _pool.configureEModeCategoryIsolated(categoryId, isolated);
+    emit EModeCategoryIsolationChanged(categoryId, isolated);
+  }
+
+  /// @inheritdoc IPoolConfigurator
   function setReserveInterestRateData(
     address asset,
     bytes calldata rateData
@@ -547,11 +502,6 @@ abstract contract PoolConfigurator is VersionedInitializable, IPoolConfigurator 
   /// @inheritdoc IPoolConfigurator
   function getPendingLtv(address asset) external view override returns (uint256) {
     return _pendingLtv[asset];
-  }
-
-  /// @inheritdoc IPoolConfigurator
-  function getConfiguratorLogic() external pure returns (address) {
-    return address(ConfiguratorLogic);
   }
 
   function _setReserveLtvzero(

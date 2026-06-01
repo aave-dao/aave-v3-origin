@@ -43,8 +43,6 @@ contract AaveV3MockListingCustomWithEModeCreation is AaveV3Payload {
           variableRateSlope2: 75_00
         }),
         enabledToBorrow: EngineFlags.ENABLED,
-        borrowableInIsolation: EngineFlags.DISABLED,
-        withSiloedBorrowing: EngineFlags.DISABLED,
         flashloanable: EngineFlags.DISABLED,
         ltv: 82_50,
         liqThreshold: 86_00,
@@ -52,7 +50,6 @@ contract AaveV3MockListingCustomWithEModeCreation is AaveV3Payload {
         reserveFactor: 10_00,
         supplyCap: 85_000,
         borrowCap: 60_000,
-        debtCeiling: 0,
         liqProtocolFee: 10_00
       }),
       IEngine.TokenImplementations({aToken: A_TOKEN_IMPL, vToken: V_TOKEN_IMPL})
@@ -80,7 +77,8 @@ contract AaveV3MockListingCustomWithEModeCreation is AaveV3Payload {
       liqBonus: 1_50,
       label: 'Listed Asset EMode',
       borrowables: borrowables,
-      collaterals: collaterals
+      collaterals: collaterals,
+      isolated: false
     });
 
     return eModeUpdates;

@@ -59,14 +59,6 @@ persistent ghost uint128 FINAL_deficit;
 
 
 methods {
-  function IsolationModeLogic.reduceIsolatedDebtIfIsolated(
-    mapping(address => DataTypes.ReserveData) storage reservesData,
-    mapping(uint256 => address) storage reservesList,
-    DataTypes.UserConfigurationMap storage userConfig,
-    DataTypes.ReserveCache memory reserveCache,
-    uint256 repayAmount
-  ) internal => reduceIsolatedDebtIfIsolatedCVL();
-
   function LiquidationLogic._calculateAvailableCollateralToLiquidate(
     DataTypes.ReserveConfigurationMap memory collateralReserveConfiguration,
     uint256 collateralAssetPrice,
@@ -74,9 +66,9 @@ methods {
     uint256 debtAssetPrice,
     uint256 debtAssetUnit,
     uint256 debtToCover,
-    uint256 userCollateralBalance,
+    uint256 borrowerCollateralBalance,
     uint256 liquidationBonus
-  ) internal returns (uint256,uint256,uint256,uint256) =>
+  ) internal returns (uint256,uint256,uint256) =>
     _calculateAvailableCollateralToLiquidateCVL();
 
   function LiquidationLogic._burnBadDebt(
@@ -112,16 +104,9 @@ function _burnBadDebt_CVL(env e) {
 }
 
 // This is immediately after the call to updateState for the COL token
-function _calculateAvailableCollateralToLiquidateCVL() returns (uint256,uint256,uint256,uint256) {
-  uint256 a; uint256 b; uint256 c; uint256 d;
-  return (a,b,c,d);
-}
-
-
-// The function reduceIsolatedDebtIfIsolated(...) only writes to the field isolationModeTotalDebt.
-function reduceIsolatedDebtIfIsolatedCVL() {
-  address asset;
-  havoc currentContract._reserves[asset].isolationModeTotalDebt;
+function _calculateAvailableCollateralToLiquidateCVL() returns (uint256,uint256,uint256) {
+  uint256 a; uint256 b; uint256 c;
+  return (a,b,c);
 }
 
 

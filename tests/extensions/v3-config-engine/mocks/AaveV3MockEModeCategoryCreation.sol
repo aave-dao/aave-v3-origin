@@ -44,7 +44,8 @@ contract AaveV3MockEModeCategoryCreation is AaveV3Payload {
       liqBonus: 1_00,
       label: 'No assets',
       borrowables: empty,
-      collaterals: empty
+      collaterals: empty,
+      isolated: false
     });
 
     address[] memory collaterals = new address[](2);
@@ -60,7 +61,8 @@ contract AaveV3MockEModeCategoryCreation is AaveV3Payload {
       liqBonus: 1_50,
       label: 'Test',
       borrowables: borrowables,
-      collaterals: collaterals
+      collaterals: collaterals,
+      isolated: false
     });
 
     return eModeUpdates;

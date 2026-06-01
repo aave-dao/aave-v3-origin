@@ -128,8 +128,8 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
 
       // v3 only
       reserveData.deficit = uint128(pool.getReserveDeficit(reserveData.underlyingAsset));
-      reserveData.debtCeiling = reserveConfigurationMap.getDebtCeiling();
-      reserveData.debtCeilingDecimals = poolDataProvider.getDebtCeilingDecimals();
+      reserveData.debtCeiling = 0;
+      reserveData.debtCeilingDecimals = 0;
       (reserveData.borrowCap, reserveData.supplyCap) = reserveConfigurationMap.getCaps();
 
       try poolDataProvider.getFlashLoanEnabled(reserveData.underlyingAsset) returns (
@@ -140,11 +140,11 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
         reserveData.flashLoanEnabled = true;
       }
 
-      reserveData.isSiloedBorrowing = reserveConfigurationMap.getSiloedBorrowing();
-      reserveData.isolationModeTotalDebt = baseData.isolationModeTotalDebt;
+      reserveData.isSiloedBorrowing = false;
+      reserveData.isolationModeTotalDebt = 0;
       reserveData.accruedToTreasury = baseData.accruedToTreasury;
 
-      reserveData.borrowableInIsolation = reserveConfigurationMap.getBorrowableInIsolation();
+      reserveData.borrowableInIsolation = false;
       reserveData.virtualUnderlyingBalance = pool.getVirtualUnderlyingBalance(
         reserveData.underlyingAsset
       );
@@ -184,6 +184,10 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
         try pool.getEModeCategoryLtvzeroBitmap(i) returns (uint128 _ltvzeroBitmap) {
           ltvzeroBitmap = _ltvzeroBitmap;
         } catch (bytes memory /*lowLevelData*/) {}
+        bool isolated;
+        try pool.getIsEModeCategoryIsolated(i) returns (bool _isolated) {
+          isolated = _isolated;
+        } catch (bytes memory /*lowLevelData*/) {}
         tempCategories[eModesFound] = Emode({
           eMode: DataTypes.EModeCategory({
             ltv: cfg.ltv,
@@ -192,7 +196,8 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
             label: pool.getEModeCategoryLabel(i),
             collateralBitmap: pool.getEModeCategoryCollateralBitmap(i),
             borrowableBitmap: pool.getEModeCategoryBorrowableBitmap(i),
-            ltvzeroBitmap: ltvzeroBitmap
+            ltvzeroBitmap: ltvzeroBitmap,
+            isolated: isolated
           }),
           id: i
         });

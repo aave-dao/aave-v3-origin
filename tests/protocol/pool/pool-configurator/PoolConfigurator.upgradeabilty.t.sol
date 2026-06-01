@@ -28,10 +28,6 @@ contract PoolConfiguratorUpgradeabilityTests is TestnetProcedures {
     initTestEnvironment();
   }
 
-  function test_getConfiguratorLogic() public view {
-    assertNotEq(contracts.poolConfiguratorProxy.getConfiguratorLogic(), address(0));
-  }
-
   function test_setReserveInterestRateData() public {
     address currentInterestRateStrategy = contracts
       .protocolDataProvider
@@ -166,10 +162,7 @@ contract PoolConfiguratorUpgradeabilityTests is TestnetProcedures {
     tempReserveData.id = reserveDataLegacy.id;
     tempReserveData.aTokenAddress = reserveDataLegacy.aTokenAddress;
     tempReserveData.variableDebtTokenAddress = reserveDataLegacy.variableDebtTokenAddress;
-    tempReserveData.__deprecatedInterestRateStrategyAddress = reserveDataLegacy
-      .interestRateStrategyAddress;
     tempReserveData.accruedToTreasury = reserveDataLegacy.accruedToTreasury;
-    tempReserveData.isolationModeTotalDebt = reserveDataLegacy.isolationModeTotalDebt;
     tempReserveData.virtualUnderlyingBalance = uint128(
       contracts.poolProxy.getVirtualUnderlyingBalance(asset)
     );

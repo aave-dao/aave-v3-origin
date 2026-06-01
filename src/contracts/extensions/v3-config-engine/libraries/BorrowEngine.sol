@@ -10,9 +10,9 @@ library BorrowEngine {
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
 
   function executeBorrowSide(
-    IEngine.EngineConstants calldata engineConstants,
+    IEngine.EngineConstants memory engineConstants,
     IEngine.BorrowUpdate[] memory updates
-  ) external {
+  ) internal {
     require(updates.length != 0, 'AT_LEAST_ONE_UPDATE_REQUIRED');
 
     _configBorrowSide(engineConstants.poolConfigurator, engineConstants.pool, updates);
@@ -32,20 +32,6 @@ library BorrowEngine {
       } else {
         (, , bool borrowingEnabled, ) = pool.getConfiguration(updates[i].asset).getFlags();
         updates[i].enabledToBorrow = EngineFlags.fromBool(borrowingEnabled);
-      }
-
-      if (updates[i].borrowableInIsolation != EngineFlags.KEEP_CURRENT) {
-        poolConfigurator.setBorrowableInIsolation(
-          updates[i].asset,
-          EngineFlags.toBool(updates[i].borrowableInIsolation)
-        );
-      }
-
-      if (updates[i].withSiloedBorrowing != EngineFlags.KEEP_CURRENT) {
-        poolConfigurator.setSiloedBorrowing(
-          updates[i].asset,
-          EngineFlags.toBool(updates[i].withSiloedBorrowing)
-        );
       }
 
       // The reserve factor should always be > 0

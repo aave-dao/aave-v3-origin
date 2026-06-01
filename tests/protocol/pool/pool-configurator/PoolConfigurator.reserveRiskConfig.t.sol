@@ -324,30 +324,6 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     vm.stopPrank();
   }
 
-  function test_setBorrowableInIsolation_true() public {
-    vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit IPoolConfigurator.BorrowableInIsolationChanged(tokenList.usdx, true);
-
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setBorrowableInIsolation(tokenList.usdx, true);
-    DataTypes.ReserveConfigurationMap memory config = contracts.poolProxy.getConfiguration(
-      tokenList.usdx
-    );
-    assertEq(config.getBorrowableInIsolation(), true);
-  }
-
-  function test_setBorrowableInIsolation_false() public {
-    vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit IPoolConfigurator.BorrowableInIsolationChanged(tokenList.usdx, false);
-
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setBorrowableInIsolation(tokenList.usdx, false);
-    DataTypes.ReserveConfigurationMap memory config = contracts.poolProxy.getConfiguration(
-      tokenList.usdx
-    );
-    assertEq(config.getBorrowableInIsolation(), false);
-  }
-
   function test_setReservePause_false() public {
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
     emit IPoolConfigurator.ReservePaused(tokenList.usdx, false);
@@ -422,97 +398,6 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     assertGt(updatedCache.reserveLastUpdateTimestamp, cacheAfterYear.reserveLastUpdateTimestamp);
   }
 
-  function test_reverts_setDebtCeiling_suppliers() public {
-    vm.prank(alice);
-    contracts.poolProxy.supply(tokenList.usdx, 10e6, alice, 0);
-
-    vm.expectRevert(abi.encodeWithSelector(Errors.ReserveLiquidityNotZero.selector));
-
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setDebtCeiling(tokenList.usdx, 100);
-  }
-
-  function test_setDebtCeiling_suppliers_ltZero() public {
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.configureReserveAsCollateral(tokenList.usdx, 0, 0, 0);
-
-    vm.prank(alice);
-    contracts.poolProxy.supply(tokenList.usdx, 10e6, alice, 0);
-
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setDebtCeiling(tokenList.usdx, 100);
-    assertEq(contracts.protocolDataProvider.getDebtCeiling(tokenList.usdx), 100);
-  }
-
-  function test_setDebtCeiling_suppliers_ltZero_nonltzeroEmode_shouldRevert() public {
-    EModeCategoryInput memory ct = _genCategoryOne();
-
-    vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setEModeCategory(ct.id, ct.ltv, ct.lt, ct.lb, ct.label);
-    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, 1, true);
-    contracts.poolConfiguratorProxy.configureReserveAsCollateral(tokenList.usdx, 0, 0, 0);
-    vm.stopPrank();
-
-    vm.prank(alice);
-    contracts.poolProxy.supply(tokenList.usdx, 10e6, alice, 0);
-
-    vm.startPrank(poolAdmin);
-    // should revert as you cannot increase the ceiling of an asset that has ceiling = 0, and is collateral somewhere
-    vm.expectRevert(abi.encodeWithSelector(Errors.ReserveLiquidityNotZero.selector));
-    contracts.poolConfiguratorProxy.setDebtCeiling(tokenList.usdx, 100);
-
-    // should revert because you cannot disable collateral inside eMode as it's not collateral outside
-    vm.expectRevert(abi.encodeWithSelector(Errors.ReserveLiquidityNotZero.selector));
-    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, 1, false);
-
-    // should work as now it's enabled as collateral outside
-    contracts.poolConfiguratorProxy.configureReserveAsCollateral(tokenList.usdx, 0, 100, 10010);
-    contracts.poolConfiguratorProxy.setAssetCollateralInEMode(tokenList.usdx, 1, false);
-  }
-
-  function test_setDebtCeiling() public {
-    vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit IPoolConfigurator.DebtCeilingChanged(tokenList.usdx, 0, 100);
-
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setDebtCeiling(tokenList.usdx, 100);
-    assertEq(contracts.protocolDataProvider.getDebtCeiling(tokenList.usdx), 100);
-  }
-
-  function test_setDebtCeiling_to_zero() public {
-    test_setDebtCeiling();
-
-    vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit IPoolConfigurator.DebtCeilingChanged(tokenList.usdx, 100, 0);
-
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setDebtCeiling(tokenList.usdx, 0);
-    assertEq(contracts.protocolDataProvider.getDebtCeiling(tokenList.usdx), 0);
-  }
-
-  function test_setSiloedBorrowing() public {
-    vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit IPoolConfigurator.SiloedBorrowingChanged(tokenList.usdx, false, true);
-
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setSiloedBorrowing(tokenList.usdx, true);
-    assertEq(contracts.protocolDataProvider.getSiloedBorrowing(tokenList.usdx), true);
-  }
-
-  function test_reverts_setSiloedBorrowing_borrowers() public {
-    vm.startPrank(alice);
-
-    contracts.poolProxy.supply(tokenList.usdx, 100e6, alice, 0);
-    contracts.poolProxy.borrow(tokenList.usdx, 10e6, 2, 0, alice);
-
-    vm.stopPrank();
-
-    vm.expectRevert(abi.encodeWithSelector(Errors.ReserveDebtNotZero.selector));
-
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setSiloedBorrowing(tokenList.usdx, true);
-  }
-
   function test_reverts_setLiquidationProtocolFee_amount_gt_percentageFactor() public {
     vm.expectRevert(abi.encodeWithSelector(Errors.InvalidLiquidationProtocolFee.selector));
 
@@ -575,93 +460,6 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.updateFlashloanPremium(10_00);
     assertEq(contracts.poolProxy.FLASHLOAN_PREMIUM_TOTAL(), 10_00);
-  }
-
-  function test_dropReserve() public {
-    DataTypes.ReserveDataLegacy memory reserveDataUsdx = contracts.poolProxy.getReserveData(
-      tokenList.usdx
-    );
-    vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit IPoolConfigurator.ReserveDropped(tokenList.usdx);
-
-    (address pA, address pS, address pV) = contracts.protocolDataProvider.getReserveTokensAddresses(
-      tokenList.usdx
-    );
-    assertTrue(pA != address(0));
-    assertTrue(pS == address(0));
-    assertTrue(pV != address(0));
-
-    uint256 lengthBefore = contracts.poolProxy.getReservesList().length;
-
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.dropReserve(tokenList.usdx);
-
-    (address a, address s, address v) = contracts.protocolDataProvider.getReserveTokensAddresses(
-      tokenList.usdx
-    );
-    {
-      (
-        uint256 decimals,
-        uint256 ltv,
-        uint256 liquidationThreshold,
-        uint256 liquidationBonus,
-        uint256 reserveFactor,
-        bool usageAsCollateralEnabled,
-        bool borrowingEnabled,
-        ,
-        bool isActive,
-        bool isFrozen
-      ) = contracts.protocolDataProvider.getReserveConfigurationData(tokenList.usdx);
-
-      assertEq(a, address(0));
-      assertEq(s, address(0));
-      assertEq(v, address(0));
-      assertEq(decimals, 0);
-      assertEq(ltv, 0);
-      assertEq(liquidationThreshold, 0);
-      assertEq(liquidationBonus, 0);
-      assertEq(reserveFactor, 0);
-      assertEq(usageAsCollateralEnabled, false);
-      assertEq(borrowingEnabled, false);
-      assertEq(isActive, false);
-      assertEq(isFrozen, false);
-    }
-    {
-      assertEq(contracts.poolProxy.getReservesList().length, lengthBefore - 1);
-      assertEq(contracts.poolProxy.getReserveAddressById(reserveDataUsdx.id), address(0));
-    }
-  }
-
-  function test_reverts_dropReserve_notListed() public {
-    vm.expectRevert(abi.encodeWithSelector(Errors.AssetNotListed.selector));
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.dropReserve(makeAddr('TOKEN_NOT_LISTED'));
-  }
-
-  function test_reverts_dropReserve_zeroAddress() public {
-    vm.expectRevert(abi.encodeWithSelector(Errors.ZeroAddressNotValid.selector));
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.dropReserve(address(0));
-  }
-
-  function test_reverts_dropReserve_variableDebtNotZero() public {
-    vm.startPrank(alice);
-    contracts.poolProxy.supply(tokenList.usdx, 100e6, alice, 0);
-    contracts.poolProxy.borrow(tokenList.wbtc, 0.001e8, 2, 0, alice);
-    vm.stopPrank();
-
-    vm.expectRevert(abi.encodeWithSelector(Errors.VariableDebtSupplyNotZero.selector));
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.dropReserve(tokenList.wbtc);
-  }
-
-  function test_reverts_dropReserve_supplyNotZero() public {
-    vm.prank(alice);
-    contracts.poolProxy.supply(tokenList.usdx, 100e6, alice, 0);
-
-    vm.expectRevert(abi.encodeWithSelector(Errors.UnderlyingClaimableRightsNotZero.selector));
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.dropReserve(tokenList.wbtc);
   }
 
   function test_setLiquidationGracePeriodReserve(uint40 gracePeriod) public {
@@ -758,10 +556,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     tempReserveData.id = reserveDataLegacy.id;
     tempReserveData.aTokenAddress = reserveDataLegacy.aTokenAddress;
     tempReserveData.variableDebtTokenAddress = reserveDataLegacy.variableDebtTokenAddress;
-    tempReserveData.__deprecatedInterestRateStrategyAddress = reserveDataLegacy
-      .interestRateStrategyAddress;
     tempReserveData.accruedToTreasury = reserveDataLegacy.accruedToTreasury;
-    tempReserveData.isolationModeTotalDebt = reserveDataLegacy.isolationModeTotalDebt;
     tempReserveData.virtualUnderlyingBalance = uint128(
       contracts.poolProxy.getVirtualUnderlyingBalance(asset)
     );

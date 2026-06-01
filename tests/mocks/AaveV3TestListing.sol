@@ -76,8 +76,6 @@ contract AaveV3TestListing is AaveV3Payload {
         priceFeed: USDX_MOCK_PRICE_FEED,
         rateStrategyParams: rateParams,
         enabledToBorrow: EngineFlags.ENABLED,
-        borrowableInIsolation: EngineFlags.DISABLED,
-        withSiloedBorrowing: EngineFlags.DISABLED,
         flashloanable: EngineFlags.ENABLED,
         ltv: 82_50,
         liqThreshold: 86_00,
@@ -85,7 +83,6 @@ contract AaveV3TestListing is AaveV3Payload {
         reserveFactor: 10_00,
         supplyCap: 0,
         borrowCap: 0,
-        debtCeiling: 0,
         liqProtocolFee: 10_00
       }),
       IEngine.TokenImplementations({
@@ -101,8 +98,6 @@ contract AaveV3TestListing is AaveV3Payload {
         priceFeed: WBTC_MOCK_PRICE_FEED,
         rateStrategyParams: rateParams,
         enabledToBorrow: EngineFlags.ENABLED,
-        borrowableInIsolation: EngineFlags.DISABLED,
-        withSiloedBorrowing: EngineFlags.DISABLED,
         flashloanable: EngineFlags.ENABLED,
         ltv: 82_50,
         liqThreshold: 86_00,
@@ -110,7 +105,6 @@ contract AaveV3TestListing is AaveV3Payload {
         reserveFactor: 10_00,
         supplyCap: 0,
         borrowCap: 0,
-        debtCeiling: 0,
         liqProtocolFee: 10_00
       }),
       IEngine.TokenImplementations({
@@ -126,8 +120,6 @@ contract AaveV3TestListing is AaveV3Payload {
         priceFeed: WETH_MOCK_PRICE_FEED,
         rateStrategyParams: rateParams,
         enabledToBorrow: EngineFlags.ENABLED,
-        borrowableInIsolation: EngineFlags.DISABLED,
-        withSiloedBorrowing: EngineFlags.DISABLED,
         flashloanable: EngineFlags.ENABLED,
         ltv: 82_50,
         liqThreshold: 86_00,
@@ -135,7 +127,6 @@ contract AaveV3TestListing is AaveV3Payload {
         reserveFactor: 10_00,
         supplyCap: 0,
         borrowCap: 0,
-        debtCeiling: 0,
         liqProtocolFee: 10_00
       }),
       IEngine.TokenImplementations({

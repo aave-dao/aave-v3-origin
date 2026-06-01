@@ -39,8 +39,22 @@ contract PoolEModeBorrowableTests is TestnetProcedures {
     EModeCategoryInput memory ct1 = _genCategoryOne();
     EModeCategoryInput memory ct2 = _genCategoryTwo();
 
-    contracts.poolConfiguratorProxy.setEModeCategory(ct1.id, ct1.ltv, ct1.lt, ct1.lb, ct1.label);
-    contracts.poolConfiguratorProxy.setEModeCategory(ct2.id, ct2.ltv, ct2.lt, ct2.lb, ct2.label);
+    contracts.poolConfiguratorProxy.setEModeCategory(
+      ct1.id,
+      ct1.ltv,
+      ct1.lt,
+      ct1.lb,
+      ct1.label,
+      ct1.isolated
+    );
+    contracts.poolConfiguratorProxy.setEModeCategory(
+      ct2.id,
+      ct2.ltv,
+      ct2.lt,
+      ct2.lb,
+      ct2.label,
+      ct2.isolated
+    );
     contracts.poolConfiguratorProxy.setAssetBorrowableInEMode(tokenList.usdx, 1, true);
     contracts.poolConfiguratorProxy.setAssetBorrowableInEMode(tokenList.wbtc, 1, true);
     contracts.poolConfiguratorProxy.setAssetBorrowableInEMode(tokenList.wbtc, 2, true);
