@@ -1,0 +1,19 @@
+tests/utils/ProtocolV3TestBase.sol
+  s_7213da700302c5::t_05cf3845a25d83 136-140
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "e7475867c76f6e80044d617c923ba35ebd0dfc3b",
+  "prompts": {},
+  "sessions": {
+    "s_7213da700302c5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9621d1f1-8563-4688-97d5-496352d2f3f9",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Alexandru Niculae <43644109+avniculae@users.noreply.github.com>"
+    }
+  }
+}

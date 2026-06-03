@@ -1,0 +1,19 @@
+.gitmodules
+  s_ad31a66b818ebc::t_12ff0d73943375 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.1",
+  "base_commit_sha": "f3f6a4bfbd20919e185cf58b6f4b62283b9abfb8",
+  "prompts": {},
+  "sessions": {
+    "s_ad31a66b818ebc": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f84baef9-463d-4dcb-aac2-4c042f40189c",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Alexandru Niculae <43644109+avniculae@users.noreply.github.com>"
+    }
+  }
+}
