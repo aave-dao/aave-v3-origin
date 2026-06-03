@@ -20,9 +20,9 @@ permissions:
 
 jobs:
   lint:
-    uses: bgd-labs/github-workflows/.github/workflows/foundry-lint-prettier.yml@main
+    uses: aave-dao/github-workflows/.github/workflows/foundry-lint-prettier.yml@main
   test:
-    uses: bgd-labs/github-workflows/.github/workflows/foundry-test.yml@main
+    uses: aave-dao/github-workflows/.github/workflows/foundry-test.yml@main
   codecov:
     needs: test
     runs-on: ubuntu-latest
