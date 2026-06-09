@@ -32,7 +32,7 @@ methods {
                                           DataTypes.ReserveCache memory reserveCache)
     internal => _updateIndexes_hook_CVL(reserveCache);
 
-  function LiquidationLogic.get_userCollateralBalance() internal returns (uint256) => NONDET;
+
   function LiquidationLogic.get_liquidationBonus() internal returns (uint256) => NONDET;
   function LiquidationLogic.get_collateralAssetPrice() internal returns (uint256) => NONDET;
   function LiquidationLogic.get_debtAssetPrice() internal returns (uint256) => NONDET;
@@ -40,7 +40,7 @@ methods {
   function LiquidationLogic.get_debtAssetUnit() internal returns (uint256) => NONDET;
   function LiquidationLogic.get_userReserveDebtInBaseCurrency() internal returns (uint256) => NONDET;
   function LiquidationLogic.get_userReserveCollateralInBaseCurrency() internal returns (uint256) => NONDET;
-  
+
 }
 
 function getNormalizedIncome_hook_CVL(uint256 ret_val, address aTokenAddress) {
