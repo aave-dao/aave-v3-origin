@@ -131,15 +131,3 @@ rule same_indexes__liquidationCall(env e) {
   assert  __COL_liqIND_after == _COL_liqIND;
 }
 
-
-
-
-rule test() {  
-    // THE FUNCTION CALL
-    configuration();
-
-  address user; uint256 debtToCover; bool receiveAToken;
-  env e;
-    liquidationCall(e, _COL_asset, _DBT_asset, user, debtToCover, receiveAToken);
-    assert false;
-}
