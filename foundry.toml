@@ -23,8 +23,10 @@ max_test_rejects = 20000
 
 [rpc_endpoints]
 mainnet = "${RPC_MAINNET}"
+monad = "${RPC_MONAD}"
 
 [etherscan]
 mainnet = { key = "${ETHERSCAN_API_KEY_MAINNET}", chainId = 1 }
+monad = { key = "${ETHERSCAN_API_KEY}", chainId = 143 }
 
 # See more config options https://github.com/gakonst/foundry/tree/master/config
