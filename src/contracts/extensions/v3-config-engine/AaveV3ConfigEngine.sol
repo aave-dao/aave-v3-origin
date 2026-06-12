@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.18;
 
-import {Address} from 'openzeppelin-contracts/contracts/utils/Address.sol';
 import {CapsEngine} from './libraries/CapsEngine.sol';
 import {BorrowEngine} from './libraries/BorrowEngine.sol';
 import {CollateralEngine} from './libraries/CollateralEngine.sol';
@@ -23,8 +22,6 @@ import './IAaveV3ConfigEngine.sol';
  * @author BGD Labs
  */
 contract AaveV3ConfigEngine is IAaveV3ConfigEngine {
-  using Address for address;
-
   IPool public immutable POOL;
   IPoolConfigurator public immutable POOL_CONFIGURATOR;
   IAaveOracle public immutable ORACLE;
@@ -34,27 +31,7 @@ contract AaveV3ConfigEngine is IAaveV3ConfigEngine {
   address public immutable COLLECTOR;
   address public immutable DEFAULT_INTEREST_RATE_STRATEGY;
 
-  address public immutable BORROW_ENGINE;
-  address public immutable CAPS_ENGINE;
-  address public immutable COLLATERAL_ENGINE;
-  address public immutable EMODE_ENGINE;
-  address public immutable LISTING_ENGINE;
-  address public immutable PRICE_FEED_ENGINE;
-  address public immutable RATE_ENGINE;
-
-  /**
-   * @dev Constructor.
-   * @param aTokenImpl The address of default aToken implementation.
-   * @param vTokenImpl The address of default variable debt token implementation.
-   * @param engineConstants The struct containing all the engine constants.
-   * @param engineLibraries The struct containing the addresses of stateless libraries containing the engine logic.
-   */
-  constructor(
-    address aTokenImpl,
-    address vTokenImpl,
-    EngineConstants memory engineConstants,
-    EngineLibraries memory engineLibraries
-  ) {
+  constructor(address aTokenImpl, address vTokenImpl, EngineConstants memory engineConstants) {
     require(
       address(engineConstants.pool) != address(0) &&
         address(engineConstants.poolConfigurator) != address(0) &&
@@ -67,15 +44,6 @@ contract AaveV3ConfigEngine is IAaveV3ConfigEngine {
 
     require(aTokenImpl != address(0) && vTokenImpl != address(0), 'ONLY_NONZERO_TOKEN_IMPLS');
 
-    require(
-      engineLibraries.borrowEngine != address(0) &&
-        engineLibraries.capsEngine != address(0) &&
-        engineLibraries.listingEngine != address(0) &&
-        engineLibraries.priceFeedEngine != address(0) &&
-        engineLibraries.rateEngine != address(0),
-      'ONLY_NONZERO_ENGINE_LIBRARIES'
-    );
-
     ATOKEN_IMPL = aTokenImpl;
     VTOKEN_IMPL = vTokenImpl;
     POOL = engineConstants.pool;
@@ -84,13 +52,6 @@ contract AaveV3ConfigEngine is IAaveV3ConfigEngine {
     REWARDS_CONTROLLER = engineConstants.rewardsController;
     COLLECTOR = engineConstants.collector;
     DEFAULT_INTEREST_RATE_STRATEGY = engineConstants.defaultInterestRateStrategy;
-    BORROW_ENGINE = engineLibraries.borrowEngine;
-    CAPS_ENGINE = engineLibraries.capsEngine;
-    COLLATERAL_ENGINE = engineLibraries.collateralEngine;
-    EMODE_ENGINE = engineLibraries.eModeEngine;
-    LISTING_ENGINE = engineLibraries.listingEngine;
-    PRICE_FEED_ENGINE = engineLibraries.priceFeedEngine;
-    RATE_ENGINE = engineLibraries.rateEngine;
   }
 
   /// @inheritdoc IAaveV3ConfigEngine
@@ -113,112 +74,47 @@ contract AaveV3ConfigEngine is IAaveV3ConfigEngine {
     PoolContext calldata context,
     ListingWithCustomImpl[] memory listings
   ) public {
-    LISTING_ENGINE.functionDelegateCall(
-      abi.encodeWithSelector(
-        ListingEngine.executeCustomAssetListing.selector,
-        context,
-        _getEngineConstants(),
-        _getEngineLibraries(),
-        listings
-      )
-    );
+    ListingEngine.executeCustomAssetListing(context, _getEngineConstants(), listings);
   }
 
   /// @inheritdoc IAaveV3ConfigEngine
   function updateCaps(CapsUpdate[] calldata updates) external {
-    CAPS_ENGINE.functionDelegateCall(
-      abi.encodeWithSelector(CapsEngine.executeCapsUpdate.selector, _getEngineConstants(), updates)
-    );
+    CapsEngine.executeCapsUpdate(_getEngineConstants(), updates);
   }
 
   /// @inheritdoc IAaveV3ConfigEngine
   function updatePriceFeeds(PriceFeedUpdate[] calldata updates) external {
-    PRICE_FEED_ENGINE.functionDelegateCall(
-      abi.encodeWithSelector(
-        PriceFeedEngine.executePriceFeedsUpdate.selector,
-        _getEngineConstants(),
-        updates
-      )
-    );
+    PriceFeedEngine.executePriceFeedsUpdate(_getEngineConstants(), updates);
   }
 
   /// @inheritdoc IAaveV3ConfigEngine
   function updateCollateralSide(CollateralUpdate[] calldata updates) external {
-    COLLATERAL_ENGINE.functionDelegateCall(
-      abi.encodeWithSelector(
-        CollateralEngine.executeCollateralSide.selector,
-        _getEngineConstants(),
-        updates
-      )
-    );
+    CollateralEngine.executeCollateralSide(_getEngineConstants(), updates);
   }
 
   /// @inheritdoc IAaveV3ConfigEngine
   function updateBorrowSide(BorrowUpdate[] calldata updates) external {
-    BORROW_ENGINE.functionDelegateCall(
-      abi.encodeWithSelector(
-        BorrowEngine.executeBorrowSide.selector,
-        _getEngineConstants(),
-        updates
-      )
-    );
+    BorrowEngine.executeBorrowSide(_getEngineConstants(), updates);
   }
 
   /// @inheritdoc IAaveV3ConfigEngine
   function updateRateStrategies(RateStrategyUpdate[] calldata updates) external {
-    RATE_ENGINE.functionDelegateCall(
-      abi.encodeWithSelector(
-        RateEngine.executeRateStrategiesUpdate.selector,
-        _getEngineConstants(),
-        updates
-      )
-    );
+    RateEngine.executeRateStrategiesUpdate(_getEngineConstants(), updates);
   }
 
   /// @inheritdoc IAaveV3ConfigEngine
   function createEModeCategories(EModeCategoryCreation[] calldata creations) external {
-    EMODE_ENGINE.functionDelegateCall(
-      abi.encodeWithSelector(
-        EModeEngine.executeEModeCategoriesCreate.selector,
-        _getEngineConstants(),
-        creations
-      )
-    );
+    EModeEngine.executeEModeCategoriesCreate(_getEngineConstants(), creations);
   }
 
   /// @inheritdoc IAaveV3ConfigEngine
   function updateEModeCategories(EModeCategoryUpdate[] calldata updates) external {
-    EMODE_ENGINE.functionDelegateCall(
-      abi.encodeWithSelector(
-        EModeEngine.executeEModeCategoriesUpdate.selector,
-        _getEngineConstants(),
-        updates
-      )
-    );
+    EModeEngine.executeEModeCategoriesUpdate(_getEngineConstants(), updates);
   }
 
   /// @inheritdoc IAaveV3ConfigEngine
   function updateAssetsEMode(AssetEModeUpdate[] calldata updates) external {
-    EMODE_ENGINE.functionDelegateCall(
-      abi.encodeWithSelector(
-        EModeEngine.executeAssetsEModeUpdate.selector,
-        _getEngineConstants(),
-        updates
-      )
-    );
-  }
-
-  function _getEngineLibraries() internal view returns (EngineLibraries memory) {
-    return
-      EngineLibraries({
-        listingEngine: LISTING_ENGINE,
-        eModeEngine: EMODE_ENGINE,
-        borrowEngine: BORROW_ENGINE,
-        collateralEngine: COLLATERAL_ENGINE,
-        priceFeedEngine: PRICE_FEED_ENGINE,
-        rateEngine: RATE_ENGINE,
-        capsEngine: CAPS_ENGINE
-      });
+    EModeEngine.executeAssetsEModeUpdate(_getEngineConstants(), updates);
   }
 
   function _getEngineConstants() internal view returns (EngineConstants memory) {

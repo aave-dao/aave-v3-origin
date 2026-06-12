@@ -137,9 +137,7 @@ library FlashLoanLogic {
             referralCode: params.referralCode,
             releaseUnderlying: false,
             oracle: IPoolAddressesProvider(params.addressesProvider).getPriceOracle(),
-            userEModeCategory: IPool(params.pool).getUserEMode(params.onBehalfOf).toUint8(),
-            priceOracleSentinel: IPoolAddressesProvider(params.addressesProvider)
-              .getPriceOracleSentinel()
+            userEModeCategory: IPool(params.pool).getUserEMode(params.onBehalfOf).toUint8()
           })
         );
         // no premium is paid when taking on the flashloan as debt

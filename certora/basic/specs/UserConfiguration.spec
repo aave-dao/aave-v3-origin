@@ -8,8 +8,6 @@ methods {
   function isBorrowingOne() external returns (bool) envfree;
   function isBorrowingAny() external returns bool envfree;
   function isEmpty() external returns bool envfree;
-  function getIsolationModeState() external returns (bool, address, uint256) envfree;
-  function getSiloedBorrowingState() external returns (bool, address) envfree;
 }
 
 
@@ -79,21 +77,3 @@ invariant integrityOfisBorrowingAny(uint256 reserveIndex)
 
 invariant integrityOfEmpty(uint256 reserveIndex)
   isEmpty() => !isBorrowingAny() && !isUsingAsCollateral(reserveIndex) && !isBorrowing(reserveIndex);
-
-// if IsolationModeState is active then there must be exactly one asset register as collateral.
-// note that this is a necessary requirement, but it is not sufficient.
-rule integrityOfIsolationModeState() {
-  bool existExactlyOneCollateral = isUsingAsCollateralOne();
-  bool answer; address asset; uint256 ceiling;
-  answer, asset, ceiling = getIsolationModeState();
-  assert answer => existExactlyOneCollateral;
-}
-
-// if IsolationModeState is active then there must be exactly one asset register as collateral.
-// note that this is a necessary requirement, but it is not sufficient.
-rule integrityOfSiloedBorrowingState() {
-  bool existExactlyOneBorrow = isBorrowingOne();
-  bool answer; address asset;
-  answer, asset = getSiloedBorrowingState();
-  assert answer => existExactlyOneBorrow;
-}

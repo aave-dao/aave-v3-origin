@@ -89,6 +89,7 @@ library GenericLogic {
       if (isEnabledAsCollateral || isBorrowed) {
         vars.currentReserveAddress = reservesList[vars.i];
 
+        // @dev legacy check from when dropReserve could leave gaps; see docs/3.7/drop-reserve-removal.md
         if (vars.currentReserveAddress != address(0)) {
           DataTypes.ReserveData storage currentReserve = reservesData[vars.currentReserveAddress];
           vars.configurationCache = currentReserve.configuration;

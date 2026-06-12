@@ -283,7 +283,7 @@ contract UiIncentiveDataProviderV3 is IUiIncentiveDataProviderV3 {
 
         userReservesIncentivesData[i].vTokenIncentivesUserData = UserIncentiveData(
           baseData.variableDebtTokenAddress,
-          address(aTokenIncentiveController),
+          address(vTokenIncentiveController),
           vUserRewardsInformation
         );
       }

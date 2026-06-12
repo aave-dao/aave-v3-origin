@@ -36,8 +36,6 @@ contract AaveV3MockListing is AaveV3Payload {
         variableRateSlope2: 75_00
       }),
       enabledToBorrow: EngineFlags.ENABLED,
-      borrowableInIsolation: EngineFlags.DISABLED,
-      withSiloedBorrowing: EngineFlags.DISABLED,
       flashloanable: EngineFlags.DISABLED,
       ltv: 82_50,
       liqThreshold: 86_00,
@@ -45,7 +43,6 @@ contract AaveV3MockListing is AaveV3Payload {
       reserveFactor: 10_00,
       supplyCap: 85_000,
       borrowCap: 60_000,
-      debtCeiling: 0,
       liqProtocolFee: 10_00
     });
 

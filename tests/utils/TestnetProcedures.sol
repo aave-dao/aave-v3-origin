@@ -86,6 +86,7 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     uint16 lt;
     uint16 lb;
     string label;
+    bool isolated;
   }
 
   function _initTestEnvironment(bool mintUserTokens, bool l2) internal {
@@ -342,11 +343,11 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
   }
 
   function _genCategoryOne() internal pure returns (EModeCategoryInput memory) {
-    return EModeCategoryInput(1, 95_00, 96_00, 101_00, 'GROUP_A');
+    return EModeCategoryInput(1, 95_00, 96_00, 101_00, 'GROUP_A', false);
   }
 
   function _genCategoryTwo() internal pure returns (EModeCategoryInput memory) {
-    return EModeCategoryInput(2, 96_00, 97_00, 101_50, 'GROUP_B');
+    return EModeCategoryInput(2, 96_00, 97_00, 101_50, 'GROUP_B', false);
   }
 
   function _calcPrice(uint256 price, uint256 percent) public pure returns (uint256) {

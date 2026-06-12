@@ -1,7 +1,7 @@
 pragma solidity ^0.8.10;
 pragma experimental ABIEncoderV2;
 
-import {IERC20} from 'certora/atoken-with-delegation/munged/src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
 import {IAToken} from 'certora/atoken-with-delegation/munged/src/contracts/interfaces/IAToken.sol';
 import {WadRayMath} from 'certora/atoken-with-delegation/munged/src/contracts/protocol/libraries/math/WadRayMath.sol';
 

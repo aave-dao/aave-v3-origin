@@ -72,10 +72,7 @@ contract LibraryPreCompileOne is FfiUtils, Script, DeployUtils {
       string(
         abi.encodePacked(
           'src/contracts/protocol/libraries/logic/BorrowLogic.sol:BorrowLogic:',
-          vm.toString(report.borrowLogic),
-          ',',
-          'src/contracts/protocol/libraries/logic/ConfiguratorLogic.sol:ConfiguratorLogic:',
-          vm.toString(report.configuratorLogic)
+          vm.toString(report.borrowLogic)
         )
       );
   }

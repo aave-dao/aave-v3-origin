@@ -16,16 +16,6 @@ methods {
       uint256 userBalance
   ) internal => NONDET;
   
-  function ValidationLogic.validateAutomaticUseAsCollateral(
-    mapping(address => DataTypes.ReserveData) storage reservesData,
-    mapping(uint256 => address) storage reservesList,
-    mapping(uint8 => DataTypes.EModeCategory) storage eModeCategories,
-    DataTypes.UserConfigurationMap storage userConfig,
-    DataTypes.ReserveConfigurationMap memory reserveConfig,
-    address asset,
-    uint8 categoryId
-  ) internal returns (bool) => NONDET;
-   
   function ValidationLogic.validateSupply(
     DataTypes.ReserveCache memory,
     DataTypes.ReserveData storage,
@@ -36,7 +26,6 @@ methods {
   
   function ValidationLogic.validateBorrow(
     mapping (address => DataTypes.ReserveData) storage reservesData,
-    mapping (uint256 => address) storage reservesList,
     mapping (uint8 => DataTypes.EModeCategory) storage eModeCategories,
     DataTypes.ValidateBorrowParams memory params
   ) internal => NONDET;

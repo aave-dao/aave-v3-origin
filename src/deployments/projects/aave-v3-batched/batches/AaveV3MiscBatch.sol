@@ -7,19 +7,8 @@ import '../../../interfaces/IMarketReportTypes.sol';
 contract AaveV3MiscBatch is AaveV3MiscProcedure {
   MiscReport internal _report;
 
-  constructor(
-    bool l2Flag,
-    address poolAddressesProvider,
-    address sequencerUptimeOracle,
-    uint256 gracePeriod
-  ) {
-    MiscReport memory miscReport = _deploySentinelAndDefaultIR(
-      l2Flag,
-      poolAddressesProvider,
-      sequencerUptimeOracle,
-      gracePeriod
-    );
-    _report.priceOracleSentinel = miscReport.priceOracleSentinel;
+  constructor(address poolAddressesProvider) {
+    MiscReport memory miscReport = _deployDefaultIR(poolAddressesProvider);
     _report.defaultInterestRateStrategy = miscReport.defaultInterestRateStrategy;
   }
 

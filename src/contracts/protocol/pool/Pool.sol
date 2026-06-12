@@ -123,7 +123,6 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
   ) public virtual override {
     SupplyLogic.executeSupply(
       _reserves,
-      _reservesList,
       _eModeCategories,
       _usersConfig[onBehalfOf],
       DataTypes.ExecuteSupplyParams({
@@ -162,7 +161,6 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
     {} catch {}
     SupplyLogic.executeSupply(
       _reserves,
-      _reservesList,
       _eModeCategories,
       _usersConfig[onBehalfOf],
       DataTypes.ExecuteSupplyParams({
@@ -224,8 +222,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
         referralCode: referralCode,
         releaseUnderlying: true,
         oracle: ADDRESSES_PROVIDER.getPriceOracle(),
-        userEModeCategory: _usersEModeCategory[onBehalfOf],
-        priceOracleSentinel: ADDRESSES_PROVIDER.getPriceOracleSentinel()
+        userEModeCategory: _usersEModeCategory[onBehalfOf]
       })
     );
   }
@@ -369,7 +366,6 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
         receiveAToken: receiveAToken,
         priceOracle: ADDRESSES_PROVIDER.getPriceOracle(),
         borrowerEModeCategory: _usersEModeCategory[borrower],
-        priceOracleSentinel: ADDRESSES_PROVIDER.getPriceOracleSentinel(),
         interestRateStrategyAddress: RESERVE_INTEREST_RATE_STRATEGY
       })
     );
@@ -398,7 +394,6 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
       flashLoanPremium: _flashLoanPremium,
       addressesProvider: address(ADDRESSES_PROVIDER),
       pool: address(this),
-      userEModeCategory: _usersEModeCategory[onBehalfOf],
       isAuthorizedFlashBorrower: IACLManager(ADDRESSES_PROVIDER.getACLManager()).isFlashBorrower(
         _msgSender()
       )
@@ -456,7 +451,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
     res.interestRateStrategyAddress = RESERVE_INTEREST_RATE_STRATEGY;
     res.accruedToTreasury = reserve.accruedToTreasury;
     res.unbacked = 0;
-    res.isolationModeTotalDebt = reserve.isolationModeTotalDebt;
+    res.isolationModeTotalDebt = 0;
     // This is a temporary workaround for integrations that are broken by Aave 3.2
     // While the new pool data provider is backward compatible, some integrations hard-code an old implementation
     // To allow them to not have any infrastructural blocker, a mock must be configured in the Aave Pool Addresses Provider, returning zero on all required view methods, instead of reverting
@@ -537,6 +532,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
     address[] memory reservesList = new address[](reservesListCount);
 
     for (uint256 i = 0; i < reservesListCount; i++) {
+      // @dev legacy check from when dropReserve could leave gaps; see docs/3.7/drop-reserve-removal.md
       if (_reservesList[i] != address(0)) {
         reservesList[i - droppedReservesCount] = _reservesList[i];
       } else {
@@ -626,11 +622,6 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
   }
 
   /// @inheritdoc IPool
-  function dropReserve(address asset) external virtual override onlyPoolConfigurator {
-    PoolLogic.executeDropReserve(_reserves, _reservesList, asset);
-  }
-
-  /// @inheritdoc IPool
   function syncIndexesState(address asset) external virtual override onlyPoolConfigurator {
     PoolLogic.executeSyncIndexesState(_reserves[asset]);
   }
@@ -667,6 +658,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
     _eModeCategories[id].ltv = category.ltv;
     _eModeCategories[id].liquidationThreshold = category.liquidationThreshold;
     _eModeCategories[id].liquidationBonus = category.liquidationBonus;
+    _eModeCategories[id].isolated = category.isolated;
     _eModeCategories[id].label = category.label;
   }
 
@@ -698,6 +690,15 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
     // category 0 is reserved for volatile heterogeneous assets and it's always disabled
     require(id != 0, Errors.EModeCategoryReserved());
     _eModeCategories[id].ltvzeroBitmap = ltvzeroBitmap;
+  }
+
+  /// @inheritdoc IPool
+  function configureEModeCategoryIsolated(
+    uint8 id,
+    bool isolated
+  ) external virtual override onlyPoolConfigurator {
+    require(id != 0, Errors.EModeCategoryReserved());
+    _eModeCategories[id].isolated = isolated;
   }
 
   /// @inheritdoc IPool
@@ -745,6 +746,11 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
   }
 
   /// @inheritdoc IPool
+  function getIsEModeCategoryIsolated(uint8 id) external view returns (bool) {
+    return _eModeCategories[id].isolated;
+  }
+
+  /// @inheritdoc IPool
   function setUserEMode(uint8 categoryId) external virtual override {
     SupplyLogic.executeSetUserEMode(
       _reserves,
@@ -761,13 +767,6 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
   /// @inheritdoc IPool
   function getUserEMode(address user) external view virtual override returns (uint256) {
     return _usersEModeCategory[user];
-  }
-
-  /// @inheritdoc IPool
-  function resetIsolationModeTotalDebt(
-    address asset
-  ) external virtual override onlyPoolConfigurator {
-    PoolLogic.executeResetIsolationModeTotalDebt(_reserves, asset);
   }
 
   /// @inheritdoc IPool
@@ -805,7 +804,6 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
   ) external virtual override {
     SupplyLogic.executeSupply(
       _reserves,
-      _reservesList,
       _eModeCategories,
       _usersConfig[onBehalfOf],
       DataTypes.ExecuteSupplyParams({

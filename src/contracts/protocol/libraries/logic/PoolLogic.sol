@@ -11,9 +11,7 @@ import {Errors} from '../helpers/Errors.sol';
 import {TokenMath} from '../helpers/TokenMath.sol';
 import {DataTypes} from '../types/DataTypes.sol';
 import {ReserveLogic} from './ReserveLogic.sol';
-import {ValidationLogic} from './ValidationLogic.sol';
 import {GenericLogic} from './GenericLogic.sol';
-import {IsolationModeLogic} from './IsolationModeLogic.sol';
 
 /**
  * @title PoolLogic library
@@ -46,6 +44,7 @@ library PoolLogic {
     require(!reserveAlreadyAdded, Errors.ReserveAlreadyAdded());
 
     for (uint16 i = 0; i < params.reservesCount; i++) {
+      // @dev legacy check from when dropReserve could leave gaps; see docs/3.7/drop-reserve-removal.md
       if (reservesList[i] == address(0)) {
         reservesData[params.asset].id = i;
         reservesList[i] = params.asset;
@@ -134,21 +133,6 @@ library PoolLogic {
   }
 
   /**
-   * @notice Resets the isolation mode total debt of the given asset to zero
-   * @dev It requires the given asset has zero debt ceiling
-   * @param reservesData The state of all the reserves
-   * @param asset The address of the underlying asset to reset the isolationModeTotalDebt
-   */
-  function executeResetIsolationModeTotalDebt(
-    mapping(address => DataTypes.ReserveData) storage reservesData,
-    address asset
-  ) external {
-    require(reservesData[asset].configuration.getDebtCeiling() == 0, Errors.DebtCeilingNotZero());
-
-    IsolationModeLogic.setIsolationModeTotalDebt(reservesData[asset], asset, 0);
-  }
-
-  /**
    * @notice Sets the liquidation grace period of the asset
    * @param reservesData The state of all the reserves
    * @param asset The address of the underlying asset to set the liquidationGracePeriod
@@ -160,23 +144,6 @@ library PoolLogic {
     uint40 until
   ) external {
     reservesData[asset].liquidationGracePeriodUntil = until;
-  }
-
-  /**
-   * @notice Drop a reserve
-   * @param reservesData The state of all the reserves
-   * @param reservesList The addresses of all the active reserves
-   * @param asset The address of the underlying asset of the reserve
-   */
-  function executeDropReserve(
-    mapping(address => DataTypes.ReserveData) storage reservesData,
-    mapping(uint256 => address) storage reservesList,
-    address asset
-  ) external {
-    DataTypes.ReserveData storage reserve = reservesData[asset];
-    ValidationLogic.validateDropReserve(reservesList, reserve, asset);
-    reservesList[reservesData[asset].id] = address(0);
-    delete reservesData[asset];
   }
 
   /**

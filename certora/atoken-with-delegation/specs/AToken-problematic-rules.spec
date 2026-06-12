@@ -125,7 +125,7 @@ rule additiveTransfer(address from1, address from2, address to1, address to2, ui
 }
 
 
-rule additiveBurn(address user1, address user2, address to1, address to2, uint256 x, uint256 y)
+rule additiveBurn(address user1, address user2, address to1, address to2, uint256 x, uint256 y, uint256 sx, uint256 sy)
 {
     env e;
     uint256 indexRay = gRNI();
@@ -133,12 +133,12 @@ rule additiveBurn(address user1, address user2, address to1, address to2, uint25
              (user1 == to1 <=> user2 == to2) &&
              balanceOf(user1) == balanceOf(user2) && balanceOf(to1) == balanceOf(to2));
     require user1 != currentContract && user2 != currentContract;
-    
-    burn(e, user1, to1, x, indexRay);
-    burn(e, user1, to1, y, indexRay);
+
+    burn(e, user1, to1, x, sx, indexRay);
+    burn(e, user1, to1, y, sy, indexRay);
     uint256 balanceUserScenario1 = balanceOf(user1);
-    
-    burn(e, user2, to2, require_uint256(x+y), indexRay);
+
+    burn(e, user2, to2, require_uint256(x+y), require_uint256(sx+sy), indexRay);
     uint256 balanceUserScenario2 = balanceOf(user2);
 
     assert bounded_error_eq(balanceUserScenario1, balanceUserScenario2, 3), "burn is not additive";

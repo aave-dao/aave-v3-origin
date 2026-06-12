@@ -55,7 +55,6 @@ struct MarketReport {
   address protocolDataProvider;
   address aaveOracle;
   address defaultInterestRateStrategy;
-  address priceOracleSentinel;
   address aclManager;
   address treasury;
   address treasuryImplementation;
@@ -80,7 +79,6 @@ struct MarketReport {
 
 struct LibrariesReport {
   address borrowLogic;
-  address configuratorLogic;
   address flashLoanLogic;
   address liquidationLogic;
   address poolLogic;
@@ -98,8 +96,6 @@ struct MarketConfig {
   address marketReferenceCurrencyPriceInUsdProxyAggregator;
   string marketId;
   uint8 oracleDecimals;
-  address l2SequencerUptimeFeed;
-  uint256 l2PriceOracleSentinelGracePeriod;
   uint256 providerId;
   bytes32 salt;
   address wrappedNativeToken;
@@ -118,19 +114,11 @@ struct PoolReport {
 }
 
 struct MiscReport {
-  address priceOracleSentinel;
   address defaultInterestRateStrategy;
 }
 
 struct ConfigEngineReport {
   address configEngine;
-  address listingEngine;
-  address eModeEngine;
-  address borrowEngine;
-  address collateralEngine;
-  address priceFeedEngine;
-  address rateEngine;
-  address capsEngine;
 }
 
 struct StaticATokenReport {

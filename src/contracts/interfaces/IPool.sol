@@ -73,13 +73,6 @@ interface IPool {
   );
 
   /**
-   * @dev Emitted on borrow(), repay() and liquidationCall() when using isolated assets
-   * @param asset The address of the underlying asset of the reserve
-   * @param totalDebt The total isolation mode debt for the reserve
-   */
-  event IsolationModeTotalDebtUpdated(address indexed asset, uint256 totalDebt);
-
-  /**
    * @dev Emitted when the user selects a certain asset category for eMode
    * @param user The address of the user
    * @param categoryId The category id
@@ -442,14 +435,6 @@ interface IPool {
   function initReserve(address asset, address aTokenAddress, address variableDebtAddress) external;
 
   /**
-   * @notice Drop a reserve
-   * @dev Only callable by the PoolConfigurator contract
-   * @dev Does not reset eMode flags, which must be considered when reusing the same reserve id for a different reserve.
-   * @param asset The address of the underlying asset of the reserve
-   */
-  function dropReserve(address asset) external;
-
-  /**
    * @notice Accumulates interest to all indexes of the reserve
    * @dev Only callable by the PoolConfigurator contract
    * @dev To be used when required by the configurator, for example when updating interest rates strategy data
@@ -621,6 +606,13 @@ interface IPool {
   function configureEModeCategoryLtvzeroBitmap(uint8 id, uint128 ltvzeroBitmap) external;
 
   /**
+   * @notice Sets the isolated flag of an eMode category.
+   * @param id The id of the category
+   * @param isolated True if the eMode should be isolated
+   */
+  function configureEModeCategoryIsolated(uint8 id, bool isolated) external;
+
+  /**
    * @notice Returns the data of an eMode category
    * @dev DEPRECATED use independent getters instead
    * @param id The id of the category
@@ -670,6 +662,13 @@ interface IPool {
   function getEModeCategoryLtvzeroBitmap(uint8 id) external view returns (uint128);
 
   /**
+   * @notice Returns the isolated flag of an eMode category
+   * @param id The id of the category
+   * @return True if the eMode category is isolated
+   */
+  function getIsEModeCategoryIsolated(uint8 id) external view returns (bool);
+
+  /**
    * @notice Allows a user to use the protocol in eMode
    * @param categoryId The id of the category
    */
@@ -681,13 +680,6 @@ interface IPool {
    * @return The eMode id
    */
   function getUserEMode(address user) external view returns (uint256);
-
-  /**
-   * @notice Resets the isolation mode total debt of the given asset to zero
-   * @dev It requires the given asset has zero debt ceiling
-   * @param asset The address of the underlying asset to reset the isolationModeTotalDebt
-   */
-  function resetIsolationModeTotalDebt(address asset) external;
 
   /**
    * @notice Sets the liquidation grace period of the given asset
@@ -797,7 +789,7 @@ interface IPool {
    */
   function setUserEModeOnBehalfOf(uint8 categoryId, address onBehalfOf) external;
 
-  /*
+  /**
    * @notice Returns true if the `positionManager` address is approved to use the position manager role on behalf of the user.
    * @param user The address of the user
    * @param positionManager The address of the position manager
