@@ -3,9 +3,8 @@ pragma solidity ^0.8.0;
 import './MarketInput.sol';
 
 contract MonadMarketInput is MarketInput {
-  // OWNER + POOL_ADMIN: on other Aave deploys this is the Governance Executor Lvl1. 
   address internal constant OWNER = address(0xa9d0EAFF48cE1DF468f9eAeb7e628c413343F6A2); // Monad Governance Executor Lvl1
-  address internal constant POOL_ADMIN = address(0xa9d0EAFF48cE1DF468f9eAeb7e628c413343F6A2); // same as OWNER
+  address internal constant POOL_ADMIN = address(0xa9d0EAFF48cE1DF468f9eAeb7e628c413343F6A2);
   address internal constant EMERGENCY_ADMIN = address(0xc887455536CBD4e615B745e70CaCde15B3117e74); // the Aave Protocol Guardian on Monad.
 
   // Known Monad mainnet (chainId 143) addresses.
@@ -30,6 +29,7 @@ contract MonadMarketInput is MarketInput {
     roles.emergencyAdmin = EMERGENCY_ADMIN;
 
     config.marketId = 'Aave V3 Monad';
+    config.salt = 'V3-MONAD';
     config.providerId = 1;
     config.oracleDecimals = 8;
     config.flashLoanPremium = 0.0005e4;
