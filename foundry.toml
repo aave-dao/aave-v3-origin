@@ -54,6 +54,7 @@ bob="${RPC_BOB}"
 plasma="${RPC_PLASMA}"
 xLayer="${RPC_XLAYER}"
 megaeth="${RPC_MEGAETH}"
+monad="${RPC_MONAD}"
 
 [etherscan]
 mainnet = { key = "${ETHERSCAN_API_KEY_MAINNET}", chainId = 1 }
