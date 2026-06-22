@@ -170,6 +170,8 @@ contract AaveV3SetupProcedure {
 
     manager.addEmergencyAdmin(roles.emergencyAdmin);
 
+    manager.addPoolAdmin(roles.emergencyAdmin);
+
     manager.grantRole(manager.DEFAULT_ADMIN_ROLE(), roles.poolAdmin);
 
     manager.revokeRole(manager.DEFAULT_ADMIN_ROLE(), address(this));
