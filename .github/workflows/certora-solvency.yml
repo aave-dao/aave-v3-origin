@@ -58,8 +58,8 @@ jobs:
             certora/solvency/confs/solvency/liquidationCall/lemma-DBTasset.conf
             certora/solvency/confs/solvency/liquidationCall/main-DBTasset.conf
             certora/solvency/confs/solvency/liquidationCall/main-COLasset.conf
-            certora/solvency/confs/solvency/liquidationCall/lemma-COLasset.conf --rule_sanity "none"
-            certora/solvency/confs/solvency/liquidationCall/main-COLasset-totSUP0.conf --rule_sanity "none"
+            certora/solvency/confs/solvency/liquidationCall/lemma-COLasset.conf 
+            certora/solvency/confs/solvency/liquidationCall/main-COLasset-totSUP0.conf 
             certora/solvency/confs/solvency/liquidationCall/lemma-COLasset-totSUP0.conf
             certora/solvency/confs/solvency/liquidationCall/burnBadDebt-assetINloop.conf
             certora/solvency/confs/solvency/liquidationCall/burnBadDebt-assetNOTINloop.conf
