@@ -12,9 +12,9 @@ library CollateralEngine {
   using PercentageMath for uint256;
 
   function executeCollateralSide(
-    IEngine.EngineConstants calldata engineConstants,
+    IEngine.EngineConstants memory engineConstants,
     IEngine.CollateralUpdate[] memory updates
-  ) external {
+  ) internal {
     require(updates.length != 0, 'AT_LEAST_ONE_UPDATE_REQUIRED');
 
     _configCollateralSide(engineConstants.poolConfigurator, engineConstants.pool, updates);
@@ -77,18 +77,11 @@ library CollateralEngine {
             100_00 + updates[i].liqBonus
           );
         }
+      }
 
-        if (updates[i].liqProtocolFee != EngineFlags.KEEP_CURRENT) {
-          require(updates[i].liqProtocolFee < 100_00, 'INVALID_LIQ_PROTOCOL_FEE');
-          poolConfigurator.setLiquidationProtocolFee(updates[i].asset, updates[i].liqProtocolFee);
-        }
-
-        if (updates[i].debtCeiling != EngineFlags.KEEP_CURRENT) {
-          // For reference, this is to simplify the interactions with the Aave protocol,
-          // as there the definition is with 2 decimals. We don't see any reason to set
-          // a debt ceiling involving .something USD, so we simply don't allow to do it
-          poolConfigurator.setDebtCeiling(updates[i].asset, updates[i].debtCeiling * 100);
-        }
+      if (updates[i].liqProtocolFee != EngineFlags.KEEP_CURRENT) {
+        require(updates[i].liqProtocolFee < 100_00, 'INVALID_LIQ_PROTOCOL_FEE');
+        poolConfigurator.setLiquidationProtocolFee(updates[i].asset, updates[i].liqProtocolFee);
       }
     }
   }

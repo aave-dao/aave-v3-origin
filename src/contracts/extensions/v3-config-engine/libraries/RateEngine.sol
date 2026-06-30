@@ -2,7 +2,7 @@
 pragma solidity ^0.8.18;
 
 import {IDefaultInterestRateStrategyV2} from '../../../interfaces/IDefaultInterestRateStrategyV2.sol';
-import {SafeCast} from '../../../dependencies/openzeppelin/contracts/SafeCast.sol';
+import {SafeCast} from 'openzeppelin-contracts/contracts/utils/math/SafeCast.sol';
 import {EngineFlags} from '../EngineFlags.sol';
 import {IAaveV3ConfigEngine as IEngine, IPoolConfigurator} from '../IAaveV3ConfigEngine.sol';
 
@@ -10,9 +10,9 @@ library RateEngine {
   using SafeCast for uint256;
 
   function executeRateStrategiesUpdate(
-    IEngine.EngineConstants calldata engineConstants,
+    IEngine.EngineConstants memory engineConstants,
     IEngine.RateStrategyUpdate[] memory updates
-  ) external {
+  ) internal {
     require(updates.length != 0, 'AT_LEAST_ONE_UPDATE_REQUIRED');
 
     (address[] memory ids, IEngine.InterestRateInputData[] memory rates) = _unpackRatesUpdate(

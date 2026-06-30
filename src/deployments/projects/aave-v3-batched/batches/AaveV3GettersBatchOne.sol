@@ -7,12 +7,10 @@ contract AaveV3GettersBatchOne is AaveV3GettersProcedureOne {
   GettersReportBatchOne internal _gettersReport;
 
   constructor(
-    address poolAddressesProvider,
     address networkBaseTokenPriceInUsdProxyAggregator,
     address marketReferenceCurrencyPriceInUsdProxyAggregator
   ) {
     _gettersReport = _deployAaveV3GettersBatchOne(
-      poolAddressesProvider,
       networkBaseTokenPriceInUsdProxyAggregator,
       marketReferenceCurrencyPriceInUsdProxyAggregator
     );

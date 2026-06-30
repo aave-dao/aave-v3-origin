@@ -95,7 +95,7 @@ contract EmissionManagerTest is TestnetProcedures {
     config[0] = RewardsDataTypes.RewardsConfigInput(
       0.05e6,
       0,
-      uint32(block.timestamp + 30 days),
+      uint32(vm.getBlockTimestamp() + 30 days),
       usdxAToken,
       tokenList.usdx,
       ITransferStrategyBase(strat),

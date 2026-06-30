@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
+import {ECDSA} from 'openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol';
+
 import {Context} from '../../../dependencies/openzeppelin/contracts/Context.sol';
 import {Errors} from '../../libraries/helpers/Errors.sol';
 import {VersionedInitializable} from '../../../misc/aave-upgradeability/VersionedInitializable.sol';
@@ -40,6 +42,11 @@ abstract contract DebtTokenBase is
   }
 
   /// @inheritdoc ICreditDelegationToken
+  function renounceDelegation(address delegator) external override {
+    _approveDelegation(delegator, _msgSender(), 0);
+  }
+
+  /// @inheritdoc ICreditDelegationToken
   function delegationWithSig(
     address delegator,
     address delegatee,
@@ -49,9 +56,9 @@ abstract contract DebtTokenBase is
     bytes32 r,
     bytes32 s
   ) external {
-    require(delegator != address(0), Errors.ZERO_ADDRESS_NOT_VALID);
+    require(delegator != address(0), Errors.ZeroAddressNotValid());
     //solium-disable-next-line
-    require(block.timestamp <= deadline, Errors.INVALID_EXPIRATION);
+    require(block.timestamp <= deadline, Errors.InvalidExpiration());
     uint256 currentValidNonce = _nonces[delegator];
     bytes32 digest = keccak256(
       abi.encodePacked(
@@ -62,7 +69,7 @@ abstract contract DebtTokenBase is
         )
       )
     );
-    require(delegator == ecrecover(digest, v, r, s), Errors.INVALID_SIGNATURE);
+    require(delegator == ECDSA.recover(digest, v, r, s), Errors.InvalidSignature());
     _nonces[delegator] = currentValidNonce + 1;
     _approveDelegation(delegator, delegatee, value);
   }
@@ -90,13 +97,25 @@ abstract contract DebtTokenBase is
    * @notice Decreases the borrow allowance of a user on the specific debt token.
    * @param delegator The address delegating the borrowing power
    * @param delegatee The address receiving the delegated borrowing power
-   * @param amount The amount to subtract from the current allowance
+   * @param amount The minimum amount to subtract from the current allowance
+   * @param correctedAmount The maximum amount to subtract from the current allowance
    */
-  function _decreaseBorrowAllowance(address delegator, address delegatee, uint256 amount) internal {
-    uint256 newAllowance = _borrowAllowances[delegator][delegatee] - amount;
+  function _decreaseBorrowAllowance(
+    address delegator,
+    address delegatee,
+    uint256 amount,
+    uint256 correctedAmount
+  ) internal {
+    uint256 oldBorrowAllowance = _borrowAllowances[delegator][delegatee];
+    if (oldBorrowAllowance < amount) {
+      revert InsufficientBorrowAllowance(delegatee, oldBorrowAllowance, amount);
+    }
+
+    uint256 consumption = oldBorrowAllowance >= correctedAmount
+      ? correctedAmount
+      : oldBorrowAllowance;
+    uint256 newAllowance = oldBorrowAllowance - consumption;
 
     _borrowAllowances[delegator][delegatee] = newAllowance;
-
-    emit BorrowAllowanceDelegated(delegator, delegatee, _underlyingAsset, newAllowance);
   }
 }

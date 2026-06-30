@@ -29,7 +29,7 @@ using DummyERC20_rewardToken as _DummyERC20_rewardToken;
             function _.getAssetIndex(address, address) external => NONDET;
 
             // In RewardsDistributor.sol called by RewardsController.sol
-            function _.finalizeTransfer(address, address, address, uint256, uint256, uint256) external => NONDET;
+            function _.finalizeTransfer(address, address, address, uint256, uint256) external => NONDET;
 
             // In ScaledBalanceTokenBase.sol called by getAssetIndex
             function _.scaledTotalSupply() external => DISPATCHER(true);

@@ -19,7 +19,7 @@ import {DefaultMarketInput} from 'src/deployments/inputs/DefaultMarketInput.sol'
 import {AaveV3BatchOrchestration} from 'src/deployments/projects/aave-v3-batched/AaveV3BatchOrchestration.sol';
 import {AaveV3TestListing} from '../mocks/AaveV3TestListing.sol';
 import {MockAggregatorSetPrice} from './utils/mocks/MockAggregatorSetPrice.sol';
-import {MockFlashLoanReceiver} from './helpers/FlashLoanReceiver.sol';
+import {MockFlashLoanReceiver} from './helpers/MockFlashLoanReceiver.sol';
 
 // Interfaces
 import {IAaveV3ConfigEngine} from '../../src/contracts/extensions/v3-config-engine/AaveV3ConfigEngine.sol';
@@ -174,6 +174,7 @@ contract Setup is BaseTest, DefaultMarketInput {
       for (uint256 j = 0; j < tokens.length; j++) {
         if (tokens[j] == address(tokenList.weth)) {
           weth.deposit{value: INITIAL_BALANCE}();
+          // forge-lint: disable-next-line(erc20-unchecked-transfer)
           weth.transfer(_actor, INITIAL_BALANCE);
         } else {
           TestnetERC20 _token = TestnetERC20(tokens[j]);
@@ -184,6 +185,7 @@ contract Setup is BaseTest, DefaultMarketInput {
     }
 
     // Set umbrella
+    // forge-lint: disable-next-line(unsafe-typecast)
     contracts.poolAddressesProvider.setAddress(bytes32('UMBRELLA'), UMBRELLA);
   }
 

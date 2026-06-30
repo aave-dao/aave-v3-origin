@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 // Interfaces
-import {IERC20} from 'src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
 
 // Libraries
 
@@ -24,14 +24,22 @@ contract DonationAttackHandler is BaseHandler {
 
   /// @notice This function transfers any amount of assets to a contract in the system simulating
   /// a big range of donation attacks
-  function donateUnderlying(uint256 amount, uint8 i) external {
+  function donateUnderlyingToAToken(uint256 amount, uint8 i) external {
     TestnetERC20 _token = TestnetERC20(_getRandomBaseAsset(i));
-
-    address target = protocolTokens[address(_token)].aTokenAddress;
 
     _token.mint(address(this), amount);
 
-    _token.transfer(target, amount);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
+    _token.transfer(protocolTokens[address(_token)].aTokenAddress, amount);
+  }
+
+  function donateUnderlyingToPool(uint256 amount, uint8 i) external {
+    TestnetERC20 _token = TestnetERC20(_getRandomBaseAsset(i));
+
+    _token.mint(address(this), amount);
+
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
+    _token.transfer(address(pool), amount);
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////

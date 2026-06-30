@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.19;
 
-import {Pool} from '../munged/contracts/protocol/pool/Pool.sol';
-import {ATokenInstance} from '../munged/contracts/instances/ATokenInstance.sol';
-import {WadRayMath} from '../munged/contracts/protocol/libraries/math/WadRayMath.sol';
-import {ScaledBalanceTokenBase} from '../munged/contracts/protocol/tokenization/base/ScaledBalanceTokenBase.sol';
-import {IScaledBalanceToken} from '../munged/contracts/interfaces/IScaledBalanceToken.sol';
+import {Pool} from '../munged/src/contracts/protocol/pool/Pool.sol';
+import {ATokenInstance} from '../munged/src/contracts/instances/ATokenInstance.sol';
+import {WadRayMath} from '../munged/src/contracts/protocol/libraries/math/WadRayMath.sol';
+import {ScaledBalanceTokenBase} from '../munged/src/contracts/protocol/tokenization/base/ScaledBalanceTokenBase.sol';
+import {IScaledBalanceToken} from '../munged/src/contracts/interfaces/IScaledBalanceToken.sol';
 
 /*
  * @title Certora harness for Aave ERC20 AToken
@@ -15,7 +15,11 @@ import {IScaledBalanceToken} from '../munged/contracts/interfaces/IScaledBalance
 contract ATokenHarness is ATokenInstance {
   using WadRayMath for uint256;
 
-  constructor(Pool pool) public ATokenInstance(pool) {}
+  constructor(
+    Pool pool,
+    address rewardsController,
+    address treasury
+  ) public ATokenInstance(pool, rewardsController, treasury) {}
 
   function scaledTotalSupply()
     public
@@ -31,8 +35,8 @@ contract ATokenHarness is ATokenInstance {
     return _userState[user].additionalData;
   }
 
-  function scaledBalanceOfToBalanceOf(uint256 bal) public view returns (uint256) {
-    return bal.rayMul(POOL.getReserveNormalizedIncome(_underlyingAsset));
+  function scaledBalance_to_balance(uint256 scaledBal) public view returns (uint256) {
+    return scaledBal.rayMul(POOL.getReserveNormalizedIncome(_underlyingAsset));
   }
 
   function ATokenBalanceOf(address user) public view returns (uint256) {

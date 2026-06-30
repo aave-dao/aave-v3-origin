@@ -3,62 +3,32 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 
+import {TransparentUpgradeableProxy} from 'openzeppelin-contracts/contracts/proxy/transparent/TransparentUpgradeableProxy.sol';
 import {VariableDebtTokenHarness as VariableDebtTokenInstance} from '../../harness/VariableDebtToken.sol';
 import {IAaveIncentivesController} from '../../../src/contracts/interfaces/IAaveIncentivesController.sol';
+import {IInitializableDebtToken, IScaledBalanceToken} from '../../../src/contracts/interfaces/IVariableDebtToken.sol';
+import {ICreditDelegationToken} from '../../../src/contracts/interfaces/ICreditDelegationToken.sol';
 import {Errors} from '../../../src/contracts/protocol/libraries/helpers/Errors.sol';
 import {TestnetERC20} from '../../../src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
 import {ReserveLogic, DataTypes} from '../../../src/contracts/protocol/libraries/logic/ReserveLogic.sol';
 import {WadRayMath} from '../../../src/contracts/protocol/libraries/math/WadRayMath.sol';
+import {TokenMath} from '../../../src/contracts/protocol/libraries/helpers/TokenMath.sol';
 import {ConfiguratorInputTypes, IPool} from '../../../src/contracts/protocol/pool/PoolConfigurator.sol';
 import {EIP712SigUtils} from '../../utils/EIP712SigUtils.sol';
 import {TestnetProcedures, TestVars} from '../../utils/TestnetProcedures.sol';
 
 contract VariableDebtTokenEventsTests is TestnetProcedures {
   using WadRayMath for uint256;
+  using TokenMath for uint256;
   using ReserveLogic for DataTypes.ReserveCache;
   using ReserveLogic for DataTypes.ReserveData;
 
   VariableDebtTokenInstance public variableDebtToken;
 
-  event Initialized(
-    address indexed underlyingAsset,
-    address indexed pool,
-    address incentivesController,
-    uint8 debtTokenDecimals,
-    string debtTokenName,
-    string debtTokenSymbol,
-    bytes params
-  );
-
-  event Mint(
-    address indexed caller,
-    address indexed onBehalfOf,
-    uint256 value,
-    uint256 balanceIncrease,
-    uint256 index
-  );
-
-  event Burn(
-    address indexed from,
-    address indexed target,
-    uint256 value,
-    uint256 balanceIncrease,
-    uint256 index
-  );
-
-  event BorrowAllowanceDelegated(
-    address indexed fromUser,
-    address indexed toUser,
-    address indexed asset,
-    uint256 amount
-  );
-
   function setUp() public {
     initTestEnvironment();
 
-    (, , address variableDebtUsdx) = contracts.protocolDataProvider.getReserveTokensAddresses(
-      tokenList.usdx
-    );
+    address variableDebtUsdx = contracts.poolProxy.getReserveVariableDebtToken(tokenList.usdx);
 
     variableDebtToken = VariableDebtTokenInstance(variableDebtUsdx);
 
@@ -69,15 +39,18 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
   }
 
   function test_new_VariableDebtToken_implementation() public returns (VariableDebtTokenInstance) {
-    VariableDebtTokenInstance varDebtToken = new VariableDebtTokenInstance(IPool(report.poolProxy));
+    VariableDebtTokenInstance varDebtToken = new VariableDebtTokenInstance(
+      IPool(report.poolProxy),
+      report.rewardsControllerProxy
+    );
 
     assertEq(varDebtToken.name(), 'VARIABLE_DEBT_TOKEN_IMPL');
     assertEq(varDebtToken.symbol(), 'VARIABLE_DEBT_TOKEN_IMPL');
     assertEq(varDebtToken.decimals(), 0);
     assertEq(address(varDebtToken.POOL()), address(report.poolProxy));
-    assertEq(address(varDebtToken.getIncentivesController()), address(0));
+    assertEq(address(varDebtToken.getIncentivesController()), report.rewardsControllerProxy);
     assertEq(varDebtToken.UNDERLYING_ASSET_ADDRESS(), address(0));
-    assertEq(varDebtToken.DEBT_TOKEN_REVISION(), 0x1);
+    assertEq(varDebtToken.DEBT_TOKEN_REVISION(), 0x5);
 
     return varDebtToken;
   }
@@ -85,7 +58,7 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
   function test_initialize_VariableDebtToken(
     TestVars memory t
   ) public returns (VariableDebtTokenInstance) {
-    VariableDebtTokenInstance varDebtToken = test_new_VariableDebtToken_implementation();
+    VariableDebtTokenInstance varDebtTokenImpl = test_new_VariableDebtToken_implementation();
     ConfiguratorInputTypes.InitReserveInput memory listing = _generateInitReserveInput(
       t,
       report,
@@ -93,40 +66,48 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
       true
     );
 
-    vm.expectEmit(address(varDebtToken));
-    emit Initialized(
+    vm.expectEmit();
+    emit IInitializableDebtToken.Initialized(
       listing.underlyingAsset,
       report.poolProxy,
-      listing.incentivesController,
+      report.rewardsControllerProxy,
       TestnetERC20(listing.underlyingAsset).decimals(),
       listing.variableDebtTokenName,
       listing.variableDebtTokenSymbol,
       listing.params
     );
 
-    varDebtToken.initialize(
-      IPool(report.poolProxy),
-      listing.underlyingAsset,
-      IAaveIncentivesController(listing.incentivesController),
-      TestnetERC20(listing.underlyingAsset).decimals(),
-      listing.variableDebtTokenName,
-      listing.variableDebtTokenSymbol,
-      listing.params
+    VariableDebtTokenInstance varDebtToken = VariableDebtTokenInstance(
+      address(
+        new TransparentUpgradeableProxy(
+          address(varDebtTokenImpl),
+          address(this),
+          abi.encodeWithSelector(
+            IInitializableDebtToken.initialize.selector,
+            IPool(report.poolProxy),
+            listing.underlyingAsset,
+            TestnetERC20(listing.underlyingAsset).decimals(),
+            listing.variableDebtTokenName,
+            listing.variableDebtTokenSymbol,
+            listing.params
+          )
+        )
+      )
     );
 
     assertEq(varDebtToken.name(), listing.variableDebtTokenName);
     assertEq(varDebtToken.symbol(), listing.variableDebtTokenSymbol);
     assertEq(varDebtToken.decimals(), TestnetERC20(listing.underlyingAsset).decimals());
     assertEq(address(varDebtToken.POOL()), address(report.poolProxy));
-    assertEq(address(varDebtToken.getIncentivesController()), listing.incentivesController);
+    assertEq(address(varDebtToken.getIncentivesController()), report.rewardsControllerProxy);
     assertEq(varDebtToken.UNDERLYING_ASSET_ADDRESS(), listing.underlyingAsset);
-    assertEq(varDebtToken.DEBT_TOKEN_REVISION(), 0x1);
+    assertEq(varDebtToken.DEBT_TOKEN_REVISION(), 0x5);
 
     return varDebtToken;
   }
 
-  function test_reverts_initialize_twice(TestVars memory t) public {
-    VariableDebtTokenInstance varDebtToken = test_initialize_VariableDebtToken(t);
+  function test_reverts_initialize_pool_do_not_match(TestVars memory t) public {
+    VariableDebtTokenInstance varDebtTokenImpl = test_new_VariableDebtToken_implementation();
     ConfiguratorInputTypes.InitReserveInput memory listing = _generateInitReserveInput(
       t,
       report,
@@ -136,41 +117,50 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
 
     uint8 decimals = TestnetERC20(listing.underlyingAsset).decimals();
 
-    vm.expectRevert(bytes('Contract instance has already been initialized'));
-
-    varDebtToken.initialize(
-      IPool(report.poolProxy),
-      listing.underlyingAsset,
-      IAaveIncentivesController(listing.incentivesController),
-      decimals,
-      listing.variableDebtTokenName,
-      listing.variableDebtTokenSymbol,
-      listing.params
+    vm.expectRevert(abi.encodeWithSelector(Errors.PoolAddressesDoNotMatch.selector));
+    new TransparentUpgradeableProxy(
+      address(varDebtTokenImpl),
+      address(this),
+      abi.encodeWithSelector(
+        IInitializableDebtToken.initialize.selector,
+        IPool(makeAddr('ANY_OTHER_POOL')),
+        listing.underlyingAsset,
+        decimals,
+        listing.variableDebtTokenName,
+        listing.variableDebtTokenSymbol,
+        listing.params
+      )
     );
   }
 
-  function test_reverts_initialize_pool_do_not_match(TestVars memory t) public {
-    VariableDebtTokenInstance varDebtToken = test_new_VariableDebtToken_implementation();
-    ConfiguratorInputTypes.InitReserveInput memory listing = _generateInitReserveInput(
-      t,
-      report,
-      poolAdmin,
-      true
+  function test_renounceDelegation() public {
+    uint256 approveDelegationAmount = 1e18;
+
+    vm.expectEmit(address(variableDebtToken));
+    emit ICreditDelegationToken.BorrowAllowanceDelegated(
+      alice,
+      bob,
+      variableDebtToken.UNDERLYING_ASSET_ADDRESS(),
+      approveDelegationAmount
     );
 
-    uint8 decimals = TestnetERC20(listing.underlyingAsset).decimals();
+    vm.prank(alice);
+    variableDebtToken.approveDelegation(bob, approveDelegationAmount);
 
-    vm.expectRevert(bytes(Errors.POOL_ADDRESSES_DO_NOT_MATCH));
+    assertEq(variableDebtToken.borrowAllowance(alice, bob), approveDelegationAmount);
 
-    varDebtToken.initialize(
-      IPool(makeAddr('ANY_OTHER_POOL')),
-      listing.underlyingAsset,
-      IAaveIncentivesController(listing.incentivesController),
-      decimals,
-      listing.variableDebtTokenName,
-      listing.variableDebtTokenSymbol,
-      listing.params
+    vm.expectEmit(address(variableDebtToken));
+    emit ICreditDelegationToken.BorrowAllowanceDelegated(
+      alice,
+      bob,
+      variableDebtToken.UNDERLYING_ASSET_ADDRESS(),
+      0
     );
+
+    vm.prank(bob);
+    variableDebtToken.renounceDelegation(alice);
+
+    assertEq(variableDebtToken.borrowAllowance(alice, bob), 0);
   }
 
   function test_mint_variableDebt_caller_alice(TestVars memory t) public {
@@ -180,10 +170,10 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     uint256 amount = 1200 * 10 ** decimals;
 
     vm.expectEmit(address(debtToken));
-    emit Mint(alice, alice, amount, 0, 1e27);
+    emit IScaledBalanceToken.Mint(alice, alice, amount, 0, 1e27);
 
     vm.prank(report.poolProxy);
-    debtToken.mint(alice, alice, amount, 1e27);
+    debtToken.mint(alice, alice, amount, amount, 1e27);
 
     assertEq(debtToken.scaledBalanceOf(alice), amount);
   }
@@ -195,16 +185,16 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     uint256 amount = 1200 * 10 ** decimals;
 
     vm.expectEmit(address(debtToken));
-    emit BorrowAllowanceDelegated(alice, bob, address(asset), amount);
+    emit ICreditDelegationToken.BorrowAllowanceDelegated(alice, bob, address(asset), amount);
 
     vm.prank(alice);
     debtToken.approveDelegation(bob, amount);
 
     vm.expectEmit(address(debtToken));
-    emit Mint(bob, alice, amount, 0, 1e27);
+    emit IScaledBalanceToken.Mint(bob, alice, amount, 0, 1e27);
 
     vm.prank(report.poolProxy);
-    debtToken.mint(bob, alice, amount, 1e27);
+    debtToken.mint(bob, alice, amount, amount, 1e27);
 
     assertEq(debtToken.scaledBalanceOf(alice), amount);
   }
@@ -216,22 +206,37 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     uint256 amount = 1200 * 10 ** decimals;
     uint256 repayment = amount / 2;
     uint256 supplyIndex = 1.001e27;
-    uint256 balanceScaled = amount.rayDiv(supplyIndex);
+    uint256 balanceScaled = amount.rayDivCeil(supplyIndex);
     uint256 newIndex = 1.003e27;
-    uint256 repaymentScaled = repayment.rayDiv(newIndex);
+    uint256 repaymentScaled = repayment.rayDivFloor(newIndex);
 
     vm.expectEmit(address(debtToken));
-    emit Mint(alice, alice, amount, 0, supplyIndex);
+    emit IScaledBalanceToken.Mint(
+      alice,
+      alice,
+      balanceScaled.rayMulCeil(supplyIndex),
+      0,
+      supplyIndex
+    );
 
     vm.prank(report.poolProxy);
-    debtToken.mint(alice, alice, amount, supplyIndex);
+    debtToken.mint(alice, alice, amount, amount.rayDivCeil(supplyIndex), supplyIndex);
 
-    uint256 balanceIncrease = balanceScaled.rayMul(newIndex) - balanceScaled.rayMul(supplyIndex);
+    uint256 nextBalance = (balanceScaled - repaymentScaled).rayMulCeil(newIndex);
+    uint256 previousBalance = balanceScaled.rayMulCeil(supplyIndex);
+    uint256 balanceIncrease = balanceScaled.rayMulCeil(newIndex) - previousBalance;
+
     vm.expectEmit(address(debtToken));
-    emit Burn(alice, address(0), repayment - balanceIncrease, balanceIncrease, newIndex);
+    emit IScaledBalanceToken.Burn(
+      alice,
+      address(0),
+      previousBalance - nextBalance,
+      balanceIncrease,
+      newIndex
+    );
 
     vm.prank(report.poolProxy);
-    debtToken.burn(alice, repayment, newIndex);
+    debtToken.burn(alice, repayment.getVTokenBurnScaledAmount(newIndex), newIndex);
     assertEq(debtToken.scaledBalanceOf(alice), balanceScaled - repaymentScaled);
   }
 
@@ -242,44 +247,64 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     uint256 amount = 1200 * 10 ** decimals;
     uint256 supplyIndex = 1.001e27;
     uint256 newIndex = 1.003e27;
-    uint256 balanceScaled = amount.rayDiv(supplyIndex);
+    uint256 balanceScaled = amount.rayDivCeil(supplyIndex);
     uint256 repayment = amount;
-    uint256 repaymentScaled = repayment.rayDiv(newIndex);
+    uint256 repaymentScaled = repayment.rayDivFloor(newIndex);
 
     vm.expectEmit(address(debtToken));
-    emit Mint(alice, alice, amount, 0, supplyIndex);
+    emit IScaledBalanceToken.Mint(
+      alice,
+      alice,
+      balanceScaled.rayMulCeil(supplyIndex),
+      0,
+      supplyIndex
+    );
 
     vm.prank(report.poolProxy);
-    debtToken.mint(alice, alice, amount, supplyIndex);
+    debtToken.mint(alice, alice, amount, amount.rayDivCeil(supplyIndex), supplyIndex);
 
-    uint256 balanceIncrease = balanceScaled.rayMul(newIndex) - balanceScaled.rayMul(supplyIndex);
+    uint256 nextBalance = (balanceScaled - repaymentScaled).rayMulCeil(newIndex);
+    uint256 previousBalance = balanceScaled.rayMulCeil(supplyIndex);
+    uint256 balanceIncrease = balanceScaled.rayMulCeil(newIndex) - previousBalance;
+
     vm.expectEmit(address(debtToken));
-    emit Burn(alice, address(0), repayment - balanceIncrease, balanceIncrease, newIndex);
+    emit IScaledBalanceToken.Burn(
+      alice,
+      address(0),
+      previousBalance - nextBalance,
+      balanceIncrease,
+      newIndex
+    );
 
     vm.prank(report.poolProxy);
-    debtToken.burn(alice, repayment, newIndex);
+    debtToken.burn(alice, repayment.getVTokenBurnScaledAmount(newIndex), newIndex);
     assertEq(debtToken.scaledBalanceOf(alice), balanceScaled - repaymentScaled);
   }
 
-  function test_reverts_operation_not_supported() public {
+  function test_reverts_OperationNotSupported() public {
     VariableDebtTokenInstance varDebtToken = test_new_VariableDebtToken_implementation();
 
-    vm.expectRevert(bytes(Errors.OPERATION_NOT_SUPPORTED));
+    vm.expectRevert(abi.encodeWithSelector(Errors.OperationNotSupported.selector));
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     varDebtToken.transfer(address(0), 0);
 
-    vm.expectRevert(bytes(Errors.OPERATION_NOT_SUPPORTED));
+    vm.expectRevert(abi.encodeWithSelector(Errors.OperationNotSupported.selector));
     varDebtToken.allowance(address(0), address(0));
 
-    vm.expectRevert(bytes(Errors.OPERATION_NOT_SUPPORTED));
+    vm.expectRevert(abi.encodeWithSelector(Errors.OperationNotSupported.selector));
     varDebtToken.approve(address(0), 0);
 
-    vm.expectRevert(bytes(Errors.OPERATION_NOT_SUPPORTED));
+    vm.expectRevert(abi.encodeWithSelector(Errors.OperationNotSupported.selector));
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     varDebtToken.transferFrom(address(0), address(0), 0);
 
-    vm.expectRevert(bytes(Errors.OPERATION_NOT_SUPPORTED));
+    vm.expectRevert(abi.encodeWithSelector(Errors.OperationNotSupported.selector));
+    varDebtToken.renounceAllowance(address(0));
+
+    vm.expectRevert(abi.encodeWithSelector(Errors.OperationNotSupported.selector));
     varDebtToken.increaseAllowance(address(0), 0);
 
-    vm.expectRevert(bytes(Errors.OPERATION_NOT_SUPPORTED));
+    vm.expectRevert(abi.encodeWithSelector(Errors.OperationNotSupported.selector));
     varDebtToken.decreaseAllowance(address(0), 0);
   }
 
@@ -290,9 +315,9 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
 
     assertEq(variableDebtToken.balanceOf(alice), amount);
     uint256 previousIndex = contracts.poolProxy.getReserveNormalizedVariableDebt(tokenList.usdx);
-    vm.warp(block.timestamp + 30 days);
+    vm.warp(vm.getBlockTimestamp() + 30 days);
     uint256 newIndex = contracts.poolProxy.getReserveNormalizedVariableDebt(tokenList.usdx);
-    uint256 balanceIncrease = amount.rayMul(newIndex) - amount.rayMul(previousIndex);
+    uint256 balanceIncrease = amount.rayMulCeil(newIndex) - amount.rayMulCeil(previousIndex);
 
     assertEq(variableDebtToken.balanceOf(alice), amount + balanceIncrease);
   }
@@ -303,11 +328,11 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
 
     vm.prank(alice);
     contracts.poolProxy.borrow(tokenList.usdx, aliceAmount, 2, 0, alice);
-    vm.warp(block.timestamp + 30 days);
+    vm.warp(vm.getBlockTimestamp() + 30 days);
 
     vm.prank(bob);
     contracts.poolProxy.borrow(tokenList.usdx, bobAmount, 2, 0, bob);
-    vm.warp(block.timestamp + 30 days);
+    vm.warp(vm.getBlockTimestamp() + 30 days);
 
     uint256 scaledTotalSupply = variableDebtToken.scaledTotalSupply();
     assertEq(
@@ -322,11 +347,11 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
 
     vm.prank(alice);
     contracts.poolProxy.borrow(tokenList.usdx, aliceAmount, 2, 0, alice);
-    vm.warp(block.timestamp + 30 days);
+    vm.warp(vm.getBlockTimestamp() + 30 days);
 
     vm.prank(bob);
     contracts.poolProxy.borrow(tokenList.usdx, bobAmount, 2, 0, bob);
-    vm.warp(block.timestamp + 30 days);
+    vm.warp(vm.getBlockTimestamp() + 30 days);
     uint256 totalSupply = variableDebtToken.totalSupply();
     assertEq(
       variableDebtToken.scaledTotalSupply(),
@@ -341,23 +366,23 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
 
     vm.prank(alice);
     contracts.poolProxy.borrow(tokenList.usdx, aliceAmount1, 2, 0, alice);
-    vm.warp(block.timestamp + 30 days);
+    vm.warp(vm.getBlockTimestamp() + 30 days);
 
     uint256 index2 = contracts.poolProxy.getReserveNormalizedVariableDebt(tokenList.usdx);
 
     vm.prank(alice);
     contracts.poolProxy.borrow(tokenList.usdx, aliceAmount2, 2, 0, alice);
-    vm.warp(block.timestamp + 30 days);
+    vm.warp(vm.getBlockTimestamp() + 30 days);
 
     assertEq(
       variableDebtToken.scaledBalanceOf(alice),
-      aliceAmount1.rayDiv(index1) + aliceAmount2.rayDiv(index2)
+      aliceAmount1.rayDivCeil(index1) + aliceAmount2.rayDivCeil(index2)
     );
   }
 
   function test_delegationWithSig() public {
     uint256 amount = 120e6;
-    uint256 deadline = block.timestamp + 30 days;
+    uint256 deadline = vm.getBlockTimestamp() + 30 days;
 
     EIP712SigUtils.CreditDelegation memory delegation = EIP712SigUtils.CreditDelegation({
       delegatee: bob,
@@ -376,7 +401,12 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(alicePrivateKey, digest);
 
     vm.expectEmit(address(variableDebtToken));
-    emit BorrowAllowanceDelegated(alice, bob, address(tokenList.usdx), amount);
+    emit ICreditDelegationToken.BorrowAllowanceDelegated(
+      alice,
+      bob,
+      address(tokenList.usdx),
+      amount
+    );
 
     vm.prank(alice);
     variableDebtToken.delegationWithSig(alice, bob, amount, deadline, v, r, s);
@@ -388,7 +418,7 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     // Submit permit by Alice to Bob
     test_delegationWithSig();
 
-    uint256 deadline = block.timestamp + 30 days;
+    uint256 deadline = vm.getBlockTimestamp() + 30 days;
 
     EIP712SigUtils.CreditDelegation memory delegation = EIP712SigUtils.CreditDelegation({
       delegatee: bob,
@@ -427,7 +457,7 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     // Submit permit by Alice to Bob
     test_delegationWithSig();
 
-    uint256 deadline = block.timestamp + 30 days;
+    uint256 deadline = vm.getBlockTimestamp() + 30 days;
 
     EIP712SigUtils.CreditDelegation memory delegation = EIP712SigUtils.CreditDelegation({
       delegatee: bob,
@@ -445,7 +475,7 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
 
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(alicePrivateKey, digest);
 
-    vm.expectRevert(bytes(Errors.INVALID_SIGNATURE));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidSignature.selector));
 
     vm.prank(alice);
     variableDebtToken.delegationWithSig(alice, bob, delegation.value, deadline, v, r, s);
@@ -453,7 +483,7 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
 
   function test_reverts_bad_expiration_delegationWithSig() public {
     uint256 amount = 120e6;
-    uint256 deadline = block.timestamp + 30 days;
+    uint256 deadline = vm.getBlockTimestamp() + 30 days;
 
     EIP712SigUtils.CreditDelegation memory delegation = EIP712SigUtils.CreditDelegation({
       delegatee: bob,
@@ -472,7 +502,7 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(alicePrivateKey, digest);
 
     vm.warp(delegation.deadline + 1);
-    vm.expectRevert(bytes(Errors.INVALID_EXPIRATION));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidExpiration.selector));
 
     vm.prank(alice);
     variableDebtToken.delegationWithSig(alice, bob, amount, deadline, v, r, s);
@@ -480,7 +510,7 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
 
   function test_reverts_zero_address_delegationWithSig() public {
     uint256 amount = 120e6;
-    uint256 deadline = block.timestamp + 30 days;
+    uint256 deadline = vm.getBlockTimestamp() + 30 days;
 
     EIP712SigUtils.CreditDelegation memory delegation = EIP712SigUtils.CreditDelegation({
       delegatee: bob,
@@ -498,7 +528,7 @@ contract VariableDebtTokenEventsTests is TestnetProcedures {
 
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(alicePrivateKey, digest);
 
-    vm.expectRevert(bytes(Errors.ZERO_ADDRESS_NOT_VALID));
+    vm.expectRevert(abi.encodeWithSelector(Errors.ZeroAddressNotValid.selector));
 
     vm.prank(alice);
     variableDebtToken.delegationWithSig(address(0), bob, amount, deadline, v, r, s);

@@ -2,9 +2,9 @@
 pragma solidity ^0.8.19;
 pragma experimental ABIEncoderV2;
 
-import {UserConfiguration} from '../munged/contracts/protocol/libraries/configuration/UserConfiguration.sol';
-import {DataTypes} from '../munged/contracts/protocol/libraries/types/DataTypes.sol';
-import {PoolStorage} from '../munged/contracts/protocol/pool/PoolStorage.sol';
+import {UserConfiguration} from '../munged/src/contracts/protocol/libraries/configuration/UserConfiguration.sol';
+import {DataTypes} from '../munged/src/contracts/protocol/libraries/types/DataTypes.sol';
+import {PoolStorage} from '../munged/src/contracts/protocol/pool/PoolStorage.sol';
 
 /*
 A wrapper contract for calling functions from the library UserConfiguration.
@@ -18,13 +18,19 @@ contract UserConfigurationHarness is PoolStorage {
   }
 
   //Sets if the user is using as collateral the reserve identified by reserveIndex
-  function setUsingAsCollateral(uint256 reserveIndex, bool _usingAsCollateral) public {
-    UserConfiguration.setUsingAsCollateral(usersConfig, reserveIndex, _usingAsCollateral);
-  }
-
-  // Returns if a user has been using the reserve for borrowing or as collateral
-  function isUsingAsCollateralOrBorrowing(uint256 reserveIndex) public view returns (bool) {
-    return UserConfiguration.isUsingAsCollateralOrBorrowing(usersConfig, reserveIndex);
+  function setUsingAsCollateral(
+    uint256 reserveIndex,
+    address asset,
+    address user,
+    bool _usingAsCollateral
+  ) public {
+    UserConfiguration.setUsingAsCollateral(
+      usersConfig,
+      reserveIndex,
+      asset,
+      user,
+      _usingAsCollateral
+    );
   }
 
   // Validate a user has been using the reserve for borrowing
@@ -60,15 +66,5 @@ contract UserConfigurationHarness is PoolStorage {
   // Checks if a user has not been using any reserve for borrowing or supply
   function isEmpty() public view returns (bool) {
     return UserConfiguration.isEmpty(usersConfig);
-  }
-
-  // Returns the Isolation Mode state of the user
-  function getIsolationModeState() public view returns (bool, address, uint256) {
-    return UserConfiguration.getIsolationModeState(usersConfig, _reserves, _reservesList);
-  }
-
-  // Returns the siloed borrowing state for the user
-  function getSiloedBorrowingState() public view returns (bool, address) {
-    return UserConfiguration.getSiloedBorrowingState(usersConfig, _reserves, _reservesList);
   }
 }

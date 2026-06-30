@@ -2,6 +2,7 @@
 pragma solidity ^0.8.10;
 
 import {IPool} from '../../../interfaces/IPool.sol';
+import {IPoolConfigurator} from '../../../interfaces/IPoolConfigurator.sol';
 import {IInitializableAToken} from '../../../interfaces/IInitializableAToken.sol';
 import {IInitializableDebtToken} from '../../../interfaces/IInitializableDebtToken.sol';
 import {InitializableImmutableAdminUpgradeabilityProxy} from '../../../misc/aave-upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol';
@@ -10,7 +11,7 @@ import {ReserveConfiguration} from '../configuration/ReserveConfiguration.sol';
 import {DataTypes} from '../types/DataTypes.sol';
 import {Errors} from '../helpers/Errors.sol';
 import {ConfiguratorInputTypes} from '../types/ConfiguratorInputTypes.sol';
-import {IERC20Detailed} from '../../../dependencies/openzeppelin/contracts/IERC20Detailed.sol';
+import {IERC20Metadata} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 
 /**
  * @title ConfiguratorLogic library
@@ -19,25 +20,6 @@ import {IERC20Detailed} from '../../../dependencies/openzeppelin/contracts/IERC2
  */
 library ConfiguratorLogic {
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
-
-  // See `IPoolConfigurator` for descriptions
-  event ReserveInitialized(
-    address indexed asset,
-    address indexed aToken,
-    address stableDebtToken,
-    address variableDebtToken,
-    address interestRateStrategyAddress
-  );
-  event ATokenUpgraded(
-    address indexed asset,
-    address indexed proxy,
-    address indexed implementation
-  );
-  event VariableDebtTokenUpgraded(
-    address indexed asset,
-    address indexed proxy,
-    address indexed implementation
-  );
 
   /**
    * @notice Initialize a reserve by creating and initializing aToken and variable debt token
@@ -48,19 +30,17 @@ library ConfiguratorLogic {
   function executeInitReserve(
     IPool pool,
     ConfiguratorInputTypes.InitReserveInput calldata input
-  ) external {
+  ) internal {
     // It is an assumption that the asset listed is non-malicious, and the external call doesn't create re-entrancies
-    uint8 underlyingAssetDecimals = IERC20Detailed(input.underlyingAsset).decimals();
-    require(underlyingAssetDecimals > 5, Errors.INVALID_DECIMALS);
+    uint8 underlyingAssetDecimals = IERC20Metadata(input.underlyingAsset).decimals();
+    require(underlyingAssetDecimals > 5, Errors.InvalidDecimals());
 
     address aTokenProxyAddress = _initTokenWithProxy(
       input.aTokenImpl,
       abi.encodeWithSelector(
         IInitializableAToken.initialize.selector,
         pool,
-        input.treasury,
         input.underlyingAsset,
-        input.incentivesController,
         underlyingAssetDecimals,
         input.aTokenName,
         input.aTokenSymbol,
@@ -74,7 +54,6 @@ library ConfiguratorLogic {
         IInitializableDebtToken.initialize.selector,
         pool,
         input.underlyingAsset,
-        input.incentivesController,
         underlyingAssetDecimals,
         input.variableDebtTokenName,
         input.variableDebtTokenSymbol,
@@ -82,12 +61,7 @@ library ConfiguratorLogic {
       )
     );
 
-    pool.initReserve(
-      input.underlyingAsset,
-      aTokenProxyAddress,
-      variableDebtTokenProxyAddress,
-      input.interestRateStrategyAddress
-    );
+    pool.initReserve(input.underlyingAsset, aTokenProxyAddress, variableDebtTokenProxyAddress);
 
     DataTypes.ReserveConfigurationMap memory currentConfig = DataTypes.ReserveConfigurationMap(0);
 
@@ -96,21 +70,22 @@ library ConfiguratorLogic {
     currentConfig.setActive(true);
     currentConfig.setPaused(false);
     currentConfig.setFrozen(false);
-    currentConfig.setVirtualAccActive(input.useVirtualBalance);
+    currentConfig.setVirtualAccActive();
 
     pool.setConfiguration(input.underlyingAsset, currentConfig);
 
-    IReserveInterestRateStrategy(input.interestRateStrategyAddress).setInterestRateParams(
+    address interestRateStrategyAddress = pool.RESERVE_INTEREST_RATE_STRATEGY();
+    IReserveInterestRateStrategy(interestRateStrategyAddress).setInterestRateParams(
       input.underlyingAsset,
       input.interestRateData
     );
 
-    emit ReserveInitialized(
+    emit IPoolConfigurator.ReserveInitialized(
       input.underlyingAsset,
       aTokenProxyAddress,
       address(0),
       variableDebtTokenProxyAddress,
-      input.interestRateStrategyAddress
+      interestRateStrategyAddress
     );
   }
 
@@ -123,7 +98,7 @@ library ConfiguratorLogic {
   function executeUpdateAToken(
     IPool cachedPool,
     ConfiguratorInputTypes.UpdateATokenInput calldata input
-  ) external {
+  ) internal {
     address aTokenAddress = cachedPool.getReserveAToken(input.asset);
 
     uint256 decimals = cachedPool.getConfiguration(input.asset).getDecimals();
@@ -131,9 +106,7 @@ library ConfiguratorLogic {
     bytes memory encodedCall = abi.encodeWithSelector(
       IInitializableAToken.initialize.selector,
       cachedPool,
-      input.treasury,
       input.asset,
-      input.incentivesController,
       decimals,
       input.name,
       input.symbol,
@@ -142,7 +115,7 @@ library ConfiguratorLogic {
 
     _upgradeTokenImplementation(aTokenAddress, input.implementation, encodedCall);
 
-    emit ATokenUpgraded(input.asset, aTokenAddress, input.implementation);
+    emit IPoolConfigurator.ATokenUpgraded(input.asset, aTokenAddress, input.implementation);
   }
 
   /**
@@ -154,7 +127,7 @@ library ConfiguratorLogic {
   function executeUpdateVariableDebtToken(
     IPool cachedPool,
     ConfiguratorInputTypes.UpdateDebtTokenInput calldata input
-  ) external {
+  ) internal {
     address variableDebtTokenAddress = cachedPool.getReserveVariableDebtToken(input.asset);
 
     uint256 decimals = cachedPool.getConfiguration(input.asset).getDecimals();
@@ -163,7 +136,6 @@ library ConfiguratorLogic {
       IInitializableDebtToken.initialize.selector,
       cachedPool,
       input.asset,
-      input.incentivesController,
       decimals,
       input.name,
       input.symbol,
@@ -172,7 +144,11 @@ library ConfiguratorLogic {
 
     _upgradeTokenImplementation(variableDebtTokenAddress, input.implementation, encodedCall);
 
-    emit VariableDebtTokenUpgraded(input.asset, variableDebtTokenAddress, input.implementation);
+    emit IPoolConfigurator.VariableDebtTokenUpgraded(
+      input.asset,
+      variableDebtTokenAddress,
+      input.implementation
+    );
   }
 
   /**

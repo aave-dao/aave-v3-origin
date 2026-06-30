@@ -22,6 +22,14 @@ interface ICreditDelegationToken {
   );
 
   /**
+   * @dev Indicates a failure with the `spender`’s `allowance`. Used in borrowing.
+   * @param spender Address that may be allowed to operate on tokens without being their owner.
+   * @param allowance Amount of tokens a `spender` is allowed to operate with.
+   * @param needed Minimum amount required to perform a transfer.
+   */
+  error InsufficientBorrowAllowance(address spender, uint256 allowance, uint256 needed);
+
+  /**
    * @notice Delegates borrowing power to a user on the specific debt token.
    * Delegation will still respect the liquidation constraints (even if delegated, a
    * delegatee cannot force a delegator HF to go below 1)
@@ -29,6 +37,12 @@ interface ICreditDelegationToken {
    * @param amount The maximum amount being delegated.
    */
   function approveDelegation(address delegatee, uint256 amount) external;
+
+  /**
+   * @notice Allows a delegatee to revoke the borrowing power delegated to them by a specific delegator.
+   * @param delegator The address of the user who delegated borrowing power to the caller.
+   */
+  function renounceDelegation(address delegator) external;
 
   /**
    * @notice Returns the borrow allowance of the user

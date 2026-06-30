@@ -102,10 +102,10 @@ The Handlers contain the main functions exposed to the tooling, allowing it to e
 
 Hooks handle caching of protocol and user values and enforce postconditions across the suite. They allow for modular expansion to add new postconditions, or additional value caching as needed.
 
-- `DefaultBeforeAfterHooks`: Abstract contract that contains the `DefaultVars` struct and custom setter functions, which is essential for caching protocol and user values before and after function calls. It also implements the global postconditions (GPOST) to be invoked in the `HookAggregator::_checkPostConditions` function.
+- `DefaultBeforeAfterHooks`: Abstract contract that contains the `SnapshotGlobalVars` struct and custom setter functions, which is essential for caching protocol and user values before and after function calls. It also implements the global postconditions (GPOST) to be invoked in the `HookAggregator::_checkPostConditions` function.
 - `HookAggregator`: This contract aggregates various hooks (only the default one in this case) and invokes the `_checkPostConditions` function to execute the global postconditions.
 
-Values are cached before and after nearly every handler call using `_after` and `_before` functions. The `DefaultVars` struct contains the following fields:
+Values are cached before and after nearly every handler call using `_after` and `_before` functions. The `SnapshotGlobalVars` struct contains the following fields:
 
 ```solidity
     // Pool

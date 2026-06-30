@@ -2,9 +2,12 @@
 pragma solidity ^0.8.19;
 
 // Interfaces
-import {IERC20} from 'src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
 
 // Libraries
+import {ReserveConfiguration} from 'src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
+import {DataTypes} from 'src/contracts/protocol/libraries/types/DataTypes.sol';
+import {IDefaultInterestRateStrategyV2} from 'src/contracts/interfaces/IDefaultInterestRateStrategyV2.sol';
 
 // Test Contracts
 import {Actor} from '../../utils/Actor.sol';
@@ -14,43 +17,29 @@ import {BaseHandler, EnumerableSet} from '../../base/BaseHandler.t.sol';
 /// @notice Handler test contract for a set of actions
 contract PoolPermissionedHandler is BaseHandler {
   using EnumerableSet for EnumerableSet.UintSet;
-  ///////////////////////////////////////////////////////////////////////////////////////////////
-  //                                      STATE VARIABLES                                      //
-  ///////////////////////////////////////////////////////////////////////////////////////////////
-
-  mapping(address => bool) internal ghost_reserveLtvIsZero;
+  using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
 
   ///////////////////////////////////////////////////////////////////////////////////////////////
   //                                          ACTIONS                                          //
   ///////////////////////////////////////////////////////////////////////////////////////////////
 
-  function updateBridgeProtocolFee(uint256 newBridgeProtocolFee) external {
-    _before();
-    contracts.poolConfiguratorProxy.updateBridgeProtocolFee(newBridgeProtocolFee);
-    _after();
-
-    assert(true);
-  }
-
-  function setDebtCeiling(uint256 debtCeiling, uint8 i) external {
-    address asset = _getRandomBaseAsset(i);
-
-    _before();
-    contracts.poolConfiguratorProxy.setDebtCeiling(asset, debtCeiling);
-    _after();
-
-    assert(true);
-  }
+  // Not included actions:
+  // 1. updateAToken
+  // 2. updateVariableDebtToken
 
   function setReservePause(bool paused, uint40 gracePeriod, uint8 i) external {
     address asset = _getRandomBaseAsset(i);
 
     _before();
-    contracts.poolConfiguratorProxy.setReservePause(asset, paused, gracePeriod);
+    contracts.poolConfiguratorProxy.setReservePause(asset, paused, uint40(gracePeriod));
     _after();
 
     if (!paused && gracePeriod != 0) {
-      assertReserveGracePeriodIsSet(gracePeriod, asset, BASE_HPOST_E);
+      assertEq(
+        snapshotGlobalVarsAfter.assetsInfo[asset].liquidationGracePeriodUntil,
+        block.timestamp + gracePeriod,
+        BASE_HPOST_E
+      );
     }
   }
 
@@ -64,8 +53,13 @@ contract PoolPermissionedHandler is BaseHandler {
     assert(true);
   }
 
-  function rescueTokens(uint256 amount, uint8 i) external {
-    address token = _getRandomBaseAsset(i);
+  function rescueTokens(uint256 amount, bool underlyingTokens, uint8 i) external {
+    address token;
+    if (underlyingTokens) {
+      token = _getRandomBaseAsset(i);
+    } else {
+      token = _getRandomAToken(i);
+    }
 
     _before();
     pool.rescueTokens(token, address(this), amount);
@@ -85,9 +79,9 @@ contract PoolPermissionedHandler is BaseHandler {
   }
 
   function configureReserveAsCollateral(
-    uint256 ltv,
-    uint256 liquidationThreshold,
-    uint256 liquidationBonus,
+    uint16 ltv,
+    uint16 liquidationThreshold,
+    uint16 liquidationBonus,
     uint8 i
   ) external {
     address asset = _getRandomBaseAsset(i);
@@ -100,8 +94,6 @@ contract PoolPermissionedHandler is BaseHandler {
       liquidationBonus
     );
     _after();
-
-    ghost_reserveLtvIsZero[asset] = (ltv == 0) ? true : false;
 
     assert(true);
   }
@@ -121,26 +113,6 @@ contract PoolPermissionedHandler is BaseHandler {
 
     _before();
     contracts.poolConfiguratorProxy.setReserveFreeze(asset, freeze);
-    _after();
-
-    assert(true);
-  }
-
-  function setBorrowableInIsolation(bool borrowable, uint8 i) external {
-    address asset = _getRandomBaseAsset(i);
-
-    _before();
-    contracts.poolConfiguratorProxy.setBorrowableInIsolation(asset, borrowable);
-    _after();
-
-    assert(true);
-  }
-
-  function setSiloedBorrowing(bool siloed, uint8 i) external {
-    address asset = _getRandomBaseAsset(i);
-
-    _before();
-    contracts.poolConfiguratorProxy.setSiloedBorrowing(asset, siloed);
     _after();
 
     assert(true);
@@ -166,21 +138,11 @@ contract PoolPermissionedHandler is BaseHandler {
     assert(true);
   }
 
-  function setLiquidationProtocolFee(uint256 newLiquidationProtocolFee, uint8 i) external {
+  function setLiquidationProtocolFee(uint16 newLiquidationProtocolFee, uint8 i) external {
     address asset = _getRandomBaseAsset(i);
 
     _before();
     contracts.poolConfiguratorProxy.setLiquidationProtocolFee(asset, newLiquidationProtocolFee);
-    _after();
-
-    assert(true);
-  }
-
-  function setUnbackedMintCap(uint256 newUnbackedMintCap, uint8 i) external {
-    address asset = _getRandomBaseAsset(i);
-
-    _before();
-    contracts.poolConfiguratorProxy.setUnbackedMintCap(asset, newUnbackedMintCap);
     _after();
 
     assert(true);
@@ -192,7 +154,13 @@ contract PoolPermissionedHandler is BaseHandler {
     _after();
 
     if (!paused && gracePeriod != 0) {
-      assertReserveGracePeriodIsSetAllReserves(gracePeriod, BASE_HPOST_E);
+      for (uint256 i = 0; i < baseAssets.length; i++) {
+        assertEq(
+          snapshotGlobalVarsAfter.assetsInfo[baseAssets[i]].liquidationGracePeriodUntil,
+          block.timestamp + gracePeriod,
+          BASE_HPOST_E
+        );
+      }
     }
   }
 
@@ -200,23 +168,21 @@ contract PoolPermissionedHandler is BaseHandler {
     uint8 categoryId,
     uint16 ltv,
     uint16 liquidationThreshold,
-    uint16 liquidationBonus
+    uint16 liquidationBonus,
+    bool isolated
   ) external {
     _before();
     contracts.poolConfiguratorProxy.setEModeCategory(
       categoryId,
-      ltv,
-      liquidationThreshold,
-      liquidationBonus,
-      ''
+      uint16(ltv),
+      uint16(liquidationThreshold),
+      uint16(liquidationBonus),
+      '',
+      isolated
     );
     _after();
 
-    if (liquidationThreshold == 0) {
-      ghost_categoryIds.remove(categoryId);
-    } else {
-      ghost_categoryIds.add(categoryId);
-    }
+    ghost_categoryIds.add(categoryId);
   }
 
   function setAssetCollateralInEMode(bool allowed, uint8 i, uint8 j) external {
@@ -224,7 +190,9 @@ contract PoolPermissionedHandler is BaseHandler {
 
     uint8 categoryId = _getRandomEModeCategory(j);
 
+    _before();
     contracts.poolConfiguratorProxy.setAssetCollateralInEMode(asset, categoryId, allowed);
+    _after();
 
     assert(true);
   }
@@ -234,7 +202,76 @@ contract PoolPermissionedHandler is BaseHandler {
 
     uint8 categoryId = _getRandomEModeCategory(j);
 
+    _before();
     contracts.poolConfiguratorProxy.setAssetBorrowableInEMode(asset, categoryId, allowed);
+    _after();
+
+    assert(true);
+  }
+
+  function setReserveFlashLoaning(bool flashLoanEnabled, uint8 i) external {
+    address asset = _getRandomBaseAsset(i);
+
+    _before();
+    contracts.poolConfiguratorProxy.setReserveFlashLoaning(asset, flashLoanEnabled);
+    _after();
+
+    assert(true);
+  }
+
+  function setReserveFactor(uint16 newReserveFactor, uint8 i) external {
+    address asset = _getRandomBaseAsset(i);
+
+    _before();
+    contracts.poolConfiguratorProxy.setReserveFactor(asset, newReserveFactor);
+    _after();
+
+    assert(true);
+  }
+
+  function setAssetLtvzeroInEMode(uint8 i, uint8 j, bool ltvzero) external {
+    address asset = _getRandomBaseAsset(i);
+
+    uint8 categoryId = _getRandomEModeCategory(j);
+
+    _before();
+    contracts.poolConfiguratorProxy.setAssetLtvzeroInEMode({
+      asset: asset,
+      categoryId: categoryId,
+      ltvzero: ltvzero
+    });
+    _after();
+
+    assert(true);
+  }
+
+  function setEModeCategoryIsolated(uint8 j, bool isolated) external {
+    uint8 categoryId = _getRandomEModeCategory(j);
+
+    _before();
+    contracts.poolConfiguratorProxy.setEModeCategoryIsolated(categoryId, isolated);
+    _after();
+
+    assert(true);
+  }
+
+  function setReserveInterestRateData(
+    IDefaultInterestRateStrategyV2.InterestRateData memory interestRateData,
+    uint8 i
+  ) external {
+    address asset = _getRandomBaseAsset(i);
+
+    _before();
+    contracts.poolConfiguratorProxy.setReserveInterestRateData(asset, abi.encode(interestRateData));
+    _after();
+
+    assert(true);
+  }
+
+  function updateFlashloanPremium(uint16 newFlashloanPremium) external {
+    _before();
+    contracts.poolConfiguratorProxy.updateFlashloanPremium(uint128(newFlashloanPremium));
+    _after();
 
     assert(true);
   }

@@ -18,8 +18,8 @@ import {EngineFlags} from './EngineFlags.sol';
  *   - Updates of caps (supply cap, borrow cap).
  *   - Updates of price feeds
  *   - Updates of interest rate strategies
- *   - Updates of borrow parameters (flashloanable, borrowableInIsolation, withSiloedBorrowing, reserveFactor)
- *   - Updates of collateral parameters (ltv, liq threshold, liq bonus, liq protocol fee, debt ceiling)
+ *   - Updates of borrow parameters (flashloanable, reserveFactor)
+ *   - Updates of collateral parameters (ltv, liq threshold, liq bonus, liq protocol fee)
  *   - Updates of emode category parameters (ltv, liq threshold, liq bonus, price source, label)
  *   - Updates of emode category of assets (e-mode id)
  * @author BGD Labs
@@ -42,21 +42,16 @@ abstract contract AaveV3Payload {
   function execute() external {
     _preExecute();
 
-    IEngine.EModeCategoryUpdate[] memory eModeCategories = eModeCategoriesUpdates();
     IEngine.Listing[] memory listings = newListings();
     IEngine.ListingWithCustomImpl[] memory listingsCustom = newListingsCustom();
+    IEngine.EModeCategoryUpdate[] memory eModeCategories = eModeCategoriesUpdates();
+    IEngine.AssetEModeUpdate[] memory assetsEModes = assetsEModeUpdates();
+    IEngine.EModeCategoryCreation[] memory newEmodes = eModeCategoryCreations();
     IEngine.CollateralUpdate[] memory collaterals = collateralsUpdates();
     IEngine.BorrowUpdate[] memory borrows = borrowsUpdates();
     IEngine.RateStrategyUpdate[] memory rates = rateStrategiesUpdates();
     IEngine.PriceFeedUpdate[] memory priceFeeds = priceFeedsUpdates();
-    IEngine.AssetEModeUpdate[] memory assetsEModes = assetsEModeUpdates();
     IEngine.CapsUpdate[] memory caps = capsUpdates();
-
-    if (eModeCategories.length != 0) {
-      address(CONFIG_ENGINE).functionDelegateCall(
-        abi.encodeWithSelector(CONFIG_ENGINE.updateEModeCategories.selector, eModeCategories)
-      );
-    }
 
     if (listings.length != 0) {
       address(CONFIG_ENGINE).functionDelegateCall(
@@ -71,6 +66,24 @@ abstract contract AaveV3Payload {
           getPoolContext(),
           listingsCustom
         )
+      );
+    }
+
+    if (eModeCategories.length != 0) {
+      address(CONFIG_ENGINE).functionDelegateCall(
+        abi.encodeWithSelector(CONFIG_ENGINE.updateEModeCategories.selector, eModeCategories)
+      );
+    }
+
+    if (assetsEModes.length != 0) {
+      address(CONFIG_ENGINE).functionDelegateCall(
+        abi.encodeWithSelector(CONFIG_ENGINE.updateAssetsEMode.selector, assetsEModes)
+      );
+    }
+
+    if (newEmodes.length != 0) {
+      address(CONFIG_ENGINE).functionDelegateCall(
+        abi.encodeWithSelector(CONFIG_ENGINE.createEModeCategories.selector, newEmodes)
       );
     }
 
@@ -95,12 +108,6 @@ abstract contract AaveV3Payload {
     if (priceFeeds.length != 0) {
       address(CONFIG_ENGINE).functionDelegateCall(
         abi.encodeWithSelector(CONFIG_ENGINE.updatePriceFeeds.selector, priceFeeds)
-      );
-    }
-
-    if (assetsEModes.length != 0) {
-      address(CONFIG_ENGINE).functionDelegateCall(
-        abi.encodeWithSelector(CONFIG_ENGINE.updateAssetsEMode.selector, assetsEModes)
       );
     }
 
@@ -142,6 +149,14 @@ abstract contract AaveV3Payload {
 
   /// @dev to be defined in the child with a list of priceFeeds to update
   function priceFeedsUpdates() public view virtual returns (IEngine.PriceFeedUpdate[] memory) {}
+
+  /// @dev to be defined in the child with a list of eMode categories to create
+  function eModeCategoryCreations()
+    public
+    view
+    virtual
+    returns (IEngine.EModeCategoryCreation[] memory)
+  {}
 
   /// @dev to be defined in the child with a list of eMode categories to update
   function eModeCategoriesUpdates()

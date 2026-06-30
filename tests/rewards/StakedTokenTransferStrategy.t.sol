@@ -3,18 +3,11 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 
-import {StakedTokenTransferStrategy, IERC20, IStakedToken} from '../../src/contracts/rewards/transfer-strategies/StakedTokenTransferStrategy.sol';
+import {StakedTokenTransferStrategy, IERC20, IStakedToken, ITransferStrategyBase} from '../../src/contracts/rewards/transfer-strategies/StakedTokenTransferStrategy.sol';
 import {StakeMock} from '../mocks/StakeMock.sol';
 import {TestnetProcedures} from '../utils/TestnetProcedures.sol';
 
 contract StakedTokenTransferStrategyTest is TestnetProcedures {
-  event EmergencyWithdrawal(
-    address indexed caller,
-    address indexed token,
-    address indexed to,
-    uint256 amount
-  );
-
   StakeMock internal stakeMock;
   StakedTokenTransferStrategy internal stakedTokenTransferStrategy;
 
@@ -72,7 +65,7 @@ contract StakedTokenTransferStrategyTest is TestnetProcedures {
     uint256 bobBalance = IERC20(tokenList.usdx).balanceOf(bob);
 
     vm.expectEmit();
-    emit EmergencyWithdrawal(alice, tokenList.usdx, bob, 100e6);
+    emit ITransferStrategyBase.EmergencyWithdrawal(alice, tokenList.usdx, bob, 100e6);
 
     vm.prank(alice);
     stakedTokenTransferStrategy.emergencyWithdrawal(tokenList.usdx, bob, 100e6);

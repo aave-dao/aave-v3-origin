@@ -25,53 +25,14 @@ contract PoolLogicInitReservesTests is TestnetProcedures {
       address(new Mock()),
       report.aToken,
       report.variableDebtToken,
-      address(2),
       0,
       10
     );
 
     assertTrue(PoolLogic.executeInitReserve(reservesData, reservesList, params));
 
-    vm.expectRevert(bytes(Errors.RESERVE_ALREADY_INITIALIZED));
+    vm.expectRevert(abi.encodeWithSelector(Errors.ReserveAlreadyInitialized.selector));
     PoolLogic.executeInitReserve(reservesData, reservesList, params);
-  }
-
-  function test_initReserves_return_false_after_dropped_reserve() public {
-    DataTypes.InitReserveParams memory params1 = DataTypes.InitReserveParams(
-      address(new Mock()),
-      report.aToken,
-      report.variableDebtToken,
-      address(2),
-      0,
-      10
-    );
-
-    DataTypes.InitReserveParams memory params2 = DataTypes.InitReserveParams(
-      address(new Mock()),
-      report.aToken,
-      report.variableDebtToken,
-      address(2),
-      1,
-      10
-    );
-
-    DataTypes.InitReserveParams memory params3 = DataTypes.InitReserveParams(
-      address(new Mock()),
-      report.aToken,
-      report.variableDebtToken,
-      address(2),
-      2,
-      10
-    );
-
-    assertTrue(PoolLogic.executeInitReserve(reservesData, reservesList, params1));
-    assertTrue(PoolLogic.executeInitReserve(reservesData, reservesList, params2));
-    assertTrue(PoolLogic.executeInitReserve(reservesData, reservesList, params3));
-
-    PoolLogic.executeDropReserve(reservesData, reservesList, params1.asset);
-    PoolLogic.executeDropReserve(reservesData, reservesList, params2.asset);
-
-    assertFalse(PoolLogic.executeInitReserve(reservesData, reservesList, params2));
   }
 
   function test_reverts_initReserves_max() public {
@@ -79,12 +40,11 @@ contract PoolLogicInitReservesTests is TestnetProcedures {
       address(new Mock()),
       report.aToken,
       report.variableDebtToken,
-      address(2),
       0,
       0
     );
 
-    vm.expectRevert(bytes(Errors.NO_MORE_RESERVES_ALLOWED));
+    vm.expectRevert(bytes(abi.encodeWithSelector(Errors.NoMoreReservesAllowed.selector)));
     PoolLogic.executeInitReserve(reservesData, reservesList, params1);
   }
 }

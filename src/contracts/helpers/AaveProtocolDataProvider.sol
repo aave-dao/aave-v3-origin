@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import {IERC20Detailed} from '../dependencies/openzeppelin/contracts/IERC20Detailed.sol';
+import {IERC20Metadata} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import {ReserveConfiguration} from '../protocol/libraries/configuration/ReserveConfiguration.sol';
 import {UserConfiguration} from '../protocol/libraries/configuration/UserConfiguration.sol';
 import {DataTypes} from '../protocol/libraries/types/DataTypes.sol';
@@ -10,6 +10,7 @@ import {IPoolAddressesProvider} from '../interfaces/IPoolAddressesProvider.sol';
 import {IVariableDebtToken} from '../interfaces/IVariableDebtToken.sol';
 import {IPool} from '../interfaces/IPool.sol';
 import {IPoolDataProvider} from '../interfaces/IPoolDataProvider.sol';
+import {Errors} from '../protocol/libraries/helpers/Errors.sol';
 
 /**
  * @title AaveProtocolDataProvider
@@ -27,18 +28,28 @@ contract AaveProtocolDataProvider is IPoolDataProvider {
   /// @inheritdoc IPoolDataProvider
   IPoolAddressesProvider public immutable ADDRESSES_PROVIDER;
 
+  /// @inheritdoc IPoolDataProvider
+  IPool public immutable POOL;
+
   /**
    * @notice Constructor
    * @param addressesProvider The address of the PoolAddressesProvider contract
    */
   constructor(IPoolAddressesProvider addressesProvider) {
     ADDRESSES_PROVIDER = addressesProvider;
+
+    address pool = addressesProvider.getPool();
+    require(pool != address(0), Errors.ZeroAddressNotValid());
+
+    // @dev The pool can be immutable, because in practice it never changes after initialization.
+    // The reason why it is not an actual `immutable` on `ADDRESSES_PROVIDER` is that there is a cross reference between ADDRESSES_PROVIDER <> Pool,
+    // which in turn makes is complicated to have it `immutable` on both contracts.
+    POOL = IPool(pool);
   }
 
   /// @inheritdoc IPoolDataProvider
   function getAllReservesTokens() external view override returns (TokenData[] memory) {
-    IPool pool = IPool(ADDRESSES_PROVIDER.getPool());
-    address[] memory reserves = pool.getReservesList();
+    address[] memory reserves = POOL.getReservesList();
     TokenData[] memory reservesTokens = new TokenData[](reserves.length);
     for (uint256 i = 0; i < reserves.length; i++) {
       if (reserves[i] == MKR) {
@@ -50,7 +61,7 @@ contract AaveProtocolDataProvider is IPoolDataProvider {
         continue;
       }
       reservesTokens[i] = TokenData({
-        symbol: IERC20Detailed(reserves[i]).symbol(),
+        symbol: IERC20Metadata(reserves[i]).symbol(),
         tokenAddress: reserves[i]
       });
     }
@@ -59,13 +70,12 @@ contract AaveProtocolDataProvider is IPoolDataProvider {
 
   /// @inheritdoc IPoolDataProvider
   function getAllATokens() external view override returns (TokenData[] memory) {
-    IPool pool = IPool(ADDRESSES_PROVIDER.getPool());
-    address[] memory reserves = pool.getReservesList();
+    address[] memory reserves = POOL.getReservesList();
     TokenData[] memory aTokens = new TokenData[](reserves.length);
     for (uint256 i = 0; i < reserves.length; i++) {
-      address aTokenAddress = pool.getReserveAToken(reserves[i]);
+      address aTokenAddress = POOL.getReserveAToken(reserves[i]);
       aTokens[i] = TokenData({
-        symbol: IERC20Detailed(aTokenAddress).symbol(),
+        symbol: IERC20Metadata(aTokenAddress).symbol(),
         tokenAddress: aTokenAddress
       });
     }
@@ -92,8 +102,7 @@ contract AaveProtocolDataProvider is IPoolDataProvider {
       bool isFrozen
     )
   {
-    DataTypes.ReserveConfigurationMap memory configuration = IPool(ADDRESSES_PROVIDER.getPool())
-      .getConfiguration(asset);
+    DataTypes.ReserveConfigurationMap memory configuration = POOL.getConfiguration(asset);
 
     (ltv, liquidationThreshold, liquidationBonus, decimals, reserveFactor) = configuration
       .getParams();
@@ -110,37 +119,37 @@ contract AaveProtocolDataProvider is IPoolDataProvider {
   function getReserveCaps(
     address asset
   ) external view override returns (uint256 borrowCap, uint256 supplyCap) {
-    (borrowCap, supplyCap) = IPool(ADDRESSES_PROVIDER.getPool()).getConfiguration(asset).getCaps();
+    (borrowCap, supplyCap) = POOL.getConfiguration(asset).getCaps();
   }
 
   /// @inheritdoc IPoolDataProvider
   function getPaused(address asset) external view override returns (bool isPaused) {
-    (, , , isPaused) = IPool(ADDRESSES_PROVIDER.getPool()).getConfiguration(asset).getFlags();
+    (, , , isPaused) = POOL.getConfiguration(asset).getFlags();
   }
 
   /// @inheritdoc IPoolDataProvider
-  function getSiloedBorrowing(address asset) external view override returns (bool) {
-    return IPool(ADDRESSES_PROVIDER.getPool()).getConfiguration(asset).getSiloedBorrowing();
+  function getSiloedBorrowing(address) external pure override returns (bool) {
+    return false;
   }
 
   /// @inheritdoc IPoolDataProvider
   function getLiquidationProtocolFee(address asset) external view override returns (uint256) {
-    return IPool(ADDRESSES_PROVIDER.getPool()).getConfiguration(asset).getLiquidationProtocolFee();
+    return POOL.getConfiguration(asset).getLiquidationProtocolFee();
   }
 
   /// @inheritdoc IPoolDataProvider
-  function getUnbackedMintCap(address asset) external view override returns (uint256) {
-    return IPool(ADDRESSES_PROVIDER.getPool()).getConfiguration(asset).getUnbackedMintCap();
+  function getUnbackedMintCap(address) external pure override returns (uint256) {
+    return 0;
   }
 
   /// @inheritdoc IPoolDataProvider
-  function getDebtCeiling(address asset) external view override returns (uint256) {
-    return IPool(ADDRESSES_PROVIDER.getPool()).getConfiguration(asset).getDebtCeiling();
+  function getDebtCeiling(address) external pure override returns (uint256) {
+    return 0;
   }
 
   /// @inheritdoc IPoolDataProvider
   function getDebtCeilingDecimals() external pure override returns (uint256) {
-    return ReserveConfiguration.DEBT_CEILING_DECIMALS;
+    return 2;
   }
 
   /// @inheritdoc IPoolDataProvider
@@ -151,7 +160,7 @@ contract AaveProtocolDataProvider is IPoolDataProvider {
     view
     override
     returns (
-      uint256 unbacked,
+      uint256 /* unbacked */,
       uint256 accruedToTreasuryScaled,
       uint256 totalAToken,
       uint256,
@@ -165,17 +174,15 @@ contract AaveProtocolDataProvider is IPoolDataProvider {
       uint40 lastUpdateTimestamp
     )
   {
-    DataTypes.ReserveDataLegacy memory reserve = IPool(ADDRESSES_PROVIDER.getPool()).getReserveData(
-      asset
-    );
+    DataTypes.ReserveDataLegacy memory reserve = POOL.getReserveData(asset);
 
     // @notice all stable debt related parameters deprecated in v3.2.0
     return (
-      reserve.unbacked,
+      0, // @dev unbacked is deprecated from v3.4.0, always zero, never used
       reserve.accruedToTreasury,
-      IERC20Detailed(reserve.aTokenAddress).totalSupply(),
+      IERC20Metadata(reserve.aTokenAddress).totalSupply(),
       0,
-      IERC20Detailed(reserve.variableDebtTokenAddress).totalSupply(),
+      IERC20Metadata(reserve.variableDebtTokenAddress).totalSupply(),
       reserve.currentLiquidityRate,
       reserve.currentVariableBorrowRate,
       0,
@@ -188,15 +195,14 @@ contract AaveProtocolDataProvider is IPoolDataProvider {
 
   /// @inheritdoc IPoolDataProvider
   function getATokenTotalSupply(address asset) external view override returns (uint256) {
-    address aTokenAddress = IPool(ADDRESSES_PROVIDER.getPool()).getReserveAToken(asset);
-    return IERC20Detailed(aTokenAddress).totalSupply();
+    address aTokenAddress = POOL.getReserveAToken(asset);
+    return IERC20Metadata(aTokenAddress).totalSupply();
   }
 
   /// @inheritdoc IPoolDataProvider
   function getTotalDebt(address asset) external view override returns (uint256) {
-    address variableDebtTokenAddress = IPool(ADDRESSES_PROVIDER.getPool())
-      .getReserveVariableDebtToken(asset);
-    return IERC20Detailed(variableDebtTokenAddress).totalSupply();
+    address variableDebtTokenAddress = POOL.getReserveVariableDebtToken(asset);
+    return IERC20Metadata(variableDebtTokenAddress).totalSupply();
   }
 
   /// @inheritdoc IPoolDataProvider
@@ -219,15 +225,12 @@ contract AaveProtocolDataProvider is IPoolDataProvider {
       bool usageAsCollateralEnabled
     )
   {
-    DataTypes.ReserveDataLegacy memory reserve = IPool(ADDRESSES_PROVIDER.getPool()).getReserveData(
-      asset
-    );
+    DataTypes.ReserveDataLegacy memory reserve = POOL.getReserveData(asset);
 
-    DataTypes.UserConfigurationMap memory userConfig = IPool(ADDRESSES_PROVIDER.getPool())
-      .getUserConfiguration(user);
+    DataTypes.UserConfigurationMap memory userConfig = POOL.getUserConfiguration(user);
 
-    currentATokenBalance = IERC20Detailed(reserve.aTokenAddress).balanceOf(user);
-    currentVariableDebt = IERC20Detailed(reserve.variableDebtTokenAddress).balanceOf(user);
+    currentATokenBalance = IERC20Metadata(reserve.aTokenAddress).balanceOf(user);
+    currentVariableDebt = IERC20Metadata(reserve.variableDebtTokenAddress).balanceOf(user);
 
     // @notice all stable debt related parameters deprecated in v3.2.0
     currentStableDebt = principalStableDebt = stableBorrowRate = stableRateLastUpdated = 0;
@@ -250,46 +253,36 @@ contract AaveProtocolDataProvider is IPoolDataProvider {
       address variableDebtTokenAddress
     )
   {
-    IPool pool = IPool(ADDRESSES_PROVIDER.getPool());
-
     // @notice all stable debt related parameters deprecated in v3.2.0
-    return (pool.getReserveAToken(asset), address(0), pool.getReserveVariableDebtToken(asset));
+    return (POOL.getReserveAToken(asset), address(0), POOL.getReserveVariableDebtToken(asset));
   }
 
   /// @inheritdoc IPoolDataProvider
   function getInterestRateStrategyAddress(
-    address asset
+    address
   ) external view override returns (address irStrategyAddress) {
-    DataTypes.ReserveDataLegacy memory reserve = IPool(ADDRESSES_PROVIDER.getPool()).getReserveData(
-      asset
-    );
-
-    return (reserve.interestRateStrategyAddress);
+    return POOL.RESERVE_INTEREST_RATE_STRATEGY();
   }
 
   /// @inheritdoc IPoolDataProvider
   function getFlashLoanEnabled(address asset) external view override returns (bool) {
-    DataTypes.ReserveConfigurationMap memory configuration = IPool(ADDRESSES_PROVIDER.getPool())
-      .getConfiguration(asset);
+    DataTypes.ReserveConfigurationMap memory configuration = POOL.getConfiguration(asset);
 
     return configuration.getFlashLoanEnabled();
   }
 
   /// @inheritdoc IPoolDataProvider
-  function getIsVirtualAccActive(address asset) external view override returns (bool) {
-    DataTypes.ReserveConfigurationMap memory configuration = IPool(ADDRESSES_PROVIDER.getPool())
-      .getConfiguration(asset);
-
-    return configuration.getIsVirtualAccActive();
+  function getIsVirtualAccActive(address) external pure override returns (bool) {
+    return true;
   }
 
   /// @inheritdoc IPoolDataProvider
   function getVirtualUnderlyingBalance(address asset) external view override returns (uint256) {
-    return IPool(ADDRESSES_PROVIDER.getPool()).getVirtualUnderlyingBalance(asset);
+    return POOL.getVirtualUnderlyingBalance(asset);
   }
 
   /// @inheritdoc IPoolDataProvider
   function getReserveDeficit(address asset) external view override returns (uint256) {
-    return IPool(ADDRESSES_PROVIDER.getPool()).getReserveDeficit(asset);
+    return POOL.getReserveDeficit(asset);
   }
 }

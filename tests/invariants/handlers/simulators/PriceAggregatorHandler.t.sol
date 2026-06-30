@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 // Interfaces
-import {IERC20} from 'src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
 
 // Libraries
 
@@ -22,11 +22,16 @@ contract PriceAggregatorHandler is BaseHandler {
   //                                          ACTIONS                                          //
   ///////////////////////////////////////////////////////////////////////////////////////////////
 
-  function setLatestAnswer(int256 _price, uint8 i) public {
+  function setLatestAnswer(int72 _price, uint8 i) public {
     // Get a random price aggregator
     address priceAggregator = _getRandomPriceAggregator(i);
 
+    // No need in fuzzing the price that are biggger than 2**68
+    // log2(1'000'000'000'000 * 10**8) = 66.4385618977
+
+    _before();
     MockAggregatorSetPrice(priceAggregator).setLatestAnswer(_price);
+    _after();
 
     assert(true);
   }

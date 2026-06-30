@@ -16,9 +16,6 @@ import '../../contracts/helpers/UiIncentiveDataProviderV3.sol';
 import '../../contracts/rewards/interfaces/IEmissionManager.sol';
 import '../../contracts/rewards/interfaces/IRewardsController.sol';
 import '../../contracts/helpers/WalletBalanceProvider.sol';
-import '../../contracts/extensions/paraswap-adapters/ParaSwapLiquiditySwapAdapter.sol';
-import '../../contracts/extensions/paraswap-adapters/ParaSwapRepayAdapter.sol';
-import '../../contracts/extensions/paraswap-adapters/ParaSwapWithdrawSwapAdapter.sol';
 import '../../contracts/helpers/interfaces/IWrappedTokenGatewayV3.sol';
 import '../../contracts/helpers/L2Encoder.sol';
 import {ICollector} from '../../contracts/treasury/ICollector.sol';
@@ -40,9 +37,6 @@ struct ContractsReport {
   WalletBalanceProvider walletBalanceProvider;
   UiIncentiveDataProviderV3 uiIncentiveDataProvider;
   UiPoolDataProviderV3 uiPoolDataProvider;
-  ParaSwapLiquiditySwapAdapter paraSwapLiquiditySwapAdapter;
-  ParaSwapRepayAdapter paraSwapRepayAdapter;
-  ParaSwapWithdrawSwapAdapter paraSwapWithdrawSwapAdapter;
   L2Encoder l2Encoder;
   IAToken aToken;
   IVariableDebtToken variableDebtToken;
@@ -61,7 +55,6 @@ struct MarketReport {
   address protocolDataProvider;
   address aaveOracle;
   address defaultInterestRateStrategy;
-  address priceOracleSentinel;
   address aclManager;
   address treasury;
   address treasuryImplementation;
@@ -69,9 +62,6 @@ struct MarketReport {
   address walletBalanceProvider;
   address uiIncentiveDataProvider;
   address uiPoolDataProvider;
-  address paraSwapLiquiditySwapAdapter;
-  address paraSwapRepayAdapter;
-  address paraSwapWithdrawSwapAdapter;
   address l2Encoder;
   address aToken;
   address variableDebtToken;
@@ -83,16 +73,12 @@ struct MarketReport {
   address staticATokenFactoryImplementation;
   address staticATokenFactoryProxy;
   address staticATokenImplementation;
-  address revenueSplitter;
   address dustBin;
   address emptyImplementation;
 }
 
 struct LibrariesReport {
   address borrowLogic;
-  address bridgeLogic;
-  address configuratorLogic;
-  address eModeLogic;
   address flashLoanLogic;
   address liquidationLogic;
   address poolLogic;
@@ -110,18 +96,12 @@ struct MarketConfig {
   address marketReferenceCurrencyPriceInUsdProxyAggregator;
   string marketId;
   uint8 oracleDecimals;
-  address paraswapAugustusRegistry;
-  address l2SequencerUptimeFeed;
-  uint256 l2PriceOracleSentinelGracePeriod;
   uint256 providerId;
   bytes32 salt;
   address wrappedNativeToken;
-  uint128 flashLoanPremiumTotal;
-  uint128 flashLoanPremiumToProtocol;
+  uint128 flashLoanPremium;
   address incentivesProxy;
   address treasury; // let empty for deployment of collector, otherwise reuse treasury address
-  address treasuryPartner; // let empty for single treasury, or add treasury partner for revenue split between two organizations.
-  uint16 treasurySplitPercent; // ignored if treasuryPartner is empty, otherwise the split percent for the first treasury (recipientA, values between 00_01 and 100_00)
 }
 
 struct DeployFlags {
@@ -134,19 +114,11 @@ struct PoolReport {
 }
 
 struct MiscReport {
-  address priceOracleSentinel;
   address defaultInterestRateStrategy;
 }
 
 struct ConfigEngineReport {
   address configEngine;
-  address listingEngine;
-  address eModeEngine;
-  address borrowEngine;
-  address collateralEngine;
-  address priceFeedEngine;
-  address rateEngine;
-  address capsEngine;
 }
 
 struct StaticATokenReport {
@@ -158,6 +130,7 @@ struct StaticATokenReport {
 
 struct InitialReport {
   address poolAddressesProvider;
+  address interestRateStrategy;
   address poolAddressesProviderRegistry;
 }
 
@@ -174,13 +147,6 @@ struct PeripheryReport {
   address treasuryImplementation;
   address emissionManager;
   address rewardsControllerImplementation;
-  address revenueSplitter;
   address emptyImplementation;
   address dustBin;
-}
-
-struct ParaswapReport {
-  address paraSwapLiquiditySwapAdapter;
-  address paraSwapRepayAdapter;
-  address paraSwapWithdrawSwapAdapter;
 }

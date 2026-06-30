@@ -42,7 +42,9 @@ contract AaveOracleTest is TestnetProcedures {
     vm.prank(poolAdmin);
     contracts.aaveOracle.setAssetSources(tokens, sources);
 
+    // forge-lint: disable-next-line(unsafe-typecast)
     assertEq(contracts.aaveOracle.getAssetPrice(address(mockToken)), uint256(price));
+    // forge-lint: disable-next-line(unsafe-typecast)
     assertEq(contracts.aaveOracle.getAssetsPrices(tokens)[0], uint256(price));
     assertEq(contracts.aaveOracle.getSourceOfAsset(address(mockToken)), sources[0]);
   }
@@ -58,7 +60,9 @@ contract AaveOracleTest is TestnetProcedures {
     vm.prank(poolAdmin);
     contracts.aaveOracle.setAssetSources(tokens, sources);
 
+    // forge-lint: disable-next-line(unsafe-typecast)
     assertEq(contracts.aaveOracle.getAssetPrice(tokenList.usdx), uint256(price));
+    // forge-lint: disable-next-line(unsafe-typecast)
     assertEq(contracts.aaveOracle.getAssetsPrices(tokens)[0], uint256(price));
     assertEq(contracts.aaveOracle.getSourceOfAsset(tokenList.usdx), sources[0]);
   }
@@ -72,7 +76,7 @@ contract AaveOracleTest is TestnetProcedures {
 
     vm.startPrank(poolAdmin);
 
-    vm.expectRevert(bytes(Errors.INCONSISTENT_PARAMS_LENGTH));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InconsistentParamsLength.selector));
     contracts.aaveOracle.setAssetSources(tokens, sources);
     vm.stopPrank();
   }
@@ -88,7 +92,7 @@ contract AaveOracleTest is TestnetProcedures {
     address[] memory tokens = new address[](1);
     address[] memory sources = new address[](1);
 
-    vm.expectRevert(bytes(Errors.CALLER_NOT_ASSET_LISTING_OR_POOL_ADMIN));
+    vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotAssetListingOrPoolAdmin.selector));
 
     contracts.aaveOracle.setAssetSources(tokens, sources);
   }

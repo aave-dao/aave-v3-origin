@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import {ERC20} from '../../dependencies/openzeppelin/contracts/ERC20.sol';
+import {ECDSA} from 'openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol';
+
+import {ERC20} from 'openzeppelin-contracts/contracts/token/ERC20/ERC20.sol';
 import {IERC20WithPermit} from '../../interfaces/IERC20WithPermit.sol';
 
 /**
@@ -18,9 +20,11 @@ contract MintableERC20 is IERC20WithPermit, ERC20 {
   // Map of address nonces (address => nonce)
   mapping(address => uint256) internal _nonces;
 
+  uint8 private _decimals;
+
   bytes32 public DOMAIN_SEPARATOR;
 
-  constructor(string memory name, string memory symbol, uint8 decimals) ERC20(name, symbol) {
+  constructor(string memory name, string memory symbol, uint8 decimals_) ERC20(name, symbol) {
     uint256 chainId = block.chainid;
 
     DOMAIN_SEPARATOR = keccak256(
@@ -32,7 +36,11 @@ contract MintableERC20 is IERC20WithPermit, ERC20 {
         address(this)
       )
     );
-    _setupDecimals(decimals);
+    _decimals = decimals_;
+  }
+
+  function decimals() public view override returns (uint8) {
+    return _decimals;
   }
 
   /// @inheritdoc IERC20WithPermit
@@ -56,7 +64,7 @@ contract MintableERC20 is IERC20WithPermit, ERC20 {
         keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, value, currentValidNonce, deadline))
       )
     );
-    require(owner == ecrecover(digest, v, r, s), 'INVALID_SIGNATURE');
+    require(owner == ECDSA.recover(digest, v, r, s), 'INVALID_SIGNATURE');
     _nonces[owner] = currentValidNonce + 1;
     _approve(owner, spender, value);
   }

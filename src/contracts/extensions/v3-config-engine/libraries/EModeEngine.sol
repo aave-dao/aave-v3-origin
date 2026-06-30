@@ -5,25 +5,66 @@ import {SafeCast} from 'openzeppelin-contracts/contracts/utils/math/SafeCast.sol
 import {EngineFlags} from '../EngineFlags.sol';
 import {DataTypes} from '../../../protocol/libraries/types/DataTypes.sol';
 import {PercentageMath} from '../../../protocol/libraries/math/PercentageMath.sol';
+import {EModeConfiguration} from '../../../protocol/libraries/configuration/EModeConfiguration.sol';
 import {IAaveV3ConfigEngine as IEngine, IPoolConfigurator, IPool} from '../IAaveV3ConfigEngine.sol';
 
 library EModeEngine {
   using PercentageMath for uint256;
   using SafeCast for uint256;
 
+  error NoAvailableEmodeCategory();
+
   function executeAssetsEModeUpdate(
-    IEngine.EngineConstants calldata engineConstants,
+    IEngine.EngineConstants memory engineConstants,
     IEngine.AssetEModeUpdate[] memory updates
-  ) external {
+  ) internal {
     require(updates.length != 0, 'AT_LEAST_ONE_UPDATE_REQUIRED');
 
-    _configAssetsEMode(engineConstants.poolConfigurator, updates);
+    _configAssetsEMode(engineConstants.poolConfigurator, engineConstants.pool, updates);
+  }
+
+  function executeEModeCategoriesCreate(
+    IEngine.EngineConstants memory engineConstants,
+    IEngine.EModeCategoryCreation[] memory creations
+  ) internal {
+    for (uint256 i; i < creations.length; i++) {
+      require(
+        keccak256(abi.encode(creations[i].label)) !=
+          keccak256(abi.encode(EngineFlags.KEEP_CURRENT_STRING)),
+        'INVALID_LABEL'
+      );
+      uint8 categoryId = _findFirstUnusedEmodeCategory(engineConstants.pool);
+      engineConstants.poolConfigurator.setEModeCategory(
+        categoryId,
+        creations[i].ltv.toUint16(),
+        creations[i].liqThreshold.toUint16(),
+        // For reference, this is to simplify the interaction with the Aave protocol,
+        // as there the definition is as e.g. 105% (5% bonus for liquidators)
+        (100_00 + creations[i].liqBonus).toUint16(),
+        creations[i].label,
+        creations[i].isolated
+      );
+      for (uint256 j; j < creations[i].collaterals.length; j++) {
+        engineConstants.poolConfigurator.setAssetCollateralInEMode(
+          creations[i].collaterals[j],
+          categoryId,
+          true
+        );
+      }
+      for (uint256 k; k < creations[i].borrowables.length; k++) {
+        engineConstants.poolConfigurator.setAssetBorrowableInEMode(
+          creations[i].borrowables[k],
+          categoryId,
+          true
+        );
+      }
+    }
   }
 
   function executeEModeCategoriesUpdate(
-    IEngine.EngineConstants calldata engineConstants,
+    IEngine.EngineConstants memory engineConstants,
     IEngine.EModeCategoryUpdate[] memory updates
-  ) external {
+  ) internal {
     require(updates.length != 0, 'AT_LEAST_ONE_UPDATE_REQUIRED');
 
     _configEModeCategories(engineConstants.poolConfigurator, engineConstants.pool, updates);
@@ -31,9 +72,14 @@ library EModeEngine {
 
   function _configAssetsEMode(
     IPoolConfigurator poolConfigurator,
+    IPool pool,
     IEngine.AssetEModeUpdate[] memory updates
   ) internal {
     for (uint256 i = 0; i < updates.length; i++) {
+      DataTypes.CollateralConfig memory cfg = pool.getEModeCategoryCollateralConfig(
+        updates[i].eModeCategory
+      );
+      require(cfg.liquidationThreshold != 0, 'INVALID_UPDATE');
       if (updates[i].collateral != EngineFlags.KEEP_CURRENT) {
         poolConfigurator.setAssetCollateralInEMode(
           updates[i].asset,
@@ -48,6 +94,24 @@ library EModeEngine {
           EngineFlags.toBool(updates[i].borrowable)
         );
       }
+      if (updates[i].ltvzero != EngineFlags.KEEP_CURRENT) {
+        if (updates[i].ltvzero == EngineFlags.DISABLED) {
+          // Disabling an already disabled asset, will revert.
+          // To still allow configuring DISABLED instead of KEEP_CURRENT, which can make sense e.g. in the initial creation pr,
+          // This checks skips the update.
+          uint128 ltvzeroBitmap = pool.getEModeCategoryLtvzeroBitmap(updates[i].eModeCategory);
+          DataTypes.ReserveDataLegacy memory reserveData = pool.getReserveData(updates[i].asset);
+          if (!EModeConfiguration.isReserveEnabledOnBitmap(ltvzeroBitmap, reserveData.id)) {
+            continue;
+          }
+        }
+
+        poolConfigurator.setAssetLtvzeroInEMode(
+          updates[i].asset,
+          updates[i].eModeCategory,
+          EngineFlags.toBool(updates[i].ltvzero)
+        );
+      }
     }
   }
 
@@ -60,20 +124,24 @@ library EModeEngine {
       bool atLeastOneKeepCurrent = updates[i].ltv == EngineFlags.KEEP_CURRENT ||
         updates[i].liqThreshold == EngineFlags.KEEP_CURRENT ||
         updates[i].liqBonus == EngineFlags.KEEP_CURRENT ||
+        updates[i].isolated == EngineFlags.KEEP_CURRENT ||
         keccak256(abi.encode(updates[i].label)) ==
         keccak256(abi.encode(EngineFlags.KEEP_CURRENT_STRING));
 
       bool notAllKeepCurrent = updates[i].ltv != EngineFlags.KEEP_CURRENT ||
         updates[i].liqThreshold != EngineFlags.KEEP_CURRENT ||
         updates[i].liqBonus != EngineFlags.KEEP_CURRENT ||
+        updates[i].isolated != EngineFlags.KEEP_CURRENT ||
         keccak256(abi.encode(updates[i].label)) !=
         keccak256(abi.encode(EngineFlags.KEEP_CURRENT_STRING));
 
-      if (notAllKeepCurrent && atLeastOneKeepCurrent) {
-        DataTypes.CollateralConfig memory cfg = pool.getEModeCategoryCollateralConfig(
-          updates[i].eModeCategory
-        );
+      DataTypes.CollateralConfig memory cfg = pool.getEModeCategoryCollateralConfig(
+        updates[i].eModeCategory
+      );
+      // should only be able to update existing eModes, not create new ones
+      require(cfg.liquidationThreshold != 0, 'INVALID_UPDATE');
 
+      if (notAllKeepCurrent && atLeastOneKeepCurrent) {
         if (updates[i].ltv == EngineFlags.KEEP_CURRENT) {
           updates[i].ltv = cfg.ltv;
         }
@@ -93,6 +161,12 @@ library EModeEngine {
         ) {
           updates[i].label = pool.getEModeCategoryLabel(updates[i].eModeCategory);
         }
+
+        if (updates[i].isolated == EngineFlags.KEEP_CURRENT) {
+          updates[i].isolated = EngineFlags.fromBool(
+            pool.getIsEModeCategoryIsolated(updates[i].eModeCategory)
+          );
+        }
       }
 
       if (notAllKeepCurrent) {
@@ -109,9 +183,21 @@ library EModeEngine {
           // For reference, this is to simplify the interaction with the Aave protocol,
           // as there the definition is as e.g. 105% (5% bonus for liquidators)
           (100_00 + updates[i].liqBonus).toUint16(),
-          updates[i].label
+          updates[i].label,
+          EngineFlags.toBool(updates[i].isolated)
         );
       }
     }
+  }
+
+  /**
+   * @dev eModes must have a non-zero lt so we select the first that has a zero lt.
+   */
+  function _findFirstUnusedEmodeCategory(IPool pool) private view returns (uint8) {
+    // eMode id 0 is skipped intentially as it is the reserved default
+    for (uint8 i = 1; i < 256; i++) {
+      if (pool.getEModeCategoryCollateralConfig(i).liquidationThreshold == 0) return i;
+    }
+    revert NoAvailableEmodeCategory();
   }
 }

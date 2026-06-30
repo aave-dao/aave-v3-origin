@@ -8,13 +8,11 @@ import {AaveV3GettersBatchOne} from './batches/AaveV3GettersBatchOne.sol';
 import {AaveV3GettersBatchTwo} from './batches/AaveV3GettersBatchTwo.sol';
 import {AaveV3GettersProcedureTwo} from '../../contracts/procedures/AaveV3GettersProcedureTwo.sol';
 import {AaveV3PeripheryBatch} from './batches/AaveV3PeripheryBatch.sol';
-import {AaveV3ParaswapBatch} from './batches/AaveV3ParaswapBatch.sol';
 import {AaveV3SetupBatch} from './batches/AaveV3SetupBatch.sol';
 import {AaveV3HelpersBatchOne} from './batches/AaveV3HelpersBatchOne.sol';
 import {AaveV3HelpersBatchTwo} from './batches/AaveV3HelpersBatchTwo.sol';
 import {AaveV3MiscBatch} from './batches/AaveV3MiscBatch.sol';
 import '../../interfaces/IMarketReportTypes.sol';
-import {IMarketReportStorage} from '../../interfaces/IMarketReportStorage.sol';
 import {IPoolReport} from '../../interfaces/IPoolReport.sol';
 
 /**
@@ -23,6 +21,21 @@ import {IPoolReport} from '../../interfaces/IPoolReport.sol';
  * @dev Library which ensemble the deployment of Aave V3 using batch constructor deployment pattern.
  */
 library AaveV3BatchOrchestration {
+  struct DeployAaveV3Variables {
+    AaveV3SetupBatch setupBatch;
+    InitialReport initialReport;
+    AaveV3GettersBatchOne.GettersReportBatchOne gettersReport1;
+    PoolReport poolReport;
+    PeripheryReport peripheryReport;
+    MiscReport miscReport;
+    SetupReport setupReport;
+    AaveV3GettersBatchTwo.GettersReportBatchTwo gettersReport2;
+    AaveV3TokensBatch.TokensReport tokensReport;
+    ConfigEngineReport configEngineReport;
+    StaticATokenReport staticATokenReport;
+    MarketReport report;
+  }
+
   function deployAaveV3(
     address deployer,
     Roles memory roles,
@@ -30,96 +43,92 @@ library AaveV3BatchOrchestration {
     DeployFlags memory flags,
     MarketReport memory deployedContracts
   ) internal returns (MarketReport memory) {
-    (AaveV3SetupBatch setupBatch, InitialReport memory initialReport) = _deploySetupContract(
+    DeployAaveV3Variables memory variables;
+
+    (variables.setupBatch, variables.initialReport) = _deploySetupContract(
       deployer,
       roles,
       config,
       deployedContracts
     );
 
-    AaveV3GettersBatchOne.GettersReportBatchOne memory gettersReport1 = _deployGettersBatch1(
-      initialReport.poolAddressesProvider,
+    variables.gettersReport1 = _deployGettersBatch1(
       config.networkBaseTokenPriceInUsdProxyAggregator,
       config.marketReferenceCurrencyPriceInUsdProxyAggregator
     );
 
-    PoolReport memory poolReport = _deployPoolImplementations(
-      initialReport.poolAddressesProvider,
+    variables.poolReport = _deployPoolImplementations(
+      variables.initialReport.poolAddressesProvider,
+      variables.initialReport.interestRateStrategy,
       flags
     );
 
-    PeripheryReport memory peripheryReport = _deployPeripherals(
+    variables.peripheryReport = _deployPeripherals(
       roles,
       config,
-      initialReport.poolAddressesProvider,
-      address(setupBatch)
+      variables.initialReport.poolAddressesProvider,
+      address(variables.setupBatch)
     );
 
-    MiscReport memory miscReport = _deployMisc(
-      flags.l2,
-      initialReport.poolAddressesProvider,
-      config.l2SequencerUptimeFeed,
-      config.l2PriceOracleSentinelGracePeriod
-    );
+    variables.miscReport = _deployMisc(variables.initialReport.poolAddressesProvider);
+    variables.miscReport.defaultInterestRateStrategy = variables.initialReport.interestRateStrategy;
 
-    SetupReport memory setupReport = setupBatch.setupAaveV3Market(
+    variables.setupReport = variables.setupBatch.setupAaveV3Market(
       roles,
       config,
-      poolReport.poolImplementation,
-      poolReport.poolConfiguratorImplementation,
-      gettersReport1.protocolDataProvider,
-      peripheryReport.aaveOracle,
-      peripheryReport.rewardsControllerImplementation,
-      miscReport.priceOracleSentinel
+      variables.poolReport.poolImplementation,
+      variables.poolReport.poolConfiguratorImplementation,
+      variables.peripheryReport.aaveOracle,
+      variables.peripheryReport.rewardsControllerImplementation
     );
 
-    ParaswapReport memory paraswapReport = _deployParaswapAdapters(
-      roles,
-      config,
-      initialReport.poolAddressesProvider
-    );
-
-    AaveV3GettersBatchTwo.GettersReportBatchTwo memory gettersReport2 = _deployGettersBatch2(
-      setupReport.poolProxy,
+    variables.gettersReport2 = _deployGettersBatch2(
+      variables.setupReport.poolProxy,
       roles.poolAdmin,
       config.wrappedNativeToken,
+      variables.initialReport.poolAddressesProvider,
       flags.l2
     );
 
-    AaveV3TokensBatch.TokensReport memory tokensReport = _deployTokens(setupReport.poolProxy);
+    variables.setupBatch.setProtocolDataProvider(variables.gettersReport2.protocolDataProvider);
 
-    // to avoid issues when running without --via-ir we copy the variable
-    address pa = roles.poolAdmin;
-    ConfigEngineReport memory configEngineReport = _deployHelpersBatch1(
-      setupReport,
-      miscReport,
-      peripheryReport,
-      tokensReport
+    variables.setupBatch.transferMarketOwnership(roles);
+
+    variables.tokensReport = _deployTokens(
+      variables.setupReport.poolProxy,
+      variables.setupReport.rewardsControllerProxy,
+      variables.peripheryReport
     );
 
-    StaticATokenReport memory staticATokenReport = _deployHelpersBatch2(
-      setupReport.poolProxy,
-      setupReport.rewardsControllerProxy,
-      pa
+    variables.configEngineReport = _deployHelpersBatch1(
+      variables.setupReport,
+      variables.miscReport,
+      variables.peripheryReport,
+      variables.tokensReport
+    );
+
+    variables.staticATokenReport = _deployHelpersBatch2(
+      variables.setupReport.poolProxy,
+      variables.setupReport.rewardsControllerProxy,
+      roles.poolAdmin
     );
 
     // Save final report at AaveV3SetupBatch contract
-    MarketReport memory report = _generateMarketReport(
-      initialReport,
-      gettersReport1,
-      gettersReport2,
-      poolReport,
-      peripheryReport,
-      miscReport,
-      paraswapReport,
-      setupReport,
-      tokensReport,
-      configEngineReport,
-      staticATokenReport
+    variables.report = _generateMarketReport(
+      variables.initialReport,
+      variables.gettersReport1,
+      variables.gettersReport2,
+      variables.poolReport,
+      variables.peripheryReport,
+      variables.miscReport,
+      variables.setupReport,
+      variables.tokensReport,
+      variables.configEngineReport,
+      variables.staticATokenReport
     );
-    setupBatch.setMarketReport(report);
+    variables.setupBatch.setMarketReport(variables.report);
 
-    return report;
+    return variables.report;
   }
 
   function _deploySetupContract(
@@ -133,12 +142,10 @@ library AaveV3BatchOrchestration {
   }
 
   function _deployGettersBatch1(
-    address poolAddressesProvider,
     address networkBaseTokenPriceInUsdProxyAggregator,
     address marketReferenceCurrencyPriceInUsdProxyAggregator
   ) internal returns (AaveV3GettersBatchOne.GettersReportBatchOne memory) {
     AaveV3GettersBatchOne gettersBatch1 = new AaveV3GettersBatchOne(
-      poolAddressesProvider,
       networkBaseTokenPriceInUsdProxyAggregator,
       marketReferenceCurrencyPriceInUsdProxyAggregator
     );
@@ -150,18 +157,28 @@ library AaveV3BatchOrchestration {
     address poolProxy,
     address poolAdmin,
     address wrappedNativeToken,
+    address poolAddressesProvider,
     bool l2Flag
   ) internal returns (AaveV3GettersBatchTwo.GettersReportBatchTwo memory) {
-    AaveV3GettersBatchTwo gettersBatch2;
+    AaveV3GettersBatchTwo gettersBatch2 = new AaveV3GettersBatchTwo(
+      poolProxy,
+      poolAdmin,
+      wrappedNativeToken,
+      poolAddressesProvider,
+      l2Flag
+    );
+    AaveV3GettersBatchTwo.GettersReportBatchTwo memory gettersReportTwo = gettersBatch2
+      .getGettersReportTwo();
+
     if (wrappedNativeToken != address(0) || l2Flag) {
-      gettersBatch2 = new AaveV3GettersBatchTwo(poolProxy, poolAdmin, wrappedNativeToken, l2Flag);
-      return gettersBatch2.getGettersReportTwo();
+      return gettersReportTwo;
     }
 
     return
       AaveV3GettersProcedureTwo.GettersReportBatchTwo({
         wrappedTokenGateway: address(0),
-        l2Encoder: address(0)
+        l2Encoder: address(0),
+        protocolDataProvider: gettersReportTwo.protocolDataProvider
       });
   }
 
@@ -171,18 +188,13 @@ library AaveV3BatchOrchestration {
     PeripheryReport memory peripheryReport,
     AaveV3TokensBatch.TokensReport memory tokensReport
   ) internal returns (ConfigEngineReport memory) {
-    address treasury = peripheryReport.treasury;
-    if (peripheryReport.revenueSplitter != address(0)) {
-      treasury = peripheryReport.revenueSplitter;
-    }
-
     AaveV3HelpersBatchOne helpersBatchOne = new AaveV3HelpersBatchOne(
       setupReport.poolProxy,
       setupReport.poolConfiguratorProxy,
       miscReport.defaultInterestRateStrategy,
       peripheryReport.aaveOracle,
       setupReport.rewardsControllerProxy,
-      treasury,
+      peripheryReport.treasury,
       tokensReport.aToken,
       tokensReport.variableDebtToken
     );
@@ -204,32 +216,23 @@ library AaveV3BatchOrchestration {
     return helpersBatchTwo.staticATokenReport();
   }
 
-  function _deployMisc(
-    bool l2Flag,
-    address poolAddressesProvider,
-    address sequencerUptimeOracle,
-    uint256 gracePeriod
-  ) internal returns (MiscReport memory) {
-    AaveV3MiscBatch miscBatch = new AaveV3MiscBatch(
-      l2Flag,
-      poolAddressesProvider,
-      sequencerUptimeOracle,
-      gracePeriod
-    );
+  function _deployMisc(address poolAddressesProvider) internal returns (MiscReport memory) {
+    AaveV3MiscBatch miscBatch = new AaveV3MiscBatch(poolAddressesProvider);
 
     return miscBatch.getMiscReport();
   }
 
   function _deployPoolImplementations(
     address poolAddressesProvider,
+    address interestRateStrategy,
     DeployFlags memory flags
   ) internal returns (PoolReport memory) {
     IPoolReport poolBatch;
 
     if (flags.l2) {
-      poolBatch = IPoolReport(new AaveV3L2PoolBatch(poolAddressesProvider));
+      poolBatch = IPoolReport(new AaveV3L2PoolBatch(poolAddressesProvider, interestRateStrategy));
     } else {
-      poolBatch = IPoolReport(new AaveV3PoolBatch(poolAddressesProvider));
+      poolBatch = IPoolReport(new AaveV3PoolBatch(poolAddressesProvider, interestRateStrategy));
     }
 
     return poolBatch.getPoolReport();
@@ -251,32 +254,16 @@ library AaveV3BatchOrchestration {
     return peripheryBatch.getPeripheryReport();
   }
 
-  function _deployParaswapAdapters(
-    Roles memory roles,
-    MarketConfig memory config,
-    address poolAddressesProvider
-  ) internal returns (ParaswapReport memory) {
-    if (config.paraswapAugustusRegistry != address(0)) {
-      AaveV3ParaswapBatch parawswapBatch = new AaveV3ParaswapBatch(
-        roles.poolAdmin,
-        config,
-        poolAddressesProvider
-      );
-      return parawswapBatch.getParaswapReport();
-    }
-
-    return
-      ParaswapReport({
-        paraSwapLiquiditySwapAdapter: address(0),
-        paraSwapRepayAdapter: address(0),
-        paraSwapWithdrawSwapAdapter: address(0)
-      });
-  }
-
   function _deployTokens(
-    address poolProxy
+    address poolProxy,
+    address rewardsControllerProxy,
+    PeripheryReport memory peripheryReport
   ) internal returns (AaveV3TokensBatch.TokensReport memory) {
-    AaveV3TokensBatch tokensBatch = new AaveV3TokensBatch(poolProxy);
+    AaveV3TokensBatch tokensBatch = new AaveV3TokensBatch(
+      poolProxy,
+      rewardsControllerProxy,
+      peripheryReport.treasury
+    );
 
     return tokensBatch.getTokensReport();
   }
@@ -288,7 +275,6 @@ library AaveV3BatchOrchestration {
     PoolReport memory poolReport,
     PeripheryReport memory peripheryReport,
     MiscReport memory miscReport,
-    ParaswapReport memory paraswapReport,
     SetupReport memory setupReport,
     AaveV3TokensBatch.TokensReport memory tokensReport,
     ConfigEngineReport memory configEngineReport,
@@ -302,16 +288,13 @@ library AaveV3BatchOrchestration {
     report.rewardsControllerImplementation = peripheryReport.rewardsControllerImplementation;
     report.walletBalanceProvider = gettersReportOne.walletBalanceProvider;
     report.uiIncentiveDataProvider = gettersReportOne.uiIncentiveDataProvider;
-    report.protocolDataProvider = gettersReportOne.protocolDataProvider;
+    report.protocolDataProvider = gettersReportTwo.protocolDataProvider;
     report.uiPoolDataProvider = gettersReportOne.uiPoolDataProvider;
     report.poolImplementation = poolReport.poolImplementation;
     report.wrappedTokenGateway = gettersReportTwo.wrappedTokenGateway;
     report.l2Encoder = gettersReportTwo.l2Encoder;
     report.poolConfiguratorImplementation = poolReport.poolConfiguratorImplementation;
     report.aaveOracle = peripheryReport.aaveOracle;
-    report.paraSwapLiquiditySwapAdapter = paraswapReport.paraSwapLiquiditySwapAdapter;
-    report.paraSwapRepayAdapter = paraswapReport.paraSwapRepayAdapter;
-    report.paraSwapWithdrawSwapAdapter = paraswapReport.paraSwapWithdrawSwapAdapter;
     report.treasuryImplementation = peripheryReport.treasuryImplementation;
     report.treasury = peripheryReport.treasury;
     report.dustBin = peripheryReport.dustBin;
@@ -322,14 +305,12 @@ library AaveV3BatchOrchestration {
     report.aclManager = setupReport.aclManager;
     report.aToken = tokensReport.aToken;
     report.variableDebtToken = tokensReport.variableDebtToken;
-    report.priceOracleSentinel = miscReport.priceOracleSentinel;
     report.defaultInterestRateStrategy = miscReport.defaultInterestRateStrategy;
     report.configEngine = configEngineReport.configEngine;
     report.staticATokenFactoryImplementation = staticATokenReport.staticATokenFactoryImplementation;
     report.staticATokenFactoryProxy = staticATokenReport.staticATokenFactoryProxy;
     report.staticATokenImplementation = staticATokenReport.staticATokenImplementation;
     report.transparentProxyFactory = staticATokenReport.transparentProxyFactory;
-    report.revenueSplitter = peripheryReport.revenueSplitter;
 
     return report;
   }

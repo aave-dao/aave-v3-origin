@@ -3,12 +3,13 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 
-import {IAToken} from '../../../src/contracts/interfaces/IAToken.sol';
+import {IAToken, IERC20, IScaledBalanceToken} from '../../../src/contracts/interfaces/IAToken.sol';
 import {TestnetProcedures} from '../../utils/TestnetProcedures.sol';
 import {ReserveLogic} from '../../../src/contracts/protocol/libraries/logic/ReserveLogic.sol';
 import {MathUtils} from '../../../src/contracts/protocol/libraries/math/MathUtils.sol';
 import {WadRayMath} from '../../../src/contracts/protocol/libraries/math/WadRayMath.sol';
 import {DataTypes} from '../../../src/contracts/protocol/libraries/types/DataTypes.sol';
+import {IncentivizedERC20} from '../../../src/contracts/protocol/tokenization/base/IncentivizedERC20.sol';
 
 contract ATokenEventsTests is TestnetProcedures {
   using WadRayMath for uint256;
@@ -17,28 +18,10 @@ contract ATokenEventsTests is TestnetProcedures {
 
   IAToken public aToken;
 
-  event Transfer(address indexed from, address indexed to, uint256 amount);
-  event Mint(address indexed token, address indexed to, uint256 amount);
-  event BalanceTransfer(address indexed from, address indexed to, uint256 value, uint256 index);
-  event Mint(
-    address indexed caller,
-    address indexed onBehalfOf,
-    uint256 value,
-    uint256 balanceIncrease,
-    uint256 index
-  );
-  event Burn(
-    address indexed from,
-    address indexed target,
-    uint256 value,
-    uint256 balanceIncrease,
-    uint256 index
-  );
-
   function setUp() public {
     initTestEnvironment();
 
-    (address aUSDX, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(tokenList.usdx);
+    address aUSDX = contracts.poolProxy.getReserveAToken(tokenList.usdx);
     aToken = IAToken(aUSDX);
   }
 
@@ -54,14 +37,28 @@ contract ATokenEventsTests is TestnetProcedures {
       underlyingToken
     );
 
-    uint256 cumulatedLiquidityInterest = MathUtils.calculateLinearInterest(
-      reserveData.currentLiquidityRate,
-      reserveData.lastUpdateTimestamp
-    );
-    uint256 index = cumulatedLiquidityInterest.rayMul(reserveData.liquidityIndex);
-    uint256 scaledBalance = IAToken(aTokenAddress).scaledBalanceOf(onBehalfOf);
-    uint256 balanceIncrease = scaledBalance.rayMul(index) -
-      scaledBalance.rayMul(IAToken(aTokenAddress).getPreviousIndex(onBehalfOf));
+    uint256 oldIndex;
+    uint256 newIndex;
+    {
+      uint256 cumulatedLiquidityInterest = MathUtils.calculateLinearInterest(
+        reserveData.currentLiquidityRate,
+        reserveData.lastUpdateTimestamp
+      );
+
+      oldIndex = IAToken(aTokenAddress).getPreviousIndex(onBehalfOf);
+      newIndex = cumulatedLiquidityInterest.rayMul(reserveData.liquidityIndex);
+    }
+
+    uint256 mintAmount;
+    uint256 balanceIncrease;
+    {
+      uint256 scaledBalance = IAToken(aTokenAddress).scaledBalanceOf(onBehalfOf);
+      uint256 scaledMintAmount = amount.rayDivFloor(newIndex);
+      uint256 nextBalance = (scaledBalance + scaledMintAmount).rayMulFloor(newIndex);
+      uint256 previousBalance = scaledBalance.rayMulFloor(oldIndex);
+      balanceIncrease = scaledBalance.rayMulFloor(newIndex) - previousBalance;
+      mintAmount = nextBalance - previousBalance;
+    }
 
     if (checkInterestsNonZero) {
       assertTrue(
@@ -71,11 +68,11 @@ contract ATokenEventsTests is TestnetProcedures {
     }
 
     vm.expectEmit(address(underlyingToken));
-    emit Transfer(user, aTokenAddress, amount);
+    emit IERC20.Transfer(user, aTokenAddress, amount);
     vm.expectEmit(address(aToken));
-    emit Transfer(address(0), onBehalfOf, amount + balanceIncrease);
+    emit IERC20.Transfer(address(0), onBehalfOf, mintAmount);
     vm.expectEmit(address(aToken));
-    emit Mint(user, onBehalfOf, amount + balanceIncrease, balanceIncrease, index);
+    emit IScaledBalanceToken.Mint(user, onBehalfOf, mintAmount, balanceIncrease, newIndex);
   }
 
   function _expectATokenWithdrawEvents(
@@ -91,14 +88,30 @@ contract ATokenEventsTests is TestnetProcedures {
       underlyingToken
     );
 
-    uint256 cumulatedLiquidityInterest = MathUtils.calculateLinearInterest(
-      reserveData.currentLiquidityRate,
-      reserveData.lastUpdateTimestamp
-    );
-    uint256 index = cumulatedLiquidityInterest.rayMul(reserveData.liquidityIndex);
-    uint256 scaledBalance = IAToken(aTokenAddress).scaledBalanceOf(user);
-    uint256 balanceIncrease = scaledBalance.rayMul(index) -
-      scaledBalance.rayMul(IAToken(aTokenAddress).getPreviousIndex(user));
+    uint256 oldIndex;
+    uint256 newIndex;
+    {
+      uint256 cumulatedLiquidityInterest = MathUtils.calculateLinearInterest(
+        reserveData.currentLiquidityRate,
+        reserveData.lastUpdateTimestamp
+      );
+
+      oldIndex = IAToken(aTokenAddress).getPreviousIndex(user);
+      newIndex = cumulatedLiquidityInterest.rayMul(reserveData.liquidityIndex);
+    }
+
+    int256 deltaAmount;
+    uint256 balanceIncrease;
+    {
+      uint256 scaledBalance = IAToken(aTokenAddress).scaledBalanceOf(user);
+      uint256 scaledBurnAmount = amount.rayDivCeil(newIndex);
+      uint256 nextBalance = (scaledBalance - scaledBurnAmount).rayMulFloor(newIndex);
+      uint256 previousBalance = scaledBalance.rayMulFloor(oldIndex);
+      balanceIncrease = scaledBalance.rayMulFloor(newIndex) - previousBalance;
+      // forge-lint: disable-next-line(unsafe-typecast)
+      deltaAmount = int256(nextBalance) - int256(previousBalance);
+    }
+
     // Ensure test intention via bool to determine if withdrawal amount should be less than interests
     if (checkAmountLessThanInterests) {
       assertTrue(
@@ -117,22 +130,24 @@ contract ATokenEventsTests is TestnetProcedures {
         'Intention failed: balanceIncrease should be greater than zero'
       );
     }
-    if (balanceIncrease > amount) {
-      uint256 amountToMint = balanceIncrease - amount;
+    if (deltaAmount > 0) {
       vm.expectEmit(address(aToken));
-      emit Transfer(address(0), user, amountToMint);
+      // forge-lint: disable-next-line(unsafe-typecast)
+      emit IERC20.Transfer(address(0), user, uint256(deltaAmount));
       vm.expectEmit(address(aToken));
-      emit Mint(user, user, amountToMint, balanceIncrease, index);
+      // forge-lint: disable-next-line(unsafe-typecast)
+      emit IScaledBalanceToken.Mint(user, user, uint256(deltaAmount), balanceIncrease, newIndex);
       vm.expectEmit(address(underlyingToken));
-      emit Transfer(aTokenAddress, user, amount);
+      emit IERC20.Transfer(aTokenAddress, user, amount);
     } else {
-      uint256 amountToBurn = amount - balanceIncrease;
       vm.expectEmit(address(aToken));
-      emit Transfer(user, address(0), amountToBurn);
+      // forge-lint: disable-next-line(unsafe-typecast)
+      emit IERC20.Transfer(user, address(0), uint256(-deltaAmount));
       vm.expectEmit(address(aToken));
-      emit Burn(user, target, amountToBurn, balanceIncrease, index);
+      // forge-lint: disable-next-line(unsafe-typecast)
+      emit IScaledBalanceToken.Burn(user, target, uint256(-deltaAmount), balanceIncrease, newIndex);
       vm.expectEmit(address(underlyingToken));
-      emit Transfer(aTokenAddress, user, amount);
+      emit IERC20.Transfer(aTokenAddress, user, amount);
     }
   }
 
@@ -141,7 +156,7 @@ contract ATokenEventsTests is TestnetProcedures {
 
     contracts.poolProxy.supply(tokenList.usdx, 2000e6, bob, 0);
     contracts.poolProxy.borrow(tokenList.usdx, 400e6, 2, 0, bob);
-    vm.warp(block.timestamp + 64000);
+    vm.warp(vm.getBlockTimestamp() + 64000);
 
     vm.stopPrank();
   }
@@ -165,7 +180,7 @@ contract ATokenEventsTests is TestnetProcedures {
     vm.startPrank(alice);
     _expectATokenSupplyEvents(tokenList.usdx, address(aToken), alice, alice, supplyAmount, true);
     contracts.poolProxy.supply(tokenList.usdx, supplyAmount, alice, 0);
-    vm.warp(block.timestamp + 64000);
+    vm.warp(vm.getBlockTimestamp() + 64000);
 
     _expectATokenSupplyEvents(tokenList.usdx, address(aToken), alice, alice, supplyAmount, true);
     contracts.poolProxy.supply(tokenList.usdx, supplyAmount, alice, 0);
@@ -177,7 +192,7 @@ contract ATokenEventsTests is TestnetProcedures {
     _expectATokenSupplyEvents(tokenList.usdx, address(aToken), alice, alice, supplyAmount, false);
     vm.prank(alice);
     contracts.poolProxy.supply(tokenList.usdx, supplyAmount, alice, 0);
-    vm.warp(block.timestamp + 48000);
+    vm.warp(vm.getBlockTimestamp() + 48000);
 
     _expectATokenWithdrawEvents(
       tokenList.usdx,
@@ -199,7 +214,7 @@ contract ATokenEventsTests is TestnetProcedures {
     _expectATokenSupplyEvents(tokenList.usdx, address(aToken), alice, alice, supplyAmount, false);
     vm.prank(alice);
     contracts.poolProxy.supply(tokenList.usdx, supplyAmount, alice, 0);
-    vm.warp(block.timestamp + 48000);
+    vm.warp(vm.getBlockTimestamp() + 48000);
 
     _expectATokenWithdrawEvents(
       tokenList.usdx,
@@ -221,7 +236,7 @@ contract ATokenEventsTests is TestnetProcedures {
     _expectATokenSupplyEvents(tokenList.usdx, address(aToken), alice, alice, supplyAmount, false);
     vm.prank(alice);
     contracts.poolProxy.supply(tokenList.usdx, supplyAmount, alice, 0);
-    vm.warp(block.timestamp + 48000);
+    vm.warp(vm.getBlockTimestamp() + 48000);
 
     _expectATokenWithdrawEvents(tokenList.usdx, address(aToken), alice, alice, 10, true, true);
     vm.prank(alice);
@@ -235,7 +250,7 @@ contract ATokenEventsTests is TestnetProcedures {
     _expectATokenSupplyEvents(tokenList.usdx, address(aToken), alice, alice, supplyAmount, false);
     vm.prank(alice);
     contracts.poolProxy.supply(tokenList.usdx, supplyAmount, alice, 0);
-    vm.warp(block.timestamp + 48000);
+    vm.warp(vm.getBlockTimestamp() + 48000);
 
     uint256 partialWithdrawAmount = aToken.balanceOf(alice) / 2;
     _expectATokenWithdrawEvents(
@@ -249,7 +264,7 @@ contract ATokenEventsTests is TestnetProcedures {
     );
     vm.prank(alice);
     contracts.poolProxy.withdraw(tokenList.usdx, partialWithdrawAmount, alice);
-    vm.warp(block.timestamp + 48000);
+    vm.warp(vm.getBlockTimestamp() + 48000);
 
     uint256 secondPartialWithdrawAmount = aToken.balanceOf(alice) / 2;
     _expectATokenWithdrawEvents(
@@ -263,7 +278,7 @@ contract ATokenEventsTests is TestnetProcedures {
     );
     vm.prank(alice);
     contracts.poolProxy.withdraw(tokenList.usdx, secondPartialWithdrawAmount, alice);
-    vm.warp(block.timestamp + 48000);
+    vm.warp(vm.getBlockTimestamp() + 48000);
   }
 
   function test_atoken_burnEvents_fullBalance() public {
@@ -273,7 +288,7 @@ contract ATokenEventsTests is TestnetProcedures {
     _expectATokenSupplyEvents(tokenList.usdx, address(aToken), alice, alice, supplyAmount, false);
     vm.prank(alice);
     contracts.poolProxy.supply(tokenList.usdx, supplyAmount, alice, 0);
-    vm.warp(block.timestamp + 48000);
+    vm.warp(vm.getBlockTimestamp() + 48000);
 
     uint256 fullBalance = aToken.balanceOf(alice);
     _expectATokenWithdrawEvents(
@@ -293,10 +308,10 @@ contract ATokenEventsTests is TestnetProcedures {
     uint256 amountToMint = 123e6;
 
     vm.expectEmit(address(aToken));
-    emit Transfer(address(0), aToken.RESERVE_TREASURY_ADDRESS(), amountToMint);
+    emit IERC20.Transfer(address(0), aToken.RESERVE_TREASURY_ADDRESS(), amountToMint);
 
     vm.expectEmit(address(aToken));
-    emit Mint(
+    emit IScaledBalanceToken.Mint(
       address(contracts.poolProxy),
       aToken.RESERVE_TREASURY_ADDRESS(),
       amountToMint,
@@ -306,5 +321,105 @@ contract ATokenEventsTests is TestnetProcedures {
 
     vm.prank(address(contracts.poolProxy));
     aToken.mintToTreasury(amountToMint, 1e27);
+  }
+
+  function test_allowance_events_in_approve_function() public {
+    vm.expectEmit(address(aToken));
+    emit IERC20.Approval(alice, bob, 1e18);
+    vm.prank(alice);
+    aToken.approve(bob, 1e18);
+
+    vm.expectEmit(address(aToken));
+    emit IERC20.Approval(alice, bob, 0);
+    vm.prank(alice);
+    aToken.approve(bob, 0);
+
+    vm.expectEmit(address(aToken));
+    emit IERC20.Approval(alice, bob, type(uint256).max);
+    vm.prank(alice);
+    aToken.approve(bob, type(uint256).max);
+  }
+
+  function test_allowance_events_in_transferFrom_function() public {
+    uint256 amountToMint = 1e18;
+
+    vm.prank(address(contracts.poolProxy));
+    aToken.mint({caller: alice, onBehalfOf: alice, scaledAmount: 1e18, index: 1e18});
+
+    uint256 approveAmount = amountToMint / 2;
+    uint256 transferFromAmount = amountToMint / 5;
+
+    vm.prank(alice);
+    aToken.approve(bob, approveAmount);
+
+    // Check that `count: 0` for the `Approval` event
+    // that no `Approval` event was emitted
+    vm.expectEmit({
+      checkTopic1: false,
+      checkTopic2: false,
+      checkTopic3: false,
+      checkData: false,
+      emitter: address(aToken),
+      count: 0
+    });
+    emit IERC20.Approval(alice, bob, 0);
+    vm.prank(bob);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
+    aToken.transferFrom(alice, carol, transferFromAmount);
+
+    vm.prank(alice);
+    aToken.approve(bob, type(uint256).max);
+
+    // Check that `count: 0` for the `Approval` event
+    // that no `Approval` event was emitted
+    vm.expectEmit({
+      checkTopic1: false,
+      checkTopic2: false,
+      checkTopic3: false,
+      checkData: false,
+      emitter: address(aToken),
+      count: 0
+    });
+    emit IERC20.Approval(alice, bob, 0);
+    vm.prank(bob);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
+    aToken.transferFrom(alice, carol, transferFromAmount);
+  }
+
+  function test_allowance_events_in_renounceAllowance_function() public {
+    vm.prank(alice);
+    aToken.approve(bob, 1e18);
+
+    vm.expectEmit(address(aToken));
+    emit IERC20.Approval(alice, bob, 0);
+    vm.prank(bob);
+    IncentivizedERC20(address(aToken)).renounceAllowance(alice);
+  }
+
+  function test_allowance_events_in_increaseAllowance_function() public {
+    vm.expectEmit(address(aToken));
+    emit IERC20.Approval(alice, bob, 1e18);
+    vm.prank(alice);
+    IncentivizedERC20(address(aToken)).increaseAllowance(bob, 1e18);
+
+    vm.expectEmit(address(aToken));
+    emit IERC20.Approval(alice, bob, 1e18 + 0.5e18);
+    vm.prank(alice);
+    IncentivizedERC20(address(aToken)).increaseAllowance(bob, 0.5e18);
+  }
+
+  function test_allowance_events_in_decreaseAllowance_function() public {
+    vm.prank(alice);
+    aToken.approve(bob, 2e18);
+
+    vm.expectEmit(address(aToken));
+    emit IERC20.Approval(alice, bob, 1e18 + 0.5e18);
+    vm.prank(alice);
+    IncentivizedERC20(address(aToken)).decreaseAllowance(bob, 0.5e18);
+
+    vm.expectEmit(address(aToken));
+    emit IERC20.Approval(alice, bob, 0.5e18);
+    vm.prank(alice);
+    IncentivizedERC20(address(aToken)).decreaseAllowance(bob, 1e18);
   }
 }

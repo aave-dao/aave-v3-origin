@@ -5,6 +5,7 @@ import 'forge-std/Test.sol';
 
 import {Errors} from '../../../../src/contracts/protocol/libraries/helpers/Errors.sol';
 import {ReserveLogic} from '../../../../src/contracts/protocol/libraries/logic/ReserveLogic.sol';
+import {IPoolConfigurator} from '../../../../src/contracts/interfaces/IPoolConfigurator.sol';
 import '../../../utils/TestnetProcedures.sol';
 
 contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
@@ -13,44 +14,6 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
 
   DataTypes.ReserveData internal reserveData;
   DataTypes.ReserveData internal updatedReserveData;
-
-  event ReserveBorrowing(address indexed asset, bool enabled);
-  event ReserveFlashLoaning(address indexed asset, bool enabled);
-  event CollateralConfigurationChanged(
-    address indexed asset,
-    uint256 ltv,
-    uint256 liquidationThreshold,
-    uint256 liquidationBonus
-  );
-  event ReserveFrozen(address indexed asset, bool frozen);
-  event ReservePaused(address indexed asset, bool paused);
-  event ReserveDropped(address indexed asset);
-  event ReserveFactorChanged(
-    address indexed asset,
-    uint256 oldReserveFactor,
-    uint256 newReserveFactor
-  );
-  event DebtCeilingChanged(address indexed asset, uint256 oldDebtCeiling, uint256 newDebtCeiling);
-  event SiloedBorrowingChanged(address indexed asset, bool oldState, bool newState);
-  event FlashloanPremiumTotalUpdated(
-    uint128 oldFlashloanPremiumTotal,
-    uint128 newFlashloanPremiumTotal
-  );
-  event FlashloanPremiumToProtocolUpdated(
-    uint128 oldFlashloanPremiumToProtocol,
-    uint128 newFlashloanPremiumToProtocol
-  );
-  event BorrowableInIsolationChanged(address asset, bool borrowable);
-  event LiquidationProtocolFeeChanged(address indexed asset, uint256 oldFee, uint256 newFee);
-  event LiquidationGracePeriodChanged(address indexed asset, uint40 gracePeriodUntil);
-  event BridgeProtocolFeeUpdated(uint256 oldBridgeProtocolFee, uint256 newBridgeProtocolFee);
-
-  /**
-   * @dev Emitted when a reserve is activated or deactivated
-   * @param asset The address of the underlying asset of the reserve
-   * @param active True if reserve is active, false otherwise
-   */
-  event ReserveActive(address indexed asset, bool active);
 
   function setUp() public {
     initTestEnvironment();
@@ -80,7 +43,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     assertEq(borrowingEnabledDefault, false);
 
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit ReserveBorrowing(input[0].underlyingAsset, true);
+    emit IPoolConfigurator.ReserveBorrowing(input[0].underlyingAsset, true);
 
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setReserveBorrowing(input[0].underlyingAsset, true);
@@ -91,7 +54,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     assertEq(borrowingEnabledAfter, true);
 
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit ReserveBorrowing(input[0].underlyingAsset, false);
+    emit IPoolConfigurator.ReserveBorrowing(input[0].underlyingAsset, false);
 
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setReserveBorrowing(input[0].underlyingAsset, false);
@@ -115,7 +78,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     contracts.poolConfiguratorProxy.initReserves(input);
 
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit ReserveFlashLoaning(input[0].underlyingAsset, true);
+    emit IPoolConfigurator.ReserveFlashLoaning(input[0].underlyingAsset, true);
 
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setReserveFlashLoaning(input[0].underlyingAsset, true);
@@ -147,7 +110,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     contracts.poolConfiguratorProxy.initReserves(input);
 
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit CollateralConfigurationChanged(
+    emit IPoolConfigurator.CollateralConfigurationChanged(
       input[0].underlyingAsset,
       ltv,
       liquidationThreshold,
@@ -183,7 +146,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     contracts.poolConfiguratorProxy.initReserves(input);
 
     // Revert due LTV > LQT
-    vm.expectRevert(bytes(Errors.INVALID_RESERVE_PARAMS));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidReserveParams.selector));
 
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.configureReserveAsCollateral(
@@ -194,7 +157,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     );
 
     // Revert due LIQ BONUS < PERCENTAGE_FACTOR
-    vm.expectRevert(bytes(Errors.INVALID_RESERVE_PARAMS));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidReserveParams.selector));
 
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.configureReserveAsCollateral(
@@ -205,7 +168,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     );
 
     // Revert due LQT does not cover bonus
-    vm.expectRevert(bytes(Errors.INVALID_RESERVE_PARAMS));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidReserveParams.selector));
 
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.configureReserveAsCollateral(
@@ -216,7 +179,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     );
 
     // Revert due LQT == 0 == LQ_BONUS
-    vm.expectRevert(bytes(Errors.INVALID_RESERVE_PARAMS));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidReserveParams.selector));
 
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.configureReserveAsCollateral(
@@ -230,7 +193,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     vm.prank(alice);
     contracts.poolProxy.supply(tokenList.usdx, 10e6, alice, 0);
 
-    vm.expectRevert(bytes(Errors.RESERVE_LIQUIDITY_NOT_ZERO));
+    vm.expectRevert(abi.encodeWithSelector(Errors.ReserveLiquidityNotZero.selector));
 
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.configureReserveAsCollateral(tokenList.usdx, 0, 0, 0);
@@ -241,7 +204,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     vm.prank(alice);
     contracts.poolProxy.supply(tokenList.usdx, 10e6, alice, 0);
 
-    vm.expectRevert(bytes(Errors.RESERVE_LIQUIDITY_NOT_ZERO));
+    vm.expectRevert(abi.encodeWithSelector(Errors.ReserveLiquidityNotZero.selector));
 
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setReserveActive(tokenList.usdx, false);
@@ -249,7 +212,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
 
   function test_setReserveActive_false() public {
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit ReserveActive(tokenList.usdx, false);
+    emit IPoolConfigurator.ReserveActive(tokenList.usdx, false);
 
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setReserveActive(tokenList.usdx, false);
@@ -261,7 +224,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
 
   function test_setReserveActive_true() public {
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit ReserveActive(tokenList.usdx, true);
+    emit IPoolConfigurator.ReserveActive(tokenList.usdx, true);
 
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setReserveActive(tokenList.usdx, true);
@@ -273,7 +236,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
 
   function test_PoolAdminSetReserveFreeze_true() public {
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit ReserveFrozen(tokenList.usdx, true);
+    emit IPoolConfigurator.ReserveFrozen(tokenList.usdx, true);
 
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setReserveFreeze(tokenList.usdx, true);
@@ -289,7 +252,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     contracts.aclManager.addRiskAdmin(bob);
 
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit ReserveFrozen(tokenList.usdx, true);
+    emit IPoolConfigurator.ReserveFrozen(tokenList.usdx, true);
 
     vm.prank(bob);
     contracts.poolConfiguratorProxy.setReserveFreeze(tokenList.usdx, true);
@@ -305,7 +268,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     contracts.aclManager.addEmergencyAdmin(bob);
 
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit ReserveFrozen(tokenList.usdx, true);
+    emit IPoolConfigurator.ReserveFrozen(tokenList.usdx, true);
 
     vm.prank(bob);
     contracts.poolConfiguratorProxy.setReserveFreeze(tokenList.usdx, true);
@@ -328,7 +291,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
 
     // unfreeze reserve
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit ReserveFrozen(tokenList.usdx, false);
+    emit IPoolConfigurator.ReserveFrozen(tokenList.usdx, false);
 
     contracts.poolConfiguratorProxy.setReserveFreeze(tokenList.usdx, false);
     (, , , , , , , , , isFrozen) = contracts.protocolDataProvider.getReserveConfigurationData(
@@ -340,7 +303,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
   }
 
   function test_setUnfrozenReserveFreeze_false_revert() public {
-    vm.expectRevert(bytes(Errors.INVALID_FREEZE_STATE));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidFreezeState.selector));
 
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setReserveFreeze(tokenList.usdx, false);
@@ -355,39 +318,15 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     );
     assertEq(isFrozen, true);
 
-    vm.expectRevert(bytes(Errors.INVALID_FREEZE_STATE));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidFreezeState.selector));
     contracts.poolConfiguratorProxy.setReserveFreeze(tokenList.usdx, true);
 
     vm.stopPrank();
   }
 
-  function test_setBorrowableInIsolation_true() public {
-    vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit BorrowableInIsolationChanged(tokenList.usdx, true);
-
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setBorrowableInIsolation(tokenList.usdx, true);
-    DataTypes.ReserveConfigurationMap memory config = contracts.poolProxy.getConfiguration(
-      tokenList.usdx
-    );
-    assertEq(config.getBorrowableInIsolation(), true);
-  }
-
-  function test_setBorrowableInIsolation_false() public {
-    vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit BorrowableInIsolationChanged(tokenList.usdx, false);
-
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setBorrowableInIsolation(tokenList.usdx, false);
-    DataTypes.ReserveConfigurationMap memory config = contracts.poolProxy.getConfiguration(
-      tokenList.usdx
-    );
-    assertEq(config.getBorrowableInIsolation(), false);
-  }
-
   function test_setReservePause_false() public {
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit ReservePaused(tokenList.usdx, false);
+    emit IPoolConfigurator.ReservePaused(tokenList.usdx, false);
 
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setReservePause(tokenList.usdx, false, 0);
@@ -396,7 +335,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
 
   function test_setReservePause_true() public {
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit ReservePaused(tokenList.usdx, true);
+    emit IPoolConfigurator.ReservePaused(tokenList.usdx, true);
 
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setReservePause(tokenList.usdx, true, 0);
@@ -404,7 +343,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
   }
 
   function test_reverts_setReserveFactor_gt_percentageFactor() public {
-    vm.expectRevert(bytes(Errors.INVALID_RESERVE_FACTOR));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidReserveFactor.selector));
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setReserveFactor(tokenList.usdx, 101_00);
   }
@@ -425,13 +364,13 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
 
     reserveData = _getFullReserveData(tokenList.usdx);
     DataTypes.ReserveCache memory cache = reserveData.cache();
-    uint40 initialTimestamp = uint40(block.timestamp);
+    uint40 initialTimestamp = uint40(vm.getBlockTimestamp());
 
     assertEq(cache.currVariableBorrowIndex, 1e27);
     assertEq(cache.currVariableBorrowRate, 13333333333333333333333333);
     assertEq(cache.reserveLastUpdateTimestamp, initialTimestamp);
 
-    vm.warp(block.timestamp + 365 days);
+    vm.warp(vm.getBlockTimestamp() + 365 days);
 
     // check that index is not changed after 1 year
     updatedReserveData = _getFullReserveData(tokenList.usdx);
@@ -441,7 +380,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     assertEq(cacheAfterYear.currVariableBorrowIndex, 1e27);
 
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit ReserveFactorChanged(tokenList.usdx, 10_00, 5_00);
+    emit IPoolConfigurator.ReserveFactorChanged(tokenList.usdx, 10_00, 5_00);
 
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setReserveFactor(tokenList.usdx, 5_00);
@@ -459,73 +398,8 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     assertGt(updatedCache.reserveLastUpdateTimestamp, cacheAfterYear.reserveLastUpdateTimestamp);
   }
 
-  function test_reverts_setDebtCeiling_suppliers() public {
-    vm.prank(alice);
-    contracts.poolProxy.supply(tokenList.usdx, 10e6, alice, 0);
-
-    vm.expectRevert(bytes(Errors.RESERVE_LIQUIDITY_NOT_ZERO));
-
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setDebtCeiling(tokenList.usdx, 100);
-  }
-
-  function test_setDebtCeiling_suppliers_ltZero() public {
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.configureReserveAsCollateral(tokenList.usdx, 0, 0, 0);
-
-    vm.prank(alice);
-    contracts.poolProxy.supply(tokenList.usdx, 10e6, alice, 0);
-
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setDebtCeiling(tokenList.usdx, 100);
-    assertEq(contracts.protocolDataProvider.getDebtCeiling(tokenList.usdx), 100);
-  }
-
-  function test_setDebtCeiling() public {
-    vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit DebtCeilingChanged(tokenList.usdx, 0, 100);
-
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setDebtCeiling(tokenList.usdx, 100);
-    assertEq(contracts.protocolDataProvider.getDebtCeiling(tokenList.usdx), 100);
-  }
-
-  function test_setDebtCeiling_to_zero() public {
-    test_setDebtCeiling();
-
-    vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit DebtCeilingChanged(tokenList.usdx, 100, 0);
-
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setDebtCeiling(tokenList.usdx, 0);
-    assertEq(contracts.protocolDataProvider.getDebtCeiling(tokenList.usdx), 0);
-  }
-
-  function test_setSiloedBorrowing() public {
-    vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit SiloedBorrowingChanged(tokenList.usdx, false, true);
-
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setSiloedBorrowing(tokenList.usdx, true);
-    assertEq(contracts.protocolDataProvider.getSiloedBorrowing(tokenList.usdx), true);
-  }
-
-  function test_reverts_setSiloedBorrowing_borrowers() public {
-    vm.startPrank(alice);
-
-    contracts.poolProxy.supply(tokenList.usdx, 100e6, alice, 0);
-    contracts.poolProxy.borrow(tokenList.usdx, 10e6, 2, 0, alice);
-
-    vm.stopPrank();
-
-    vm.expectRevert(bytes(Errors.RESERVE_DEBT_NOT_ZERO));
-
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setSiloedBorrowing(tokenList.usdx, true);
-  }
-
   function test_reverts_setLiquidationProtocolFee_amount_gt_percentageFactor() public {
-    vm.expectRevert(bytes(Errors.INVALID_LIQUIDATION_PROTOCOL_FEE));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidLiquidationProtocolFee.selector));
 
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setLiquidationProtocolFee(tokenList.usdx, 100_01);
@@ -533,7 +407,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
 
   function test_setLiquidationProtocolFee_amount_gt_percentageFactor() public {
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit LiquidationProtocolFeeChanged(tokenList.usdx, 10_00, 6_00);
+    emit IPoolConfigurator.LiquidationProtocolFeeChanged(tokenList.usdx, 10_00, 6_00);
 
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setLiquidationProtocolFee(tokenList.usdx, 6_00);
@@ -545,7 +419,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     address[] memory reserves = contracts.poolProxy.getReservesList();
     for (uint16 x; x < reserves.length; ++x) {
       vm.expectEmit(address(contracts.poolConfiguratorProxy));
-      emit ReservePaused(reserves[x], true);
+      emit IPoolConfigurator.ReservePaused(reserves[x], true);
     }
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setPoolPause(true);
@@ -561,7 +435,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     address[] memory reserves = contracts.poolProxy.getReservesList();
     for (uint16 x; x < reserves.length; ++x) {
       vm.expectEmit(address(contracts.poolConfiguratorProxy));
-      emit ReservePaused(reserves[x], false);
+      emit IPoolConfigurator.ReservePaused(reserves[x], false);
     }
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setPoolPause(false);
@@ -572,139 +446,20 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     }
   }
 
-  function test_bridgeProtocolFee() public {
-    vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit BridgeProtocolFeeUpdated(0, 10_00);
+  function test_reverts_updateFlashloanPremium() public {
+    vm.expectRevert(abi.encodeWithSelector(Errors.FlashloanPremiumInvalid.selector));
 
     vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.updateBridgeProtocolFee(10_00);
-    assertEq(contracts.poolProxy.BRIDGE_PROTOCOL_FEE(), 10_00);
+    contracts.poolConfiguratorProxy.updateFlashloanPremium(100_01);
   }
 
-  function test_reverts_bridgeProtocolFee() public {
-    vm.expectRevert(bytes(Errors.BRIDGE_PROTOCOL_FEE_INVALID));
-
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.updateBridgeProtocolFee(100_01);
-  }
-
-  function test_reverts_updateFlashloanPremiumTotal() public {
-    vm.expectRevert(bytes(Errors.FLASHLOAN_PREMIUM_INVALID));
-
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.updateFlashloanPremiumTotal(100_01);
-  }
-
-  function test_updateFlashloanPremiumTotal() public {
+  function test_updateFlashloanPremium() public {
     vm.expectEmit(false, false, false, false, address(contracts.poolConfiguratorProxy));
-    emit FlashloanPremiumTotalUpdated(0, 10_00);
+    emit IPoolConfigurator.FlashloanPremiumTotalUpdated(0, 10_00);
 
     vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.updateFlashloanPremiumTotal(10_00);
+    contracts.poolConfiguratorProxy.updateFlashloanPremium(10_00);
     assertEq(contracts.poolProxy.FLASHLOAN_PREMIUM_TOTAL(), 10_00);
-  }
-
-  function test_reverts_updateFlashloanPremiumToProtocol() public {
-    vm.expectRevert(bytes(Errors.FLASHLOAN_PREMIUM_INVALID));
-
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.updateFlashloanPremiumToProtocol(100_01);
-  }
-
-  function test_updateFlashloanPremiumToProtocol() public {
-    vm.expectEmit(false, false, false, false, address(contracts.poolConfiguratorProxy));
-    emit FlashloanPremiumToProtocolUpdated(0, 10_00);
-
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.updateFlashloanPremiumToProtocol(10_00);
-    assertEq(contracts.poolProxy.FLASHLOAN_PREMIUM_TO_PROTOCOL(), 10_00);
-  }
-
-  function test_dropReserve() public {
-    DataTypes.ReserveDataLegacy memory reserveDataUsdx = contracts.poolProxy.getReserveData(
-      tokenList.usdx
-    );
-    vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit ReserveDropped(tokenList.usdx);
-
-    (address pA, address pS, address pV) = contracts.protocolDataProvider.getReserveTokensAddresses(
-      tokenList.usdx
-    );
-    assertTrue(pA != address(0));
-    assertTrue(pS == address(0));
-    assertTrue(pV != address(0));
-
-    uint256 lengthBefore = contracts.poolProxy.getReservesList().length;
-
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.dropReserve(tokenList.usdx);
-
-    (address a, address s, address v) = contracts.protocolDataProvider.getReserveTokensAddresses(
-      tokenList.usdx
-    );
-    {
-      (
-        uint256 decimals,
-        uint256 ltv,
-        uint256 liquidationThreshold,
-        uint256 liquidationBonus,
-        uint256 reserveFactor,
-        bool usageAsCollateralEnabled,
-        bool borrowingEnabled,
-        ,
-        bool isActive,
-        bool isFrozen
-      ) = contracts.protocolDataProvider.getReserveConfigurationData(tokenList.usdx);
-
-      assertEq(a, address(0));
-      assertEq(s, address(0));
-      assertEq(v, address(0));
-      assertEq(decimals, 0);
-      assertEq(ltv, 0);
-      assertEq(liquidationThreshold, 0);
-      assertEq(liquidationBonus, 0);
-      assertEq(reserveFactor, 0);
-      assertEq(usageAsCollateralEnabled, false);
-      assertEq(borrowingEnabled, false);
-      assertEq(isActive, false);
-      assertEq(isFrozen, false);
-    }
-    {
-      assertEq(contracts.poolProxy.getReservesList().length, lengthBefore - 1);
-      assertEq(contracts.poolProxy.getReserveAddressById(reserveDataUsdx.id), address(0));
-    }
-  }
-
-  function test_reverts_dropReserve_notListed() public {
-    vm.expectRevert(bytes(Errors.ASSET_NOT_LISTED));
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.dropReserve(makeAddr('TOKEN_NOT_LISTED'));
-  }
-
-  function test_reverts_dropReserve_zeroAddress() public {
-    vm.expectRevert(bytes(Errors.ZERO_ADDRESS_NOT_VALID));
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.dropReserve(address(0));
-  }
-
-  function test_reverts_dropReserve_variableDebtNotZero() public {
-    vm.startPrank(alice);
-    contracts.poolProxy.supply(tokenList.usdx, 100e6, alice, 0);
-    contracts.poolProxy.borrow(tokenList.wbtc, 0.001e8, 2, 0, alice);
-    vm.stopPrank();
-
-    vm.expectRevert(bytes(Errors.VARIABLE_DEBT_SUPPLY_NOT_ZERO));
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.dropReserve(tokenList.wbtc);
-  }
-
-  function test_reverts_dropReserve_supplyNotZero() public {
-    vm.prank(alice);
-    contracts.poolProxy.supply(tokenList.usdx, 100e6, alice, 0);
-
-    vm.expectRevert(bytes(Errors.UNDERLYING_CLAIMABLE_RIGHTS_NOT_ZERO));
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.dropReserve(tokenList.wbtc);
   }
 
   function test_setLiquidationGracePeriodReserve(uint40 gracePeriod) public {
@@ -712,13 +467,13 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
 
     address asset = tokenList.usdx;
 
-    uint40 until = uint40(block.timestamp) + gracePeriod;
+    uint40 until = uint40(vm.getBlockTimestamp()) + gracePeriod;
 
     vm.startPrank(poolAdmin);
 
     // reserve unpause -> unpause, liquidationGracePeriod would be set
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit LiquidationGracePeriodChanged(asset, until);
+    emit IPoolConfigurator.LiquidationGracePeriodChanged(asset, until);
     contracts.poolConfiguratorProxy.setReservePause(asset, false, gracePeriod);
     assertEq(contracts.poolProxy.getLiquidationGracePeriod(asset), until);
 
@@ -733,7 +488,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
 
     // reserve pause -> unpause, liquidationGracePeriod would be set
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit LiquidationGracePeriodChanged(asset, until);
+    emit IPoolConfigurator.LiquidationGracePeriodChanged(asset, until);
     contracts.poolConfiguratorProxy.setReservePause(asset, false, gracePeriod);
     assertEq(contracts.poolProxy.getLiquidationGracePeriod(asset), until);
 
@@ -743,7 +498,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
   function test_disableLiquidationGracePeriod() public {
     uint40 gracePeriod = 2 hours;
     address asset = tokenList.usdx;
-    uint40 until = uint40(block.timestamp) + 2 hours;
+    uint40 until = uint40(vm.getBlockTimestamp()) + 2 hours;
 
     vm.startPrank(poolAdmin);
 
@@ -751,7 +506,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     assertEq(contracts.poolProxy.getLiquidationGracePeriod(asset), until);
 
     contracts.poolConfiguratorProxy.disableLiquidationGracePeriod(asset);
-    assertEq(contracts.poolProxy.getLiquidationGracePeriod(asset), block.timestamp - 1);
+    assertEq(contracts.poolProxy.getLiquidationGracePeriod(asset), vm.getBlockTimestamp() - 1);
 
     vm.stopPrank();
   }
@@ -761,7 +516,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
 
     address[] memory allReserves = contracts.poolProxy.getReservesList();
 
-    uint40 until = uint40(block.timestamp) + gracePeriod;
+    uint40 until = uint40(vm.getBlockTimestamp()) + gracePeriod;
 
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setPoolPause(false, gracePeriod);
@@ -776,14 +531,14 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
   function test_setLiquidationGracePeriodAboveCap(uint40 gracePeriod) public {
     vm.assume(
       gracePeriod > contracts.poolConfiguratorProxy.MAX_GRACE_PERIOD() &&
-        gracePeriod < type(uint40).max - block.timestamp
+        gracePeriod < type(uint40).max - vm.getBlockTimestamp()
     );
 
     address asset = tokenList.usdx;
 
     vm.prank(poolAdmin);
 
-    vm.expectRevert(bytes(Errors.INVALID_GRACE_PERIOD));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidGracePeriod.selector));
     contracts.poolConfiguratorProxy.setReservePause(asset, false, gracePeriod);
   }
 
@@ -801,10 +556,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     tempReserveData.id = reserveDataLegacy.id;
     tempReserveData.aTokenAddress = reserveDataLegacy.aTokenAddress;
     tempReserveData.variableDebtTokenAddress = reserveDataLegacy.variableDebtTokenAddress;
-    tempReserveData.interestRateStrategyAddress = reserveDataLegacy.interestRateStrategyAddress;
     tempReserveData.accruedToTreasury = reserveDataLegacy.accruedToTreasury;
-    tempReserveData.unbacked = reserveDataLegacy.unbacked;
-    tempReserveData.isolationModeTotalDebt = reserveDataLegacy.isolationModeTotalDebt;
     tempReserveData.virtualUnderlyingBalance = uint128(
       contracts.poolProxy.getVirtualUnderlyingBalance(asset)
     );

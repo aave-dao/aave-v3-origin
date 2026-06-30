@@ -1,27 +1,24 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {Pool} from '../munged/contracts/protocol/pool/Pool.sol';
-import {IPoolAddressesProvider} from '../munged/contracts/interfaces/IPoolAddressesProvider.sol';
-import {PoolInstance} from '../munged/contracts/instances/PoolInstance.sol';
-import {DataTypes} from '../munged/contracts/protocol/libraries/types/DataTypes.sol';
-import {ReserveLogic} from '../munged/contracts/protocol/libraries/logic/ReserveLogic.sol';
-import {WadRayMath} from '../munged/contracts/protocol/libraries/math/WadRayMath.sol';
+import {Pool} from '../munged/src/contracts/protocol/pool/Pool.sol';
+import {IPoolAddressesProvider} from '../munged/src/contracts/interfaces/IPoolAddressesProvider.sol';
+import {PoolInstance} from '../munged/src/contracts/instances/PoolInstance.sol';
+import {DataTypes} from '../munged/src/contracts/protocol/libraries/types/DataTypes.sol';
+import {ReserveLogic} from '../munged/src/contracts/protocol/libraries/logic/ReserveLogic.sol';
+import {WadRayMath} from '../munged/src/contracts/protocol/libraries/math/WadRayMath.sol';
+import {IReserveInterestRateStrategy} from '../munged/src/contracts/interfaces/IReserveInterestRateStrategy.sol';
 
 import {DummyContract} from './DummyContract.sol';
 
 contract PoolInstanceHarness is PoolInstance {
   DummyContract DUMMY;
 
-  constructor(IPoolAddressesProvider provider) PoolInstance(provider) {}
-
-  function cumulateToLiquidityIndex(
-    address asset,
-    uint256 totalLiquidity,
-    uint256 amount
-  ) external returns (uint256) {
-    return ReserveLogic.cumulateToLiquidityIndex(_reserves[asset], totalLiquidity, amount);
-  }
+  //  constructor(IPoolAddressesProvider provider) PoolInstance(provider) {}
+  constructor(
+    IPoolAddressesProvider provider,
+    IReserveInterestRateStrategy interestRateStrategy_
+  ) public PoolInstance(provider, interestRateStrategy_) {}
 
   function getNormalizedIncome(address asset) external returns (uint256) {
     return ReserveLogic.getNormalizedIncome(_reserves[asset]);

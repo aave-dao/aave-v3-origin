@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.10;
 
-import {IERC20Detailed} from '../dependencies/openzeppelin/contracts/IERC20Detailed.sol';
+import {IERC20Metadata} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 
 import {IPool} from '../interfaces/IPool.sol';
 import {IPoolAddressesProvider} from '../interfaces/IPoolAddressesProvider.sol';
-import {IPriceOracleSentinel} from '../interfaces/IPriceOracleSentinel.sol';
 import {IPriceOracleGetter} from '../interfaces/IPriceOracleGetter.sol';
 
 import {ValidationLogic} from '../protocol/libraries/logic/ValidationLogic.sol';
@@ -14,6 +13,7 @@ import {ReserveConfiguration} from '../protocol/libraries/configuration/ReserveC
 import {UserConfiguration} from '../protocol/libraries/configuration/UserConfiguration.sol';
 import {EModeConfiguration} from '../protocol/libraries/configuration/EModeConfiguration.sol';
 import {DataTypes} from '../protocol/libraries/types/DataTypes.sol';
+import {MathUtils} from '../protocol/libraries/math/MathUtils.sol';
 import {PercentageMath} from '../protocol/libraries/math/PercentageMath.sol';
 
 import {ILiquidationDataProvider} from './interfaces/ILiquidationDataProvider.sol';
@@ -119,12 +119,10 @@ contract LiquidationDataProvider is ILiquidationDataProvider {
     if (
       !_isReserveReadyForLiquidations({
         reserveAsset: collateralAsset,
-        isCollateral: true,
         reserveConfiguration: collateralReserveData.configuration
       }) ||
       !_isReserveReadyForLiquidations({
         reserveAsset: debtAsset,
-        isCollateral: false,
         reserveConfiguration: debtReserveData.configuration
       })
     ) {
@@ -175,8 +173,11 @@ contract LiquidationDataProvider is ILiquidationDataProvider {
     );
 
     if (
-      liquidationInfo.maxDebtToLiquidate != 0 &&
-      liquidationInfo.maxDebtToLiquidate == liquidationInfo.debtInfo.debtBalance
+      (liquidationInfo.maxDebtToLiquidate != 0 &&
+        liquidationInfo.maxDebtToLiquidate == liquidationInfo.debtInfo.debtBalance) ||
+      (liquidationInfo.maxCollateralToLiquidate != 0 &&
+        liquidationInfo.maxCollateralToLiquidate ==
+        liquidationInfo.collateralInfo.collateralBalance)
     ) {
       liquidationInfo.amountToPassToLiquidationCall = type(uint256).max;
     } else {
@@ -208,9 +209,11 @@ contract LiquidationDataProvider is ILiquidationDataProvider {
           collateralInfo.price) /
         collateralInfo.assetUnit;
 
-      localVars.debtLeftoverInBaseCurrency =
-        ((debtInfo.debtBalance - debtAmountToLiquidate) * debtInfo.price) /
-        debtInfo.assetUnit;
+      localVars.debtLeftoverInBaseCurrency = MathUtils.mulDivCeil(
+        debtInfo.debtBalance - debtAmountToLiquidate,
+        debtInfo.price,
+        debtInfo.assetUnit
+      );
 
       if (
         localVars.collateralLeftoverInBaseCurrency < LiquidationLogic.MIN_LEFTOVER_BASE ||
@@ -238,7 +241,7 @@ contract LiquidationDataProvider is ILiquidationDataProvider {
 
           debtAmountToLiquidate = ((collateralInfo.price *
             collateralAmountToLiquidate *
-            debtInfo.assetUnit) / (debtInfo.price * collateralInfo.assetUnit)).percentDiv(
+            debtInfo.assetUnit) / (debtInfo.price * collateralInfo.assetUnit)).percentDivCeil(
               liquidationBonus
             );
         } else {
@@ -250,9 +253,8 @@ contract LiquidationDataProvider is ILiquidationDataProvider {
 
           collateralAmountToLiquidate = ((debtInfo.price *
             debtAmountToLiquidate *
-            collateralInfo.assetUnit) / (collateralInfo.price * debtInfo.assetUnit)).percentMul(
-              liquidationBonus
-            );
+            collateralInfo.assetUnit) / (collateralInfo.price * debtInfo.assetUnit))
+            .percentMulFloor(liquidationBonus);
         }
 
         localVars.liquidationProtocolFeePercentage = collateralConfiguration
@@ -261,9 +263,9 @@ contract LiquidationDataProvider is ILiquidationDataProvider {
         if (localVars.liquidationProtocolFeePercentage != 0) {
           localVars.bonusCollateral =
             collateralAmountToLiquidate -
-            collateralAmountToLiquidate.percentDiv(liquidationBonus);
+            collateralAmountToLiquidate.percentDivFloor(liquidationBonus);
 
-          liquidationProtocolFee = localVars.bonusCollateral.percentMul(
+          liquidationProtocolFee = localVars.bonusCollateral.percentMulCeil(
             localVars.liquidationProtocolFeePercentage
           );
 
@@ -287,7 +289,7 @@ contract LiquidationDataProvider is ILiquidationDataProvider {
     uint256 maxBaseCollateral = (debtInfo.price * maxDebtToLiquidate * collateralInfo.assetUnit) /
       (collateralInfo.price * debtInfo.assetUnit);
 
-    uint256 maxCollateralToLiquidate = maxBaseCollateral.percentMul(liquidationBonus);
+    uint256 maxCollateralToLiquidate = maxBaseCollateral.percentMulFloor(liquidationBonus);
 
     uint256 collateralAmountToLiquidate;
     uint256 debtAmountToLiquidate;
@@ -296,7 +298,7 @@ contract LiquidationDataProvider is ILiquidationDataProvider {
 
       debtAmountToLiquidate = ((collateralInfo.price *
         collateralAmountToLiquidate *
-        debtInfo.assetUnit) / (debtInfo.price * collateralInfo.assetUnit)).percentDiv(
+        debtInfo.assetUnit) / (debtInfo.price * collateralInfo.assetUnit)).percentDivCeil(
           liquidationBonus
         );
     } else {
@@ -307,9 +309,9 @@ contract LiquidationDataProvider is ILiquidationDataProvider {
     uint256 liquidationProtocolFee;
     if (liquidationProtocolFeePercentage != 0) {
       uint256 bonusCollateral = collateralAmountToLiquidate -
-        collateralAmountToLiquidate.percentDiv(liquidationBonus);
+        collateralAmountToLiquidate.percentDivFloor(liquidationBonus);
 
-      liquidationProtocolFee = bonusCollateral.percentMul(liquidationProtocolFeePercentage);
+      liquidationProtocolFee = bonusCollateral.percentMulCeil(liquidationProtocolFeePercentage);
 
       collateralAmountToLiquidate -= liquidationProtocolFee;
     }
@@ -352,6 +354,8 @@ contract LiquidationDataProvider is ILiquidationDataProvider {
   ) private view returns (uint256) {
     uint256 userEModeCategory = POOL.getUserEMode(user);
 
+    // There is an explicit assumption on the protocol when of the uint8(userEModeCategory) being safe
+    // forge-lint: disable-next-line(unsafe-typecast)
     uint128 collateralBitmap = POOL.getEModeCategoryCollateralBitmap(uint8(userEModeCategory));
 
     if (
@@ -359,6 +363,7 @@ contract LiquidationDataProvider is ILiquidationDataProvider {
       EModeConfiguration.isReserveEnabledOnBitmap(collateralBitmap, collateralId)
     ) {
       DataTypes.EModeCategoryLegacy memory eModeCategory = POOL.getEModeCategoryData(
+        // forge-lint: disable-next-line(unsafe-typecast)
         uint8(userEModeCategory)
       );
 
@@ -377,27 +382,12 @@ contract LiquidationDataProvider is ILiquidationDataProvider {
     return userConfiguration.isUsingAsCollateral(collateralId);
   }
 
-  function _canLiquidateThisHealthFactor(uint256 healthFactor) private view returns (bool) {
-    address priceOracleSentinel = ADDRESSES_PROVIDER.getPriceOracleSentinel();
-
-    if (healthFactor >= ValidationLogic.HEALTH_FACTOR_LIQUIDATION_THRESHOLD) {
-      return false;
-    }
-
-    if (
-      priceOracleSentinel != address(0) &&
-      healthFactor >= ValidationLogic.MINIMUM_HEALTH_FACTOR_LIQUIDATION_THRESHOLD &&
-      !IPriceOracleSentinel(priceOracleSentinel).isLiquidationAllowed()
-    ) {
-      return false;
-    }
-
-    return true;
+  function _canLiquidateThisHealthFactor(uint256 healthFactor) private pure returns (bool) {
+    return healthFactor < ValidationLogic.HEALTH_FACTOR_LIQUIDATION_THRESHOLD;
   }
 
   function _isReserveReadyForLiquidations(
     address reserveAsset,
-    bool isCollateral,
     DataTypes.ReserveConfigurationMap memory reserveConfiguration
   ) private view returns (bool) {
     bool isReserveActive = reserveConfiguration.getActive();
@@ -406,11 +396,7 @@ contract LiquidationDataProvider is ILiquidationDataProvider {
     bool areLiquidationsAllowed = POOL.getLiquidationGracePeriod(reserveAsset) <
       uint40(block.timestamp);
 
-    return
-      isReserveActive &&
-      !isReservePaused &&
-      areLiquidationsAllowed &&
-      (isCollateral ? reserveConfiguration.getLiquidationThreshold() != 0 : true);
+    return isReserveActive && !isReservePaused && areLiquidationsAllowed;
   }
 
   function _getCollateralFullInfo(
@@ -420,12 +406,12 @@ contract LiquidationDataProvider is ILiquidationDataProvider {
   ) private view returns (CollateralFullInfo memory) {
     CollateralFullInfo memory collateralInfo;
 
-    collateralInfo.assetUnit = 10 ** IERC20Detailed(reserveAsset).decimals();
+    collateralInfo.assetUnit = 10 ** IERC20Metadata(reserveAsset).decimals();
     collateralInfo.price = IPriceOracleGetter(oracle).getAssetPrice(reserveAsset);
 
     collateralInfo.aToken = POOL.getReserveAToken(reserveAsset);
 
-    collateralInfo.collateralBalance = IERC20Detailed(collateralInfo.aToken).balanceOf(user);
+    collateralInfo.collateralBalance = IERC20Metadata(collateralInfo.aToken).balanceOf(user);
 
     collateralInfo.collateralBalanceInBaseCurrency =
       (collateralInfo.collateralBalance * collateralInfo.price) /
@@ -441,16 +427,18 @@ contract LiquidationDataProvider is ILiquidationDataProvider {
   ) private view returns (DebtFullInfo memory) {
     DebtFullInfo memory debtInfo;
 
-    debtInfo.assetUnit = 10 ** IERC20Detailed(reserveAsset).decimals();
+    debtInfo.assetUnit = 10 ** IERC20Metadata(reserveAsset).decimals();
     debtInfo.price = IPriceOracleGetter(oracle).getAssetPrice(reserveAsset);
 
     debtInfo.variableDebtToken = POOL.getReserveVariableDebtToken(reserveAsset);
 
-    debtInfo.debtBalance = IERC20Detailed(debtInfo.variableDebtToken).balanceOf(user);
+    debtInfo.debtBalance = IERC20Metadata(debtInfo.variableDebtToken).balanceOf(user);
 
-    debtInfo.debtBalanceInBaseCurrency =
-      (debtInfo.debtBalance * debtInfo.price) /
-      debtInfo.assetUnit;
+    debtInfo.debtBalanceInBaseCurrency = MathUtils.mulDivCeil(
+      debtInfo.debtBalance,
+      debtInfo.price,
+      debtInfo.assetUnit
+    );
 
     return debtInfo;
   }

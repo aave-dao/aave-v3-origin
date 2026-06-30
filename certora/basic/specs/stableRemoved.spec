@@ -1,7 +1,6 @@
 
 // aave imports
 import "aux/aToken.spec";
-//import "AddressProvider.spec";
 
 methods {
   //  function getReserveDataExtended(address) external returns (DataTypes.ReserveData memory) envfree;
@@ -34,11 +33,10 @@ methods {
     uint256 debtAssetPrice,
     uint256 debtAssetUnit,
     uint256 debtToCover,
-    uint256 userCollateralBalance,
+    uint256 borrowerCollateralBalance,
     uint256 liquidationBonus
-  ) internal returns (uint256, uint256, uint256, uint256) => NONDET;
+  ) internal returns (uint256, uint256, uint256) => NONDET;
 }
-
 
 // For flashloan
 methods {
@@ -63,9 +61,10 @@ methods {
 
 
 
+
 function init_state() {
   // based on aTokensAreNotUnderlyings
-  require forall address a. 
+  require forall address a.
     a == 0 // nothing-token
     || aTokenToUnderlying[a] == 0 // underlying
     || aTokenToUnderlying[aTokenToUnderlying[a]] == 0 // aTokens map to underlyings which map to 0
@@ -93,25 +92,25 @@ hook Sstore _reserves[KEY address a].__deprecatedStableDebtTokenAddress address 
   see the above hooks.
 
   Status: PASS
-  Link: 
+  Link:
   =====================================================================================*/
 rule stableFieldsUntouched(method f, env e, address _asset)
-  filtered {f -> f.selector != sig:dropReserve(address).selector}
+  filtered {f -> true}
 {
   init_state();
-  require forall address asset. 
+  require forall address asset.
     aTokenToUnderlying[currentContract._reserves[asset].aTokenAddress]==asset
     &&
     aTokenToUnderlying[currentContract._reserves[asset].variableDebtTokenAddress]==asset;
 
-  
+
   DataTypes.ReserveDataLegacy reserveLegasy = getReserveData(_asset);
 
   uint128 currentStableBorrowRate_BEFORE = reserveLegasy.currentStableBorrowRate;
-  
+
   calldataarg args;
   f(e,args);
-  
+
   DataTypes.ReserveDataLegacy reserveLegasy2 = getReserveData(_asset);
 
   uint128 currentStableBorrowRate_AFTER = reserveLegasy2.currentStableBorrowRate;

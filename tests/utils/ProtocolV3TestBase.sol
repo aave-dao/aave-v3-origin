@@ -2,7 +2,7 @@
 pragma solidity >=0.7.5 <0.9.0;
 
 import {AggregatorInterface} from '../../src/contracts/dependencies/chainlink/AggregatorInterface.sol';
-import {IERC20Detailed} from '../../src/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
+import {IERC20Metadata} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import {IDefaultInterestRateStrategyV2} from '../../src/contracts/interfaces/IDefaultInterestRateStrategyV2.sol';
 import {ReserveConfiguration} from '../../src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
 import {IPoolAddressesProvider} from '../../src/contracts/interfaces/IPoolAddressesProvider.sol';
@@ -12,7 +12,7 @@ import {IAaveOracle} from '../../src/contracts/interfaces/IAaveOracle.sol';
 import {DataTypes} from '../../src/contracts/protocol/libraries/types/DataTypes.sol';
 import {IPoolConfigurator} from '../../src/contracts/interfaces/IPoolConfigurator.sol';
 import {ProxyHelpers} from './ProxyHelpers.sol';
-import {DiffUtils} from './DiffUtils.sol';
+import {Test} from 'forge-std/Test.sol';
 
 struct ReserveTokens {
   address aToken;
@@ -49,13 +49,9 @@ struct ReserveConfig {
   bool isPaused;
   bool isActive;
   bool isFrozen;
-  bool isSiloed;
-  bool isBorrowableInIsolation;
   bool isFlashloanable;
   uint256 supplyCap;
   uint256 borrowCap;
-  uint256 debtCeiling;
-  bool virtualAccActive;
   uint256 virtualBalance;
   uint256 aTokenUnderlyingBalance;
 }
@@ -68,7 +64,7 @@ struct LocalVars {
 /**
  * only applicable to harmony at this point
  */
-contract ProtocolV3TestBase is DiffUtils {
+contract ProtocolV3TestBase is Test {
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
 
   /**
@@ -93,12 +89,7 @@ contract ProtocolV3TestBase is DiffUtils {
     bool poolConfigs
   ) public virtual returns (ReserveConfig[] memory) {
     string memory path = string(abi.encodePacked('./reports/', reportName, '.json'));
-    // overwrite with empty json to later be extended as foundry does not currently support adding new keys
-    vm.writeFile(
-      path,
-      '{ "eModes": {}, "reserves": {}, "strategies": {}, "poolConfiguration": {}, "raw": {} }'
-    );
-    vm.serializeUint('root', 'chainId', block.chainid);
+    vm.writeJson(vm.serializeUint('root', 'chainId', block.chainid), path);
     ReserveConfig[] memory configs = _getReservesConfigs(pool);
     if (reserveConfigs) _writeReserveConfigs(path, configs, pool);
     if (strategyConfigs) _writeStrategyConfigs(path, configs);
@@ -109,7 +100,6 @@ contract ProtocolV3TestBase is DiffUtils {
   }
 
   function _writeEModeConfigs(string memory path, IPool pool) internal virtual {
-    // keys for json stringification
     string memory eModesKey = 'emodes';
     string memory content = '{}';
     vm.serializeJson(eModesKey, '{}');
@@ -124,6 +114,7 @@ contract ProtocolV3TestBase is DiffUtils {
         vm.serializeUint(key, 'eModeCategory', i);
         vm.serializeString(key, 'label', pool.getEModeCategoryLabel(i));
         vm.serializeUint(key, 'ltv', cfg.ltv);
+        vm.serializeBool(key, 'isolated', pool.getIsEModeCategoryIsolated(i));
         vm.serializeString(
           key,
           'collateralBitmap',
@@ -134,21 +125,24 @@ contract ProtocolV3TestBase is DiffUtils {
           'borrowableBitmap',
           vm.toString(pool.getEModeCategoryBorrowableBitmap(i))
         );
+        vm.serializeString(
+          key,
+          'ltvzeroBitmap',
+          vm.toString(pool.getEModeCategoryLtvzeroBitmap(i))
+        );
         vm.serializeUint(key, 'liquidationThreshold', cfg.liquidationThreshold);
         string memory object = vm.serializeUint(key, 'liquidationBonus', cfg.liquidationBonus);
         content = vm.serializeString(eModesKey, key, object);
         emptyCounter = 0;
       }
     }
-    string memory output = vm.serializeString('root', 'eModes', content);
-    vm.writeJson(output, path);
+    vm.writeJson(content, path, '.eModes');
   }
 
   function _writeStrategyConfigs(
     string memory path,
     ReserveConfig[] memory configs
   ) internal virtual {
-    // keys for json stringification
     string memory strategiesKey = 'strategies';
     string memory content = '{}';
     vm.serializeJson(strategiesKey, '{}');
@@ -189,8 +183,7 @@ contract ProtocolV3TestBase is DiffUtils {
 
       content = vm.serializeString(strategiesKey, key, object);
     }
-    string memory output = vm.serializeString('root', 'strategies', content);
-    vm.writeJson(output, path);
+    vm.writeJson(content, path, '.strategies');
   }
 
   function _writeReserveConfigs(
@@ -198,7 +191,6 @@ contract ProtocolV3TestBase is DiffUtils {
     ReserveConfig[] memory configs,
     IPool pool
   ) internal virtual {
-    // keys for json stringification
     string memory reservesKey = 'reserves';
     string memory content = '{}';
     vm.serializeJson(reservesKey, '{}');
@@ -223,30 +215,27 @@ contract ProtocolV3TestBase is DiffUtils {
       vm.serializeUint(key, 'decimals', config.decimals);
       vm.serializeUint(key, 'borrowCap', config.borrowCap);
       vm.serializeUint(key, 'supplyCap', config.supplyCap);
-      vm.serializeUint(key, 'debtCeiling', config.debtCeiling);
       vm.serializeBool(key, 'usageAsCollateralEnabled', config.usageAsCollateralEnabled);
       vm.serializeBool(key, 'borrowingEnabled', config.borrowingEnabled);
       vm.serializeBool(key, 'isPaused', config.isPaused);
       vm.serializeBool(key, 'isActive', config.isActive);
       vm.serializeBool(key, 'isFrozen', config.isFrozen);
-      vm.serializeBool(key, 'isSiloed', config.isSiloed);
-      vm.serializeBool(key, 'isBorrowableInIsolation', config.isBorrowableInIsolation);
       vm.serializeBool(key, 'isFlashloanable', config.isFlashloanable);
       vm.serializeAddress(key, 'interestRateStrategy', config.interestRateStrategy);
       vm.serializeAddress(key, 'underlying', config.underlying);
       vm.serializeAddress(key, 'aToken', config.aToken);
       vm.serializeAddress(key, 'variableDebtToken', config.variableDebtToken);
-      vm.serializeString(key, 'aTokenSymbol', IERC20Detailed(config.aToken).symbol());
-      vm.serializeString(key, 'aTokenName', IERC20Detailed(config.aToken).name());
+      vm.serializeString(key, 'aTokenSymbol', IERC20Metadata(config.aToken).symbol());
+      vm.serializeString(key, 'aTokenName', IERC20Metadata(config.aToken).name());
       vm.serializeString(
         key,
         'variableDebtTokenSymbol',
-        IERC20Detailed(config.variableDebtToken).symbol()
+        IERC20Metadata(config.variableDebtToken).symbol()
       );
       vm.serializeString(
         key,
         'variableDebtTokenName',
-        IERC20Detailed(config.variableDebtToken).name()
+        IERC20Metadata(config.variableDebtToken).name()
       );
       vm.serializeAddress(key, 'oracle', address(assetOracle));
       if (address(assetOracle) != address(0)) {
@@ -266,7 +255,6 @@ contract ProtocolV3TestBase is DiffUtils {
         }
       }
 
-      vm.serializeBool(key, 'virtualAccountingActive', config.virtualAccActive);
       vm.serializeString(key, 'virtualBalance', vm.toString(config.virtualBalance));
       vm.serializeString(
         key,
@@ -281,39 +269,20 @@ contract ProtocolV3TestBase is DiffUtils {
       );
       content = vm.serializeString(reservesKey, key, out);
     }
-    string memory output = vm.serializeString('root', 'reserves', content);
-    vm.writeJson(output, path);
+    vm.writeJson(content, path, '.reserves');
   }
 
   function _writePoolConfiguration(string memory path, IPool pool) internal virtual {
-    // keys for json stringification
     string memory poolConfigKey = 'poolConfig';
-
-    // addresses provider
     IPoolAddressesProvider addressesProvider = IPoolAddressesProvider(pool.ADDRESSES_PROVIDER());
     vm.serializeAddress(poolConfigKey, 'poolAddressesProvider', address(addressesProvider));
-
-    // oracles
     vm.serializeAddress(poolConfigKey, 'oracle', addressesProvider.getPriceOracle());
-    vm.serializeAddress(
-      poolConfigKey,
-      'priceOracleSentinel',
-      addressesProvider.getPriceOracleSentinel()
-    );
-
-    // pool configurator
     IPoolConfigurator configurator = IPoolConfigurator(addressesProvider.getPoolConfigurator());
     vm.serializeAddress(poolConfigKey, 'poolConfigurator', address(configurator));
-
-    // PoolDataProvider
     IPoolDataProvider pdp = IPoolDataProvider(addressesProvider.getPoolDataProvider());
     vm.serializeAddress(poolConfigKey, 'protocolDataProvider', address(pdp));
-
-    // pool
     string memory content = vm.serializeAddress(poolConfigKey, 'pool', address(pool));
-
-    string memory output = vm.serializeString('root', 'poolConfig', content);
-    vm.writeJson(output, path);
+    vm.writeJson(content, path, '.poolConfig');
   }
 
   function _getReservesConfigs(IPool pool) internal view virtual returns (ReserveConfig[] memory) {
@@ -358,24 +327,16 @@ contract ProtocolV3TestBase is DiffUtils {
     if (reserve == 0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2) {
       localConfig.symbol = 'MKR';
     } else {
-      localConfig.symbol = IERC20Detailed(reserve).symbol();
+      localConfig.symbol = IERC20Metadata(reserve).symbol();
     }
     localConfig.usageAsCollateralEnabled = localConfig.liquidationThreshold != 0;
-    localConfig.isSiloed = configuration.getSiloedBorrowing();
     (localConfig.borrowCap, localConfig.supplyCap) = configuration.getCaps();
-    localConfig.debtCeiling = configuration.getDebtCeiling();
     localConfig.liquidationProtocolFee = configuration.getLiquidationProtocolFee();
-    localConfig.isBorrowableInIsolation = configuration.getBorrowableInIsolation();
 
     localConfig.isFlashloanable = configuration.getFlashLoanEnabled();
 
-    // 3.1 configurations
-    localConfig.virtualAccActive = configuration.getIsVirtualAccActive();
-
-    if (localConfig.virtualAccActive) {
-      localConfig.virtualBalance = pool.getVirtualUnderlyingBalance(reserve);
-    }
-    localConfig.aTokenUnderlyingBalance = IERC20Detailed(reserve).balanceOf(localConfig.aToken);
+    localConfig.virtualBalance = pool.getVirtualUnderlyingBalance(reserve);
+    localConfig.aTokenUnderlyingBalance = IERC20Metadata(reserve).balanceOf(localConfig.aToken);
 
     return localConfig;
   }
@@ -384,34 +345,31 @@ contract ProtocolV3TestBase is DiffUtils {
   function _clone(
     ReserveConfig memory config
   ) internal pure virtual returns (ReserveConfig memory) {
-    return
-      ReserveConfig({
-        symbol: config.symbol,
-        underlying: config.underlying,
-        aToken: config.aToken,
-        variableDebtToken: config.variableDebtToken,
-        decimals: config.decimals,
-        ltv: config.ltv,
-        liquidationThreshold: config.liquidationThreshold,
-        liquidationBonus: config.liquidationBonus,
-        liquidationProtocolFee: config.liquidationProtocolFee,
-        reserveFactor: config.reserveFactor,
-        usageAsCollateralEnabled: config.usageAsCollateralEnabled,
-        borrowingEnabled: config.borrowingEnabled,
-        interestRateStrategy: config.interestRateStrategy,
-        isPaused: config.isPaused,
-        isActive: config.isActive,
-        isFrozen: config.isFrozen,
-        isSiloed: config.isSiloed,
-        isBorrowableInIsolation: config.isBorrowableInIsolation,
-        isFlashloanable: config.isFlashloanable,
-        supplyCap: config.supplyCap,
-        borrowCap: config.borrowCap,
-        debtCeiling: config.debtCeiling,
-        virtualAccActive: config.virtualAccActive,
-        virtualBalance: config.virtualBalance,
-        aTokenUnderlyingBalance: config.aTokenUnderlyingBalance
-      });
+    ReserveConfig memory configCopy;
+
+    configCopy.symbol = config.symbol;
+    configCopy.underlying = config.underlying;
+    configCopy.aToken = config.aToken;
+    configCopy.variableDebtToken = config.variableDebtToken;
+    configCopy.decimals = config.decimals;
+    configCopy.ltv = config.ltv;
+    configCopy.liquidationThreshold = config.liquidationThreshold;
+    configCopy.liquidationBonus = config.liquidationBonus;
+    configCopy.liquidationProtocolFee = config.liquidationProtocolFee;
+    configCopy.reserveFactor = config.reserveFactor;
+    configCopy.usageAsCollateralEnabled = config.usageAsCollateralEnabled;
+    configCopy.borrowingEnabled = config.borrowingEnabled;
+    configCopy.interestRateStrategy = config.interestRateStrategy;
+    configCopy.isPaused = config.isPaused;
+    configCopy.isActive = config.isActive;
+    configCopy.isFrozen = config.isFrozen;
+    configCopy.isFlashloanable = config.isFlashloanable;
+    configCopy.supplyCap = config.supplyCap;
+    configCopy.borrowCap = config.borrowCap;
+    configCopy.virtualBalance = config.virtualBalance;
+    configCopy.aTokenUnderlyingBalance = config.aTokenUnderlyingBalance;
+
+    return configCopy;
   }
 
   function _findReserveConfig(
@@ -455,23 +413,26 @@ contract ProtocolV3TestBase is DiffUtils {
       config.underlying == expectedConfig.underlying,
       '_validateReserveConfig() : INVALID_UNDERLYING'
     );
-    require(config.decimals == expectedConfig.decimals, '_validateReserveConfig: INVALID_DECIMALS');
-    require(config.ltv == expectedConfig.ltv, '_validateReserveConfig: INVALID_LTV');
+    require(
+      config.decimals == expectedConfig.decimals,
+      '_validateReserveConfig: InvalidDecimals()'
+    );
+    require(config.ltv == expectedConfig.ltv, '_validateReserveConfig: InvalidLtv()');
     require(
       config.liquidationThreshold == expectedConfig.liquidationThreshold,
-      '_validateReserveConfig: INVALID_LIQ_THRESHOLD'
+      '_validateReserveConfig: InvalidLiquidationThreshold()'
     );
     require(
       config.liquidationBonus == expectedConfig.liquidationBonus,
-      '_validateReserveConfig: INVALID_LIQ_BONUS'
+      '_validateReserveConfig: InvalidLiquidationBonus()'
     );
     require(
       config.liquidationProtocolFee == expectedConfig.liquidationProtocolFee,
-      '_validateReserveConfig: INVALID_LIQUIDATION_PROTOCOL_FEE'
+      '_validateReserveConfig: InvalidLiquidationProtocolFee()'
     );
     require(
       config.reserveFactor == expectedConfig.reserveFactor,
-      '_validateReserveConfig: INVALID_RESERVE_FACTOR'
+      '_validateReserveConfig: InvalidReserveFactor()'
     );
 
     require(
@@ -491,28 +452,16 @@ contract ProtocolV3TestBase is DiffUtils {
       '_validateReserveConfig: INVALID_IS_FROZEN'
     );
     require(
-      config.isSiloed == expectedConfig.isSiloed,
-      '_validateReserveConfig: INVALID_IS_SILOED'
-    );
-    require(
-      config.isBorrowableInIsolation == expectedConfig.isBorrowableInIsolation,
-      '_validateReserveConfig: INVALID_IS_BORROWABLE_IN_ISOLATION'
-    );
-    require(
       config.isFlashloanable == expectedConfig.isFlashloanable,
       '_validateReserveConfig: INVALID_IS_FLASHLOANABLE'
     );
     require(
       config.supplyCap == expectedConfig.supplyCap,
-      '_validateReserveConfig: INVALID_SUPPLY_CAP'
+      '_validateReserveConfig: InvalidSupplyCap()'
     );
     require(
       config.borrowCap == expectedConfig.borrowCap,
-      '_validateReserveConfig: INVALID_BORROW_CAP'
-    );
-    require(
-      config.debtCeiling == expectedConfig.debtCeiling,
-      '_validateReserveConfig: INVALID_DEBT_CEILING'
+      '_validateReserveConfig: InvalidBorrowCap()'
     );
     require(
       config.interestRateStrategy == expectedConfig.interestRateStrategy,
@@ -663,14 +612,6 @@ contract ProtocolV3TestBase is DiffUtils {
       '_noReservesConfigsChangesApartNewListings() : UNEXPECTED_IS_FROZEN_CHANGED'
     );
     require(
-      config1.isSiloed == config2.isSiloed,
-      '_noReservesConfigsChangesApartNewListings() : UNEXPECTED_IS_SILOED_CHANGED'
-    );
-    require(
-      config1.isBorrowableInIsolation == config2.isBorrowableInIsolation,
-      '_noReservesConfigsChangesApartNewListings() : UNEXPECTED_IS_BORROWABLE_IN_ISOLATION_CHANGED'
-    );
-    require(
       config1.isFlashloanable == config2.isFlashloanable,
       '_noReservesConfigsChangesApartNewListings() : UNEXPECTED_IS_FLASHLOANABLE_CHANGED'
     );
@@ -681,10 +622,6 @@ contract ProtocolV3TestBase is DiffUtils {
     require(
       config1.borrowCap == config2.borrowCap,
       '_noReservesConfigsChangesApartNewListings() : UNEXPECTED_BORROW_CAP_CHANGED'
-    );
-    require(
-      config1.debtCeiling == config2.debtCeiling,
-      '_noReservesConfigsChangesApartNewListings() : UNEXPECTED_DEBT_CEILING_CHANGED'
     );
   }
 
@@ -738,14 +675,16 @@ contract ProtocolV3TestBase is DiffUtils {
   ) internal view {
     address poolAddress = addressesProvider.getPool();
     DataTypes.CollateralConfig memory cfg = IPool(poolAddress).getEModeCategoryCollateralConfig(
+      // forge-lint: disable-next-line(unsafe-typecast)
       uint8(category)
     );
     require(
+      // forge-lint: disable-next-line(unsafe-typecast)
       keccak256(bytes(IPool(poolAddress).getEModeCategoryLabel(uint8(category)))) ==
         keccak256(bytes(expectedCategoryData.label)),
       '_validateEmodeCategory(): INVALID_LABEL'
     );
-    require(cfg.ltv == expectedCategoryData.ltv, '_validateEmodeCategory(): INVALID_LTV');
+    require(cfg.ltv == expectedCategoryData.ltv, '_validateEmodeCategory(): InvalidLtv()');
     require(
       cfg.liquidationThreshold == expectedCategoryData.liquidationThreshold,
       '_validateEmodeCategory(): INVALID_LT'
@@ -755,14 +694,16 @@ contract ProtocolV3TestBase is DiffUtils {
       '_validateEmodeCategory(): INVALID_LB'
     );
     require(
+      // forge-lint: disable-next-line(unsafe-typecast)
       IPool(poolAddress).getEModeCategoryCollateralBitmap(uint8(category)) ==
         expectedCategoryData.collateralBitmap,
-      '_validateEmodeCategory(): INVALID_LB'
+      '_validateEmodeCategory(): INVALID_COLLATERALS'
     );
     require(
+      // forge-lint: disable-next-line(unsafe-typecast)
       IPool(poolAddress).getEModeCategoryBorrowableBitmap(uint8(category)) ==
         expectedCategoryData.borrowableBitmap,
-      '_validateEmodeCategory(): INVALID_LB'
+      '_validateEmodeCategory(): INVALID_BORROWABLES'
     );
   }
 
@@ -770,8 +711,8 @@ contract ProtocolV3TestBase is DiffUtils {
    * @dev forwards time by x blocks
    */
   function _skipBlocks(uint128 blocks) internal {
-    vm.roll(block.number + blocks);
-    vm.warp(block.timestamp + blocks * 12); // assuming a block is around 12seconds
+    vm.roll(vm.getBlockNumber() + blocks);
+    vm.warp(vm.getBlockTimestamp() + blocks * 12); // assuming a block is around 12seconds
   }
 
   function _isInUint256Array(

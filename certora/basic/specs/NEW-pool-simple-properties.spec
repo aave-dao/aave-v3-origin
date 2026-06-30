@@ -172,6 +172,10 @@ rule cannotBorrowOnInactiveReserve(env e) {
   assert reserveIsActive;
 }
 
+/*
+
+From V3.6 the following rule is no longer true due to changen in eModes behaviour
+
 // It is impossible to borrow on a reserve, that is disabled for borrowing.
 // Proved
 // https://prover.certora.com/output/40577/1b50faf4cbb3459c9563e4af75658525/?anonymousKey=e04b8838d1f6eceb3fb29504969ecf0817269679
@@ -187,7 +191,7 @@ rule cannotBorrowOnReserveDisabledForBorrowing(env e) {
   borrow(e, asset, amount, interestRateMode, referralCode, onBehalfOf);
 
   assert reserveIsEnabledForBorrow;
-}
+  }*/
 
 // @title It is impossible to borrow on frozen reserve.
 // Proved

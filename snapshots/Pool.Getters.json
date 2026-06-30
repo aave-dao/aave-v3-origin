@@ -1,14 +1,15 @@
 {
-  "getEModeCategoryCollateralConfig": "8000",
-  "getEModeCategoryData": "11053",
-  "getLiquidationGracePeriod": "7765",
-  "getReserveData": "32157",
-  "getUserAccountData: supplies: 0, borrows: 0": "22641",
-  "getUserAccountData: supplies: 0, borrows: 0 with eMode enabled": "22641",
-  "getUserAccountData: supplies: 1, borrows: 0": "58553",
-  "getUserAccountData: supplies: 1, borrows: 0 with eMode enabled": "61360",
-  "getUserAccountData: supplies: 2, borrows: 0": "87575",
-  "getUserAccountData: supplies: 2, borrows: 0 with eMode enabled": "90767",
-  "getUserAccountData: supplies: 2, borrows: 1": "118931",
-  "getUserAccountData: supplies: 2, borrows: 1 with eMode enabled": "122123"
+  "getEModeCategoryCollateralConfig": "8023",
+  "getEModeCategoryData": "11076",
+  "getLiquidationGracePeriod": "7781",
+  "getReserveData": "27646",
+  "getUserAccountData: supplies: 0, borrows: 0": "20274",
+  "getUserAccountData: supplies: 0, borrows: 0 with eMode enabled": "20274",
+  "getUserAccountData: supplies: 1, borrows: 0": "55235",
+  "getUserAccountData: supplies: 1, borrows: 0 with eMode enabled": "60484",
+  "getUserAccountData: supplies: 2, borrows: 0": "84507",
+  "getUserAccountData: supplies: 2, borrows: 0 with eMode enabled": "90558",
+  "getUserAccountData: supplies: 2, borrows: 0 with isolated eMode enabled": "90047",
+  "getUserAccountData: supplies: 2, borrows: 1": "115196",
+  "getUserAccountData: supplies: 2, borrows: 1 with eMode enabled": "121248"
 }

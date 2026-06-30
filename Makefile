@@ -33,25 +33,15 @@ coverage :
 	make coverage-report
 	make coverage-badge
 
-
-# Utilities
-download :; cast etherscan-source --chain ${chain} -d src/etherscan/${chain}_${address} ${address}
-git-diff :
-	@mkdir -p diffs
-	# @npx prettier ${before} ${after} --write
-	@printf '%s\n%s\n%s\n' "\`\`\`diff" "$$(git diff --no-index --ignore-space-at-eol ${before} ${after})" "\`\`\`" > diffs/${out}.md
-
 # Deploy
 deploy-libs-one	:;
-	FOUNDRY_PROFILE=${chain} forge script scripts/misc/LibraryPreCompileOne.sol --rpc-url ${chain} --ledger --mnemonic-indexes ${MNEMONIC_INDEX} --sender ${LEDGER_SENDER} --slow --broadcast
+	forge script scripts/misc/LibraryPreCompileOne.sol --rpc-url ${chain} --ledger --mnemonic-indexes ${MNEMONIC_INDEX} --sender ${LEDGER_SENDER} --slow --broadcast --verify
 deploy-libs-two	:;
-	FOUNDRY_PROFILE=${chain} forge script scripts/misc/LibraryPreCompileTwo.sol --rpc-url ${chain} --ledger --mnemonic-indexes ${MNEMONIC_INDEX} --sender ${LEDGER_SENDER} --slow --broadcast
+	forge script scripts/misc/LibraryPreCompileTwo.sol --rpc-url ${chain} --ledger --mnemonic-indexes ${MNEMONIC_INDEX} --sender ${LEDGER_SENDER} --slow --broadcast --verify
 
 deploy-libs :
 	make deploy-libs-one chain=${chain}
-	npx catapulta-verify -b broadcast/LibraryPreCompileOne.sol/${chainId}/run-latest.json
 	make deploy-libs-two chain=${chain}
-	npx catapulta-verify -b broadcast/LibraryPreCompileTwo.sol/${chainId}/run-latest.json
 
 
 # Invariants

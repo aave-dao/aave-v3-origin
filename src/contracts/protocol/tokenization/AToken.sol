@@ -1,19 +1,20 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.10;
 
-import {IERC20} from '../../dependencies/openzeppelin/contracts/IERC20.sol';
+import {SafeCast} from 'openzeppelin-contracts/contracts/utils/math/SafeCast.sol';
+import {ECDSA} from 'openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol';
+
+import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
 import {GPv2SafeERC20} from '../../dependencies/gnosis/contracts/GPv2SafeERC20.sol';
-import {SafeCast} from '../../dependencies/openzeppelin/contracts/SafeCast.sol';
 import {VersionedInitializable} from '../../misc/aave-upgradeability/VersionedInitializable.sol';
 import {Errors} from '../libraries/helpers/Errors.sol';
-import {WadRayMath} from '../libraries/math/WadRayMath.sol';
 import {IPool} from '../../interfaces/IPool.sol';
 import {IAToken} from '../../interfaces/IAToken.sol';
-import {IAaveIncentivesController} from '../../interfaces/IAaveIncentivesController.sol';
 import {IInitializableAToken} from '../../interfaces/IInitializableAToken.sol';
 import {ScaledBalanceTokenBase} from './base/ScaledBalanceTokenBase.sol';
 import {IncentivizedERC20} from './base/IncentivizedERC20.sol';
 import {EIP712Base} from './base/EIP712Base.sol';
+import {TokenMath} from '../libraries/helpers/TokenMath.sol';
 
 /**
  * @title Aave ERC20 AToken
@@ -21,32 +22,37 @@ import {EIP712Base} from './base/EIP712Base.sol';
  * @notice Implementation of the interest bearing token for the Aave protocol
  */
 abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP712Base, IAToken {
-  using WadRayMath for uint256;
+  using TokenMath for uint256;
   using SafeCast for uint256;
   using GPv2SafeERC20 for IERC20;
 
   bytes32 public constant PERMIT_TYPEHASH =
     keccak256('Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)');
 
-  address internal _treasury;
+  address public immutable TREASURY;
+
+  address internal _deprecated_treasury;
   address internal _underlyingAsset;
 
   /**
    * @dev Constructor.
    * @param pool The address of the Pool contract
+   * @param rewardsController The address of the rewards controller contract
+   * @param treasury The address of the treasury. This is where accrued interest is sent.
    */
   constructor(
-    IPool pool
-  ) ScaledBalanceTokenBase(pool, 'ATOKEN_IMPL', 'ATOKEN_IMPL', 0) EIP712Base() {
-    // Intentionally left blank
+    IPool pool,
+    address rewardsController,
+    address treasury
+  ) ScaledBalanceTokenBase(pool, 'ATOKEN_IMPL', 'ATOKEN_IMPL', 0, rewardsController) EIP712Base() {
+    require(treasury != address(0), Errors.ZeroAddressNotValid());
+    TREASURY = treasury;
   }
 
   /// @inheritdoc IInitializableAToken
   function initialize(
     IPool initializingPool,
-    address treasury,
     address underlyingAsset,
-    IAaveIncentivesController incentivesController,
     uint8 aTokenDecimals,
     string calldata aTokenName,
     string calldata aTokenSymbol,
@@ -57,10 +63,17 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
   function mint(
     address caller,
     address onBehalfOf,
-    uint256 amount,
+    uint256 scaledAmount,
     uint256 index
   ) external virtual override onlyPool returns (bool) {
-    return _mintScaled(caller, onBehalfOf, amount, index);
+    return
+      _mintScaled({
+        caller: caller,
+        onBehalfOf: onBehalfOf,
+        amountScaled: scaledAmount,
+        index: index,
+        getTokenBalance: TokenMath.getATokenBalance
+      });
   }
 
   /// @inheritdoc IAToken
@@ -68,54 +81,70 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
     address from,
     address receiverOfUnderlying,
     uint256 amount,
+    uint256 scaledAmount,
     uint256 index
-  ) external virtual override onlyPool {
-    _burnScaled(from, receiverOfUnderlying, amount, index);
+  ) external virtual override onlyPool returns (bool) {
+    bool zeroBalanceAfterBurn = _burnScaled({
+      user: from,
+      target: receiverOfUnderlying,
+      amountScaled: scaledAmount,
+      index: index,
+      getTokenBalance: TokenMath.getATokenBalance
+    });
+
     if (receiverOfUnderlying != address(this)) {
       IERC20(_underlyingAsset).safeTransfer(receiverOfUnderlying, amount);
     }
+    return zeroBalanceAfterBurn;
   }
 
   /// @inheritdoc IAToken
-  function mintToTreasury(uint256 amount, uint256 index) external virtual override onlyPool {
-    if (amount == 0) {
+  function mintToTreasury(uint256 scaledAmount, uint256 index) external virtual override onlyPool {
+    if (scaledAmount == 0) {
       return;
     }
-    _mintScaled(address(POOL), _treasury, amount, index);
+    _mintScaled({
+      caller: address(POOL),
+      onBehalfOf: TREASURY,
+      amountScaled: scaledAmount,
+      index: index,
+      getTokenBalance: TokenMath.getATokenBalance
+    });
   }
 
   /// @inheritdoc IAToken
   function transferOnLiquidation(
     address from,
     address to,
-    uint256 value
+    uint256 amount,
+    uint256 scaledAmount,
+    uint256 index
   ) external virtual override onlyPool {
-    // Being a normal transfer, the Transfer() and BalanceTransfer() are emitted
-    // so no need to emit a specific event here
-    _transfer(from, to, value, false);
+    _transfer({
+      sender: from,
+      recipient: to,
+      amount: amount,
+      scaledAmount: scaledAmount.toUint120(),
+      index: index
+    });
   }
 
   /// @inheritdoc IERC20
   function balanceOf(
     address user
   ) public view virtual override(IncentivizedERC20, IERC20) returns (uint256) {
-    return super.balanceOf(user).rayMul(POOL.getReserveNormalizedIncome(_underlyingAsset));
+    return
+      super.balanceOf(user).getATokenBalance(POOL.getReserveNormalizedIncome(_underlyingAsset));
   }
 
   /// @inheritdoc IERC20
   function totalSupply() public view virtual override(IncentivizedERC20, IERC20) returns (uint256) {
-    uint256 currentSupplyScaled = super.totalSupply();
-
-    if (currentSupplyScaled == 0) {
-      return 0;
-    }
-
-    return currentSupplyScaled.rayMul(POOL.getReserveNormalizedIncome(_underlyingAsset));
+    return super.totalSupply().getATokenBalance(POOL.getReserveNormalizedIncome(_underlyingAsset));
   }
 
   /// @inheritdoc IAToken
   function RESERVE_TREASURY_ADDRESS() external view override returns (address) {
-    return _treasury;
+    return TREASURY;
   }
 
   /// @inheritdoc IAToken
@@ -129,15 +158,6 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
   }
 
   /// @inheritdoc IAToken
-  function handleRepayment(
-    address user,
-    address onBehalfOf,
-    uint256 amount
-  ) external virtual override onlyPool {
-    // Intentionally left blank
-  }
-
-  /// @inheritdoc IAToken
   function permit(
     address owner,
     address spender,
@@ -147,9 +167,9 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
     bytes32 r,
     bytes32 s
   ) external override {
-    require(owner != address(0), Errors.ZERO_ADDRESS_NOT_VALID);
+    require(owner != address(0), Errors.ZeroAddressNotValid());
     //solium-disable-next-line
-    require(block.timestamp <= deadline, Errors.INVALID_EXPIRATION);
+    require(block.timestamp <= deadline, Errors.InvalidExpiration());
     uint256 currentValidNonce = _nonces[owner];
     bytes32 digest = keccak256(
       abi.encodePacked(
@@ -158,34 +178,61 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
         keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, value, currentValidNonce, deadline))
       )
     );
-    require(owner == ecrecover(digest, v, r, s), Errors.INVALID_SIGNATURE);
+    require(owner == ECDSA.recover(digest, v, r, s), Errors.InvalidSignature());
     _nonces[owner] = currentValidNonce + 1;
-    _approve(owner, spender, value);
+    _approve({owner: owner, spender: spender, amount: value, emitEvent: true});
   }
 
-  /**
-   * @notice Transfers the aTokens between two users. Validates the transfer
-   * (ie checks for valid HF after the transfer) if required
-   * @param from The source address
-   * @param to The destination address
-   * @param amount The amount getting transferred
-   * @param validate True if the transfer needs to be validated, false otherwise
-   */
-  function _transfer(address from, address to, uint256 amount, bool validate) internal virtual {
-    address underlyingAsset = _underlyingAsset;
-
-    uint256 index = POOL.getReserveNormalizedIncome(underlyingAsset);
-
-    uint256 fromBalanceBefore = super.balanceOf(from).rayMul(index);
-    uint256 toBalanceBefore = super.balanceOf(to).rayMul(index);
-
-    super._transfer(from, to, amount, index);
-
-    if (validate) {
-      POOL.finalizeTransfer(underlyingAsset, from, to, amount, fromBalanceBefore, toBalanceBefore);
-    }
-
-    emit BalanceTransfer(from, to, amount.rayDiv(index), index);
+  /// @inheritdoc IERC20
+  function transferFrom(
+    address sender,
+    address recipient,
+    uint256 amount
+  ) external virtual override(IERC20, IncentivizedERC20) returns (bool) {
+    uint256 index = POOL.getReserveNormalizedIncome(_underlyingAsset);
+    uint256 scaledBalanceOfSender = super.balanceOf(sender);
+    _spendAllowance(
+      sender,
+      _msgSender(),
+      amount,
+      // This comment explains the logic behind the allowance spent calculation.
+      //
+      // Problem:
+      // Simply decreasing the allowance by the input `amount` is not ideal for scaled-balance tokens.
+      // Due to rounding, the actual decrease in the sender's balance (`amount_out`) can be slightly
+      // larger than the input `amount`.
+      //
+      // Definitions:
+      // - `amount`: The unscaled amount to be transferred, passed as the `amount` argument.
+      // - `amount_out`: The actual unscaled amount deducted from the sender's balance.
+      // - `amount_in`: The actual unscaled amount added to the recipient's balance.
+      // - `allowance_spent`: The unscaled amount deducted from the spender's allowance. Equivalent to `amount_out`.
+      // - `amount_logged`: The amount logged in the `Transfer` event. Equivalent to `amount`.
+      //
+      // Solution:
+      // To fix this, `allowance_spent` must be exactly equal to `amount_out`.
+      // We calculate `amount_out` precisely by simulating the effect of the transfer on the sender's balance.
+      // By passing `amount_out` to `_spendAllowance`, we ensure `allowance_spent` is as close as possible to `amount_out`.
+      // `amount_logged` is equal to `amount`. `amount_in` is the actual balance increase for the recipient, which is >= `amount` due to rounding.
+      //
+      // Backward Compatibility & Guarantees:
+      // This implementation is backward-compatible and secure. The `_spendAllowance` function has a critical feature:
+      // 1. It REQUIRES the allowance to be >= `amount` (the user's requested transfer amount).
+      // 2. The amount consumed from the allowance is `amount_out`, but it is capped at the `currentAllowance`.
+      // This means if a user has an allowance of 100 wei and calls `transferFrom` with an `amount` of 100, the call will succeed
+      // even if the calculated `amount_out` is 101 wei. In that specific scenario, the allowance consumed will be 100 wei (since that is the `currentAllowance`),
+      // and the transaction will not revert. But if the allowance is 101 wei, then the allowance consumed will be 101 wei.
+      //
+      // uint256 amount_in = amount.getATokenTransferScaledAmount(index);
+      // uint256 amount_out = balanceBefore - balanceAfter = scaledBalanceOfSender.getATokenBalance(index) - (scaledBalanceOfSender - amount_in).getATokenBalance(index);
+      // Due to limitations of the solidity compiler, the calculation is inlined for gas efficiency.
+      scaledBalanceOfSender.getATokenBalance(index) -
+        (scaledBalanceOfSender - amount.getATokenTransferScaledAmount(index)).getATokenBalance(
+          index
+        )
+    );
+    _transfer(sender, recipient, amount.toUint120());
+    return true;
   }
 
   /**
@@ -194,8 +241,72 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
    * @param to The destination address
    * @param amount The amount getting transferred
    */
-  function _transfer(address from, address to, uint128 amount) internal virtual override {
-    _transfer(from, to, amount, true);
+  function _transfer(address from, address to, uint120 amount) internal virtual override {
+    address underlyingAsset = _underlyingAsset;
+
+    uint256 index = POOL.getReserveNormalizedIncome(underlyingAsset);
+
+    uint256 scaledBalanceFromBefore = super.balanceOf(from);
+    uint256 scaledAmount = uint256(amount).getATokenTransferScaledAmount(index);
+
+    _transfer({
+      sender: from,
+      recipient: to,
+      amount: amount,
+      scaledAmount: scaledAmount.toUint120(),
+      index: index
+    });
+
+    POOL.finalizeTransfer({
+      asset: underlyingAsset,
+      from: from,
+      to: to,
+      scaledAmount: scaledAmount,
+      scaledBalanceFromBefore: scaledBalanceFromBefore
+    });
+  }
+
+  /**
+   * @notice Implements the basic logic to transfer scaled balance tokens between two users
+   * @dev It emits a mint event with the interest accrued per user
+   * @param sender The source address
+   * @param recipient The destination address
+   * @param amount The amount getting transferred
+   * @param scaledAmount The scaled amount getting transferred
+   * @param index The next liquidity index of the reserve
+   */
+  function _transfer(
+    address sender,
+    address recipient,
+    uint256 amount,
+    uint120 scaledAmount,
+    uint256 index
+  ) internal virtual {
+    uint256 senderScaledBalance = super.balanceOf(sender);
+    uint256 senderBalanceIncrease = senderScaledBalance.getATokenBalance(index) -
+      senderScaledBalance.getATokenBalance(_userState[sender].additionalData);
+
+    uint256 recipientScaledBalance = super.balanceOf(recipient);
+    uint256 recipientBalanceIncrease = recipientScaledBalance.getATokenBalance(index) -
+      recipientScaledBalance.getATokenBalance(_userState[recipient].additionalData);
+
+    _userState[sender].additionalData = index.toUint128();
+    _userState[recipient].additionalData = index.toUint128();
+
+    super._transfer(sender, recipient, scaledAmount);
+
+    if (senderBalanceIncrease > 0) {
+      emit Transfer(address(0), sender, senderBalanceIncrease);
+      emit Mint(_msgSender(), sender, senderBalanceIncrease, senderBalanceIncrease, index);
+    }
+
+    if (sender != recipient && recipientBalanceIncrease > 0) {
+      emit Transfer(address(0), recipient, recipientBalanceIncrease);
+      emit Mint(_msgSender(), recipient, recipientBalanceIncrease, recipientBalanceIncrease, index);
+    }
+
+    emit Transfer(sender, recipient, amount);
+    emit BalanceTransfer(sender, recipient, scaledAmount, index);
   }
 
   /**
@@ -221,7 +332,7 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
 
   /// @inheritdoc IAToken
   function rescueTokens(address token, address to, uint256 amount) external override onlyPoolAdmin {
-    require(token != _underlyingAsset, Errors.UNDERLYING_CANNOT_BE_RESCUED);
+    require(token != _underlyingAsset, Errors.UnderlyingCannotBeRescued());
     IERC20(token).safeTransfer(to, amount);
   }
 }

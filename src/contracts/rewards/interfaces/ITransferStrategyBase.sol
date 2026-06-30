@@ -2,6 +2,9 @@
 pragma solidity ^0.8.10;
 
 interface ITransferStrategyBase {
+  error CallerNotIncentivesController();
+  error OnlyRewardsAdmin();
+
   event EmergencyWithdrawal(
     address indexed caller,
     address indexed token,

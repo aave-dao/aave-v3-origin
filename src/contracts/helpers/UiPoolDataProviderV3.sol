@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.10;
 
-import {IERC20Detailed} from '../dependencies/openzeppelin/contracts/IERC20Detailed.sol';
+import {IERC20Metadata} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import {IPoolAddressesProvider} from '../interfaces/IPoolAddressesProvider.sol';
 import {IPool} from '../interfaces/IPool.sol';
 import {IAaveOracle} from '../interfaces/IAaveOracle.sol';
@@ -79,7 +79,7 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
         reserveData.underlyingAsset
       );
       reserveData.priceOracle = oracle.getSourceOfAsset(reserveData.underlyingAsset);
-      reserveData.availableLiquidity = IERC20Detailed(reserveData.underlyingAsset).balanceOf(
+      reserveData.availableLiquidity = IERC20Metadata(reserveData.underlyingAsset).balanceOf(
         reserveData.aTokenAddress
       );
       reserveData.totalScaledVariableDebt = IVariableDebtToken(reserveData.variableDebtTokenAddress)
@@ -92,8 +92,8 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
         reserveData.symbol = bytes32ToString(symbol);
         reserveData.name = bytes32ToString(name);
       } else {
-        reserveData.symbol = IERC20Detailed(reserveData.underlyingAsset).symbol();
-        reserveData.name = IERC20Detailed(reserveData.underlyingAsset).name();
+        reserveData.symbol = IERC20Metadata(reserveData.underlyingAsset).symbol();
+        reserveData.name = IERC20Metadata(reserveData.underlyingAsset).name();
       }
 
       //stores the reserve configuration
@@ -128,8 +128,8 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
 
       // v3 only
       reserveData.deficit = uint128(pool.getReserveDeficit(reserveData.underlyingAsset));
-      reserveData.debtCeiling = reserveConfigurationMap.getDebtCeiling();
-      reserveData.debtCeilingDecimals = poolDataProvider.getDebtCeilingDecimals();
+      reserveData.debtCeiling = 0;
+      reserveData.debtCeilingDecimals = 0;
       (reserveData.borrowCap, reserveData.supplyCap) = reserveConfigurationMap.getCaps();
 
       try poolDataProvider.getFlashLoanEnabled(reserveData.underlyingAsset) returns (
@@ -140,28 +140,14 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
         reserveData.flashLoanEnabled = true;
       }
 
-      reserveData.isSiloedBorrowing = reserveConfigurationMap.getSiloedBorrowing();
-      reserveData.unbacked = baseData.unbacked;
-      reserveData.isolationModeTotalDebt = baseData.isolationModeTotalDebt;
+      reserveData.isSiloedBorrowing = false;
+      reserveData.isolationModeTotalDebt = 0;
       reserveData.accruedToTreasury = baseData.accruedToTreasury;
 
-      reserveData.borrowableInIsolation = reserveConfigurationMap.getBorrowableInIsolation();
-
-      try poolDataProvider.getIsVirtualAccActive(reserveData.underlyingAsset) returns (
-        bool virtualAccActive
-      ) {
-        reserveData.virtualAccActive = virtualAccActive;
-      } catch (bytes memory) {
-        reserveData.virtualAccActive = false;
-      }
-
-      try pool.getVirtualUnderlyingBalance(reserveData.underlyingAsset) returns (
-        uint128 virtualUnderlyingBalance
-      ) {
-        reserveData.virtualUnderlyingBalance = virtualUnderlyingBalance;
-      } catch (bytes memory) {
-        reserveData.virtualUnderlyingBalance = 0;
-      }
+      reserveData.borrowableInIsolation = false;
+      reserveData.virtualUnderlyingBalance = pool.getVirtualUnderlyingBalance(
+        reserveData.underlyingAsset
+      );
     }
 
     BaseCurrencyInfo memory baseCurrencyInfo;
@@ -172,6 +158,8 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
 
     try oracle.BASE_CURRENCY_UNIT() returns (uint256 baseCurrencyUnit) {
       baseCurrencyInfo.marketReferenceCurrencyUnit = baseCurrencyUnit;
+      // Safe to cast, assuming the price feed always returns positive, also on protocol
+      // forge-lint: disable-next-line(unsafe-typecast)
       baseCurrencyInfo.marketReferenceCurrencyPriceInUsd = int256(baseCurrencyUnit);
     } catch (bytes memory /*lowLevelData*/) {
       baseCurrencyInfo.marketReferenceCurrencyUnit = ETH_CURRENCY_UNIT;
@@ -192,6 +180,14 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
     for (uint8 i = 1; i < 256; i++) {
       DataTypes.CollateralConfig memory cfg = pool.getEModeCategoryCollateralConfig(i);
       if (cfg.liquidationThreshold != 0) {
+        uint128 ltvzeroBitmap;
+        try pool.getEModeCategoryLtvzeroBitmap(i) returns (uint128 _ltvzeroBitmap) {
+          ltvzeroBitmap = _ltvzeroBitmap;
+        } catch (bytes memory /*lowLevelData*/) {}
+        bool isolated;
+        try pool.getIsEModeCategoryIsolated(i) returns (bool _isolated) {
+          isolated = _isolated;
+        } catch (bytes memory /*lowLevelData*/) {}
         tempCategories[eModesFound] = Emode({
           eMode: DataTypes.EModeCategory({
             ltv: cfg.ltv,
@@ -199,7 +195,9 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
             liquidationBonus: cfg.liquidationBonus,
             label: pool.getEModeCategoryLabel(i),
             collateralBitmap: pool.getEModeCategoryCollateralBitmap(i),
-            borrowableBitmap: pool.getEModeCategoryBorrowableBitmap(i)
+            borrowableBitmap: pool.getEModeCategoryBorrowableBitmap(i),
+            ltvzeroBitmap: ltvzeroBitmap,
+            isolated: isolated
           }),
           id: i
         });

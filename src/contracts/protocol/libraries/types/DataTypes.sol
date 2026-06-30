@@ -29,13 +29,13 @@ library DataTypes {
     address stableDebtTokenAddress;
     //variableDebtToken address
     address variableDebtTokenAddress;
-    //address of the interest rate strategy
+    // DEPRECATED on v3.4.0, should use the `RESERVE_INTEREST_RATE_STRATEGY` variable from the Pool contract
     address interestRateStrategyAddress;
     //the current treasury balance, scaled
     uint128 accruedToTreasury;
-    //the outstanding unbacked aTokens minted through the bridging feature
+    // DEPRECATED on v3.4.0
     uint128 unbacked;
-    //the outstanding debt borrowed against this asset in isolation mode
+    // DEPRECATED on v3.7.0
     uint128 isolationModeTotalDebt;
   }
 
@@ -65,16 +65,17 @@ library DataTypes {
     address __deprecatedStableDebtTokenAddress;
     //variableDebtToken address
     address variableDebtTokenAddress;
-    //address of the interest rate strategy
-    address interestRateStrategyAddress;
+    // DEPRECATED on v3.4.0, should use the `RESERVE_INTEREST_RATE_STRATEGY` variable from the Pool contract
+    address __deprecatedInterestRateStrategyAddress;
     //the current treasury balance, scaled
     uint128 accruedToTreasury;
-    //the outstanding unbacked aTokens minted through the bridging feature
-    uint128 unbacked;
-    //the outstanding debt borrowed against this asset in isolation mode
-    uint128 isolationModeTotalDebt;
-    //the amount of underlying accounted for by the protocol
+    // In aave 3.3.0 this storage slot contained the `unbacked`
     uint128 virtualUnderlyingBalance;
+    //the outstanding debt borrowed against this asset in isolation mode
+    uint128 __deprecatedIsolationModeTotalDebt;
+    //the amount of underlying accounted for by the protocol
+    // DEPRECATED on v3.4.0. Moved into the same slot as accruedToTreasury for optimized storage access.
+    uint128 __deprecatedVirtualUnderlyingBalance;
   }
 
   struct ReserveConfigurationMap {
@@ -87,17 +88,17 @@ library DataTypes {
     //bit 58: borrowing is enabled
     //bit 59: DEPRECATED: stable rate borrowing enabled
     //bit 60: asset is paused
-    //bit 61: borrowing in isolation mode is enabled
-    //bit 62: siloed borrowing enabled
+    //bit 61: DEPRECATED: borrowing in isolation mode is enabled
+    //bit 62: DEPRECATED: siloed borrowing enabled
     //bit 63: flashloaning enabled
     //bit 64-79: reserve factor
     //bit 80-115: borrow cap in whole tokens, borrowCap == 0 => no cap
     //bit 116-151: supply cap in whole tokens, supplyCap == 0 => no cap
     //bit 152-167: liquidation protocol fee
     //bit 168-175: DEPRECATED: eMode category
-    //bit 176-211: unbacked mint cap in whole tokens, unbackedMintCap == 0 => minting disabled
-    //bit 212-251: debt ceiling for isolation mode with (ReserveConfiguration::DEBT_CEILING_DECIMALS) decimals
-    //bit 252: virtual accounting is enabled for the reserve
+    //bit 176-211: DEPRECATED: unbacked mint cap
+    //bit 212-251: DEPRECATED: debt ceiling for isolation mode with (ReserveConfiguration::DEBT_CEILING_DECIMALS) decimals
+    //bit 252: DEPRECATED: virtual accounting is enabled for the reserve
     //bit 253-255 unused
 
     uint256 data;
@@ -133,6 +134,7 @@ library DataTypes {
     uint16 ltv;
     uint16 liquidationThreshold;
     uint16 liquidationBonus;
+    bool isolated;
     string label;
   }
 
@@ -142,8 +144,10 @@ library DataTypes {
     uint16 liquidationThreshold;
     uint16 liquidationBonus;
     uint128 collateralBitmap;
+    bool isolated; // if true, only assets in collateralBitmap can be used as collateral, and all others will have ltv0 rules applying
     string label;
     uint128 borrowableBitmap;
+    uint128 ltvzeroBitmap; // if true, the asset will be treated as ltv0 and ltv0 rules apply
   }
 
   enum InterestRateMode {
@@ -169,117 +173,118 @@ library DataTypes {
   }
 
   struct ExecuteLiquidationCallParams {
-    uint256 reservesCount;
+    address liquidator;
     uint256 debtToCover;
     address collateralAsset;
     address debtAsset;
-    address user;
+    address borrower;
     bool receiveAToken;
     address priceOracle;
-    uint8 userEModeCategory;
-    address priceOracleSentinel;
+    uint8 borrowerEModeCategory;
+    address interestRateStrategyAddress;
   }
 
   struct ExecuteSupplyParams {
+    address user;
     address asset;
+    address interestRateStrategyAddress;
     uint256 amount;
     address onBehalfOf;
     uint16 referralCode;
+    uint8 supplierEModeCategory;
   }
 
   struct ExecuteBorrowParams {
     address asset;
     address user;
     address onBehalfOf;
+    address interestRateStrategyAddress;
     uint256 amount;
     InterestRateMode interestRateMode;
     uint16 referralCode;
     bool releaseUnderlying;
-    uint256 reservesCount;
     address oracle;
     uint8 userEModeCategory;
-    address priceOracleSentinel;
   }
 
   struct ExecuteRepayParams {
     address asset;
+    address user;
+    address interestRateStrategyAddress;
     uint256 amount;
     InterestRateMode interestRateMode;
     address onBehalfOf;
     bool useATokens;
+    address oracle;
+    uint8 userEModeCategory;
   }
 
   struct ExecuteWithdrawParams {
+    address user;
     address asset;
+    address interestRateStrategyAddress;
     uint256 amount;
     address to;
-    uint256 reservesCount;
     address oracle;
     uint8 userEModeCategory;
   }
 
   struct ExecuteEliminateDeficitParams {
+    address user;
     address asset;
+    address interestRateStrategyAddress;
     uint256 amount;
-  }
-
-  struct ExecuteSetUserEModeParams {
-    uint256 reservesCount;
-    address oracle;
-    uint8 categoryId;
   }
 
   struct FinalizeTransferParams {
     address asset;
     address from;
     address to;
-    uint256 amount;
-    uint256 balanceFromBefore;
-    uint256 balanceToBefore;
-    uint256 reservesCount;
+    uint256 scaledAmount;
+    uint256 scaledBalanceFromBefore;
     address oracle;
     uint8 fromEModeCategory;
   }
 
   struct FlashloanParams {
+    address user;
     address receiverAddress;
     address[] assets;
     uint256[] amounts;
     uint256[] interestRateModes;
+    address interestRateStrategyAddress;
     address onBehalfOf;
     bytes params;
     uint16 referralCode;
-    uint256 flashLoanPremiumToProtocol;
-    uint256 flashLoanPremiumTotal;
-    uint256 reservesCount;
+    uint256 flashLoanPremium;
     address addressesProvider;
     address pool;
-    uint8 userEModeCategory;
     bool isAuthorizedFlashBorrower;
   }
 
   struct FlashloanSimpleParams {
+    address user;
     address receiverAddress;
     address asset;
+    address interestRateStrategyAddress;
     uint256 amount;
     bytes params;
     uint16 referralCode;
-    uint256 flashLoanPremiumToProtocol;
-    uint256 flashLoanPremiumTotal;
+    uint256 flashLoanPremium;
   }
 
   struct FlashLoanRepaymentParams {
+    address user;
     uint256 amount;
     uint256 totalPremium;
-    uint256 flashLoanPremiumToProtocol;
     address asset;
+    address interestRateStrategyAddress;
     address receiverAddress;
     uint16 referralCode;
   }
 
   struct CalculateUserAccountDataParams {
     UserConfigurationMap userConfig;
-    uint256 reservesCount;
     address user;
     address oracle;
     uint8 userEModeCategory;
@@ -287,25 +292,18 @@ library DataTypes {
 
   struct ValidateBorrowParams {
     ReserveCache reserveCache;
-    UserConfigurationMap userConfig;
     address asset;
-    address userAddress;
-    uint256 amount;
+    uint256 amountScaled;
     InterestRateMode interestRateMode;
-    uint256 reservesCount;
-    address oracle;
     uint8 userEModeCategory;
-    address priceOracleSentinel;
-    bool isolationModeActive;
-    address isolationModeCollateralAddress;
-    uint256 isolationModeDebtCeiling;
   }
 
   struct ValidateLiquidationCallParams {
     ReserveCache debtReserveCache;
     uint256 totalDebt;
     uint256 healthFactor;
-    address priceOracleSentinel;
+    address borrower;
+    address liquidator;
   }
 
   struct CalculateInterestRatesParams {
@@ -315,6 +313,7 @@ library DataTypes {
     uint256 totalDebt;
     uint256 reserveFactor;
     address reserve;
+    // @notice DEPRECATED in 3.4, but kept for backwards compatibility
     bool usingVirtualBalance;
     uint256 virtualUnderlyingBalance;
   }
@@ -323,7 +322,6 @@ library DataTypes {
     address asset;
     address aTokenAddress;
     address variableDebtAddress;
-    address interestRateStrategyAddress;
     uint16 reservesCount;
     uint16 maxNumberReserves;
   }

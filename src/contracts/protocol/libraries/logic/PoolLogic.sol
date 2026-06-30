@@ -3,14 +3,14 @@ pragma solidity ^0.8.10;
 
 import {GPv2SafeERC20} from '../../../dependencies/gnosis/contracts/GPv2SafeERC20.sol';
 import {Address} from '../../../dependencies/openzeppelin/contracts/Address.sol';
-import {IERC20} from '../../../dependencies/openzeppelin/contracts/IERC20.sol';
+import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
 import {IAToken} from '../../../interfaces/IAToken.sol';
+import {IPool} from '../../../interfaces/IPool.sol';
 import {ReserveConfiguration} from '../configuration/ReserveConfiguration.sol';
 import {Errors} from '../helpers/Errors.sol';
-import {WadRayMath} from '../math/WadRayMath.sol';
+import {TokenMath} from '../helpers/TokenMath.sol';
 import {DataTypes} from '../types/DataTypes.sol';
 import {ReserveLogic} from './ReserveLogic.sol';
-import {ValidationLogic} from './ValidationLogic.sol';
 import {GenericLogic} from './GenericLogic.sol';
 
 /**
@@ -20,13 +20,9 @@ import {GenericLogic} from './GenericLogic.sol';
  */
 library PoolLogic {
   using GPv2SafeERC20 for IERC20;
-  using WadRayMath for uint256;
+  using TokenMath for uint256;
   using ReserveLogic for DataTypes.ReserveData;
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
-
-  // See `IPool` for descriptions
-  event MintedToTreasury(address indexed reserve, uint256 amountMinted);
-  event IsolationModeTotalDebtUpdated(address indexed asset, uint256 totalDebt);
 
   /**
    * @notice Initialize an asset reserve and add the reserve to the list of reserves
@@ -40,18 +36,15 @@ library PoolLogic {
     mapping(uint256 => address) storage reservesList,
     DataTypes.InitReserveParams memory params
   ) external returns (bool) {
-    require(Address.isContract(params.asset), Errors.NOT_CONTRACT);
-    reservesData[params.asset].init(
-      params.aTokenAddress,
-      params.variableDebtAddress,
-      params.interestRateStrategyAddress
-    );
+    require(Address.isContract(params.asset), Errors.NotContract());
+    reservesData[params.asset].init(params.aTokenAddress, params.variableDebtAddress);
 
     bool reserveAlreadyAdded = reservesData[params.asset].id != 0 ||
       reservesList[0] == params.asset;
-    require(!reserveAlreadyAdded, Errors.RESERVE_ALREADY_ADDED);
+    require(!reserveAlreadyAdded, Errors.ReserveAlreadyAdded());
 
     for (uint16 i = 0; i < params.reservesCount; i++) {
+      // @dev legacy check from when dropReserve could leave gaps; see docs/3.7/drop-reserve-removal.md
       if (reservesList[i] == address(0)) {
         reservesData[params.asset].id = i;
         reservesList[i] = params.asset;
@@ -59,10 +52,42 @@ library PoolLogic {
       }
     }
 
-    require(params.reservesCount < params.maxNumberReserves, Errors.NO_MORE_RESERVES_ALLOWED);
+    require(params.reservesCount < params.maxNumberReserves, Errors.NoMoreReservesAllowed());
     reservesData[params.asset].id = params.reservesCount;
     reservesList[params.reservesCount] = params.asset;
     return true;
+  }
+
+  /**
+   * @notice Accumulates interest to all indexes of the reserve
+   * @param reserve The state of the reserve
+   */
+  function executeSyncIndexesState(DataTypes.ReserveData storage reserve) external {
+    DataTypes.ReserveCache memory reserveCache = reserve.cache();
+
+    reserve.updateState(reserveCache);
+  }
+
+  /**
+   * @notice Updates interest rates on the reserve data
+   * @param reserve The state of the reserve
+   * @param asset The address of the asset
+   * @param interestRateStrategyAddress The address of the interest rate
+   */
+  function executeSyncRatesState(
+    DataTypes.ReserveData storage reserve,
+    address asset,
+    address interestRateStrategyAddress
+  ) external {
+    DataTypes.ReserveCache memory reserveCache = reserve.cache();
+
+    reserve.updateInterestRatesAndVirtualBalance(
+      reserveCache,
+      asset,
+      0,
+      0,
+      interestRateStrategyAddress
+    );
   }
 
   /**
@@ -99,27 +124,12 @@ library PoolLogic {
       if (accruedToTreasury != 0) {
         reserve.accruedToTreasury = 0;
         uint256 normalizedIncome = reserve.getNormalizedIncome();
-        uint256 amountToMint = accruedToTreasury.rayMul(normalizedIncome);
-        IAToken(reserve.aTokenAddress).mintToTreasury(amountToMint, normalizedIncome);
+        uint256 amountToMint = accruedToTreasury.getATokenBalance(normalizedIncome);
+        IAToken(reserve.aTokenAddress).mintToTreasury(accruedToTreasury, normalizedIncome);
 
-        emit MintedToTreasury(assetAddress, amountToMint);
+        emit IPool.MintedToTreasury(assetAddress, amountToMint);
       }
     }
-  }
-
-  /**
-   * @notice Resets the isolation mode total debt of the given asset to zero
-   * @dev It requires the given asset has zero debt ceiling
-   * @param reservesData The state of all the reserves
-   * @param asset The address of the underlying asset to reset the isolationModeTotalDebt
-   */
-  function executeResetIsolationModeTotalDebt(
-    mapping(address => DataTypes.ReserveData) storage reservesData,
-    address asset
-  ) external {
-    require(reservesData[asset].configuration.getDebtCeiling() == 0, Errors.DEBT_CEILING_NOT_ZERO);
-    reservesData[asset].isolationModeTotalDebt = 0;
-    emit IsolationModeTotalDebtUpdated(asset, 0);
   }
 
   /**
@@ -134,23 +144,6 @@ library PoolLogic {
     uint40 until
   ) external {
     reservesData[asset].liquidationGracePeriodUntil = until;
-  }
-
-  /**
-   * @notice Drop a reserve
-   * @param reservesData The state of all the reserves
-   * @param reservesList The addresses of all the active reserves
-   * @param asset The address of the underlying asset of the reserve
-   */
-  function executeDropReserve(
-    mapping(address => DataTypes.ReserveData) storage reservesData,
-    mapping(uint256 => address) storage reservesList,
-    address asset
-  ) external {
-    DataTypes.ReserveData storage reserve = reservesData[asset];
-    ValidationLogic.validateDropReserve(reservesList, reserve, asset);
-    reservesList[reservesData[asset].id] = address(0);
-    delete reservesData[asset];
   }
 
   /**

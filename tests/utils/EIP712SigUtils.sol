@@ -9,6 +9,14 @@ library EIP712SigUtils {
   bytes32 public constant DELEGATION_WITH_SIG_TYPEHASH =
     keccak256('DelegationWithSig(address delegatee,uint256 value,uint256 nonce,uint256 deadline)');
 
+  bytes32 public constant DELEGATE_BY_TYPE_TYPEHASH =
+    keccak256(
+      'DelegateByType(address delegator,address delegatee,uint8 delegationType,uint256 nonce,uint256 deadline)'
+    );
+
+  bytes32 public constant DELEGATE_TYPEHASH =
+    keccak256('Delegate(address delegator,address delegatee,uint256 nonce,uint256 deadline)');
+
   bytes32 public constant EIP712_DOMAIN =
     keccak256('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)');
 
@@ -44,6 +52,21 @@ library EIP712SigUtils {
     uint256 deadline;
   }
 
+  struct DelegateByType {
+    address delegator;
+    address delegatee;
+    uint8 delegationType;
+    uint256 nonce;
+    uint256 deadline;
+  }
+
+  struct Delegate {
+    address delegator;
+    address delegatee;
+    uint256 nonce;
+    uint256 deadline;
+  }
+
   // computes the hash of a permit
   function getStructHash(Permit memory _permit) internal pure returns (bytes32) {
     return
@@ -65,7 +88,7 @@ library EIP712SigUtils {
     bytes memory name,
     bytes memory revision,
     address contractAddress
-  ) public view returns (bytes32) {
+  ) internal view returns (bytes32) {
     return
       keccak256(
         abi.encodePacked(
@@ -96,13 +119,66 @@ library EIP712SigUtils {
     bytes memory name,
     bytes memory revision,
     address contractAddress
-  ) public view returns (bytes32) {
+  ) internal view returns (bytes32) {
     return
       keccak256(
         abi.encodePacked(
           '\x19\x01',
           getDomainSeparator(name, revision, contractAddress),
           getCreditDelegationStructHash(_del)
+        )
+      );
+  }
+
+  function getDelegateByTypeStructHash(DelegateByType memory _del) internal pure returns (bytes32) {
+    return
+      keccak256(
+        abi.encode(
+          DELEGATE_BY_TYPE_TYPEHASH,
+          _del.delegator,
+          _del.delegatee,
+          _del.delegationType,
+          _del.nonce,
+          _del.deadline
+        )
+      );
+  }
+
+  function getDelegateByTypeTypedDataHash(
+    DelegateByType memory _del,
+    bytes memory name,
+    bytes memory revision,
+    address contractAddress
+  ) internal view returns (bytes32) {
+    return
+      keccak256(
+        abi.encodePacked(
+          '\x19\x01',
+          getDomainSeparator(name, revision, contractAddress),
+          getDelegateByTypeStructHash(_del)
+        )
+      );
+  }
+
+  function getDelegateStructHash(Delegate memory _del) internal pure returns (bytes32) {
+    return
+      keccak256(
+        abi.encode(DELEGATE_TYPEHASH, _del.delegator, _del.delegatee, _del.nonce, _del.deadline)
+      );
+  }
+
+  function getDelegateTypedDataHash(
+    Delegate memory _del,
+    bytes memory name,
+    bytes memory revision,
+    address contractAddress
+  ) internal view returns (bytes32) {
+    return
+      keccak256(
+        abi.encodePacked(
+          '\x19\x01',
+          getDomainSeparator(name, revision, contractAddress),
+          getDelegateStructHash(_del)
         )
       );
   }

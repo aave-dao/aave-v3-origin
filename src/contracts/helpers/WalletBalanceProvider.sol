@@ -2,7 +2,7 @@
 pragma solidity ^0.8.10;
 
 import {Address} from '../dependencies/openzeppelin/contracts/Address.sol';
-import {IERC20} from '../dependencies/openzeppelin/contracts/IERC20.sol';
+import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
 
 import {IPoolAddressesProvider} from '../interfaces/IPoolAddressesProvider.sol';
 import {IPool} from '../interfaces/IPool.sol';
@@ -24,14 +24,6 @@ contract WalletBalanceProvider {
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
 
   address constant MOCK_ETH_ADDRESS = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
-
-  /**
-    @dev Fallback function, don't accept any ETH
-    **/
-  receive() external payable {
-    //only contracts can send ETH to the core
-    require(msg.sender.isContract(), '22');
-  }
 
   /**
     @dev Check the token balance of a wallet in a token contract

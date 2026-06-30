@@ -17,15 +17,9 @@ methods {
   function _.rayMul(uint256 a, uint256 b) internal => mulDivDownAbstractPlus(a, b, 10^27) expect uint256 ALL;
   function _.rayDiv(uint256 a, uint256 b) internal => mulDivDownAbstractPlus(a, 10^27, b) expect uint256 ALL;
 
-  // IPriceOracleSentinel
-  function _.isBorrowAllowed() external => DISPATCHER(true);
-  function _.isLiquidationAllowed() external => DISPATCHER(true);
-  function _.setSequencerOracle(address newSequencerOracle) external => DISPATCHER(true);
-  function _.setGracePeriod(uint256 newGracePeriod) external => DISPATCHER(true);
-  function _.getGracePeriod() external => DISPATCHER(true);
-
   // Modification of index is tracked by incrementCounter:
   function _.incrementCounter() external => ghostUpdate() expect bool ALL;
+  function _.getLastTransferResult(address) internal => NONDET;
 }
 
 ghost mathint counterUpdateIndexes;
@@ -59,24 +53,6 @@ rule _updateIndexesWrapperReachable(env e, method f) {
   mathint updateIndexesCallCountAfter = counterUpdateIndexes;
 
   satisfy updateIndexesCallCountBefore != updateIndexesCallCountAfter;
-}
-
-// @title cumulateToLiquidityIndex does not decrease the liquidity index.
-// This rule is part of a check, that the liquidity index cannot decrease.
-// Proved here:
-// https://prover.certora.com/output/40577/bb018f9a52b64b27a0ac364e0c22cd79/?anonymousKey=21613bfbfc0f479ed2c99ce5fa2dd16e581baf5e
-rule liquidityIndexNonDecresingFor_cumulateToLiquidityIndex() {
-  address asset;
-  uint256 totalLiquidity;
-  uint256 amount;
-  env e;
-
-  uint256 reserveLiquidityIndexBefore = getReserveLiquidityIndex(e, asset);
-  require reserveLiquidityIndexBefore >= RAY();
-
-  uint256 reserveLiquidityIndexAfter = cumulateToLiquidityIndex(e, asset, totalLiquidity, amount);
-
-  assert reserveLiquidityIndexAfter >= reserveLiquidityIndexBefore;
 }
 
 

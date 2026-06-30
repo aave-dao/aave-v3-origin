@@ -5,11 +5,7 @@ library ConfiguratorInputTypes {
   struct InitReserveInput {
     address aTokenImpl;
     address variableDebtTokenImpl;
-    bool useVirtualBalance;
-    address interestRateStrategyAddress;
     address underlyingAsset;
-    address treasury;
-    address incentivesController;
     string aTokenName;
     string aTokenSymbol;
     string variableDebtTokenName;
@@ -20,8 +16,6 @@ library ConfiguratorInputTypes {
 
   struct UpdateATokenInput {
     address asset;
-    address treasury;
-    address incentivesController;
     string name;
     string symbol;
     address implementation;
@@ -30,7 +24,6 @@ library ConfiguratorInputTypes {
 
   struct UpdateDebtTokenInput {
     address asset;
-    address incentivesController;
     string name;
     string symbol;
     address implementation;

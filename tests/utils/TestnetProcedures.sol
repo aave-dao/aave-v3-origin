@@ -3,6 +3,8 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 
+import {Multicall} from 'openzeppelin-contracts/contracts/utils/Multicall.sol';
+
 import '../../src/deployments/interfaces/IMarketReportTypes.sol';
 import {DeployUtils} from '../../src/deployments/contracts/utilities/DeployUtils.sol';
 import {FfiUtils} from '../../src/deployments/contracts/utilities/FfiUtils.sol';
@@ -76,7 +78,6 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     address wbtc;
     address weth;
     address usdx;
-    address gho;
   }
 
   struct EModeCategoryInput {
@@ -85,6 +86,7 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     uint16 lt;
     uint16 lb;
     string label;
+    bool isolated;
   }
 
   function _initTestEnvironment(bool mintUserTokens, bool l2) internal {
@@ -230,7 +232,6 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
 
     assetsList.wbtc = testnetListingPayload.WBTC_ADDRESS();
     assetsList.usdx = testnetListingPayload.USDX_ADDRESS();
-    assetsList.gho = testnetListingPayload.GHO_ADDRESS();
 
     ACLManager manager = ACLManager(r.aclManager);
 
@@ -320,10 +321,6 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
       new TestnetERC20('Misc Token', 'MISC', t.underlyingDecimals, poolAdminUser)
     );
     input.variableDebtTokenImpl = r.variableDebtToken;
-    input.useVirtualBalance = t.useVirtualBalance;
-    input.interestRateStrategyAddress = r.defaultInterestRateStrategy;
-    input.treasury = t.treasury;
-    input.incentivesController = r.rewardsControllerProxy;
     input.aTokenName = t.aTokenName;
     input.aTokenSymbol = t.aTokenSymbol;
     input.variableDebtTokenName = t.variableDebtName;
@@ -346,11 +343,11 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
   }
 
   function _genCategoryOne() internal pure returns (EModeCategoryInput memory) {
-    return EModeCategoryInput(1, 95_00, 96_00, 101_00, 'GROUP_A');
+    return EModeCategoryInput(1, 95_00, 96_00, 101_00, 'GROUP_A', false);
   }
 
   function _genCategoryTwo() internal pure returns (EModeCategoryInput memory) {
-    return EModeCategoryInput(2, 96_00, 97_00, 101_50, 'GROUP_B');
+    return EModeCategoryInput(2, 96_00, 97_00, 101_50, 'GROUP_B', false);
   }
 
   function _calcPrice(uint256 price, uint256 percent) public pure returns (uint256) {
@@ -376,7 +373,7 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
       totalDebt: borrowAmount,
       reserveFactor: reserveConfig.reserveFactor,
       reserve: token,
-      usingVirtualBalance: IPool(report.poolProxy).getConfiguration(token).getIsVirtualAccActive(),
+      usingVirtualBalance: true,
       virtualUnderlyingBalance: IPool(report.poolProxy).getVirtualUnderlyingBalance(token)
     });
 
@@ -402,5 +399,51 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
           variableRateSlope2: 60_00
         })
       );
+  }
+
+  /**
+   * In is not ensures the a supply will automatically enable as collateral as there are multiple edge cases preventing that.
+   * This helper function ensures it is enabled by performing the explicit action.
+   */
+  function _supplyAndEnableAsCollateral(address asset, uint256 amount, address user) internal {
+    vm.startPrank(user);
+    deal(asset, user, amount);
+    IERC20(asset).approve(report.poolProxy, amount);
+    bytes[] memory calls = new bytes[](2);
+    calls[0] = abi.encodeWithSelector(IPool.supply.selector, asset, amount, user, 0);
+    calls[1] = abi.encodeWithSelector(IPool.setUserUseReserveAsCollateral.selector, asset, true);
+    Multicall(address(contracts.poolProxy)).multicall(calls);
+    vm.stopPrank();
+  }
+
+  /**
+   * Supplies the specified amount of asset to the reserve, without enabeling as collateral.
+   */
+  function _supply(address asset, uint256 amount, address user) internal {
+    vm.startPrank(user);
+    deal(asset, user, amount);
+    IERC20(asset).approve(report.poolProxy, amount);
+    contracts.poolProxy.supply(asset, amount, user, 0);
+    vm.stopPrank();
+  }
+
+  function _checkInterestRates(address asset) internal view {
+    DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(asset);
+    (uint256 nextLiquidityRate, uint256 nextVariableRate) = contracts
+      .defaultInterestRateStrategy
+      .calculateInterestRates(
+        DataTypes.CalculateInterestRatesParams({
+          unbacked: contracts.poolProxy.getReserveDeficit(asset),
+          liquidityAdded: 0,
+          liquidityTaken: 0,
+          totalDebt: IERC20(contracts.poolProxy.getReserveVariableDebtToken(asset)).totalSupply(),
+          reserveFactor: reserveData.configuration.getReserveFactor(),
+          reserve: asset,
+          usingVirtualBalance: true,
+          virtualUnderlyingBalance: contracts.poolProxy.getVirtualUnderlyingBalance(asset)
+        })
+      );
+    assertEq(reserveData.currentLiquidityRate, nextLiquidityRate, 'bad liquidity rate');
+    assertEq(reserveData.currentVariableBorrowRate, nextVariableRate, 'bad debt rate');
   }
 }

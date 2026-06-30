@@ -2,16 +2,17 @@
 pragma solidity ^0.8.10;
 
 import {GPv2SafeERC20} from '../../../dependencies/gnosis/contracts/GPv2SafeERC20.sol';
-import {SafeCast} from '../../../dependencies/openzeppelin/contracts/SafeCast.sol';
-import {IERC20} from '../../../dependencies/openzeppelin/contracts/IERC20.sol';
+import {SafeCast} from 'openzeppelin-contracts/contracts/utils/math/SafeCast.sol';
+import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
 import {IVariableDebtToken} from '../../../interfaces/IVariableDebtToken.sol';
 import {IAToken} from '../../../interfaces/IAToken.sol';
+import {IPool} from '../../../interfaces/IPool.sol';
+import {TokenMath} from '../../libraries/helpers/TokenMath.sol';
 import {UserConfiguration} from '../configuration/UserConfiguration.sol';
 import {ReserveConfiguration} from '../configuration/ReserveConfiguration.sol';
 import {DataTypes} from '../types/DataTypes.sol';
 import {ValidationLogic} from './ValidationLogic.sol';
 import {ReserveLogic} from './ReserveLogic.sol';
-import {IsolationModeLogic} from './IsolationModeLogic.sol';
 
 /**
  * @title BorrowLogic library
@@ -19,6 +20,7 @@ import {IsolationModeLogic} from './IsolationModeLogic.sol';
  * @notice Implements the base logic for all the actions related to borrowing
  */
 library BorrowLogic {
+  using TokenMath for uint256;
   using ReserveLogic for DataTypes.ReserveCache;
   using ReserveLogic for DataTypes.ReserveData;
   using GPv2SafeERC20 for IERC20;
@@ -26,30 +28,9 @@ library BorrowLogic {
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
   using SafeCast for uint256;
 
-  // See `IPool` for descriptions
-  event Borrow(
-    address indexed reserve,
-    address user,
-    address indexed onBehalfOf,
-    uint256 amount,
-    DataTypes.InterestRateMode interestRateMode,
-    uint256 borrowRate,
-    uint16 indexed referralCode
-  );
-  event Repay(
-    address indexed reserve,
-    address indexed user,
-    address indexed repayer,
-    uint256 amount,
-    bool useATokens
-  );
-  event IsolationModeTotalDebtUpdated(address indexed asset, uint256 totalDebt);
-  event ReserveUsedAsCollateralDisabled(address indexed reserve, address indexed user);
-
   /**
    * @notice Implements the borrow feature. Borrowing allows users that provided collateral to draw liquidity from the
-   * Aave protocol proportionally to their collateralization power. For isolated positions, it also increases the
-   * isolated debt.
+   * Aave protocol proportionally to their collateralization power.
    * @dev  Emits the `Borrow()` event
    * @param reservesData The state of all the reserves
    * @param reservesList The addresses of all the active reserves
@@ -69,67 +50,59 @@ library BorrowLogic {
 
     reserve.updateState(reserveCache);
 
-    (
-      bool isolationModeActive,
-      address isolationModeCollateralAddress,
-      uint256 isolationModeDebtCeiling
-    ) = userConfig.getIsolationModeState(reservesData, reservesList);
+    uint256 amountScaled = params.amount.getVTokenMintScaledAmount(
+      reserveCache.nextVariableBorrowIndex
+    );
 
     ValidationLogic.validateBorrow(
       reservesData,
-      reservesList,
       eModeCategories,
       DataTypes.ValidateBorrowParams({
         reserveCache: reserveCache,
-        userConfig: userConfig,
         asset: params.asset,
-        userAddress: params.onBehalfOf,
-        amount: params.amount,
+        amountScaled: amountScaled,
         interestRateMode: params.interestRateMode,
-        reservesCount: params.reservesCount,
-        oracle: params.oracle,
-        userEModeCategory: params.userEModeCategory,
-        priceOracleSentinel: params.priceOracleSentinel,
-        isolationModeActive: isolationModeActive,
-        isolationModeCollateralAddress: isolationModeCollateralAddress,
-        isolationModeDebtCeiling: isolationModeDebtCeiling
+        userEModeCategory: params.userEModeCategory
       })
     );
 
-    bool isFirstBorrowing = false;
-
-    (isFirstBorrowing, reserveCache.nextScaledVariableDebt) = IVariableDebtToken(
-      reserveCache.variableDebtTokenAddress
-    ).mint(params.user, params.onBehalfOf, params.amount, reserveCache.nextVariableBorrowIndex);
-
-    if (isFirstBorrowing) {
-      userConfig.setBorrowing(reserve.id, true);
-    }
-
-    if (isolationModeActive) {
-      uint256 nextIsolationModeTotalDebt = reservesData[isolationModeCollateralAddress]
-        .isolationModeTotalDebt += (params.amount /
-        10 **
-          (reserveCache.reserveConfiguration.getDecimals() -
-            ReserveConfiguration.DEBT_CEILING_DECIMALS)).toUint128();
-      emit IsolationModeTotalDebtUpdated(
-        isolationModeCollateralAddress,
-        nextIsolationModeTotalDebt
+    reserveCache.nextScaledVariableDebt = IVariableDebtToken(reserveCache.variableDebtTokenAddress)
+      .mint(
+        params.user,
+        params.onBehalfOf,
+        params.amount,
+        amountScaled,
+        reserveCache.nextVariableBorrowIndex
       );
+
+    uint16 cachedReserveId = reserve.id;
+    if (!userConfig.isBorrowing(cachedReserveId)) {
+      userConfig.setBorrowing(cachedReserveId, true);
     }
 
     reserve.updateInterestRatesAndVirtualBalance(
       reserveCache,
       params.asset,
       0,
-      params.releaseUnderlying ? params.amount : 0
+      params.releaseUnderlying ? params.amount : 0,
+      params.interestRateStrategyAddress
     );
 
     if (params.releaseUnderlying) {
       IAToken(reserveCache.aTokenAddress).transferUnderlyingTo(params.user, params.amount);
     }
 
-    emit Borrow(
+    ValidationLogic.validateHFAndLtv(
+      reservesData,
+      reservesList,
+      eModeCategories,
+      userConfig,
+      params.onBehalfOf,
+      params.userEModeCategory,
+      params.oracle
+    );
+
+    emit IPool.Borrow(
       params.asset,
       params.user,
       params.onBehalfOf,
@@ -142,93 +115,109 @@ library BorrowLogic {
 
   /**
    * @notice Implements the repay feature. Repaying transfers the underlying back to the aToken and clears the
-   * equivalent amount of debt for the user by burning the corresponding debt token. For isolated positions, it also
-   * reduces the isolated debt.
+   * equivalent amount of debt for the user by burning the corresponding debt token.
    * @dev  Emits the `Repay()` event
    * @param reservesData The state of all the reserves
    * @param reservesList The addresses of all the active reserves
-   * @param userConfig The user configuration mapping that tracks the supplied/borrowed assets
+   * @param onBehalfOfConfig The user configuration mapping that tracks the supplied/borrowed assets
    * @param params The additional parameters needed to execute the repay function
    * @return The actual amount being repaid
    */
   function executeRepay(
     mapping(address => DataTypes.ReserveData) storage reservesData,
     mapping(uint256 => address) storage reservesList,
-    DataTypes.UserConfigurationMap storage userConfig,
+    mapping(uint8 => DataTypes.EModeCategory) storage eModeCategories,
+    DataTypes.UserConfigurationMap storage onBehalfOfConfig,
     DataTypes.ExecuteRepayParams memory params
   ) external returns (uint256) {
     DataTypes.ReserveData storage reserve = reservesData[params.asset];
     DataTypes.ReserveCache memory reserveCache = reserve.cache();
     reserve.updateState(reserveCache);
 
-    uint256 variableDebt = IERC20(reserveCache.variableDebtTokenAddress).balanceOf(
-      params.onBehalfOf
-    );
+    uint256 userDebtScaled = IVariableDebtToken(reserveCache.variableDebtTokenAddress)
+      .scaledBalanceOf(params.onBehalfOf);
+    uint256 userDebt = userDebtScaled.getVTokenBalance(reserveCache.nextVariableBorrowIndex);
 
     ValidationLogic.validateRepay(
+      params.user,
       reserveCache,
       params.amount,
       params.interestRateMode,
       params.onBehalfOf,
-      variableDebt
+      userDebtScaled
     );
 
-    uint256 paybackAmount = variableDebt;
-
-    // Allows a user to repay with aTokens without leaving dust from interest.
+    uint256 paybackAmount = params.amount;
     if (params.useATokens && params.amount == type(uint256).max) {
-      params.amount = IAToken(reserveCache.aTokenAddress).balanceOf(msg.sender);
+      // Allows a user to repay with aTokens without leaving dust from interest.
+      paybackAmount = IAToken(reserveCache.aTokenAddress)
+        .scaledBalanceOf(params.user)
+        .getATokenBalance(reserveCache.nextLiquidityIndex);
     }
 
-    if (params.amount < paybackAmount) {
-      paybackAmount = params.amount;
+    if (paybackAmount > userDebt) {
+      paybackAmount = userDebt;
     }
 
-    reserveCache.nextScaledVariableDebt = IVariableDebtToken(reserveCache.variableDebtTokenAddress)
-      .burn(params.onBehalfOf, paybackAmount, reserveCache.nextVariableBorrowIndex);
+    bool noMoreDebt;
+    (noMoreDebt, reserveCache.nextScaledVariableDebt) = IVariableDebtToken(
+      reserveCache.variableDebtTokenAddress
+    ).burn({
+        from: params.onBehalfOf,
+        scaledAmount: paybackAmount.getVTokenBurnScaledAmount(reserveCache.nextVariableBorrowIndex),
+        index: reserveCache.nextVariableBorrowIndex
+      });
 
     reserve.updateInterestRatesAndVirtualBalance(
       reserveCache,
       params.asset,
       params.useATokens ? 0 : paybackAmount,
-      0
+      0,
+      params.interestRateStrategyAddress
     );
 
-    if (variableDebt - paybackAmount == 0) {
-      userConfig.setBorrowing(reserve.id, false);
+    if (noMoreDebt) {
+      onBehalfOfConfig.setBorrowing(reserve.id, false);
     }
 
-    IsolationModeLogic.updateIsolatedDebtIfIsolated(
-      reservesData,
-      reservesList,
-      userConfig,
-      reserveCache,
-      paybackAmount
-    );
-
-    // in case of aToken repayment the msg.sender must always repay on behalf of itself
+    // in case of aToken repayment the sender must always repay on behalf of itself
     if (params.useATokens) {
-      IAToken(reserveCache.aTokenAddress).burn(
-        msg.sender,
-        reserveCache.aTokenAddress,
-        paybackAmount,
-        reserveCache.nextLiquidityIndex
-      );
-      bool isCollateral = userConfig.isUsingAsCollateral(reserve.id);
-      if (isCollateral && IAToken(reserveCache.aTokenAddress).scaledBalanceOf(msg.sender) == 0) {
-        userConfig.setUsingAsCollateral(reserve.id, false);
-        emit ReserveUsedAsCollateralDisabled(params.asset, msg.sender);
+      // As aToken.burn rounds up the burned shares, we ensure at least an equivalent of >= paybackAmount is burned.
+      bool zeroBalanceAfterBurn = IAToken(reserveCache.aTokenAddress).burn({
+        from: params.user,
+        receiverOfUnderlying: reserveCache.aTokenAddress,
+        amount: paybackAmount,
+        scaledAmount: paybackAmount.getATokenBurnScaledAmount(reserveCache.nextLiquidityIndex),
+        index: reserveCache.nextLiquidityIndex
+      });
+      if (onBehalfOfConfig.isUsingAsCollateral(reserve.id)) {
+        if (zeroBalanceAfterBurn) {
+          onBehalfOfConfig.setUsingAsCollateral(reserve.id, params.asset, params.user, false);
+        }
+
+        if (onBehalfOfConfig.isBorrowingAny()) {
+          ValidationLogic.validateHealthFactor(
+            reservesData,
+            reservesList,
+            eModeCategories,
+            onBehalfOfConfig,
+            params.user,
+            params.userEModeCategory,
+            params.oracle
+          );
+        }
       }
     } else {
-      IERC20(params.asset).safeTransferFrom(msg.sender, reserveCache.aTokenAddress, paybackAmount);
-      IAToken(reserveCache.aTokenAddress).handleRepayment(
-        msg.sender,
-        params.onBehalfOf,
-        paybackAmount
-      );
+      IERC20(params.asset).safeTransferFrom(params.user, reserveCache.aTokenAddress, paybackAmount);
     }
 
-    emit Repay(params.asset, params.onBehalfOf, msg.sender, paybackAmount, params.useATokens);
+    emit IPool.Repay(
+      params.asset,
+      params.onBehalfOf,
+      params.user,
+      paybackAmount,
+      params.useATokens
+    );
 
     return paybackAmount;
   }

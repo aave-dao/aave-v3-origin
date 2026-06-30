@@ -50,6 +50,27 @@ struct TestReserveConfig {
 contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
   using PercentageMath for uint256;
 
+  struct DeployCoreAndPeripheryVariables {
+    AaveV3SetupBatch setupContract;
+    InitialReport initialReport;
+    AaveV3GettersBatchOne.GettersReportBatchOne gettersReport1;
+    PoolReport poolReport;
+    PeripheryReport peripheryReport;
+    MiscReport miscReport;
+  }
+
+  struct DeployAndSetupVariables {
+    AaveV3SetupBatch setupContract;
+    InitialReport initialReport;
+    AaveV3GettersBatchOne.GettersReportBatchOne gettersReport1;
+    PoolReport poolReport;
+    PeripheryReport peripheryReport;
+    MiscReport miscReport;
+    SetupReport setupReport;
+    AaveV3GettersBatchTwo.GettersReportBatchTwo gettersReport2;
+    AaveV3TokensBatch.TokensReport tokensReport;
+  }
+
   address poolAdmin;
 
   function deployCoreAndPeriphery(
@@ -68,39 +89,41 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
       AaveV3SetupBatch setupContract
     )
   {
-    (setupContract, initialReport) = AaveV3BatchOrchestration._deploySetupContract(
-      roles.marketOwner,
-      roles,
-      config,
-      deployedContracts
-    );
+    DeployCoreAndPeripheryVariables memory variables;
 
-    gettersReport1 = AaveV3BatchOrchestration._deployGettersBatch1(
-      initialReport.poolAddressesProvider,
+    (variables.setupContract, variables.initialReport) = AaveV3BatchOrchestration
+      ._deploySetupContract(roles.marketOwner, roles, config, deployedContracts);
+
+    variables.gettersReport1 = AaveV3BatchOrchestration._deployGettersBatch1(
       config.networkBaseTokenPriceInUsdProxyAggregator,
       config.marketReferenceCurrencyPriceInUsdProxyAggregator
     );
 
-    poolReport = AaveV3BatchOrchestration._deployPoolImplementations(
-      initialReport.poolAddressesProvider,
+    variables.poolReport = AaveV3BatchOrchestration._deployPoolImplementations(
+      variables.initialReport.poolAddressesProvider,
+      variables.initialReport.interestRateStrategy,
       flags
     );
 
-    peripheryReport = AaveV3BatchOrchestration._deployPeripherals(
+    variables.peripheryReport = AaveV3BatchOrchestration._deployPeripherals(
       roles,
       config,
-      initialReport.poolAddressesProvider,
-      address(setupContract)
+      variables.initialReport.poolAddressesProvider,
+      address(variables.setupContract)
     );
 
-    miscReport = AaveV3BatchOrchestration._deployMisc(
-      flags.l2,
-      initialReport.poolAddressesProvider,
-      config.l2SequencerUptimeFeed,
-      config.l2PriceOracleSentinelGracePeriod
+    variables.miscReport = AaveV3BatchOrchestration._deployMisc(
+      variables.initialReport.poolAddressesProvider
     );
 
-    return (initialReport, gettersReport1, poolReport, peripheryReport, miscReport, setupContract);
+    return (
+      variables.initialReport,
+      variables.gettersReport1,
+      variables.poolReport,
+      variables.peripheryReport,
+      variables.miscReport,
+      variables.setupContract
+    );
   }
 
   function deployAndSetup(
@@ -108,69 +131,49 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
     MarketConfig memory config,
     DeployFlags memory flags,
     MarketReport memory deployedContracts
-  )
-    internal
-    returns (
-      InitialReport memory initialReport,
-      AaveV3GettersBatchOne.GettersReportBatchOne memory gettersReport1,
-      AaveV3GettersBatchTwo.GettersReportBatchTwo memory gettersReport2,
-      PoolReport memory poolReport,
-      SetupReport memory setupReport,
-      PeripheryReport memory peripheryReport,
-      MiscReport memory miscReport,
-      AaveV3TokensBatch.TokensReport memory tokensReport,
-      ParaswapReport memory paraswapReport,
-      AaveV3SetupBatch setupContract
-    )
-  {
+  ) internal returns (DeployAndSetupVariables memory) {
+    DeployAndSetupVariables memory variables;
+
     (
-      initialReport,
-      gettersReport1,
-      poolReport,
-      peripheryReport,
-      miscReport,
-      setupContract
+      variables.initialReport,
+      variables.gettersReport1,
+      variables.poolReport,
+      variables.peripheryReport,
+      variables.miscReport,
+      variables.setupContract
     ) = deployCoreAndPeriphery(roles, config, flags, deployedContracts);
 
     vm.prank(roles.marketOwner);
-    setupReport = setupContract.setupAaveV3Market(
+    variables.setupReport = variables.setupContract.setupAaveV3Market(
       roles,
       config,
-      poolReport.poolImplementation,
-      poolReport.poolConfiguratorImplementation,
-      gettersReport1.protocolDataProvider,
-      peripheryReport.aaveOracle,
-      peripheryReport.rewardsControllerImplementation,
-      miscReport.priceOracleSentinel
+      variables.poolReport.poolImplementation,
+      variables.poolReport.poolConfiguratorImplementation,
+      variables.peripheryReport.aaveOracle,
+      variables.peripheryReport.rewardsControllerImplementation
     );
 
-    paraswapReport = AaveV3BatchOrchestration._deployParaswapAdapters(
-      roles,
-      config,
-      initialReport.poolAddressesProvider
-    );
-
-    gettersReport2 = AaveV3BatchOrchestration._deployGettersBatch2(
-      setupReport.poolProxy,
+    variables.gettersReport2 = AaveV3BatchOrchestration._deployGettersBatch2(
+      variables.setupReport.poolProxy,
       roles.poolAdmin,
       config.wrappedNativeToken,
+      variables.initialReport.poolAddressesProvider,
       flags.l2
     );
 
-    tokensReport = AaveV3BatchOrchestration._deployTokens(setupReport.poolProxy);
+    vm.prank(roles.marketOwner);
+    variables.setupContract.setProtocolDataProvider(variables.gettersReport2.protocolDataProvider);
 
-    return (
-      initialReport,
-      gettersReport1,
-      gettersReport2,
-      poolReport,
-      setupReport,
-      peripheryReport,
-      miscReport,
-      tokensReport,
-      paraswapReport,
-      setupContract
+    vm.prank(roles.marketOwner);
+    variables.setupContract.transferMarketOwnership(roles);
+
+    variables.tokensReport = AaveV3BatchOrchestration._deployTokens(
+      variables.setupReport.poolProxy,
+      variables.setupReport.rewardsControllerProxy,
+      variables.peripheryReport
     );
+
+    return variables;
   }
 
   function checkFullReport(
@@ -199,13 +202,9 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
     assertTrue(r.walletBalanceProvider != address(0), 'report.walletBalanceProvider');
     assertTrue(r.uiIncentiveDataProvider != address(0), 'report.uiIncentiveDataProvider');
     assertTrue(r.uiPoolDataProvider != address(0), 'report.uiPoolDataProvider');
-    assertTrue(r.paraSwapLiquiditySwapAdapter != address(0), 'report.paraSwapLiquiditySwapAdapter');
-    assertTrue(r.paraSwapRepayAdapter != address(0), 'report.paraSwapRepayAdapter');
-    assertTrue(r.paraSwapWithdrawSwapAdapter != address(0), 'report.paraSwapWithdrawSwapAdapter');
 
     if (flags.l2) {
       assertTrue(r.l2Encoder != address(0), 'report.l2Encoder');
-      assertTrue(r.priceOracleSentinel != address(0), 'report.priceOracleSentinel');
     }
 
     assertTrue(r.aToken != address(0), 'report.aToken');
@@ -242,10 +241,6 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
     assertTrue(r.staticATokenFactoryProxy != address(0), 'report.staticATokenFactoryProxy');
     assertTrue(r.staticATokenImplementation != address(0), 'report.staticATokenImplementation');
     assertTrue(r.transparentProxyFactory != address(0), 'report.transparentProxyFactory');
-
-    if (config.treasuryPartner != address(0)) {
-      assertTrue(r.revenueSplitter != address(0), 'report.revenueSplitter');
-    }
   }
 
   function deployAaveV3Testnet(
@@ -304,6 +299,7 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
       TestnetERC20 listingToken = new TestnetERC20(
         _concatStr('Token', x),
         _concatStr('T', x),
+        // forge-lint: disable-next-line(unsafe-typecast)
         uint8(10 + x),
         poolAdminUser
       );
@@ -325,11 +321,7 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
       input[x] = ConfiguratorInputTypes.InitReserveInput(
         r.aToken,
         r.variableDebtToken,
-        true,
-        t.rateStrategy,
         address(listingToken),
-        r.treasury,
-        r.rewardsControllerProxy,
         t.aTokenName,
         t.aTokenSymbol,
         t.variableDebtName,

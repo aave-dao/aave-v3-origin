@@ -14,16 +14,6 @@ interface IAaveV3ConfigEngine {
     TokenImplementations implementations;
   }
 
-  struct EngineLibraries {
-    address listingEngine;
-    address eModeEngine;
-    address borrowEngine;
-    address collateralEngine;
-    address priceFeedEngine;
-    address rateEngine;
-    address capsEngine;
-  }
-
   struct EngineConstants {
     IPool pool;
     IPoolConfigurator poolConfigurator;
@@ -67,17 +57,13 @@ interface IAaveV3ConfigEngine {
    *   }),
    *   enabledToBorrow: EngineFlags.ENABLED,
    *   flashloanable: EngineFlags.ENABLED,
-   *   borrowableInIsolation: EngineFlags.ENABLED,
-   *   withSiloedBorrowing:, EngineFlags.DISABLED,
    *   ltv: 70_50, // 70.5%
    *   liqThreshold: 76_00, // 76%
    *   liqBonus: 5_00, // 5%
    *   reserveFactor: 10_00, // 10%
    *   supplyCap: 100_000, // 100k AAVE
    *   borrowCap: 60_000, // 60k AAVE
-   *   debtCeiling: 100_000, // 100k USD
    *   liqProtocolFee: 10_00, // 10%
-   *   eModeCategory: 0, // No category
    * }
    */
   struct Listing {
@@ -86,8 +72,6 @@ interface IAaveV3ConfigEngine {
     address priceFeed;
     InterestRateInputData rateStrategyParams; // Mandatory, no matter if enabled for borrowing or not
     uint256 enabledToBorrow;
-    uint256 borrowableInIsolation; // Only considered is enabledToBorrow == EngineFlags.ENABLED (true)
-    uint256 withSiloedBorrowing; // Only considered if enabledToBorrow == EngineFlags.ENABLED (true)
     uint256 flashloanable; // Independent from enabled to borrow: an asset can be flashloanble and not enabled to borrow
     uint256 ltv; // Only considered if liqThreshold > 0
     uint256 liqThreshold; // If `0`, the asset will not be enabled as collateral
@@ -95,7 +79,6 @@ interface IAaveV3ConfigEngine {
     uint256 reserveFactor; // Only considered if enabledToBorrow == EngineFlags.ENABLED (true)
     uint256 supplyCap; // If passing any value distinct to EngineFlags.KEEP_CURRENT, always configured
     uint256 borrowCap; // If passing any value distinct to EngineFlags.KEEP_CURRENT, always configured
-    uint256 debtCeiling; // Only considered if liqThreshold > 0
     uint256 liqProtocolFee; // Only considered if liqThreshold > 0
   }
 
@@ -152,7 +135,6 @@ interface IAaveV3ConfigEngine {
    *   ltv: 60_00,
    *   liqThreshold: 70_00,
    *   liqBonus: EngineFlags.KEEP_CURRENT,
-   *   debtCeiling: EngineFlags.KEEP_CURRENT,
    *   liqProtocolFee: 7_00
    * })
    */
@@ -161,7 +143,6 @@ interface IAaveV3ConfigEngine {
     uint256 ltv;
     uint256 liqThreshold;
     uint256 liqBonus;
-    uint256 debtCeiling;
     uint256 liqProtocolFee;
   }
 
@@ -171,8 +152,6 @@ interface IAaveV3ConfigEngine {
    *   asset: AaveV3EthereumAssets.AAVE_UNDERLYING,
    *   enabledToBorrow: EngineFlags.ENABLED,
    *   flashloanable: EngineFlags.KEEP_CURRENT,
-   *   borrowableInIsolation: EngineFlags.KEEP_CURRENT,
-   *   withSiloedBorrowing: EngineFlags.KEEP_CURRENT,
    *   reserveFactor: 15_00, // 15%
    * })
    */
@@ -180,8 +159,6 @@ interface IAaveV3ConfigEngine {
     address asset;
     uint256 enabledToBorrow;
     uint256 flashloanable;
-    uint256 borrowableInIsolation;
-    uint256 withSiloedBorrowing;
     uint256 reserveFactor;
   }
 
@@ -192,6 +169,7 @@ interface IAaveV3ConfigEngine {
    *   eModeCategory: 1, // ETH correlated
    *   borrowable: EngineFlags.ENABLED,
    *   collateral: EngineFlags.KEEP_CURRENT,
+   *   ltvzero: EngineFlags.KEEP_CURRENT
    * })
    */
   struct AssetEModeUpdate {
@@ -199,6 +177,7 @@ interface IAaveV3ConfigEngine {
     uint8 eModeCategory;
     uint256 borrowable;
     uint256 collateral;
+    uint256 ltvzero;
   }
 
   /**
@@ -208,7 +187,8 @@ interface IAaveV3ConfigEngine {
    *   ltv: 60_00,
    *   liqThreshold: 70_00,
    *   liqBonus: EngineFlags.KEEP_CURRENT,
-   *   label: EngineFlags.KEEP_CURRENT_STRING
+   *   label: EngineFlags.KEEP_CURRENT_STRING,
+   *   isolated: EngineFlags.ENABLED
    * })
    */
   struct EModeCategoryUpdate {
@@ -217,6 +197,28 @@ interface IAaveV3ConfigEngine {
     uint256 liqThreshold;
     uint256 liqBonus;
     string label;
+    uint256 isolated;
+  }
+
+  /**
+   * @dev Example (mock):
+   * EModeCategoryUpdate({
+   *   ltv: 60_00,
+   *   liqThreshold: 70_00,
+   *   liqBonus: 3_00,
+   *   label: 'WETH USDC',
+   *   borrowables:[USDC],
+   *   collaterals:[ETH]
+   * })
+   */
+  struct EModeCategoryCreation {
+    uint256 ltv;
+    uint256 liqThreshold;
+    uint256 liqBonus;
+    string label;
+    address[] borrowables;
+    address[] collaterals;
+    bool isolated;
   }
 
   /**
@@ -296,6 +298,13 @@ interface IAaveV3ConfigEngine {
   function updateBorrowSide(BorrowUpdate[] memory updates) external;
 
   /**
+   * @notice Performs creation of new e-mode categories, in the Aave pool configured in this engine instance
+   * @param creations `EModeCategoryCreation[]` list of declarative creations containing the new parameters
+   *   More information on the documentation of the struct.
+   */
+  function createEModeCategories(EModeCategoryCreation[] memory creations) external;
+
+  /**
    * @notice Performs an update of the e-mode categories, in the Aave pool configured in this engine instance
    * @param updates `EModeCategoryUpdate[]` list of declarative updates containing the new parameters
    *   More information on the documentation of the struct.
@@ -325,18 +334,4 @@ interface IAaveV3ConfigEngine {
   function REWARDS_CONTROLLER() external view returns (address);
 
   function COLLECTOR() external view returns (address);
-
-  function BORROW_ENGINE() external view returns (address);
-
-  function CAPS_ENGINE() external view returns (address);
-
-  function COLLATERAL_ENGINE() external view returns (address);
-
-  function EMODE_ENGINE() external view returns (address);
-
-  function LISTING_ENGINE() external view returns (address);
-
-  function PRICE_FEED_ENGINE() external view returns (address);
-
-  function RATE_ENGINE() external view returns (address);
 }

@@ -2,8 +2,8 @@
 pragma solidity ^0.8.19;
 pragma experimental ABIEncoderV2;
 
-import {ReserveConfiguration} from '../munged/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
-import {DataTypes} from '../munged/contracts/protocol/libraries/types/DataTypes.sol';
+import {ReserveConfiguration} from '../munged/src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
+import {DataTypes} from '../munged/src/contracts/protocol/libraries/types/DataTypes.sol';
 
 contract ReserveConfigurationHarness {
   DataTypes.ReserveConfigurationMap public reservesConfig;
@@ -95,30 +95,6 @@ contract ReserveConfigurationHarness {
     return ReserveConfiguration.getPaused(reservesConfig);
   }
 
-  // Sets the borrowable in isolation flag for the reserve.
-  function setBorrowableInIsolation(bool borrowable) public {
-    DataTypes.ReserveConfigurationMap memory configNew = reservesConfig;
-    ReserveConfiguration.setBorrowableInIsolation(configNew, borrowable);
-    reservesConfig.data = configNew.data;
-  }
-
-  // Gets the borrowable in isolation flag for the reserve.
-  function getBorrowableInIsolation() public view returns (bool) {
-    return ReserveConfiguration.getBorrowableInIsolation(reservesConfig);
-  }
-
-  // Sets the siloed borrowing flag for the reserve.
-  function setSiloedBorrowing(bool siloed) public {
-    DataTypes.ReserveConfigurationMap memory configNew = reservesConfig;
-    ReserveConfiguration.setSiloedBorrowing(configNew, siloed);
-    reservesConfig.data = configNew.data;
-  }
-
-  // Gets the siloed borrowing flag for the reserve.
-  function getSiloedBorrowing() public view returns (bool) {
-    return ReserveConfiguration.getSiloedBorrowing(reservesConfig);
-  }
-
   // Enables or disables borrowing on the reserve
   function setBorrowingEnabled(bool enabled) public {
     DataTypes.ReserveConfigurationMap memory configNew = reservesConfig;
@@ -167,18 +143,6 @@ contract ReserveConfigurationHarness {
     return ReserveConfiguration.getSupplyCap(reservesConfig);
   }
 
-  // Sets the debt ceiling in isolation mode for the asset
-  function setDebtCeiling(uint256 ceiling) public {
-    DataTypes.ReserveConfigurationMap memory configNew = reservesConfig;
-    ReserveConfiguration.setDebtCeiling(configNew, ceiling);
-    reservesConfig.data = configNew.data;
-  }
-
-  // Gets the debt ceiling for the asset if the asset is in isolation mode
-  function getDebtCeiling() public view returns (uint256) {
-    return ReserveConfiguration.getDebtCeiling(reservesConfig);
-  }
-
   // Sets the liquidation protocol fee of the reserve
   function setLiquidationProtocolFee(uint256 liquidationProtocolFee) public {
     DataTypes.ReserveConfigurationMap memory configNew = reservesConfig;
@@ -189,18 +153,6 @@ contract ReserveConfigurationHarness {
   // Gets the liquidation protocol fee
   function getLiquidationProtocolFee() public view returns (uint256) {
     return ReserveConfiguration.getLiquidationProtocolFee(reservesConfig);
-  }
-
-  // Sets the unbacked mint cap of the reserve
-  function setUnbackedMintCap(uint256 unbackedMintCap) public {
-    DataTypes.ReserveConfigurationMap memory configNew = reservesConfig;
-    ReserveConfiguration.setUnbackedMintCap(configNew, unbackedMintCap);
-    reservesConfig.data = configNew.data;
-  }
-
-  // Gets the unbacked mint cap of the reserve
-  function getUnbackedMintCap() public view returns (uint256) {
-    return ReserveConfiguration.getUnbackedMintCap(reservesConfig);
   }
 
   // Sets the eMode asset category
@@ -234,7 +186,7 @@ contract ReserveConfigurationHarness {
 
   // Executes a setter of an int parameter according to the given id
   function executeIntSetterById(uint256 id, uint256 val) public {
-    require(id >= 0 && id <= 10);
+    require(id >= 0 && id <= 7);
     if (id == 0) {
       setLtv(val);
     } else if (id == 1) {
@@ -249,20 +201,14 @@ contract ReserveConfigurationHarness {
       setBorrowCap(val);
     } else if (id == 6) {
       setSupplyCap(val);
-    } else if (id == 7) {
-      setLiquidationProtocolFee(val);
-      //    } else if (id == 8) {
-      //setEModeCategory(val);
-    } else if (id == 8) {
-      setUnbackedMintCap(val);
     } else {
-      setDebtCeiling(val);
+      setLiquidationProtocolFee(val);
     }
   }
 
   // Executes a getter of an int parameter according to the given id
   function executeIntGetterById(uint256 id) public view returns (uint256) {
-    require(id >= 0 && id <= 10);
+    require(id >= 0 && id <= 7);
     if (id == 0) {
       return getLtv();
     } else if (id == 1) {
@@ -277,14 +223,8 @@ contract ReserveConfigurationHarness {
       return getBorrowCap();
     } else if (id == 6) {
       return getSupplyCap();
-    } else if (id == 7) {
-      return getLiquidationProtocolFee();
-      //    } else if (id == 8) {
-      //return getEModeCategory();
-    } else if (id == 8) {
-      return getUnbackedMintCap();
     } else {
-      return getDebtCeiling();
+      return getLiquidationProtocolFee();
     }
   }
 
@@ -300,7 +240,7 @@ contract ReserveConfigurationHarness {
     } else if (id == 3) {
       setPaused(val);
     } else {
-      setBorrowableInIsolation(val);
+      setFlashLoanEnabled(val);
     }
   }
 
@@ -316,7 +256,7 @@ contract ReserveConfigurationHarness {
     } else if (id == 3) {
       return getPaused();
     } else {
-      return getBorrowableInIsolation();
+      return getFlashLoanEnabled();
     }
   }
 }

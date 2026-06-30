@@ -119,16 +119,6 @@ contract MockReserveConfiguration {
     return configuration.getLiquidationProtocolFee();
   }
 
-  function setUnbackedMintCap(uint256 unbackedMintCap) external {
-    DataTypes.ReserveConfigurationMap memory config = configuration;
-    config.setUnbackedMintCap(unbackedMintCap);
-    configuration = config;
-  }
-
-  function getUnbackedMintCap() external view returns (uint256) {
-    return configuration.getUnbackedMintCap();
-  }
-
   function getFlags() external view returns (bool, bool, bool, bool) {
     return configuration.getFlags();
   }

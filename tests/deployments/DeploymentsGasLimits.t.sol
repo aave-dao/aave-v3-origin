@@ -9,14 +9,11 @@ import {AaveV3L2PoolBatch} from '../../src/deployments/projects/aave-v3-batched/
 import {AaveV3GettersBatchOne} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3GettersBatchOne.sol';
 import {AaveV3GettersBatchTwo} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3GettersBatchTwo.sol';
 import {AaveV3PeripheryBatch} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3PeripheryBatch.sol';
-import {AaveV3ParaswapBatch} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3ParaswapBatch.sol';
 import {AaveV3SetupBatch} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3SetupBatch.sol';
 import {AaveV3MiscBatch} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3MiscBatch.sol';
 import {AaveV3HelpersBatchOne} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3HelpersBatchOne.sol';
 import {AaveV3HelpersBatchTwo} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3HelpersBatchTwo.sol';
 import {WETH9} from '../../src/contracts/dependencies/weth/WETH9.sol';
-import {AugustusRegistryMock} from '../mocks/AugustusRegistryMock.sol';
-import {SequencerOracle} from '../../src/contracts/mocks/oracle/SequencerOracle.sol';
 import {BatchTestProcedures} from '../utils/BatchTestProcedures.sol';
 
 contract DeploymentsGasLimits is BatchTestProcedures {
@@ -26,13 +23,14 @@ contract DeploymentsGasLimits is BatchTestProcedures {
   MarketReport deployedContracts;
 
   InitialReport marketReportOne;
+  InitialReport marketReportTwo;
+
   PoolReport poolReportOne;
 
   AaveV3GettersBatchOne.GettersReportBatchOne gettersReportOne;
   AaveV3GettersBatchTwo.GettersReportBatchTwo gettersReportTwo;
 
   PeripheryReport peripheryReportOne;
-  ParaswapReport paraswapReportOne;
   MiscReport miscReport;
   AaveV3TokensBatch.TokensReport tokensReport;
 
@@ -54,18 +52,12 @@ contract DeploymentsGasLimits is BatchTestProcedures {
       makeAddr('ethUsdOracle'),
       'Testnet Market',
       8,
-      address(new AugustusRegistryMock()), // replace with mock of augustus registry
-      address(new SequencerOracle(poolAdmin)),
-      2 hours, // l2PriceOracleSentinelGracePeriod
       8080,
       empty,
       address(new WETH9()),
       0.0005e4,
-      0.0004e4,
       address(0),
-      address(0),
-      address(0),
-      0
+      address(0)
     );
     flags = DeployFlags(true);
 
@@ -84,18 +76,18 @@ contract DeploymentsGasLimits is BatchTestProcedures {
       aaveV3SetupOne
     ) = deployCoreAndPeriphery(roles, config, flags, deployedContracts);
 
-    (
-      ,
-      ,
-      gettersReportTwo,
-      ,
-      setupReportTwo,
-      ,
-      miscReport,
-      tokensReport,
-      paraswapReportOne,
+    BatchTestProcedures.DeployAndSetupVariables memory deployAndSetupVariables = deployAndSetup(
+      roles,
+      config,
+      flags,
+      deployedContracts
+    );
 
-    ) = deployAndSetup(roles, config, flags, deployedContracts);
+    marketReportTwo = deployAndSetupVariables.initialReport;
+    gettersReportTwo = deployAndSetupVariables.gettersReport2;
+    setupReportTwo = deployAndSetupVariables.setupReport;
+    miscReport = deployAndSetupVariables.miscReport;
+    tokensReport = deployAndSetupVariables.tokensReport;
   }
 
   function test0AaveV3SetupDeployment() public {
@@ -104,7 +96,6 @@ contract DeploymentsGasLimits is BatchTestProcedures {
 
   function test1AaveV3GettersBatch1Deployment() public {
     new AaveV3GettersBatchOne(
-      marketReportOne.poolAddressesProvider,
       config.networkBaseTokenPriceInUsdProxyAggregator,
       config.marketReferenceCurrencyPriceInUsdProxyAggregator
     );
@@ -115,16 +106,23 @@ contract DeploymentsGasLimits is BatchTestProcedures {
       setupReportTwo.poolProxy,
       roles.poolAdmin,
       config.wrappedNativeToken,
+      marketReportTwo.poolAddressesProvider,
       flags.l2
     );
   }
 
   function test3AaveV3PoolDeployment() public {
-    new AaveV3PoolBatch(marketReportOne.poolAddressesProvider);
+    new AaveV3PoolBatch(
+      marketReportOne.poolAddressesProvider,
+      marketReportOne.interestRateStrategy
+    );
   }
 
   function test4AaveV3L2PoolDeployment() public {
-    new AaveV3L2PoolBatch(marketReportOne.poolAddressesProvider);
+    new AaveV3L2PoolBatch(
+      marketReportOne.poolAddressesProvider,
+      marketReportOne.interestRateStrategy
+    );
   }
 
   function test5PeripheralsRelease() public {
@@ -137,16 +135,7 @@ contract DeploymentsGasLimits is BatchTestProcedures {
   }
 
   function test6MiscDeployment() public {
-    new AaveV3MiscBatch(
-      flags.l2,
-      marketReportOne.poolAddressesProvider,
-      config.l2SequencerUptimeFeed,
-      config.l2PriceOracleSentinelGracePeriod
-    );
-  }
-
-  function test7ParaswapDeployment() public {
-    new AaveV3ParaswapBatch(roles.poolAdmin, config, marketReportOne.poolAddressesProvider);
+    new AaveV3MiscBatch(marketReportOne.poolAddressesProvider);
   }
 
   function test8SetupMarket() public {
@@ -156,15 +145,17 @@ contract DeploymentsGasLimits is BatchTestProcedures {
       config,
       poolReportOne.poolImplementation,
       poolReportOne.poolConfiguratorImplementation,
-      gettersReportOne.protocolDataProvider,
       peripheryReportOne.aaveOracle,
-      peripheryReportOne.rewardsControllerImplementation,
-      miscReport.priceOracleSentinel
+      peripheryReportOne.rewardsControllerImplementation
     );
   }
 
   function test9TokensMarket() public {
-    new AaveV3TokensBatch(setupReportTwo.poolProxy);
+    new AaveV3TokensBatch(
+      setupReportTwo.poolProxy,
+      setupReportTwo.rewardsControllerProxy,
+      peripheryReportOne.treasury
+    );
   }
 
   function test10ConfigEngineDeployment() public {
@@ -185,17 +176,6 @@ contract DeploymentsGasLimits is BatchTestProcedures {
       setupReportTwo.poolProxy,
       setupReportTwo.rewardsControllerProxy,
       roles.poolAdmin
-    );
-  }
-
-  function test12PeripheralsTreasuryPartner() public {
-    config.treasuryPartner = address(1);
-    config.treasurySplitPercent = 5000;
-    new AaveV3PeripheryBatch(
-      roles.poolAdmin,
-      config,
-      marketReportOne.poolAddressesProvider,
-      address(aaveV3SetupOne)
     );
   }
 }

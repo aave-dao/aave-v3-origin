@@ -20,6 +20,27 @@ contract ProtocolDataProvider_gas_Tests is Testhelpers {
     vm.snapshotGasLastCall('ProtocolDataProvider', 'getReserveConfigurationData');
   }
 
+  function test_getAllReservesTokens() external {
+    contracts.protocolDataProvider.getAllReservesTokens();
+    vm.snapshotGasLastCall('ProtocolDataProvider', 'getAllReservesTokens');
+  }
+
+  function test_getAllATokens() external {
+    contracts.protocolDataProvider.getAllATokens();
+    vm.snapshotGasLastCall('ProtocolDataProvider', 'getAllATokens');
+  }
+
+  // breaks coverage due to stack to deep
+  // function test_getReserveData() external {
+  //   contracts.protocolDataProvider.getReserveData(tokenList.usdx);
+  //   vm.snapshotGasLastCall('ProtocolDataProvider', 'getReserveData');
+  // }
+
+  function test_getReserveDeficit() external {
+    contracts.protocolDataProvider.getReserveDeficit(tokenList.usdx);
+    vm.snapshotGasLastCall('ProtocolDataProvider', 'getReserveDeficit');
+  }
+
   function test_getReserveCaps() external {
     contracts.protocolDataProvider.getReserveCaps(tokenList.usdx);
     vm.snapshotGasLastCall('ProtocolDataProvider', 'getReserveCaps');
@@ -28,11 +49,6 @@ contract ProtocolDataProvider_gas_Tests is Testhelpers {
   function test_getPaused() external {
     contracts.protocolDataProvider.getPaused(tokenList.usdx);
     vm.snapshotGasLastCall('ProtocolDataProvider', 'getPaused');
-  }
-
-  function test_getSiloedBorrowing() external {
-    contracts.protocolDataProvider.getSiloedBorrowing(tokenList.usdx);
-    vm.snapshotGasLastCall('ProtocolDataProvider', 'getSiloedBorrowing');
   }
 
   function test_getLiquidationProtocolFee() external {
@@ -45,23 +61,18 @@ contract ProtocolDataProvider_gas_Tests is Testhelpers {
     vm.snapshotGasLastCall('ProtocolDataProvider', 'getUnbackedMintCap');
   }
 
-  function test_getDebtCeiling() external {
-    contracts.protocolDataProvider.getDebtCeiling(tokenList.usdx);
-    vm.snapshotGasLastCall('ProtocolDataProvider', 'getPaused');
-  }
-
   function test_getATokenTotalSupply() external {
     contracts.protocolDataProvider.getATokenTotalSupply(tokenList.usdx);
     vm.snapshotGasLastCall('ProtocolDataProvider', 'getATokenTotalSupply');
   }
 
   function test_getTotalDebt() external {
-    contracts.protocolDataProvider.getATokenTotalSupply(tokenList.usdx);
+    contracts.protocolDataProvider.getTotalDebt(tokenList.usdx);
     vm.snapshotGasLastCall('ProtocolDataProvider', 'getTotalDebt');
   }
 
   function test_getUserReserveData() external {
-    _supplyOnReserve(user, 1e6, tokenList.usdx);
+    _supply(tokenList.usdx, 1e6, user);
 
     contracts.protocolDataProvider.getUserReserveData(tokenList.usdx, user);
     vm.snapshotGasLastCall('ProtocolDataProvider', 'getUserReserveData');

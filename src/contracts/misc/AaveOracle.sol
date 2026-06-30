@@ -81,7 +81,7 @@ contract AaveOracle is IAaveOracle {
    * @param sources The address of the source of each asset
    */
   function _setAssetsSources(address[] memory assets, address[] memory sources) internal {
-    require(assets.length == sources.length, Errors.INCONSISTENT_PARAMS_LENGTH);
+    require(assets.length == sources.length, Errors.InconsistentParamsLength());
     for (uint256 i = 0; i < assets.length; i++) {
       assetsSources[assets[i]] = AggregatorInterface(sources[i]);
       emit AssetSourceUpdated(assets[i], sources[i]);
@@ -108,6 +108,7 @@ contract AaveOracle is IAaveOracle {
     } else {
       int256 price = source.latestAnswer();
       if (price > 0) {
+        // forge-lint: disable-next-line(unsafe-typecast)
         return uint256(price);
       } else {
         return _fallbackOracle.getAssetPrice(asset);
@@ -140,7 +141,7 @@ contract AaveOracle is IAaveOracle {
     IACLManager aclManager = IACLManager(ADDRESSES_PROVIDER.getACLManager());
     require(
       aclManager.isAssetListingAdmin(msg.sender) || aclManager.isPoolAdmin(msg.sender),
-      Errors.CALLER_NOT_ASSET_LISTING_OR_POOL_ADMIN
+      Errors.CallerNotAssetListingOrPoolAdmin()
     );
   }
 }

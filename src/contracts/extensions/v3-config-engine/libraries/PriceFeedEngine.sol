@@ -6,9 +6,9 @@ import {AggregatorInterface} from '../../../dependencies/chainlink/AggregatorInt
 
 library PriceFeedEngine {
   function executePriceFeedsUpdate(
-    IEngine.EngineConstants calldata engineConstants,
+    IEngine.EngineConstants memory engineConstants,
     IEngine.PriceFeedUpdate[] memory updates
-  ) external {
+  ) internal {
     require(updates.length != 0, 'AT_LEAST_ONE_UPDATE_REQUIRED');
 
     _setPriceFeeds(engineConstants.oracle, updates);
@@ -23,6 +23,10 @@ library PriceFeedEngine {
       require(
         AggregatorInterface(updates[i].priceFeed).latestAnswer() > 0,
         'FEED_SHOULD_RETURN_POSITIVE_PRICE'
+      );
+      require(
+        AggregatorInterface(updates[i].priceFeed).decimals() == 8,
+        'FEED_MUST_USE_8_DECIMALS'
       );
       assets[i] = updates[i].asset;
       sources[i] = updates[i].priceFeed;

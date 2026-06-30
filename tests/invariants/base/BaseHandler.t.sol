@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 // Interfaces
-import {IERC20} from 'src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
 
 // Libraries
 import {EnumerableSet} from 'openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol';
@@ -37,9 +37,8 @@ contract BaseHandler is HookAggregator {
   ///////////////////////////////////////////////////////////////////////////////////////////////
 
   /// @notice Helper function to get a random base asset
-  function _getRandomBaseAsset(uint256 i) internal returns (address) {
-    targetAsset = baseAssets[i % baseAssets.length];
-    return targetAsset;
+  function _getRandomBaseAsset(uint256 i) internal view returns (address) {
+    return baseAssets[i % baseAssets.length];
   }
 
   /// @notice Helper function to get a random Atoken
@@ -113,6 +112,7 @@ contract BaseHandler is HookAggregator {
   function _mint(address token, address receiver, uint256 amount) internal {
     if (token == address(tokenList.weth)) {
       weth.deposit{value: amount}();
+      // forge-lint: disable-next-line(erc20-unchecked-transfer)
       weth.transfer(receiver, amount);
     } else {
       TestERC20 _token = TestERC20(token);

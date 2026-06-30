@@ -32,6 +32,8 @@ Change eMode category configuration? Same as previous, just define the update wi
 
 Change eMode category of a particular asset? Same as previous, just define the update within a `assetsEModeUpdates()` function, and the base payload will take care of the rest.
 
+Create a new eMode category? Same as previous, just define the update within a `eModeCategoryCreations()` function, and the base payload will take care of the rest.
+
 ### Internal aspects to consider
 
 - Frequently, at the same time that you want to do an update of parameters or listing, you also want to do something extra before or after.
@@ -39,16 +41,17 @@ Change eMode category of a particular asset? Same as previous, just define the u
 
 - The payload also allow you to group changes of parameters and listings, just by defining at the same time the aforementioned `newListings()`, `capsUpdate()` and/or `collateralsUpdates()` and so on. For reference, the execution ordering is the following:
   1. `_preExecute()`
-  2. `eModeCategoriesUpdates()`
-  3. `newListings()`
-  4. `newListingsCustom()`
-  5. `borrowsUpdates()`
-  6. `collateralsUpdates()`
-  7. `rateStrategiesUpdates()`
-  8. `priceFeedsUpdates()`
-  9. `assetsEModeUpdates()`
-  10. `capsUpdates()`
-  11. `_postExecute()`
+  2. `newListings()`
+  3. `newListingsCustom()`
+  4. `eModeCategoriesUpdates()`
+  5. `assetsEModeUpdates()`
+  6. `eModeCategoryCreations()`
+  7. `borrowsUpdates()`
+  8. `collateralsUpdates()`
+  9. `rateStrategiesUpdates()`
+  10. `priceFeedsUpdates()`
+  11. `capsUpdates()`
+  12. `_postExecute()`
 
 ## Links to examples
 

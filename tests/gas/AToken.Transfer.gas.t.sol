@@ -14,7 +14,6 @@ import {Testhelpers, IERC20} from './Testhelpers.sol';
 contract ATokenTransfer_gas_Tests is Testhelpers {
   address token;
   IAToken aToken;
-  address variableDebtToken;
 
   address sender = makeAddr('sender');
   address receiver = makeAddr('receiver');
@@ -22,80 +21,186 @@ contract ATokenTransfer_gas_Tests is Testhelpers {
   function setUp() public override {
     super.setUp();
     token = tokenList.usdx;
-    (address aTokenAddress, , address variableDebtTokenAddress) = contracts
-      .protocolDataProvider
-      .getReserveTokensAddresses(tokenList.usdx);
+    address aTokenAddress = contracts.poolProxy.getReserveAToken(tokenList.usdx);
     aToken = IAToken(aTokenAddress);
-    variableDebtToken = variableDebtTokenAddress;
   }
 
   function test_transfer_fullAmount() external {
-    _supplyOnReserve(sender, 1 ether);
-    vm.prank(sender);
+    _supply(token, 1 ether, sender);
+    vm.startPrank(sender);
 
     _skip(100);
 
-    aToken.transfer(receiver, 1 ether);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
+    aToken.transfer(receiver, aToken.balanceOf(sender));
+
     vm.snapshotGasLastCall(
       'AToken.transfer',
       'full amount; sender: ->disableCollateral; receiver: ->enableCollateral'
     );
   }
 
-  function test_transfer_fullAmount_dirtyReceiver() external {
-    _supplyOnReserve(receiver, 1 ether, tokenList.weth);
-    _supplyOnReserve(sender, 1 ether);
-    vm.prank(sender);
+  function test_transfer_fullAmount_senderCollateralDisabled_receiverDirty() external {
+    _supplyAndEnableAsCollateral(tokenList.usdx, 1 ether, sender);
+    _supply(tokenList.usdx, 1 ether, receiver);
+    vm.startPrank(sender);
 
     _skip(100);
 
-    aToken.transfer(receiver, 1 ether);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
+    aToken.transfer(receiver, aToken.balanceOf(sender));
+    vm.snapshotGasLastCall('AToken.transfer', 'full amount; sender: ->disableCollateral;');
+  }
+
+  function test_transferFrom_fullAmount() external {
+    _supply(token, 1 ether, sender);
+    vm.prank(sender);
+
+    aToken.approve(receiver, 1 ether);
+
+    _skip(100);
+
+    vm.startPrank(receiver);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
+    aToken.transferFrom(sender, receiver, aToken.balanceOf(sender));
+    vm.snapshotGasLastCall(
+      'AToken.transfer',
+      'full amount; sender: ->disableCollateral; receiver: ->enableCollateral; transferFrom'
+    );
+  }
+
+  function test_transfer_fullAmount_dirtyReceiver() external {
+    _supply(tokenList.weth, 1 ether, receiver);
+    _supply(token, 1 ether, sender);
+    vm.startPrank(sender);
+
+    _skip(100);
+
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
+    aToken.transfer(receiver, aToken.balanceOf(sender));
     vm.snapshotGasLastCall(
       'AToken.transfer',
       'full amount; sender: ->disableCollateral; receiver: dirty, ->enableCollateral'
     );
   }
 
+  function test_transferFrom_fullAmount_dirtyReceiver() external {
+    _supply(tokenList.weth, 1 ether, receiver);
+    _supply(token, 1 ether, sender);
+    vm.prank(sender);
+
+    aToken.approve(receiver, 1 ether);
+
+    _skip(100);
+
+    vm.startPrank(receiver);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
+    aToken.transferFrom(sender, receiver, aToken.balanceOf(sender));
+    vm.snapshotGasLastCall(
+      'AToken.transfer',
+      'full amount; sender: ->disableCollateral; receiver: dirty, ->enableCollateral; transferFrom'
+    );
+  }
+
   function test_transfer_fullAmount_senderCollateralDisabled() external {
-    _supplyOnReserve(sender, 1 ether);
+    _supply(token, 1 ether, sender);
     vm.startPrank(sender);
     contracts.poolProxy.setUserUseReserveAsCollateral(token, false);
 
     _skip(100);
 
-    aToken.transfer(receiver, 1 ether);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
+    aToken.transfer(receiver, aToken.balanceOf(sender));
     vm.snapshotGasLastCall('AToken.transfer', 'full amount; receiver: ->enableCollateral');
   }
 
+  function test_transferFrom_fullAmount_senderCollateralDisabled() external {
+    _supply(token, 1 ether, sender);
+    vm.startPrank(sender);
+    contracts.poolProxy.setUserUseReserveAsCollateral(token, false);
+
+    aToken.approve(receiver, 1 ether);
+
+    _skip(100);
+
+    vm.startPrank(receiver);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
+    aToken.transferFrom(sender, receiver, aToken.balanceOf(sender));
+    vm.snapshotGasLastCall(
+      'AToken.transfer',
+      'full amount; receiver: ->enableCollateral; transferFrom'
+    );
+  }
+
   function test_transfer_fullAmount_senderCollateralDisabled_receiverNonZeroFunds2() external {
-    _supplyOnReserve(sender, 1 ether);
-    _supplyOnReserve(receiver, 1 ether);
+    _supply(token, 1 ether, sender);
+    _supply(token, 1 ether, receiver);
     vm.startPrank(sender);
 
     _skip(100);
 
-    aToken.transfer(receiver, 1 ether);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
+    aToken.transfer(receiver, aToken.balanceOf(sender));
     vm.snapshotGasLastCall('AToken.transfer', 'full amount; sender: ->disableCollateral;');
   }
 
+  function test_transferFrom_fullAmount_senderCollateralDisabled_receiverNonZeroFunds2() external {
+    _supply(token, 1 ether, sender);
+    _supply(token, 1 ether, receiver);
+    vm.startPrank(sender);
+
+    aToken.approve(receiver, 1 ether);
+
+    _skip(100);
+
+    vm.startPrank(receiver);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
+    aToken.transferFrom(sender, receiver, aToken.balanceOf(sender));
+    vm.snapshotGasLastCall(
+      'AToken.transfer',
+      'full amount; sender: ->disableCollateral; transferFrom'
+    );
+  }
+
   function test_transfer_fullAmount_senderCollateralDisabled_receiverNonZeroFunds() external {
-    _supplyOnReserve(sender, 1 ether);
-    _supplyOnReserve(receiver, 1 ether);
+    _supply(token, 1 ether, sender);
+    _supply(token, 1 ether, receiver);
     vm.startPrank(sender);
     contracts.poolProxy.setUserUseReserveAsCollateral(token, false);
 
     _skip(100);
 
-    aToken.transfer(receiver, 1 ether);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
+    aToken.transfer(receiver, aToken.balanceOf(sender));
     vm.snapshotGasLastCall('AToken.transfer', 'full amount; sender: collateralDisabled');
   }
 
+  function test_transferFrom_fullAmount_senderCollateralDisabled_receiverNonZeroFunds() external {
+    _supply(token, 1 ether, sender);
+    _supply(token, 1 ether, receiver);
+    vm.startPrank(sender);
+    contracts.poolProxy.setUserUseReserveAsCollateral(token, false);
+
+    aToken.approve(receiver, 1 ether);
+
+    _skip(100);
+
+    vm.startPrank(receiver);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
+    aToken.transferFrom(sender, receiver, aToken.balanceOf(sender));
+    vm.snapshotGasLastCall(
+      'AToken.transfer',
+      'full amount; sender: collateralDisabled; transferFrom'
+    );
+  }
+
   function test_transfer_partialAmount_senderCollateralEnabled() external {
-    _supplyOnReserve(sender, 1 ether);
+    _supply(token, 1 ether, sender);
     vm.startPrank(sender);
 
     _skip(100);
 
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transfer(receiver, 0.5 ether);
     vm.snapshotGasLastCall(
       'AToken.transfer',
@@ -103,36 +208,93 @@ contract ATokenTransfer_gas_Tests is Testhelpers {
     );
   }
 
+  function test_transferFrom_partialAmount_senderCollateralEnabled() external {
+    _supply(token, 1 ether, sender);
+    vm.startPrank(sender);
+
+    aToken.approve(receiver, 0.5 ether);
+
+    _skip(100);
+
+    vm.startPrank(receiver);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
+    aToken.transferFrom(sender, receiver, 0.5 ether);
+    vm.snapshotGasLastCall(
+      'AToken.transfer',
+      'partial amount; sender: collateralEnabled; receiver: ->enableCollateral; transferFrom'
+    );
+  }
+
   function test_transfer_partialAmount_senderCollateralEnabled_receiverNonZeroFunds() external {
-    _supplyOnReserve(sender, 1 ether);
-    _supplyOnReserve(receiver, 1 ether);
+    _supply(token, 1 ether, sender);
+    _supply(token, 1 ether, receiver);
     vm.startPrank(sender);
 
     _skip(100);
 
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transfer(receiver, 0.5 ether);
     vm.snapshotGasLastCall('AToken.transfer', 'partial amount; sender: collateralEnabled;');
   }
 
+  function test_transferFrom_partialAmount_senderCollateralEnabled_receiverNonZeroFunds() external {
+    _supply(token, 1 ether, sender);
+    _supply(token, 1 ether, receiver);
+    vm.startPrank(sender);
+
+    aToken.approve(receiver, 0.5 ether);
+
+    _skip(100);
+
+    vm.startPrank(receiver);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
+    aToken.transferFrom(sender, receiver, 0.5 ether);
+    vm.snapshotGasLastCall(
+      'AToken.transfer',
+      'partial amount; sender: collateralEnabled; transferFrom'
+    );
+  }
+
   function test_transfer_partialAmount_receiverNonZeroFunds() external {
-    _supplyOnReserve(sender, 1 ether);
-    _supplyOnReserve(receiver, 1 ether);
+    _supply(token, 1 ether, sender);
+    _supply(token, 1 ether, receiver);
     vm.startPrank(sender);
     contracts.poolProxy.setUserUseReserveAsCollateral(token, false);
 
     _skip(100);
 
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transfer(receiver, 0.5 ether);
     vm.snapshotGasLastCall('AToken.transfer', 'partial amount; sender: collateralDisabled;');
   }
 
+  function test_transferFrom_partialAmount_receiverNonZeroFunds() external {
+    _supply(token, 1 ether, sender);
+    _supply(token, 1 ether, receiver);
+    vm.startPrank(sender);
+    contracts.poolProxy.setUserUseReserveAsCollateral(token, false);
+
+    aToken.approve(receiver, 0.5 ether);
+
+    _skip(100);
+
+    vm.startPrank(receiver);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
+    aToken.transferFrom(sender, receiver, 0.5 ether);
+    vm.snapshotGasLastCall(
+      'AToken.transfer',
+      'partial amount; sender: collateralDisabled; transferFrom'
+    );
+  }
+
   function test_transfer_partialAmount() external {
-    _supplyOnReserve(sender, 1 ether);
+    _supply(token, 1 ether, sender);
     vm.startPrank(sender);
     contracts.poolProxy.setUserUseReserveAsCollateral(token, false);
 
     _skip(100);
 
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
     aToken.transfer(receiver, 0.5 ether);
     vm.snapshotGasLastCall(
       'AToken.transfer',
@@ -140,7 +302,21 @@ contract ATokenTransfer_gas_Tests is Testhelpers {
     );
   }
 
-  function _supplyOnReserve(address user, uint256 amount) internal {
-    _supplyOnReserve(user, amount, token);
+  function test_transferFrom_partialAmount() external {
+    _supply(token, 1 ether, sender);
+    vm.startPrank(sender);
+    contracts.poolProxy.setUserUseReserveAsCollateral(token, false);
+
+    aToken.approve(receiver, 0.5 ether);
+
+    _skip(100);
+
+    vm.startPrank(receiver);
+    // forge-lint: disable-next-line(erc20-unchecked-transfer)
+    aToken.transferFrom(sender, receiver, 0.5 ether);
+    vm.snapshotGasLastCall(
+      'AToken.transfer',
+      'partial amount; sender: collateralDisabled; receiver: ->enableCollateral; transferFrom'
+    );
   }
 }

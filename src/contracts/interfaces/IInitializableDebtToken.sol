@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {IAaveIncentivesController} from './IAaveIncentivesController.sol';
 import {IPool} from './IPool.sol';
 
 /**
@@ -34,7 +33,6 @@ interface IInitializableDebtToken {
    * @notice Initializes the debt token.
    * @param pool The pool contract that is initializing this contract
    * @param underlyingAsset The address of the underlying asset of this aToken (E.g. WETH for aWETH)
-   * @param incentivesController The smart contract managing potential incentives distribution
    * @param debtTokenDecimals The decimals of the debtToken, same as the underlying asset's
    * @param debtTokenName The name of the token
    * @param debtTokenSymbol The symbol of the token
@@ -43,7 +41,6 @@ interface IInitializableDebtToken {
   function initialize(
     IPool pool,
     address underlyingAsset,
-    IAaveIncentivesController incentivesController,
     uint8 debtTokenDecimals,
     string memory debtTokenName,
     string memory debtTokenSymbol,

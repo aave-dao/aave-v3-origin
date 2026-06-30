@@ -5,14 +5,13 @@ import {ERC20Upgradeable, ERC20PermitUpgradeable} from 'openzeppelin-contracts-u
 import {PausableUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/utils/PausableUpgradeable.sol';
 import {IERC20Metadata} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import {IERC20Permit} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol';
-import {IRescuable, Rescuable} from 'solidity-utils/contracts/utils/Rescuable.sol';
+import {Rescuable} from 'solidity-utils/contracts/utils/Rescuable.sol';
 import {IRescuableBase, RescuableBase} from 'solidity-utils/contracts/utils/RescuableBase.sol';
 
 import {IACLManager} from '../../../contracts/interfaces/IACLManager.sol';
 import {ERC4626Upgradeable, ERC4626StataTokenUpgradeable, IPool, Math, IERC20} from './ERC4626StataTokenUpgradeable.sol';
 import {ERC20AaveLMUpgradeable, IRewardsController} from './ERC20AaveLMUpgradeable.sol';
 import {IStataTokenV2} from './interfaces/IStataTokenV2.sol';
-import {IAToken} from './interfaces/IAToken.sol';
 
 /**
  * @title StataTokenV2

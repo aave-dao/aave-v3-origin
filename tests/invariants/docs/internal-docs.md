@@ -141,17 +141,17 @@ As mentioned on the public documentation this suite framework spins around to ty
       if (targetAsset == address(0)) return;
       uint256 totalSupplyUpdatedTreasury = _getRealTotalSupply(
         targetAsset,
-        defaultVarsBefore.scaledTotalSupply,
-        defaultVarsAfter.accruedToTreasury
+        snapshotGlobalVarsBefore.scaledTotalSupply,
+        snapshotGlobalVarsAfter.accruedToTreasury
       );
-      if (totalSupplyUpdatedTreasury < defaultVarsAfter.totalSupply) {
+      if (totalSupplyUpdatedTreasury < snapshotGlobalVarsAfter.totalSupply) {
         if (
-          defaultVarsAfter.supplyCap != 0 &&
+          snapshotGlobalVarsAfter.supplyCap != 0 &&
           msg.sig != IPoolHandler.mintToTreasury.selector
         )
           assertLe(
-            defaultVarsAfter.totalSupply,
-            defaultVarsAfter.supplyCap,
+            snapshotGlobalVarsAfter.totalSupply,
+            snapshotGlobalVarsAfter.supplyCap,
             LENDING_GPOST_C
           );
       }

@@ -23,7 +23,6 @@ contract AaveV3MockCollateralUpdate is AaveV3Payload {
       ltv: 62_00,
       liqThreshold: 72_00,
       liqBonus: 6_00,
-      debtCeiling: EngineFlags.KEEP_CURRENT,
       liqProtocolFee: EngineFlags.KEEP_CURRENT
     });
 

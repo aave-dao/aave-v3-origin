@@ -1,0 +1,90 @@
+diff -ruN .gitignore .gitignore
+--- .gitignore	1970-01-01 01:00:00
++++ .gitignore	2026-03-04 10:17:28
+@@ -0,0 +1,2 @@
++*
++!.gitignore
+\ No newline at end of file
+diff -ruN src/contracts/dependencies/gnosis/contracts/GPv2SafeERC20.sol src/contracts/dependencies/gnosis/contracts/GPv2SafeERC20.sol
+--- src/contracts/dependencies/gnosis/contracts/GPv2SafeERC20.sol	2026-03-04 10:18:41
++++ src/contracts/dependencies/gnosis/contracts/GPv2SafeERC20.sol	2026-03-04 10:18:01
+@@ -10,6 +10,8 @@
+   /// @dev Wrapper around a call to the ERC20 function `transfer` that reverts
+   /// also when the token returns `false`.
+   function safeTransfer(IERC20 token, address to, uint256 value) internal {
++    require(token.transfer(to,value));
++    /*
+     bytes4 selector_ = token.transfer.selector;
+ 
+     // solhint-disable-next-line no-inline-assembly
+@@ -25,12 +27,14 @@
+       }
+     }
+ 
+-    require(getLastTransferResult(token), 'GPv2: failed transfer');
++    require(getLastTransferResult(token), 'GPv2: failed transfer');*/
+   }
+ 
+   /// @dev Wrapper around a call to the ERC20 function `transferFrom` that
+   /// reverts also when the token returns `false`.
+   function safeTransferFrom(IERC20 token, address from, address to, uint256 value) internal {
++    require(token.transferFrom(from,to,value));
++    /*
+     bytes4 selector_ = token.transferFrom.selector;
+ 
+     // solhint-disable-next-line no-inline-assembly
+@@ -48,6 +52,7 @@
+     }
+ 
+     require(getLastTransferResult(token), 'GPv2: failed transferFrom');
++    */
+   }
+ 
+   /// @dev Verifies that the last return was a successful `transfer*` call.
+diff -ruN src/contracts/protocol/libraries/logic/LiquidationLogic.sol src/contracts/protocol/libraries/logic/LiquidationLogic.sol
+--- src/contracts/protocol/libraries/logic/LiquidationLogic.sol	2026-03-04 10:18:41
++++ src/contracts/protocol/libraries/logic/LiquidationLogic.sol	2026-03-04 10:18:29
+@@ -561,16 +561,24 @@
+       .getLiquidationProtocolFee();
+ 
+     // This is the base collateral to liquidate based on the given debt to cover
+-    vars.baseCollateral =
+-      (debtAssetPrice * debtToCover * collateralAssetUnit) /
+-      (vars.collateralAssetPrice * debtAssetUnit);
+ 
+-    vars.maxCollateralToLiquidate = vars.baseCollateral.percentMulFloor(liquidationBonus);
++    if ((debtAssetPrice * debtToCover * collateralAssetUnit) % (vars.collateralAssetPrice * debtAssetUnit) == 0) // ADDED
++      vars.baseCollateral =
++        (debtAssetPrice * debtToCover * collateralAssetUnit) /
++        (vars.collateralAssetPrice * debtAssetUnit);
++    else // ADDED
++      vars.baseCollateral = // ADDED
++        (debtAssetPrice * debtToCover * collateralAssetUnit) /   // ADDED
++        (vars.collateralAssetPrice * debtAssetUnit)    // ADDED
++        + 1      ;   // ADDED
+ 
++    vars.maxCollateralToLiquidate = vars.baseCollateral.percentMulCeil(liquidationBonus);
++
+     if (vars.maxCollateralToLiquidate > borrowerCollateralBalance) {
+       vars.collateralAmount = borrowerCollateralBalance;
+       vars.debtAmountNeeded = ((vars.collateralAssetPrice * vars.collateralAmount * debtAssetUnit) /
+-        (debtAssetPrice * collateralAssetUnit)).percentDivCeil(liquidationBonus);
++                               //(debtAssetPrice * collateralAssetUnit)).percentDivCeil(liquidationBonus);
++                               (debtAssetPrice * collateralAssetUnit)).percentDivFloor(liquidationBonus);  // CHANGE !
+     } else {
+       vars.collateralAmount = vars.maxCollateralToLiquidate;
+       vars.debtAmountNeeded = debtToCover;
+@@ -583,9 +591,11 @@
+     if (vars.liquidationProtocolFeePercentage != 0) {
+       vars.bonusCollateral =
+         vars.collateralAmount -
+-        vars.collateralAmount.percentDivFloor(liquidationBonus);
++        //        vars.collateralAmount.percentDivFloor(liquidationBonus);
++        vars.collateralAmount.percentDivCeil(liquidationBonus); // CHANGE
+ 
+-      vars.liquidationProtocolFee = vars.bonusCollateral.percentMulCeil(
++      //      vars.liquidationProtocolFee = vars.bonusCollateral.percentMulCeil(
++      vars.liquidationProtocolFee = vars.bonusCollateral.percentMulFloor( // CHANGE
+         vars.liquidationProtocolFeePercentage
+       );
+       vars.collateralAmount -= vars.liquidationProtocolFee;

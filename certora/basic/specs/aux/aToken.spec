@@ -51,7 +51,7 @@ methods {
     function _.rescueTokens(address token, address to, uint256 amount) external with (env e) => aTokenRescueTokensCVL(calledContract, token, to, amount, e) expect void;
 
     // matches VariableDebtToken only
-    function _.burn(address from, uint256 amount, uint256 index) external => variableDebtBurnCVL(calledContract, from, amount, index) expect uint256;
+    function _.burn(address from, uint256 amount, uint256 index) external => variableDebtBurnCVL(calledContract, from, amount, index) expect (bool,uint256);
 
     // matches StableDebtToken only
     function _.burn(address from, uint256 amount) external => stableDebtBurnCVL(calledContract, from, amount) expect (uint256, uint256);
@@ -251,10 +251,11 @@ function aTokenRescueTokensCVL(address tokenCalled, address tokenToRescue, addre
     aTokenTransferCVLInternal(tokenToRescue, tokenCalled /* from */, to, amount, e);
 }
 
-function variableDebtBurnCVL(address token, address from, uint amount, uint index) returns uint {
+function variableDebtBurnCVL(address token, address from, uint amount, uint index) returns (bool,uint) {
     // based on VariableDebtToken.sol
     aTokenBurnCVL(token, from, 0 /* receiver of underlying */, amount, index);
-    return require_uint256(totalSupplyByToken[token]);
+    bool any_val;
+    return (any_val,require_uint256(totalSupplyByToken[token]));
 }
 
 function stableDebtBurnCVL(address token, address from, uint amount) returns (uint, uint) {

@@ -5,20 +5,13 @@ import 'forge-std/Test.sol';
 
 import {AToken} from '../../../../src/contracts/protocol/tokenization/AToken.sol';
 import {Errors} from '../../../../src/contracts/protocol/libraries/helpers/Errors.sol';
+import {IPoolConfigurator} from '../../../../src/contracts/interfaces/IPoolConfigurator.sol';
 import {TestnetERC20} from '../../../../src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
 import {ConfiguratorInputTypes} from '../../../../src/contracts/protocol/pool/PoolConfigurator.sol';
 import {IDefaultInterestRateStrategyV2} from '../../../../src/contracts/misc/DefaultReserveInterestRateStrategyV2.sol';
 import {TestnetProcedures, TestVars, TestReserveConfig} from '../../../utils/TestnetProcedures.sol';
 
 contract PoolConfiguratorInitReservesTest is TestnetProcedures {
-  event ReserveInitialized(
-    address indexed asset,
-    address indexed aToken,
-    address stableDebtToken,
-    address variableDebtToken,
-    address interestRateStrategyAddress
-  );
-
   function setUp() public {
     initTestEnvironment(false);
   }
@@ -36,12 +29,12 @@ contract PoolConfiguratorInitReservesTest is TestnetProcedures {
       input[i] = _generateInitReserveInput(t[i], report, poolAdmin, true);
 
       vm.expectEmit(true, false, false, false, address(contracts.poolConfiguratorProxy));
-      emit ReserveInitialized(
+      emit IPoolConfigurator.ReserveInitialized(
         input[i].underlyingAsset,
         address(0),
         address(0),
         address(0),
-        input[i].interestRateStrategyAddress
+        report.defaultInterestRateStrategy
       );
     }
     // Perform action
@@ -62,11 +55,11 @@ contract PoolConfiguratorInitReservesTest is TestnetProcedures {
           AToken(aTokenProxy).decimals(),
           TestnetERC20(initConfig.underlyingAsset).decimals()
         );
-        assertEq(AToken(aTokenProxy).RESERVE_TREASURY_ADDRESS(), initConfig.treasury);
+        assertEq(AToken(aTokenProxy).RESERVE_TREASURY_ADDRESS(), address(contracts.treasury));
         assertEq(AToken(aTokenProxy).UNDERLYING_ASSET_ADDRESS(), initConfig.underlyingAsset);
         assertEq(
           address(AToken(aTokenProxy).getIncentivesController()),
-          initConfig.incentivesController
+          report.rewardsControllerProxy
         );
 
         assertEq(AToken(variableDebtProxy).name(), initConfig.variableDebtTokenName);
@@ -78,7 +71,7 @@ contract PoolConfiguratorInitReservesTest is TestnetProcedures {
         assertEq(AToken(variableDebtProxy).UNDERLYING_ASSET_ADDRESS(), initConfig.underlyingAsset);
         assertEq(
           address(AToken(variableDebtProxy).getIncentivesController()),
-          initConfig.incentivesController
+          report.rewardsControllerProxy
         );
       }
       // Perform default asset checks
@@ -98,7 +91,7 @@ contract PoolConfiguratorInitReservesTest is TestnetProcedures {
       assertEq(c.reserveFactor, 0);
       assertEq(c.usageAsCollateralEnabled, false);
       assertEq(c.borrowingEnabled, false);
-      assertEq(c.isVirtualAccActive, initConfig.useVirtualBalance);
+      assertEq(c.isVirtualAccActive, true);
     }
     assertEq(contracts.poolProxy.getReservesList().length, previousListedAssets + length);
   }
@@ -126,7 +119,7 @@ contract PoolConfiguratorInitReservesTest is TestnetProcedures {
     for (uint256 i = 0; i < length; i++)
       input[i] = _generateInitReserveInput(t, report, poolAdmin, true);
 
-    vm.expectRevert(bytes(Errors.NO_MORE_RESERVES_ALLOWED));
+    vm.expectRevert(abi.encodeWithSelector(Errors.NoMoreReservesAllowed.selector));
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.initReserves(input);
 
@@ -143,7 +136,7 @@ contract PoolConfiguratorInitReservesTest is TestnetProcedures {
       false
     );
 
-    vm.expectRevert(bytes(Errors.INVALID_DECIMALS));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidDecimals.selector));
 
     // Perform action
     vm.prank(poolAdmin);

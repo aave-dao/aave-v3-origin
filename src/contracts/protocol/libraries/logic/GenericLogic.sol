@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.10;
 
-import {IERC20} from '../../../dependencies/openzeppelin/contracts/IERC20.sol';
 import {IScaledBalanceToken} from '../../../interfaces/IScaledBalanceToken.sol';
 import {IPriceOracleGetter} from '../../../interfaces/IPriceOracleGetter.sol';
 import {ReserveConfiguration} from '../configuration/ReserveConfiguration.sol';
@@ -9,9 +8,11 @@ import {UserConfiguration} from '../configuration/UserConfiguration.sol';
 import {EModeConfiguration} from '../configuration/EModeConfiguration.sol';
 import {PercentageMath} from '../math/PercentageMath.sol';
 import {WadRayMath} from '../math/WadRayMath.sol';
+import {TokenMath} from '../helpers/TokenMath.sol';
+import {MathUtils} from '../math/MathUtils.sol';
 import {DataTypes} from '../types/DataTypes.sol';
 import {ReserveLogic} from './ReserveLogic.sol';
-import {EModeLogic} from './EModeLogic.sol';
+import {ValidationLogic} from './ValidationLogic.sol';
 
 /**
  * @title GenericLogic library
@@ -20,6 +21,7 @@ import {EModeLogic} from './EModeLogic.sol';
  */
 library GenericLogic {
   using ReserveLogic for DataTypes.ReserveData;
+  using TokenMath for uint256;
   using WadRayMath for uint256;
   using PercentageMath for uint256;
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
@@ -29,7 +31,8 @@ library GenericLogic {
     uint256 assetPrice;
     uint256 assetUnit;
     uint256 userBalanceInBaseCurrency;
-    uint256 decimals;
+    uint256 unsafe_cachedUserConfig;
+    DataTypes.ReserveConfigurationMap configurationCache;
     uint256 ltv;
     uint256 liquidationThreshold;
     uint256 i;
@@ -38,11 +41,10 @@ library GenericLogic {
     uint256 totalDebtInBaseCurrency;
     uint256 avgLtv;
     uint256 avgLiquidationThreshold;
-    uint256 eModeLtv;
     uint256 eModeLiqThreshold;
+    uint128 eModeCollateralBitmap;
     address currentReserveAddress;
     bool hasZeroLtvCollateral;
-    bool isInEModeCategory;
   }
 
   /**
@@ -73,83 +75,76 @@ library GenericLogic {
     CalculateUserAccountDataVars memory vars;
 
     if (params.userEModeCategory != 0) {
-      vars.eModeLtv = eModeCategories[params.userEModeCategory].ltv;
       vars.eModeLiqThreshold = eModeCategories[params.userEModeCategory].liquidationThreshold;
+      vars.eModeCollateralBitmap = eModeCategories[params.userEModeCategory].collateralBitmap;
     }
 
-    while (vars.i < params.reservesCount) {
-      if (!params.userConfig.isUsingAsCollateralOrBorrowing(vars.i)) {
-        unchecked {
-          ++vars.i;
-        }
-        continue;
-      }
+    vars.unsafe_cachedUserConfig = params.userConfig.data;
+    bool isBorrowed = false;
+    bool isEnabledAsCollateral = false;
 
-      vars.currentReserveAddress = reservesList[vars.i];
+    while (vars.unsafe_cachedUserConfig != 0) {
+      (vars.unsafe_cachedUserConfig, isBorrowed, isEnabledAsCollateral) = UserConfiguration
+        .getNextFlags(vars.unsafe_cachedUserConfig);
+      if (isEnabledAsCollateral || isBorrowed) {
+        vars.currentReserveAddress = reservesList[vars.i];
 
-      if (vars.currentReserveAddress == address(0)) {
-        unchecked {
-          ++vars.i;
-        }
-        continue;
-      }
+        // @dev legacy check from when dropReserve could leave gaps; see docs/3.7/drop-reserve-removal.md
+        if (vars.currentReserveAddress != address(0)) {
+          DataTypes.ReserveData storage currentReserve = reservesData[vars.currentReserveAddress];
+          vars.configurationCache = currentReserve.configuration;
 
-      DataTypes.ReserveData storage currentReserve = reservesData[vars.currentReserveAddress];
+          unchecked {
+            vars.assetUnit = 10 ** vars.configurationCache.getDecimals();
+          }
 
-      (vars.ltv, vars.liquidationThreshold, , vars.decimals, ) = currentReserve
-        .configuration
-        .getParams();
-
-      unchecked {
-        vars.assetUnit = 10 ** vars.decimals;
-      }
-
-      vars.assetPrice = IPriceOracleGetter(params.oracle).getAssetPrice(vars.currentReserveAddress);
-
-      if (vars.liquidationThreshold != 0 && params.userConfig.isUsingAsCollateral(vars.i)) {
-        vars.userBalanceInBaseCurrency = _getUserBalanceInBaseCurrency(
-          params.user,
-          currentReserve,
-          vars.assetPrice,
-          vars.assetUnit
-        );
-
-        vars.totalCollateralInBaseCurrency += vars.userBalanceInBaseCurrency;
-
-        vars.isInEModeCategory =
-          params.userEModeCategory != 0 &&
-          EModeConfiguration.isReserveEnabledOnBitmap(
-            eModeCategories[params.userEModeCategory].collateralBitmap,
-            vars.i
+          vars.assetPrice = IPriceOracleGetter(params.oracle).getAssetPrice(
+            vars.currentReserveAddress
           );
 
-        if (vars.ltv != 0) {
-          vars.avgLtv +=
-            vars.userBalanceInBaseCurrency *
-            (vars.isInEModeCategory ? vars.eModeLtv : vars.ltv);
-        } else {
-          vars.hasZeroLtvCollateral = true;
-        }
+          if (isEnabledAsCollateral) {
+            vars.userBalanceInBaseCurrency = _getUserBalanceInBaseCurrency(
+              params.user,
+              currentReserve,
+              vars.assetPrice,
+              vars.assetUnit
+            );
 
-        vars.avgLiquidationThreshold +=
-          vars.userBalanceInBaseCurrency *
-          (vars.isInEModeCategory ? vars.eModeLiqThreshold : vars.liquidationThreshold);
-      }
+            vars.totalCollateralInBaseCurrency += vars.userBalanceInBaseCurrency;
 
-      if (params.userConfig.isBorrowing(vars.i)) {
-        if (currentReserve.configuration.getIsVirtualAccActive()) {
-          vars.totalDebtInBaseCurrency += _getUserDebtInBaseCurrency(
-            params.user,
-            currentReserve,
-            vars.assetPrice,
-            vars.assetUnit
-          );
-        } else {
-          // custom case for GHO, which applies the GHO discount on balanceOf
-          vars.totalDebtInBaseCurrency +=
-            (IERC20(currentReserve.variableDebtTokenAddress).balanceOf(params.user) *
-              vars.assetPrice) /
-            vars.assetUnit;
+            vars.ltv = ValidationLogic.getUserReserveLtv(
+              currentReserve,
+              eModeCategories[params.userEModeCategory],
+              params.userEModeCategory
+            );
+            if (vars.ltv == 0) {
+              vars.hasZeroLtvCollateral = true;
+            } else {
+              vars.avgLtv += vars.userBalanceInBaseCurrency * vars.ltv;
+            }
+
+            if (
+              params.userEModeCategory != 0 &&
+              EModeConfiguration.isReserveEnabledOnBitmap(vars.eModeCollateralBitmap, vars.i)
+            ) {
+              vars.liquidationThreshold = vars.eModeLiqThreshold;
+            } else {
+              vars.liquidationThreshold = vars.configurationCache.getLiquidationThreshold();
+            }
+
+            vars.avgLiquidationThreshold +=
+              vars.userBalanceInBaseCurrency *
+              vars.liquidationThreshold;
+          }
+
+          if (isBorrowed) {
+            vars.totalDebtInBaseCurrency += _getUserDebtInBaseCurrency(
+              params.user,
+              currentReserve,
+              vars.assetPrice,
+              vars.assetUnit
+            );
+          }
         }
       }
 
@@ -157,6 +152,16 @@ library GenericLogic {
         ++vars.i;
       }
     }
+
+    // @note At this point, `avgLiquidationThreshold` represents
+    // `SUM(collateral_base_value_i * liquidation_threshold_i)` for all collateral assets.
+    // It has 8 decimals (base currency) + 2 decimals (percentage) = 10 decimals.
+    // healthFactor has 18 decimals
+    // healthFactor = (avgLiquidationThreshold * WAD / totalDebtInBaseCurrency) / 100_00
+    // 18 decimals = (10 decimals * 18 decimals / 8 decimals) / 2 decimals = 18 decimals
+    vars.healthFactor = (vars.totalDebtInBaseCurrency == 0)
+      ? type(uint256).max
+      : vars.avgLiquidationThreshold.wadDiv(vars.totalDebtInBaseCurrency) / 100_00;
 
     unchecked {
       vars.avgLtv = vars.totalCollateralInBaseCurrency != 0
@@ -167,11 +172,6 @@ library GenericLogic {
         : 0;
     }
 
-    vars.healthFactor = (vars.totalDebtInBaseCurrency == 0)
-      ? type(uint256).max
-      : (vars.totalCollateralInBaseCurrency.percentMul(vars.avgLiquidationThreshold)).wadDiv(
-        vars.totalDebtInBaseCurrency
-      );
     return (
       vars.totalCollateralInBaseCurrency,
       vars.totalDebtInBaseCurrency,
@@ -195,7 +195,7 @@ library GenericLogic {
     uint256 totalDebtInBaseCurrency,
     uint256 ltv
   ) internal pure returns (uint256) {
-    uint256 availableBorrowsInBaseCurrency = totalCollateralInBaseCurrency.percentMul(ltv);
+    uint256 availableBorrowsInBaseCurrency = totalCollateralInBaseCurrency.percentMulFloor(ltv);
 
     if (availableBorrowsInBaseCurrency <= totalDebtInBaseCurrency) {
       return 0;
@@ -222,18 +222,11 @@ library GenericLogic {
     uint256 assetPrice,
     uint256 assetUnit
   ) private view returns (uint256) {
-    // fetching variable debt
-    uint256 userTotalDebt = IScaledBalanceToken(reserve.variableDebtTokenAddress).scaledBalanceOf(
-      user
-    );
-    if (userTotalDebt == 0) {
-      return 0;
-    }
+    uint256 userTotalDebt = IScaledBalanceToken(reserve.variableDebtTokenAddress)
+      .scaledBalanceOf(user)
+      .getVTokenBalance(reserve.getNormalizedDebt());
 
-    userTotalDebt = userTotalDebt.rayMul(reserve.getNormalizedDebt()) * assetPrice;
-    unchecked {
-      return userTotalDebt / assetUnit;
-    }
+    return MathUtils.mulDivCeil(userTotalDebt, assetPrice, assetUnit);
   }
 
   /**
@@ -252,9 +245,10 @@ library GenericLogic {
     uint256 assetPrice,
     uint256 assetUnit
   ) private view returns (uint256) {
-    uint256 normalizedIncome = reserve.getNormalizedIncome();
     uint256 balance = (
-      IScaledBalanceToken(reserve.aTokenAddress).scaledBalanceOf(user).rayMul(normalizedIncome)
+      IScaledBalanceToken(reserve.aTokenAddress).scaledBalanceOf(user).getATokenBalance(
+        reserve.getNormalizedIncome()
+      )
     ) * assetPrice;
 
     unchecked {

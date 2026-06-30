@@ -7,6 +7,7 @@ import {ACLManager} from '../../../contracts/protocol/configuration/ACLManager.s
 import {IPoolConfigurator} from '../../../contracts/interfaces/IPoolConfigurator.sol';
 import {IPoolAddressesProvider} from '../../../contracts/interfaces/IPoolAddressesProvider.sol';
 import {PoolAddressesProvider} from '../../../contracts/protocol/configuration/PoolAddressesProvider.sol';
+import {DefaultReserveInterestRateStrategyV2} from '../../../contracts/misc/DefaultReserveInterestRateStrategyV2.sol';
 import {PoolAddressesProviderRegistry} from '../../../contracts/protocol/configuration/PoolAddressesProviderRegistry.sol';
 import {IEmissionManager} from '../../../contracts/rewards/interfaces/IEmissionManager.sol';
 import {IRewardsController} from '../../../contracts/rewards/interfaces/IRewardsController.sol';
@@ -19,12 +20,10 @@ contract AaveV3SetupProcedure {
     InitialReport initialReport;
     address poolImplementation;
     address poolConfiguratorImplementation;
-    address protocolDataProvider;
     address poolAdmin;
     address aaveOracle;
     address rewardsControllerProxy;
     address rewardsControllerImplementation;
-    address priceOracleSentinel;
   }
 
   function _initialDeployment(
@@ -36,12 +35,16 @@ contract AaveV3SetupProcedure {
     InitialReport memory report;
 
     report.poolAddressesProvider = address(new PoolAddressesProvider(marketId, address(this)));
+    report.interestRateStrategy = address(
+      new DefaultReserveInterestRateStrategyV2(report.poolAddressesProvider)
+    );
     report.poolAddressesProviderRegistry = _deployPoolAddressesProviderRegistry(
       marketOwner,
       providerRegistry,
       report.poolAddressesProvider,
       providerId
     );
+
     return report;
   }
 
@@ -51,10 +54,8 @@ contract AaveV3SetupProcedure {
     InitialReport memory initialReport,
     address poolImplementation,
     address poolConfiguratorImplementation,
-    address protocolDataProvider,
     address aaveOracle,
-    address rewardsControllerImplementation,
-    address priceOracleSentinel
+    address rewardsControllerImplementation
   ) internal returns (SetupReport memory) {
     _validateMarketSetup(roles);
 
@@ -63,12 +64,10 @@ contract AaveV3SetupProcedure {
         initialReport,
         poolImplementation,
         poolConfiguratorImplementation,
-        protocolDataProvider,
         roles.poolAdmin,
         aaveOracle,
         config.incentivesProxy,
-        rewardsControllerImplementation,
-        priceOracleSentinel
+        rewardsControllerImplementation
       )
     );
 
@@ -76,11 +75,8 @@ contract AaveV3SetupProcedure {
       roles,
       initialReport.poolAddressesProvider,
       report.poolConfiguratorProxy,
-      config.flashLoanPremiumTotal,
-      config.flashLoanPremiumToProtocol
+      config.flashLoanPremium
     );
-
-    _transferMarketOwnership(roles, initialReport);
 
     return report;
   }
@@ -118,14 +114,9 @@ contract AaveV3SetupProcedure {
     provider.setPriceOracle(input.aaveOracle);
     provider.setPoolImpl(input.poolImplementation);
     provider.setPoolConfiguratorImpl(input.poolConfiguratorImplementation);
-    provider.setPoolDataProvider(input.protocolDataProvider);
 
     report.poolProxy = address(provider.getPool());
     report.poolConfiguratorProxy = address(provider.getPoolConfigurator());
-
-    if (input.priceOracleSentinel != address(0)) {
-      provider.setPriceOracleSentinel(input.priceOracleSentinel);
-    }
 
     bytes32 controllerId = keccak256('INCENTIVES_CONTROLLER');
     if (input.rewardsControllerProxy == address(0)) {
@@ -145,12 +136,20 @@ contract AaveV3SetupProcedure {
     return report;
   }
 
+  function _setProtocolDataProvider(
+    InitialReport memory initialReport,
+    address protocolDataProvider
+  ) internal {
+    IPoolAddressesProvider provider = IPoolAddressesProvider(initialReport.poolAddressesProvider);
+
+    provider.setPoolDataProvider(protocolDataProvider);
+  }
+
   function _setupACL(
     Roles memory roles,
     address poolAddressesProvider,
     address poolConfiguratorProxy,
-    uint128 flashLoanPremiumTotal,
-    uint128 flashLoanPremiumToProtocol
+    uint128 flashLoanPremium
   ) internal returns (address) {
     IPoolAddressesProvider provider = IPoolAddressesProvider(poolAddressesProvider);
 
@@ -165,12 +164,7 @@ contract AaveV3SetupProcedure {
 
     provider.setACLManager(address(manager));
 
-    _configureFlashloanParams(
-      manager,
-      poolConfiguratorProxy,
-      flashLoanPremiumTotal,
-      flashLoanPremiumToProtocol
-    );
+    _configureFlashloanParams(manager, poolConfiguratorProxy, flashLoanPremium);
 
     manager.addPoolAdmin(roles.poolAdmin);
 
@@ -186,14 +180,12 @@ contract AaveV3SetupProcedure {
   function _configureFlashloanParams(
     ACLManager manager,
     address poolConfiguratorProxy,
-    uint128 flashLoanPremiumTotal,
-    uint128 flashLoanPremiumToProtocol
+    uint128 flashLoanPremium
   ) internal {
     IPoolConfigurator configurator = IPoolConfigurator(poolConfiguratorProxy);
     manager.addPoolAdmin(address(this));
 
-    configurator.updateFlashloanPremiumTotal(flashLoanPremiumTotal);
-    configurator.updateFlashloanPremiumToProtocol(flashLoanPremiumToProtocol);
+    configurator.updateFlashloanPremium(flashLoanPremium);
 
     manager.revokeRole(manager.POOL_ADMIN_ROLE(), address(this));
   }

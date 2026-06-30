@@ -107,7 +107,7 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
     erc4626Upgradeable.depositWithPermit(
       env.underlyingBalance,
       user,
-      block.timestamp + 1000,
+      vm.getBlockTimestamp() + 1000,
       sig,
       false
     );
@@ -128,7 +128,7 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
     uint256 shares = erc4626Upgradeable.depositWithPermit(
       env.amountToDeposit,
       receiver,
-      block.timestamp + 1000,
+      vm.getBlockTimestamp() + 1000,
       sig,
       true
     );
@@ -154,7 +154,7 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
     uint256 shares = erc4626Upgradeable.depositWithPermit(
       env.amountToDeposit,
       receiver,
-      block.timestamp + 1000,
+      vm.getBlockTimestamp() + 1000,
       sig,
       false
     );
@@ -178,7 +178,7 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
       spender: address(erc4626Upgradeable),
       value: env.amountToDeposit,
       nonce: IERC20Permit(underlying).nonces(user),
-      deadline: block.timestamp + 100
+      deadline: vm.getBlockTimestamp() + 100
     });
 
     bytes32 permitDigest = SigUtils.getTypedDataHash(
@@ -216,7 +216,7 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
       spender: address(erc4626Upgradeable),
       value: env.amountToDeposit,
       nonce: IERC20Permit(aToken).nonces(user),
-      deadline: block.timestamp + 100
+      deadline: vm.getBlockTimestamp() + 100
     });
 
     bytes32 permitDigest = SigUtils.getTypedDataHash(
@@ -498,11 +498,7 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
   }
 
   function _fundAToken(uint256 assets, address receiver) internal {
-    _fundUnderlying(assets, receiver);
-    vm.startPrank(receiver);
-    IERC20(underlying).approve(address(contracts.poolProxy), assets);
-    contracts.poolProxy.deposit(underlying, assets, receiver, 0);
-    vm.stopPrank();
+    _supply(underlying, assets, receiver);
   }
 
   function _fund4626(uint256 assets, address receiver) internal returns (uint256) {

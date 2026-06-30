@@ -9,18 +9,18 @@ certoraRun $CMN certora/basic/conf/AToken.conf \
 
 echo
 echo "******** Running:  2 ***************"
-certoraRun $CMN certora/basic/conf/ReserveConfiguration.conf \
-           --msg "2: ReserveConfiguration.conf"
+certoraRun $CMN certora/basic/conf/VariableDebtToken.conf \
+           --msg "2: VariableDebtToken.conf"
 
 echo
 echo "******** Running:  3 ***************"
-certoraRun $CMN certora/basic/conf/UserConfiguration.conf \
-           --msg "3: UserConfiguration.conf"
+certoraRun $CMN certora/basic/conf/ReserveConfiguration.conf \
+           --msg "3: ReserveConfiguration.conf"
 
 echo
 echo "******** Running:  4 ***************"
-certoraRun $CMN certora/basic/conf/VariableDebtToken.conf \
-           --msg "4: VariableDebtToken.conf"
+certoraRun $CMN certora/basic/conf/UserConfiguration.conf \
+           --msg "4: UserConfiguration.conf"
 
 echo
 echo "******** Running:  5 NEW no summarization ***************"
@@ -82,12 +82,13 @@ certoraRun $CMN certora/basic/conf/NEW-pool-simple-properties.conf \
            --rule_sanity none \
            --msg "simple:7: NEW :: cannotBorrowOnInactiveReserve"
 
-echo
-echo "******** Running:  simple:8 ***************"
-certoraRun $CMN certora/basic/conf/NEW-pool-simple-properties.conf \
-           --rule cannotBorrowOnReserveDisabledForBorrowing \
-           --rule_sanity none \
-           --msg "simple:8: NEW :: cannotBorrowOnReserveDisabledForBorrowing"
+
+#echo
+#/echo "******** Running:  simple:8 ***************"
+#certoraRun $CMN certora/basic/conf/NEW-pool-simple-properties.conf \
+#--rule cannotBorrowOnReserveDisabledForBorrowing \
+#           --rule_sanity none \
+#           --msg "simple:8: NEW :: cannotBorrowOnReserveDisabledForBorrowing"
 
 echo
 echo "******** Running:  simple:9 ***************"

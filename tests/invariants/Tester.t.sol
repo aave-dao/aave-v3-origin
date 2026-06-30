@@ -25,8 +25,5 @@ contract Tester is Invariants, Setup {
 
     // Initialize handler contracts
     _setUpHandlers();
-
-    // Initialize the actor to the first user
-    _setUpHooks();
   }
 }

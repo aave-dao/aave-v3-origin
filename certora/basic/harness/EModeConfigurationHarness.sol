@@ -2,8 +2,8 @@
 pragma solidity ^0.8.19;
 pragma experimental ABIEncoderV2;
 
-import {EModeConfiguration} from '../munged/contracts/protocol/libraries/configuration/EModeConfiguration.sol';
-import {DataTypes} from '../munged/contracts/protocol/libraries/types/DataTypes.sol';
+import {EModeConfiguration} from '../munged/src/contracts/protocol/libraries/configuration/EModeConfiguration.sol';
+import {DataTypes} from '../munged/src/contracts/protocol/libraries/types/DataTypes.sol';
 
 contract EModeConfigurationHarness {
   DataTypes.EModeCategory public eModeCategory;

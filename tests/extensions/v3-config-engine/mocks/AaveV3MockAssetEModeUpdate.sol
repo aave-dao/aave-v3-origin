@@ -28,13 +28,15 @@ contract AaveV3MockAssetEModeUpdate is AaveV3Payload {
       asset: ASSET_ADDRESS,
       eModeCategory: 1,
       collateral: EngineFlags.DISABLED,
-      borrowable: EngineFlags.ENABLED
+      borrowable: EngineFlags.ENABLED,
+      ltvzero: EngineFlags.DISABLED
     });
     eModeUpdate[1] = IEngine.AssetEModeUpdate({
       asset: ASSET_2_ADDRESS,
       eModeCategory: 1,
       collateral: EngineFlags.ENABLED,
-      borrowable: EngineFlags.KEEP_CURRENT
+      borrowable: EngineFlags.KEEP_CURRENT,
+      ltvzero: EngineFlags.ENABLED
     });
 
     return eModeUpdate;

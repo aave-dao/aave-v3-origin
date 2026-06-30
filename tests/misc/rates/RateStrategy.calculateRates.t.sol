@@ -463,14 +463,14 @@ contract RateStrategyCalculateRatesTests is RateStrategyBase {
     );
   }
 
-  function test_zero_rates_strategy_calculate_rates() public view {
+  function test_zero_rates_strategy_calculate_rates() public {
     DataTypes.CalculateInterestRatesParams memory input = DataTypes.CalculateInterestRatesParams({
       unbacked: 10,
       liquidityAdded: 1000,
       liquidityTaken: 50,
       totalDebt: 20,
       reserveFactor: reserveFactor,
-      reserve: tokenList.wbtc,
+      reserve: makeAddr('newToken'),
       usingVirtualBalance: true,
       virtualUnderlyingBalance: 30000
     });

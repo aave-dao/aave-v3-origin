@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 
+import {IERC20Errors} from 'openzeppelin-contracts/contracts/interfaces/draft-IERC6093.sol';
 import {IPool} from '../../../src/contracts/interfaces/IPool.sol';
 import {IAToken, IERC20} from '../../../src/contracts/interfaces/IAToken.sol';
 import {Errors} from '../../../src/contracts/protocol/libraries/helpers/Errors.sol';
@@ -16,23 +17,11 @@ contract PoolSupplyTests is TestnetProcedures {
   address internal aUSDX;
   address internal aWBTC;
 
-  event Supply(
-    address indexed reserve,
-    address user,
-    address indexed onBehalfOf,
-    uint256 amount,
-    uint16 indexed referralCode
-  );
-
-  event ReserveUsedAsCollateralEnabled(address indexed reserve, address indexed user);
-
-  event ReserveUsedAsCollateralDisabled(address indexed reserve, address indexed user);
-
   function setUp() public {
     initTestEnvironment();
 
-    (aUSDX, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(tokenList.usdx);
-    (aWBTC, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(tokenList.wbtc);
+    aUSDX = contracts.poolProxy.getReserveAToken(tokenList.usdx);
+    aWBTC = contracts.poolProxy.getReserveAToken(tokenList.wbtc);
   }
 
   function test_first_supply() public {
@@ -40,15 +29,17 @@ contract PoolSupplyTests is TestnetProcedures {
     uint256 underlyingBalanceBefore = IERC20(tokenList.wbtc).balanceOf(alice);
 
     vm.expectEmit(report.poolProxy);
-    emit ReserveUsedAsCollateralEnabled(tokenList.wbtc, alice);
+    emit IPool.ReserveUsedAsCollateralEnabled(tokenList.wbtc, alice);
     vm.expectEmit(report.poolProxy);
-    emit Supply(tokenList.wbtc, alice, alice, supplyAmount, 0);
+    emit IPool.Supply(tokenList.wbtc, alice, alice, supplyAmount, 0);
 
     vm.prank(alice);
     contracts.poolProxy.supply(tokenList.wbtc, supplyAmount, alice, 0);
 
     assertEq(IERC20(tokenList.wbtc).balanceOf(alice), underlyingBalanceBefore - supplyAmount);
     assertEq(IAToken(aWBTC).scaledBalanceOf(alice), supplyAmount);
+
+    _checkInterestRates(tokenList.wbtc);
   }
 
   function test_first_supply_on_behalf() public {
@@ -56,15 +47,17 @@ contract PoolSupplyTests is TestnetProcedures {
     uint256 underlyingBalanceBefore = IERC20(tokenList.wbtc).balanceOf(alice);
 
     vm.expectEmit(report.poolProxy);
-    emit ReserveUsedAsCollateralEnabled(tokenList.wbtc, bob);
+    emit IPool.ReserveUsedAsCollateralEnabled(tokenList.wbtc, bob);
     vm.expectEmit(report.poolProxy);
-    emit Supply(tokenList.wbtc, alice, bob, supplyAmount, 0);
+    emit IPool.Supply(tokenList.wbtc, alice, bob, supplyAmount, 0);
 
     vm.prank(alice);
     contracts.poolProxy.supply(tokenList.wbtc, supplyAmount, bob, 0);
 
     assertEq(IERC20(tokenList.wbtc).balanceOf(alice), underlyingBalanceBefore - supplyAmount);
     assertEq(IAToken(aWBTC).scaledBalanceOf(bob), supplyAmount);
+
+    _checkInterestRates(tokenList.wbtc);
   }
 
   function test_supply_after_collateral_enabled() public {
@@ -74,18 +67,20 @@ contract PoolSupplyTests is TestnetProcedures {
     uint256 scaledBalanceTokenBase = IAToken(aWBTC).scaledBalanceOf(alice);
 
     vm.expectEmit(report.poolProxy);
-    emit Supply(tokenList.wbtc, alice, alice, supplyAmount, 0);
+    emit IPool.Supply(tokenList.wbtc, alice, alice, supplyAmount, 0);
 
     vm.prank(alice);
     contracts.poolProxy.supply(tokenList.wbtc, supplyAmount, alice, 0);
 
     assertEq(IERC20(tokenList.wbtc).balanceOf(alice), underlyingBalanceBefore - supplyAmount);
     assertEq(IAToken(aWBTC).scaledBalanceOf(alice), scaledBalanceTokenBase + supplyAmount);
+
+    _checkInterestRates(tokenList.wbtc);
   }
 
   function test_supplyWithPermit(
     uint128 userPk,
-    uint128 supplyAmount,
+    uint120 supplyAmount,
     uint128 underlyingBalance
   ) public {
     vm.assume(userPk != 0);
@@ -98,7 +93,7 @@ contract PoolSupplyTests is TestnetProcedures {
       spender: address(contracts.poolProxy),
       value: supplyAmount,
       nonce: 0,
-      deadline: block.timestamp + 1 days
+      deadline: vm.getBlockTimestamp() + 1 days
     });
     bytes32 digest = EIP712SigUtils.getTypedDataHash(
       permit,
@@ -110,9 +105,9 @@ contract PoolSupplyTests is TestnetProcedures {
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(userPk, digest);
 
     vm.expectEmit(report.poolProxy);
-    emit ReserveUsedAsCollateralEnabled(tokenList.wbtc, user);
+    emit IPool.ReserveUsedAsCollateralEnabled(tokenList.wbtc, user);
     vm.expectEmit(report.poolProxy);
-    emit Supply(tokenList.wbtc, user, user, supplyAmount, 0);
+    emit IPool.Supply(tokenList.wbtc, user, user, supplyAmount, 0);
 
     vm.prank(user);
     contracts.poolProxy.supplyWithPermit(
@@ -128,11 +123,13 @@ contract PoolSupplyTests is TestnetProcedures {
 
     assertEq(IERC20(tokenList.wbtc).balanceOf(user), underlyingBalance - supplyAmount);
     assertEq(IAToken(aWBTC).scaledBalanceOf(user), supplyAmount);
+
+    _checkInterestRates(tokenList.wbtc);
   }
 
   function test_supplyWithPermit_not_failing_if_permit_was_used(
     uint128 userPk,
-    uint128 supplyAmount,
+    uint120 supplyAmount,
     uint128 underlyingBalance
   ) public {
     vm.assume(userPk != 0);
@@ -145,7 +142,7 @@ contract PoolSupplyTests is TestnetProcedures {
       spender: address(contracts.poolProxy),
       value: supplyAmount,
       nonce: 0,
-      deadline: block.timestamp + 1 days
+      deadline: vm.getBlockTimestamp() + 1 days
     });
     bytes32 digest = EIP712SigUtils.getTypedDataHash(
       permit,
@@ -172,6 +169,8 @@ contract PoolSupplyTests is TestnetProcedures {
 
     assertEq(IERC20(tokenList.wbtc).balanceOf(user), underlyingBalance - supplyAmount);
     assertEq(IAToken(aWBTC).scaledBalanceOf(user), supplyAmount);
+
+    _checkInterestRates(tokenList.wbtc);
   }
 
   function test_supplyWithPermit_should_revert_if_permit_is_less_then_supply_amount(
@@ -188,7 +187,7 @@ contract PoolSupplyTests is TestnetProcedures {
       spender: address(contracts.poolProxy),
       value: supplyAmount - 1,
       nonce: 0,
-      deadline: block.timestamp + 1 days
+      deadline: vm.getBlockTimestamp() + 1 days
     });
     bytes32 digest = EIP712SigUtils.getTypedDataHash(
       permit,
@@ -200,7 +199,14 @@ contract PoolSupplyTests is TestnetProcedures {
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(userPk, digest);
 
     vm.prank(user);
-    vm.expectRevert(bytes('ERC20: transfer amount exceeds allowance'));
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        IERC20Errors.ERC20InsufficientAllowance.selector,
+        address(contracts.poolProxy),
+        0,
+        supplyAmount
+      )
+    );
     contracts.poolProxy.supplyWithPermit(
       tokenList.wbtc,
       supplyAmount,
@@ -218,28 +224,30 @@ contract PoolSupplyTests is TestnetProcedures {
     uint256 underlyingBalanceBefore = IERC20(tokenList.wbtc).balanceOf(alice);
 
     vm.expectEmit(report.poolProxy);
-    emit ReserveUsedAsCollateralEnabled(tokenList.wbtc, alice);
+    emit IPool.ReserveUsedAsCollateralEnabled(tokenList.wbtc, alice);
     vm.expectEmit(report.poolProxy);
-    emit Supply(tokenList.wbtc, alice, alice, supplyAmount, 0);
+    emit IPool.Supply(tokenList.wbtc, alice, alice, supplyAmount, 0);
 
     vm.prank(alice);
     contracts.poolProxy.deposit(tokenList.wbtc, supplyAmount, alice, 0);
 
     assertEq(IERC20(tokenList.wbtc).balanceOf(alice), underlyingBalanceBefore - supplyAmount);
     assertEq(IAToken(aWBTC).scaledBalanceOf(alice), supplyAmount);
+
+    _checkInterestRates(tokenList.wbtc);
   }
 
   function test_reverts_supply_invalidAmount() public {
-    vm.expectRevert(bytes(Errors.INVALID_AMOUNT));
+    vm.expectRevert(abi.encodeWithSelector(Errors.InvalidAmount.selector));
 
     vm.prank(alice);
     contracts.poolProxy.supply(tokenList.wbtc, 0, alice, 0);
   }
 
-  function test_reverts_supply_to_aToken() public {
+  function test_reverts_SupplyToAToken() public {
     uint256 supplyAmount = 0.2e8;
 
-    vm.expectRevert(bytes(Errors.SUPPLY_TO_ATOKEN));
+    vm.expectRevert(abi.encodeWithSelector(Errors.SupplyToAToken.selector));
 
     vm.prank(alice);
     contracts.poolProxy.supply(tokenList.wbtc, supplyAmount, aWBTC, 0);
@@ -249,7 +257,7 @@ contract PoolSupplyTests is TestnetProcedures {
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setReserveActive(tokenList.wbtc, false);
 
-    vm.expectRevert(bytes(Errors.RESERVE_INACTIVE));
+    vm.expectRevert(abi.encodeWithSelector(Errors.ReserveInactive.selector));
 
     vm.prank(alice);
     contracts.poolProxy.supply(tokenList.wbtc, 0.2e8, alice, 0);
@@ -259,7 +267,7 @@ contract PoolSupplyTests is TestnetProcedures {
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setReservePause(tokenList.wbtc, true, 0);
 
-    vm.expectRevert(bytes(Errors.RESERVE_PAUSED));
+    vm.expectRevert(abi.encodeWithSelector(Errors.ReservePaused.selector));
 
     vm.prank(alice);
     contracts.poolProxy.supply(tokenList.wbtc, 0.2e8, alice, 0);
@@ -269,7 +277,7 @@ contract PoolSupplyTests is TestnetProcedures {
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setReserveFreeze(tokenList.wbtc, true);
 
-    vm.expectRevert(bytes(Errors.RESERVE_FROZEN));
+    vm.expectRevert(abi.encodeWithSelector(Errors.ReserveFrozen.selector));
 
     vm.prank(alice);
     contracts.poolProxy.supply(tokenList.wbtc, 0.2e8, alice, 0);
@@ -279,7 +287,7 @@ contract PoolSupplyTests is TestnetProcedures {
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setSupplyCap(tokenList.wbtc, 1);
 
-    vm.expectRevert(bytes(Errors.SUPPLY_CAP_EXCEEDED));
+    vm.expectRevert(abi.encodeWithSelector(Errors.SupplyCapExceeded.selector));
 
     vm.prank(alice);
     contracts.poolProxy.supply(tokenList.wbtc, 2e8, alice, 0);

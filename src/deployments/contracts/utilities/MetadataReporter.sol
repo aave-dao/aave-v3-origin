@@ -60,20 +60,9 @@ contract MetadataReporter is IMetadataReporter {
 
     vm.serializeAddress(
       jsonReport,
-      'paraSwapLiquiditySwapAdapter',
-      report.paraSwapLiquiditySwapAdapter
-    );
-    vm.serializeAddress(
-      jsonReport,
-      'paraSwapWithdrawSwapAdapter',
-      report.paraSwapWithdrawSwapAdapter
-    );
-    vm.serializeAddress(
-      jsonReport,
       'defaultInterestRateStrategy',
       report.defaultInterestRateStrategy
     );
-    vm.serializeAddress(jsonReport, 'priceOracleSentinel', report.priceOracleSentinel);
     vm.serializeAddress(jsonReport, 'configEngine', report.configEngine);
     vm.serializeAddress(
       jsonReport,
@@ -86,12 +75,10 @@ contract MetadataReporter is IMetadataReporter {
       'staticATokenImplementation',
       report.staticATokenImplementation
     );
-    vm.serializeAddress(jsonReport, 'transparentProxyFactory', report.transparentProxyFactory);
-
     string memory output = vm.serializeAddress(
       jsonReport,
-      'paraSwapRepayAdapter',
-      report.paraSwapRepayAdapter
+      'transparentProxyFactory',
+      report.transparentProxyFactory
     );
 
     vm.writeJson(output, string.concat('./reports/', timestamp, '-market-deployment.json'));
@@ -105,12 +92,7 @@ contract MetadataReporter is IMetadataReporter {
     (factoryV3Commit, factoryV3Branch) = getGitModuleVersion();
 
     string memory jsonReport = 'lib-report-1';
-
-    vm.serializeAddress(jsonReport, 'borrowLogic', libraries.borrowLogic);
-    vm.serializeAddress(jsonReport, 'bridgeLogic', libraries.bridgeLogic);
-    vm.serializeAddress(jsonReport, 'configuratorLogic', libraries.configuratorLogic);
-
-    string memory output = vm.serializeAddress(jsonReport, 'eModeLogic', libraries.eModeLogic);
+    string memory output = vm.serializeAddress(jsonReport, 'borrowLogic', libraries.borrowLogic);
 
     vm.writeJson(output, string.concat('./reports/', timestamp, '-library-1-deployment.json'));
   }

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.10;
 
 import {VersionedInitializable} from '../misc/aave-upgradeability/VersionedInitializable.sol';
-import {SafeCast} from '../dependencies/openzeppelin/contracts/SafeCast.sol';
+import {SafeCast} from 'openzeppelin-contracts/contracts/utils/math/SafeCast.sol';
 import {IScaledBalanceToken} from '../interfaces/IScaledBalanceToken.sol';
 import {RewardsDistributor} from './RewardsDistributor.sol';
 import {IRewardsController} from './interfaces/IRewardsController.sol';

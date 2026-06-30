@@ -8,7 +8,7 @@ import {ILiquidationHandler} from '../handlers/interfaces/ILiquidationHandler.so
 import {IPoolHandler} from '../handlers/interfaces/IPoolHandler.sol';
 import {IATokenHandler} from '../handlers/interfaces/IATokenHandler.sol';
 import {IFlashLoanHandler} from '../handlers/interfaces/IFlashLoanHandler.sol';
-import {IERC20} from 'src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
 
 // Mock Contracts
 import {TestnetERC20} from 'src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
@@ -158,9 +158,6 @@ abstract contract BaseStorage {
 
   /// @notice Mappinng from asset to protocol tokens
   mapping(address => ProtocolTokens) internal protocolTokens;
-
-  /// @notice Target asset for the test run
-  address internal targetAsset;
 
   ///////////////////////////////////////////////////////////////////////////////////////////////
   //                                          STRUCTS                                          //

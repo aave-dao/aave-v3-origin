@@ -7,8 +7,8 @@ import '../../../interfaces/IPoolReport.sol';
 contract AaveV3L2PoolBatch is AaveV3L2PoolProcedure, IPoolReport {
   PoolReport internal _poolReport;
 
-  constructor(address poolAddressesProvider) {
-    _poolReport = _deployAaveV3L2Pool(poolAddressesProvider);
+  constructor(address poolAddressesProvider, address interestRateStrategy) {
+    _poolReport = _deployAaveV3L2Pool(poolAddressesProvider, interestRateStrategy);
   }
 
   function getPoolReport() external view returns (PoolReport memory) {

@@ -27,4 +27,26 @@ library ProxyHelpers {
     );
     return slot;
   }
+
+  /**
+   * @dev the prediction only depends on the address of the proxy.
+   * The admin is always the first and only contract deployed by the proxy.
+   */
+  function getOzV5ProxyAdminAddress(address proxy) internal pure returns (address) {
+    return
+      address(
+        uint160(
+          uint256(
+            keccak256(
+              abi.encodePacked(
+                bytes1(0xd6), // RLP prefix for a list with total length 22
+                bytes1(0x94), // RLP prefix for an address (20 bytes)
+                proxy, // 20-byte address
+                uint8(1) // 1-byte nonce
+              )
+            )
+          )
+        )
+      );
+  }
 }
