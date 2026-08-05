@@ -76,6 +76,15 @@ methods {
     DataTypes.UserConfigurationMap storage userConfig,
     DataTypes.ExecuteLiquidationCallParams memory params
   ) internal with (env e) => _burnBadDebt_CVL(e);
+
+  function LiquidationLogic.get_userCollateralBalance() internal returns (uint256) => NONDET;
+  function LiquidationLogic.get_liquidationBonus() internal returns (uint256) => NONDET;
+  function LiquidationLogic.get_collateralAssetPrice() internal returns (uint256) => NONDET;
+  function LiquidationLogic.get_debtAssetPrice() internal returns (uint256) => NONDET;
+  function LiquidationLogic.get_collateralAssetUnit() internal returns (uint256) => NONDET;
+  function LiquidationLogic.get_debtAssetUnit() internal returns (uint256) => NONDET;
+  function LiquidationLogic.get_userReserveDebtInBaseCurrency() internal returns (uint256) => NONDET;
+  function LiquidationLogic.get_userReserveCollateralInBaseCurrency() internal returns (uint256) => NONDET;
 }
 
 function getNormalizedIncome_CVL() returns uint256 {
