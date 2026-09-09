@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   comment:
-    uses: aave-dao/github-workflows/.github/workflows/comment.yml@main
+    uses: aave-dao/github-workflows/.github/workflows/comment.yml@c6fd9ab803dce41fb760e917e59bb1a4bc07acb0 # main
     secrets:
       # the provided PAT needs write and write permissions on issues and pull requests
       # the PAT is only really needed when commenting of prs from forks
