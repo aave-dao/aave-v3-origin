@@ -1,0 +1,16 @@
+foundry.lock
+  h_739c25e72c37fb 6,9
+lib/solidity-utils
+  h_739c25e72c37fb 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "67f0a9671b7aaa722eb36245b9c6d289bfff6ed4",
+  "prompts": {},
+  "humans": {
+    "h_739c25e72c37fb": {
+      "author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}
