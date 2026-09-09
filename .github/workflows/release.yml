@@ -21,7 +21,7 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v4
 
-      - uses: aave-dao/github-workflows/.github/actions/setup-node@main
+      - uses: aave-dao/github-workflows/.github/actions/setup-node@c6fd9ab803dce41fb760e917e59bb1a4bc07acb0 # main
 
       - name: Create Release Pull Request or Publish to npm
         id: changesets
