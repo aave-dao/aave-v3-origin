@@ -1,0 +1,26 @@
+certora/basic/conf/PoolReentrancy.conf
+  s_59c76c233c0936::t_3cb2b7da0ad801 1-22
+certora/basic/harness/PoolHarness.sol
+  s_59c76c233c0936::t_3cb2b7da0ad801 75-78
+.github/workflows/certora-basic.yml
+  s_59c76c233c0936::t_3cb2b7da0ad801 53
+certora/basic/specs/PoolReentrancy.spec
+  s_59c76c233c0936::t_b0e17ab51616c9 21
+  s_59c76c233c0936::t_3cb2b7da0ad801 1-20,22-25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "0b4d41a58e3c3a79aa9881ce53654a00305ab8a3",
+  "prompts": {},
+  "sessions": {
+    "s_59c76c233c0936": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a08cee-b9f9-7882-b2a5-900777a601db",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}

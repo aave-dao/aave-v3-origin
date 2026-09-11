@@ -1,0 +1,14 @@
+certora/basic/specs/NEW-pool-no-summarizations.spec
+  h_739c25e72c37fb 17-18,21-23,75,83,90,92,96,98,113,122,124,126
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "27d2a96d14b5855f1d4699b43427a225b38b19a6",
+  "prompts": {},
+  "humans": {
+    "h_739c25e72c37fb": {
+      "author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}

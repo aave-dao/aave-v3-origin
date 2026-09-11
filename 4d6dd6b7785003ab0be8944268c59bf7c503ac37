@@ -1,0 +1,26 @@
+foundry.lock
+  s_ae1fe2fb085454::t_8598fe7f47ca4a 6,8
+lib/solidity-utils
+  s_ae1fe2fb085454::t_c76b7af37babda 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "4d6dd6b7785003ab0be8944268c59bf7c503ac37",
+  "prompts": {},
+  "humans": {
+    "h_739c25e72c37fb": {
+      "author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_ae1fe2fb085454": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3cffb11a-10cb-4b96-b0da-e73846b69436",
+        "model": "claude-opus-5"
+      },
+      "human_author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}

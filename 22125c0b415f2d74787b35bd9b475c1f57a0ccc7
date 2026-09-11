@@ -1,0 +1,14 @@
+foundry.toml
+  h_739c25e72c37fb 57
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "22125c0b415f2d74787b35bd9b475c1f57a0ccc7",
+  "prompts": {},
+  "humans": {
+    "h_739c25e72c37fb": {
+      "author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}

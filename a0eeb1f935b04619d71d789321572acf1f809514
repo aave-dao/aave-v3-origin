@@ -1,0 +1,22 @@
+.github/workflows/certora-solvency.yml
+  h_739c25e72c37fb 42
+.github/workflows/certora-basic.yml
+  h_739c25e72c37fb 42
+.github/workflows/certora-ATokenWithDelegation.yml
+  h_739c25e72c37fb 39
+.github/workflows/certora-math-calculations.yml
+  h_739c25e72c37fb 42
+.github/workflows/certora-stata.yml
+  h_739c25e72c37fb 42
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "a0eeb1f935b04619d71d789321572acf1f809514",
+  "prompts": {},
+  "humans": {
+    "h_739c25e72c37fb": {
+      "author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}
