@@ -6,6 +6,8 @@ src/contracts/protocol/pool/PoolStorage.sol
   s_59c76c233c0936::t_a1088e52a48b62 57-59
 tests/protocol/pool/Pool.LiquidationReentrancy.t.sol
   s_59c76c233c0936::t_644d97fdbd1cc6 275,282,304,311,324
+  s_59c76c233c0936::t_83fab1f9e39821 281,300,310,323
+  s_59c76c233c0936::t_7e6856c6e00aaf 10,28-29,31-32,66-74,93-97,177,208,212,222-227,239,242-274,276-280,283-299,301-303,305-309,312-322,325-327
 ---
 {
   "schema_version": "authorship/3.0.0",
