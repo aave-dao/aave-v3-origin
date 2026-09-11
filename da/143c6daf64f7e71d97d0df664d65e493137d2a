@@ -1,0 +1,25 @@
+src/contracts/protocol/libraries/helpers/Errors.sol
+  s_59c76c233c0936::t_a1088e52a48b62 95
+src/contracts/protocol/pool/Pool.sol
+  s_59c76c233c0936::t_a1088e52a48b62 48-68,144,171,204,230,257,288,329,375,404,439,825
+src/contracts/protocol/pool/PoolStorage.sol
+  s_59c76c233c0936::t_a1088e52a48b62 57-59
+tests/protocol/pool/Pool.LiquidationReentrancy.t.sol
+  s_59c76c233c0936::t_644d97fdbd1cc6 275,282,304,311,324
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "da143c6daf64f7e71d97d0df664d65e493137d2a",
+  "prompts": {},
+  "sessions": {
+    "s_59c76c233c0936": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a08cee-b9f9-7882-b2a5-900777a601db",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}
