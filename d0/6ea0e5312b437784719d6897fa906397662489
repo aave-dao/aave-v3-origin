@@ -1,0 +1,32 @@
+certora/basic/specs/PoolReentrancy.spec
+  s_59c76c233c0936::t_7dd26d8c79291d 19-25,31-34,46-57,62
+  s_59c76c233c0936::t_c8bb0f78649a28 58-61
+  s_59c76c233c0936::t_e5fefc24cb0d53 26
+  s_59c76c233c0936::t_8b2a781d7b9d45 27-30
+tests/invariants/handlers/simulators/FlashLoanHandler.t.sol
+  s_59c76c233c0936::t_bd76998b57f9e4 115-117
+tests/invariants/Setup.t.sol
+  s_59c76c233c0936::t_bd76998b57f9e4 199
+tests/invariants/helpers/ReentrantFlashLoanReceiver.sol
+  s_59c76c233c0936::t_bd76998b57f9e4 45,47
+certora/basic/conf/PoolReentrancy.conf
+  s_59c76c233c0936::t_cf65f55a7a319e 19
+  s_59c76c233c0936::t_e5fefc24cb0d53 16
+  s_59c76c233c0936::t_2b77393a387f0c 14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "d06ea0e5312b437784719d6897fa906397662489",
+  "prompts": {},
+  "sessions": {
+    "s_59c76c233c0936": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a08cee-b9f9-7882-b2a5-900777a601db",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}
