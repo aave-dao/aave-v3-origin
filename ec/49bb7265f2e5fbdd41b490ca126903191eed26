@@ -1,0 +1,31 @@
+.github/workflows/certora-solvency.yml
+  s_59c76c233c0936::t_14aff24360c289 22
+.github/workflows/certora-math-calculations.yml
+  s_59c76c233c0936::t_14aff24360c289 22
+.github/workflows/certora-stata.yml
+  s_59c76c233c0936::t_14aff24360c289 22
+.github/workflows/certora-ATokenWithDelegation.yml
+  s_59c76c233c0936::t_14aff24360c289 19
+.github/workflows/certora-basic.yml
+  s_59c76c233c0936::t_14aff24360c289 22
+.github/workflows/invariants.yml
+  s_59c76c233c0936::t_14aff24360c289 1-16,18-23,28-47
+  s_59c76c233c0936::t_c9c54561319970 17,24,27
+  s_59c76c233c0936::t_71c9647c08a084 25-26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "ec49bb7265f2e5fbdd41b490ca126903191eed26",
+  "prompts": {},
+  "sessions": {
+    "s_59c76c233c0936": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a08cee-b9f9-7882-b2a5-900777a601db",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": null
+    }
+  }
+}
