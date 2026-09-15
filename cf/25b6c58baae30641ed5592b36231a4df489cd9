@@ -1,0 +1,37 @@
+tests/protocol/pool/Pool.LiquidationReentrancy.t.sol
+  s_59c76c233c0936::t_a0557fdfa2ab27 5,337-341
+  s_59c76c233c0936::t_d702f3315f189f 342-344
+  s_59c76c233c0936::t_5d3dd0fe352240 345-346
+.github/workflows/certora-stata.yml
+  s_59c76c233c0936::t_14aff24360c289 22
+.github/workflows/certora-basic.yml
+  s_59c76c233c0936::t_14aff24360c289 22
+.github/workflows/certora-solvency.yml
+  s_59c76c233c0936::t_14aff24360c289 22
+.github/workflows/certora-math-calculations.yml
+  s_59c76c233c0936::t_14aff24360c289 22
+.github/workflows/invariants.yml
+  s_59c76c233c0936::t_1b33a1c9726d4d 24
+  s_59c76c233c0936::t_c9c54561319970 17,28
+  s_59c76c233c0936::t_71c9647c08a084 25,27
+  s_59c76c233c0936::t_94551d56c00dda 26
+  s_59c76c233c0936::t_14aff24360c289 1-16,18-23,29-48
+.github/workflows/certora-ATokenWithDelegation.yml
+  s_59c76c233c0936::t_14aff24360c289 19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "cf25b6c58baae30641ed5592b36231a4df489cd9",
+  "prompts": {},
+  "sessions": {
+    "s_59c76c233c0936": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a08cee-b9f9-7882-b2a5-900777a601db",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}
