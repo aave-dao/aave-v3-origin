@@ -6,6 +6,7 @@ snapshots/WrappedTokenGatewayV3.json
   s_507b571442c515::t_e3a7360cd71782 2-5
 snapshots/StataTokenV2.json
   s_507b571442c515::t_e3a7360cd71782 3
+  s_507b571442c515::t_d93fdc016bf68b 4
 src/contracts/protocol/libraries/logic/ReserveLogic.sol
   s_507b571442c515::t_792d88161e416a 197
 ---
