@@ -1,0 +1,28 @@
+snapshots/StataTokenV2.json
+  s_507b571442c515::t_812674950348cd 4,6
+snapshots/WrappedTokenGatewayV3.json
+  s_507b571442c515::t_812674950348cd 5
+src/contracts/protocol/pool/Pool.sol
+  s_507b571442c515::t_3fa0add86ad825 812
+  s_507b571442c515::t_9067c423a01f0d 597
+snapshots/ATokenWithDelegation.transfer.json
+  s_507b571442c515::t_812674950348cd 2-7
+snapshots/AToken.transfer.json
+  s_507b571442c515::t_812674950348cd 2-19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "60c6b6db00c5febfbe49c3ba16d6ee724add5dc7",
+  "prompts": {},
+  "sessions": {
+    "s_507b571442c515": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9284c673-f110-4628-9da7-9611b315c7ce",
+        "model": "claude-opus-5"
+      },
+      "human_author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}
