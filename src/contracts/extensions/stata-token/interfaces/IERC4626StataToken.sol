@@ -54,6 +54,7 @@ interface IERC4626StataToken {
    * @param receiver The address that will receive the static aTokens
    * @param deadline Must be a timestamp in the future
    * @param sig A `secp256k1` signature params from `msgSender()`
+   * @param depositToAave True to deposit underlying into Aave, false to deposit aTokens directly
    * @return uint256 The amount of StaticAToken minted, static balance
    **/
   function depositWithPermit(
