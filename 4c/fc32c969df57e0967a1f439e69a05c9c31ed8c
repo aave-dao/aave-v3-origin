@@ -1,0 +1,34 @@
+tests/invariants/hooks/DefaultBeforeAfterHooks.t.sol
+  s_507b571442c515::t_82448dd1443c77 500-501,514-521,523
+tests/invariants/hooks/HookAggregator.t.sol
+  s_507b571442c515::t_3956b6bf7aca5a 15-17
+tests/invariants/base/BaseStorage.t.sol
+  s_507b571442c515::t_3956b6bf7aca5a 146-148
+tests/protocol/pool/Pool.Liquidations.DoubleTreasuryAccrual.t.sol
+  s_507b571442c515::t_fe7c2cc2b8b067 31-34
+tests/invariants/handlers/simulators/FlashLoanHandler.t.sol
+  s_507b571442c515::t_ef2e44a0c062a9 21,62-64,81,122,143-144
+  s_507b571442c515::t_9ff7fb2eb8aa8c 145-146
+tests/invariants/specs/PostconditionsSpec.t.sol
+  s_507b571442c515::t_84d5fe25e5e34c 46
+  s_507b571442c515::t_fe7c2cc2b8b067 47
+  s_507b571442c515::t_eb2c011022708c 48
+tests/protocol/pool/Pool.TreasuryAccrualRounding.t.sol
+  s_507b571442c515::t_84d5fe25e5e34c 32,58,71
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4cfc32c969df57e0967a1f439e69a05c9c31ed8c",
+  "prompts": {},
+  "sessions": {
+    "s_507b571442c515": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9284c673-f110-4628-9da7-9611b315c7ce",
+        "model": "claude-opus-5"
+      },
+      "human_author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}
