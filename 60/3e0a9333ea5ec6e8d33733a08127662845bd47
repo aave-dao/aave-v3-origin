@@ -1,0 +1,24 @@
+docs/3.8/Aave-v3.8-changelog.md
+  s_507b571442c515::t_5c969a7a2e1b5f 3
+src/contracts/protocol/libraries/logic/ReserveLogic.sol
+  s_507b571442c515::t_71b6393b9c7759 197
+certora/solvency/specs/MOCKS/checks/rayMulDiv-CVL-check.spec
+  s_507b571442c515::t_5c969a7a2e1b5f 65
+  s_507b571442c515::t_5b01c59612d2c0 63-64
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "603e0a9333ea5ec6e8d33733a08127662845bd47",
+  "prompts": {},
+  "sessions": {
+    "s_507b571442c515": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9284c673-f110-4628-9da7-9611b315c7ce",
+        "model": "claude-opus-5"
+      },
+      "human_author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}
