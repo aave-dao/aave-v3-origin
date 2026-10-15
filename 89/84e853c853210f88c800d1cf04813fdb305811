@@ -1,0 +1,33 @@
+snapshots/StataTokenV2.json
+  s_507b571442c515::t_79ed6064428c4a 3
+snapshots/Pool.Operations.json
+  s_507b571442c515::t_79ed6064428c4a 4-6,8,10,12,17,19,30
+src/contracts/protocol/libraries/logic/ReserveLogic.sol
+  s_507b571442c515::t_79ed6064428c4a 50,74-76
+snapshots/WrappedTokenGatewayV3.json
+  s_507b571442c515::t_79ed6064428c4a 4-5
+snapshots/Pool.Setters.json
+  s_507b571442c515::t_79ed6064428c4a 2-5
+snapshots/AToken.transfer.json
+  s_507b571442c515::t_79ed6064428c4a 2-19
+snapshots/ATokenWithDelegation.transfer.json
+  s_507b571442c515::t_79ed6064428c4a 2-7
+snapshots/ProtocolDataProvider.json
+  s_507b571442c515::t_79ed6064428c4a 2,14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8984e853c853210f88c800d1cf04813fdb305811",
+  "prompts": {},
+  "sessions": {
+    "s_507b571442c515": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9284c673-f110-4628-9da7-9611b315c7ce",
+        "model": "claude-opus-5"
+      },
+      "human_author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}
