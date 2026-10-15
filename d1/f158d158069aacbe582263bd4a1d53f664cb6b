@@ -1,0 +1,34 @@
+snapshots/StataTokenV2.json
+  s_507b571442c515::t_22078669d84a5f 3
+src/contracts/protocol/pool/Pool.sol
+  s_507b571442c515::t_32520798b0b624 844
+tests/protocol/pool/Pool.LiquidationReentrancy.t.sol
+  s_507b571442c515::t_f86ba6f2a4fcd1 295-297,300,302,304-312
+  s_507b571442c515::t_c6b8d6a1fa678c 303
+  s_507b571442c515::t_2a0e3b39332d3e 110-111,462-465
+  s_507b571442c515::t_aec323de50cf06 298-299,301
+snapshots/WrappedTokenGatewayV3.json
+  s_507b571442c515::t_22078669d84a5f 2-5
+snapshots/Pool.Operations.json
+  s_507b571442c515::t_22078669d84a5f 2-6,8,10-16,21-30
+snapshots/Pool.OperationsComposition.json
+  s_507b571442c515::t_22078669d84a5f 2-4
+certora/basic/specs/PoolReentrancy.spec
+  s_507b571442c515::t_57b024668fc9e6 35-36,59-60
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d1f158d158069aacbe582263bd4a1d53f664cb6b",
+  "prompts": {},
+  "sessions": {
+    "s_507b571442c515": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9284c673-f110-4628-9da7-9611b315c7ce",
+        "model": "claude-opus-5"
+      },
+      "human_author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}
