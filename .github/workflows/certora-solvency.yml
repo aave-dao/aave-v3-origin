@@ -39,7 +39,7 @@ jobs:
           touch applyHarness.patch
           make munged
 
-      - uses: Certora/certora-run-action@v2
+      - uses: Certora/certora-run-action@1bb1d5e60f00bb35a93424bfcae2c3c8785537f7
         with:
           cli-version: 7.31.0
           configurations: |-
@@ -58,8 +58,8 @@ jobs:
             certora/solvency/confs/solvency/liquidationCall/lemma-DBTasset.conf
             certora/solvency/confs/solvency/liquidationCall/main-DBTasset.conf
             certora/solvency/confs/solvency/liquidationCall/main-COLasset.conf
-            certora/solvency/confs/solvency/liquidationCall/lemma-COLasset.conf --rule_sanity "none"
-            certora/solvency/confs/solvency/liquidationCall/main-COLasset-totSUP0.conf --rule_sanity "none"
+            certora/solvency/confs/solvency/liquidationCall/lemma-COLasset.conf 
+            certora/solvency/confs/solvency/liquidationCall/main-COLasset-totSUP0.conf 
             certora/solvency/confs/solvency/liquidationCall/lemma-COLasset-totSUP0.conf
             certora/solvency/confs/solvency/liquidationCall/burnBadDebt-assetINloop.conf
             certora/solvency/confs/solvency/liquidationCall/burnBadDebt-assetNOTINloop.conf
@@ -71,6 +71,7 @@ jobs:
           job-name: "Certora Prover Run"
           certora-key: ${{ secrets.CERTORAKEY }}
           install-java: true
+          auto-rerun-timeouts: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 # Put back the following rule after ticket 8889 is closed

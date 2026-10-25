@@ -26,6 +26,16 @@ methods {
     uint256 liquidationBonus
   ) internal returns (uint256,uint256,uint256) =>
     _calculateAvailableCollateralToLiquidateCVL();
+
+  
+  function LiquidationLogic.get_userCollateralBalance() internal returns (uint256) => NONDET;
+  function LiquidationLogic.get_liquidationBonus() internal returns (uint256) => NONDET;
+  function LiquidationLogic.get_collateralAssetPrice() internal returns (uint256) => NONDET;
+  function LiquidationLogic.get_debtAssetPrice() internal returns (uint256) => NONDET;
+  function LiquidationLogic.get_collateralAssetUnit() internal returns (uint256) => NONDET;
+  function LiquidationLogic.get_debtAssetUnit() internal returns (uint256) => NONDET;
+  function LiquidationLogic.get_userReserveDebtInBaseCurrency() internal returns (uint256) => NONDET;
+  function LiquidationLogic.get_userReserveCollateralInBaseCurrency() internal returns (uint256) => NONDET;
 }
 
 function getNormalizedIncome_hook_CVL(uint256 ret_val, address aTokenAddress) {
@@ -93,6 +103,7 @@ function configuration() {
 /*=====================================================================================
   Rule: same_indexes__liquidationCall
   =====================================================================================*/
+  
 rule same_indexes__liquidationCall(env e) {
   INSIDE_liquidationCall = false;
   configuration();
@@ -119,5 +130,4 @@ rule same_indexes__liquidationCall(env e) {
   uint256 __COL_liqIND_after = getReserveNormalizedIncome(e, _COL_asset);
   assert  __COL_liqIND_after == _COL_liqIND;
 }
-
 
