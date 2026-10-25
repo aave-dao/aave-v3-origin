@@ -1,3 +1,4 @@
+95ef871e68709e89a731efba63d3e5388ef3a402
 # Contributing
 
 Thanks for your interest in contributing to the Aave protocol! Please take a moment to review this document **before submitting a pull request.**
