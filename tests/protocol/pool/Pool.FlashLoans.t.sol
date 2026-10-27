@@ -19,6 +19,7 @@ import {DataTypes} from '../../../src/contracts/protocol/libraries/types/DataTyp
 import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
 import {MockFlashLoanATokenReceiver} from '../../mocks/MockFlashLoanATokenReceiver.sol';
 import {MockFlashLoanBorrowInsideFlashLoan} from '../../mocks/MockFlashLoanBorrowInsideFlashLoan.sol';
+import {MockFlashLoanATokenTransferReceiver} from '../../mocks/MockFlashLoanATokenTransferReceiver.sol';
 import {TestnetProcedures, TestReserveConfig} from '../../utils/TestnetProcedures.sol';
 
 contract PoolFlashLoansTests is TestnetProcedures {
@@ -896,5 +897,89 @@ contract PoolFlashLoansTests is TestnetProcedures {
         0
       );
     }
+  }
+
+  function test_flashLoanSimple_nestedFlashLoan() public {
+    MockFlashLoanATokenTransferReceiver receiver = _newATokenTransferReceiver();
+    receiver.setNestedFlashLoan(tokenList.wbtc, 1e6);
+
+    vm.prank(alice);
+    contracts.poolProxy.flashLoanSimple(address(receiver), tokenList.usdx, 1_000e6, '', 0);
+
+    assertTrue(receiver.tookNestedFlashLoan());
+  }
+
+  function test_flashLoan_nestedFlashLoan() public {
+    MockFlashLoanATokenTransferReceiver receiver = _newATokenTransferReceiver();
+    receiver.setNestedFlashLoan(tokenList.wbtc, 1e6);
+
+    (address[] memory assets, uint256[] memory amounts, uint256[] memory modes) = _singleAsset(
+      tokenList.usdx,
+      1_000e6
+    );
+
+    vm.prank(alice);
+    contracts.poolProxy.flashLoan(address(receiver), assets, amounts, modes, alice, '', 0);
+
+    assertTrue(receiver.tookNestedFlashLoan());
+  }
+
+  function test_flashLoanSimple_moveATokensInsideCallback() public {
+    MockFlashLoanATokenTransferReceiver receiver = _newATokenTransferReceiver();
+    _approveATokens(receiver);
+
+    vm.prank(alice);
+    contracts.poolProxy.flashLoanSimple(address(receiver), tokenList.usdx, 1_000e6, '', 0);
+
+    assertGt(receiver.pulledBalance(), 0);
+    assertGt(receiver.withdrawnAmount(), 0);
+  }
+
+  function test_flashLoan_moveATokensInsideCallback() public {
+    MockFlashLoanATokenTransferReceiver receiver = _newATokenTransferReceiver();
+    _approveATokens(receiver);
+
+    (address[] memory assets, uint256[] memory amounts, uint256[] memory modes) = _singleAsset(
+      tokenList.usdx,
+      1_000e6
+    );
+
+    vm.prank(alice);
+    contracts.poolProxy.flashLoan(address(receiver), assets, amounts, modes, alice, '', 0);
+
+    assertGt(receiver.pulledBalance(), 0);
+    assertGt(receiver.withdrawnAmount(), 0);
+  }
+
+  function _newATokenTransferReceiver()
+    internal
+    returns (MockFlashLoanATokenTransferReceiver receiver)
+  {
+    receiver = new MockFlashLoanATokenTransferReceiver(
+      IPoolAddressesProvider(report.poolAddressesProvider)
+    );
+    deal(tokenList.usdx, address(receiver), 1_000e6);
+    deal(tokenList.wbtc, address(receiver), 1e8);
+  }
+
+  function _approveATokens(MockFlashLoanATokenTransferReceiver receiver) internal {
+    receiver.setATokenSource(carol);
+    address aUsdx = contracts.poolProxy.getReserveAToken(tokenList.usdx);
+
+    vm.prank(carol);
+    IERC20(aUsdx).approve(address(receiver), UINT256_MAX);
+  }
+
+  function _singleAsset(
+    address asset,
+    uint256 amount
+  ) internal pure returns (address[] memory, uint256[] memory, uint256[] memory) {
+    address[] memory assets = new address[](1);
+    uint256[] memory amounts = new uint256[](1);
+    uint256[] memory modes = new uint256[](1);
+
+    assets[0] = asset;
+    amounts[0] = amount;
+    return (assets, amounts, modes);
   }
 }

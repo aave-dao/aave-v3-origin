@@ -2,6 +2,7 @@
 pragma solidity ^0.8.10;
 
 import {Multicall} from 'openzeppelin-contracts/contracts/utils/Multicall.sol';
+import {ReentrancyGuardTransient} from 'openzeppelin-contracts/contracts/utils/ReentrancyGuardTransient.sol';
 import {VersionedInitializable} from '../../misc/aave-upgradeability/VersionedInitializable.sol';
 import {Errors} from '../libraries/helpers/Errors.sol';
 import {ReserveConfiguration} from '../libraries/configuration/ReserveConfiguration.sol';
@@ -35,7 +36,13 @@ import {PoolStorage} from './PoolStorage.sol';
  * @dev All admin functions are callable by the PoolConfigurator contract defined also in the
  *   PoolAddressesProvider
  */
-abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall {
+abstract contract Pool is
+  VersionedInitializable,
+  ReentrancyGuardTransient,
+  PoolStorage,
+  IPool,
+  Multicall
+{
   using ReserveLogic for DataTypes.ReserveData;
 
   IPoolAddressesProvider public immutable ADDRESSES_PROVIDER;
@@ -44,6 +51,14 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
 
   // @notice The name used to fetch the UMBRELLA contract
   bytes32 public constant UMBRELLA = 'UMBRELLA';
+
+  /**
+   * @dev Prevents entering a callback-based action from a guarded Pool action without locking it.
+   */
+  modifier onlyNotReentrant() {
+    require(!_reentrancyGuardEntered(), ReentrancyGuardReentrantCall());
+    _;
+  }
 
   /**
    * @dev Only pool configurator can call functions marked by this modifier.
@@ -120,7 +135,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
     uint256 amount,
     address onBehalfOf,
     uint16 referralCode
-  ) public virtual override {
+  ) public virtual override nonReentrant {
     SupplyLogic.executeSupply(
       _reserves,
       _eModeCategories,
@@ -147,7 +162,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
     uint8 permitV,
     bytes32 permitR,
     bytes32 permitS
-  ) public virtual override {
+  ) public virtual override nonReentrant {
     try
       IERC20WithPermit(asset).permit(
         _msgSender(),
@@ -180,7 +195,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
     address asset,
     uint256 amount,
     address to
-  ) public virtual override returns (uint256) {
+  ) public virtual override nonReentrant returns (uint256) {
     return
       SupplyLogic.executeWithdraw(
         _reserves,
@@ -206,7 +221,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
     uint256 interestRateMode,
     uint16 referralCode,
     address onBehalfOf
-  ) public virtual override {
+  ) public virtual override nonReentrant {
     BorrowLogic.executeBorrow(
       _reserves,
       _reservesList,
@@ -233,7 +248,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
     uint256 amount,
     uint256 interestRateMode,
     address onBehalfOf
-  ) public virtual override returns (uint256) {
+  ) public virtual override nonReentrant returns (uint256) {
     return
       BorrowLogic.executeRepay(
         _reserves,
@@ -264,7 +279,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
     uint8 permitV,
     bytes32 permitR,
     bytes32 permitS
-  ) public virtual override returns (uint256) {
+  ) public virtual override nonReentrant returns (uint256) {
     try
       IERC20WithPermit(asset).permit(
         _msgSender(),
@@ -305,7 +320,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
     address asset,
     uint256 amount,
     uint256 interestRateMode
-  ) public virtual override returns (uint256) {
+  ) public virtual override nonReentrant returns (uint256) {
     return
       BorrowLogic.executeRepay(
         _reserves,
@@ -330,7 +345,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
   function setUserUseReserveAsCollateral(
     address asset,
     bool useAsCollateral
-  ) public virtual override {
+  ) public virtual override nonReentrant {
     SupplyLogic.executeUseReserveAsCollateral(
       _reserves,
       _reservesList,
@@ -351,7 +366,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
     address borrower,
     uint256 debtToCover,
     bool receiveAToken
-  ) public virtual override {
+  ) public virtual override nonReentrant {
     LiquidationLogic.executeLiquidationCall(
       _reserves,
       _reservesList,
@@ -380,7 +395,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
     address onBehalfOf,
     bytes calldata params,
     uint16 referralCode
-  ) public virtual override {
+  ) public virtual override onlyNotReentrant {
     DataTypes.FlashloanParams memory flashParams = DataTypes.FlashloanParams({
       user: _msgSender(),
       receiverAddress: receiverAddress,
@@ -415,7 +430,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
     uint256 amount,
     bytes calldata params,
     uint16 referralCode
-  ) public virtual override {
+  ) public virtual override onlyNotReentrant {
     DataTypes.FlashloanSimpleParams memory flashParams = DataTypes.FlashloanSimpleParams({
       user: _msgSender(),
       receiverAddress: receiverAddress,
@@ -430,7 +445,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
   }
 
   /// @inheritdoc IPool
-  function mintToTreasury(address[] calldata assets) external virtual override {
+  function mintToTreasury(address[] calldata assets) external virtual override nonReentrant {
     PoolLogic.executeMintToTreasury(_reserves, assets);
   }
 
@@ -579,7 +594,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
     address to,
     uint256 scaledAmount,
     uint256 scaledBalanceFromBefore
-  ) external virtual override {
+  ) external virtual override nonReentrant {
     require(_msgSender() == _reserves[asset].aTokenAddress, Errors.CallerNotAToken());
     SupplyLogic.executeFinalizeTransfer(
       _reserves,
@@ -603,7 +618,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
     address asset,
     address aTokenAddress,
     address variableDebtAddress
-  ) external virtual override onlyPoolConfigurator {
+  ) external virtual override nonReentrant onlyPoolConfigurator {
     if (
       PoolLogic.executeInitReserve(
         _reserves,
@@ -622,12 +637,16 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
   }
 
   /// @inheritdoc IPool
-  function syncIndexesState(address asset) external virtual override onlyPoolConfigurator {
+  function syncIndexesState(
+    address asset
+  ) external virtual override nonReentrant onlyPoolConfigurator {
     PoolLogic.executeSyncIndexesState(_reserves[asset]);
   }
 
   /// @inheritdoc IPool
-  function syncRatesState(address asset) external virtual override onlyPoolConfigurator {
+  function syncRatesState(
+    address asset
+  ) external virtual override nonReentrant onlyPoolConfigurator {
     PoolLogic.executeSyncRatesState(_reserves[asset], asset, RESERVE_INTEREST_RATE_STRATEGY);
   }
 
@@ -635,7 +654,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
   function setConfiguration(
     address asset,
     DataTypes.ReserveConfigurationMap calldata configuration
-  ) external virtual override onlyPoolConfigurator {
+  ) external virtual override nonReentrant onlyPoolConfigurator {
     require(asset != address(0), Errors.ZeroAddressNotValid());
     require(_reserves[asset].id != 0 || _reservesList[0] == asset, Errors.AssetNotListed());
     _reserves[asset].configuration = configuration;
@@ -644,7 +663,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
   /// @inheritdoc IPool
   function updateFlashloanPremium(
     uint128 flashLoanPremium
-  ) external virtual override onlyPoolConfigurator {
+  ) external virtual override nonReentrant onlyPoolConfigurator {
     _flashLoanPremium = flashLoanPremium;
   }
 
@@ -652,7 +671,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
   function configureEModeCategory(
     uint8 id,
     DataTypes.EModeCategoryBaseConfiguration calldata category
-  ) external virtual override onlyPoolConfigurator {
+  ) external virtual override nonReentrant onlyPoolConfigurator {
     // category 0 is reserved for volatile heterogeneous assets and it's always disabled
     require(id != 0, Errors.EModeCategoryReserved());
     _eModeCategories[id].ltv = category.ltv;
@@ -666,7 +685,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
   function configureEModeCategoryCollateralBitmap(
     uint8 id,
     uint128 collateralBitmap
-  ) external virtual override onlyPoolConfigurator {
+  ) external virtual override nonReentrant onlyPoolConfigurator {
     // category 0 is reserved for volatile heterogeneous assets and it's always disabled
     require(id != 0, Errors.EModeCategoryReserved());
     _eModeCategories[id].collateralBitmap = collateralBitmap;
@@ -676,7 +695,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
   function configureEModeCategoryBorrowableBitmap(
     uint8 id,
     uint128 borrowableBitmap
-  ) external virtual override onlyPoolConfigurator {
+  ) external virtual override nonReentrant onlyPoolConfigurator {
     // category 0 is reserved for volatile heterogeneous assets and it's always disabled
     require(id != 0, Errors.EModeCategoryReserved());
     _eModeCategories[id].borrowableBitmap = borrowableBitmap;
@@ -686,7 +705,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
   function configureEModeCategoryLtvzeroBitmap(
     uint8 id,
     uint128 ltvzeroBitmap
-  ) external virtual override onlyPoolConfigurator {
+  ) external virtual override nonReentrant onlyPoolConfigurator {
     // category 0 is reserved for volatile heterogeneous assets and it's always disabled
     require(id != 0, Errors.EModeCategoryReserved());
     _eModeCategories[id].ltvzeroBitmap = ltvzeroBitmap;
@@ -696,7 +715,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
   function configureEModeCategoryIsolated(
     uint8 id,
     bool isolated
-  ) external virtual override onlyPoolConfigurator {
+  ) external virtual override nonReentrant onlyPoolConfigurator {
     require(id != 0, Errors.EModeCategoryReserved());
     _eModeCategories[id].isolated = isolated;
   }
@@ -751,7 +770,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
   }
 
   /// @inheritdoc IPool
-  function setUserEMode(uint8 categoryId) external virtual override {
+  function setUserEMode(uint8 categoryId) external virtual override nonReentrant {
     SupplyLogic.executeSetUserEMode(
       _reserves,
       _reservesList,
@@ -780,7 +799,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
   function setLiquidationGracePeriod(
     address asset,
     uint40 until
-  ) external virtual override onlyPoolConfigurator {
+  ) external virtual override nonReentrant onlyPoolConfigurator {
     require(_reserves[asset].id != 0 || _reservesList[0] == asset, Errors.AssetNotListed());
     PoolLogic.executeSetLiquidationGracePeriod(_reserves, asset, until);
   }
@@ -790,7 +809,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
     address token,
     address to,
     uint256 amount
-  ) external virtual override onlyPoolAdmin {
+  ) external virtual override onlyNotReentrant onlyPoolAdmin {
     PoolLogic.executeRescueTokens(token, to, amount);
   }
 
@@ -801,7 +820,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
     uint256 amount,
     address onBehalfOf,
     uint16 referralCode
-  ) external virtual override {
+  ) external virtual override nonReentrant {
     SupplyLogic.executeSupply(
       _reserves,
       _eModeCategories,
@@ -822,7 +841,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
   function eliminateReserveDeficit(
     address asset,
     uint256 amount
-  ) external override onlyUmbrella returns (uint256) {
+  ) external override nonReentrant onlyUmbrella returns (uint256) {
     return
       LiquidationLogic.executeEliminateDeficit(
         _reserves,
@@ -860,7 +879,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
     address asset,
     bool useAsCollateral,
     address onBehalfOf
-  ) external override onlyPositionManager(onBehalfOf) {
+  ) external override nonReentrant onlyPositionManager(onBehalfOf) {
     SupplyLogic.executeUseReserveAsCollateral(
       _reserves,
       _reservesList,
@@ -878,7 +897,7 @@ abstract contract Pool is VersionedInitializable, PoolStorage, IPool, Multicall 
   function setUserEModeOnBehalfOf(
     uint8 categoryId,
     address onBehalfOf
-  ) external override onlyPositionManager(onBehalfOf) {
+  ) external override nonReentrant onlyPositionManager(onBehalfOf) {
     SupplyLogic.executeSetUserEMode(
       _reserves,
       _reservesList,
