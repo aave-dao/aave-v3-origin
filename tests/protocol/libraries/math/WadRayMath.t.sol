@@ -39,6 +39,51 @@ contract WadRayMathTests is Test {
     assertEq(WadRayMath.wadDiv(a, b), ((a * WadRayMath.WAD) + (b / 2)) / b);
   }
 
+  function test_rayMulFloor_fuzz(uint256 a, uint256 b) public {
+    if (b != 0 && a > type(uint256).max / b) {
+      vm.expectRevert();
+      WadRayMath.rayMulFloor(a, b);
+      return;
+    }
+
+    assertEq(WadRayMath.rayMulFloor(a, b), (a * b) / WadRayMath.RAY);
+  }
+
+  function test_rayMulCeil_fuzz(uint256 a, uint256 b) public {
+    if (b != 0 && a > type(uint256).max / b) {
+      vm.expectRevert();
+      WadRayMath.rayMulCeil(a, b);
+      return;
+    }
+
+    uint256 product = a * b;
+    assertEq(
+      WadRayMath.rayMulCeil(a, b),
+      product / WadRayMath.RAY + (product % WadRayMath.RAY == 0 ? 0 : 1)
+    );
+  }
+
+  function test_rayDivFloor_fuzz(uint256 a, uint256 b) public {
+    if (b == 0 || a > type(uint256).max / WadRayMath.RAY) {
+      vm.expectRevert();
+      WadRayMath.rayDivFloor(a, b);
+      return;
+    }
+
+    assertEq(WadRayMath.rayDivFloor(a, b), (a * WadRayMath.RAY) / b);
+  }
+
+  function test_rayDivCeil_fuzz(uint256 a, uint256 b) public {
+    if (b == 0 || a > type(uint256).max / WadRayMath.RAY) {
+      vm.expectRevert();
+      WadRayMath.rayDivCeil(a, b);
+      return;
+    }
+
+    uint256 scaled = a * WadRayMath.RAY;
+    assertEq(WadRayMath.rayDivCeil(a, b), scaled / b + (scaled % b == 0 ? 0 : 1));
+  }
+
   function test_wadMul_revertOnOverflow() public {
     vm.expectRevert();
     WadRayMath.wadMul(type(uint256).max, 2);
