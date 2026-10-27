@@ -1,0 +1,23 @@
+tests/protocol/pool/Pool.LiquidationFeeEvasion.t.sol
+  s_507b571442c515::t_29baade7c617e2 1-189,197-201,209-326
+  s_507b571442c515::t_1c8961005110b5 190-196,202-208
+  s_507b571442c515::t_e50ad10984b457 327-360
+tests/protocol/pool/Pool.LiquidationReentrancy.t.sol
+  s_507b571442c515::t_6c20ec7710e337 132-162,299-321,369,378,415,428,435-438,446-449,457,465,476-492,529-530,533,540,543,546,549,552,559,562,569,582,586,589,592,599,602,607,610,613,616,623,626,630,634,638,642,645,651-713
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7a76a52760097a964f68f6ed67e4f7ee54f0c743",
+  "prompts": {},
+  "sessions": {
+    "s_507b571442c515": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9284c673-f110-4628-9da7-9611b315c7ce",
+        "model": "claude-opus-5"
+      },
+      "human_author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}

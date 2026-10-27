@@ -1,0 +1,23 @@
+tests/protocol/libraries/math/WadRayMath.t.sol
+  s_507b571442c515::t_74de48a9f10b60 42-86
+tests/protocol/libraries/math/PercentageMath.t.sol
+  s_507b571442c515::t_74de48a9f10b60 47-69,72-101
+  s_507b571442c515::t_c24432418e4cfb 70-71
+  s_507b571442c515::t_9b4549ee9fc2aa 46
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "51f6aef3443ba6889244b5f0ab3d884731ab7f24",
+  "prompts": {},
+  "sessions": {
+    "s_507b571442c515": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9284c673-f110-4628-9da7-9611b315c7ce",
+        "model": "claude-opus-5"
+      },
+      "human_author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}

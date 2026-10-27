@@ -1,0 +1,19 @@
+docs/3.8/Aave-v3.8-changelog.md
+  s_507b571442c515::t_fead773a167431 1-13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "fe59a2959fd5e7ab4ab3350394fea8a7bcf336b4",
+  "prompts": {},
+  "sessions": {
+    "s_507b571442c515": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9284c673-f110-4628-9da7-9611b315c7ce",
+        "model": "claude-opus-5"
+      },
+      "human_author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}

@@ -1,0 +1,23 @@
+tests/invariants/CryticToFoundry.t.sol
+  s_59c76c233c0936::t_7e0ef22d15559c 45-56
+tests/invariants/Setup.t.sol
+  s_59c76c233c0936::t_33217a3779d7ce 199
+  s_59c76c233c0936::t_4377c06d8a4523 27,195-198,200-201
+  s_59c76c233c0936::t_097f423f37e728 202-203
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "4c514daeae40c2a457217308614c5bb0651db979",
+  "prompts": {},
+  "sessions": {
+    "s_59c76c233c0936": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a08cee-b9f9-7882-b2a5-900777a601db",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}

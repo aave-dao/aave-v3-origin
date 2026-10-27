@@ -1,0 +1,44 @@
+src/contracts/protocol/pool/Pool.sol
+  s_59c76c233c0936::t_7392d786dd2035 448,621,640-642,647-649,657,666,674,688,698,708,718,802,812
+certora/basic/specs/PoolReentrancy.spec
+  s_59c76c233c0936::t_30b91a93bbe74d 18,20,43,45
+  s_59c76c233c0936::t_6edd8292412ede 14-17,19,21-26,37-42,44,46-52,77,92-104
+  s_8c295720da3933::t_b1e21a2f3f1495 105
+snapshots/Pool.Getters.json
+  s_59c76c233c0936::t_34e7c755a2fcc9 3
+snapshots/ProtocolDataProvider.json
+  s_59c76c233c0936::t_34e7c755a2fcc9 3-4
+snapshots/Pool.Operations.json
+  s_59c76c233c0936::t_34e7c755a2fcc9 17-20
+snapshots/AToken.transfer.json
+  s_59c76c233c0936::t_34e7c755a2fcc9 2-19
+tests/protocol/pool/Pool.LiquidationReentrancy.t.sol
+  s_59c76c233c0936::t_ad5f7b10b0ca54 571,575,579
+  s_59c76c233c0936::t_b8164861ebbde2 269,538-570,572-574,576-578,580-587
+snapshots/ATokenWithDelegation.transfer.json
+  s_59c76c233c0936::t_34e7c755a2fcc9 2-7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "fefaf9e02190cae643bb7cc43cd7a9e59c5e6aab",
+  "prompts": {},
+  "sessions": {
+    "s_59c76c233c0936": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a08cee-b9f9-7882-b2a5-900777a601db",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    },
+    "s_8c295720da3933": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d89f781b-ee4f-4333-bf03-c8bb0fa1eed9",
+        "model": "claude-opus-5"
+      },
+      "human_author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}
