@@ -1,8 +1,8 @@
-# Aave V3.7 Origin
+# Aave V3.8 Origin
 
 ![Aave v3.1 Origin_banner](./resources/v3-1-banner.jpeg)
 
-Aave v3.7 complete codebase, Foundry-based.
+Aave v3.8 complete codebase, Foundry-based.
 
 [![codecov](https://codecov.io/gh/aave-dao/aave-v3-origin/graph/badge.svg?token=6HX4NXCNIQ)](https://codecov.io/gh/aave-dao/aave-v3-origin)
 <br>
@@ -25,6 +25,7 @@ If you're interested in contributing, please read the [contributing docs](/.gith
 - [Aave v3.6 features](./docs/3.6/Aave-v3.6-features.md)
 - [Aave v3.7 isolated eMode](./docs/3.7/isolated-emode.md)
 - [Aave v3.7 liquidation rounding](./docs/3.7/liquidation-rounding.md)
+- [Aave v3.8 changelog](./docs/3.8/Aave-v3.8-changelog.md)
 - [v3.1 to v3.2 production upgrade](https://github.com/bgd-labs/protocol-3.2.0-upgrade/blob/main/README.md)
 - [v3.2 to v3.3 production upgrade](https://github.com/bgd-labs/protocol-3.3.0-upgrade/blob/main/README.md)
 - [Set Ltv to 0 on Freeze Feature State diagram](./docs/freeze-ltv0-states.png)
