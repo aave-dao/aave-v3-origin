@@ -19,7 +19,7 @@
     "url": "git+https://github.com/aave-dao/aave-v3-origin.git"
   },
   "keywords": [],
-  "author": "BGD Labs for Aave",
+  "author": "Aave Labs, BGD Labs for Aave",
   "license": "BUSL1.1",
   "bugs": {
     "url": "https://github.com/aave-dao/aave-v3-origin/issues"
