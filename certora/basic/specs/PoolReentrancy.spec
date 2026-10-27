@@ -32,7 +32,8 @@ definition isProtectedEntryPoint(method f) returns bool =
    f.selector == sig:flashLoanSimple(address,address,uint256,bytes,uint16).selector ||
    f.selector == sig:setUserUseReserveAsCollateralOnBehalfOf(address,bool,address).selector ||
    f.selector == sig:setUserEModeOnBehalfOf(uint8,address).selector ||
-   f.selector == sig:finalizeTransfer(address,address,address,uint256,uint256).selector);
+   f.selector == sig:finalizeTransfer(address,address,address,uint256,uint256).selector ||
+   f.selector == sig:eliminateReserveDeficit(address,uint256).selector);
 
 definition acquiresGuard(method f) returns bool =
   isProtectedEntryPoint(f) &&
@@ -55,7 +56,8 @@ definition mayRevertInGuardAcquisitionRule(method f) returns bool =
    f.selector == sig:configureEModeCategoryLtvzeroBitmap(uint8,uint128).selector ||
    f.selector == sig:configureEModeCategoryIsolated(uint8,bool).selector ||
    f.selector == sig:setLiquidationGracePeriod(address,uint40).selector ||
-   f.selector == sig:finalizeTransfer(address,address,address,uint256,uint256).selector);
+   f.selector == sig:finalizeTransfer(address,address,address,uint256,uint256).selector ||
+   f.selector == sig:eliminateReserveDeficit(address,uint256).selector);
 
 persistent ghost bool sawGuardEnter;
 

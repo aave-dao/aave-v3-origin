@@ -841,7 +841,7 @@ abstract contract Pool is
   function eliminateReserveDeficit(
     address asset,
     uint256 amount
-  ) external override onlyUmbrella returns (uint256) {
+  ) external override nonReentrant onlyUmbrella returns (uint256) {
     return
       LiquidationLogic.executeEliminateDeficit(
         _reserves,

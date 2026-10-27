@@ -107,6 +107,7 @@ enum GuardedAction {
   ConfigureEModeCategoryIsolated,
   SetLiquidationGracePeriod,
   RescueTokens,
+  EliminateReserveDeficit,
   FinalizeTransfer
 }
 
@@ -289,6 +290,26 @@ contract PoolLiquidationReentrancyTests is TestnetProcedures {
     assertApproxEqAbs(IERC20(aUsdx).balanceOf(carol), carolBalanceBefore, 2);
   }
 
+  /// @dev The guard sits ahead of onlyUmbrella, so even the legitimate caller is turned away
+  /// while another Pool action holds the lock.
+  function test_eliminateReserveDeficitBlockedWhileEntered() public {
+    // the caller inside the callback is the attacker, so make it Umbrella: otherwise
+    // onlyUmbrella rejects the call first and the guard is never reached
+    bytes32 umbrellaKey = Pool(address(pool)).UMBRELLA();
+
+    vm.prank(poolAdmin);
+    contracts.poolAddressesProvider.setAddress(umbrellaKey, address(attacker));
+
+    _prepareWbtcSupply();
+    attacker.armCallback(
+      abi.encodeCall(IPool.eliminateReserveDeficit, (tokenList.wbtc, 1)),
+      address(attacker)
+    );
+    attacker.callPool(abi.encodeCall(IPool.supply, (tokenList.wbtc, 1, address(attacker), 0)));
+
+    _assertCallbackBlocked();
+  }
+
   /// @dev The position manager role is deliberately settable from inside a callback: the functions
   /// that consume it are guarded, so writing it mid-action is reachable but inert.
   function test_positionManagerRoleStaysReachableFromCallback() public {
@@ -455,6 +476,9 @@ contract PoolLiquidationReentrancyTests is TestnetProcedures {
     }
     if (action == GuardedAction.RescueTokens) {
       return abi.encodeCall(IPool.rescueTokens, (tokenList.wbtc, address(attacker), 1));
+    }
+    if (action == GuardedAction.EliminateReserveDeficit) {
+      return abi.encodeCall(IPool.eliminateReserveDeficit, (tokenList.wbtc, 1));
     }
     if (action == GuardedAction.FinalizeTransfer) {
       return abi.encodeCall(IPool.finalizeTransfer, (tokenList.wbtc, address(attacker), bob, 1, 1));
