@@ -50,6 +50,7 @@ jobs:
             certora/basic/conf/NEW-pool-no-summarizations.conf
             certora/basic/conf/stableRemoved.conf
             certora/basic/conf/EModeConfiguration.conf
+            certora/basic/conf/PoolReentrancy.conf
             certora/basic/conf/NEW-pool-simple-properties.conf --rule cannotDepositInInactiveReserve
             certora/basic/conf/NEW-pool-simple-properties.conf --rule cannotDepositInFrozenReserve
             certora/basic/conf/NEW-pool-simple-properties.conf --rule cannotDepositZeroAmount

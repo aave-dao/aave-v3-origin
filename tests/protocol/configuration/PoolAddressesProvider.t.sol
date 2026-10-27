@@ -14,6 +14,17 @@ import {ACLManager} from '../../../src/contracts/protocol/configuration/ACLManag
 import {TestnetProcedures} from '../../utils/TestnetProcedures.sol';
 import {SlotParser} from '../../utils/SlotParser.sol';
 
+contract PoolInstanceRevision11 is PoolInstance {
+  constructor(
+    IPoolAddressesProvider provider,
+    IReserveInterestRateStrategy interestRateStrategy
+  ) PoolInstance(provider, interestRateStrategy) {}
+
+  function getRevision() internal pure override returns (uint256) {
+    return 11;
+  }
+}
+
 contract PoolAddressesProviderTests is TestnetProcedures {
   using stdStorage for StdStorage;
 
@@ -266,6 +277,29 @@ contract PoolAddressesProviderTests is TestnetProcedures {
         bytes32(uint256(keccak256('eip1967.proxy.implementation')) - 1)
       ),
       poolImplementation
+    );
+  }
+
+  function test_setPoolImpl_upgradeFromRevision11() public {
+    PoolAddressesProvider provider = new PoolAddressesProvider('test', alice);
+    DefaultReserveInterestRateStrategyV2 interestRateStrategy = new DefaultReserveInterestRateStrategyV2(
+        address(provider)
+      );
+    address revision11 = address(new PoolInstanceRevision11(provider, interestRateStrategy));
+
+    vm.startPrank(alice);
+    provider.setPoolImpl(revision11);
+
+    address revision12 = address(new PoolInstance(provider, interestRateStrategy));
+    provider.setPoolImpl(revision12);
+    vm.stopPrank();
+
+    assertEq(
+      SlotParser.loadAddressFromSlot(
+        provider.getPool(),
+        bytes32(uint256(keccak256('eip1967.proxy.implementation')) - 1)
+      ),
+      revision12
     );
   }
 
