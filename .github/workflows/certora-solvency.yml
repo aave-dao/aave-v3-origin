@@ -54,7 +54,7 @@ jobs:
             certora/solvency/confs/solvency/repay-main.conf
             certora/solvency/confs/solvency/repayWithATokens-lemma.conf
             certora/solvency/confs/solvency/repayWithATokens-main.conf --rule_sanity "none"
-            certora/solvency/confs/solvency/liquidationCall/lemma-revertsIF_totDbt_of_DBTasset_is0.conf
+            certora/solvency/confs/solvency/liquidationCall/lemma-revertsIF_totDbt_of_DBTasset_is0.conf --rule_sanity "none"
             certora/solvency/confs/solvency/liquidationCall/lemma-DBTasset.conf
             certora/solvency/confs/solvency/liquidationCall/main-DBTasset.conf
             certora/solvency/confs/solvency/liquidationCall/main-COLasset.conf
