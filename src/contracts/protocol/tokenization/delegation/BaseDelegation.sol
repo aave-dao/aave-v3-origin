@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: LicenseRef-BUSL
 pragma solidity ^0.8.10;
 
 import {MessageHashUtils} from 'openzeppelin-contracts/contracts/utils/cryptography/MessageHashUtils.sol';

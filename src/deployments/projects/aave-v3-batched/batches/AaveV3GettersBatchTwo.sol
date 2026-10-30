@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: LicenseRef-BUSL
 pragma solidity ^0.8.0;
 
 import {AaveV3GettersProcedureTwo} from '../../../contracts/procedures/AaveV3GettersProcedureTwo.sol';

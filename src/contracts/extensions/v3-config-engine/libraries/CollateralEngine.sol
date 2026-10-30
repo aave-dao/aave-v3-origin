@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: LicenseRef-BUSL
 pragma solidity ^0.8.18;
 
 import {DataTypes} from '../../../protocol/libraries/types/DataTypes.sol';

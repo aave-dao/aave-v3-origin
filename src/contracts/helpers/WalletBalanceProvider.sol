@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: LicenseRef-BUSL
 pragma solidity ^0.8.10;
 
 import {Address} from '../dependencies/openzeppelin/contracts/Address.sol';
