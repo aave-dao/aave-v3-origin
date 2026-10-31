@@ -1,0 +1,21 @@
+tests/invariants/_config/echidna_config.yaml
+  s_59c76c233c0936::t_5f0060d0aaa2d6 52
+medusa.json
+  s_59c76c233c0936::t_5f0060d0aaa2d6 83
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "386f8a0e930cfd543bf99e700e587683e9095de0",
+  "prompts": {},
+  "sessions": {
+    "s_59c76c233c0936": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a08cee-b9f9-7882-b2a5-900777a601db",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}

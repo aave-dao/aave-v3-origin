@@ -1,0 +1,18 @@
+.github/workflows/release.yml
+  h_0f977de3f043fc 24
+.github/workflows/comment.yml
+  h_0f977de3f043fc 19
+.github/workflows/test.yml
+  h_0f977de3f043fc 23,25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "47c07b1beb3c94156edec07edfd0e3f17ccce801",
+  "prompts": {},
+  "humans": {
+    "h_0f977de3f043fc": {
+      "author": "Alexandru Niculae <43644109+avniculae@users.noreply.github.com>"
+    }
+  }
+}

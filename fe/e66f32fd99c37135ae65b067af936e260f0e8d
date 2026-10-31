@@ -1,0 +1,73 @@
+snapshots/ATokenWithDelegation.transfer.json
+  s_87d264f34effbb::t_156a997643ac72 2-7
+tests/invariants/CryticToFoundry.t.sol
+  s_87d264f34effbb::t_156a997643ac72 45-65
+snapshots/Pool.Getters.json
+  s_87d264f34effbb::t_156a997643ac72 3
+medusa.json
+  s_87d264f34effbb::t_156a997643ac72 83
+tests/invariants/Invariants.t.sol
+  s_87d264f34effbb::t_156a997643ac72 16-20
+foundry.toml
+  s_87d264f34effbb::t_156a997643ac72 8
+src/contracts/protocol/pool/Pool.sol
+  s_87d264f34effbb::t_156a997643ac72 5,39-45,55-62,138,165,198,224,251,282,323,348,369,398,433,448,597,621,640-642,647-649,657,666,674,688,698,708,718,773,802,812,823,882,900
+tests/invariants/base/BaseStorage.t.sol
+  s_87d264f34effbb::t_156a997643ac72 23,143-144
+certora/basic/specs/PoolReentrancy.spec
+  s_87d264f34effbb::t_ec8920d2b66127 35,58
+  s_87d264f34effbb::t_156a997643ac72 1-34,36-57,59-169
+snapshots/ProtocolDataProvider.json
+  s_87d264f34effbb::t_156a997643ac72 3-4
+src/contracts/instances/PoolInstance.sol
+  s_87d264f34effbb::t_156a997643ac72 15
+tests/invariants/handlers/simulators/FlashLoanHandler.t.sol
+  s_87d264f34effbb::t_156a997643ac72 11,20,96-133
+  s_87d264f34effbb::t_1bd93d5cbff9b5 134-136
+.github/workflows/certora-basic.yml
+  s_87d264f34effbb::t_156a997643ac72 53
+tests/invariants/helpers/ReentrantFlashLoanReceiver.sol
+  s_87d264f34effbb::t_156a997643ac72 1-110
+certora/basic/conf/PoolReentrancy.conf
+  s_87d264f34effbb::t_156a997643ac72 1-25
+snapshots/Pool.Operations.json
+  s_87d264f34effbb::t_156a997643ac72 2-30
+snapshots/WrappedTokenGatewayV3.json
+  s_87d264f34effbb::t_156a997643ac72 2-5
+tests/invariants/Setup.t.sol
+  s_87d264f34effbb::t_156a997643ac72 23,27,152-157,195-212
+  s_87d264f34effbb::t_2d73933ce74418 213
+tests/protocol/pool/Pool.LiquidationReentrancy.t.sol
+  s_87d264f34effbb::t_156a997643ac72 1-521
+snapshots/Pool.OperationsComposition.json
+  s_87d264f34effbb::t_156a997643ac72 2-4
+tests/invariants/_config/echidna_config.yaml
+  s_87d264f34effbb::t_156a997643ac72 52
+snapshots/StataTokenV2.json
+  s_87d264f34effbb::t_156a997643ac72 3-6
+snapshots/AToken.transfer.json
+  s_87d264f34effbb::t_156a997643ac72 2-19
+snapshots/Pool.Setters.json
+  s_87d264f34effbb::t_156a997643ac72 2-9
+tests/protocol/configuration/PoolAddressesProvider.t.sol
+  s_87d264f34effbb::t_156a997643ac72 17-27,283-302,304
+  s_87d264f34effbb::t_bfcf353e6c261d 303,305
+certora/basic/harness/PoolHarness.sol
+  s_87d264f34effbb::t_156a997643ac72 75-80
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "fee66f32fd99c37135ae65b067af936e260f0e8d",
+  "prompts": {},
+  "sessions": {
+    "s_87d264f34effbb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "15481d9b-ae90-4db8-8da8-f39b48a6a9ed",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}

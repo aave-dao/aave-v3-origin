@@ -1,0 +1,23 @@
+docs/3.6/Aave-v3.6-properties.md
+  s_59c76c233c0936::t_185b9d71818961 21,37
+tests/invariants/docs/internal-docs.md
+  s_59c76c233c0936::t_ef94173acb7825 6,12,19,25,30,43,57,92,133,174,206,212,242,295
+tests/protocol/pool/Pool.LiquidationReentrancy.t.sol
+  s_59c76c233c0936::t_5bcfbd04502aea 4,6-13,20-77,79,81-85,89-242,244-246,248,250-259
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "bbb53b394fef7a0e2138ac5cdcfae9ec421ea37b",
+  "prompts": {},
+  "sessions": {
+    "s_59c76c233c0936": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a08cee-b9f9-7882-b2a5-900777a601db",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}

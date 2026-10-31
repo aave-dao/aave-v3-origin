@@ -1,0 +1,23 @@
+.github/workflows/certora-solvency.yml
+  s_507b571442c515::t_ba95bee865b515 50
+certora/solvency/confs/solvency/treasuryAccrual.conf
+  s_507b571442c515::t_c01d93fe9ec886 1-19
+certora/solvency/specs/treasuryAccrual.spec
+  s_507b571442c515::t_c01d93fe9ec886 1-112
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "d8a3a95366b6e37e83baef6345334d115ab884bc",
+  "prompts": {},
+  "sessions": {
+    "s_507b571442c515": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9284c673-f110-4628-9da7-9611b315c7ce",
+        "model": "claude-opus-5"
+      },
+      "human_author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}

@@ -1,0 +1,22 @@
+tests/protocol/pool/Pool.LiquidationReentrancy.t.sol
+  s_59c76c233c0936::t_39773f6a515e2e 31,69,106
+  s_59c76c233c0936::t_28f15be6547e8d 317
+  s_59c76c233c0936::t_59c802148f4c22 67,73-82,258,269-308,315-316,318
+  s_59c76c233c0936::t_6207f3218fd463 319
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "6d22d7fa5920888e9beab05b585a2c7d5aeb1f71",
+  "prompts": {},
+  "sessions": {
+    "s_59c76c233c0936": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a08cee-b9f9-7882-b2a5-900777a601db",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}

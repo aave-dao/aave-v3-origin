@@ -1,0 +1,21 @@
+README.md
+  s_87d264f34effbb::t_b0579356ef5212 1,5,28
+.changeset/aave-v3-8.md
+  s_87d264f34effbb::t_b0579356ef5212 1-7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "09386fb5ec058efea449f70790cbd00f1f2600c6",
+  "prompts": {},
+  "sessions": {
+    "s_87d264f34effbb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "15481d9b-ae90-4db8-8da8-f39b48a6a9ed",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}

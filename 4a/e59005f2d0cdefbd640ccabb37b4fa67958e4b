@@ -1,0 +1,21 @@
+certora/solvency/confs/solvency/liquidationCall/burnBadDebt-assetINloop.conf
+  s_bb47c2c2531924::t_7ae7515be54189 13-15
+certora/solvency/confs/solvency/liquidationCall/main-COLasset.conf
+  s_bb47c2c2531924::t_7ae7515be54189 11-14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "4ae59005f2d0cdefbd640ccabb37b4fa67958e4b",
+  "prompts": {},
+  "sessions": {
+    "s_bb47c2c2531924": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fd144-3746-7a40-9ed4-5a9002b92b8e",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}

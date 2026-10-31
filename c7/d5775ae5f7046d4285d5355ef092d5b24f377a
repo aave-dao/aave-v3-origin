@@ -1,0 +1,21 @@
+.github/workflows/certora-solvency.yml
+  s_87d264f34effbb::t_002878330ee536 36-37,46
+certora/solvency/confs/solvency/withdraw.conf
+  s_87d264f34effbb::t_9bc7d7930292e2 12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c7d5775ae5f7046d4285d5355ef092d5b24f377a",
+  "prompts": {},
+  "sessions": {
+    "s_87d264f34effbb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "15481d9b-ae90-4db8-8da8-f39b48a6a9ed",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}

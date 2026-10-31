@@ -1,0 +1,19 @@
+certora/basic/specs/PoolReentrancy.spec
+  s_59c76c233c0936::t_24b2e9a8477592 37,39-40,78,88
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "1ebb5a8574cbef89ead68f9ec4b2dda077478de7",
+  "prompts": {},
+  "sessions": {
+    "s_59c76c233c0936": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a08cee-b9f9-7882-b2a5-900777a601db",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}

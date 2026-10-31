@@ -1,0 +1,25 @@
+tests/mocks/MockFlashLoanATokenTransferReceiver.sol
+  s_87d264f34effbb::t_6834140e9b6ef8 1-76
+tests/protocol/libraries/math/PercentageMath.t.sol
+  s_87d264f34effbb::t_41426e3e7f08ce 46-101
+tests/protocol/libraries/math/WadRayMath.t.sol
+  s_87d264f34effbb::t_ad10539394ece9 42-86
+tests/protocol/pool/Pool.FlashLoans.t.sol
+  s_87d264f34effbb::t_8daf86d4bdc0d6 22,901-984
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5f49548370942d81a518ed3f42bd80ac82c105db",
+  "prompts": {},
+  "sessions": {
+    "s_87d264f34effbb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "15481d9b-ae90-4db8-8da8-f39b48a6a9ed",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}

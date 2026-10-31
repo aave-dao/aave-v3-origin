@@ -1,0 +1,25 @@
+snapshots/Pool.Operations.json
+  s_59c76c233c0936::t_1a3498f64746ee 2-16,21-30
+snapshots/Pool.OperationsComposition.json
+  s_59c76c233c0936::t_1a3498f64746ee 2-4
+snapshots/WrappedTokenGatewayV3.json
+  s_59c76c233c0936::t_1a3498f64746ee 2-5
+snapshots/StataTokenV2.json
+  s_59c76c233c0936::t_2ef388591b4860 3,5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "57f55ab3fa1c1db040193f1c398e026628bef42b",
+  "prompts": {},
+  "sessions": {
+    "s_59c76c233c0936": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a08cee-b9f9-7882-b2a5-900777a601db",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}

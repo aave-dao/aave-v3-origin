@@ -1,0 +1,98 @@
+snapshots/StataTokenV2.json
+  s_507b571442c515::t_812674950348cd 4,6
+  s_507b571442c515::t_e3a7360cd71782 3
+src/contracts/protocol/pool/Pool.sol
+  s_507b571442c515::t_3fa0add86ad825 812
+  s_507b571442c515::t_9067c423a01f0d 597
+snapshots/ATokenWithDelegation.transfer.json
+  s_507b571442c515::t_812674950348cd 2-7
+snapshots/AToken.transfer.json
+  s_507b571442c515::t_812674950348cd 2-19
+tests/protocol/pool/Pool.LiquidationFeeEvasion.t.sol
+  s_507b571442c515::t_1c8961005110b5 204-210,216-222
+  s_507b571442c515::t_29baade7c617e2 1-14,16-30,32-64,69-70,78-93,125-163,170-174,176-186,199-203,211-215,223-257,266-272,299-301,309-345,354-360
+tests/protocol/pool/Pool.LiquidationReentrancy.t.sol
+  s_507b571442c515::t_90527a7cc009b5 476-479,481-483,485-489,491-492
+  s_59c76c233c0936::t_a0557fdfa2ab27 5,375-377,379
+  s_59c76c233c0936::t_d702f3315f189f 380-382
+  s_59c76c233c0936::t_5d3dd0fe352240 383-384
+tests/invariants/hooks/DefaultBeforeAfterHooks.t.sol
+  s_507b571442c515::t_ced8df7d1d14ad 507,511,515,528-529
+  s_507b571442c515::t_59ba514a9335ca 10-12,28,37-39,87-88,285-287,306-307,499-512,515-527
+  s_507b571442c515::t_4dec820da3833f 513-514
+  s_507b571442c515::t_284b74a6f1c96c 528-529
+  s_507b571442c515::t_16ba737e83ab76 528-529
+certora/basic/specs/PoolReentrancy.spec
+  s_507b571442c515::t_91246dd3dd2575 118-124,137-143,145,147,150-152,168
+  s_507b571442c515::t_6ca77305d1fd10 1-4,132,160
+  s_507b571442c515::t_8f9229e74e8dad 34-35,40-41,58,115-117,125-131,133-136,144,146,148-149,153-159,161-167,169
+snapshots/Pool.Operations.json
+  s_507b571442c515::t_e3a7360cd71782 2-6,8,10-16,21-30
+src/contracts/protocol/libraries/logic/ReserveLogic.sol
+  s_507b571442c515::t_792d88161e416a 197
+snapshots/Pool.OperationsComposition.json
+  s_507b571442c515::t_e3a7360cd71782 2-4
+snapshots/WrappedTokenGatewayV3.json
+  s_507b571442c515::t_e3a7360cd71782 2-5,2-4
+tests/invariants/hooks/HookAggregator.t.sol
+  s_507b571442c515::t_59ba514a9335ca 34
+tests/invariants/specs/PostconditionsSpec.t.sol
+  s_507b571442c515::t_59ba514a9335ca 43-45
+tests/protocol/pool/Pool.Liquidations.DoubleTreasuryAccrual.t.sol
+  s_507b571442c515::t_72d482f014d2c4 138,141
+  s_507b571442c515::t_618df8b2dc3d73 14-17,42,46-49,51-52,64-65,70,87-90,92-93,105-106,133-137,139-140,142-150
+tests/protocol/pool/Pool.TreasuryAccrualRounding.t.sol
+  s_507b571442c515::t_5534b4503a223a 1-43,45-68,77-93
+  s_507b571442c515::t_254e9a4640576d 69-76
+  s_507b571442c515::t_ada456dbcbace9 44
+.github/workflows/certora-solvency.yml
+  s_507b571442c515::t_ba95bee865b515 51
+  s_59c76c233c0936::t_14aff24360c289 22
+certora/solvency/confs/solvency/treasuryAccrual.conf
+  s_507b571442c515::t_c01d93fe9ec886 1-19
+certora/solvency/specs/treasuryAccrual.spec
+  s_507b571442c515::t_c01d93fe9ec886 1-112
+.github/workflows/certora-stata.yml
+  s_59c76c233c0936::t_14aff24360c289 22
+.github/workflows/certora-basic.yml
+  s_59c76c233c0936::t_14aff24360c289 22
+.github/workflows/certora-math-calculations.yml
+  s_59c76c233c0936::t_14aff24360c289 22
+.github/workflows/invariants.yml
+  s_59c76c233c0936::t_1b33a1c9726d4d 24
+  s_59c76c233c0936::t_c9c54561319970 17,28
+  s_59c76c233c0936::t_71c9647c08a084 25,27
+  s_59c76c233c0936::t_94551d56c00dda 26
+  s_59c76c233c0936::t_14aff24360c289 1-16,18-23,29-48
+.github/workflows/certora-ATokenWithDelegation.yml
+  s_59c76c233c0936::t_14aff24360c289 19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "e588c895f682da855ac2d931e14e9e2e7bbff49f",
+  "prompts": {},
+  "humans": {
+    "h_739c25e72c37fb": {
+      "author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_507b571442c515": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9284c673-f110-4628-9da7-9611b315c7ce",
+        "model": "claude-opus-5"
+      },
+      "human_author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    },
+    "s_59c76c233c0936": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a08cee-b9f9-7882-b2a5-900777a601db",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}

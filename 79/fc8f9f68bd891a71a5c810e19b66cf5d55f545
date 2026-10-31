@@ -1,0 +1,21 @@
+tests/protocol/pool/Pool.LiquidationFeeEvasion.t.sol
+  s_507b571442c515::t_29baade7c617e2 1-245
+tests/protocol/pool/Pool.LiquidationReentrancy.t.sol
+  s_507b571442c515::t_90527a7cc009b5 432-445
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "79fc8f9f68bd891a71a5c810e19b66cf5d55f545",
+  "prompts": {},
+  "sessions": {
+    "s_507b571442c515": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9284c673-f110-4628-9da7-9611b315c7ce",
+        "model": "claude-opus-5"
+      },
+      "human_author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}

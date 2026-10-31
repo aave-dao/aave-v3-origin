@@ -1,0 +1,23 @@
+src/contracts/instances/PoolInstance.sol
+  s_59c76c233c0936::t_1cce92f1c9404b 15
+tests/protocol/configuration/PoolAddressesProvider.t.sol
+  s_59c76c233c0936::t_1cce92f1c9404b 17-27,283-302,304
+  s_59c76c233c0936::t_d133b3e955f96c 303
+  s_59c76c233c0936::t_66371c980acacf 305
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "d937a05ccd8064ae5dba3ab2769e3d0789a3d4e2",
+  "prompts": {},
+  "sessions": {
+    "s_59c76c233c0936": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a08cee-b9f9-7882-b2a5-900777a601db",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}

@@ -1,0 +1,23 @@
+tests/invariants/handlers/simulators/FlashLoanHandler.t.sol
+  s_59c76c233c0936::t_bd76998b57f9e4 115-117
+tests/invariants/Setup.t.sol
+  s_59c76c233c0936::t_bd76998b57f9e4 199
+tests/invariants/helpers/ReentrantFlashLoanReceiver.sol
+  s_59c76c233c0936::t_bd76998b57f9e4 45,47
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "4db16227dd15df0542e1ad3933981bffbac932dc",
+  "prompts": {},
+  "sessions": {
+    "s_59c76c233c0936": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a08cee-b9f9-7882-b2a5-900777a601db",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}

@@ -1,0 +1,25 @@
+tests/invariants/specs/PostconditionsSpec.t.sol
+  s_507b571442c515::t_ced8df7d1d14ad 169-171
+tests/invariants/handlers/user/LiquidationHandler.t.sol
+  s_507b571442c515::t_c592c3b6ade9b1 117-118
+tests/invariants/hooks/DefaultBeforeAfterHooks.t.sol
+  s_507b571442c515::t_1c8961005110b5 508
+  s_507b571442c515::t_ced8df7d1d14ad 486-507,509-527
+  s_507b571442c515::t_e8bb525f0da16c 485
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "bd6972f17ec64931abae29cd57aae175481a9c66",
+  "prompts": {},
+  "sessions": {
+    "s_507b571442c515": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9284c673-f110-4628-9da7-9611b315c7ce",
+        "model": "claude-opus-5"
+      },
+      "human_author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}

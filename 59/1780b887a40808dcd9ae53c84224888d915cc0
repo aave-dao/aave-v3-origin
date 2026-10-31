@@ -1,0 +1,20 @@
+certora/basic/harness/PoolHarness.sol
+  s_59c76c233c0936::t_b12a14a3dbdfcb 78
+  s_59c76c233c0936::t_03d881579b6c0e 77,79
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "591780b887a40808dcd9ae53c84224888d915cc0",
+  "prompts": {},
+  "sessions": {
+    "s_59c76c233c0936": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a08cee-b9f9-7882-b2a5-900777a601db",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}

@@ -1,0 +1,22 @@
+certora/basic/specs/PoolReentrancy.spec
+  s_507b571442c515::t_91246dd3dd2575 102-108,121-127,129,131,134-136,152
+  s_507b571442c515::t_8f9229e74e8dad 34-35,40-41,50,52,58,99-101,109-115,117-120,128,130,132-133,137-143,145-151,153
+  s_507b571442c515::t_6ca77305d1fd10 1-4,116,144
+  s_507b571442c515::t_71a8df49e8dc8b 22,24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bbf2f7c3b90ac7148d208bfc2fbae1159f41f9fa",
+  "prompts": {},
+  "sessions": {
+    "s_507b571442c515": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9284c673-f110-4628-9da7-9611b315c7ce",
+        "model": "claude-opus-5"
+      },
+      "human_author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}

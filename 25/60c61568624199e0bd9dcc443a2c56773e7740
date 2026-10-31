@@ -1,0 +1,29 @@
+certora/solvency/specs/treasuryAccrual.spec
+  s_507b571442c515::t_3d59909ff0d6c1 21-22
+  s_507b571442c515::t_d3a9caab49054b 8
+  s_507b571442c515::t_8e2e03be34798a 71-73,103-108
+certora/solvency/specs/MOCKS/checks/rayMulDiv-CVL-check.spec
+  s_507b571442c515::t_d3a9caab49054b 2,12,65-69
+certora/solvency/harnesses/Utilities.sol
+  s_507b571442c515::t_d3a9caab49054b 5
+  s_507b571442c515::t_7f4ab658cccee9 31-32
+  s_507b571442c515::t_483faff7242937 33-34
+certora/solvency/specs/MOCKS/percentMath-CVL.spec
+  s_507b571442c515::t_7f4ab658cccee9 1-5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2560c61568624199e0bd9dcc443a2c56773e7740",
+  "prompts": {},
+  "sessions": {
+    "s_507b571442c515": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9284c673-f110-4628-9da7-9611b315c7ce",
+        "model": "claude-opus-5"
+      },
+      "human_author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}

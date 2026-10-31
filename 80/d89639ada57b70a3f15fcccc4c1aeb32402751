@@ -1,0 +1,19 @@
+LICENSE
+  s_87d264f34effbb::t_bcc3c90e803359 46
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "80d89639ada57b70a3f15fcccc4c1aeb32402751",
+  "prompts": {},
+  "sessions": {
+    "s_87d264f34effbb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "15481d9b-ae90-4db8-8da8-f39b48a6a9ed",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}

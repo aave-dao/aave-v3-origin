@@ -1,0 +1,37 @@
+certora/basic/specs/PoolReentrancy.spec
+  s_59c76c233c0936::t_7dd26d8c79291d 19-25,31-34,46-57,62
+tests/invariants/handlers/simulators/FlashLoanHandler.t.sol
+  s_59c76c233c0936::t_bd76998b57f9e4 115-117
+tests/invariants/Setup.t.sol
+  s_59c76c233c0936::t_bd76998b57f9e4 199
+tests/invariants/helpers/ReentrantFlashLoanReceiver.sol
+  s_59c76c233c0936::t_bd76998b57f9e4 45,47
+.github/workflows/certora-solvency.yml
+  s_59c76c233c0936::t_14aff24360c289 22
+.github/workflows/certora-math-calculations.yml
+  s_59c76c233c0936::t_14aff24360c289 22
+.github/workflows/certora-stata.yml
+  s_59c76c233c0936::t_14aff24360c289 22
+.github/workflows/certora-ATokenWithDelegation.yml
+  s_59c76c233c0936::t_14aff24360c289 19
+.github/workflows/certora-basic.yml
+  s_59c76c233c0936::t_14aff24360c289 22
+.github/workflows/invariants.yml
+  s_59c76c233c0936::t_14aff24360c289 1-45
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "8fe44c84a0fee9e9961fcee95d555504651bd096",
+  "prompts": {},
+  "sessions": {
+    "s_59c76c233c0936": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a08cee-b9f9-7882-b2a5-900777a601db",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}

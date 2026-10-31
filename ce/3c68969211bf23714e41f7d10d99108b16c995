@@ -1,0 +1,38 @@
+certora/basic/specs/PoolReentrancy.spec
+  s_503072c35d3925::t_5b37c8039fa5d7 11-12,15-17
+tests/protocol/pool/Pool.LiquidationReentrancy.t.sol
+  s_503072c35d3925::t_8c8426c4de3e7d 269,294,484
+  s_503072c35d3925::t_2073ca225c418a 8,268,305,308,310,324,482-483,485-499
+  s_503072c35d3925::t_759a990bf02418 296
+  s_503072c35d3925::t_9671c305c0a7ad 92-100,285-293,295,297-304,306-307,309,311-323,325
+  s_503072c35d3925::t_62bbe5985e4b85 101-102,326-327
+snapshots/Pool.Setters.json
+  s_503072c35d3925::t_ea60743b2bcc05 2-9
+src/contracts/protocol/pool/Pool.sol
+  s_503072c35d3925::t_72d4d7af981d29 348,769,878,896
+  s_59c76c233c0936::t_b32f01c785c080 59
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "ce3c68969211bf23714e41f7d10d99108b16c995",
+  "prompts": {},
+  "sessions": {
+    "s_503072c35d3925": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0901f-f787-7ba0-9cc3-5cc01cb14398",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    },
+    "s_59c76c233c0936": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a08cee-b9f9-7882-b2a5-900777a601db",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "DhairyaSethi <55102840+DhairyaSethi@users.noreply.github.com>"
+    }
+  }
+}
