@@ -154,7 +154,7 @@ In addition, Enigma Dark has adapted the Foundry-based fuzzing [invariant suite]
 #### Pool reentrancy guard
 
 - [ChainSecurity](./audits/2026-10-27_ChainSecurity_Aave-v3.8.pdf)
-- [Certora](./audits/2026-10-27_Certora_Aave-v3.8.pdf)
+- [Certora](./audits/2026-10-20_Certora_Aave-v3.8.pdf)
 - [Tomer Security First](./audits/2026-10-27_TomerSecurityFirst_Aave-v3.8.pdf)
 
 <br>
