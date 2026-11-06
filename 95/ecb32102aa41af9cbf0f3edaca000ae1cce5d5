@@ -1,0 +1,29 @@
+.github/workflows/certora-solvency.yml
+  s_04da9fe33e9a43::t_65fb7514bce458 59
+docs/3.8/Aave-v3.8-changelog.md
+  s_04da9fe33e9a43::t_16fafd978c1727 3,9-14
+tests/mocks/MockFlashLoanATokenTransferReceiver.sol
+  s_04da9fe33e9a43::t_8221a55586ae89 15,32-35,70-74
+tests/protocol/pool/L2Pool.Reentrancy.t.sol
+  s_04da9fe33e9a43::t_121e8e8881bb20 1-124
+tests/protocol/pool/Pool.FlashLoans.t.sol
+  s_04da9fe33e9a43::t_2ab03346bf1ac2 905-906,911,917-918,928,934,939,945,955-1050
+tests/protocol/pool/Pool.LiquidationReentrancy.t.sol
+  s_04da9fe33e9a43::t_5c207ac1c79a77 10,30,43-47,83,121-299,331,333-334,352-355,364,401-404,417-420,428,438,448-451,459-462,526,552,577-579,581-584,586-587,589-591
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "95ecb32102aa41af9cbf0f3edaca000ae1cce5d5",
+  "prompts": {},
+  "sessions": {
+    "s_04da9fe33e9a43": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "edbe4941-0dfc-48ff-89db-dac35e1d57bf",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Alexandru Niculae <43644109+avniculae@users.noreply.github.com>"
+    }
+  }
+}
