@@ -217,6 +217,8 @@ abstract contract PostconditionsSpec {
     'ERC20_HSPOST_E: After a transfer, the sender allowance and balance must decrease by at least the amount transferred (accounting for rounding).';
   string constant ERC20_HSPOST_F =
     'ERC20_HSPOST_F: After a transfer, the recipient balance must increase by at least the amount transferred (accounting for rounding).';
+  string constant ERC20_HSPOST_G =
+    'ERC20_HSPOST_G: After a transfer to self, the balance must not change.';
 
   ///////////////////////////////////////////////////////////////////////////////////////////////
   //                                       FLASHLOAN                                           //

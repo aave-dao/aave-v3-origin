@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 pragma solidity ^0.8.10;
 
 import {RewardsController, RewardsDataTypes} from '../../munged/src/contracts/rewards/RewardsController.sol';

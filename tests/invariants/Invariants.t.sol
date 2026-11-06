@@ -13,6 +13,11 @@ import {BaseInvariants} from './invariants/BaseInvariants.t.sol';
 /// @dev recognised by Echidna when property mode is activated
 /// @dev Inherits BaseInvariants
 abstract contract Invariants is BaseInvariants {
+  /// @notice The reentrancy guard never blocks a Pool action taken from a flashloan callback.
+  function echidna_POOL_FLASHLOAN_CALLBACK_COMPOSABLE() public returns (bool) {
+    return !flashLoanComposabilityFailed && !reentrantFlashLoanReceiver.guardBlockedCall();
+  }
+
   ///////////////////////////////////////////////////////////////////////////////////////////////
   //                                     BASE INVARIANTS                                       //
   ///////////////////////////////////////////////////////////////////////////////////////////////

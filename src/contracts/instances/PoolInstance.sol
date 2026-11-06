@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: LicenseRef-BUSL
 pragma solidity ^0.8.0;
 
 import {Pool} from '../protocol/pool/Pool.sol';
@@ -12,7 +12,7 @@ import {Errors} from '../protocol/libraries/helpers/Errors.sol';
  * @notice Instance of the Pool for the Aave protocol
  */
 contract PoolInstance is Pool {
-  uint256 public constant POOL_REVISION = 11;
+  uint256 public constant POOL_REVISION = 12;
 
   constructor(
     IPoolAddressesProvider provider,

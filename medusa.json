@@ -10,9 +10,7 @@
     "coverageFormats": ["html", "lcov"],
     "deploymentOrder": ["Tester"],
     "targetContracts": ["Tester"],
-    "targetContractsBalances": [
-      "0xffffffffffffffffffffffffffffffffffffffffffffffffffff"
-    ],
+    "targetContractsBalances": ["0x80000000000000000000000000000000"],
     "predeployedContracts": {
       "Create2Factory": "0x914d7Fec6aaC8cd542e72Bca78B30650d45643d7",
       "Pretty": "0xf01",
@@ -22,7 +20,6 @@
       "PoolLogic": "0xf05",
       "LiquidationLogic": "0xf06",
       "FlashLoanLogic": "0xf07",
-      "EModeLogic": "0xf09",
       "BorrowLogic": "0xf10"
     },
     "constructorArgs": {},
@@ -81,7 +78,7 @@
       "args": [
         "--solc-remaps",
         "@crytic/properties/=../../../lib/properties/ forge-std/=../../../lib/forge-std/src/ ds-test/=../../../lib/forge-std/lib/ds-test/src/",
-        "--compile-libraries=(Pretty,0xf01), (Strings,0xf02), (AaveV3BatchOrchestration,0xf03), (SupplyLogic,0xf04), (PoolLogic,0xf05), (LiquidationLogic,0xf06), (FlashLoanLogic,0xf07), (EModeLogic,0xf09), (BorrowLogic,0xf10)"
+        "--compile-libraries=(Pretty,0xf01), (Strings,0xf02), (AaveV3BatchOrchestration,0xf03), (SupplyLogic,0xf04), (PoolLogic,0xf05), (LiquidationLogic,0xf06), (FlashLoanLogic,0xf07), (BorrowLogic,0xf10)"
       ]
     }
   },

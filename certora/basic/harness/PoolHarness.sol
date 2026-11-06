@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
 import {PoolInstance} from '../munged/src/contracts/instances/PoolInstance.sol';
@@ -71,5 +71,11 @@ contract PoolHarness is PoolInstance {
     DataTypes.ReserveConfigurationMap memory self
   ) external pure returns (bool) {
     return ReserveConfiguration.getBorrowingEnabled(self);
+  }
+
+  function setReentrancyGuardEntered(bool entered) external {
+    assembly {
+      tstore(0x9b779b17422d0df92223018b32b4d1fa46e071723d6817e2486d003becc55f00, entered)
+    }
   }
 }

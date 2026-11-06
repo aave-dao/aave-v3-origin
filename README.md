@@ -1,8 +1,8 @@
-# Aave V3.7 Origin
+# Aave V3 Origin
 
-![Aave v3.1 Origin_banner](./resources/v3-1-banner.jpeg)
+![Aave v3 Origin_banner](./resources/v3-banner.jpg)
 
-Aave v3.7 complete codebase, Foundry-based.
+Aave v3.8 complete codebase, Foundry-based.
 
 [![codecov](https://codecov.io/gh/aave-dao/aave-v3-origin/graph/badge.svg?token=6HX4NXCNIQ)](https://codecov.io/gh/aave-dao/aave-v3-origin)
 <br>
@@ -25,6 +25,7 @@ If you're interested in contributing, please read the [contributing docs](/.gith
 - [Aave v3.6 features](./docs/3.6/Aave-v3.6-features.md)
 - [Aave v3.7 isolated eMode](./docs/3.7/isolated-emode.md)
 - [Aave v3.7 liquidation rounding](./docs/3.7/liquidation-rounding.md)
+- [Aave v3.8 changelog](./docs/3.8/Aave-v3.8-changelog.md)
 - [v3.1 to v3.2 production upgrade](https://github.com/bgd-labs/protocol-3.2.0-upgrade/blob/main/README.md)
 - [v3.2 to v3.3 production upgrade](https://github.com/bgd-labs/protocol-3.3.0-upgrade/blob/main/README.md)
 - [Set Ltv to 0 on Freeze Feature State diagram](./docs/freeze-ltv0-states.png)
@@ -148,6 +149,16 @@ In addition, Enigma Dark has adapted the Foundry-based fuzzing [invariant suite]
 
 <br>
 
+**-> Aave v3.8 - October 2026**
+
+#### Pool reentrancy guard
+
+- [ChainSecurity](./audits/2026-10-27_ChainSecurity_Aave-v3.8.pdf)
+- [Certora](./audits/2026-10-20_Certora_Aave-v3.8.pdf)
+- [Tomer Security First](./audits/2026-10-27_TomerSecurityFirst_Aave-v3.8.pdf)
+
+<br>
+
 ### Bug bounty
 
 This repository will be subjected to [this bug bounty](https://immunefi.com/bounty/aave/) once the Aave Governance upgrades the smart contracts in the applicable production instances.
@@ -156,7 +167,4 @@ This repository will be subjected to [this bug bounty](https://immunefi.com/boun
 
 ## License
 
-Copyright © 2026, Aave DAO, represented by its governance smart contracts.
-
-The [BUSL1.1](./LICENSE) license of this repository allows for any usage of the software, if respecting the Additional Use Grant limitations, forbidding any use case damaging anyhow the Aave DAO's interests.
-Interfaces and other components required for integrations are explicitly MIT licensed.
+Aave V3 is licensed under the Business Source License, see [LICENSE](./LICENSE). Each Solidity file in Aave V3 states the applicable license; files marked BUSL-1.1 or LicenseRef-BUSL refer to the license in [LICENSE](./LICENSE). As a customized license, BUSL uses the `LicenseRef-` prefix per [SPDX Spec v2.3, Annex E](https://spdx.github.io/spdx-spec/v2.3/using-SPDX-short-identifiers-in-source-files/).

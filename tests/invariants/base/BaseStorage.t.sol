@@ -20,6 +20,7 @@ import {MockAggregatorSetPrice} from '../utils/mocks/MockAggregatorSetPrice.sol'
 // Utils
 import {Actor} from '../utils/Actor.sol';
 import {WETH9} from 'src/contracts/dependencies/weth/WETH9.sol';
+import {ReentrantFlashLoanReceiver} from '../helpers/ReentrantFlashLoanReceiver.sol';
 
 /// @notice BaseStorage contract for all test contracts, works in tandem with BaseTest
 abstract contract BaseStorage {
@@ -139,6 +140,8 @@ abstract contract BaseStorage {
   MockAggregatorSetPrice internal mockPriceAggregatorWETH;
 
   address internal flashLoanReceiver;
+  ReentrantFlashLoanReceiver internal reentrantFlashLoanReceiver;
+  bool internal flashLoanComposabilityFailed;
 
   ///////////////////////////////////////////////////////////////////////////////////////////////
   //                                       EXTRA VARIABLES                                     //

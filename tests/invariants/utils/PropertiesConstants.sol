@@ -8,7 +8,7 @@ abstract contract PropertiesConstants {
   address constant USER3 = address(0x30000);
   address constant UMBRELLA = address(0x400000);
 
-  uint256 constant INITIAL_BALANCE = 10e38;
+  uint256 constant INITIAL_BALANCE = 1e36;
   uint256 internal constant DEFAULT_LIQUIDATION_CLOSE_FACTOR = 0.5e4;
   uint256 constant CLOSE_FACTOR_HF_THRESHOLD = 0.95e18;
   uint256 public constant MIN_BASE_MAX_CLOSE_FACTOR_THRESHOLD = 2000e8;

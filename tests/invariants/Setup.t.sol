@@ -20,9 +20,11 @@ import {AaveV3BatchOrchestration} from 'src/deployments/projects/aave-v3-batched
 import {AaveV3TestListing} from '../mocks/AaveV3TestListing.sol';
 import {MockAggregatorSetPrice} from './utils/mocks/MockAggregatorSetPrice.sol';
 import {MockFlashLoanReceiver} from './helpers/MockFlashLoanReceiver.sol';
+import {ReentrantFlashLoanReceiver} from './helpers/ReentrantFlashLoanReceiver.sol';
 
 // Interfaces
 import {IAaveV3ConfigEngine} from '../../src/contracts/extensions/v3-config-engine/AaveV3ConfigEngine.sol';
+import {IPool} from '../../src/contracts/interfaces/IPool.sol';
 
 /// @notice Setup contract for the invariant test Suite, inherited by Tester
 contract Setup is BaseTest, DefaultMarketInput {
@@ -147,6 +149,12 @@ contract Setup is BaseTest, DefaultMarketInput {
     );
 
     flashLoanReceiver = address(new MockFlashLoanReceiver());
+    reentrantFlashLoanReceiver = new ReentrantFlashLoanReceiver(contracts.poolProxy);
+
+    usdx.mint(address(reentrantFlashLoanReceiver), 1e24);
+    wbtc.mint(address(reentrantFlashLoanReceiver), 1e24);
+    weth.deposit{value: 1e24}();
+    weth.transfer(address(reentrantFlashLoanReceiver), 1e24);
   }
 
   /// @notice Deploy protocol actors and initialize their balances
@@ -182,6 +190,25 @@ contract Setup is BaseTest, DefaultMarketInput {
         }
       }
       actorAddresses.push(_actor);
+    }
+
+    Actor liquidityProvider = actors[USER1];
+    for (uint256 i; i < tokens.length; ++i) {
+      (bool success, ) = liquidityProvider.proxy(
+        address(pool),
+        abi.encodeCall(IPool.supply, (tokens[i], 1e6, address(liquidityProvider), 0))
+      );
+      require(success, 'Setup: seed liquidity failed');
+    }
+
+    for (uint256 i; i < NUMBER_OF_ACTORS; i++) {
+      for (uint256 j; j < tokens.length; ++j) {
+        (bool success, ) = actors[addresses[i]].proxy(
+          protocolTokens[tokens[j]].aTokenAddress,
+          abi.encodeCall(IERC20.approve, (address(reentrantFlashLoanReceiver), type(uint256).max))
+        );
+        require(success, 'Setup: aToken approval failed');
+      }
     }
 
     // Set umbrella

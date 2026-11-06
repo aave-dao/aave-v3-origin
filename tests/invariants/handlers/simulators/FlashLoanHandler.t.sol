@@ -8,6 +8,7 @@ import {IPool} from 'src/contracts/interfaces/IPool.sol';
 // Libraries
 import {DataTypes} from 'src/contracts/protocol/libraries/types/DataTypes.sol';
 import {PercentageMath} from 'src/contracts/protocol/libraries/math/PercentageMath.sol';
+import {ReserveConfiguration} from 'src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
 
 // Test Contracts
 import {Actor} from '../../utils/Actor.sol';
@@ -16,6 +17,7 @@ import {BaseHandler} from '../../base/BaseHandler.t.sol';
 /// @title FlashLoanHandler
 /// @notice Handler test contract for a set of actions
 contract FlashLoanHandler is BaseHandler {
+  using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
   ///////////////////////////////////////////////////////////////////////////////////////////////
   //                                      STATE VARIABLES                                      //
   ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -88,6 +90,47 @@ contract FlashLoanHandler is BaseHandler {
       _after();
     } else {
       revert('FlashLoanHandler: flashLoanSimple failed');
+    }
+  }
+
+  /// @notice Drives protected Pool actions from inside a simple flashloan callback.
+  function flashLoanSimpleComposable(uint8 assetIndex, uint8 action) external setup {
+    address asset = _getRandomBaseAsset(assetIndex);
+    DataTypes.ReserveConfigurationMap memory configuration = pool.getConfiguration(asset);
+
+    if (
+      !configuration.getFlashLoanEnabled() ||
+      !configuration.getActive() ||
+      configuration.getPaused()
+    ) return;
+
+    uint256 available = pool.getVirtualUnderlyingBalance(asset);
+    uint256 actualBalance = IERC20(asset).balanceOf(pool.getReserveData(asset).aTokenAddress);
+    uint256 totalSupply = IERC20(pool.getReserveData(asset).aTokenAddress).totalSupply();
+    if (available == 0 || actualBalance == 0 || totalSupply == 0) return;
+
+    uint256 amount = available > 1e6 ? 1e6 : available;
+    if (amount > actualBalance) amount = actualBalance;
+    if (amount > totalSupply) amount = totalSupply;
+
+    uint256 callbacksBefore = reentrantFlashLoanReceiver.callbackCount();
+    reentrantFlashLoanReceiver.setATokenSource(address(actor));
+    reentrantFlashLoanReceiver.configure(action % 2);
+
+    (bool success, ) = address(pool).call(
+      abi.encodeCall(
+        IPool.flashLoanSimple,
+        (address(reentrantFlashLoanReceiver), asset, amount, bytes(''), 0)
+      )
+    );
+
+    if (
+      !success ||
+      !reentrantFlashLoanReceiver.callbackEntered() ||
+      reentrantFlashLoanReceiver.guardBlockedCall() ||
+      reentrantFlashLoanReceiver.callbackCount() != callbacksBefore + 1
+    ) {
+      flashLoanComposabilityFailed = true;
     }
   }
 

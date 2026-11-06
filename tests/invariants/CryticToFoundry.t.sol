@@ -42,6 +42,27 @@ contract CryticToFoundry is Invariants, Setup {
     actor = actors[USER1];
   }
 
+  uint8 internal constant REENTRY_ACTIONS = 2;
+
+  function test_flashLoanSimpleComposable() public {
+    uint256 callbacksBefore = reentrantFlashLoanReceiver.callbackCount();
+
+    uint256 expectedCallbacks;
+    for (uint8 assetIndex; assetIndex < baseAssets.length; ++assetIndex) {
+      for (uint8 action; action < REENTRY_ACTIONS; ++action) {
+        this.flashLoanSimpleComposable(assetIndex, action);
+        ++expectedCallbacks;
+
+        assertFalse(reentrantFlashLoanReceiver.guardBlockedCall());
+        assertFalse(flashLoanComposabilityFailed);
+        assertTrue(reentrantFlashLoanReceiver.stateChanged());
+      }
+    }
+
+    assertEq(reentrantFlashLoanReceiver.callbackCount(), callbacksBefore + expectedCallbacks);
+    assertTrue(echidna_POOL_FLASHLOAN_CALLBACK_COMPOSABLE());
+  }
+
   function _resetActorTargets() internal override {
     delete senderActor;
     delete receiverActor;

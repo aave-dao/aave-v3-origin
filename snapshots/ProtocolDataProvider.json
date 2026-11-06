@@ -1,7 +1,7 @@
 {
   "getATokenTotalSupply": "30034",
-  "getAllATokens": "63838",
-  "getAllReservesTokens": "43138",
+  "getAllATokens": "63019",
+  "getAllReservesTokens": "42319",
   "getFlashLoanEnabled": "11303",
   "getInterestRateStrategyAddress": "8789",
   "getIsVirtualAccActive": "463",

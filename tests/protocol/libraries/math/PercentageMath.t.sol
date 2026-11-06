@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
@@ -42,6 +42,62 @@ contract PercentageMathTests is Test {
         ((value * PercentageMath.PERCENTAGE_FACTOR) + (percentage / 2)) / percentage
       );
     }
+  }
+
+  function test_percentMulFloor_fuzz(uint256 value, uint256 percentage) public {
+    if (percentage != 0 && value > type(uint256).max / percentage) {
+      vm.expectRevert();
+      PercentageMath.percentMulFloor(value, percentage);
+      return;
+    }
+
+    assertEq(
+      PercentageMath.percentMulFloor(value, percentage),
+      (value * percentage) / PercentageMath.PERCENTAGE_FACTOR
+    );
+  }
+
+  function test_percentMulCeil_fuzz(uint256 value, uint256 percentage) public {
+    if (percentage != 0 && value > type(uint256).max / percentage) {
+      vm.expectRevert();
+      PercentageMath.percentMulCeil(value, percentage);
+      return;
+    }
+
+    uint256 product = value * percentage;
+    assertEq(
+      PercentageMath.percentMulCeil(value, percentage),
+      product /
+        PercentageMath.PERCENTAGE_FACTOR +
+        (product % PercentageMath.PERCENTAGE_FACTOR == 0 ? 0 : 1)
+    );
+  }
+
+  function test_percentDivFloor_fuzz(uint256 value, uint256 percentage) public {
+    if (percentage == 0 || value > type(uint256).max / PercentageMath.PERCENTAGE_FACTOR) {
+      vm.expectRevert();
+      PercentageMath.percentDivFloor(value, percentage);
+      return;
+    }
+
+    assertEq(
+      PercentageMath.percentDivFloor(value, percentage),
+      (value * PercentageMath.PERCENTAGE_FACTOR) / percentage
+    );
+  }
+
+  function test_percentDivCeil_fuzz(uint256 value, uint256 percentage) public {
+    if (percentage == 0 || value > type(uint256).max / PercentageMath.PERCENTAGE_FACTOR) {
+      vm.expectRevert();
+      PercentageMath.percentDivCeil(value, percentage);
+      return;
+    }
+
+    uint256 scaled = value * PercentageMath.PERCENTAGE_FACTOR;
+    assertEq(
+      PercentageMath.percentDivCeil(value, percentage),
+      scaled / percentage + (scaled % percentage == 0 ? 0 : 1)
+    );
   }
 
   function test_percentMul_revertOnOverflow() public {
