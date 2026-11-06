@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity >=0.7.5 <0.9.0;
 
 import {AggregatorInterface} from '../../src/contracts/dependencies/chainlink/AggregatorInterface.sol';
