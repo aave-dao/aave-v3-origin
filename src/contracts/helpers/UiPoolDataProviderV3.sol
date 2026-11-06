@@ -125,6 +125,7 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
         reserveData.variableRateSlope2 = res.variableRateSlope2;
         reserveData.optimalUsageRatio = res.optimalUsageRatio;
       } catch {}
+
       // v3 only
       reserveData.deficit = uint128(pool.getReserveDeficit(reserveData.underlyingAsset));
       reserveData.debtCeiling = 0;
@@ -138,6 +139,7 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
       } catch (bytes memory) {
         reserveData.flashLoanEnabled = true;
       }
+
       reserveData.isSiloedBorrowing = false;
       reserveData.isolationModeTotalDebt = 0;
       reserveData.accruedToTreasury = baseData.accruedToTreasury;
@@ -165,6 +167,7 @@ contract UiPoolDataProviderV3 is IUiPoolDataProviderV3 {
         .marketReferenceCurrencyPriceInUsd = marketReferenceCurrencyPriceInUsdProxyAggregator
         .latestAnswer();
     }
+
     return (reservesData, baseCurrencyInfo);
   }
 

@@ -1,4 +1,4 @@
-# Aave V3.8 Origin
+# Aave V3 Origin
 
 ![Aave v3 Origin_banner](./resources/v3-banner.jpg)
 
