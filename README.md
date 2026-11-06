@@ -1,6 +1,6 @@
 # Aave V3.8 Origin
 
-![Aave v3.1 Origin_banner](./resources/v3-1-banner.jpeg)
+![Aave v3 Origin_banner](./resources/v3-banner.jpg)
 
 Aave v3.8 complete codebase, Foundry-based.
 
@@ -167,7 +167,4 @@ This repository will be subjected to [this bug bounty](https://immunefi.com/boun
 
 ## License
 
-Copyright © 2026, Aave DAO, represented by its governance smart contracts.
-
-The [LicenseRef-BUSL](./LICENSE) license of this repository allows for any usage of the software, if respecting the Additional Use Grant limitations, forbidding any use case damaging anyhow the Aave DAO's interests.
-Interfaces and other components required for integrations are explicitly MIT licensed.
+Aave V3 is licensed under the Business Source License, see [LICENSE](./LICENSE). Each Solidity file in Aave V3 states the applicable license; files marked BUSL-1.1 or LicenseRef-BUSL refer to the license in [LICENSE](./LICENSE). As a customized license, BUSL uses the `LicenseRef-` prefix per [SPDX Spec v2.3, Annex E](https://spdx.github.io/spdx-spec/v2.3/using-SPDX-short-identifiers-in-source-files/).
