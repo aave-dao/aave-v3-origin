@@ -1,15 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import {
-  IERC20Metadata
-} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
+import {IERC20Metadata} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import {IPoolAddressesProvider} from '../interfaces/IPoolAddressesProvider.sol';
 import {IPool} from '../interfaces/IPool.sol';
 import {IncentivizedERC20} from '../protocol/tokenization/base/IncentivizedERC20.sol';
-import {
-  UserConfiguration
-} from '../../contracts/protocol/libraries/configuration/UserConfiguration.sol';
+import {UserConfiguration} from '../../contracts/protocol/libraries/configuration/UserConfiguration.sol';
 import {DataTypes} from '../protocol/libraries/types/DataTypes.sol';
 import {IRewardsController} from '../rewards/interfaces/IRewardsController.sol';
 import {AggregatorInterface} from '../dependencies/chainlink/AggregatorInterface.sol';
