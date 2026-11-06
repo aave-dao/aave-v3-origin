@@ -7,6 +7,7 @@ import {ReentrancyGuardTransient} from 'openzeppelin-contracts/contracts/utils/R
 
 import {IAaveOracle} from '../../../src/contracts/interfaces/IAaveOracle.sol';
 import {IPool} from '../../../src/contracts/interfaces/IPool.sol';
+import {IPoolAddressesProvider} from '../../../src/contracts/interfaces/IPoolAddressesProvider.sol';
 import {Pool} from '../../../src/contracts/protocol/pool/Pool.sol';
 import {TestnetERC20} from '../../../src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
 import {MockAggregator} from '../../../src/contracts/mocks/oracle/CLAggregators/MockAggregator.sol';
@@ -26,6 +27,7 @@ contract LiquidationCallbackToken is TestnetERC20 {
   address internal armedCallbackSource;
   bytes internal callbackData;
   bytes internal callbackResult;
+  address internal callbackTarget;
 
   constructor(IPool pool) TestnetERC20('implementation only', 'IMPL', 8, address(this)) {
     POOL = pool;
@@ -38,6 +40,11 @@ contract LiquidationCallbackToken is TestnetERC20 {
   }
 
   function armCallback(bytes calldata data, address source) external {
+    armCallback(address(POOL), data, source);
+  }
+
+  function armCallback(address target, bytes calldata data, address source) public {
+    callbackTarget = target;
     callbackData = data;
     armedCallbackSource = source;
     callbackArmed = true;
@@ -73,7 +80,7 @@ contract LiquidationCallbackToken is TestnetERC20 {
 
     if (callbackArmed && from == armedCallbackSource) {
       callbackArmed = false;
-      (callbackSucceeded, callbackResult) = address(POOL).call(callbackData);
+      (callbackSucceeded, callbackResult) = callbackTarget.call(callbackData);
     }
   }
 }
@@ -111,11 +118,188 @@ enum GuardedAction {
   FinalizeTransfer
 }
 
-contract PoolLiquidationReentrancyTests is TestnetProcedures {
+/// @dev Builds the call a callback makes for each guarded entry point and gives the calling contract
+/// every role those entry points check, so the reentrancy guard is the only reason a call reverts.
+abstract contract GuardedActionCalls is TestnetProcedures {
+  uint8 internal constant ISOLATED_EMODE = 3;
+
+  function _grantGuardedActionAccess(LiquidationCallbackToken caller) internal {
+    IPool pool = contracts.poolProxy;
+    address aUsdx = pool.getReserveAToken(tokenList.usdx);
+    caller.callPool(abi.encodeCall(IPool.approvePositionManager, (address(caller), true)));
+
+    vm.startPrank(poolAdmin);
+    contracts.aclManager.addPoolAdmin(address(caller));
+    contracts.poolAddressesProvider.setAddress(Pool(address(pool)).UMBRELLA(), address(caller));
+    TestnetERC20(tokenList.wbtc).mint(address(pool), 1);
+    vm.stopPrank();
+
+    vm.prank(carol);
+    IERC20(aUsdx).approve(address(caller), 1);
+
+    vm.mockCall(
+      address(contracts.poolAddressesProvider),
+      abi.encodeCall(IPoolAddressesProvider.getPoolConfigurator, ()),
+      abi.encode(address(caller))
+    );
+  }
+
+  /// @dev `finalizeTransfer` is only callable by an aToken, so it is reached through an aToken transfer.
+  function _getGuardedCall(
+    GuardedAction action,
+    address caller
+  ) internal view returns (address target, bytes memory data) {
+    if (action == GuardedAction.FinalizeTransfer) {
+      return (
+        contracts.poolProxy.getReserveAToken(tokenList.usdx),
+        abi.encodeCall(IERC20.transferFrom, (carol, bob, 1))
+      );
+    }
+    return (address(contracts.poolProxy), _getGuardedCallData(action, caller));
+  }
+
+  function _assertCallbackBlocked(LiquidationCallbackToken token) internal view {
+    (bool callbackSucceeded, bytes memory callbackResult) = token.getCallbackResult();
+    assertFalse(callbackSucceeded);
+    assertEq(callbackResult.length, 4);
+    assertEq(
+      bytes4(callbackResult),
+      ReentrancyGuardTransient.ReentrancyGuardReentrantCall.selector
+    );
+  }
+
+  function _getGuardedCallData(
+    GuardedAction action,
+    address caller
+  ) internal view returns (bytes memory) {
+    if (action == GuardedAction.Supply) {
+      return abi.encodeCall(IPool.supply, (tokenList.weth, 1, caller, 0));
+    }
+    if (action == GuardedAction.SupplyWithPermit) {
+      return
+        abi.encodeCall(
+          IPool.supplyWithPermit,
+          (tokenList.weth, 1, caller, 0, 0, 0, bytes32(0), bytes32(0))
+        );
+    }
+    if (action == GuardedAction.Deposit) {
+      return abi.encodeCall(IPool.deposit, (tokenList.weth, 1, caller, 0));
+    }
+    if (action == GuardedAction.Withdraw) {
+      return abi.encodeCall(IPool.withdraw, (tokenList.weth, 1, caller));
+    }
+    if (action == GuardedAction.Borrow) {
+      return abi.encodeCall(IPool.borrow, (tokenList.usdx, 1, 2, 0, caller));
+    }
+    if (action == GuardedAction.Repay) {
+      return abi.encodeCall(IPool.repay, (tokenList.weth, 1, 2, caller));
+    }
+    if (action == GuardedAction.RepayWithPermit) {
+      return
+        abi.encodeCall(
+          IPool.repayWithPermit,
+          (tokenList.weth, 1, 2, caller, 0, 0, bytes32(0), bytes32(0))
+        );
+    }
+    if (action == GuardedAction.RepayWithATokens) {
+      return abi.encodeCall(IPool.repayWithATokens, (tokenList.weth, 1, 2));
+    }
+    if (action == GuardedAction.LiquidationCall) {
+      return
+        abi.encodeCall(IPool.liquidationCall, (tokenList.wbtc, tokenList.weth, caller, 1, false));
+    }
+    if (action == GuardedAction.FlashLoan) {
+      address[] memory assets = new address[](1);
+      assets[0] = tokenList.usdx;
+      uint256[] memory amounts = new uint256[](1);
+      amounts[0] = 1;
+      uint256[] memory interestRateModes = new uint256[](1);
+      interestRateModes[0] = 2;
+      return
+        abi.encodeCall(
+          IPool.flashLoan,
+          (caller, assets, amounts, interestRateModes, caller, bytes(''), 0)
+        );
+    }
+    if (action == GuardedAction.FlashLoanSimple) {
+      return abi.encodeCall(IPool.flashLoanSimple, (caller, tokenList.usdx, 1, bytes(''), 0));
+    }
+    if (action == GuardedAction.SetUserUseReserveAsCollateral) {
+      return abi.encodeCall(IPool.setUserUseReserveAsCollateral, (tokenList.wbtc, false));
+    }
+    if (action == GuardedAction.SetUserEMode) {
+      return abi.encodeCall(IPool.setUserEMode, (0));
+    }
+    if (action == GuardedAction.SetUserUseReserveAsCollateralOnBehalfOf) {
+      return
+        abi.encodeCall(
+          IPool.setUserUseReserveAsCollateralOnBehalfOf,
+          (tokenList.wbtc, false, caller)
+        );
+    }
+    if (action == GuardedAction.SetUserEModeOnBehalfOf) {
+      return abi.encodeCall(IPool.setUserEModeOnBehalfOf, (0, caller));
+    }
+    if (action == GuardedAction.MintToTreasury) {
+      address[] memory assets = new address[](1);
+      assets[0] = tokenList.wbtc;
+      return abi.encodeCall(IPool.mintToTreasury, (assets));
+    }
+    if (action == GuardedAction.InitReserve) {
+      return abi.encodeCall(IPool.initReserve, (address(1), address(2), address(3)));
+    }
+    if (action == GuardedAction.SyncIndexesState) {
+      return abi.encodeCall(IPool.syncIndexesState, (tokenList.wbtc));
+    }
+    if (action == GuardedAction.SyncRatesState) {
+      return abi.encodeCall(IPool.syncRatesState, (tokenList.wbtc));
+    }
+    if (action == GuardedAction.SetConfiguration) {
+      return
+        abi.encodeCall(
+          IPool.setConfiguration,
+          (tokenList.wbtc, contracts.poolProxy.getConfiguration(tokenList.wbtc))
+        );
+    }
+    if (action == GuardedAction.UpdateFlashloanPremium) {
+      return abi.encodeCall(IPool.updateFlashloanPremium, (0));
+    }
+    if (action == GuardedAction.ConfigureEModeCategory) {
+      DataTypes.EModeCategoryBaseConfiguration memory category;
+      return abi.encodeCall(IPool.configureEModeCategory, (ISOLATED_EMODE, category));
+    }
+    if (action == GuardedAction.ConfigureEModeCategoryCollateralBitmap) {
+      return
+        abi.encodeCall(IPool.configureEModeCategoryCollateralBitmap, (ISOLATED_EMODE, uint128(0)));
+    }
+    if (action == GuardedAction.ConfigureEModeCategoryBorrowableBitmap) {
+      return
+        abi.encodeCall(IPool.configureEModeCategoryBorrowableBitmap, (ISOLATED_EMODE, uint128(0)));
+    }
+    if (action == GuardedAction.ConfigureEModeCategoryLtvzeroBitmap) {
+      return
+        abi.encodeCall(IPool.configureEModeCategoryLtvzeroBitmap, (ISOLATED_EMODE, uint128(0)));
+    }
+    if (action == GuardedAction.ConfigureEModeCategoryIsolated) {
+      return abi.encodeCall(IPool.configureEModeCategoryIsolated, (ISOLATED_EMODE, false));
+    }
+    if (action == GuardedAction.SetLiquidationGracePeriod) {
+      return abi.encodeCall(IPool.setLiquidationGracePeriod, (tokenList.wbtc, uint40(0)));
+    }
+    if (action == GuardedAction.RescueTokens) {
+      return abi.encodeCall(IPool.rescueTokens, (tokenList.wbtc, caller, 1));
+    }
+    if (action == GuardedAction.EliminateReserveDeficit) {
+      return abi.encodeCall(IPool.eliminateReserveDeficit, (tokenList.wbtc, 1));
+    }
+    revert('unhandled GuardedAction');
+  }
+}
+
+contract PoolLiquidationReentrancyTests is GuardedActionCalls {
   IPool internal pool;
   LiquidationCallbackToken internal attacker;
 
-  uint8 internal constant ISOLATED_EMODE = 3;
   uint256 internal constant MALICIOUS_COLLATERAL = 0.01e8;
   uint256 internal constant INITIAL_WETH_DEBT = 0.1e18;
 
@@ -144,12 +328,10 @@ contract PoolLiquidationReentrancyTests is TestnetProcedures {
     for (uint256 i; i <= uint256(type(GuardedAction).max); ++i) {
       uint256 snapshot = vm.snapshotState();
 
-      attacker.callPool(abi.encodeCall(IPool.approvePositionManager, (address(attacker), true)));
+      _grantGuardedActionAccess(attacker);
       _makePositionLiquidatable();
-      attacker.armCallback(
-        _getGuardedCallData(GuardedAction(i)),
-        pool.getReserveAToken(tokenList.wbtc)
-      );
+      (address target, bytes memory data) = _getGuardedCall(GuardedAction(i), address(attacker));
+      attacker.armCallback(target, data, pool.getReserveAToken(tokenList.wbtc));
 
       vm.prank(bob);
       pool.liquidationCall(
@@ -167,7 +349,10 @@ contract PoolLiquidationReentrancyTests is TestnetProcedures {
 
   function test_supplyLocksGuardedEntryPoints() public {
     _prepareWbtcSupply();
-    attacker.armCallback(_getGuardedCallData(GuardedAction.Borrow), address(attacker));
+    attacker.armCallback(
+      _getGuardedCallData(GuardedAction.Borrow, address(attacker)),
+      address(attacker)
+    );
     attacker.callPool(abi.encodeCall(IPool.supply, (tokenList.wbtc, 1, address(attacker), 0)));
 
     _assertCallbackBlocked();
@@ -176,7 +361,7 @@ contract PoolLiquidationReentrancyTests is TestnetProcedures {
   function test_multicallCannotBypassGuard() public {
     _prepareWbtcSupply();
     bytes[] memory calls = new bytes[](1);
-    calls[0] = _getGuardedCallData(GuardedAction.Borrow);
+    calls[0] = _getGuardedCallData(GuardedAction.Borrow, address(attacker));
     attacker.armCallback(abi.encodeCall(Multicall.multicall, (calls)), address(attacker));
     attacker.callPool(abi.encodeCall(IPool.supply, (tokenList.wbtc, 1, address(attacker), 0)));
 
@@ -213,7 +398,10 @@ contract PoolLiquidationReentrancyTests is TestnetProcedures {
 
   function test_supplyWithPermitLocksGuardedEntryPoints() public {
     _prepareWbtcSupply();
-    attacker.armCallback(_getGuardedCallData(GuardedAction.Borrow), address(attacker));
+    attacker.armCallback(
+      _getGuardedCallData(GuardedAction.Borrow, address(attacker)),
+      address(attacker)
+    );
     attacker.callPool(
       abi.encodeCall(
         IPool.supplyWithPermit,
@@ -226,7 +414,10 @@ contract PoolLiquidationReentrancyTests is TestnetProcedures {
 
   function test_depositLocksGuardedEntryPoints() public {
     _prepareWbtcSupply();
-    attacker.armCallback(_getGuardedCallData(GuardedAction.Borrow), address(attacker));
+    attacker.armCallback(
+      _getGuardedCallData(GuardedAction.Borrow, address(attacker)),
+      address(attacker)
+    );
     attacker.callPool(abi.encodeCall(IPool.deposit, (tokenList.wbtc, 1, address(attacker), 0)));
 
     _assertCallbackBlocked();
@@ -234,7 +425,7 @@ contract PoolLiquidationReentrancyTests is TestnetProcedures {
 
   function test_withdrawLocksGuardedEntryPoints() public {
     attacker.armCallback(
-      _getGuardedCallData(GuardedAction.Borrow),
+      _getGuardedCallData(GuardedAction.Borrow, address(attacker)),
       pool.getReserveAToken(tokenList.wbtc)
     );
     attacker.callPool(abi.encodeCall(IPool.withdraw, (tokenList.wbtc, 1, address(attacker))));
@@ -244,7 +435,7 @@ contract PoolLiquidationReentrancyTests is TestnetProcedures {
 
   function test_borrowLocksGuardedEntryPoints() public {
     attacker.armCallback(
-      _getGuardedCallData(GuardedAction.Supply),
+      _getGuardedCallData(GuardedAction.Supply, address(attacker)),
       pool.getReserveAToken(tokenList.wbtc)
     );
     attacker.callPool(abi.encodeCall(IPool.borrow, (tokenList.wbtc, 1, 2, 0, address(attacker))));
@@ -254,7 +445,10 @@ contract PoolLiquidationReentrancyTests is TestnetProcedures {
 
   function test_repayLocksGuardedEntryPoints() public {
     _openWbtcDebt();
-    attacker.armCallback(_getGuardedCallData(GuardedAction.Supply), address(attacker));
+    attacker.armCallback(
+      _getGuardedCallData(GuardedAction.Supply, address(attacker)),
+      address(attacker)
+    );
     attacker.callPool(abi.encodeCall(IPool.repay, (tokenList.wbtc, 1, 2, address(attacker))));
 
     _assertCallbackBlocked();
@@ -262,7 +456,10 @@ contract PoolLiquidationReentrancyTests is TestnetProcedures {
 
   function test_repayWithPermitLocksGuardedEntryPoints() public {
     _openWbtcDebt();
-    attacker.armCallback(_getGuardedCallData(GuardedAction.Supply), address(attacker));
+    attacker.armCallback(
+      _getGuardedCallData(GuardedAction.Supply, address(attacker)),
+      address(attacker)
+    );
     attacker.callPool(
       abi.encodeCall(
         IPool.repayWithPermit,
@@ -326,13 +523,7 @@ contract PoolLiquidationReentrancyTests is TestnetProcedures {
   }
 
   function _assertCallbackBlocked() internal view {
-    (bool callbackSucceeded, bytes memory callbackResult) = attacker.getCallbackResult();
-    assertFalse(callbackSucceeded);
-    assertEq(callbackResult.length, 4);
-    assertEq(
-      bytes4(callbackResult),
-      ReentrancyGuardTransient.ReentrancyGuardReentrantCall.selector
-    );
+    _assertCallbackBlocked(attacker);
   }
 
   function _prepareWbtcSupply() internal {
@@ -354,142 +545,11 @@ contract PoolLiquidationReentrancyTests is TestnetProcedures {
     vm.prank(poolAdmin);
     IAaveOracle(report.aaveOracle).setAssetSources(assets, sources);
   }
-
-  function _getGuardedCallData(GuardedAction action) internal view returns (bytes memory) {
-    if (action == GuardedAction.Supply) {
-      return abi.encodeCall(IPool.supply, (tokenList.weth, 1, address(attacker), 0));
-    }
-    if (action == GuardedAction.SupplyWithPermit) {
-      return
-        abi.encodeCall(
-          IPool.supplyWithPermit,
-          (tokenList.weth, 1, address(attacker), 0, 0, 0, bytes32(0), bytes32(0))
-        );
-    }
-    if (action == GuardedAction.Deposit) {
-      return abi.encodeCall(IPool.deposit, (tokenList.weth, 1, address(attacker), 0));
-    }
-    if (action == GuardedAction.Withdraw) {
-      return abi.encodeCall(IPool.withdraw, (tokenList.weth, 1, address(attacker)));
-    }
-    if (action == GuardedAction.Borrow) {
-      return abi.encodeCall(IPool.borrow, (tokenList.usdx, 1, 2, 0, address(attacker)));
-    }
-    if (action == GuardedAction.Repay) {
-      return abi.encodeCall(IPool.repay, (tokenList.weth, 1, 2, address(attacker)));
-    }
-    if (action == GuardedAction.RepayWithPermit) {
-      return
-        abi.encodeCall(
-          IPool.repayWithPermit,
-          (tokenList.weth, 1, 2, address(attacker), 0, 0, bytes32(0), bytes32(0))
-        );
-    }
-    if (action == GuardedAction.RepayWithATokens) {
-      return abi.encodeCall(IPool.repayWithATokens, (tokenList.weth, 1, 2));
-    }
-    if (action == GuardedAction.LiquidationCall) {
-      return
-        abi.encodeCall(
-          IPool.liquidationCall,
-          (tokenList.wbtc, tokenList.weth, address(attacker), 1, false)
-        );
-    }
-    if (action == GuardedAction.FlashLoan) {
-      address[] memory assets = new address[](1);
-      assets[0] = tokenList.usdx;
-      uint256[] memory amounts = new uint256[](1);
-      amounts[0] = 1;
-      uint256[] memory interestRateModes = new uint256[](1);
-      interestRateModes[0] = 2;
-      return
-        abi.encodeCall(
-          IPool.flashLoan,
-          (address(attacker), assets, amounts, interestRateModes, address(attacker), bytes(''), 0)
-        );
-    }
-    if (action == GuardedAction.FlashLoanSimple) {
-      return
-        abi.encodeCall(IPool.flashLoanSimple, (address(attacker), tokenList.usdx, 1, bytes(''), 0));
-    }
-    if (action == GuardedAction.SetUserUseReserveAsCollateral) {
-      return abi.encodeCall(IPool.setUserUseReserveAsCollateral, (tokenList.wbtc, false));
-    }
-    if (action == GuardedAction.SetUserEMode) {
-      return abi.encodeCall(IPool.setUserEMode, (0));
-    }
-    if (action == GuardedAction.SetUserUseReserveAsCollateralOnBehalfOf) {
-      return
-        abi.encodeCall(
-          IPool.setUserUseReserveAsCollateralOnBehalfOf,
-          (tokenList.wbtc, false, address(attacker))
-        );
-    }
-    if (action == GuardedAction.SetUserEModeOnBehalfOf) {
-      return abi.encodeCall(IPool.setUserEModeOnBehalfOf, (0, address(attacker)));
-    }
-    if (action == GuardedAction.MintToTreasury) {
-      address[] memory assets = new address[](1);
-      assets[0] = tokenList.wbtc;
-      return abi.encodeCall(IPool.mintToTreasury, (assets));
-    }
-    if (action == GuardedAction.InitReserve) {
-      return abi.encodeCall(IPool.initReserve, (address(1), address(2), address(3)));
-    }
-    if (action == GuardedAction.SyncIndexesState) {
-      return abi.encodeCall(IPool.syncIndexesState, (tokenList.wbtc));
-    }
-    if (action == GuardedAction.SyncRatesState) {
-      return abi.encodeCall(IPool.syncRatesState, (tokenList.wbtc));
-    }
-    if (action == GuardedAction.SetConfiguration) {
-      return
-        abi.encodeCall(
-          IPool.setConfiguration,
-          (tokenList.wbtc, pool.getConfiguration(tokenList.wbtc))
-        );
-    }
-    if (action == GuardedAction.UpdateFlashloanPremium) {
-      return abi.encodeCall(IPool.updateFlashloanPremium, (0));
-    }
-    if (action == GuardedAction.ConfigureEModeCategory) {
-      DataTypes.EModeCategoryBaseConfiguration memory category;
-      return abi.encodeCall(IPool.configureEModeCategory, (ISOLATED_EMODE, category));
-    }
-    if (action == GuardedAction.ConfigureEModeCategoryCollateralBitmap) {
-      return
-        abi.encodeCall(IPool.configureEModeCategoryCollateralBitmap, (ISOLATED_EMODE, uint128(0)));
-    }
-    if (action == GuardedAction.ConfigureEModeCategoryBorrowableBitmap) {
-      return
-        abi.encodeCall(IPool.configureEModeCategoryBorrowableBitmap, (ISOLATED_EMODE, uint128(0)));
-    }
-    if (action == GuardedAction.ConfigureEModeCategoryLtvzeroBitmap) {
-      return
-        abi.encodeCall(IPool.configureEModeCategoryLtvzeroBitmap, (ISOLATED_EMODE, uint128(0)));
-    }
-    if (action == GuardedAction.ConfigureEModeCategoryIsolated) {
-      return abi.encodeCall(IPool.configureEModeCategoryIsolated, (ISOLATED_EMODE, false));
-    }
-    if (action == GuardedAction.SetLiquidationGracePeriod) {
-      return abi.encodeCall(IPool.setLiquidationGracePeriod, (tokenList.wbtc, uint40(0)));
-    }
-    if (action == GuardedAction.RescueTokens) {
-      return abi.encodeCall(IPool.rescueTokens, (tokenList.wbtc, address(attacker), 1));
-    }
-    if (action == GuardedAction.EliminateReserveDeficit) {
-      return abi.encodeCall(IPool.eliminateReserveDeficit, (tokenList.wbtc, 1));
-    }
-    if (action == GuardedAction.FinalizeTransfer) {
-      return abi.encodeCall(IPool.finalizeTransfer, (tokenList.wbtc, address(attacker), bob, 1, 1));
-    }
-    revert('unhandled GuardedAction');
-  }
 }
 
 /// @dev A liquidation makes a second external call after the collateral leg: the debt asset is
 /// pulled from the liquidator at LiquidationLogic:445. The same lock has to cover that transfer.
-contract PoolLiquidationDebtAssetCallbackTests is TestnetProcedures {
+contract PoolLiquidationDebtAssetCallbackTests is GuardedActionCalls {
   IPool internal pool;
   LiquidationCallbackToken internal debtAsset;
 
@@ -514,24 +574,21 @@ contract PoolLiquidationDebtAssetCallbackTests is TestnetProcedures {
     IERC20(tokenList.usdx).approve(address(pool), UINT256_MAX);
   }
 
-  function test_debtAssetCallbackIsBlocked() public {
-    _makePositionLiquidatable();
+  function test_debtAssetCallbackBlocksGuardedEntryPoints() public {
+    for (uint256 i; i <= uint256(type(GuardedAction).max); ++i) {
+      uint256 snapshot = vm.snapshotState();
 
-    debtAsset.armCallback(
-      abi.encodeCall(IPool.supply, (tokenList.weth, 1, address(debtAsset), 0)),
-      bob
-    );
+      _grantGuardedActionAccess(debtAsset);
+      _makePositionLiquidatable();
+      (address target, bytes memory data) = _getGuardedCall(GuardedAction(i), address(debtAsset));
+      debtAsset.armCallback(target, data, bob);
 
-    vm.prank(bob);
-    pool.liquidationCall(tokenList.weth, tokenList.usdx, alice, type(uint256).max, false);
+      vm.prank(bob);
+      pool.liquidationCall(tokenList.weth, tokenList.usdx, alice, type(uint256).max, false);
 
-    (bool callbackSucceeded, bytes memory callbackResult) = debtAsset.getCallbackResult();
-    assertFalse(callbackSucceeded);
-    assertEq(callbackResult.length, 4);
-    assertEq(
-      bytes4(callbackResult),
-      ReentrancyGuardTransient.ReentrancyGuardReentrantCall.selector
-    );
+      _assertCallbackBlocked(debtAsset);
+      vm.revertToState(snapshot);
+    }
   }
 
   function _makePositionLiquidatable() internal {

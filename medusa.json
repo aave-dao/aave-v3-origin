@@ -10,9 +10,7 @@
     "coverageFormats": ["html", "lcov"],
     "deploymentOrder": ["Tester"],
     "targetContracts": ["Tester"],
-    "targetContractsBalances": [
-      "0xffffffffffffffffffffffffffffffffffffffffffffffffffff"
-    ],
+    "targetContractsBalances": ["0x80000000000000000000000000000000"],
     "predeployedContracts": {
       "Create2Factory": "0x914d7Fec6aaC8cd542e72Bca78B30650d45643d7",
       "Pretty": "0xf01",

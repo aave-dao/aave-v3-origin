@@ -902,16 +902,20 @@ contract PoolFlashLoansTests is TestnetProcedures {
   function test_flashLoanSimple_nestedFlashLoan() public {
     MockFlashLoanATokenTransferReceiver receiver = _newATokenTransferReceiver();
     receiver.setNestedFlashLoan(tokenList.wbtc, 1e6);
+    receiver.setNestedSupply(0.1e6);
+    NestedSnapshot memory snapshotBefore = _nestedSnapshot(receiver);
 
     vm.prank(alice);
     contracts.poolProxy.flashLoanSimple(address(receiver), tokenList.usdx, 1_000e6, '', 0);
 
-    assertTrue(receiver.tookNestedFlashLoan());
+    _assertNestedFlashLoan(receiver, snapshotBefore, 1_000e6);
   }
 
   function test_flashLoan_nestedFlashLoan() public {
     MockFlashLoanATokenTransferReceiver receiver = _newATokenTransferReceiver();
     receiver.setNestedFlashLoan(tokenList.wbtc, 1e6);
+    receiver.setNestedSupply(0.1e6);
+    NestedSnapshot memory snapshotBefore = _nestedSnapshot(receiver);
 
     (address[] memory assets, uint256[] memory amounts, uint256[] memory modes) = _singleAsset(
       tokenList.usdx,
@@ -921,23 +925,24 @@ contract PoolFlashLoansTests is TestnetProcedures {
     vm.prank(alice);
     contracts.poolProxy.flashLoan(address(receiver), assets, amounts, modes, alice, '', 0);
 
-    assertTrue(receiver.tookNestedFlashLoan());
+    _assertNestedFlashLoan(receiver, snapshotBefore, 1_000e6);
   }
 
   function test_flashLoanSimple_moveATokensInsideCallback() public {
     MockFlashLoanATokenTransferReceiver receiver = _newATokenTransferReceiver();
     _approveATokens(receiver);
+    MoveSnapshot memory snapshotBefore = _moveSnapshot(receiver);
 
     vm.prank(alice);
     contracts.poolProxy.flashLoanSimple(address(receiver), tokenList.usdx, 1_000e6, '', 0);
 
-    assertGt(receiver.pulledBalance(), 0);
-    assertGt(receiver.withdrawnAmount(), 0);
+    _assertATokensMoved(receiver, snapshotBefore, 1_000e6);
   }
 
   function test_flashLoan_moveATokensInsideCallback() public {
     MockFlashLoanATokenTransferReceiver receiver = _newATokenTransferReceiver();
     _approveATokens(receiver);
+    MoveSnapshot memory snapshotBefore = _moveSnapshot(receiver);
 
     (address[] memory assets, uint256[] memory amounts, uint256[] memory modes) = _singleAsset(
       tokenList.usdx,
@@ -947,8 +952,102 @@ contract PoolFlashLoansTests is TestnetProcedures {
     vm.prank(alice);
     contracts.poolProxy.flashLoan(address(receiver), assets, amounts, modes, alice, '', 0);
 
-    assertGt(receiver.pulledBalance(), 0);
-    assertGt(receiver.withdrawnAmount(), 0);
+    _assertATokensMoved(receiver, snapshotBefore, 1_000e6);
+  }
+
+  struct MoveSnapshot {
+    uint256 sourceATokenBalance;
+    uint256 receiverATokenBalance;
+    uint256 receiverUnderlyingBalance;
+  }
+
+  struct NestedSnapshot {
+    uint256 receiverUsdxBalance;
+    uint256 receiverWbtcBalance;
+    uint256 aUsdxUnderlyingBalance;
+    uint256 aWbtcUnderlyingBalance;
+  }
+
+  function _moveSnapshot(
+    MockFlashLoanATokenTransferReceiver receiver
+  ) internal view returns (MoveSnapshot memory) {
+    address aUsdx = contracts.poolProxy.getReserveAToken(tokenList.usdx);
+    return
+      MoveSnapshot({
+        sourceATokenBalance: IERC20(aUsdx).balanceOf(carol),
+        receiverATokenBalance: IERC20(aUsdx).balanceOf(address(receiver)),
+        receiverUnderlyingBalance: IERC20(tokenList.usdx).balanceOf(address(receiver))
+      });
+  }
+
+  function _assertATokensMoved(
+    MockFlashLoanATokenTransferReceiver receiver,
+    MoveSnapshot memory snapshotBefore,
+    uint256 flashAmount
+  ) internal view {
+    address aUsdx = contracts.poolProxy.getReserveAToken(tokenList.usdx);
+    uint256 pulled = snapshotBefore.sourceATokenBalance / 2;
+    uint256 withdrawn = pulled / 2;
+    uint256 premium = flashAmount.percentMulCeil(contracts.poolProxy.FLASHLOAN_PREMIUM_TOTAL());
+
+    assertEq(receiver.pulledBalance(), snapshotBefore.receiverATokenBalance + pulled);
+    assertEq(receiver.withdrawnAmount(), withdrawn);
+    assertEq(IERC20(aUsdx).balanceOf(carol), snapshotBefore.sourceATokenBalance - pulled);
+    assertEq(
+      IERC20(aUsdx).balanceOf(address(receiver)),
+      snapshotBefore.receiverATokenBalance + pulled - withdrawn
+    );
+    assertEq(
+      IERC20(tokenList.usdx).balanceOf(address(receiver)),
+      snapshotBefore.receiverUnderlyingBalance + withdrawn - premium
+    );
+  }
+
+  function _nestedSnapshot(
+    MockFlashLoanATokenTransferReceiver receiver
+  ) internal view returns (NestedSnapshot memory) {
+    return
+      NestedSnapshot({
+        receiverUsdxBalance: IERC20(tokenList.usdx).balanceOf(address(receiver)),
+        receiverWbtcBalance: IERC20(tokenList.wbtc).balanceOf(address(receiver)),
+        aUsdxUnderlyingBalance: IERC20(tokenList.usdx).balanceOf(
+          contracts.poolProxy.getReserveAToken(tokenList.usdx)
+        ),
+        aWbtcUnderlyingBalance: IERC20(tokenList.wbtc).balanceOf(
+          contracts.poolProxy.getReserveAToken(tokenList.wbtc)
+        )
+      });
+  }
+
+  function _assertNestedFlashLoan(
+    MockFlashLoanATokenTransferReceiver receiver,
+    NestedSnapshot memory snapshotBefore,
+    uint256 flashAmount
+  ) internal view {
+    address aWbtc = contracts.poolProxy.getReserveAToken(tokenList.wbtc);
+    uint256 premiumTotal = contracts.poolProxy.FLASHLOAN_PREMIUM_TOTAL();
+    uint256 usdxPremium = flashAmount.percentMulCeil(premiumTotal);
+    uint256 wbtcPremium = receiver.nestedAmount().percentMulCeil(premiumTotal);
+    uint256 supplied = receiver.nestedSupplyAmount();
+
+    assertTrue(receiver.tookNestedFlashLoan());
+    assertEq(IERC20(aWbtc).balanceOf(address(receiver)), supplied);
+    assertEq(
+      IERC20(tokenList.usdx).balanceOf(address(receiver)),
+      snapshotBefore.receiverUsdxBalance - usdxPremium
+    );
+    assertEq(
+      IERC20(tokenList.wbtc).balanceOf(address(receiver)),
+      snapshotBefore.receiverWbtcBalance - wbtcPremium - supplied
+    );
+    assertEq(
+      IERC20(tokenList.usdx).balanceOf(contracts.poolProxy.getReserveAToken(tokenList.usdx)),
+      snapshotBefore.aUsdxUnderlyingBalance + usdxPremium
+    );
+    assertEq(
+      IERC20(tokenList.wbtc).balanceOf(aWbtc),
+      snapshotBefore.aWbtcUnderlyingBalance + wbtcPremium + supplied
+    );
   }
 
   function _newATokenTransferReceiver()

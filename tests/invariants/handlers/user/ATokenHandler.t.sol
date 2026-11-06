@@ -74,28 +74,45 @@ contract ATokenHandler is BaseHandler {
         assertTrue(snapshotGlobalVarsBefore.usersInfo[address(actor)].isHealthy, ERC20_HSPOST_B);
       }
 
-      assertApproxEqAbs(
-        snapshotGlobalVarsAfter
-          .usersInfo[address(actor)]
-          .userAssetsInfo[underlyingToken]
-          .aTokenBalance + amount,
-        snapshotGlobalVarsBefore
-          .usersInfo[address(actor)]
-          .userAssetsInfo[underlyingToken]
-          .aTokenBalance,
-        2,
-        ERC20_HSPOST_E
-      );
+      if (address(actor) == recipient) {
+        assertEq(
+          snapshotGlobalVarsAfter
+            .usersInfo[recipient]
+            .userAssetsInfo[underlyingToken]
+            .aTokenBalance,
+          snapshotGlobalVarsBefore
+            .usersInfo[recipient]
+            .userAssetsInfo[underlyingToken]
+            .aTokenBalance,
+          ERC20_HSPOST_G
+        );
+      } else {
+        assertApproxEqAbs(
+          snapshotGlobalVarsAfter
+            .usersInfo[address(actor)]
+            .userAssetsInfo[underlyingToken]
+            .aTokenBalance + amount,
+          snapshotGlobalVarsBefore
+            .usersInfo[address(actor)]
+            .userAssetsInfo[underlyingToken]
+            .aTokenBalance,
+          2,
+          ERC20_HSPOST_E
+        );
 
-      assertApproxEqAbs(
-        snapshotGlobalVarsBefore
-          .usersInfo[recipient]
-          .userAssetsInfo[underlyingToken]
-          .aTokenBalance + amount,
-        snapshotGlobalVarsAfter.usersInfo[recipient].userAssetsInfo[underlyingToken].aTokenBalance,
-        2,
-        ERC20_HSPOST_F
-      );
+        assertApproxEqAbs(
+          snapshotGlobalVarsBefore
+            .usersInfo[recipient]
+            .userAssetsInfo[underlyingToken]
+            .aTokenBalance + amount,
+          snapshotGlobalVarsAfter
+            .usersInfo[recipient]
+            .userAssetsInfo[underlyingToken]
+            .aTokenBalance,
+          2,
+          ERC20_HSPOST_F
+        );
+      }
     } else {
       revert('ATokenHandler: transfer failed');
     }
@@ -131,75 +148,85 @@ contract ATokenHandler is BaseHandler {
       }
 
       if (
-        snapshotGlobalVarsBefore
-          .usersInfo[owner]
-          .userAssetsInfo[underlyingToken]
-          .underlyingAllowances[address(actor)] != type(uint256).max
+        snapshotGlobalVarsBefore.usersInfo[owner].userAssetsInfo[underlyingToken].aTokenAllowances[
+          address(actor)
+        ] != type(uint256).max
       ) {
         assertApproxEqAbs(
-          snapshotGlobalVarsAfter
-            .usersInfo[owner]
-            .userAssetsInfo[underlyingToken]
-            .underlyingAllowances[address(actor)] + amount,
+          snapshotGlobalVarsAfter.usersInfo[owner].userAssetsInfo[underlyingToken].aTokenAllowances[
+            address(actor)
+          ] + amount,
           snapshotGlobalVarsBefore
             .usersInfo[owner]
             .userAssetsInfo[underlyingToken]
-            .underlyingAllowances[address(actor)],
+            .aTokenAllowances[address(actor)],
           2,
           ERC20_HSPOST_E
         );
         assertLe(
-          snapshotGlobalVarsAfter
-            .usersInfo[owner]
-            .userAssetsInfo[underlyingToken]
-            .underlyingAllowances[address(actor)] + amount,
+          snapshotGlobalVarsAfter.usersInfo[owner].userAssetsInfo[underlyingToken].aTokenAllowances[
+            address(actor)
+          ] + amount,
           snapshotGlobalVarsBefore
             .usersInfo[owner]
             .userAssetsInfo[underlyingToken]
-            .underlyingAllowances[address(actor)],
+            .aTokenAllowances[address(actor)],
           ERC20_HSPOST_E
         );
       } else {
         assertEq(
-          snapshotGlobalVarsAfter
-            .usersInfo[owner]
-            .userAssetsInfo[underlyingToken]
-            .underlyingAllowances[address(actor)],
+          snapshotGlobalVarsAfter.usersInfo[owner].userAssetsInfo[underlyingToken].aTokenAllowances[
+            address(actor)
+          ],
           type(uint256).max
         );
       }
 
-      assertApproxEqAbs(
-        snapshotGlobalVarsAfter.usersInfo[owner].userAssetsInfo[underlyingToken].aTokenBalance +
-          amount,
-        snapshotGlobalVarsBefore.usersInfo[owner].userAssetsInfo[underlyingToken].aTokenBalance,
-        2,
-        ERC20_HSPOST_E
-      );
-      assertLe(
-        snapshotGlobalVarsAfter.usersInfo[owner].userAssetsInfo[underlyingToken].aTokenBalance +
-          amount,
-        snapshotGlobalVarsBefore.usersInfo[owner].userAssetsInfo[underlyingToken].aTokenBalance,
-        ERC20_HSPOST_E
-      );
+      if (owner == recipient) {
+        assertEq(
+          snapshotGlobalVarsAfter.usersInfo[owner].userAssetsInfo[underlyingToken].aTokenBalance,
+          snapshotGlobalVarsBefore.usersInfo[owner].userAssetsInfo[underlyingToken].aTokenBalance,
+          ERC20_HSPOST_G
+        );
+      } else {
+        assertApproxEqAbs(
+          snapshotGlobalVarsAfter.usersInfo[owner].userAssetsInfo[underlyingToken].aTokenBalance +
+            amount,
+          snapshotGlobalVarsBefore.usersInfo[owner].userAssetsInfo[underlyingToken].aTokenBalance,
+          2,
+          ERC20_HSPOST_E
+        );
+        assertLe(
+          snapshotGlobalVarsAfter.usersInfo[owner].userAssetsInfo[underlyingToken].aTokenBalance +
+            amount,
+          snapshotGlobalVarsBefore.usersInfo[owner].userAssetsInfo[underlyingToken].aTokenBalance,
+          ERC20_HSPOST_E
+        );
 
-      assertApproxEqAbs(
-        snapshotGlobalVarsBefore
-          .usersInfo[recipient]
-          .userAssetsInfo[underlyingToken]
-          .aTokenBalance + amount,
-        snapshotGlobalVarsAfter.usersInfo[recipient].userAssetsInfo[underlyingToken].aTokenBalance,
-        2,
-        ERC20_HSPOST_F
-      );
-      assertGe(
-        snapshotGlobalVarsBefore
-          .usersInfo[recipient]
-          .userAssetsInfo[underlyingToken]
-          .aTokenBalance + amount,
-        snapshotGlobalVarsAfter.usersInfo[recipient].userAssetsInfo[underlyingToken].aTokenBalance,
-        ERC20_HSPOST_F
-      );
+        assertApproxEqAbs(
+          snapshotGlobalVarsBefore
+            .usersInfo[recipient]
+            .userAssetsInfo[underlyingToken]
+            .aTokenBalance + amount,
+          snapshotGlobalVarsAfter
+            .usersInfo[recipient]
+            .userAssetsInfo[underlyingToken]
+            .aTokenBalance,
+          2,
+          ERC20_HSPOST_F
+        );
+        assertGe(
+          snapshotGlobalVarsBefore
+            .usersInfo[recipient]
+            .userAssetsInfo[underlyingToken]
+            .aTokenBalance + amount,
+          snapshotGlobalVarsAfter
+            .usersInfo[recipient]
+            .userAssetsInfo[underlyingToken]
+            .aTokenBalance,
+          ERC20_HSPOST_F
+        );
+      }
     } else {
       revert('ATokenHandler: transferFrom failed');
     }

@@ -153,29 +153,33 @@ contract BorrowingHandler is BaseHandler {
 
     if (success) {
       _after();
+      uint256 repaid = abi.decode(returnData, (uint256));
 
       // POST-CONDITIONS
+      assertLe(repaid, amount, '');
+
       assertEq(
         snapshotGlobalVarsAfter.usersInfo[address(actor)].userAssetsInfo[asset].underlyingBalance +
-          amount,
+          repaid,
         snapshotGlobalVarsBefore.usersInfo[address(actor)].userAssetsInfo[asset].underlyingBalance,
         BORROWING_HSPOST_K
       );
 
       assertApproxEqAbs(
-        snapshotGlobalVarsAfter.usersInfo[onBehalfOf].userAssetsInfo[asset].vTokenBalance,
-        snapshotGlobalVarsBefore.usersInfo[onBehalfOf].userAssetsInfo[asset].vTokenBalance + amount,
-        2
+        snapshotGlobalVarsAfter.usersInfo[onBehalfOf].userAssetsInfo[asset].vTokenBalance + repaid,
+        snapshotGlobalVarsBefore.usersInfo[onBehalfOf].userAssetsInfo[asset].vTokenBalance,
+        2,
+        BORROWING_HSPOST_L
       );
       assertGe(
-        snapshotGlobalVarsAfter.usersInfo[onBehalfOf].userAssetsInfo[asset].vTokenBalance,
-        snapshotGlobalVarsBefore.usersInfo[onBehalfOf].userAssetsInfo[asset].vTokenBalance + amount,
-        ''
+        snapshotGlobalVarsAfter.usersInfo[onBehalfOf].userAssetsInfo[asset].vTokenBalance + repaid,
+        snapshotGlobalVarsBefore.usersInfo[onBehalfOf].userAssetsInfo[asset].vTokenBalance,
+        BORROWING_HSPOST_L
       );
 
       assertEq(
         snapshotGlobalVarsAfter.assetsInfo[asset].virtualUnderlyingBalance,
-        snapshotGlobalVarsBefore.assetsInfo[asset].virtualUnderlyingBalance + amount,
+        snapshotGlobalVarsBefore.assetsInfo[asset].virtualUnderlyingBalance + repaid,
         BORROWING_HSPOST_O
       );
     } else {
@@ -205,8 +209,11 @@ contract BorrowingHandler is BaseHandler {
 
     if (success) {
       _after();
+      uint256 repaid = abi.decode(returnData, (uint256));
 
       // POST-CONDITIONS
+      assertLe(repaid, amount, '');
+
       assertEq(
         snapshotGlobalVarsAfter.usersInfo[address(actor)].userAssetsInfo[asset].underlyingBalance,
         snapshotGlobalVarsBefore.usersInfo[address(actor)].userAssetsInfo[asset].underlyingBalance,
@@ -214,29 +221,30 @@ contract BorrowingHandler is BaseHandler {
       );
 
       assertApproxEqAbs(
-        snapshotGlobalVarsAfter.usersInfo[address(actor)].userAssetsInfo[asset].vTokenBalance,
-        snapshotGlobalVarsBefore.usersInfo[address(actor)].userAssetsInfo[asset].vTokenBalance +
-          amount,
-        2
+        snapshotGlobalVarsAfter.usersInfo[address(actor)].userAssetsInfo[asset].vTokenBalance +
+          repaid,
+        snapshotGlobalVarsBefore.usersInfo[address(actor)].userAssetsInfo[asset].vTokenBalance,
+        2,
+        BORROWING_HSPOST_M
       );
       assertGe(
-        snapshotGlobalVarsAfter.usersInfo[address(actor)].userAssetsInfo[asset].vTokenBalance,
-        snapshotGlobalVarsBefore.usersInfo[address(actor)].userAssetsInfo[asset].vTokenBalance +
-          amount,
-        ''
+        snapshotGlobalVarsAfter.usersInfo[address(actor)].userAssetsInfo[asset].vTokenBalance +
+          repaid,
+        snapshotGlobalVarsBefore.usersInfo[address(actor)].userAssetsInfo[asset].vTokenBalance,
+        BORROWING_HSPOST_M
       );
 
       assertApproxEqAbs(
         snapshotGlobalVarsBefore.usersInfo[address(actor)].userAssetsInfo[asset].aTokenBalance,
         snapshotGlobalVarsAfter.usersInfo[address(actor)].userAssetsInfo[asset].aTokenBalance +
-          amount,
+          repaid,
         2,
         BORROWING_HSPOST_P
       );
       assertGe(
         snapshotGlobalVarsBefore.usersInfo[address(actor)].userAssetsInfo[asset].aTokenBalance,
         snapshotGlobalVarsAfter.usersInfo[address(actor)].userAssetsInfo[asset].aTokenBalance +
-          amount,
+          repaid,
         BORROWING_HSPOST_P
       );
 

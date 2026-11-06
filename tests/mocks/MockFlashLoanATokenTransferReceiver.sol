@@ -12,6 +12,7 @@ contract MockFlashLoanATokenTransferReceiver is FlashLoanSimpleReceiverBase {
   address public aTokenSource;
   address public nestedAsset;
   uint256 public nestedAmount;
+  uint256 public nestedSupplyAmount;
   uint256 public pulledBalance;
   uint256 public withdrawnAmount;
   bool public tookNestedFlashLoan;
@@ -26,6 +27,10 @@ contract MockFlashLoanATokenTransferReceiver is FlashLoanSimpleReceiverBase {
   function setNestedFlashLoan(address asset, uint256 amount) external {
     nestedAsset = asset;
     nestedAmount = amount;
+  }
+
+  function setNestedSupply(uint256 amount) external {
+    nestedSupplyAmount = amount;
   }
 
   function executeOperation(
@@ -60,6 +65,11 @@ contract MockFlashLoanATokenTransferReceiver is FlashLoanSimpleReceiverBase {
     if (depth == 1 && nestedAsset != address(0)) {
       POOL.flashLoanSimple(address(this), nestedAsset, nestedAmount, '', 0);
       tookNestedFlashLoan = true;
+    }
+
+    if (depth == 2 && nestedSupplyAmount != 0) {
+      IERC20(asset).approve(address(POOL), nestedSupplyAmount);
+      POOL.supply(asset, nestedSupplyAmount, address(this), 0);
     }
 
     if (depth == 1 && aTokenSource != address(0)) {

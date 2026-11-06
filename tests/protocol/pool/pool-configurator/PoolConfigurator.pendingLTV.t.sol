@@ -177,11 +177,8 @@ contract PoolConfiguratorPendingLtvTests is TestnetProcedures {
     uint256 liquidationThreshold = 86_00;
     uint256 liquidationBonus = 10_500;
 
-    vm.assume(originalLtv > 0);
-    vm.assume(originalLtv < liquidationThreshold);
-
-    vm.assume(ltvToSet > 0);
-    vm.assume(ltvToSet < liquidationThreshold);
+    originalLtv = bound(originalLtv, 1, liquidationThreshold - 1);
+    ltvToSet = bound(ltvToSet, 1, liquidationThreshold - 1);
     vm.assume(ltvToSet != originalLtv);
 
     // set original ltv

@@ -16,6 +16,7 @@ import {ILendingHandler} from '../handlers/interfaces/ILendingHandler.sol';
 import {IBorrowingHandler} from '../handlers/interfaces/IBorrowingHandler.sol';
 import {ILiquidationHandler} from '../handlers/interfaces/ILiquidationHandler.sol';
 import {IPoolHandler} from '../handlers/interfaces/IPoolHandler.sol';
+import {IPriceAggregatorHandler} from '../handlers/interfaces/IPriceAggregatorHandler.sol';
 import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
 import {IERC20Metadata} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import {IAToken} from 'src/contracts/interfaces/IAToken.sol';
@@ -429,11 +430,14 @@ abstract contract DefaultBeforeAfterHooks is BaseHooks {
         BASE_GPOST_A
       );
 
-      assertLe(
-        snapshotGlobalVarsBefore.assetsInfo[baseAssets[i]].variableBorrowIndex,
-        snapshotGlobalVarsAfter.assetsInfo[baseAssets[i]].variableBorrowIndex,
-        BASE_GPOST_A
-      );
+      // with no variable debt the stored index does not accrue, so its projection can reset
+      if (snapshotGlobalVarsBefore.assetsInfo[baseAssets[i]].vTokenScaledTotalSupply != 0) {
+        assertLe(
+          snapshotGlobalVarsBefore.assetsInfo[baseAssets[i]].variableBorrowIndex,
+          snapshotGlobalVarsAfter.assetsInfo[baseAssets[i]].variableBorrowIndex,
+          BASE_GPOST_A
+        );
+      }
     }
   }
 
@@ -568,7 +572,11 @@ abstract contract DefaultBeforeAfterHooks is BaseHooks {
       snapshotGlobalVarsBefore.usersInfo[user].isHealthy &&
       !snapshotGlobalVarsAfter.usersInfo[user].isHealthy
     ) {
-      assertTrue(msg.sig == IPoolHandler.configureReserveAsCollateral.selector, HF_GPOST_C);
+      assertTrue(
+        msg.sig == IPoolHandler.configureReserveAsCollateral.selector ||
+          msg.sig == IPriceAggregatorHandler.setLatestAnswer.selector,
+        HF_GPOST_C
+      );
     }
   }
 
