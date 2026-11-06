@@ -1,0 +1,45 @@
+tests/protocol/pool/Pool.LiquidationReentrancy.t.sol
+  s_04da9fe33e9a43::t_5c207ac1c79a77 10,30,43-47,83,121-299,331,333-334,352-355,364,401-404,417-420,428,438,448-451,459-462,526,552,577-579,581-584,586-587,589-591
+medusa.json
+  s_04da9fe33e9a43::t_033ebfff2156a1 13
+tests/invariants/specs/PostconditionsSpec.t.sol
+  s_04da9fe33e9a43::t_2addfa81004ca0 220-221
+.github/workflows/certora-solvency.yml
+  s_04da9fe33e9a43::t_65fb7514bce458 59
+tests/invariants/handlers/user/BorrowingHandler.t.sol
+  s_04da9fe33e9a43::t_1b82be3fb46c87 156,159-160,163,169-172,175-177,182,212,215-216,224-228,231-234,240,247
+docs/3.8/Aave-v3.8-changelog.md
+  s_04da9fe33e9a43::t_16fafd978c1727 3,9-11
+tests/protocol/pool/Pool.FlashLoans.t.sol
+  s_04da9fe33e9a43::t_2ab03346bf1ac2 905-906,911,917-918,928,934,939,945,955-1050
+tests/protocol/pool/L2Pool.Reentrancy.t.sol
+  s_04da9fe33e9a43::t_121e8e8881bb20 1-124
+tests/invariants/handlers/user/ATokenHandler.t.sol
+  s_04da9fe33e9a43::t_07f9d9ebe6fdb3 77-115,151-153,156-158,162,167-169,173,178-180,185-229
+tests/invariants/utils/PropertiesConstants.sol
+  s_04da9fe33e9a43::t_4f77aefe3713ca 11
+tests/invariants/handlers/interfaces/IPriceAggregatorHandler.sol
+  s_04da9fe33e9a43::t_df38f73785162b 1-6
+tests/mocks/MockFlashLoanATokenTransferReceiver.sol
+  s_04da9fe33e9a43::t_8221a55586ae89 15,32-35,70-74
+tests/invariants/hooks/DefaultBeforeAfterHooks.t.sol
+  s_04da9fe33e9a43::t_1e568e712bec0a 19,433-440,575-579
+tests/protocol/pool/pool-configurator/PoolConfigurator.pendingLTV.t.sol
+  s_04da9fe33e9a43::t_edfb0b6de09431 180-181
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "10a3f519a322f1bd04f4c869a71876f79816f5b7",
+  "prompts": {},
+  "sessions": {
+    "s_04da9fe33e9a43": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "edbe4941-0dfc-48ff-89db-dac35e1d57bf",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Alexandru Niculae <43644109+avniculae@users.noreply.github.com>"
+    }
+  }
+}
