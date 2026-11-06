@@ -1,0 +1,21 @@
+medusa.json
+  s_04da9fe33e9a43::t_033ebfff2156a1 13
+tests/invariants/utils/PropertiesConstants.sol
+  s_04da9fe33e9a43::t_4f77aefe3713ca 11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "51533c10fe568e3453ddea19acb58ea823ecc567",
+  "prompts": {},
+  "sessions": {
+    "s_04da9fe33e9a43": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "edbe4941-0dfc-48ff-89db-dac35e1d57bf",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Alexandru Niculae <43644109+avniculae@users.noreply.github.com>"
+    }
+  }
+}
